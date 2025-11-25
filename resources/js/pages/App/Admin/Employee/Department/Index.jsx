@@ -91,84 +91,77 @@ const Management = () => {
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor: '#F6F6F6',
+                    backgroundColor: '#f5f5f5',
                 }}
             >
-                <Box
-                    sx={{
-                        px: 2,
-                        py: 2,
-                    }}
-                >
-                    <div className="container-fluid py-4">
-                        {/* Header */}
-                        <div className="row mb-4 align-items-center">
-                            <div className="col-auto d-flex align-items-center">
-                                <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                                    <IconButton sx={{ color: '#333', mr: 1 }}>
-                                        <ArrowBack />
-                                    </IconButton>
-                                </div>
-                                <Typography
-                                    variant="h5"
-                                    className="mb-0 ms-2"
-                                    style={{
-                                        // fontWeight:'700',
-                                        fontSize: '30px',
-                                        color: '#202224',
-                                    }}
-                                >
-                                    Departments
-                                </Typography>
+                <div className="container-fluid p-4">
+                    {/* Header */}
+                    <div className="row mb-4 align-items-center">
+                        <div className="col-auto d-flex align-items-center">
+                            <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                                <IconButton>
+                                    <ArrowBack />
+                                </IconButton>
                             </div>
-                            <div className="col-auto ms-auto">
-                                <Button variant="contained" sx={{ bgcolor: '#0a3d62', borderRadius: '10px', '&:hover': { bgcolor: '#0a3d62' } }} onClick={() => handleOpen()}>
-                                    New Department
-                                </Button>
-                            </div>
+                            <Typography
+                                variant="h5"
+                                className="mb-0"
+                                style={{
+                                    fontWeight:'600',
+                                    // fontSize: '30px',
+                                    color: '#0A3D63',
+                                }}
+                            >
+                                Departments
+                            </Typography>
                         </div>
-
-                        {/* Table */}
-                        <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
-                            <Table>
-                                <TableHead sx={{ bgcolor: '#F8FAFC' }}>
-                                    <TableRow>
-                                        <TableCell>Name</TableCell>
-                                        <TableCell>Action</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {departments.data.length > 0 ? (
-                                        departments.data.map((department) => (
-                                            <TableRow key={department.id}>
-                                                <TableCell>{department.name}</TableCell>
-                                                <TableCell>
-                                                    <Button onClick={() => handleOpen(department)} color="primary">
-                                                        Edit
-                                                    </Button>
-                                                    <Button onClick={() => openDeleteDialog(department.id)} color="secondary">
-                                                        Delete
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={2} align="center">
-                                                No departments found.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-
-                        {/* Pagination */}
-                        <div className="d-flex justify-content-end mt-4">
-                            <Pagination count={departments.last_page} page={departments.current_page} onChange={(e, page) => router.get(route('employees.departments'), { page })} />
+                        <div className="col-auto ms-auto">
+                            <Button variant="contained" sx={{ bgcolor: '#0a3d62', borderRadius: '4px', '&:hover': { bgcolor: '#0a3d62' } }} onClick={() => handleOpen()}>
+                                New Department
+                            </Button>
                         </div>
                     </div>
-                </Box>
+
+                    {/* Table */}
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
+                        <Table>
+                            <TableHead sx={{ bgcolor: '#F8FAFC' }}>
+                                <TableRow>
+                                    <TableCell>Name</TableCell>
+                                    <TableCell>Action</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {departments.data.length > 0 ? (
+                                    departments.data.map((department) => (
+                                        <TableRow key={department.id}>
+                                            <TableCell>{department.name}</TableCell>
+                                            <TableCell>
+                                                <Button onClick={() => handleOpen(department)} color="primary">
+                                                    Edit
+                                                </Button>
+                                                <Button onClick={() => openDeleteDialog(department.id)} color="secondary">
+                                                    Delete
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={2} align="center">
+                                            No departments found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    {/* Pagination */}
+                    <div className="d-flex justify-content-end mt-4">
+                        <Pagination count={departments.last_page} page={departments.current_page} onChange={(e, page) => router.get(route('employees.departments'), { page })} />
+                    </div>
+                </div>
             </div>
 
             {/* Delete Confirmation Dialog */}

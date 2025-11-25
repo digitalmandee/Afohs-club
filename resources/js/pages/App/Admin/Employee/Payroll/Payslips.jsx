@@ -156,14 +156,14 @@ const Payslips = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ bgcolor: '#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.dashboard'))} sx={{ color: '#063455' }}>
-                            Back to Dashboard
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payslips
                         </Typography>
                     </Box>
@@ -181,6 +181,22 @@ const Payslips = () => {
                                     onChange={(e) => {
                                         setSelectedPeriod(e.target.value);
                                         setCurrentPage(1);
+                                    }}
+                                    sx={{
+                                        height: 40,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        "& .MuiInputBase-root": {
+                                            height: 40,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        },
+                                        "& .MuiInputBase-input": {
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            paddingY: 0,
+                                            paddingTop: '2px',
+                                        },
                                     }}
                                 >
                                     {periods.map((period) => (
@@ -201,6 +217,22 @@ const Payslips = () => {
                                     onChange={(e) => {
                                         setStatusFilter(e.target.value);
                                         setCurrentPage(1);
+                                    }}
+                                    sx={{
+                                        height: 40,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        "& .MuiInputBase-root": {
+                                            height: 40,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        },
+                                        "& .MuiInputBase-input": {
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            // paddingBottom: "20rem",
+                                            // paddingBottom: '2rem',
+                                        },
                                     }}
                                 >
                                     <MenuItem value="">All Status</MenuItem>
@@ -224,6 +256,22 @@ const Payslips = () => {
                                         </InputAdornment>
                                     ),
                                 }}
+                                sx={{
+                                    height: 40,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    "& .MuiInputBase-root": {
+                                        height: 40,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        paddingY: 0,
+                                        // paddingTop: '2px',
+                                    },
+                                }}
                             />
                         </Grid>
 
@@ -231,7 +279,7 @@ const Payslips = () => {
                             <Button
                                 fullWidth
                                 variant="outlined"
-                                startIcon={<FilterListIcon />}
+                                // startIcon={<FilterListIcon />}
                                 onClick={fetchPayslips}
                                 sx={{
                                     color: '#063455',
@@ -250,14 +298,14 @@ const Payslips = () => {
                     <TableContainer component={Paper}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Department</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Basic Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Gross Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Net Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Department</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Basic Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Gross Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

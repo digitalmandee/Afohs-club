@@ -92,7 +92,7 @@ const EmployeeDashboard = () => {
                     <div style={{ paddingTop: '1rem' }}>
                         {/* Header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
+                            <Typography variant="h5" style={{ color: '#0a3d62', fontWeight: '600' }}>
                                 Employee Management
                             </Typography>
                             <Button style={{ color: 'white', backgroundColor: '#0a3d62' }} onClick={() => router.visit(route('employees.create'))}>

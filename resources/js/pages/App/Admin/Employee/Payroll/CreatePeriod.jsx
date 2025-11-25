@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, TextField, Button, Grid, Alert, Snackbar, FormControl, InputLabel, Select, MenuItem, Divider, Paper } from '@mui/material';
+import { Box, Card, CardContent, Typography, TextField, Button, Grid, Alert, Snackbar, FormControl, InputLabel, Select, MenuItem, Divider, Paper, IconButton } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon, CalendarMonth as CalendarIcon, Schedule as ScheduleIcon } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -138,29 +138,32 @@ const CreatePeriod = () => {
 
     return (
         <AdminLayout>
-            {/* Header */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.periods'))} sx={{ color: '#063455' }}>
-                        Back to Periods
-                    </Button>
-                    <Divider orientation="vertical" flexItem />
-                    <Box>
-                        <Typography variant="h4" sx={{ fontWeight: 600, color: '#063455' }}>
-                            Create Payroll Period
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
+            <div style={{
+                minHeight: '100vh',
+                backgroundColor: '#f5f5f5',
+                padding: "1rem"
+            }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                                Create Payroll Period
+                            </Typography>
+                            {/* <Typography variant="body2" color="textSecondary">
                             Set up a new payroll processing period
-                        </Typography>
+                        </Typography> */}
+                        </Box>
                     </Box>
+                    {/* <CalendarIcon sx={{ fontSize: 40, color: '#063455', opacity: 0.7 }} /> */}
                 </Box>
-                <CalendarIcon sx={{ fontSize: 40, color: '#063455', opacity: 0.7 }} />
-            </Box>
 
-            {/* Main Form */}
-            <Card sx={{ maxWidth: 800, mx: 'auto' }}>
-                <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                {/* Main Form */}
+                <Card sx={{ maxWidth: 600, mx: 'auto', p: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                         <ScheduleIcon sx={{ color: '#063455' }} />
                         <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
                             Period Information
@@ -168,38 +171,121 @@ const CreatePeriod = () => {
                     </Box>
 
                     <form onSubmit={handleSubmit}>
-                        <Grid container spacing={3}>
+                        <Grid container spacing={2}>
                             {/* Period Dates */}
-                            <Grid item xs={12} md={6}>
-                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                    <DatePicker label="Start Date" value={formData.start_date} onChange={(date) => handleInputChange('start_date', date)} renderInput={(params) => <TextField {...params} fullWidth error={!!errors.start_date} helperText={errors.start_date} />} />
-                                </LocalizationProvider>
+                            <Grid item xs={12} sm={4}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                                    Start Date
+                                </Typography>
+                                {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
+                                <TextField
+                                    type='date'
+                                    // label="Start Date"
+                                    value={formData.start_date}
+                                    onChange={(e) => handleInputChange('start_date', e.target.value)}
+                                    // renderInput={(params) => <TextField {...params}
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                    error={!!errors.start_date}
+                                    helperText={errors.start_date}
+                                    sx={{
+                                        minWidth: 0,
+                                        height: 40,
+                                        "& .MuiInputBase-root": {
+                                            minWidth: 0,
+                                            height: 40,
+                                        },
+                                        "& .MuiFormControl-root": {
+                                            minWidth: 0,
+                                            height: 40,
+                                        },
+                                    }} />
+                                {/* </LocalizationProvider> */}
                             </Grid>
 
-                            <Grid item xs={12} md={6}>
-                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                    <DatePicker label="End Date" value={formData.end_date} onChange={(date) => handleInputChange('end_date', date)} minDate={formData.start_date} renderInput={(params) => <TextField {...params} fullWidth error={!!errors.end_date} helperText={errors.end_date} />} />
-                                </LocalizationProvider>
+                            <Grid item xs={12} sm={4}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                                    End Date
+                                </Typography>
+                                {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
+                                <TextField
+                                    type='date'
+                                    value={formData.end_date}
+                                    onChange={(e) => handleInputChange('end_date', e.target.value)}
+                                    minDate={formData.start_date}
+                                    // renderInput={(params) => <TextField {...params} 
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                    error={!!errors.end_date} helperText={errors.end_date}
+                                    sx={{
+                                        minWidth: 0,
+                                        height: 40,
+                                        "& .MuiInputBase-root": {
+                                            minWidth: 0,
+                                            height: 40,
+                                        },
+                                        "& .MuiFormControl-root": {
+                                            minWidth: 0,
+                                            height: 40,
+                                        },
+                                    }} />
+                                {/* </LocalizationProvider> */}
                             </Grid>
 
                             {/* Pay Date */}
-                            <Grid item xs={12} md={6}>
-                                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                                    <DatePicker label="Pay Date (Optional)" value={formData.pay_date} onChange={(date) => handleInputChange('pay_date', date)} minDate={formData.end_date} renderInput={(params) => <TextField {...params} fullWidth error={!!errors.pay_date} helperText={errors.pay_date || 'Date when salaries will be paid'} />} />
-                                </LocalizationProvider>
+                            <Grid item xs={12} sm={4}>
+                                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                                    Pay Date (optional)
+                                </Typography>
+                                {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
+                                    <TextField
+                                        type='date'
+                                        value={formData.pay_date} 
+                                        onChange={(e) => handleInputChange('pay_date', e.target.value)} 
+                                        minDate={formData.end_date} 
+                                        // renderInput={(params) => <TextField {...params} 
+                                        fullWidth
+                                        InputLabelProps={{ shrink: true }}
+                                        error={!!errors.pay_date} 
+                                        helperText={errors.pay_date || 'Date when salaries will be paid'}
+                                        sx={{
+                                            minWidth: 0,
+                                            height: 40,
+                                            "& .MuiInputBase-root": {
+                                                minWidth: 0,
+                                                height: 40,
+                                            },
+                                            "& .MuiFormControl-root": {
+                                                minWidth: 0,
+                                                height: 40,
+                                            },
+                                        }} />
+                                {/* </LocalizationProvider> */}
                             </Grid>
 
                             {/* Period Name */}
                             <Grid item xs={12}>
                                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
-                                    <TextField fullWidth label="Period Name" value={formData.period_name} onChange={(e) => handleInputChange('period_name', e.target.value)} error={!!errors.period_name} helperText={errors.period_name} placeholder="e.g., January 2024, Q1 2024" />
+                                    <TextField fullWidth label="Period Name" value={formData.period_name} onChange={(e) => handleInputChange('period_name', e.target.value)} error={!!errors.period_name} helperText={errors.period_name} placeholder="e.g., January 2024, Q1 2024"
+                                        sx={{
+                                            minWidth: 0,
+                                            height: 50,
+                                            "& .MuiInputBase-root": {
+                                                minWidth: 0,
+                                                height: 50,
+                                            },
+                                            "& .MuiFormControl-root": {
+                                                minWidth: 0,
+                                                height: 50,
+                                            },
+                                        }} />
                                     <Button
                                         variant="outlined"
                                         onClick={handleAutoGenerateName}
                                         disabled={!formData.start_date || !formData.end_date}
                                         sx={{
                                             minWidth: 120,
-                                            height: 56,
+                                            height: 50,
                                             borderColor: '#063455',
                                             color: '#063455',
                                             '&:hover': { borderColor: '#052d45', backgroundColor: 'rgba(6, 52, 85, 0.04)' },
@@ -211,10 +297,22 @@ const CreatePeriod = () => {
                             </Grid>
 
                             {/* Status */}
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} md={4}>
                                 <FormControl fullWidth>
                                     <InputLabel>Status</InputLabel>
-                                    <Select value={formData.status} onChange={(e) => handleInputChange('status', e.target.value)} label="Status">
+                                    <Select value={formData.status} onChange={(e) => handleInputChange('status', e.target.value)} label="Status"
+                                        sx={{
+                                            minWidth: 0,
+                                            height: 40,
+                                            "& .MuiInputBase-root": {
+                                                minWidth: 0,
+                                                height: 40,
+                                            },
+                                            "& .MuiFormControl-root": {
+                                                minWidth: 0,
+                                                height: 40,
+                                            },
+                                        }}>
                                         <MenuItem value="draft">Draft</MenuItem>
                                         <MenuItem value="active">Active</MenuItem>
                                         <MenuItem value="processing">Processing</MenuItem>
@@ -298,15 +396,15 @@ const CreatePeriod = () => {
                             </Grid>
                         </Grid>
                     </form>
-                </CardContent>
-            </Card>
+                </Card>
 
-            {/* Snackbar */}
-            <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}>
-                <Alert onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} severity={snackbar.severity} sx={{ width: '100%' }}>
-                    {snackbar.message}
-                </Alert>
-            </Snackbar>
+                {/* Snackbar */}
+                <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}>
+                    <Alert onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} severity={snackbar.severity} sx={{ width: '100%' }}>
+                        {snackbar.message}
+                    </Alert>
+                </Snackbar>
+            </div>
         </AdminLayout>
     );
 };

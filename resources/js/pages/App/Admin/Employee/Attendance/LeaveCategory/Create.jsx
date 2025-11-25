@@ -73,7 +73,7 @@ const CreateCategory = () => {
 							<IconButton sx={{ color: '#063455' }} onClick={() => window.history.back()}>
 								<ArrowBackIcon />
 							</IconButton>
-							<Typography variant="h5" style={{ fontWeight: 'bold' }}>
+							<Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
 								New Leave Category
 							</Typography>
 						</div>

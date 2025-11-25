@@ -185,7 +185,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                         sx={{
                                             background: item.color,
                                             color: 'white',
-                                            borderRadius: '12px',
+                                            borderRadius: '4px',
                                             height: '140px',
                                             display: 'flex',
                                             alignItems: 'center',

@@ -136,14 +136,14 @@ const PayrollPeriods = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ bgcolor: '#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.dashboard'))} sx={{ color: '#063455' }}>
-                            Back to Dashboard
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payroll Periods
                         </Typography>
                     </Box>
@@ -165,14 +165,14 @@ const PayrollPeriods = () => {
                     <TableContainer component={Paper}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Period Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Date Range</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Pay Date</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employees</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Net Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Period Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Date Range</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Pay Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employees</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

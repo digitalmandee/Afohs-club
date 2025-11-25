@@ -110,8 +110,8 @@ const AttendanceReport = () => {
                                 className="mb-0"
                                 style={{
                                     color: "#063455",
-                                    fontSize: '30px',
-                                    fontWeight: 500
+                                    // fontSize: '30px',
+                                    fontWeight: 600
                                 }}
                             >
                                 Attendance Report

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, Snackbar, Divider, Switch, FormControlLabel, InputAdornment, CircularProgress } from '@mui/material';
+import { Box, Card, CardContent, Typography, TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, Snackbar, IconButton, Switch, FormControlLabel, InputAdornment, CircularProgress } from '@mui/material';
 import { Settings as SettingsIcon, Save as SaveIcon, Refresh as RefreshIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -93,21 +93,27 @@ const PayrollSettings = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ bgcolor: '#f5f5f5', p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('employees.payroll.dashboard'))} sx={{ color: '#063455' }}>
-                            Back to Dashboard
-                        </Button>
-                        <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <IconButton edge="start" onClick={() => window.history.back()}>
+                            <ArrowBackIcon />
+                        </IconButton>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payroll Settings
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button startIcon={<RefreshIcon />} onClick={fetchSettings} variant="outlined" sx={{ color: '#063455', borderColor: '#063455' }} disabled={loading}>
+                        {/* <Button
+                            startIcon={<RefreshIcon />}
+                            onClick={fetchSettings}
+                            variant="outlined"
+                            sx={{ color: '#063455', borderColor: '#063455' }}
+                            disabled={loading}
+                        >
                             Refresh
-                        </Button>
+                        </Button> */}
                         <Button
                             startIcon={<SaveIcon />}
                             onClick={handleSave}

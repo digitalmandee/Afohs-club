@@ -647,11 +647,11 @@ export default function SideNav({ open, setOpen }) {
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        p: 2,
+                        p: 0,
                         position: 'sticky',
-                        top: 10,
+                        top: 0,
                         zIndex: 1000,
-                        height: open ? 180 : 80,
+                        height: open ? 120 : 80,
                     }}
                 >
                     <img

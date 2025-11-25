@@ -95,135 +95,133 @@ const LeaveReport = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
+                    minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
                 }}
             >
-                <Box sx={{ px: 2, py: 2 }}>
-                    <div style={{ paddingTop: '1rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
-                                Leave Report
-                            </Typography>
-                        </div>
-                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <TextField
-                                        variant="outlined"
-                                        placeholder="Search by name or employee ID..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        onKeyPress={handleKeyPress}
-                                        size="small"
-                                        sx={{ width: 350 }}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Search color="action" />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                    <Button
-                                        variant="contained"
-                                        onClick={handleSearch}
-                                        sx={{
+                <div style={{ padding: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                        <Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
+                            Leave Report
+                        </Typography>
+                    </div>
+                    <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <TextField
+                                    variant="outlined"
+                                    placeholder="Search by name or employee ID..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    onKeyPress={handleKeyPress}
+                                    size="small"
+                                    sx={{ width: 350 }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Search color="action" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                                <Button
+                                    variant="contained"
+                                    onClick={handleSearch}
+                                    sx={{
+                                        backgroundColor: '#063455',
+                                        color: 'white',
+                                        textTransform: 'none',
+                                        '&:hover': {
                                             backgroundColor: '#063455',
-                                            color: 'white',
+                                        },
+                                    }}
+                                >
+                                    Search
+                                </Button>
+                                {searchTerm && (
+                                    <Button
+                                        variant="outlined"
+                                        onClick={handleClearSearch}
+                                        sx={{
+                                            color: '#063455',
+                                            borderColor: '#063455',
                                             textTransform: 'none',
                                             '&:hover': {
-                                                backgroundColor: '#052d45',
+                                                borderColor: '#052d45',
+                                                backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                             },
                                         }}
                                     >
-                                        Search
+                                        Clear
                                     </Button>
-                                    {searchTerm && (
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleClearSearch}
-                                            sx={{
-                                                color: '#063455',
-                                                borderColor: '#063455',
-                                                textTransform: 'none',
-                                                '&:hover': {
-                                                    borderColor: '#052d45',
-                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
-                                                },
-                                            }}
-                                        >
-                                            Clear
-                                        </Button>
-                                    )}
-                                </Box>
-                                <FormControl size="small">
-                                    <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 150 }}>
-                                        {months.map((m) => (
-                                            <MenuItem key={m.value} value={m.value}>
-                                                {m.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Box>
-                        </Box>
-                        <TableContainer component={Paper}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455' }}>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>#</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Employee Name</TableCell>
-                                        {leaveCategories.map((category) => (
-                                            <TableCell key={category.id} sx={{ fontWeight: 'bold', color: 'white' }}>
-                                                {category.name}
-                                            </TableCell>
-                                        ))}
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total Attendance</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total Absence</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Total Leave</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                {isLoading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={5 + leaveCategories.length} align="center">
-                                            <CircularProgress sx={{ color: '#063455' }} />
-                                        </TableCell>
-                                    </TableRow>
-                                ) : employees.length > 0 ? (
-                                    employees.map((employee, index) => (
-                                        <TableRow key={employee.employee_id}>
-                                            <TableCell>{employee.employee_id}</TableCell>
-                                            <TableCell>{employee.employee_name}</TableCell>
-                                            {leaveCategories.map((category) => {
-                                                const categoryKey = category.name.replace(/\s+/g, '_');
-                                                return (
-                                                    <TableCell key={category.id}>
-                                                        {employee.leave_categories?.[categoryKey] || 0}
-                                                    </TableCell>
-                                                );
-                                            })}
-                                            <TableCell>{employee.total_attendance}</TableCell>
-                                            <TableCell>{employee.total_absence}</TableCell>
-                                            <TableCell>{employee.total_leave}</TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={5 + leaveCategories.length} align="center">
-                                            No employees found.
-                                        </TableCell>
-                                    </TableRow>
                                 )}
-                            </Table>
-                        </TableContainer>
-
-                        {/* Pagination */}
-                        <Box sx={{ display: 'flex', justifyContent: 'end', mt: 3 }}>
-                            <Pagination count={totalPages} page={currentPage} onChange={(e, page) => setCurrentPage(page)} />
+                            </Box>
+                            <FormControl size="small">
+                                <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 150 }}>
+                                    {months.map((m) => (
+                                        <MenuItem key={m.value} value={m.value}>
+                                            {m.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
                         </Box>
-                    </div>
-                </Box>
+                    </Box>
+                    <TableContainer component={Paper}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>#</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Employee Name</TableCell>
+                                    {leaveCategories.map((category) => (
+                                        <TableCell key={category.id} sx={{ fontWeight: '600', color: '#000' }}>
+                                            {category.name}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Total Attendance</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Total Absence</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Total Leave</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            {isLoading ? (
+                                <TableRow>
+                                    <TableCell colSpan={5 + leaveCategories.length} align="center">
+                                        <CircularProgress sx={{ color: '#063455' }} />
+                                    </TableCell>
+                                </TableRow>
+                            ) : employees.length > 0 ? (
+                                employees.map((employee, index) => (
+                                    <TableRow key={employee.employee_id}>
+                                        <TableCell>{employee.employee_id}</TableCell>
+                                        <TableCell>{employee.employee_name}</TableCell>
+                                        {leaveCategories.map((category) => {
+                                            const categoryKey = category.name.replace(/\s+/g, '_');
+                                            return (
+                                                <TableCell key={category.id}>
+                                                    {employee.leave_categories?.[categoryKey] || 0}
+                                                </TableCell>
+                                            );
+                                        })}
+                                        <TableCell>{employee.total_attendance}</TableCell>
+                                        <TableCell>{employee.total_absence}</TableCell>
+                                        <TableCell>{employee.total_leave}</TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5 + leaveCategories.length} align="center">
+                                        No employees found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </Table>
+                    </TableContainer>
+
+                    {/* Pagination */}
+                    <Box sx={{ display: 'flex', justifyContent: 'end', mt: 3 }}>
+                        <Pagination count={totalPages} page={currentPage} onChange={(e, page) => setCurrentPage(page)} />
+                    </Box>
+                </div>
             </div>
         </>
     );

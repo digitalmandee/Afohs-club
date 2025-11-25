@@ -56,7 +56,7 @@ const MonthlyReport = () => {
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
+                            <Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
                                 Monthly Attendance Report
                             </Typography>
                         </div>

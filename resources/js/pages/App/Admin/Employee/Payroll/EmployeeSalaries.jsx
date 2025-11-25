@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
+import { TbCashBanknoteOff } from 'react-icons/tb';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, InputAdornment, IconButton, Pagination, CircularProgress, Alert, Snackbar, Tooltip, Avatar } from '@mui/material';
 import { Search as SearchIcon, Add as AddIcon, Edit as EditIcon, Visibility as VisibilityIcon, ArrowBack as ArrowBackIcon, AccountBalance as AccountBalanceIcon, Person as PersonIcon } from '@mui/icons-material';
@@ -86,32 +87,15 @@ const EmployeeSalaries = () => {
             >
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton onClick={() => window.history.back()}>
                                 <ArrowBackIcon />
                             </IconButton>
-                            <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                            <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                                 Employee Salaries
                             </Typography>
                         </Box>
-                    </Box>
-
-                    {/* Search and Actions */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <TextField
-                            placeholder="Search employees..."
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon sx={{ color: '#063455' }} />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button
                                 variant="contained"
@@ -126,7 +110,7 @@ const EmployeeSalaries = () => {
                             </Button>
                             <Button
                                 variant="outlined"
-                                startIcon={<AccountBalanceIcon />}
+                                startIcon={<TbCashBanknoteOff />}
                                 onClick={() => router.visit(route('employees.payroll.deduction-types'))}
                                 sx={{
                                     color: '#063455',
@@ -137,6 +121,32 @@ const EmployeeSalaries = () => {
                                 Manage Deductions
                             </Button>
                         </Box>
+                    </Box>
+
+                    {/* Search and Actions */}
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
+                        <TextField
+                            placeholder="Search employees..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ m: 0, p: 0 }} />
+                                    </InputAdornment>
+                                ),
+                            }}
+                            sx={{
+                                '& .MuiInputBase-root': {
+                                    height: 40, // 🔥 Controls total height
+                                    borderRadius: 1,
+                                    width: 215,
+                                },
+                                '& .MuiInputBase-input': {
+                                    padding: '0 14px', // 🔥 Centers placeholder vertically
+                                },
+                            }}
+                        />
                     </Box>
 
                     {/* Employees Table */}
@@ -191,7 +201,7 @@ const EmployeeSalaries = () => {
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Chip label={getSalaryStatusText(employee)} size="small" color={getSalaryStatusColor(employee)} />
+                                                    <Chip label={getSalaryStatusText(employee)} size="small" color={getSalaryStatusColor(employee)} sx={{ borderRadius: '4px' }} />
                                                 </TableCell>
                                                 <TableCell>{employee.salary_structure ? new Date(employee.salary_structure.effective_from).toLocaleDateString() : 'N/A'}</TableCell>
                                                 <TableCell>

@@ -300,16 +300,24 @@ const EmployeeCreate = () => {
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-            <Box sx={{ px: 2, py: 2 }}>
-                <div style={{ paddingTop: '1rem', display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+            <Box sx={{ p: 2 }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
                     <div onClick={() => router.visit(route('employees.dashboard'))} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                        <IconButton sx={{ color: '#333', mr: 1 }}>
+                        <IconButton>
                             <ArrowBack />
                         </IconButton>
                     </div>
-                    <h3 style={{ margin: 0 }}>{isEdit ? 'Edit Employee' : 'Add New Employee'}</h3>
+                    <h2 style={{ margin: 0, fontWeight: '600', color: '#0A3D62' }}>{isEdit ? 'Edit Employee' : 'Personal Detail'}</h2>
                 </div>
-                <Paper sx={{ padding: '2rem', borderRadius: '1rem', maxWidth: '80rem', margin: 'auto' }}>
+                <Paper
+                    sx={{
+                        padding: '2rem',
+                        borderRadius: '1rem',
+                        maxWidth: '65rem',
+                        margin: 'auto',
+                        // boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
+                    }}
+                >
                     {/* Employment Type & Employee Type */}
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                         <Box>

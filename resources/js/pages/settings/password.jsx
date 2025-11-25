@@ -40,21 +40,15 @@ const Password = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5'
+                    backgroundColor: '#f5f5f5',
+                    paddingTop:'1rem'
                 }}
             >
-                <Container style={{ maxWidth: '600px', padding: '2rem' }}>
-                    <Row className="align-items-center mb-4">
-                        <Col>
-                            <Typography variant="h4" style={{ color: '#063455', fontWeight: 500 }}>
-                                Password
-                            </Typography>
-                        </Col>
-                    </Row>
+                <Typography variant="h4" style={{ color: '#063455', fontWeight: 500, marginLeft:'30px' }}>
+                    Password
+                </Typography>
+                <Box style={{ maxWidth: '600px', margin:'0 auto', padding: '2rem' }}>
 
                     <Box
                         sx={{
@@ -130,7 +124,7 @@ const Password = () => {
                             </div>
                         </form>
                     </Box>
-                </Container>
+                </Box>
             </div>
         </>
     );
