@@ -30,7 +30,7 @@ class MembershipController extends Controller
                 'memberCategory:id,name,description',
                 'profilePhoto:id,mediable_id,mediable_type,file_path',
                 'documents:id,mediable_id,mediable_type,file_path',
-                'membershipInvoice:id,member_id,invoice_no,status,total_price' // ✅ Include membership invoice
+                'membershipInvoice:id,member_id,invoice_no,status,total_price'  // ✅ Include membership invoice
             ])
             ->withCount('familyMembers')
             ->latest()
@@ -136,8 +136,8 @@ class MembershipController extends Controller
                 'card_issue_date' => $member->card_issue_date,
                 'card_expiry_date' => $member->card_expiry_date,
                 'status' => $member->status,
-                'picture' => $pictureUrl, // Full URL from file_path
-                'picture_id' => $pictureId, // Media ID for tracking
+                'picture' => $pictureUrl,  // Full URL from file_path
+                'picture_id' => $pictureId,  // Media ID for tracking
             ];
         });
 
@@ -154,7 +154,7 @@ class MembershipController extends Controller
                 'profilePhoto:id,mediable_id,mediable_type,file_path',
                 'documents:id,mediable_id,mediable_type,file_path',
                 'memberCategory:id,name,description',
-                'membershipInvoice:id,member_id,invoice_no,status,total_price' // ✅ Include membership invoice
+                'membershipInvoice:id,member_id,invoice_no,status,total_price'  // ✅ Include membership invoice
             ])
             ->withCount('familyMembers');
 
@@ -450,7 +450,7 @@ class MembershipController extends Controller
                     'discount_type' => null,
                     'discount_value' => 0,
                     'total_price' => $memberCategory->fee,
-                    'payment_method' => null, // Will be set when payment is made
+                    'payment_method' => null,  // Will be set when payment is made
                     'valid_from' => $request->membership_date,
                     'valid_to' => null,
                     'status' => 'unpaid',
@@ -487,7 +487,7 @@ class MembershipController extends Controller
 
         return $nextNumber;
     }
-    
+
     public function updateMember(Request $request)
     {
         try {
@@ -524,8 +524,8 @@ class MembershipController extends Controller
                 // Delete old profile photo media if exists
                 $oldProfilePhoto = $member->profilePhoto;
                 if ($oldProfilePhoto) {
-                    $oldProfilePhoto->deleteFile(); // Delete physical file
-                    $oldProfilePhoto->delete(); // Delete media record
+                    $oldProfilePhoto->deleteFile();  // Delete physical file
+                    $oldProfilePhoto->delete();  // Delete media record
                 }
 
                 // Create new profile photo media
@@ -579,11 +579,12 @@ class MembershipController extends Controller
 
                 // Delete the media records and their files
                 if (!empty($mediaIdsToDelete)) {
-                    $member->media()
+                    $member
+                        ->media()
                         ->whereIn('id', $mediaIdsToDelete)
                         ->each(function ($media) {
-                            $media->deleteFile(); // Delete physical file
-                            $media->delete(); // Delete media record
+                            $media->deleteFile();  // Delete physical file
+                            $media->delete();  // Delete media record
                         });
                 }
             }
@@ -647,7 +648,7 @@ class MembershipController extends Controller
                         $familyMember = Member::create([
                             'barcode_no' => $newMemberData['barcode_no'] ?? null,
                             'parent_id' => $member->id,
-                            'membership_no' => $request->membership_no . ($newMemberData['family_suffix']? '-' . $newMemberData['family_suffix']:''),
+                            'membership_no' => $request->membership_no . ($newMemberData['family_suffix'] ? '-' . $newMemberData['family_suffix'] : ''),
                             'family_suffix' => $newMemberData['family_suffix'] ?? null,
                             'first_name' => $newMemberData['first_name'] ?? null,
                             'middle_name' => $newMemberData['middle_name'] ?? null,
@@ -788,7 +789,7 @@ class MembershipController extends Controller
                     'status' => $request->status,
                     'reason' => 'Status updated during member profile update',
                     'start_date' => now(),
-                    'end_date' => null, // Open-ended until next status change
+                    'end_date' => null,  // Open-ended until next status change
                 ]);
             }
 
@@ -805,9 +806,30 @@ class MembershipController extends Controller
     // Show Public Profile
     public function viewProfile($id)
     {
-        $user = Member::with(['memberType'])->findOrFail($id);
+        $member = Member::with([
+            'memberType',
+            'profilePhoto',
+            'parent.profilePhoto',  // Fetch parent's photo
+            'parent.memberType'  // Fetch parent's member type
+        ])->findOrFail($id);
 
-        return Inertia::render('App/Membership/Show', ['user' => $user]);
+        // Prepare data for the view
+        $memberData = [
+            'id' => $member->id,
+            'full_name' => $member->full_name,
+            'membership_no' => $member->membership_no,
+            'status' => $member->status,
+            'card_status' => $member->card_status,
+            'card_expiry_date' => $member->card_expiry_date,
+            'profile_photo_url' => $member->profilePhoto ? $member->profilePhoto->file_path : null,
+            'is_family_member' => !is_null($member->parent_id),
+            'parent_member' => $member->parent ? [
+                'full_name' => $member->parent->full_name,
+                'membership_no' => $member->parent->membership_no,
+            ] : null,
+        ];
+
+        return Inertia::render('App/Membership/Show', ['member' => $memberData]);
     }
 
     // Show Admin Member Profile with Family Members
