@@ -11,13 +11,14 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         media: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
     });
     const [validationDialog, setValidationDialog] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false, media: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, qr_codes: false });
 
     useEffect(() => {
         refreshStats();
@@ -77,16 +78,33 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('media', 0);
     };
 
+    const startQrCodeGeneration = async () => {
+        if (stats.pending_qr_codes_count === 0) {
+            alert('No pending QR codes to generate');
+            return;
+        }
+
+        migrationRunning.current.qr_codes = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            qr_codes: { ...prev.qr_codes, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('qr_codes', 0);
+    };
+
     const processMigrationBatch = async (type, offset) => {
         try {
             const endpointMap = {
                 members: '/admin/data-migration/migrate-members',
                 families: '/admin/data-migration/migrate-families',
-                media: '/admin/data-migration/migrate-media'
+                media: '/admin/data-migration/migrate-media',
+                qr_codes: '/admin/data-migration/generate-qr-codes',
             };
             const endpoint = endpointMap[type];
+            const batchSize = type === 'qr_codes' ? 20 : 100;
             const response = await axios.post(endpoint, {
-                batch_size: 100,
+                batch_size: batchSize,
                 offset: offset,
             });
 
@@ -96,7 +114,8 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             const totalCountMap = {
                 members: stats.old_members_count,
                 families: stats.old_families_count,
-                media: stats.old_media_count
+                media: stats.old_media_count,
+                qr_codes: stats.pending_qr_codes_count,
             };
 
             setMigrationStatus((prev) => ({
@@ -112,7 +131,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             if (has_more && migrationRunning.current[type]) {
                 // Process next batch
                 setTimeout(() => {
-                    processMigrationBatch(type, offset + 100);
+                    processMigrationBatch(type, offset + batchSize);
                 }, 500); // Small delay to prevent overwhelming the server
             } else {
                 // Migration complete
@@ -178,7 +197,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             await axios.post('/admin/data-migration/reset-families');
             setResetFamiliesDialog(false);
             refreshStats();
-            setMigrationStatus(prev => ({
+            setMigrationStatus((prev) => ({
                 ...prev,
                 families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
             }));
@@ -205,10 +224,10 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         return (
             <AdminLayout>
                 <Head title="Data Migration" />
-                    <Typography variant="h4" gutterBottom>
-                        Data Migration
-                    </Typography>
-                    <Alert severity="error">{stats.error || 'Old tables (memberships, mem_families) not found in database'}</Alert>
+                <Typography variant="h4" gutterBottom>
+                    Data Migration
+                </Typography>
+                <Alert severity="error">{stats.error || 'Old tables (memberships, mem_families) not found in database'}</Alert>
             </AdminLayout>
         );
     }
@@ -337,6 +356,23 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
                                     Migrated to media table
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Box sx={{ mr: 1, color: 'info.main', fontWeight: 'bold', fontSize: '1.5rem' }}>QR</Box>
+                                    <Typography variant="h6">Pending QR</Typography>
+                                </Box>
+                                <Typography variant="h4" color="info.main">
+                                    {stats.pending_qr_codes_count?.toLocaleString() || 0}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Members without QR codes
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -470,6 +506,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                     </Grid>
 
                     {/* Media Migration */}
+                    {/* Media Migration */}
                     <Grid item xs={12} md={6}>
                         <Card>
                             <CardContent>
@@ -510,6 +547,61 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
                                                         <strong>Media ID:</strong> {error.media_id}
+                                                        <br />
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* QR Code Generation */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    QR Code Generation
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {migrationStatus.qr_codes.progress.toFixed(2)}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.qr_codes.progress} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Generated: {migrationStatus.qr_codes.migrated} / {stats.pending_qr_codes_count || 0}
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.qr_codes.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startQrCodeGeneration} disabled={migrationStatus.qr_codes.running}>
+                                        {migrationStatus.qr_codes.running ? 'Generating...' : 'Start Generation'}
+                                    </Button>
+
+                                    {migrationStatus.qr_codes.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('qr_codes')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.qr_codes.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.qr_codes.errors.length} errors occurred during generation
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.qr_codes.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
+                                                        <strong>Member ID:</strong> {error.member_id}
+                                                        <br />
+                                                        <strong>Name:</strong> {error.name}
                                                         <br />
                                                         <strong>Error:</strong> {error.error}
                                                     </Typography>
@@ -601,11 +693,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 <Dialog open={resetFamiliesDialog} onClose={() => setResetFamiliesDialog(false)}>
                     <DialogTitle>Reset Family Members Only</DialogTitle>
                     <DialogContent>
-                        <Typography>
-                            Are you sure you want to reset only family member migration data? 
-                            This will delete all family member records (records with parent_id) from the members table, 
-                            but will keep primary members intact.
-                        </Typography>
+                        <Typography>Are you sure you want to reset only family member migration data? This will delete all family member records (records with parent_id) from the members table, but will keep primary members intact.</Typography>
                     </DialogContent>
                     <DialogActions>
                         <Button onClick={() => setResetFamiliesDialog(false)}>Cancel</Button>
@@ -619,11 +707,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 <Dialog open={deletePhotosDialog} onClose={() => setDeletePhotosDialog(false)}>
                     <DialogTitle>Delete Profile Photos</DialogTitle>
                     <DialogContent>
-                        <Typography>
-                            Are you sure you want to delete all profile photos? 
-                            This will permanently remove all media records where type is 'profile_photo' 
-                            for both family members and primary members from the media table.
-                        </Typography>
+                        <Typography>Are you sure you want to delete all profile photos? This will permanently remove all media records where type is 'profile_photo' for both family members and primary members from the media table.</Typography>
                         <Alert severity="warning" sx={{ mt: 2 }}>
                             <Typography variant="body2">
                                 <strong>Warning:</strong> This action cannot be undone. All profile photos will be permanently deleted.

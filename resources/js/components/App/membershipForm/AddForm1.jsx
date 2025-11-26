@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
-import { TextField, Button, Select, MenuItem, FormControl, Paper, Typography, Grid, Box, IconButton, InputAdornment, OutlinedInput } from '@mui/material';
-import { ArrowBack, Add, Delete, Edit, KeyboardArrowRight, KeyboardArrowDown } from '@mui/icons-material';
+import { TextField, Button, Select, MenuItem, FormControl, Paper, Typography, Grid, Box, IconButton, InputAdornment, OutlinedInput, CircularProgress } from '@mui/material';
+import { ArrowBack, Add, Delete, Edit, KeyboardArrowRight, KeyboardArrowDown, Check, CloseRounded } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -21,6 +21,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
     const [isValidatingCnic, setIsValidatingCnic] = useState(false);
+    const [cnicStatus, setCnicStatus] = useState(null); // 'available', 'exists', 'error'
     const [cnicValidationTimeout, setCnicValidationTimeout] = useState(null);
 
     const handleImageUpload = (event) => {
@@ -64,6 +65,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
             return newErrors;
         });
 
+        // Reset status
+        setCnicStatus(null);
+
         // Check CNIC format first
         if (!cnicValue) {
             return;
@@ -87,12 +91,14 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                 });
 
                 if (response.data.exists) {
+                    setCnicStatus('exists');
                     setFormErrors((prev) => ({
                         ...prev,
                         cnic_no: 'This CNIC number is already registered with another member',
                     }));
                 } else {
                     // CNIC is valid and available
+                    setCnicStatus('available');
                     setFormErrors((prev) => {
                         const newErrors = { ...prev };
                         delete newErrors.cnic_no;
@@ -101,6 +107,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                 }
             } catch (error) {
                 console.error('Error checking CNIC:', error);
+                setCnicStatus('error');
                 setFormErrors((prev) => ({
                     ...prev,
                     cnic_no: 'Error validating CNIC. Please try again.',
@@ -265,10 +272,10 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 }}
                             >
                                 <Typography variant="body1" sx={{ color: '#777' }}>
-                                    Membership No: 
+                                    Membership No:
                                 </Typography>
                                 <Typography variant="body1" sx={{ color: '#0a2b4f' }}>
-                                     #{data.membership_no}
+                                    #{data.membership_no}
                                 </Typography>
                                 {/* add member status woth proper background design accordng */}
                                 <Typography variant="body1" sx={{ ml: 2, color: data.status === 'active' ? '#2e7d32' : data.status === 'suspended' || data.status === 'cancelled' ? '#FFA90B' : '#d32f2f', textTransform: 'capitalize', fontWeight: 700 }}>
@@ -422,7 +429,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                     name="cnic_no"
                                     value={data.cnic_no}
                                     error={!!formErrors.cnic_no}
-                                    helperText={isValidatingCnic ? 'Checking CNIC availability...' : formErrors.cnic_no}
+                                    helperText={isValidatingCnic ? 'Checking CNIC availability...' : cnicStatus === 'available' ? <span style={{ color: '#4caf50' }}>CNIC is available</span> : formErrors.cnic_no}
                                     onChange={(e) => {
                                         let value = e.target.value;
                                         // Auto-format the input as the user types
@@ -432,15 +439,22 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         if (value.length > 15) value = value.slice(0, 15); // Limit to 15 characters
                                         handleInputChange({ target: { name: 'cnic_no', value } });
                                     }}
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                {isValidatingCnic && <CircularProgress size={20} />}
+                                                {!isValidatingCnic && cnicStatus === 'available' && <Check sx={{ color: '#4caf50' }} />}
+                                                {!isValidatingCnic && cnicStatus === 'exists' && <CloseRounded sx={{ color: '#f44336' }} />}
+                                                {!isValidatingCnic && cnicStatus === 'error' && <CloseRounded sx={{ color: '#ff9800' }} />}
+                                            </InputAdornment>
+                                        ),
+                                    }}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '4px',
-                                            ...(isValidatingCnic && {
-                                                borderColor: '#1976d2',
-                                                '& fieldset': {
-                                                    borderColor: '#1976d2',
-                                                },
-                                            }),
+                                            '& fieldset': {
+                                                borderColor: cnicStatus === 'available' ? '#4caf50' : cnicStatus === 'exists' ? '#f44336' : '#ccc',
+                                            },
                                         },
                                     }}
                                 />

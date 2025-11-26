@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FileHelper;
+use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\MemberClassification;
-use App\Models\Media;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
-use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class DataMigrationController extends Controller
 {
@@ -57,7 +59,12 @@ class DataMigrationController extends Controller
 
             $migratedMediaCount = Media::whereNotNull('mediable_id')->count();
 
+            $migratedMediaCount = Media::whereNotNull('mediable_id')->count();
+
+            $pendingQrCodesCount = Member::whereNull('qr_code')->orWhere('qr_code', '')->count();
+
             return [
+                'pending_qr_codes_count' => $pendingQrCodesCount,
                 'old_tables_exist' => true,
                 'old_members_count' => $oldMembersCount,
                 'old_families_count' => $oldFamiliesCount,
@@ -106,7 +113,7 @@ class DataMigrationController extends Controller
                 ->limit($batchSize)
                 ->get();
 
-            Log::info("Processing batch: offset={$offset}, found " . count($oldMembers) . " records");
+            Log::info("Processing batch: offset={$offset}, found " . count($oldMembers) . ' records');
 
             $migrated = 0;
             $errors = [];
@@ -125,7 +132,7 @@ class DataMigrationController extends Controller
                         'line' => $e->getLine(),
                         'file' => basename($e->getFile())
                     ];
-                    Log::error("Error migrating member {$oldMember->id} ({$oldMember->applicant_name}): " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+                    Log::error("Error migrating member {$oldMember->id} ({$oldMember->applicant_name}): " . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
                 }
             }
 
@@ -164,7 +171,8 @@ class DataMigrationController extends Controller
                 $query->where('application_no', $oldMember->application_no);
             } else {
                 // Fallback: check by membership_no and name if application_no is empty
-                $query->where('membership_no', $oldMember->mem_no)
+                $query
+                    ->where('membership_no', $oldMember->mem_no)
                     ->where('full_name', $oldMember->applicant_name);
             }
 
@@ -173,7 +181,7 @@ class DataMigrationController extends Controller
 
         if ($existingMember) {
             Log::info("Skipping member {$oldMember->id} - already exists (App No: {$oldMember->application_no})");
-            return; // Skip if already migrated
+            return;  // Skip if already migrated
         }
 
         Log::info("Migrating member {$oldMember->id} (App No: {$oldMember->application_no})");
@@ -279,7 +287,7 @@ class DataMigrationController extends Controller
                         'line' => $e->getLine(),
                         'file' => basename($e->getFile())
                     ];
-                    Log::error("Error migrating family member {$oldFamily->id} ({$oldFamily->name}): " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+                    Log::error("Error migrating family member {$oldFamily->id} ({$oldFamily->name}): " . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
                 }
             }
 
@@ -318,7 +326,7 @@ class DataMigrationController extends Controller
             ->first();
 
         if ($existingFamily) {
-            return; // Skip if already migrated
+            return;  // Skip if already migrated
         }
 
         // Generate unique membership number for family member
@@ -360,7 +368,7 @@ class DataMigrationController extends Controller
     {
         // Check if oldCategoryId has valid data before querying
         if (empty($oldCategoryId) || is_null($oldCategoryId)) {
-            Log::info("getMemberCategoryId: oldCategoryId is empty or null");
+            Log::info('getMemberCategoryId: oldCategoryId is empty or null');
             return null;
         }
 
@@ -383,7 +391,7 @@ class DataMigrationController extends Controller
 
             return $newCategory ? $newCategory->id : null;
         } catch (\Exception $e) {
-            Log::error("getMemberCategoryId: Database error - " . $e->getMessage());
+            Log::error('getMemberCategoryId: Database error - ' . $e->getMessage());
             return null;
         }
     }
@@ -412,18 +420,18 @@ class DataMigrationController extends Controller
     {
         // Check if oldStatus has valid data before querying
         if (empty($oldStatus) || is_null($oldStatus)) {
-            return 'active'; // Default status
+            return 'active';  // Default status
         }
 
         // Check if it's a valid numeric ID
         if (!is_numeric($oldStatus)) {
-            return 'active'; // Default status for non-numeric values
+            return 'active';  // Default status for non-numeric values
         }
 
         // Get status from mem_statuses table
         try {
             $status = DB::table('mem_statuses')->where('id', $oldStatus)->first();
-            
+
             if ($status) {
                 // Map status name to new enum values
                 $statusMap = [
@@ -454,7 +462,7 @@ class DataMigrationController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Error mapping member status: ' . $e->getMessage());
-            throw $e; // Re-throw the exception to be caught by migration error handling
+            throw $e;  // Re-throw the exception to be caught by migration error handling
         }
     }
 
@@ -462,20 +470,20 @@ class DataMigrationController extends Controller
     {
         // Check if oldRelation has valid data before querying
         if (empty($oldRelation) || is_null($oldRelation)) {
-            Log::info("mapFamilyRelation: oldRelation is empty or null");
+            Log::info('mapFamilyRelation: oldRelation is empty or null');
             return null;
         }
 
         // Check if it's a valid numeric ID
         if (!is_numeric($oldRelation)) {
             Log::info("mapFamilyRelation: oldRelation is not numeric: {$oldRelation}");
-            return $oldRelation; // Return as-is if it's already a string relation
+            return $oldRelation;  // Return as-is if it's already a string relation
         }
 
         // Get relation from mem_relations table
         try {
             $relation = DB::table('mem_relations')->where('id', $oldRelation)->first();
-            
+
             if ($relation) {
                 return $relation->desc;
             } else {
@@ -483,7 +491,7 @@ class DataMigrationController extends Controller
                 return $oldRelation;
             }
         } catch (\Exception $e) {
-            Log::error("mapFamilyRelation: Database error - " . $e->getMessage());
+            Log::error('mapFamilyRelation: Database error - ' . $e->getMessage());
             return $oldRelation;
         }
     }
@@ -509,7 +517,7 @@ class DataMigrationController extends Controller
         // Convert: public/familymemberupload/xxxxx.png to tenants/default/familymembers/xxxxx.png
         return 'tenants/default/familymembers/' . basename($oldPhotoPath);
     }
-    
+
     public function resetMigration(Request $request)
     {
         try {
@@ -618,9 +626,9 @@ class DataMigrationController extends Controller
             // Delete all media records where type is 'profile_photo' (including soft deleted ones)
             $mediaRecords = \App\Models\Media::withTrashed()->where('type', 'profile_photo')->get();
             $deletedCount = $mediaRecords->count();
-            
+
             foreach ($mediaRecords as $media) {
-                $media->forceDelete(); // Permanently delete including soft deleted records
+                $media->forceDelete();  // Permanently delete including soft deleted records
             }
 
             DB::commit();
@@ -736,7 +744,7 @@ class DataMigrationController extends Controller
                 ->limit($batchSize)
                 ->get();
 
-            Log::info("Processing media batch: offset={$offset}, found " . count($oldMediaRecords) . " records");
+            Log::info("Processing media batch: offset={$offset}, found " . count($oldMediaRecords) . ' records');
 
             if ($oldMediaRecords->isEmpty()) {
                 DB::commit();
@@ -754,8 +762,8 @@ class DataMigrationController extends Controller
                 try {
                     // Map trans_type to new type
                     $typeMapping = [
-                        3 => 'profile_photo',    // Member profile photos
-                        90 => 'member_docs',     // Member documents
+                        3 => 'profile_photo',  // Member profile photos
+                        90 => 'member_docs',  // Member documents
                         100 => 'profile_photo',  // Family member profile photos
                     ];
 
@@ -768,7 +776,7 @@ class DataMigrationController extends Controller
 
                     // Find the new member ID based on trans_type and old ID
                     $newMemberId = null;
-                    
+
                     if ($oldMedia->trans_type == 3 || $oldMedia->trans_type == 90) {
                         // For member photos and documents, check old_member_id
                         $member = Member::where('old_member_id', $oldMedia->trans_type_id)->first();
@@ -794,7 +802,7 @@ class DataMigrationController extends Controller
                     $fileName = basename($newFilePath);
 
                     // Determine mediable_type based on trans_type
-                    $mediableType = 'App\\Models\\Member';
+                    $mediableType = 'App\Models\Member';
 
                     // Get MIME type from file extension
                     $mimeType = $this->getMimeTypeFromPath($newFilePath);
@@ -802,7 +810,7 @@ class DataMigrationController extends Controller
                     // Create new media record
                     Media::create([
                         'mediable_type' => $mediableType,
-                        'mediable_id' => $newMemberId, // Use the mapped new member ID
+                        'mediable_id' => $newMemberId,  // Use the mapped new member ID
                         'type' => $newType,
                         'file_name' => $fileName,
                         'file_path' => $newFilePath,
@@ -851,14 +859,14 @@ class DataMigrationController extends Controller
 
         // Extract original filename
         $originalFileName = basename($cleanUrl);
-        
+
         // Map trans_type to new directory structure
         switch ($transType) {
-            case 3: // Member profile photos
+            case 3:  // Member profile photos
                 return '/tenants/default/membership/' . $originalFileName;
-            case 90: // Member documents
+            case 90:  // Member documents
                 return '/tenants/default/member_documents/' . $originalFileName;
-            case 100: // Family member profile photos
+            case 100:  // Family member profile photos
                 return '/tenants/default/familymembers/' . $originalFileName;
             default:
                 return '/tenants/default/media/' . $originalFileName;
@@ -868,7 +876,7 @@ class DataMigrationController extends Controller
     private function getMimeTypeFromPath($path)
     {
         $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        
+
         $mimeTypes = [
             'jpg' => 'image/jpeg',
             'jpeg' => 'image/jpeg',
@@ -882,5 +890,102 @@ class DataMigrationController extends Controller
         ];
 
         return $mimeTypes[$extension] ?? 'application/octet-stream';
+    }
+
+    public function generateQrCodes(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 50);  // Smaller batch size for image generation
+        $offset = $request->get('offset', 0);
+
+        try {
+            // Get batch of members without QR codes
+            // We use skip/take logic, but since we are updating records, the "offset" strategy
+            // might be tricky if we re-query "whereNull" every time (the list shrinks).
+            // However, the frontend sends an increasing offset.
+            // IF the frontend sends offset 0, 100, 200... then we should NOT use "whereNull" with offset,
+            // because the first 100 would be fixed, and the next 100 would be the *new* first 100.
+            //
+            // BETTER STRATEGY: The frontend logic in Index.jsx uses a fixed offset loop?
+            // Let's look at Index.jsx... it passes `offset`.
+            // If I use `whereNull`, I should ALWAYS use offset 0 if I'm processing a queue.
+            // BUT, if the user wants to resume or if we want to show progress based on total,
+            // it's safer to just query *all* members and check if they need update, OR
+            // rely on the frontend to handle the "progress" visualization but the backend to just "take next batch".
+            //
+            // User asked: "only those create which has not"
+            //
+            // If I use `whereNull(...)->limit($batchSize)->get()`, I get the next batch of pending ones.
+            // I don't need `offset` from the request if I'm always grabbing the "next pending".
+            // BUT, if the frontend sends offset, and I ignore it, the progress bar math might be weird if it relies on offset.
+            //
+            // Let's stick to: Query ALL members, but only process those with missing QR codes?
+            // No, that's inefficient.
+            //
+            // Correct approach for "Queue" processing:
+            // Always take the first N records that match the "Pending" criteria.
+            // Ignore the 'offset' parameter for the query itself, OR use it if we are iterating through a fixed list.
+            // Since we are modifying the state (adding QR code), the "Pending" list shrinks.
+            // So `offset` should effectively be 0 for the query.
+
+            $members = Member::where(function ($query) {
+                $query
+                    ->whereNull('qr_code')
+                    ->orWhere('qr_code', '');
+            })
+                ->limit($batchSize)
+                ->get();
+
+            Log::info('Processing QR code batch: found ' . count($members) . ' records');
+
+            if ($members->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'processed' => 0,
+                    'message' => 'No more members pending QR codes',
+                    'has_more' => false
+                ]);
+            }
+
+            $processed = 0;
+            $errors = [];
+
+            foreach ($members as $member) {
+                try {
+                    $qrCodeData = route('member.profile', ['id' => $member->id]);
+
+                    // Create QR code image
+                    $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
+
+                    // Save it
+                    $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
+
+                    // Update member
+                    $member->qr_code = $qrImagePath;
+                    $member->save();
+
+                    $processed++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'member_id' => $member->id,
+                        'name' => $member->full_name,
+                        'error' => $e->getMessage()
+                    ];
+                    Log::error("Error generating QR for member {$member->id}: " . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'errors' => $errors,
+                'has_more' => count($members) == $batchSize
+            ]);
+        } catch (\Exception $e) {
+            Log::error('QR Code generation batch error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

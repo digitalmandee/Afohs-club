@@ -28,6 +28,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [familyCnicValidationTimeout, setFamilyCnicValidationTimeout] = useState(null);
     const [isValidatingMembershipNo, setIsValidatingMembershipNo] = useState(false);
     const [membershipNoStatus, setMembershipNoStatus] = useState(null); // 'available', 'exists', 'error'
+    const [familyCnicStatus, setFamilyCnicStatus] = useState(null); // 'available', 'exists', 'error'
     const [membershipNoSuggestion, setMembershipNoSuggestion] = useState(null);
     const fileInputRef = useRef(null);
 
@@ -56,9 +57,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         setMembershipNoStatus(null);
 
         try {
+            // Ensure we send the correct member_id for exclusion during edit
+            const memberId = data.member_id || data.id || null;
+            console.log(memberId);
             const response = await axios.post('/api/check-duplicate-membership-no', {
                 membership_no: membershipNo,
-                member_id: data.member_id || null,
+                member_id: memberId,
             });
 
             if (response.data.exists) {
@@ -123,6 +127,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             return newErrors;
         });
 
+        // Reset status
+        setFamilyCnicStatus(null);
+
         // Check CNIC format first
         if (!cnicValue) {
             return;
@@ -151,16 +158,18 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             try {
                 const response = await axios.post('/api/check-duplicate-cnic', {
                     cnic_no: cnicValue,
-                    member_id: data.member_id || null, // Exclude current member if editing
+                    member_id: currentFamilyMember.id && !String(currentFamilyMember.id).startsWith('new-') ? currentFamilyMember.id : null,
                 });
 
                 if (response.data.exists) {
+                    setFamilyCnicStatus('exists');
                     setFamilyMemberErrors((prev) => ({
                         ...prev,
                         cnic: 'This CNIC number is already registered with another member',
                     }));
                 } else {
                     // CNIC is valid and available
+                    setFamilyCnicStatus('available');
                     setFamilyMemberErrors((prev) => {
                         const newErrors = { ...prev };
                         delete newErrors.cnic;
@@ -169,6 +178,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                 }
             } catch (error) {
                 console.error('Error checking family member CNIC:', error);
+                setFamilyCnicStatus('error');
                 setFamilyMemberErrors((prev) => ({
                     ...prev,
                     cnic: 'Error validating CNIC. Please try again.',
@@ -702,281 +712,200 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         <>
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                 {/* <Container maxWidth="lg" sx={{ py: 4 }}> */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                        <IconButton onClick={onBack}>
-                            <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
-                            Membership Information
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <IconButton onClick={onBack}>
+                        <ArrowBackIcon sx={{ color: '#063455' }} />
+                    </IconButton>
+                    <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
+                        Membership Information
+                    </Typography>
+                </Box>
+
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        p: 2,
+                        mb: 3,
+                        backgroundColor: '#f0f0f0',
+                        borderRadius: '4px',
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box
+                            sx={{
+                                width: 30,
+                                height: 30,
+                                borderRadius: '50%',
+                                backgroundColor: '#2c3e50',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mr: 2,
+                            }}
+                        >
+                            <CheckCircleIcon fontSize="small" />
+                        </Box>
+                        <Typography sx={{ fontWeight: 500 }}>Personal Information</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box
+                            sx={{
+                                width: 30,
+                                height: 30,
+                                borderRadius: '50%',
+                                backgroundColor: '#2c3e50',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mr: 2,
+                            }}
+                        >
+                            <CheckCircleIcon fontSize="small" />
+                        </Box>
+                        <Typography sx={{ fontWeight: 500 }}>Contact Information</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box
+                            sx={{
+                                width: 30,
+                                height: 30,
+                                borderRadius: '50%',
+                                backgroundColor: '#2c3e50',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mr: 2,
+                            }}
+                        >
+                            3
+                        </Box>
+                        <Typography sx={{ fontWeight: 500 }}>Membership Information</Typography>
+                    </Box>
+                </Box>
+
+                {submitError && (
+                    <Box sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: '4px', border: '1px solid #ef5350' }}>
+                        <Typography variant="body2" sx={{ color: '#d32f2f' }}>
+                            {submitError}
                         </Typography>
                     </Box>
+                )}
 
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            p: 2,
-                            mb: 3,
-                            backgroundColor: '#f0f0f0',
-                            borderRadius: '4px',
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Box
-                                sx={{
-                                    width: 30,
-                                    height: 30,
-                                    borderRadius: '50%',
-                                    backgroundColor: '#2c3e50',
-                                    color: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    mr: 2,
-                                }}
-                            >
-                                <CheckCircleIcon fontSize="small" />
+                <Box sx={{ p: 3, bgcolor: '#FFFFFF', border: '1px solid #e0e0e0' }}>
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={12}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                    Membership Information
+                                </Typography>
+                                <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
+                                    sx={{
+                                        bgcolor: '#0c4b6e',
+                                        '&:hover': {
+                                            bgcolor: '#083854',
+                                        },
+                                        textTransform: 'none',
+                                        ml: 2,
+                                    }}
+                                    onClick={() => setOpenDocumentsDialog(true)}
+                                >
+                                    Add Documents
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<AddIcon />}
+                                    sx={{
+                                        bgcolor: '#0c4b6e',
+                                        '&:hover': {
+                                            bgcolor: '#083854',
+                                        },
+                                        textTransform: 'none',
+                                        ml: 2,
+                                    }}
+                                    onClick={() => setOpenFamilyMember(true)}
+                                >
+                                    Add Family Member
+                                </Button>
                             </Box>
-                            <Typography sx={{ fontWeight: 500 }}>Personal Information</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Box
-                                sx={{
-                                    width: 30,
-                                    height: 30,
-                                    borderRadius: '50%',
-                                    backgroundColor: '#2c3e50',
-                                    color: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    mr: 2,
-                                }}
-                            >
-                                <CheckCircleIcon fontSize="small" />
-                            </Box>
-                            <Typography sx={{ fontWeight: 500 }}>Contact Information</Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Box
-                                sx={{
-                                    width: 30,
-                                    height: 30,
-                                    borderRadius: '50%',
-                                    backgroundColor: '#2c3e50',
-                                    color: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    mr: 2,
-                                }}
-                            >
-                                3
-                            </Box>
-                            <Typography sx={{ fontWeight: 500 }}>Membership Information</Typography>
-                        </Box>
-                    </Box>
-
-                    {submitError && (
-                        <Box sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: '4px', border: '1px solid #ef5350' }}>
-                            <Typography variant="body2" sx={{ color: '#d32f2f' }}>
-                                {submitError}
-                            </Typography>
-                        </Box>
-                    )}
-
-                    <Box sx={{ p: 3, bgcolor: '#FFFFFF', border: '1px solid #e0e0e0' }}>
-                        <Grid container spacing={3}>
-                            <Grid item xs={12} md={12}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
-                                        Membership Information
-                                    </Typography>
-                                    <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<AddIcon />}
-                                        sx={{
-                                            bgcolor: '#0c4b6e',
-                                            '&:hover': {
-                                                bgcolor: '#083854',
-                                            },
-                                            textTransform: 'none',
-                                            ml: 2,
-                                        }}
-                                        onClick={() => setOpenDocumentsDialog(true)}
-                                    >
-                                        Add Documents
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<AddIcon />}
-                                        sx={{
-                                            bgcolor: '#0c4b6e',
-                                            '&:hover': {
-                                                bgcolor: '#083854',
-                                            },
-                                            textTransform: 'none',
-                                            ml: 2,
-                                        }}
-                                        onClick={() => setOpenFamilyMember(true)}
-                                    >
-                                        Add Family Member
-                                    </Button>
-                                </Box>
-                                {/* Membership Details */}
-                                <Grid container spacing={3}>
-                                    <Grid item xs={12}>
-                                        <Box>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type *</Typography>
-                                            <Grid container spacing={2}>
-                                                {memberTypesData.map((type) => (
-                                                    <Grid item xs={6} sm={4} md={3} key={type.id}>
-                                                        <Box
-                                                            sx={{
-                                                                border: '1px solid #ccc',
-                                                                borderRadius: 1,
-                                                                // p: 1,
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                bgcolor: data.member_type_id == type.id ? '#fff' : 'transparent',
-                                                            }}
-                                                        >
-                                                            <Radio checked={data.member_type_id == type.id} onChange={handleChange} value={type.id} name="member_type_id" sx={{ color: '#1976d2' }} />
-                                                            <Typography>{type.name}</Typography>
-                                                        </Box>
-                                                    </Grid>
-                                                ))}
-                                            </Grid>
-                                            {fieldErrors.member_type_id && (
-                                                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                    {fieldErrors.member_type_id}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Box>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category *</Typography>
-                                            <FormControl fullWidth variant="outlined">
-                                                <Select
-                                                    name="membership_category"
-                                                    value={data.membership_category}
-                                                    onChange={async (e) => {
-                                                        const selectedCategoryId = e.target.value;
-                                                        const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
-                                                        const categoryName = selectedCategory?.name || '';
-
-                                                        handleChange({
-                                                            target: {
-                                                                name: 'membership_category',
-                                                                value: selectedCategoryId,
-                                                            },
-                                                        });
-
-                                                        // Generate unique membership number when category changes
-                                                        if (categoryName) {
-                                                            const isKinship = !!selectedKinshipUser;
-
-                                                            // If there's an existing membership number, preserve the number part
-                                                            let existingNumber = null;
-                                                            if (data.membership_no) {
-                                                                const parts = data.membership_no.split(' ');
-                                                                if (parts.length >= 2) {
-                                                                    existingNumber = parts[parts.length - 1]; // Get the number part
-                                                                }
-                                                            }
-
-                                                            let newMembershipNo;
-                                                            if (existingNumber) {
-                                                                // Keep existing number, just change category
-                                                                newMembershipNo = `${categoryName} ${existingNumber}`;
-                                                            } else {
-                                                                // Generate new unique number
-                                                                newMembershipNo = await generateUniqueMembershipNumber(categoryName, isKinship);
-                                                            }
-
-                                                            handleChange({
-                                                                target: {
-                                                                    name: 'membership_no',
-                                                                    value: newMembershipNo,
-                                                                },
-                                                            });
-
-                                                            // Validate the new membership number
-                                                            setTimeout(() => validateMembershipNumber(newMembershipNo), 500);
-                                                        }
-                                                    }}
-                                                    displayEmpty
-                                                    renderValue={(selected) => {
-                                                        if (!selected) {
-                                                            return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
-                                                        }
-                                                        const item = membercategories.find((item) => item.id == Number(selected));
-                                                        return item ? item.description + ' (' + item.name + ')' : '';
-                                                    }}
-                                                    SelectProps={{
-                                                        displayEmpty: true,
-                                                    }}
-                                                    sx={{
-                                                        height: 40,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        '& .MuiSelect-select': {
+                            {/* Membership Details */}
+                            <Grid container spacing={3}>
+                                <Grid item xs={12}>
+                                    <Box>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type *</Typography>
+                                        <Grid container spacing={2}>
+                                            {memberTypesData.map((type) => (
+                                                <Grid item xs={6} sm={4} md={3} key={type.id}>
+                                                    <Box
+                                                        sx={{
+                                                            border: '1px solid #ccc',
+                                                            borderRadius: 1,
+                                                            // p: 1,
                                                             display: 'flex',
                                                             alignItems: 'center',
-                                                            paddingY: 0,
-                                                        },
-                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#ccc',
-                                                        },
-                                                    }}
-                                                >
-                                                    <MenuItem value="">
-                                                        <em>None</em>
-                                                    </MenuItem>
-                                                    {membercategories?.map((item) => (
-                                                        <MenuItem value={item.id} key={item.id}>
-                                                            {item.description} ({item.name})
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                                {fieldErrors.membership_category && (
-                                                    <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                        {fieldErrors.membership_category}
-                                                    </Typography>
-                                                )}
-                                            </FormControl>
-                                        </Box>
-                                    </Grid>
-
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Kinship</Typography>
-                                            <AsyncSearchTextField
-                                                label=""
-                                                name="kinship"
-                                                value={data.kinship}
+                                                            bgcolor: data.member_type_id == type.id ? '#fff' : 'transparent',
+                                                        }}
+                                                    >
+                                                        <Radio checked={data.member_type_id == type.id} onChange={handleChange} value={type.id} name="member_type_id" sx={{ color: '#1976d2' }} />
+                                                        <Typography>{type.name}</Typography>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
+                                        </Grid>
+                                        {fieldErrors.member_type_id && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                                {fieldErrors.member_type_id}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <Box>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category *</Typography>
+                                        <FormControl fullWidth variant="outlined">
+                                            <Select
+                                                name="membership_category"
+                                                value={data.membership_category}
                                                 onChange={async (e) => {
-                                                    const kinshipUser = e.target.value;
-                                                    setSelectedKinshipUser(kinshipUser);
-                                                    handleChange({ target: { name: 'kinship', value: e.target.value } });
+                                                    const selectedCategoryId = e.target.value;
+                                                    const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
+                                                    const categoryName = selectedCategory?.name || '';
 
-                                                    const selectedCategory = membercategories.find((item) => item.id === Number(data.membership_category));
-                                                    const prefix = selectedCategory?.name || '';
+                                                    handleChange({
+                                                        target: {
+                                                            name: 'membership_category',
+                                                            value: selectedCategoryId,
+                                                        },
+                                                    });
 
-                                                    if (kinshipUser && kinshipUser.membership_no) {
-                                                        const kinshipParts = kinshipUser.membership_no.split(' ');
-                                                        const kinshipNum = kinshipParts[1];
+                                                    // Generate unique membership number when category changes
+                                                    if (categoryName) {
+                                                        const isKinship = !!selectedKinshipUser;
 
-                                                        const existingMembers = [];
-                                                        let suffix = kinshipUser.total_kinships + 1;
-                                                        while (existingMembers.includes(`${prefix} ${kinshipNum}-${suffix}`)) {
-                                                            suffix++;
+                                                        // If there's an existing membership number, preserve the number part
+                                                        let existingNumber = null;
+                                                        if (data.membership_no) {
+                                                            const parts = data.membership_no.split(' ');
+                                                            if (parts.length >= 2) {
+                                                                existingNumber = parts[parts.length - 1]; // Get the number part
+                                                            }
                                                         }
 
-                                                        const newMembershipNo = `${prefix} ${kinshipNum}-${suffix}`;
+                                                        let newMembershipNo;
+                                                        if (existingNumber) {
+                                                            // Keep existing number, just change category
+                                                            newMembershipNo = `${categoryName} ${existingNumber}`;
+                                                        } else {
+                                                            // Generate new unique number
+                                                            newMembershipNo = await generateUniqueMembershipNumber(categoryName, isKinship);
+                                                        }
 
                                                         handleChange({
                                                             target: {
@@ -984,71 +913,24 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 value: newMembershipNo,
                                                             },
                                                         });
+
+                                                        // Validate the new membership number
+                                                        setTimeout(() => validateMembershipNumber(newMembershipNo), 500);
                                                     }
                                                 }}
-                                                endpoint="admin.api.search-users"
-                                                placeholder="Search Kinship..."
-                                                disabled={!data.membership_category}
-                                            // textFieldProps={{
-                                            //     sx: { '& .MuiInputBase-root': { height: 40, alignItems: 'center' } }
-                                            // }}
-                                            />
-                                        </Box>
-                                    </Grid>
-
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Number *</Typography>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="e.g. 12345-24"
-                                                variant="outlined"
-                                                name="membership_no"
-                                                value={data.membership_no}
-                                                onChange={(e) => {
-                                                    handleChange(e);
-                                                    // Validate membership number after a short delay
-                                                    setTimeout(() => validateMembershipNumber(e.target.value), 500);
+                                                displayEmpty
+                                                renderValue={(selected) => {
+                                                    if (!selected) {
+                                                        return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
+                                                    }
+                                                    const item = membercategories.find((item) => item.id == Number(selected));
+                                                    return item ? item.description + ' (' + item.name + ')' : '';
                                                 }}
-                                                inputProps={{
-                                                    maxLength: 12,
-                                                    inputMode: 'numeric',
-                                                }}
-                                                InputProps={{
-                                                    endAdornment: (
-                                                        <InputAdornment position="end">
-                                                            {isValidatingMembershipNo && <CircularProgress size={20} />}
-                                                            {!isValidatingMembershipNo && membershipNoStatus === 'available' && <CheckIcon sx={{ color: '#4caf50' }} />}
-                                                            {!isValidatingMembershipNo && membershipNoStatus === 'exists' && <CloseRoundedIcon sx={{ color: '#f44336' }} />}
-                                                            {!isValidatingMembershipNo && membershipNoStatus === 'error' && <CloseRoundedIcon sx={{ color: '#ff9800' }} />}
-                                                        </InputAdornment>
-                                                    ),
-                                                }}
-                                                error={membershipNoStatus === 'exists'}
-                                                helperText={isValidatingMembershipNo ? 'Checking availability...' : membershipNoStatus === 'available' ? 'Membership number is available' : membershipNoStatus === 'exists' ? `Membership number already exists${membershipNoSuggestion ? `. Try: ${membershipNoSuggestion}` : ''}` : membershipNoStatus === 'error' ? 'Error checking membership number' : ''}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: membershipNoStatus === 'available' ? '#4caf50' : membershipNoStatus === 'exists' ? '#f44336' : '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-                                    </Grid>
-
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="e.g. 12345-24"
-                                                variant="outlined"
-                                                name="barcode_no"
-                                                value={data.barcode_no}
-                                                onChange={(e) => {
-                                                    handleChange(e);
+                                                SelectProps={{
+                                                    displayEmpty: true,
                                                 }}
                                                 sx={{
-                                                    // height: 10,
+                                                    height: 40,
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     '& .MuiSelect-select': {
@@ -1060,926 +942,1055 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                         borderColor: '#ccc',
                                                     },
                                                 }}
-                                            />
-                                        </Box>
-                                    </Grid>
-
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Date *</Typography>
-                                            <TextField
-                                                fullWidth
-                                                type="date"
-                                                InputLabelProps={{ shrink: true }}
-                                                placeholder="dd/mm/yyyy"
-                                                variant="outlined"
-                                                name="membership_date"
-                                                value={data.membership_date}
-                                                onChange={handleChange}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                            {fieldErrors.membership_date && (
+                                            >
+                                                <MenuItem value="">
+                                                    <em>None</em>
+                                                </MenuItem>
+                                                {membercategories?.map((item) => (
+                                                    <MenuItem value={item.id} key={item.id}>
+                                                        {item.description} ({item.name})
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {fieldErrors.membership_category && (
                                                 <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                    {fieldErrors.membership_date}
+                                                    {fieldErrors.membership_category}
                                                 </Typography>
                                             )}
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
-                                            <FormControl fullWidth variant="outlined">
-                                                <Select
-                                                    name="card_status"
-                                                    value={data.card_status}
-                                                    onChange={handleChange}
-                                                    displayEmpty
-                                                    renderValue={(selected) => {
-                                                        if (!selected) {
-                                                            return <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
-                                                        }
-                                                        return selected;
-                                                    }}
-                                                    sx={{
-                                                        height: 40,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        '& .MuiSelect-select': {
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            paddingY: 0,
-                                                        },
-                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#ccc',
-                                                        },
-                                                    }}
-                                                >
-                                                    {['In-Process', 'Printed', 'Received', 'Issued', 'Re-Printed', 'E-Card Issued', 'Expired'].map((status) => (
-                                                        <MenuItem key={status} value={status}>
-                                                            {status}
-                                                        </MenuItem>
-                                                    ))}
-                                                </Select>
-                                            </FormControl>
-                                        </Box>
-                                    </Grid>
+                                        </FormControl>
+                                    </Box>
+                                </Grid>
 
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
-                                            <TextField
-                                                fullWidth
-                                                type="date"
-                                                InputLabelProps={{ shrink: true }}
-                                                placeholder="dd/mm/yyyy"
-                                                variant="outlined"
-                                                name="card_issue_date"
-                                                value={data.card_issue_date}
-                                                onChange={handleChange}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
-                                            <TextField
-                                                fullWidth
-                                                type="date"
-                                                InputLabelProps={{ shrink: true }}
-                                                placeholder="dd/mm/yyyy"
-                                                variant="outlined"
-                                                name="card_expiry_date"
-                                                value={data.card_expiry_date}
-                                                onChange={handleChange}
-                                                sx={{
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={4}>
-                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Status</Typography>
-                                            <FormControl fullWidth variant="outlined">
-                                                <Select
-                                                    name="status"
-                                                    value={data.status}
-                                                    onChange={handleChange}
-                                                    displayEmpty
-                                                    renderValue={() => {
-                                                        const status = data.status;
-                                                        const label = status ? status.replace(/_/g, ' ') : '';
-                                                        return status ? <Typography sx={{ textTransform: 'capitalize' }}>{label}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
-                                                    }}
-                                                    sx={{
-                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#ccc',
-                                                        },
-                                                    }}
-                                                >
-                                                    {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
-                                                        const label = status.replace(/_/g, ' ');
-                                                        return (
-                                                            <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
-                                                                {label}
-                                                            </MenuItem>
-                                                        );
-                                                    })}
-                                                </Select>
-                                            </FormControl>
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        {data.previewFiles && data.previewFiles.length > 0 && (
-                                            <Box>
-                                                <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
-                                                    Uploaded Documents ({data.previewFiles.length})
-                                                </Typography>
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        flexWrap: 'wrap',
-                                                        gap: '15px',
-                                                        padding: '15px',
-                                                        backgroundColor: '#f9f9f9',
-                                                        borderRadius: '8px',
-                                                        border: '1px solid #e0e0e0',
-                                                    }}
-                                                >
-                                                    {data.previewFiles.map((file, index) => getFilePreview(file, index))}
-                                                </div>
-                                            </Box>
-                                        )}
-                                    </Grid>
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Kinship</Typography>
+                                        <AsyncSearchTextField
+                                            label=""
+                                            name="kinship"
+                                            value={data.kinship}
+                                            onChange={async (e) => {
+                                                const kinshipUser = e.target.value;
+                                                setSelectedKinshipUser(kinshipUser);
+                                                handleChange({ target: { name: 'kinship', value: e.target.value } });
 
-                                    {/* Document Missing */}
-                                    <Grid item xs={12}>
-                                        <Box sx={{ mb: 2 }}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        checked={data.is_document_missing || false}
-                                                        onChange={(e) =>
-                                                            handleChange({
-                                                                target: {
-                                                                    name: 'is_document_missing',
-                                                                    value: e.target.checked,
-                                                                },
-                                                            })
-                                                        }
-                                                        sx={{ color: '#1976d2' }}
-                                                    />
+                                                const selectedCategory = membercategories.find((item) => item.id === Number(data.membership_category));
+                                                const prefix = selectedCategory?.name || '';
+
+                                                if (kinshipUser && kinshipUser.membership_no) {
+                                                    const kinshipParts = kinshipUser.membership_no.split(' ');
+                                                    const kinshipNum = kinshipParts[1];
+
+                                                    const existingMembers = [];
+                                                    let suffix = kinshipUser.total_kinships + 1;
+                                                    while (existingMembers.includes(`${prefix} ${kinshipNum}-${suffix}`)) {
+                                                        suffix++;
+                                                    }
+
+                                                    const newMembershipNo = `${prefix} ${kinshipNum}-${suffix}`;
+
+                                                    handleChange({
+                                                        target: {
+                                                            name: 'membership_no',
+                                                            value: newMembershipNo,
+                                                        },
+                                                    });
                                                 }
-                                                label="Document Missing"
-                                            />
-                                        </Box>
-                                        {data.is_document_missing && (
-                                            <Box>
-                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Which document is missing?</Typography>
-                                                <TextField
-                                                    fullWidth
-                                                    multiline
-                                                    rows={4}
-                                                    placeholder="Enter missing documents"
-                                                    variant="outlined"
-                                                    name="missing_documents"
-                                                    value={data.missing_documents || ''}
-                                                    onChange={handleChange}
-                                                    sx={{
-                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                            borderColor: '#ccc',
-                                                        },
-                                                    }}
-                                                />
-                                            </Box>
-                                        )}
-                                        {fieldErrors.missing_documents && (
-                                            <Typography variant="caption" color="error">
-                                                {fieldErrors.missing_documents}
+                                            }}
+                                            endpoint="admin.api.search-users"
+                                            placeholder="Search Kinship..."
+                                            disabled={!data.membership_category}
+                                            // textFieldProps={{
+                                            //     sx: { '& .MuiInputBase-root': { height: 40, alignItems: 'center' } }
+                                            // }}
+                                        />
+                                    </Box>
+                                </Grid>
+
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Number *</Typography>
+                                        <TextField
+                                            fullWidth
+                                            placeholder="e.g. 12345-24"
+                                            variant="outlined"
+                                            name="membership_no"
+                                            value={data.membership_no}
+                                            onChange={(e) => {
+                                                handleChange(e);
+                                                // Validate membership number after a short delay
+                                                setTimeout(() => validateMembershipNumber(e.target.value), 500);
+                                            }}
+                                            inputProps={{
+                                                inputMode: 'numeric',
+                                            }}
+                                            InputProps={{
+                                                endAdornment: (
+                                                    <InputAdornment position="end">
+                                                        {isValidatingMembershipNo && <CircularProgress size={20} />}
+                                                        {!isValidatingMembershipNo && membershipNoStatus === 'available' && <CheckIcon sx={{ color: '#4caf50' }} />}
+                                                        {!isValidatingMembershipNo && membershipNoStatus === 'exists' && <CloseRoundedIcon sx={{ color: '#f44336' }} />}
+                                                        {!isValidatingMembershipNo && membershipNoStatus === 'error' && <CloseRoundedIcon sx={{ color: '#ff9800' }} />}
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            error={membershipNoStatus === 'exists'}
+                                            helperText={isValidatingMembershipNo ? 'Checking availability...' : membershipNoStatus === 'available' ? <span style={{ color: '#4caf50' }}>Membership number is available</span> : membershipNoStatus === 'exists' ? `Membership number already exists${membershipNoSuggestion ? `. Try: ${membershipNoSuggestion}` : ''}` : membershipNoStatus === 'error' ? 'Error checking membership number' : ''}
+                                            sx={{
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: membershipNoStatus === 'available' ? '#4caf50' : membershipNoStatus === 'exists' ? '#f44336' : '#ccc',
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
+                                        <TextField
+                                            fullWidth
+                                            placeholder="e.g. 12345-24"
+                                            variant="outlined"
+                                            name="barcode_no"
+                                            value={data.barcode_no}
+                                            onChange={(e) => {
+                                                handleChange(e);
+                                            }}
+                                            sx={{
+                                                // height: 10,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                '& .MuiSelect-select': {
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    paddingY: 0,
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#ccc',
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Date *</Typography>
+                                        <TextField
+                                            fullWidth
+                                            type="date"
+                                            InputLabelProps={{ shrink: true }}
+                                            placeholder="dd/mm/yyyy"
+                                            variant="outlined"
+                                            name="membership_date"
+                                            value={data.membership_date}
+                                            onChange={handleChange}
+                                            sx={{
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#ccc',
+                                                },
+                                            }}
+                                        />
+                                        {fieldErrors.membership_date && (
+                                            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                                {fieldErrors.membership_date}
                                             </Typography>
                                         )}
-                                    </Grid>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
+                                        <FormControl fullWidth variant="outlined">
+                                            <Select
+                                                name="card_status"
+                                                value={data.card_status}
+                                                onChange={handleChange}
+                                                displayEmpty
+                                                renderValue={(selected) => {
+                                                    if (!selected) {
+                                                        return <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                    }
+                                                    return selected;
+                                                }}
+                                                sx={{
+                                                    height: 40,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    '& .MuiSelect-select': {
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        paddingY: 0,
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
+                                                    },
+                                                }}
+                                            >
+                                                {['In-Process', 'Printed', 'Received', 'Issued', 'Re-Printed', 'E-Card Issued', 'Expired'].map((status) => (
+                                                    <MenuItem key={status} value={status}>
+                                                        {status}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
+                                </Grid>
+
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
+                                        <TextField
+                                            fullWidth
+                                            type="date"
+                                            InputLabelProps={{ shrink: true }}
+                                            placeholder="dd/mm/yyyy"
+                                            variant="outlined"
+                                            name="card_issue_date"
+                                            value={data.card_issue_date}
+                                            onChange={handleChange}
+                                            sx={{
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#ccc',
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
+                                        <TextField
+                                            fullWidth
+                                            type="date"
+                                            InputLabelProps={{ shrink: true }}
+                                            placeholder="dd/mm/yyyy"
+                                            variant="outlined"
+                                            name="card_expiry_date"
+                                            value={data.card_expiry_date}
+                                            onChange={handleChange}
+                                            sx={{
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#ccc',
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={4}>
+                                    <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Status</Typography>
+                                        <FormControl fullWidth variant="outlined">
+                                            <Select
+                                                name="status"
+                                                value={data.status}
+                                                onChange={handleChange}
+                                                displayEmpty
+                                                renderValue={() => {
+                                                    const status = data.status;
+                                                    const label = status ? status.replace(/_/g, ' ') : '';
+                                                    return status ? <Typography sx={{ textTransform: 'capitalize' }}>{label}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                }}
+                                                sx={{
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
+                                                    },
+                                                }}
+                                            >
+                                                {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
+                                                    const label = status.replace(/_/g, ' ');
+                                                    return (
+                                                        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
+                                                            {label}
+                                                        </MenuItem>
+                                                    );
+                                                })}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    {data.previewFiles && data.previewFiles.length > 0 && (
+                                        <Box>
+                                            <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                                                Uploaded Documents ({data.previewFiles.length})
+                                            </Typography>
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: '15px',
+                                                    padding: '15px',
+                                                    backgroundColor: '#f9f9f9',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #e0e0e0',
+                                                }}
+                                            >
+                                                {data.previewFiles.map((file, index) => getFilePreview(file, index))}
+                                            </div>
+                                        </Box>
+                                    )}
+                                </Grid>
+
+                                {/* Document Missing */}
+                                <Grid item xs={12}>
+                                    <Box sx={{ mb: 2 }}>
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={data.is_document_missing || false}
+                                                    onChange={(e) =>
+                                                        handleChange({
+                                                            target: {
+                                                                name: 'is_document_missing',
+                                                                value: e.target.checked,
+                                                            },
+                                                        })
+                                                    }
+                                                    sx={{ color: '#1976d2' }}
+                                                />
+                                            }
+                                            label="Document Missing"
+                                        />
+                                    </Box>
+                                    {data.is_document_missing && (
+                                        <Box>
+                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Which document is missing?</Typography>
+                                            <TextField
+                                                fullWidth
+                                                multiline
+                                                rows={4}
+                                                placeholder="Enter missing documents"
+                                                variant="outlined"
+                                                name="missing_documents"
+                                                value={data.missing_documents || ''}
+                                                onChange={handleChange}
+                                                sx={{
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderColor: '#ccc',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
+                                    )}
+                                    {fieldErrors.missing_documents && (
+                                        <Typography variant="caption" color="error">
+                                            {fieldErrors.missing_documents}
+                                        </Typography>
+                                    )}
                                 </Grid>
                             </Grid>
+                        </Grid>
 
-                            {/* Documents Upload Dialog */}
-                            <Dialog open={openDocumentsDialog} onClose={() => setOpenDocumentsDialog(false)} fullWidth maxWidth="md">
-                                <DialogTitle
+                        {/* Documents Upload Dialog */}
+                        <Dialog open={openDocumentsDialog} onClose={() => setOpenDocumentsDialog(false)} fullWidth maxWidth="md">
+                            <DialogTitle
+                                sx={{
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    pr: 2,
+                                }}
+                            >
+                                Upload Documents
+                                <IconButton
+                                    onClick={() => setOpenDocumentsDialog(false)}
                                     sx={{
-                                        fontWeight: 600,
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        pr: 2,
+                                        color: '#666',
+                                        '&:hover': { color: '#000' },
                                     }}
                                 >
-                                    Upload Documents
-                                    <IconButton
-                                        onClick={() => setOpenDocumentsDialog(false)}
-                                        sx={{
-                                            color: '#666',
-                                            '&:hover': { color: '#000' },
-                                        }}
-                                    >
-                                        <CloseIcon />
-                                    </IconButton>
-                                </DialogTitle>
-                                <DialogContent>
-                                    <Grid container spacing={2} sx={{ mt: 1 }}>
+                                    <CloseIcon />
+                                </IconButton>
+                            </DialogTitle>
+                            <DialogContent>
+                                <Grid container spacing={2} sx={{ mt: 1 }}>
+                                    <Grid item xs={12}>
+                                        <Box
+                                            onDragOver={handleDragOver}
+                                            onDragLeave={handleDragLeave}
+                                            onDrop={handleDrop}
+                                            onClick={handleBoxClick}
+                                            sx={{
+                                                border: isDragOver ? '2px dashed #0a3d62' : '2px dashed #ccc',
+                                                borderRadius: 2,
+                                                p: 4,
+                                                textAlign: 'center',
+                                                backgroundColor: isDragOver ? '#e3f2fd' : '#fafafa',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.3s ease',
+                                                '&:hover': {
+                                                    borderColor: '#0a3d62',
+                                                    backgroundColor: '#f5f5f5',
+                                                    transform: 'translateY(-2px)',
+                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                                },
+                                            }}
+                                        >
+                                            <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,image/*" name="documents" onChange={handleFileChange} style={{ display: 'none' }} />
+
+                                            <Box sx={{ mb: 2 }}>
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3" />
+                                                    <path d="M14 2L20 8H14V2Z" fill="#2196f3" />
+                                                    <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3" />
+                                                </svg>
+                                            </Box>
+
+                                            <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
+                                                {isDragOver ? 'Drop files here' : 'Upload Documents'}
+                                            </Typography>
+                                            <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+                                                Drag and drop files here or click to browse
+                                            </Typography>
+                                            <Typography variant="caption" color="textSecondary">
+                                                Supported formats: PDF, DOC, DOCX, Images (JPG, PNG, etc.)
+                                            </Typography>
+                                        </Box>
+                                    </Grid>
+
+                                    {data.previewFiles && data.previewFiles.length > 0 && (
                                         <Grid item xs={12}>
-                                            <Box
-                                                onDragOver={handleDragOver}
-                                                onDragLeave={handleDragLeave}
-                                                onDrop={handleDrop}
-                                                onClick={handleBoxClick}
-                                                sx={{
-                                                    border: isDragOver ? '2px dashed #0a3d62' : '2px dashed #ccc',
-                                                    borderRadius: 2,
-                                                    p: 4,
-                                                    textAlign: 'center',
-                                                    backgroundColor: isDragOver ? '#e3f2fd' : '#fafafa',
-                                                    cursor: 'pointer',
-                                                    transition: 'all 0.3s ease',
-                                                    '&:hover': {
-                                                        borderColor: '#0a3d62',
-                                                        backgroundColor: '#f5f5f5',
-                                                        transform: 'translateY(-2px)',
-                                                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                                    },
+                                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                                Uploaded Documents ({data.previewFiles.length})
+                                            </Typography>
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    flexWrap: 'wrap',
+                                                    gap: '15px',
+                                                    padding: '15px',
+                                                    backgroundColor: '#f9f9f9',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #e0e0e0',
                                                 }}
                                             >
-                                                <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,image/*" name="documents" onChange={handleFileChange} style={{ display: 'none' }} />
+                                                {data.previewFiles.map((file, index) => getFilePreview(file, index))}
+                                            </div>
+                                        </Grid>
+                                    )}
+                                </Grid>
+                            </DialogContent>
+                            <DialogActions sx={{ p: 2 }}>
+                                <Button
+                                    onClick={() => setOpenDocumentsDialog(false)}
+                                    sx={{
+                                        textTransform: 'none',
+                                        color: '#666',
+                                        '&:hover': { backgroundColor: '#f5f5f5' },
+                                    }}
+                                >
+                                    Close
+                                </Button>
+                            </DialogActions>
+                        </Dialog>
 
-                                                <Box sx={{ mb: 2 }}>
-                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" fill="#2196f3" opacity="0.3" />
-                                                        <path d="M14 2L20 8H14V2Z" fill="#2196f3" />
-                                                        <path d="M12 11L8 15H10.5V19H13.5V15H16L12 11Z" fill="#2196f3" />
-                                                    </svg>
-                                                </Box>
+                        {/* FamilyMember Popup */}
 
-                                                <Typography variant="h6" sx={{ mb: 1, color: isDragOver ? '#2196f3' : '#666' }}>
-                                                    {isDragOver ? 'Drop files here' : 'Upload Documents'}
-                                                </Typography>
-                                                <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
-                                                    Drag and drop files here or click to browse
-                                                </Typography>
-                                                <Typography variant="caption" color="textSecondary">
-                                                    Supported formats: PDF, DOC, DOCX, Images (JPG, PNG, etc.)
+                        <Dialog open={openFamilyMember} onClose={() => setOpenFamilyMember(false)} fullWidth maxWidth="lg">
+                            <DialogTitle
+                                sx={{
+                                    fontWeight: 600,
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    pr: 2,
+                                }}
+                            >
+                                Family Member Information
+                                <IconButton
+                                    onClick={() => setOpenFamilyMember(false)}
+                                    sx={{
+                                        color: '#666',
+                                        '&:hover': { color: '#000' },
+                                    }}
+                                >
+                                    <CloseIcon />
+                                </IconButton>
+                            </DialogTitle>
+                            <DialogContent>
+                                <Grid container spacing={3}>
+                                    <Grid item xs={12} md={showFamilyMember ? 4 : 12}>
+                                        <Button
+                                            variant="contained"
+                                            sx={{
+                                                mt: 2,
+                                                bgcolor: showFamilyMember ? '#90caf9' : '#e3f2fd',
+                                                color: '#000',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    bgcolor: '#90caf9',
+                                                },
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                width: '100%',
+                                                py: 1.5,
+                                            }}
+                                            onClick={AddFamilyMember}
+                                        >
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                                                <Typography sx={{ fontWeight: 500 }}>Add Family Member</Typography>
+                                                <Typography variant="body2" sx={{ color: '#666' }}>
+                                                    If you add family members then click
                                                 </Typography>
                                             </Box>
-                                        </Grid>
-
-                                        {data.previewFiles && data.previewFiles.length > 0 && (
-                                            <Grid item xs={12}>
-                                                <Typography variant="h6" sx={{ mb: 2 }}>
-                                                    Uploaded Documents ({data.previewFiles.length})
-                                                </Typography>
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        flexWrap: 'wrap',
-                                                        gap: '15px',
-                                                        padding: '15px',
-                                                        backgroundColor: '#f9f9f9',
-                                                        borderRadius: '8px',
-                                                        border: '1px solid #e0e0e0',
-                                                    }}
-                                                >
-                                                    {data.previewFiles.map((file, index) => getFilePreview(file, index))}
-                                                </div>
-                                            </Grid>
+                                            <ChevronRightIcon />
+                                        </Button>
+                                        {data.family_members.length > 0 && (
+                                            <Box sx={{ mt: 3 }}>
+                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Added Family Members</Typography>
+                                                {data.family_members.map((family, index) => (
+                                                    <Box
+                                                        key={index}
+                                                        sx={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center',
+                                                            p: 1,
+                                                            border: '1px solid #ccc',
+                                                            borderRadius: 1,
+                                                            mb: 1,
+                                                        }}
+                                                    >
+                                                        <Typography>
+                                                            {family.full_name} ({family.relation})
+                                                        </Typography>
+                                                        <Box>
+                                                            <IconButton size="small" onClick={() => handleEditFamilyMember(index)} sx={{ mr: 1 }}>
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                            <IconButton size="small" onClick={() => handleDeleteFamilyMember(family, index)}>
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Box>
+                                                    </Box>
+                                                ))}
+                                            </Box>
                                         )}
                                     </Grid>
-                                </DialogContent>
-                                <DialogActions sx={{ p: 2 }}>
-                                    <Button
-                                        onClick={() => setOpenDocumentsDialog(false)}
-                                        sx={{
-                                            textTransform: 'none',
-                                            color: '#666',
-                                            '&:hover': { backgroundColor: '#f5f5f5' },
-                                        }}
-                                    >
-                                        Close
-                                    </Button>
-                                </DialogActions>
-                            </Dialog>
-
-                            {/* FamilyMember Popup */}
-
-                            <Dialog open={openFamilyMember} onClose={() => setOpenFamilyMember(false)} fullWidth maxWidth="lg">
-                                <DialogTitle
-                                    sx={{
-                                        fontWeight: 600,
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        pr: 2,
-                                    }}
-                                >
-                                    Family Member Information
-                                    <IconButton
-                                        onClick={() => setOpenFamilyMember(false)}
-                                        sx={{
-                                            color: '#666',
-                                            '&:hover': { color: '#000' },
-                                        }}
-                                    >
-                                        <CloseIcon />
-                                    </IconButton>
-                                </DialogTitle>
-                                <DialogContent>
-                                    <Grid container spacing={3}>
-                                        <Grid item xs={12} md={showFamilyMember ? 4 : 12}>
-                                            <Button
-                                                variant="contained"
-                                                sx={{
-                                                    mt: 2,
-                                                    bgcolor: showFamilyMember ? '#90caf9' : '#e3f2fd',
-                                                    color: '#000',
-                                                    textTransform: 'none',
-                                                    '&:hover': {
-                                                        bgcolor: '#90caf9',
-                                                    },
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    width: '100%',
-                                                    py: 1.5,
-                                                }}
-                                                onClick={AddFamilyMember}
-                                            >
-                                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                                                    <Typography sx={{ fontWeight: 500 }}>Add Family Member</Typography>
-                                                    <Typography variant="body2" sx={{ color: '#666' }}>
-                                                        If you add family members then click
+                                    <Grid item xs={12} md={showFamilyMember ? 8 : 0}>
+                                        {showFamilyMember && (
+                                            <>
+                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                                        Family Member Information
                                                     </Typography>
+                                                    <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                                 </Box>
-                                                <ChevronRightIcon />
-                                            </Button>
-                                            {data.family_members.length > 0 && (
-                                                <Box sx={{ mt: 3 }}>
-                                                    <Typography sx={{ mb: 1, fontWeight: 500 }}>Added Family Members</Typography>
-                                                    {data.family_members.map((family, index) => (
-                                                        <Box
-                                                            key={index}
-                                                            sx={{
-                                                                display: 'flex',
-                                                                justifyContent: 'space-between',
-                                                                alignItems: 'center',
-                                                                p: 1,
-                                                                border: '1px solid #ccc',
-                                                                borderRadius: 1,
-                                                                mb: 1,
-                                                            }}
-                                                        >
-                                                            <Typography>
-                                                                {family.full_name} ({family.relation})
-                                                            </Typography>
-                                                            <Box>
-                                                                <IconButton size="small" onClick={() => handleEditFamilyMember(index)} sx={{ mr: 1 }}>
-                                                                    <EditIcon fontSize="small" />
-                                                                </IconButton>
-                                                                <IconButton size="small" onClick={() => handleDeleteFamilyMember(family, index)}>
-                                                                    <DeleteIcon fontSize="small" />
-                                                                </IconButton>
-                                                            </Box>
+
+                                                <Box sx={{ mb: 3, display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
+                                                    <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
+                                                        <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
+                                                            Family Membership Number :
                                                         </Box>
-                                                    ))}
+                                                        <Box component="span" sx={{ color: '#666' }}>
+                                                            {data.membership_no}-{currentFamilyMember.family_suffix}
+                                                        </Box>
+                                                    </Box>
                                                 </Box>
-                                            )}
-                                        </Grid>
-                                        <Grid item xs={12} md={showFamilyMember ? 8 : 0}>
-                                            {showFamilyMember && (
-                                                <>
-                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                                        <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
-                                                            Family Member Information
+
+                                                <Box sx={{ mb: 3, display: 'flex', gap: '10px' }}>
+                                                    <Box
+                                                        sx={{
+                                                            border: '1px dashed #90caf9',
+                                                            borderRadius: 1,
+                                                            p: 2,
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            bgcolor: '#e3f2fd',
+                                                            height: '100px',
+                                                            width: '100px',
+                                                            position: 'relative',
+                                                        }}
+                                                    >
+                                                        {currentFamilyMember.picture_preview ? (
+                                                            <>
+                                                                <img src={currentFamilyMember.picture_preview} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
+                                                                    <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={handleFamilyPictureDelete}>
+                                                                        <DeleteIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Box>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <input accept="image/*" type="file" id="upload-family-picture" style={{ display: 'none' }} onChange={handleImageUpload} />
+                                                                <label htmlFor="upload-family-picture">
+                                                                    <IconButton component="span" sx={{ color: '#90caf9' }}>
+                                                                        <AddIcon />
+                                                                    </IconButton>
+                                                                </label>
+                                                            </>
+                                                        )}
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Family Member Picture</Typography>
+                                                        <Typography variant="body2" sx={{ color: '#666', mt: 1 }}>
+                                                            Click upload to profile picture (4 MB max)
                                                         </Typography>
-                                                        <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
                                                     </Box>
+                                                </Box>
 
-                                                    <Box sx={{ mb: 3, display: 'flex', gap: '10px', justifyContent: 'space-between' }}>
-                                                        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-                                                            <Box component="span" sx={{ mr: 1, fontWeight: 500 }}>
-                                                                Family Membership Number :
-                                                            </Box>
-                                                            <Box component="span" sx={{ color: '#666' }}>
-                                                                {data.membership_no}-{currentFamilyMember.family_suffix}
-                                                            </Box>
+                                                <Grid container spacing={2}>
+                                                    {/* First Name */}
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>First Name*</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="Enter First Name"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.first_name || ''}
+                                                                onChange={(e) => handleFamilyMemberChange('first_name', e.target.value)}
+                                                                error={!!familyMemberErrors.first_name}
+                                                                helperText={familyMemberErrors.first_name}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
                                                         </Box>
-                                                    </Box>
-
-                                                    <Box sx={{ mb: 3, display: 'flex', gap: '10px' }}>
-                                                        <Box
-                                                            sx={{
-                                                                border: '1px dashed #90caf9',
-                                                                borderRadius: 1,
-                                                                p: 2,
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                alignItems: 'center',
-                                                                justifyContent: 'center',
-                                                                bgcolor: '#e3f2fd',
-                                                                height: '100px',
-                                                                width: '100px',
-                                                                position: 'relative',
-                                                            }}
-                                                        >
-                                                            {currentFamilyMember.picture_preview ? (
-                                                                <>
-                                                                    <img src={currentFamilyMember.picture_preview} alt="Family member" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                                    <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
-                                                                        <IconButton size="small" sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={handleFamilyPictureDelete}>
-                                                                            <DeleteIcon fontSize="small" />
-                                                                        </IconButton>
-                                                                    </Box>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <input accept="image/*" type="file" id="upload-family-picture" style={{ display: 'none' }} onChange={handleImageUpload} />
-                                                                    <label htmlFor="upload-family-picture">
-                                                                        <IconButton component="span" sx={{ color: '#90caf9' }}>
-                                                                            <AddIcon />
-                                                                        </IconButton>
-                                                                    </label>
-                                                                </>
-                                                            )}
-                                                        </Box>
-                                                        <Box>
-                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Family Member Picture</Typography>
-                                                            <Typography variant="body2" sx={{ color: '#666', mt: 1 }}>
-                                                                Click upload to profile picture (4 MB max)
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
-
-                                                    <Grid container spacing={2}>
-                                                        {/* First Name */}
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>First Name*</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="Enter First Name"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.first_name || ''}
-                                                                    onChange={(e) => handleFamilyMemberChange('first_name', e.target.value)}
-                                                                    error={!!familyMemberErrors.first_name}
-                                                                    helperText={familyMemberErrors.first_name}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
-
-                                                        {/* Middle Name */}
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Middle Name</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="Enter Middle Name"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.middle_name || ''}
-                                                                    onChange={(e) => handleFamilyMemberChange('middle_name', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
-
-                                                        {/* Last Name */}
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Last Name</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="Enter Last Name"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.last_name || ''}
-                                                                    onChange={(e) => handleFamilyMemberChange('last_name', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Relation with Primary*</Typography>
-                                                                <FormControl fullWidth variant="outlined" error={!!familyMemberErrors.relation}>
-                                                                    <Select
-                                                                        displayEmpty
-                                                                        value={currentFamilyMember.relation}
-                                                                        onChange={(e) => handleFamilyMemberChange('relation', e.target.value)}
-                                                                        renderValue={(selected) => {
-                                                                            if (!selected) {
-                                                                                return <Typography sx={{ color: '#757575' }}>Choose Relation</Typography>;
-                                                                            }
-                                                                            return selected;
-                                                                        }}
-                                                                        sx={{
-                                                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                                                borderColor: '#ccc',
-                                                                            },
-                                                                        }}
-                                                                    >
-                                                                        {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law'].map((item, index) => (
-                                                                            <MenuItem key={index} value={item} sx={{ textTransform: 'capitalize' }}>
-                                                                                {item}
-                                                                            </MenuItem>
-                                                                        ))}
-                                                                    </Select>
-                                                                    {!!familyMemberErrors.relation && (
-                                                                        <Typography variant="caption" color="error">
-                                                                            {familyMemberErrors.relation}
-                                                                        </Typography>
-                                                                    )}
-                                                                </FormControl>
-                                                            </Box>
-                                                        </Grid>
-
-                                                        {/* Passport No */}
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Passport No</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="Enter Passport Number"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.passport_no || ''}
-                                                                    onChange={(e) => handleFamilyMemberChange('passport_no', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
-                                                        {/* Nationality */}
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Nationality</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="Enter Nationality"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.nationality || ''}
-                                                                    onChange={(e) => handleFamilyMemberChange('nationality', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
                                                     </Grid>
 
-                                                    <Grid container spacing={2} sx={{mt:1}}>
-
-                                                        {/* Gender */}
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, mb: 3, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Gender</Typography>
-                                                                <FormControl fullWidth variant="outlined">
-                                                                    <Select
-                                                                        displayEmpty
-                                                                        value={currentFamilyMember.gender || ''}
-                                                                        onChange={(e) => handleFamilyMemberChange('gender', e.target.value)}
-                                                                        renderValue={(selected) => {
-                                                                            if (!selected) {
-                                                                                return <Typography sx={{ color: '#757575' }}>Choose Gender</Typography>;
-                                                                            }
-                                                                            return selected;
-                                                                        }}
-                                                                        sx={{
-                                                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                                                borderColor: '#ccc',
-                                                                            },
-                                                                        }}
-                                                                    >
-                                                                        <MenuItem value="Male">Male</MenuItem>
-                                                                        <MenuItem value="Female">Female</MenuItem>
-                                                                        <MenuItem value="Other">Other</MenuItem>
-                                                                    </Select>
-                                                                </FormControl>
-                                                            </Box>
-                                                        </Grid>
-
-                                                        {/* Marital Status */}
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, mb: 3, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Marital Status</Typography>
-                                                                <FormControl fullWidth variant="outlined">
-                                                                    <Select
-                                                                        displayEmpty
-                                                                        value={currentFamilyMember.martial_status || ''}
-                                                                        onChange={(e) => handleFamilyMemberChange('martial_status', e.target.value)}
-                                                                        renderValue={(selected) => {
-                                                                            if (!selected) {
-                                                                                return <Typography sx={{ color: '#757575' }}>Choose Marital Status</Typography>;
-                                                                            }
-                                                                            return selected;
-                                                                        }}
-                                                                        sx={{
-                                                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                                                borderColor: '#ccc',
-                                                                            },
-                                                                        }}
-                                                                    >
-                                                                        <MenuItem value="Single">Single</MenuItem>
-                                                                        <MenuItem value="Married">Married</MenuItem>
-                                                                        <MenuItem value="Divorced">Divorced</MenuItem>
-                                                                        <MenuItem value="Widowed">Widowed</MenuItem>
-                                                                    </Select>
-                                                                </FormControl>
-                                                            </Box>
-                                                        </Grid>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Email</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="Enter Email"
-                                                                    variant="outlined"
-                                                                    name="email"
-                                                                    type="email"
-                                                                    value={currentFamilyMember.email}
-                                                                    error={!!familyMemberErrors.email}
-                                                                    helperText={familyMemberErrors.email}
-                                                                    onChange={(e) => handleFamilyMemberChange('email', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
+                                                    {/* Middle Name */}
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Middle Name</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="Enter Middle Name"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.middle_name || ''}
+                                                                onChange={(e) => handleFamilyMemberChange('middle_name', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
                                                     </Grid>
 
-                                                    <Grid container spacing={2}>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="e.g. 12345-24"
-                                                                    variant="outlined"
-                                                                    name="barcode_no"
-                                                                    value={currentFamilyMember.barcode_no}
-                                                                    onChange={(e) => handleFamilyMemberChange('barcode_no', e.target.value)}
-                                                                    inputProps={{
-                                                                        maxLength: 12,
-                                                                        inputMode: 'numeric',
-                                                                    }}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Phone Number</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="Enter Phone Number"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.phone_number}
-                                                                    onChange={(e) => handleFamilyMemberChange('phone_number', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>CNIC</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    placeholder="XXXXX-XXXXXXX-X"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.cnic}
-                                                                    error={!!familyMemberErrors.cnic}
-                                                                    helperText={isValidatingFamilyCnic ? 'Checking CNIC availability...' : familyMemberErrors.cnic}
-                                                                    onChange={(e) => {
-                                                                        let value = e.target.value;
-                                                                        value = value.replace(/[^\d-]/g, '');
-                                                                        if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
-                                                                        if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
-                                                                        if (value.length > 15) value = value.slice(0, 15);
-                                                                        handleFamilyMemberChange('cnic', value);
-                                                                    }}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: isValidatingFamilyCnic ? '#1976d2' : '#ccc',
-                                                                        },
-                                                                        ...(isValidatingFamilyCnic && {
-                                                                            '& .MuiOutlinedInput-root': {
-                                                                                '& fieldset': {
-                                                                                    borderColor: '#1976d2',
-                                                                                },
-                                                                            },
-                                                                        }),
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
+                                                    {/* Last Name */}
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Last Name</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="Enter Last Name"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.last_name || ''}
+                                                                onChange={(e) => handleFamilyMemberChange('last_name', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
                                                     </Grid>
-
-                                                    <Grid container spacing={2} sx={{mt:1}}>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Date of Birth *</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    type="date"
-                                                                    InputLabelProps={{ shrink: true }}
-                                                                    placeholder="dd/mm/yyyy"
-                                                                    variant="outlined"
-                                                                    name="date_of_birth"
-                                                                    error={!!familyMemberErrors.date_of_birth}
-                                                                    helperText={familyMemberErrors.date_of_birth || (currentFamilyMember.date_of_birth ? `Age: ${calculateAge(currentFamilyMember.date_of_birth)} years` : '')}
-                                                                    value={currentFamilyMember.date_of_birth}
-                                                                    onChange={(e) => handleFamilyMemberChange('date_of_birth', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                                {currentFamilyMember.date_of_birth && calculateAge(currentFamilyMember.date_of_birth) >= 25 && (
-                                                                    <Typography variant="caption" sx={{ color: '#ff9800', mt: 1, display: 'block' }}>
-                                                                        ⚠️ Member is 25+ years old. Membership will expire automatically unless extended by Super Admin.
-                                                                    </Typography>
-                                                                )}
-                                                            </Box>
-                                                        </Grid>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    type="date"
-                                                                    InputLabelProps={{ shrink: true }}
-                                                                    placeholder="Select date"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.card_issue_date}
-                                                                    onChange={(e) => handleFamilyMemberChange('card_issue_date', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                            </Box>
-                                                        </Grid>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
-                                                                <TextField
-                                                                    fullWidth
-                                                                    type="date"
-                                                                    InputLabelProps={{ shrink: true }}
-                                                                    placeholder="Select date"
-                                                                    variant="outlined"
-                                                                    value={currentFamilyMember.card_expiry_date}
-                                                                    onChange={(e) => handleFamilyMemberChange('card_expiry_date', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-notchedOutline': {
-                                                                            borderColor: '#ccc',
-                                                                        },
-                                                                    }}
-                                                                />
-                                                                {currentFamilyMember.auto_expiry_calculated && (
-                                                                    <Typography variant="caption" sx={{ color: '#2196f3', mt: 1, display: 'block' }}>
-                                                                        📅 Auto-calculated based on 25th birthday
-                                                                    </Typography>
-                                                                )}
-                                                            </Box>
-                                                        </Grid>
-                                                        <Grid item xs={4}>
-                                                            <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
-                                                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Status</Typography>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Relation with Primary*</Typography>
+                                                            <FormControl fullWidth variant="outlined" error={!!familyMemberErrors.relation}>
                                                                 <Select
-                                                                    name="status"
-                                                                    value={currentFamilyMember.status}
-                                                                    onChange={(e) => handleFamilyMemberChange('status', e.target.value)}
                                                                     displayEmpty
-                                                                    renderValue={() => {
-                                                                        const status = currentFamilyMember.status;
-                                                                        const label = status ? status.replace(/_/g, ' ') : '';
-                                                                        return status ? <Typography sx={{ textTransform: 'capitalize' }}>{status}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                                    value={currentFamilyMember.relation}
+                                                                    onChange={(e) => handleFamilyMemberChange('relation', e.target.value)}
+                                                                    renderValue={(selected) => {
+                                                                        if (!selected) {
+                                                                            return <Typography sx={{ color: '#757575' }}>Choose Relation</Typography>;
+                                                                        }
+                                                                        return selected;
                                                                     }}
                                                                     sx={{
-                                                                        width: '100%',
                                                                         '& .MuiOutlinedInput-notchedOutline': {
                                                                             borderColor: '#ccc',
                                                                         },
                                                                     }}
                                                                 >
-                                                                    {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
-                                                                        const label = status.replace(/_/g, ' ');
-                                                                        return (
-                                                                            <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
-                                                                                {label}
-                                                                            </MenuItem>
-                                                                        );
-                                                                    })}
+                                                                    {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law'].map((item, index) => (
+                                                                        <MenuItem key={index} value={item} sx={{ textTransform: 'capitalize' }}>
+                                                                            {item}
+                                                                        </MenuItem>
+                                                                    ))}
                                                                 </Select>
-                                                            </Box>
-                                                        </Grid>
+                                                                {!!familyMemberErrors.relation && (
+                                                                    <Typography variant="caption" color="error">
+                                                                        {familyMemberErrors.relation}
+                                                                    </Typography>
+                                                                )}
+                                                            </FormControl>
+                                                        </Box>
                                                     </Grid>
 
-                                                    {familyMemberErrors.date && (
-                                                        <Typography color="error" variant="body2">
-                                                            {familyMemberErrors.date}
-                                                        </Typography>
-                                                    )}
+                                                    {/* Passport No */}
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Passport No</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="Enter Passport Number"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.passport_no || ''}
+                                                                onChange={(e) => handleFamilyMemberChange('passport_no', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Grid>
+                                                    {/* Nationality */}
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Nationality</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="Enter Nationality"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.nationality || ''}
+                                                                onChange={(e) => handleFamilyMemberChange('nationality', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Grid>
+                                                </Grid>
 
-                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                                                        <Button
-                                                            variant="outlined"
-                                                            sx={{
-                                                                mr: 2,
-                                                                textTransform: 'none',
-                                                                borderColor: '#ccc',
-                                                                color: '#333',
-                                                                '&:hover': { borderColor: '#999', backgroundColor: '#f5f5f5' },
-                                                            }}
-                                                            onClick={handleCancelFamilyMember}
-                                                        >
-                                                            Cancel
-                                                        </Button>
-                                                        <Button
-                                                            variant="contained"
-                                                            sx={{
-                                                                bgcolor: '#0c4b6e',
-                                                                '&:hover': {
-                                                                    bgcolor: '#083854',
-                                                                },
-                                                                textTransform: 'none',
-                                                            }}
-                                                            onClick={handleSaveFamilyMember}
-                                                            disabled={isValidatingFamilyCnic}
-                                                        >
-                                                            {isValidatingFamilyCnic ? 'Validating CNIC...' : 'Save Members'}
-                                                        </Button>
-                                                    </Box>
-                                                </>
-                                            )}
-                                        </Grid>
+                                                <Grid container spacing={2} sx={{ mt: 1 }}>
+                                                    {/* Gender */}
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, mb: 3, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Gender</Typography>
+                                                            <FormControl fullWidth variant="outlined">
+                                                                <Select
+                                                                    displayEmpty
+                                                                    value={currentFamilyMember.gender || ''}
+                                                                    onChange={(e) => handleFamilyMemberChange('gender', e.target.value)}
+                                                                    renderValue={(selected) => {
+                                                                        if (!selected) {
+                                                                            return <Typography sx={{ color: '#757575' }}>Choose Gender</Typography>;
+                                                                        }
+                                                                        return selected;
+                                                                    }}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                >
+                                                                    <MenuItem value="Male">Male</MenuItem>
+                                                                    <MenuItem value="Female">Female</MenuItem>
+                                                                    <MenuItem value="Other">Other</MenuItem>
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Box>
+                                                    </Grid>
+
+                                                    {/* Marital Status */}
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, mb: 3, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Marital Status</Typography>
+                                                            <FormControl fullWidth variant="outlined">
+                                                                <Select
+                                                                    displayEmpty
+                                                                    value={currentFamilyMember.martial_status || ''}
+                                                                    onChange={(e) => handleFamilyMemberChange('martial_status', e.target.value)}
+                                                                    renderValue={(selected) => {
+                                                                        if (!selected) {
+                                                                            return <Typography sx={{ color: '#757575' }}>Choose Marital Status</Typography>;
+                                                                        }
+                                                                        return selected;
+                                                                    }}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                >
+                                                                    <MenuItem value="Single">Single</MenuItem>
+                                                                    <MenuItem value="Married">Married</MenuItem>
+                                                                    <MenuItem value="Divorced">Divorced</MenuItem>
+                                                                    <MenuItem value="Widowed">Widowed</MenuItem>
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Email</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="Enter Email"
+                                                                variant="outlined"
+                                                                name="email"
+                                                                type="email"
+                                                                value={currentFamilyMember.email}
+                                                                error={!!familyMemberErrors.email}
+                                                                helperText={familyMemberErrors.email}
+                                                                onChange={(e) => handleFamilyMemberChange('email', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Grid>
+                                                </Grid>
+
+                                                <Grid container spacing={2}>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Barcode Number</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="e.g. 12345-24"
+                                                                variant="outlined"
+                                                                name="barcode_no"
+                                                                value={currentFamilyMember.barcode_no}
+                                                                onChange={(e) => handleFamilyMemberChange('barcode_no', e.target.value)}
+                                                                inputProps={{
+                                                                    maxLength: 12,
+                                                                    inputMode: 'numeric',
+                                                                }}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Phone Number</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="Enter Phone Number"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.phone_number}
+                                                                onChange={(e) => handleFamilyMemberChange('phone_number', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>CNIC</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                placeholder="XXXXX-XXXXXXX-X"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.cnic}
+                                                                error={!!familyMemberErrors.cnic}
+                                                                helperText={isValidatingFamilyCnic ? 'Checking CNIC availability...' : familyCnicStatus === 'available' ? 'CNIC is available' : familyMemberErrors.cnic}
+                                                                onChange={(e) => {
+                                                                    let value = e.target.value;
+                                                                    value = value.replace(/[^\d-]/g, '');
+                                                                    if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                                                                    if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                                                                    if (value.length > 15) value = value.slice(0, 15);
+                                                                    handleFamilyMemberChange('cnic', value);
+                                                                }}
+                                                                InputProps={{
+                                                                    endAdornment: (
+                                                                        <InputAdornment position="end">
+                                                                            {isValidatingFamilyCnic && <CircularProgress size={20} />}
+                                                                            {!isValidatingFamilyCnic && familyCnicStatus === 'available' && <CheckIcon sx={{ color: '#4caf50' }} />}
+                                                                            {!isValidatingFamilyCnic && familyCnicStatus === 'exists' && <CloseRoundedIcon sx={{ color: '#f44336' }} />}
+                                                                            {!isValidatingFamilyCnic && familyCnicStatus === 'error' && <CloseRoundedIcon sx={{ color: '#ff9800' }} />}
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                }}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: familyCnicStatus === 'available' ? '#4caf50' : familyCnicStatus === 'exists' ? '#f44336' : '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Grid>
+                                                </Grid>
+
+                                                <Grid container spacing={2} sx={{ mt: 1 }}>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Date of Birth *</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                type="date"
+                                                                InputLabelProps={{ shrink: true }}
+                                                                placeholder="dd/mm/yyyy"
+                                                                variant="outlined"
+                                                                name="date_of_birth"
+                                                                error={!!familyMemberErrors.date_of_birth}
+                                                                helperText={familyMemberErrors.date_of_birth || (currentFamilyMember.date_of_birth ? `Age: ${calculateAge(currentFamilyMember.date_of_birth)} years` : '')}
+                                                                value={currentFamilyMember.date_of_birth}
+                                                                onChange={(e) => handleFamilyMemberChange('date_of_birth', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                            {currentFamilyMember.date_of_birth && calculateAge(currentFamilyMember.date_of_birth) >= 25 && (
+                                                                <Typography variant="caption" sx={{ color: '#ff9800', mt: 1, display: 'block' }}>
+                                                                    ⚠️ Member is 25+ years old. Membership will expire automatically unless extended by Super Admin.
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                type="date"
+                                                                InputLabelProps={{ shrink: true }}
+                                                                placeholder="Select date"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.card_issue_date}
+                                                                onChange={(e) => handleFamilyMemberChange('card_issue_date', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                type="date"
+                                                                InputLabelProps={{ shrink: true }}
+                                                                placeholder="Select date"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.card_expiry_date}
+                                                                onChange={(e) => handleFamilyMemberChange('card_expiry_date', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            />
+                                                            {currentFamilyMember.auto_expiry_calculated && (
+                                                                <Typography variant="caption" sx={{ color: '#2196f3', mt: 1, display: 'block' }}>
+                                                                    📅 Auto-calculated based on 25th birthday
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Status</Typography>
+                                                            <Select
+                                                                name="status"
+                                                                value={currentFamilyMember.status}
+                                                                onChange={(e) => handleFamilyMemberChange('status', e.target.value)}
+                                                                displayEmpty
+                                                                renderValue={() => {
+                                                                    const status = currentFamilyMember.status;
+                                                                    const label = status ? status.replace(/_/g, ' ') : '';
+                                                                    return status ? <Typography sx={{ textTransform: 'capitalize' }}>{status}</Typography> : <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                                }}
+                                                                sx={{
+                                                                    width: '100%',
+                                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                                        borderColor: '#ccc',
+                                                                    },
+                                                                }}
+                                                            >
+                                                                {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
+                                                                    const label = status.replace(/_/g, ' ');
+                                                                    return (
+                                                                        <MenuItem key={status} value={status} sx={{ textTransform: 'capitalize' }}>
+                                                                            {label}
+                                                                        </MenuItem>
+                                                                    );
+                                                                })}
+                                                            </Select>
+                                                        </Box>
+                                                    </Grid>
+                                                </Grid>
+
+                                                {familyMemberErrors.date && (
+                                                    <Typography color="error" variant="body2">
+                                                        {familyMemberErrors.date}
+                                                    </Typography>
+                                                )}
+
+                                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        sx={{
+                                                            mr: 2,
+                                                            textTransform: 'none',
+                                                            borderColor: '#ccc',
+                                                            color: '#333',
+                                                            '&:hover': { borderColor: '#999', backgroundColor: '#f5f5f5' },
+                                                        }}
+                                                        onClick={handleCancelFamilyMember}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                    <Button
+                                                        variant="contained"
+                                                        sx={{
+                                                            bgcolor: '#0c4b6e',
+                                                            '&:hover': {
+                                                                bgcolor: '#083854',
+                                                            },
+                                                            textTransform: 'none',
+                                                        }}
+                                                        onClick={handleSaveFamilyMember}
+                                                        disabled={isValidatingFamilyCnic}
+                                                    >
+                                                        {isValidatingFamilyCnic ? 'Validating CNIC...' : 'Save Members'}
+                                                    </Button>
+                                                </Box>
+                                            </>
+                                        )}
                                     </Grid>
-                                </DialogContent>
-                            </Dialog>
-                        </Grid>
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-                            <Button
-                                variant="contained"
-                                sx={{
-                                    bgcolor: '#0c4b6e',
-                                    '&:hover': {
-                                        bgcolor: '#083854',
-                                    },
-                                    textTransform: 'none',
-                                }}
-                                onClick={handleSubmit}
-                                loading={loading}
-                                loadingPosition="start"
-                                disabled={loading}
-                            >
-                                Save & Submit
-                            </Button>
-                        </Box>
+                                </Grid>
+                            </DialogContent>
+                        </Dialog>
+                    </Grid>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                bgcolor: '#0c4b6e',
+                                '&:hover': {
+                                    bgcolor: '#083854',
+                                },
+                                textTransform: 'none',
+                            }}
+                            onClick={handleSubmit}
+                            loading={loading}
+                            loadingPosition="start"
+                            disabled={loading}
+                        >
+                            Save & Submit
+                        </Button>
                     </Box>
+                </Box>
                 {/* </Container> */}
             </div>
         </>
