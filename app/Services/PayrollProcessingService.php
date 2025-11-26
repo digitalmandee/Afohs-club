@@ -369,6 +369,81 @@ class PayrollProcessingService
             $totalDeductions += $amount;
         }
 
+        // Calculate overtime amount
+        $overtimeAmount = $attendanceData['overtime_hours']
+            * ($basicSalary / ($this->settings->working_days_per_month * $this->settings->working_hours_per_day))
+            * $this->settings->overtime_rate_multiplier;
+
+        // Add overtime to allowances
+        $totalAllowances += $overtimeAmount;
+
+        // Calculate Gross Salary first so we can use it for Tax
+        $grossSalary = $basicSalary + $totalAllowances;
+
+        // Calculate Income Tax based on slabs
+        $taxAmount = 0;
+        $taxSlabs = $this->settings->tax_slabs ?? [];
+
+        if (!empty($taxSlabs) && is_array($taxSlabs)) {
+            // Sort slabs by min_salary to ensure correct order check
+            usort($taxSlabs, function ($a, $b) {
+                return $a['min_salary'] <=> $b['min_salary'];
+            });
+
+            foreach ($taxSlabs as $slab) {
+                $minSalary = $slab['min_salary'];
+                $maxSalary = $slab['max_salary'];
+                $fixedAmount = $slab['fixed_amount'] ?? 0;
+                $taxRate = $slab['tax_rate'] ?? 0;
+
+                // Normalize Yearly to Monthly
+                if (($slab['frequency'] ?? 'monthly') === 'yearly') {
+                    $minSalary = $minSalary / 12;
+                    if (!is_null($maxSalary)) {
+                        $maxSalary = $maxSalary / 12;
+                    }
+                    $fixedAmount = $fixedAmount / 12;
+                }
+
+                // Check if salary falls in this slab
+                // If max_salary is null, it means "above min_salary"
+                if ($grossSalary >= $minSalary && (is_null($maxSalary) || $grossSalary <= $maxSalary)) {
+                    // Calculate Tax
+                    // Logic: (Gross - Min) * Rate% + Fixed
+                    // Note: This is a direct slab check as per user request ("if has salary 50k plus above then this tax employe cut")
+                    // It is NOT a progressive tax calculation (where you pay different rates for different chunks of salary).
+                    // It applies the rule of the matching slab.
+
+                    $taxableAmount = $grossSalary - $minSalary;
+                    $calculatedTax = ($taxableAmount * $taxRate / 100) + $fixedAmount;
+
+                    $taxAmount = $calculatedTax;
+                    break;  // Stop after finding the matching slab
+                }
+            }
+        }
+
+        if ($taxAmount > 0) {
+            // Find or Create Income Tax Deduction Type
+            $taxDeductionType = DeductionType::firstOrCreate(
+                ['name' => 'Income Tax'],
+                [
+                    'type' => 'fixed',
+                    'is_mandatory' => true,
+                    'calculation_base' => 'gross_salary',
+                    'is_active' => true,
+                    'description' => 'Auto-calculated Income Tax'
+                ]
+            );
+
+            $deductions[] = [
+                'type_id' => $taxDeductionType->id,
+                'name' => 'Income Tax',
+                'amount' => $taxAmount
+            ];
+            $totalDeductions += $taxAmount;
+        }
+
         // Calculate absent deduction
         $absentDeduction = 0;
         if ($attendanceData['days_absent'] > $this->settings->max_allowed_absents) {
@@ -384,18 +459,11 @@ class PayrollProcessingService
         // Calculate late deduction
         $lateDeduction = $attendanceData['days_late'] * $this->settings->late_deduction_per_minute * 60;  // Assuming 1 hour late per day
 
-        // Calculate overtime amount
-        $overtimeAmount = $attendanceData['overtime_hours']
-            * ($basicSalary / ($this->settings->working_days_per_month * $this->settings->working_hours_per_day))
-            * $this->settings->overtime_rate_multiplier;
-
         // Add attendance-based deductions to total
         $totalDeductions += $absentDeduction + $lateDeduction;
 
-        // Add overtime to allowances
-        $totalAllowances += $overtimeAmount;
+        // Note: Overtime was already added to totalAllowances above
 
-        $grossSalary = $basicSalary + $totalAllowances;
         $netSalary = $grossSalary - $totalDeductions;
 
         return [
@@ -408,7 +476,8 @@ class PayrollProcessingService
             'late_deduction' => $lateDeduction,
             'overtime_amount' => $overtimeAmount,
             'allowances' => $allowances,
-            'deductions' => $deductions
+            'deductions' => $deductions,
+            'tax_amount' => $taxAmount ?? 0
         ];
     }
 
@@ -448,7 +517,9 @@ class PayrollProcessingService
             'total_absent_deduction' => $payslips->sum('absent_deduction'),
             'total_late_deduction' => $payslips->sum('late_deduction'),
             'total_overtime_amount' => $payslips->sum('overtime_amount'),
-            'department_wise' => $this->getDepartmentWiseSummary($payslips)
+            'department_wise' => $this->getDepartmentWiseSummary($payslips),
+            'allowances_summary' => $this->getAllowancesSummary($payslips),
+            'deductions_summary' => $this->getDeductionsSummary($payslips)
         ];
     }
 
@@ -464,5 +535,63 @@ class PayrollProcessingService
                 'total_net' => $departmentPayslips->sum('net_salary')
             ];
         });
+    }
+
+    /**
+     * Get allowances summary
+     */
+    private function getAllowancesSummary($payslips)
+    {
+        $summary = [];
+        foreach ($payslips as $payslip) {
+            foreach ($payslip->allowances as $allowance) {
+                if (!isset($summary[$allowance->allowance_name])) {
+                    $summary[$allowance->allowance_name] = 0;
+                }
+                $summary[$allowance->allowance_name] += $allowance->amount;
+            }
+
+            // Add Overtime as a separate allowance type if not already in allowances list
+            if ($payslip->overtime_amount > 0) {
+                if (!isset($summary['Overtime'])) {
+                    $summary['Overtime'] = 0;
+                }
+                $summary['Overtime'] += $payslip->overtime_amount;
+            }
+        }
+        return $summary;
+    }
+
+    /**
+     * Get deductions summary
+     */
+    private function getDeductionsSummary($payslips)
+    {
+        $summary = [];
+        foreach ($payslips as $payslip) {
+            foreach ($payslip->deductions as $deduction) {
+                if (!isset($summary[$deduction->deduction_name])) {
+                    $summary[$deduction->deduction_name] = 0;
+                }
+                $summary[$deduction->deduction_name] += $deduction->amount;
+            }
+
+            // Add Absent Deduction
+            if ($payslip->absent_deduction > 0) {
+                if (!isset($summary['Absent Deduction'])) {
+                    $summary['Absent Deduction'] = 0;
+                }
+                $summary['Absent Deduction'] += $payslip->absent_deduction;
+            }
+
+            // Add Late Deduction
+            if ($payslip->late_deduction > 0) {
+                if (!isset($summary['Late Deduction'])) {
+                    $summary['Late Deduction'] = 0;
+                }
+                $summary['Late Deduction'] += $payslip->late_deduction;
+            }
+        }
+        return $summary;
     }
 }

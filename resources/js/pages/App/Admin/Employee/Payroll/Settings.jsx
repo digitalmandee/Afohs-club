@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, Snackbar, IconButton, Switch, FormControlLabel, InputAdornment, CircularProgress } from '@mui/material';
-import { Settings as SettingsIcon, Save as SaveIcon, Refresh as RefreshIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { Box, Card, CardContent, Typography, TextField, Button, Grid, FormControl, InputLabel, Select, MenuItem, Alert, Snackbar, IconButton, Switch, FormControlLabel, InputAdornment, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Settings as SettingsIcon, Save as SaveIcon, Refresh as RefreshIcon, ArrowBack as ArrowBackIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import axios from 'axios';
 
 const PayrollSettings = () => {
@@ -17,7 +17,9 @@ const PayrollSettings = () => {
         absent_deduction_type: 'full_day',
         absent_deduction_amount: 0.0,
         max_allowed_absents: 3,
+        max_allowed_absents: 3,
         grace_period_minutes: 15,
+        tax_slabs: [],
     });
 
     const [loading, setLoading] = useState(false);
@@ -81,6 +83,38 @@ const PayrollSettings = () => {
         }));
     };
 
+    const handleAddSlab = () => {
+        setSettings((prev) => ({
+            ...prev,
+            tax_slabs: [
+                ...(prev.tax_slabs || []),
+                {
+                    name: '',
+                    frequency: 'monthly',
+                    min_salary: 0,
+                    max_salary: '',
+                    tax_rate: 0,
+                    fixed_amount: 0,
+                },
+            ],
+        }));
+    };
+
+    const handleRemoveSlab = (index) => {
+        setSettings((prev) => ({
+            ...prev,
+            tax_slabs: prev.tax_slabs.filter((_, i) => i !== index),
+        }));
+    };
+
+    const handleSlabChange = (index, field, value) => {
+        setSettings((prev) => {
+            const newSlabs = [...(prev.tax_slabs || [])];
+            newSlabs[index] = { ...newSlabs[index], [field]: value };
+            return { ...prev, tax_slabs: newSlabs };
+        });
+    };
+
     if (loading) {
         return (
             <AdminLayout>
@@ -98,7 +132,7 @@ const PayrollSettings = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton edge="start" onClick={() => window.history.back()}>
-                            <ArrowBackIcon sx={{color: '#063455'}} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Payroll Settings
@@ -250,6 +284,96 @@ const PayrollSettings = () => {
                                         </Grid>
                                     )}
                                 </Grid>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Tax Configuration */}
+                    <Grid item xs={12}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                                    <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
+                                        Tax Configuration (Income Tax Slabs)
+                                    </Typography>
+                                    <Button startIcon={<AddIcon />} onClick={handleAddSlab} variant="outlined" size="small">
+                                        Add Slab
+                                    </Button>
+                                </Box>
+
+                                <Alert severity="info" sx={{ mb: 3 }}>
+                                    Define tax slabs based on salary ranges. Slabs are checked in order. If you select <strong>Yearly</strong> frequency, the system will automatically convert the values to monthly equivalents for calculation.
+                                    <br />
+                                    <strong>Logic:</strong> If salary falls in range, Tax = (Salary - Min) * Rate% + Fixed Amount.
+                                </Alert>
+
+                                <TableContainer component={Paper} variant="outlined">
+                                    <Table size="small">
+                                        <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                                            <TableRow>
+                                                <TableCell>Name</TableCell>
+                                                <TableCell>Frequency</TableCell>
+                                                <TableCell>Min Salary</TableCell>
+                                                <TableCell>Max Salary</TableCell>
+                                                <TableCell>Tax Rate (%)</TableCell>
+                                                <TableCell>Fixed Amount</TableCell>
+                                                <TableCell>Action</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {settings.tax_slabs && settings.tax_slabs.length > 0 ? (
+                                                settings.tax_slabs.map((slab, index) => (
+                                                    <TableRow key={index}>
+                                                        <TableCell>
+                                                            <TextField size="small" value={slab.name} onChange={(e) => handleSlabChange(index, 'name', e.target.value)} placeholder="e.g. Tier 1" />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Select size="small" value={slab.frequency} onChange={(e) => handleSlabChange(index, 'frequency', e.target.value)} sx={{ minWidth: 100 }}>
+                                                                <MenuItem value="monthly">Monthly</MenuItem>
+                                                                <MenuItem value="yearly">Yearly</MenuItem>
+                                                            </Select>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <TextField size="small" type="number" value={slab.min_salary} onChange={(e) => handleSlabChange(index, 'min_salary', parseFloat(e.target.value))} InputProps={{ inputProps: { min: 0 } }} />
+                                                            {slab.frequency === 'yearly' && (
+                                                                <Typography variant="caption" display="block" color="text.secondary">
+                                                                    Monthly: {(slab.min_salary / 12).toFixed(0)}
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <TextField size="small" type="number" value={slab.max_salary === null ? '' : slab.max_salary} onChange={(e) => handleSlabChange(index, 'max_salary', e.target.value === '' ? null : parseFloat(e.target.value))} placeholder="Above" InputProps={{ inputProps: { min: 0 } }} />
+                                                            {slab.frequency === 'yearly' && slab.max_salary && (
+                                                                <Typography variant="caption" display="block" color="text.secondary">
+                                                                    Monthly: {(slab.max_salary / 12).toFixed(0)}
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <TextField size="small" type="number" value={slab.tax_rate} onChange={(e) => handleSlabChange(index, 'tax_rate', parseFloat(e.target.value))} InputProps={{ inputProps: { min: 0, max: 100 } }} />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <TextField size="small" type="number" value={slab.fixed_amount} onChange={(e) => handleSlabChange(index, 'fixed_amount', parseFloat(e.target.value))} InputProps={{ inputProps: { min: 0 } }} />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <IconButton size="small" color="error" onClick={() => handleRemoveSlab(index)}>
+                                                                <DeleteIcon />
+                                                            </IconButton>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow>
+                                                    <TableCell colSpan={7} align="center">
+                                                        <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                                                            No tax slabs defined. Click "Add Slab" to create one.
+                                                        </Typography>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
                             </CardContent>
                         </Card>
                     </Grid>
