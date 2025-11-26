@@ -69,7 +69,8 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5.5rem',
+                    paddingTop: '5rem',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 {/* Order Detailss */}
@@ -79,7 +80,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                         gap: 2,
                         maxWidth: orderDetails.order_type === 'reservation' ? '1000px' : '732px',
                         mx: 'auto',
-                        mt: 15,
+                        mt: 5,
                         mb: 5,
                     }}
                 >

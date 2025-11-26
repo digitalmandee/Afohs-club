@@ -31,7 +31,7 @@ const ForgetPin = () => {
                 }}
             >
                 {/* Left side with text */}
-                <Box
+                {/* <Box
                     sx={{
                         flex: 1,
                         display: { xs: 'none', md: 'flex' },
@@ -72,7 +72,7 @@ const ForgetPin = () => {
                             />
                         ))}
                     </Box>
-                </Box>
+                </Box> */}
 
                 {/* Right side with login form */}
                 <Box
@@ -84,7 +84,7 @@ const ForgetPin = () => {
                         //   m: { xs: 1, md: 1 },
                         mt: { xs: 1, md: 1 },
                         mb: { xs: 1, md: 1 },
-                        mr: { xs: 1, md: 1 },
+                        mx: 'auto',
                         zIndex: 1,
                     }}
                 >

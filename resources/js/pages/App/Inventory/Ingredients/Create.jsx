@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, TextField, MenuItem, Grid, Alert } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';
+import { Box, Typography, IconButton, Button, Card, CardContent, TextField, MenuItem, Grid, Alert } from '@mui/material';
+import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import SideNav from '@/components/App/SideBar/SideNav';
@@ -48,15 +48,16 @@ const CreateIngredient = () => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3 }}>
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Button startIcon={<BackIcon />} onClick={() => router.visit(route('ingredients.index'))} sx={{ mr: 2 }}>
-                    Back to Ingredients
-                </Button>
-                <Typography variant="h4" fontWeight="bold">
+                <IconButton onClick={() => router.visit(route('ingredients.index'))}>
+                    <ArrowBackIcon sx={{ color:'#063455' }} />
+                </IconButton>
+                <Typography variant="h5" sx={{fontWeight:'600'}}>
                     Add New Ingredient
                 </Typography>
             </Box>

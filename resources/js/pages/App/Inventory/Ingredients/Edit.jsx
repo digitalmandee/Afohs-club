@@ -48,15 +48,16 @@ const EditIngredient = ({ ingredient }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Button startIcon={<BackIcon />} onClick={() => router.visit(route('ingredients.index'))} sx={{ mr: 2 }}>
-                            Back to Ingredients
-                        </Button>
-                        <Typography variant="h4" fontWeight="bold">
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
+                        </IconButton>
+                        <Typography variant="h5" sx={{fontWeight:'600'}}>
                             Edit Ingredient
                         </Typography>
                     </Box>

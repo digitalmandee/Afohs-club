@@ -73,7 +73,7 @@ const ResetPin = () => {
                         zIndex: 2,
                     }}
                 >
-                    <Typography
+                    {/* <Typography
                         variant="h5"
                         component="div"
                         sx={{
@@ -88,7 +88,7 @@ const ResetPin = () => {
                         Complex. A total of 25.5 Kanal of land was demarcated by
                         Air Headquarters in PAF Falcon Complex for the
                         establishment of "Community Centre and Club".
-                    </Typography>
+                    </Typography> */}
                     <Box
                         sx={{
                             display: "flex",

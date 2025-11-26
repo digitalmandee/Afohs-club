@@ -240,50 +240,55 @@ export default function Category({ categoriesList }) {
                                 </Button>
                             </Box>
                         </div>
-
-                        {filteredCategories.map((category) => (
-                            <Card
-                                key={category.id}
-                                sx={{
-                                    mb: 1,
-                                    borderRadius: 1,
-                                    border: '1px solid #E3E3E3',
-                                    boxShadow: 'none',
-                                    '&:hover': { background: '#F6F6F6' },
-                                }}
-                            >
-                                <CardContent sx={{ p: 3 }}>
-                                    <Grid container alignItems="center" justifyContent="space-between">
-                                        <Grid item xs={12} sm={9} md={9} sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
-                                            <Box sx={{ width: 70, height: 70, mr: 2 }}>
-                                                <img
-                                                    src={category.image ? tenantAsset(category.image) : '/assets/dish.png'}
-                                                    alt={category.name}
-                                                    style={{
-                                                        width: '100%',
-                                                        height: '100%',
-                                                        objectFit: 'contain',
-                                                        borderRadius: '50%',
-                                                    }}
-                                                />
-                                            </Box>
-                                            <Box>
-                                                <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{category.name}</Typography>
-                                                <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#121212' }}>Products ({category.products_count ?? 0})</Typography>
-                                            </Box>
-                                        </Grid>
-                                        <Grid item>
-                                            <IconButton onClick={() => handleEdit(category)}>
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton onClick={() => handleDeleteClick(category)}>
-                                                <DeleteIcon color="error" />
-                                            </IconButton>
-                                        </Grid>
-                                    </Grid>
-                                </CardContent>
-                            </Card>
-                        ))}
+                        <Grid container spacing={2}>
+                            {filteredCategories.map((category) => (
+                                <Grid item xs={12} sm={6} md={4} key={category.id}>
+                                    <Card
+                                        key={category.id}
+                                        sx={{
+                                            mb: 1,
+                                            borderRadius: 1,
+                                            border: '1px solid #E3E3E3',
+                                            boxShadow: 'none',
+                                            '&:hover': { background: '#F6F6F6' },
+                                        }}
+                                    >
+                                        <CardContent sx={{ p: 2 }}>
+                                            {/* <Grid container alignItems="center" justifyContent="space-between" sx={{bgcolor:'pink'}}> */}
+                                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
+                                                <div style={{display:'flex'}}>
+                                                    <Box sx={{ width: 70, height: 70, mr: 2 }}>
+                                                        <img
+                                                            src={category.image ? tenantAsset(category.image) : '/assets/dish.png'}
+                                                            alt={category.name}
+                                                            style={{
+                                                                width: '100%',
+                                                                height: '100%',
+                                                                objectFit: 'contain',
+                                                                borderRadius: '50%',
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{category.name}</Typography>
+                                                        <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#121212' }}>Products ({category.products_count ?? 0})</Typography>
+                                                    </Box>
+                                                </div>
+                                                <div style={{ display: 'flex' }}>
+                                                    <IconButton onClick={() => handleEdit(category)}>
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton onClick={() => handleDeleteClick(category)}>
+                                                        <DeleteIcon color="error" />
+                                                    </IconButton>
+                                                </div>
+                                            </Grid>
+                                            {/* </Grid> */}
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            ))}
+                        </Grid>
                     </div>
                 </div>
             </div>
