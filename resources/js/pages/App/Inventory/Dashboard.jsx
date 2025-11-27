@@ -315,143 +315,125 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         </div>
 
                         {/* Product List */}
-                        <div>
+                        <Grid container spacing={2}>
                             {filteredProducts.map((product) => (
-                                <Card
-                                    key={product.id}
-                                    sx={{
-                                        mb: 1,
-                                        borderRadius: 1,
-                                        border: '1px solid #E3E3E3',
-                                        boxShadow: 'none',
-                                        cursor: 'pointer',
-                                        '&:hover': {
-                                            background: '#F6F6F6',
-                                        },
-                                    }}
-                                >
-                                    <CardContent sx={{ p: 3 }}>
-                                        <Grid container alignItems="center">
-                                            <Grid item xs={12} sm={3} md={2.5} sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <Box sx={{ width: 70, height: 70, mr: 2 }}>
-                                                    <img
-                                                        src={product.images.length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
-                                                        alt={product.name}
-                                                        style={{
-                                                            width: '100%',
-                                                            height: '100%',
-                                                            objectFit: 'cover',
-                                                            borderRadius: '50%',
-                                                        }}
-                                                    />
-                                                </Box>
-
-                                                <Box>
-                                                    <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{product.name}</Typography>
-                                                    <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#063455' }}>{product.category?.name}</Typography>
-                                                </Box>
-                                            </Grid>
-
-                                            <Grid item xs={12} sm={3} md={2.5} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Box>
-                                                    {product.current_stock === 0 ? (
-                                                        <Typography
-                                                            variant="body2"
-                                                            component="span"
-                                                            className="badge"
-                                                            sx={{
-                                                                background: '#F14C35',
-                                                            }}
-                                                        >
-                                                            Out of Stock
-                                                            {/* {product.stock.status} */}
-                                                        </Typography>
-                                                    ) : (
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Stock Available
-                                                        </Typography>
-                                                    )}
-                                                    <Typography variant="body1" fontWeight="500" sx={{ fontSize: '18px' }}>
-                                                        {product.current_stock}
-                                                    </Typography>
-                                                </Box>
-                                            </Grid>
-
-                                            <Grid item xs={12} sm={3} md={2.5} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                        Rs
-                                                    </Typography>
-                                                    <Typography variant="h6" fontWeight="500" sx={{ fontSize: '24px' }}>
-                                                        {product.base_price}
-                                                    </Typography>
-
-                                                    {/* {product.cost_of_goods_sold && (
-                                                        <>
-                                                            <Typography
-                                                                variant="body2"
-                                                                color="#FFA90B"
-                                                                sx={{ ml: 1, textDecoration: 'line-through' }}
-                                                            >
-                                                                Rs {product.cost_of_goods_sold}
-                                                            </Typography>
-                                                            <Chip
-                                                                label={product.price.discount}
-                                                                size="small"
-                                                                sx={{
-                                                                    ml: 1,
-                                                                    backgroundColor: '#0288d1',
-                                                                    color: 'white',
-                                                                    height: 20,
-                                                                    fontSize: '0.7rem',
+                                <Grid item xs={12} sm={6} md={4} key={product.id}>
+                                    <Card
+                                        key={product.id}
+                                        sx={{
+                                            height: '100%',
+                                            borderRadius: 1,
+                                            border: '1px solid #E3E3E3',
+                                            boxShadow: 'none',
+                                            cursor: 'pointer',
+                                            // padding: 1,
+                                            '&:hover': {
+                                                background: '#F6F6F6',
+                                            },
+                                        }}
+                                    >
+                                        <CardContent>
+                                            <Grid container alignItems="center">
+                                                <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <div>
+                                                        <Box sx={{ width: 70, height: 70, mr: 2 }}>
+                                                            <img
+                                                                src={product.images.length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
+                                                                alt={product.name}
+                                                                style={{
+                                                                    width: '100%',
+                                                                    height: '100%',
+                                                                    objectFit: 'cover',
+                                                                    borderRadius: '50%',
                                                                 }}
                                                             />
-                                                        </>
-                                                    )} */}
-                                                </Box>
-                                            </Grid>
+                                                        </Box>
 
-                                            <Grid item xs={12} sm={3} md={4.5} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                {product.variants.length > 0
-                                                    ? product.variants.map((variant, index) => {
-                                                          return (
-                                                              <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
-                                                                  <Typography variant="body2" color="text.secondary">
-                                                                      {variant.name}
-                                                                  </Typography>
-                                                                  <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                                      {variant.values.map((value, valueIndex) => (
-                                                                          <Button
-                                                                              key={valueIndex}
-                                                                              variant="outlined"
-                                                                              size="small"
-                                                                              sx={{
-                                                                                  minWidth: 'unset',
-                                                                                  px: 1.5,
-                                                                                  borderColor: '#e0e0e0',
-                                                                                  color: 'text.primary',
-                                                                              }}
-                                                                          >
-                                                                              {value.name}
-                                                                          </Button>
-                                                                      ))}
-                                                                  </Box>
-                                                              </Box>
-                                                          );
-                                                      })
-                                                    : '-----'}
+                                                        <Box>
+                                                            <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{product.name}</Typography>
+                                                            <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#063455' }}>{product.category?.name}</Typography>
+                                                        </Box>
+                                                    </div>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                            Rs
+                                                        </Typography>
+                                                        <Typography variant="h6" fontWeight="500" sx={{ fontSize: '24px' }}>
+                                                            {product.base_price}
+                                                        </Typography>
+                                                    </Box>
+                                                </Grid>
 
-                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                    <IconButton onClick={() => handleProductClick(product)}>
-                                                        <ChevronRightIcon />
-                                                    </IconButton>
-                                                </Box>
+                                                <Grid item xs={12} sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+                                                    <Box>
+                                                        {product.current_stock === 0 ? (
+                                                            <Typography
+                                                                variant="body2"
+                                                                component="span"
+                                                                className="badge"
+                                                                sx={{
+                                                                    background: '#F14C35',
+                                                                }}
+                                                            >
+                                                                Out of Stock
+                                                                {/* {product.stock.status} */}
+                                                            </Typography>
+                                                        ) : (
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Stock Available
+                                                            </Typography>
+                                                        )}
+                                                        <Typography variant="body1" fontWeight="500" sx={{ fontSize: '18px' }}>
+                                                            {product.current_stock}
+                                                        </Typography>
+                                                    </Box>
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        {product.variants.length > 0
+                                                            ? product.variants.map((variant, index) => {
+                                                                return (
+                                                                    <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
+                                                                        <Typography variant="body2" color="text.secondary">
+                                                                            {variant.name}
+                                                                        </Typography>
+                                                                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                                            {variant.values.map((value, valueIndex) => (
+                                                                                <Button
+                                                                                    key={valueIndex}
+                                                                                    variant="outlined"
+                                                                                    size="small"
+                                                                                    sx={{
+                                                                                        minWidth: 'unset',
+                                                                                        px: 1.5,
+                                                                                        borderColor: '#e0e0e0',
+                                                                                        color: 'text.primary',
+                                                                                    }}
+                                                                                >
+                                                                                    {value.name}
+                                                                                </Button>
+                                                                            ))}
+                                                                        </Box>
+                                                                    </Box>
+                                                                );
+                                                            })
+                                                            : '-----'}
+
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <IconButton onClick={() => handleProductClick(product)}>
+                                                                <ChevronRightIcon />
+                                                            </IconButton>
+                                                        </Box>
+                                                    </div>
+                                                </Grid>
+
+                                                {/* <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                                    
+                                                </Grid> */}
                                             </Grid>
-                                        </Grid>
-                                    </CardContent>
-                                </Card>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
                             ))}
-                        </div>
+                        </Grid>
                     </div>
                     {/* Filter Modal */}
                     <Dialog
@@ -696,12 +678,12 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                     <AddMenu
                         openMenu={openAddMenu}
                         onClose={handleAddMenuClose}
-                        // handleAddMenu={handleAddMenu}
-                        // selectedCategory={selectedCategory}
-                        // setSelectedCategory={setSelectedCategory}
-                        // newMenu={newMenu}
-                        // setNewMenu={setNewMenu}
-                        // addMenuStep={addMenuStep}
+                    // handleAddMenu={handleAddMenu}
+                    // selectedCategory={selectedCategory}
+                    // setSelectedCategory={setSelectedCategory}
+                    // newMenu={newMenu}
+                    // setNewMenu={setNewMenu}
+                    // addMenuStep={addMenuStep}
                     />
 
                     {/* Stock Modal */}
@@ -1316,7 +1298,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         </Alert>
                     </Snackbar>
                 </div>
-            </div>
+            </div >
         </>
     );
 }

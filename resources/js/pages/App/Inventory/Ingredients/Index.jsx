@@ -76,11 +76,12 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                     padding: '2rem',
+                    backgroundColor:'#f5f5f5'
                 }}
             >
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h4" fontWeight="bold">
+                    <Typography variant="h5" fontWeight="bold">
                         Ingredients Management
                     </Typography>
                     <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('ingredients.create'))} sx={{ backgroundColor: '#063455' }}>

@@ -31,6 +31,8 @@ import EmployeeProfileScreen from './Profile';
 import { Modal, Slide } from '@mui/material';
 import CategoryIcon from '@mui/icons-material/Category';
 import { MdManageHistory } from 'react-icons/md';
+import { MdRestaurantMenu } from "react-icons/md";
+import { MdMenuBook } from "react-icons/md";
 import { useEffect } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -107,9 +109,9 @@ export default function SideNav({ open, setOpen }) {
     const menuItems = [
         { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard') },
         { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
-        { text: 'Inventory', icon: <InventoryIcon />, path: route('inventory.index') },
-        { text: 'Inventory Category', icon: <CategoryIcon />, path: route('inventory.category') },
-        { text: 'Ingredients', icon: <CategoryIcon />, path: route('ingredients.index') },
+        { text: 'Menu', icon: <MdRestaurantMenu style={{ height: '25px', width: '25px' }} />, path: route('inventory.index') },
+        { text: 'Menu Category', icon: <CategoryIcon />, path: route('inventory.category') },
+        { text: 'Ingredients', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('ingredients.index') },
         { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index') },
         {

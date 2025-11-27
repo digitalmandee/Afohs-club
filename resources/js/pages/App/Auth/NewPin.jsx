@@ -45,7 +45,7 @@ const SetNewPin = () => {
                 }}
             >
                 {/* Left side with text */}
-                <Box
+                {/* <Box
                     sx={{
                         flex: 1,
                         display: { xs: 'none', md: 'flex' },
@@ -55,20 +55,6 @@ const SetNewPin = () => {
                         zIndex: 2,
                     }}
                 >
-                    <Typography
-                        variant="h5"
-                        component="div"
-                        sx={{
-                            color: 'white',
-                            maxWidth: '70%',
-                            mb: 6,
-                            fontWeight: 500,
-                            lineHeight: 1.5,
-                        }}
-                    >
-                        AFOHS Club was established in Pakistan Air Force Falcon Complex. A total of 25.5 Kanal of land was demarcated by Air
-                        Headquarters in PAF Falcon Complex for the establishment of "Community Centre and Club".
-                    </Typography>
                     <Box
                         sx={{
                             display: 'flex',
@@ -87,7 +73,7 @@ const SetNewPin = () => {
                             />
                         ))}
                     </Box>
-                </Box>
+                </Box> */}
 
                 {/* Right side with login form */}
                 <Box
@@ -99,7 +85,7 @@ const SetNewPin = () => {
                         //   m: { xs: 1, md: 1 },
                         mt: { xs: 1, md: 1 },
                         mb: { xs: 1, md: 1 },
-                        mr: { xs: 1, md: 1 },
+                        mx: 'auto',
                         zIndex: 1,
                     }}
                 >

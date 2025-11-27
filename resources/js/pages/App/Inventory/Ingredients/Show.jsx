@@ -52,16 +52,17 @@ const ShowIngredient = ({ ingredient }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
+                    backgroundColor: '#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Button startIcon={<BackIcon />} onClick={() => router.visit(route('ingredients.index'))} sx={{ mr: 2 }}>
-                                Back to Ingredients
-                            </Button>
-                            <Typography variant="h4" fontWeight="bold">
+                            <IconButton onClick={() => window.history.back()}>
+                                <ArrowBackIcon sx={{ color: '#063455' }} />
+                            </IconButton>
+                            <Typography variant="h5" sx={{fontWeight:'600'}}>
                                 {ingredient.name}
                             </Typography>
                         </Box>
@@ -84,7 +85,7 @@ const ShowIngredient = ({ ingredient }) => {
                                         Basic Information
                                     </Typography>
                                     <Divider sx={{ mb: 2 }} />
-                                    
+
                                     <Grid container spacing={2}>
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body2" color="text.secondary">
@@ -94,15 +95,15 @@ const ShowIngredient = ({ ingredient }) => {
                                                 {ingredient.name}
                                             </Typography>
                                         </Grid>
-                                        
+
                                         <Grid item xs={12} sm={6}>
                                             <Typography variant="body2" color="text.secondary">
                                                 Status
                                             </Typography>
-                                            <Chip 
-                                                label={ingredient.status} 
-                                                color={getStatusColor(ingredient.status)} 
-                                                size="small" 
+                                            <Chip
+                                                label={ingredient.status}
+                                                color={getStatusColor(ingredient.status)}
+                                                size="small"
                                                 sx={{ mt: 0.5 }}
                                             />
                                         </Grid>
@@ -128,7 +129,7 @@ const ShowIngredient = ({ ingredient }) => {
                                         Stock Information
                                     </Typography>
                                     <Divider sx={{ mb: 2 }} />
-                                    
+
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Total Quantity
@@ -177,7 +178,7 @@ const ShowIngredient = ({ ingredient }) => {
                                             Used in Products
                                         </Typography>
                                         <Divider sx={{ mb: 2 }} />
-                                        
+
                                         <TableContainer component={Paper} variant="outlined">
                                             <Table>
                                                 <TableHead>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, TextField, Grid, Alert, Divider } from '@mui/material';
-import { Save as SaveIcon, ArrowBack as BackIcon, Add as AddIcon } from '@mui/icons-material';
+import { Box, Typography, Button, Card, CardContent, IconButton, TextField, Grid, Alert, Divider } from '@mui/material';
+import { Save as SaveIcon, ArrowBack as ArrowBackIcon, Add as AddIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import SideNav from '@/components/App/SideBar/SideNav';
@@ -42,15 +42,16 @@ const AddStock = ({ ingredient }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
+                    backgroundColor: '#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 3 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Button startIcon={<BackIcon />} onClick={() => router.visit(route('ingredients.index'))} sx={{ mr: 2 }}>
-                            Back to Ingredients
-                        </Button>
-                        <Typography variant="h4" fontWeight="bold">
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
+                        </IconButton>
+                        <Typography variant="h5" sx={{fontWeight:'600'}}>
                             Add Stock - {ingredient.name}
                         </Typography>
                     </Box>
@@ -64,7 +65,7 @@ const AddStock = ({ ingredient }) => {
                                         Current Stock Information
                                     </Typography>
                                     <Divider sx={{ mb: 2 }} />
-                                    
+
                                     <Box sx={{ mb: 2 }}>
                                         <Typography variant="body2" color="text.secondary">
                                             Ingredient Name
