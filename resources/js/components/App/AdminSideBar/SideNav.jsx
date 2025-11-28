@@ -363,10 +363,6 @@ export default function SideNav({ open, setOpen }) {
                         path: route('finance.dashboard'),
                     },
                     {
-                        text: 'Bulk Transaction',
-                        path: route('finance.transaction.bulk-migration'),
-                    },
-                    {
                         text: 'Add Transaction',
                         path: route('finance.transaction.create'),
                     },

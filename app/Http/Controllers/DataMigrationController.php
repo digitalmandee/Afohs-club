@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\FinancialInvoice;
 use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\MemberClassification;
+use App\Models\SubscriptionCategory;
+use App\Models\SubscriptionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,6 +81,12 @@ class DataMigrationController extends Controller
                 'members_migration_percentage' => $oldMembersCount > 0 ? round(($migratedMembersCount / $oldMembersCount) * 100, 2) : 0,
                 'families_migration_percentage' => $oldFamiliesCount > 0 ? round(($migratedFamiliesCount / $oldFamiliesCount) * 100, 2) : 0,
                 'media_migration_percentage' => $oldMediaCount > 0 ? round(($migratedMediaCount / $oldMediaCount) * 100, 2) : 0,
+                // Invoice Stats
+                'old_invoices_count' => DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count(),
+                'migrated_invoices_count' => FinancialInvoice::whereIn('invoice_type', ['membership', 'maintenance'])->count(),
+                'invoices_migration_percentage' => DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count() > 0
+                    ? round((FinancialInvoice::whereIn('invoice_type', ['membership', 'maintenance'])->count() / DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count()) * 100, 2)
+                    : 0,
             ];
         } catch (\Exception $e) {
             Log::error('Error getting migration stats: ' . $e->getMessage());
@@ -93,6 +102,15 @@ class DataMigrationController extends Controller
         try {
             $tables = DB::select("SHOW TABLES LIKE 'memberships'");
             $familyTables = DB::select("SHOW TABLES LIKE 'mem_families'");
+
+            // Check for finance_invoices table in old database connection if possible, or just assume it exists if others do
+            // Better to check explicitly if we can
+            try {
+                $invoiceTables = DB::select("SHOW TABLES LIKE 'finance_invoices'");
+            } catch (\Exception $e) {
+                $invoiceTables = [];  // Connection might fail or table might not exist
+            }
+
             return !empty($tables) && !empty($familyTables);
         } catch (\Exception $e) {
             return false;
@@ -728,6 +746,217 @@ class DataMigrationController extends Controller
             // If Carbon can't parse it, return null
             return null;
         }
+    }
+
+    public function migrateInvoices(Request $request)
+    {
+        $batchSize = $request->input('batch_size', 100);
+        $offset = $request->input('offset', 0);
+
+        try {
+            // Check if old table exists
+            if (!$this->checkOldTablesExist()) {
+                return response()->json(['error' => 'Old tables not found'], 404);
+            }
+
+            // Get old invoices (Type 3 = Membership, Type 4 = Maintenance)
+            $oldInvoices = DB::table('finance_invoices')
+                ->whereIn('charges_type', [3, 4])
+                ->whereNotNull('member_id')
+                ->orderBy('id')
+                ->skip($offset)
+                ->take($batchSize)
+                ->get();
+
+            $migrated = 0;
+            $errors = [];
+
+            foreach ($oldInvoices as $oldInvoice) {
+                try {
+                    $this->migrateSingleInvoice($oldInvoice);
+                    $migrated++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'invoice_no' => $oldInvoice->invoice_no,
+                        'error' => $e->getMessage()
+                    ];
+                }
+            }
+
+            // Check if there are more records
+            $totalCount = DB::table('finance_invoices')
+                ->whereIn('charges_type', [3, 4])
+                ->whereNotNull('member_id')
+                ->count();
+
+            $hasMore = ($offset + $batchSize) < $totalCount;
+
+            return response()->json([
+                'migrated' => $migrated,
+                'errors' => $errors,
+                'has_more' => $hasMore,
+                'total_processed' => $offset + $migrated
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Invoice migration error: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function migrateSingleInvoice($old)
+    {
+        // Check if invoice already exists
+        $exists = FinancialInvoice::where('invoice_no', $old->invoice_no)->exists();
+        if ($exists) {
+            return;  // Skip if already migrated
+        }
+
+        // Determine Fee Type
+        $invoiceType = ($old->charges_type == 3) ? 'membership' : 'maintenance';
+        $feeType = ($old->charges_type == 3) ? 'membership_fee' : 'maintenance_fee';
+
+        // Calculate Discount Type
+        $discountType = (!empty($old->discount_percentage) && $old->discount_percentage > 0) ? 'percentage' : 'fixed';
+
+        // Calculate Quarter Number (for Maintenance)
+        $quarterNumber = ($invoiceType === 'maintenance') ? $this->calculateQuarter($old->start_date) : null;
+
+        // Find New Member ID
+        $member = Member::where('old_member_id', $old->member_id)->whereNull('parent_id')->first();
+        if (!$member) {
+            // Throw error if member not found, with details
+            $errorMsg = "Member not found for Invoice #{$old->invoice_no}. Old Member ID: {$old->member_id}, Mem No: {$old->mem_no}, Name: {$old->name}";
+            Log::warning($errorMsg);
+            throw new \Exception($errorMsg);
+        }
+        $newMemberId = $member->id;
+
+        // Find New Family ID (if applicable)
+        $newFamilyId = null;
+        if (!empty($old->family)) {
+            $familyMember = Member::where('old_family_id', $old->family)->whereNotNull('parent_id')->first();
+            if ($familyMember) {
+                $newFamilyId = $familyMember->id;
+            }
+        }
+
+        // Prepare Data
+        $data = [
+            // Direct Mappings
+            'invoice_no' => $old->invoice_no,
+            'member_id' => $newMemberId,
+            'invoice_type' => $invoiceType,
+            'discount_details' => $old->discount_details,
+            'status' => $old->status ?? 'pending',
+            'created_by' => $old->created_by,
+            'updated_by' => $old->updated_by,
+            'deleted_by' => $old->deleted_by,
+            'created_at' => $old->created_at,
+            'updated_at' => $old->updated_at,
+            'deleted_at' => $old->deleted_at,
+            // Renamed Fields
+            'issue_date' => $old->invoice_date,
+            'amount' => $old->total,
+            'total_price' => $old->grand_total,
+            'discount_value' => $old->discount_amount,
+            'remarks' => $old->comments,
+            'customer_charges' => $old->extra_charges,
+            'valid_from' => $old->start_date,
+            'valid_to' => $old->end_date,
+            // Customer Info (Preserved)
+            'name' => $old->name,
+            'mem_no' => $old->mem_no,
+            'address' => $old->address,
+            'contact' => $old->contact,
+            'cnic' => $old->cnic,
+            'email' => $old->email,
+            'family_id' => $newFamilyId,  // Maps to new family member ID
+            // Financial Calculations
+            'sub_total' => $old->sub_total,
+            'discount_percentage' => $old->discount_percentage,
+            'extra_details' => $old->extra_details,
+            'extra_percentage' => $old->extra_percentage,
+            'tax_amount' => $old->tax_charges,
+            'tax_details' => $old->tax_details,
+            'tax_percentage' => $old->tax_percentage,
+            'ledger_amount' => $old->ledger_amount,
+            // Quantity & Period
+            'number_of_days' => $old->days,
+            'quantity' => $old->qty,
+            'per_day_amount' => $old->per_day_amount,
+            'charges_type' => $old->charges_type,
+            'charges_amount' => $old->charges_amount,
+            // Metadata
+            'is_auto_generated' => $old->is_auto_generated,
+            'coa_code' => $old->coa_code,
+            'corporate_id' => $old->corporate_id,
+            'created_at' => $this->validateDate($old->created_at),
+            'updated_at' => $this->validateDate($old->updated_at),
+            'deleted_at' => $this->validateDate($old->deleted_at),
+            // New Fields / Calculated
+            'fee_type' => $feeType,
+            'discount_type' => $discountType,
+            'quarter_number' => $quarterNumber,
+            'paid_for_month' => $old->start_date ? Carbon::parse($old->start_date)->format('Y-m') : null,
+            'due_date' => $old->invoice_date ? Carbon::parse($old->invoice_date)->addDays(30) : null,
+            'payment_frequency' => $this->calculatePaymentFrequency($old->start_date, $old->end_date),
+            // Defaults
+            'advance_payment' => 0,
+            'paid_amount' => ($old->status === 'paid') ? $old->grand_total : 0,
+            'payment_date' => ($old->status === 'paid') ? $old->updated_at : null,
+            // JSON Data for extra preservation
+            'data' => [
+                'old_invoice_id' => $old->id,
+                'migration_source' => 'finance_invoices',
+            ]
+        ];
+
+        FinancialInvoice::create($data);
+    }
+
+    private function calculateQuarter($date)
+    {
+        if (!$date)
+            return null;
+        $month = (int) Carbon::parse($date)->format('m');
+        return ceil($month / 3);
+    }
+
+    private function calculatePaymentFrequency($start, $end)
+    {
+        if (!$start || !$end)
+            return 'one-time';
+
+        $startDate = Carbon::parse($start);
+        $endDate = Carbon::parse($end);
+        $diffInMonths = $startDate->diffInMonths($endDate);
+
+        if ($diffInMonths <= 1)
+            return 'monthly';
+        if ($diffInMonths <= 3)
+            return 'quarterly';
+        if ($diffInMonths <= 6)
+            return 'semi-annual';
+        if ($diffInMonths <= 12)
+            return 'annual';
+
+        return 'one-time';
+    }
+
+    private function getMemberSubscriptionDetails($memberId)
+    {
+        $member = Member::find($memberId);
+        if (!$member)
+            return ['type_id' => null, 'category_id' => null];
+
+        // Assuming Member model has relationships or fields for these
+        // If not, we might need to look them up from MemberCategory/Type models
+        // Based on existing code structure, trying to infer:
+
+        return [
+            'type_id' => $member->member_type_id ?? null,  // Adjust field name if needed
+            'category_id' => $member->category_id ?? null  // Adjust field name if needed
+        ];
     }
 
     public function migrateMedia(Request $request)

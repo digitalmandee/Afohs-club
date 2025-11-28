@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { TextField, Button, Select, MenuItem, FormControl, Paper, Typography, Grid, Box, IconButton, InputAdornment, OutlinedInput, CircularProgress } from '@mui/material';
+import { TextField, Button, Select, MenuItem, FormControl, Paper, Typography, Grid, Box, IconButton, InputAdornment, OutlinedInput, CircularProgress, Autocomplete } from '@mui/material';
 import { ArrowBack, Add, Delete, Edit, KeyboardArrowRight, KeyboardArrowDown, Check, CloseRounded } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
@@ -23,6 +23,12 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const [isValidatingCnic, setIsValidatingCnic] = useState(false);
     const [cnicStatus, setCnicStatus] = useState(null); // 'available', 'exists', 'error'
     const [cnicValidationTimeout, setCnicValidationTimeout] = useState(null);
+
+    // Guardian Search State
+    const [guardianSearchResults, setGuardianSearchResults] = useState([]);
+    const [guardianSearchLoading, setGuardianSearchLoading] = useState(false);
+    const [guardianStatus, setGuardianStatus] = useState(null); // 'valid', 'invalid', null
+    const [guardianSearchTimeout, setGuardianSearchTimeout] = useState(null);
 
     const handleImageUpload = (event) => {
         if (event.target.files && event.target.files[0]) {
@@ -130,6 +136,39 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
         // If it's CNIC field, validate in real-time
         if (name === 'cnic_no') {
             validateCnicRealTime(value);
+        }
+    };
+
+    const handleGuardianSearch = async (query) => {
+        if (!query) {
+            setGuardianSearchResults([]);
+            setGuardianStatus(null);
+            return;
+        }
+        setGuardianSearchLoading(true);
+        try {
+            const response = await axios.get(route('api.members.search'), { params: { query } });
+            setGuardianSearchResults(response.data.members);
+
+            // Check if exact match exists in results
+            const exactMatch = response.data.members.find((m) => m.membership_no === query);
+            if (exactMatch) {
+                setGuardianStatus('valid');
+            } else {
+                // If we have results but no exact match yet, status is neutral until selection
+                // If query is long enough and no results, maybe invalid?
+                // For now, let's rely on selection for 'valid' status
+                if (response.data.members.length === 0 && query.length > 3) {
+                    setGuardianStatus('invalid');
+                } else {
+                    setGuardianStatus(null);
+                }
+            }
+        } catch (error) {
+            console.error('Error searching members:', error);
+            setGuardianStatus('invalid');
+        } finally {
+            setGuardianSearchLoading(false);
         }
     };
 
@@ -404,7 +443,84 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 1 }}>
                                     If father is a member then membership No
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter membership Number" size="small" name="guardian_membership" value={data.fatherMembershipNo} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <Autocomplete
+                                    freeSolo
+                                    options={guardianSearchResults}
+                                    getOptionLabel={(option) => (typeof option === 'string' ? option : option.membership_no)}
+                                    renderOption={(props, option) => (
+                                        <li {...props}>
+                                            <Box>
+                                                <Typography variant="body1">{option.membership_no}</Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    {option.full_name}
+                                                </Typography>
+                                            </Box>
+                                        </li>
+                                    )}
+                                    loading={guardianSearchLoading}
+                                    inputValue={data.guardian_membership || ''}
+                                    onInputChange={(event, newInputValue) => {
+                                        // Update form data
+                                        handleChange({ target: { name: 'guardian_membership', value: newInputValue } });
+
+                                        // Reset status if cleared
+                                        if (!newInputValue) {
+                                            setGuardianStatus(null);
+                                            setGuardianSearchResults([]);
+                                            return;
+                                        }
+
+                                        // Debounce search
+                                        if (guardianSearchTimeout) clearTimeout(guardianSearchTimeout);
+                                        const timeoutId = setTimeout(() => {
+                                            handleGuardianSearch(newInputValue);
+                                        }, 500);
+                                        setGuardianSearchTimeout(timeoutId);
+                                    }}
+                                    onChange={(event, newValue) => {
+                                        if (newValue && typeof newValue === 'object') {
+                                            // Selected from dropdown
+                                            handleChange({ target: { name: 'guardian_membership', value: newValue.membership_no } });
+                                            handleChange({ target: { name: 'guardian_name', value: newValue.full_name } });
+                                            setGuardianStatus('valid');
+                                        } else {
+                                            // Free text or cleared
+                                            // If free text, we rely on onInputChange
+                                        }
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            fullWidth
+                                            variant="outlined"
+                                            placeholder="Enter membership Number"
+                                            size="small"
+                                            name="guardian_membership"
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {guardianSearchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                        {!guardianSearchLoading && guardianStatus === 'valid' && <Check sx={{ color: '#4caf50' }} />}
+                                                        {!guardianSearchLoading && guardianStatus === 'invalid' && <CloseRounded sx={{ color: '#f44336' }} />}
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+                                        />
+                                    )}
+                                />
+                                {guardianStatus === 'valid' && (
+                                    <Typography variant="caption" sx={{ color: '#4caf50', mt: 0.5, display: 'block' }}>
+                                        Member Found: {data.guardian_name}
+                                    </Typography>
+                                )}
+                                {guardianStatus === 'invalid' && (
+                                    <Typography variant="caption" sx={{ color: '#f44336', mt: 0.5, display: 'block' }}>
+                                        Member Not Found
+                                    </Typography>
+                                )}
                             </Grid>
                         </Grid>
 

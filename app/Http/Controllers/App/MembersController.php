@@ -151,4 +151,26 @@ class MembersController extends Controller
             'message' => 'Next available membership number generated'
         ]);
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (!$query) {
+            return response()->json(['members' => []]);
+        }
+
+        $members = Member::whereNull('parent_id')
+            ->where(function ($q) use ($query) {
+                $q
+                    ->where('full_name', 'like', "%{$query}%")
+                    ->orWhere('membership_no', 'like', "%{$query}%")
+                    ->orWhere('cnic_no', 'like', "%{$query}%");
+            })
+            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'status')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['members' => $members]);
+    }
 }

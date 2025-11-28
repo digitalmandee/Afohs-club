@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppliedMember;
+use App\Models\FinancialInvoice;
 use App\Models\Member;
 use App\Models\User;
 use App\Models\UserDetail;
@@ -16,7 +17,7 @@ class AppliedMemberController extends Controller
 {
     public function index(Request $request)
     {
-        $members = AppliedMember::all()->map(function ($member) {
+        $members = AppliedMember::with('financialInvoice')->get()->map(function ($member) {
             return [
                 'id' => $member->id,
                 'name' => $member->name,
@@ -28,6 +29,7 @@ class AppliedMemberController extends Controller
                 'start_date' => $member->start_date,
                 'end_date' => $member->end_date,
                 'is_permanent_member' => $member->is_permanent_member,
+                'invoice' => $member->financialInvoice,
             ];
         });
 
@@ -86,7 +88,7 @@ class AppliedMemberController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            AppliedMember::create([
+            $appliedMember = AppliedMember::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
@@ -96,6 +98,24 @@ class AppliedMemberController extends Controller
                 'start_date' => $request->start_date,
                 'end_date' => $request->end_date,
                 'is_permanent_member' => $request->is_permanent_member,
+            ]);
+
+            // Generate Invoice
+            $invoiceNo = FinancialInvoice::withTrashed()->max('invoice_no') + 1;
+
+            FinancialInvoice::create([
+                'invoice_no' => $invoiceNo,
+                'invoice_type' => 'applied_member',  // Custom type
+                'invoiceable_id' => $appliedMember->id,
+                'invoiceable_type' => AppliedMember::class,
+                'amount' => $appliedMember->amount_paid,
+                'total_price' => $appliedMember->amount_paid,
+                'paid_amount' => $appliedMember->amount_paid,
+                'status' => 'paid',
+                'issue_date' => now(),
+                'due_date' => now(),
+                'payment_date' => now(),
+                'remarks' => 'Applied Member Registration Fee',
             ]);
 
             return response()->json(['message' => 'Applied member created successfully.'], 200);

@@ -50,4 +50,9 @@ class AppliedMember extends Model
         $next = $lastNumber + 1;
         return $next;
     }
+
+    public function financialInvoice()
+    {
+        return $this->morphOne(FinancialInvoice::class, 'invoiceable');
+    }
 }

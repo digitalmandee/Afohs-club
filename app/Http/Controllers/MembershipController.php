@@ -471,7 +471,8 @@ class MembershipController extends Controller
     private function generateInvoiceNumber()
     {
         // Get the highest invoice_no from all financial_invoices (not just transaction types)
-        $lastInvoice = FinancialInvoice::orderBy('invoice_no', 'desc')
+        $lastInvoice = FinancialInvoice::withTrashed()
+            ->orderBy('invoice_no', 'desc')
             ->whereNotNull('invoice_no')
             ->first();
 
@@ -481,7 +482,7 @@ class MembershipController extends Controller
         }
 
         // Double-check that this number doesn't exist (safety check)
-        while (FinancialInvoice::where('invoice_no', $nextNumber)->exists()) {
+        while (FinancialInvoice::withTrashed()->where('invoice_no', $nextNumber)->exists()) {
             $nextNumber++;
         }
 

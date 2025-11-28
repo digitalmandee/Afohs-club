@@ -33,12 +33,12 @@ class FinancialController extends Controller
 
         // Transaction Statistics (Membership Fees)
         $totalTransactions = FinancialInvoice::whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee'])->count();
-        
+
         // Membership Fee Revenue
         $membershipFeeRevenue = FinancialInvoice::where('fee_type', 'membership_fee')
             ->where('status', 'paid')
             ->sum('total_price');
-        
+
         $maintenanceFeeRevenue = FinancialInvoice::where('fee_type', 'maintenance_fee')
             ->where('status', 'paid')
             ->sum('total_price');
@@ -74,24 +74,25 @@ class FinancialController extends Controller
         $totalRevenue = FinancialInvoice::where('status', 'paid')->sum('total_price');
 
         // Total Expenses (placeholder - you can implement expense tracking later)
-        $totalExpenses = 0; // TODO: Implement expense tracking
+        $totalExpenses = 0;  // TODO: Implement expense tracking
 
         // Recent transactions (all types) with polymorphic booking data
         $recentTransactions = FinancialInvoice::with([
-                'member:id,full_name,membership_no,mobile_number_a',
-                'customer:id,name,email',
-                'createdBy:id,name'
-            ])
-            ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type', 
-                     'member_id', 'customer_id', 'fee_type', 'amount', 'total_price', 
-                     'paid_amount', 'status', 'payment_method', 'payment_date', 
-                     'valid_to', 'created_at', 'created_by')
+            'member:id,full_name,membership_no,mobile_number_a',
+            'customer:id,name,email',
+            'createdBy:id,name'
+        ])
+            ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type',
+                'member_id', 'customer_id', 'fee_type', 'amount', 'total_price',
+                'paid_amount', 'status', 'payment_method', 'payment_date',
+                'valid_to', 'created_at', 'created_by',
+                'tax_amount', 'tax_percentage', 'overdue_amount', 'overdue_percentage', 'remarks')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
             ->map(function ($invoice) {
                 // Add formatted fee type for frontend
-                $invoice->fee_type_formatted = $invoice->fee_type 
+                $invoice->fee_type_formatted = $invoice->fee_type
                     ? ucwords(str_replace('_', ' ', $invoice->fee_type))
                     : null;
                 return $invoice;
@@ -104,24 +105,20 @@ class FinancialController extends Controller
                 'active_members' => $activeMembers,
                 'expired_members' => $expiredMembers,
                 'canceled_members' => $canceledMembers,
-                
                 // Revenue Statistics
                 'total_revenue' => $totalRevenue,
                 'total_expenses' => $totalExpenses,
                 'total_transactions' => $totalTransactions,
-                
                 // Membership Revenue Breakdown
                 'membership_fee_revenue' => $membershipFeeRevenue,
                 'maintenance_fee_revenue' => $maintenanceFeeRevenue,
                 'subscription_fee_revenue' => $subscriptionFeeRevenue,
                 'reinstating_fee_revenue' => $reinstatingFeeRevenue,
                 'total_membership_revenue' => $totalMembershipRevenue,
-                
                 // Booking Revenue Breakdown
                 'room_revenue' => $roomRevenue,
                 'event_revenue' => $eventRevenue,
                 'total_booking_revenue' => $totalBookingRevenue,
-                
                 // Other Revenue
                 'food_revenue' => $foodRevenue,
             ],
@@ -174,25 +171,28 @@ class FinancialController extends Controller
             'customer:id,name,email',
             'createdBy:id,name'
         ])
-        ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type', 
-                 'member_id', 'customer_id', 'fee_type', 'amount', 'total_price', 
-                 'paid_amount', 'status', 'payment_method', 'payment_date', 
-                 'valid_to', 'created_at', 'created_by');
+            ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type',
+                'member_id', 'customer_id', 'fee_type', 'amount', 'total_price',
+                'paid_amount', 'status', 'payment_method', 'payment_date',
+                'valid_to', 'created_at', 'created_by',
+                'tax_amount', 'tax_percentage', 'overdue_amount', 'overdue_percentage', 'remarks');
 
         // Apply search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('invoice_no', 'like', "%{$search}%")
-                  ->orWhere('fee_type', 'like', "%{$search}%")
-                  ->orWhere('invoice_type', 'like', "%{$search}%")
-                  ->orWhere('payment_method', 'like', "%{$search}%")
-                  ->orWhereHas('member', function ($q) use ($search) {
-                      $q->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('membership_no', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('customer', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                $q
+                    ->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhere('fee_type', 'like', "%{$search}%")
+                    ->orWhere('invoice_type', 'like', "%{$search}%")
+                    ->orWhere('payment_method', 'like', "%{$search}%")
+                    ->orWhereHas('member', function ($q) use ($search) {
+                        $q
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -212,18 +212,18 @@ class FinancialController extends Controller
     {
         // First, try to find by invoice ID directly
         $invoice = FinancialInvoice::with([
-            'member', 
+            'member',
             'member.memberType',
             'subscriptionType',
             'subscriptionCategory'
         ])->find($id);
-        
+
         // If not found by invoice ID, try to find by member ID (latest membership invoice)
         if (!$invoice) {
             $invoice = FinancialInvoice::where('member_id', $id)
                 ->where('invoice_type', 'membership')
                 ->with([
-                    'member', 
+                    'member',
                     'member.memberType',
                     'subscriptionType',
                     'subscriptionCategory'

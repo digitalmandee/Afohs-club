@@ -460,7 +460,7 @@ class RoomBookingController extends Controller
 
     private function getInvoiceNo()
     {
-        $invoiceNo = FinancialInvoice::max('invoice_no');
+        $invoiceNo = FinancialInvoice::withTrashed()->max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
     }

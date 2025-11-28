@@ -22,8 +22,8 @@ const handlePrintReceipt = (invoice) => {
             invoiceNumber: invoice.invoice_no || 'N/A',
             issueDate: invoice.issue_date,
             paymentMethod: invoice.payment_method,
-            validFrom: (invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') ? invoice.valid_from : null,
-            validTo: (invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') ? invoice.valid_to : null,
+            validFrom: invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee' ? invoice.valid_from : null,
+            validTo: invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee' ? invoice.valid_to : null,
         },
         items: [
             {
@@ -38,6 +38,11 @@ const handlePrintReceipt = (invoice) => {
             grandTotal: invoice.total_price,
             remainingAmount: invoice.customer_charges,
             paidAmount: invoice.total_price,
+            taxAmount: invoice.tax_amount || 0,
+            taxPercentage: invoice.tax_percentage || 0,
+            overdueAmount: invoice.overdue_amount || 0,
+            overduePercentage: invoice.overdue_percentage || 0,
+            remarks: invoice.remarks || '',
         },
         note: 'This is a computer-generated receipt. It does not require any signature or stamp.',
         paymentNote: 'If paid by credit card or cheque, 5% surcharge will be added to the total amount.',
@@ -131,17 +136,25 @@ const handlePrintReceipt = (invoice) => {
                       <div class="typography-body2" style="margin-bottom: 4px;">
                         <span style="font-weight: bold;">Payment Method: </span>${invoiceData.details.paymentMethod}
                       </div>
-                      ${invoiceData.details.validFrom ? `
+                      ${
+                          invoiceData.details.validFrom
+                              ? `
                       <div class="typography-body2" style="margin-bottom: 4px;">
                         <span style="font-weight: bold;">Valid From: </span>${new Date(invoiceData.details.validFrom).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </div>` : ''}
-                      ${invoiceData.details.validTo ? `
+                      </div>`
+                              : ''
+                      }
+                      ${
+                          invoiceData.details.validTo
+                              ? `
                       <div class="typography-body2" style="margin-bottom: 4px;">
                         <span style="font-weight: bold;">Valid To: </span>
                         <span style="color: ${new Date(invoiceData.details.validTo) > new Date() ? '#28a745' : '#dc3545'}; font-weight: 500;">
                           ${new Date(invoiceData.details.validTo).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
-                      </div>` : ''}
+                      </div>`
+                              : ''
+                      }
                     </div>
                   </div>
                 </div>
@@ -153,10 +166,14 @@ const handlePrintReceipt = (invoice) => {
                       <tr>
                         <th class="table-cell">SR #</th>
                         <th class="table-cell">Description</th>
-                        ${invoice.fee_type === 'subscription_fee' ? `
+                        ${
+                            invoice.fee_type === 'subscription_fee'
+                                ? `
                         <th class="table-cell">Subscription Type</th>
                         <th class="table-cell">Subscription Category</th>
-                        ` : ''}
+                        `
+                                : ''
+                        }
                         <th class="table-cell">Invoice Amount</th>
                         <th class="table-cell">Remaining Amount</th>
                         <th class="table-cell">Paid Amount</th>
@@ -166,10 +183,14 @@ const handlePrintReceipt = (invoice) => {
                         <tr>
                           <td class="table-body-cell">1</td>
                           <td class="table-body-cell">${invoice.invoice_type}</td>
-                          ${invoice.fee_type === 'subscription_fee' ? `
+                          ${
+                              invoice.fee_type === 'subscription_fee'
+                                  ? `
                           <td class="table-body-cell">${invoice.subscription_type?.name || 'N/A'}</td>
                           <td class="table-body-cell">${invoice.subscription_category?.name || 'N/A'}</td>
-                          ` : ''}
+                          `
+                                  : ''
+                          }
                           <td class="table-body-cell">${invoice.total_price}</td>
                           <td class="table-body-cell">${invoice.customer_charges}</td>
                           <td class="table-body-cell">${invoice.paid_amount}</td>
@@ -182,9 +203,27 @@ const handlePrintReceipt = (invoice) => {
                 <div class="summary-container">
                   <div class="summary-box">
                     <div class="summary-row">
-                      <span class="typography-body2-bold">Grand Total</span>
+                      <span class="typography-body2-bold">Subtotal</span>
                       <span class="typography-body2">Rs ${invoice.total_price}</span>
                     </div>
+                    ${
+                        invoiceData.summary.taxAmount > 0
+                            ? `
+                    <div class="summary-row">
+                      <span class="typography-body2-bold">Tax (${invoiceData.summary.taxPercentage}%)</span>
+                      <span class="typography-body2">Rs ${invoiceData.summary.taxAmount}</span>
+                    </div>`
+                            : ''
+                    }
+                    ${
+                        invoiceData.summary.overdueAmount > 0
+                            ? `
+                    <div class="summary-row">
+                      <span class="typography-body2-bold">Overdue (${invoiceData.summary.overduePercentage}%)</span>
+                      <span class="typography-body2">Rs ${invoiceData.summary.overdueAmount}</span>
+                    </div>`
+                            : ''
+                    }
                     <div class="summary-row">
                       <span class="typography-body2-bold">Remaining Amount</span>
                       <span class="typography-body2">Rs ${invoice.customer_charges}</span>
@@ -201,6 +240,14 @@ const handlePrintReceipt = (invoice) => {
                   <div class="notes-item">
                     <div class="typography-body2-bold" style="margin-bottom: 4px;">Note:</div>
                     <div class="typography-body2">This is a computer-generated receipt. It does not require any signature or stamp.</div>
+                    ${
+                        invoiceData.summary.remarks
+                            ? `
+                    <div class="typography-body2-bold" style="margin-top: 8px; margin-bottom: 4px;">Remarks:</div>
+                    <div class="typography-body2">${invoiceData.summary.remarks}</div>
+                    `
+                            : ''
+                    }
                     <div style="margin-top: 16px;">
                       <div class="typography-body2-bold" style="margin-bottom: 4px;">Sent By: Admin</div>
                     </div>
@@ -233,10 +280,10 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
     useEffect(() => {
         if (open && (invoiceNo || invoiceId)) {
             setLoading(true);
-            
+
             // If invoiceId is provided, use it directly; otherwise use member ID (invoiceNo)
             const idToUse = invoiceId || invoiceNo;
-            
+
             axios
                 .get(route('financial-invoice', idToUse))
                 .then((response) => {
@@ -350,7 +397,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                             <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
                                             {invoice.payment_method?.replace('_', ' ') || 'Cash'}
                                         </Typography>
-                                        
+
                                         {/* Show validity dates for subscription and maintenance fees */}
                                         {(invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') && (
                                             <>
@@ -367,10 +414,12 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                 {invoice.valid_to && (
                                                     <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                                         <span style={{ fontWeight: 'bold' }}>Valid To: </span>
-                                                        <span style={{ 
-                                                            color: new Date(invoice.valid_to) > new Date() ? '#28a745' : '#dc3545',
-                                                            fontWeight: 500 
-                                                        }}>
+                                                        <span
+                                                            style={{
+                                                                color: new Date(invoice.valid_to) > new Date() ? '#28a745' : '#dc3545',
+                                                                fontWeight: 500,
+                                                            }}
+                                                        >
                                                             {new Date(invoice.valid_to).toLocaleDateString('en-US', {
                                                                 year: 'numeric',
                                                                 month: 'long',
@@ -409,12 +458,8 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                             <TableCell sx={{ fontSize: '13px', py: 1.5, textTransform: 'capitalize' }}>{invoice.invoice_type}</TableCell>
                                             {invoice.fee_type === 'subscription_fee' && (
                                                 <>
-                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>
-                                                        {invoice.subscription_type?.name || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>
-                                                        {invoice.subscription_category?.name || 'N/A'}
-                                                    </TableCell>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.subscription_type?.name || 'N/A'}</TableCell>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.subscription_category?.name || 'N/A'}</TableCell>
                                                 </>
                                             )}
                                             <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{invoice.amount}</TableCell>
@@ -431,12 +476,32 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                     <Box sx={{ pt: 1 }}>
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                             <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
-                                                Grand Total
+                                                Subtotal
                                             </Typography>
                                             <Typography variant="body2" sx={{ fontSize: '13px' }}>
-                                                Rs {invoice.total_price}
+                                                Rs {invoice.amount}
                                             </Typography>
                                         </Box>
+                                        {invoice.tax_amount > 0 && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                                    Tax ({invoice.tax_percentage}%)
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                    Rs {invoice.tax_amount}
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                        {invoice.overdue_amount > 0 && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                                    Overdue ({invoice.overdue_percentage}%)
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                    Rs {invoice.overdue_amount}
+                                                </Typography>
+                                            </Box>
+                                        )}
                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
                                             <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
                                                 Remaining Amount
@@ -466,6 +531,16 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                     <Typography variant="body2" sx={{ fontSize: '13px' }}>
                                         This is a computer-generated receipt. It does not require any signature or stamp.
                                     </Typography>
+                                    {invoice.remarks && (
+                                        <>
+                                            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5, mt: 2, fontSize: '13px' }}>
+                                                Remarks:
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                {invoice.remarks}
+                                            </Typography>
+                                        </>
+                                    )}
                                     <Box sx={{ mt: 2 }}>
                                         <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5, fontSize: '13px' }}>
                                             Admin
