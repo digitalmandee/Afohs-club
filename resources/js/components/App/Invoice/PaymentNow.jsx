@@ -363,12 +363,13 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 ENT
                             </Typography>
                         </Box>
-
-                        <Box sx={activePaymentMethod === 'cts' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('cts')}>
-                            <Typography variant="body1" fontWeight={activePaymentMethod === 'cts' ? 'medium' : 'normal'}>
-                                CTS
-                            </Typography>
-                        </Box>
+                        {(invoiceData?.employee_id || invoiceData?.member?.booking_type === 'employee') && (
+                            <Box sx={activePaymentMethod === 'cts' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('cts')}>
+                                <Typography variant="body1" fontWeight={activePaymentMethod === 'cts' ? 'medium' : 'normal'}>
+                                    CTS
+                                </Typography>
+                            </Box>
+                        )}
                     </Box>
 
                     {/* Cash Payment Form */}
