@@ -236,7 +236,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                                             <MenuItem value="" disabled>
                                                 Choose Relation
                                             </MenuItem>
-                                            {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law'].map((item, index) => (
+                                            {['Father', 'Son', 'Daughter', 'Wife', 'Mother', 'Grand Son', 'Grand Daughter', 'Second Wife', 'Husband', 'Sister', 'Brother', 'Nephew', 'Niece', 'Father in law', 'Mother in Law', 'Cousin', 'Friend'].map((item, index) => (
                                                 <MenuItem key={index} value={item} sx={{ textTransform: 'capitalize' }}>
                                                     {item}
                                                 </MenuItem>
@@ -367,7 +367,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                             </Grid>
 
                             {/* Action Buttons */}
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, mb:1.5 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, mb: 1.5 }}>
                                 <Button
                                     variant="outlined"
                                     sx={{

@@ -20,7 +20,8 @@ class PayrollSetting extends Model
         'absent_deduction_type',
         'absent_deduction_amount',
         'max_allowed_absents',
-        'grace_period_minutes'
+        'grace_period_minutes',
+        'tax_slabs'
     ];
 
     protected $casts = [
@@ -30,7 +31,8 @@ class PayrollSetting extends Model
         'absent_deduction_amount' => 'decimal:2',
         'working_days_per_month' => 'integer',
         'max_allowed_absents' => 'integer',
-        'grace_period_minutes' => 'integer'
+        'grace_period_minutes' => 'integer',
+        'tax_slabs' => 'array'
     ];
 
     /**
@@ -39,23 +41,24 @@ class PayrollSetting extends Model
     public static function getSettings()
     {
         $settings = self::first();
-        
+
         if (!$settings) {
             $settings = self::create([
                 'company_name' => 'Afohs Club',
                 'pay_frequency' => 'monthly',
                 'currency' => 'PKR',
                 'working_days_per_month' => 26,
-                'working_hours_per_day' => 8.00,
+                'working_hours_per_day' => 8.0,
                 'overtime_rate_multiplier' => 1.5,
-                'late_deduction_per_minute' => 0.00,
+                'late_deduction_per_minute' => 0.0,
                 'absent_deduction_type' => 'full_day',
-                'absent_deduction_amount' => 0.00,
+                'absent_deduction_amount' => 0.0,
                 'max_allowed_absents' => 3,
-                'grace_period_minutes' => 15
+                'grace_period_minutes' => 15,
+                'tax_slabs' => []
             ]);
         }
-        
+
         return $settings;
     }
 }

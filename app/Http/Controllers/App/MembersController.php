@@ -48,7 +48,7 @@ class MembersController extends Controller
         ]);
 
         $query = Member::where('cnic_no', $request->cnic_no);
-        
+
         // Exclude current member if editing
         if ($request->member_id) {
             $query->where('id', '!=', $request->member_id);
@@ -72,25 +72,29 @@ class MembersController extends Controller
         // Extract the number part from membership number (e.g., "123" from "OP 123" or "123-1" from "AR/S 123-1")
         $membershipNo = $request->membership_no;
         $numberPart = '';
-        
+
         // Split by space and get the last part (the number part)
         $parts = explode(' ', trim($membershipNo));
         if (count($parts) >= 2) {
-            $numberPart = end($parts); // Get the last part (e.g., "123" or "123-1")
+            $numberPart = end($parts);  // Get the last part (e.g., "123" or "123-1")
         } else {
-            $numberPart = $membershipNo; // If no space, use the whole string
+            $numberPart = $membershipNo;  // If no space, use the whole string
         }
 
         // Search for any membership number that ends with this number part
-        $query = Member::where('membership_no', 'LIKE', '% ' . $numberPart)
-                      ->orWhere('membership_no', $numberPart);
-        
+        $query = Member::where(function ($q) use ($numberPart) {
+            $q
+                ->where('membership_no', 'LIKE', '% ' . $numberPart)
+                ->orWhere('membership_no', $numberPart);
+        });
+
         // Exclude current member if editing
-        if ($request->member_id) {
+        if (!empty($request->member_id)) {
             $query->where('id', '!=', $request->member_id);
         }
 
-        $existingMembers = $query->get(['membership_no', 'first_name', 'last_name']);
+        $existingMembers = $query->get(['id', 'membership_no', 'first_name', 'last_name']);
+
         $exists = $existingMembers->count() > 0;
 
         // Generate next available number suggestion
@@ -99,18 +103,18 @@ class MembersController extends Controller
             // Find the highest number in use
             $allNumbers = Member::select('membership_no')->get()->pluck('membership_no');
             $maxNumber = 0;
-            
+
             foreach ($allNumbers as $membershipNumber) {
                 $parts = explode(' ', trim($membershipNumber));
                 $numPart = count($parts) >= 2 ? end($parts) : $membershipNumber;
-                
+
                 // Extract base number (before any dash)
                 $baseNum = explode('-', $numPart)[0];
                 if (is_numeric($baseNum)) {
-                    $maxNumber = max($maxNumber, (int)$baseNum);
+                    $maxNumber = max($maxNumber, (int) $baseNum);
                 }
             }
-            
+
             $suggestion = $maxNumber + 1;
         }
 
@@ -128,23 +132,45 @@ class MembersController extends Controller
         // Find the highest number in use
         $allNumbers = Member::select('membership_no')->get()->pluck('membership_no');
         $maxNumber = 0;
-        
+
         foreach ($allNumbers as $membershipNumber) {
             $parts = explode(' ', trim($membershipNumber));
             $numPart = count($parts) >= 2 ? end($parts) : $membershipNumber;
-            
+
             // Extract base number (before any dash)
             $baseNum = explode('-', $numPart)[0];
             if (is_numeric($baseNum)) {
-                $maxNumber = max($maxNumber, (int)$baseNum);
+                $maxNumber = max($maxNumber, (int) $baseNum);
             }
         }
-        
+
         $nextNumber = $maxNumber + 1;
 
         return response()->json([
             'next_number' => $nextNumber,
             'message' => 'Next available membership number generated'
         ]);
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (!$query) {
+            return response()->json(['members' => []]);
+        }
+
+        $members = Member::whereNull('parent_id')
+            ->where(function ($q) use ($query) {
+                $q
+                    ->where('full_name', 'like', "%{$query}%")
+                    ->orWhere('membership_no', 'like', "%{$query}%")
+                    ->orWhere('cnic_no', 'like', "%{$query}%");
+            })
+            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'status')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['members' => $members]);
     }
 }

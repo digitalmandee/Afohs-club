@@ -4,7 +4,6 @@ import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
-
 const UserManagement = () => {
     const { users, roles, filters, can } = usePage().props;
     const { enqueueSnackbar } = useSnackbar();
@@ -47,25 +46,33 @@ const UserManagement = () => {
     };
 
     const handleAssignRole = (userId, roleName) => {
-        router.post(route('admin.users.assign-role'), { user_id: userId, role_name: roleName }, {
-            onSuccess: () => {
-                enqueueSnackbar('Role assigned successfully!', { variant: 'success' });
+        router.post(
+            route('admin.users.assign-role'),
+            { user_id: userId, role_name: roleName },
+            {
+                onSuccess: () => {
+                    enqueueSnackbar('Role assigned successfully!', { variant: 'success' });
+                },
+                onError: () => {
+                    enqueueSnackbar('Error assigning role', { variant: 'error' });
+                },
             },
-            onError: () => {
-                enqueueSnackbar('Error assigning role', { variant: 'error' });
-            },
-        });
+        );
     };
 
     const handleRemoveRole = (userId, roleName) => {
-        router.post(route('admin.users.remove-role'), { user_id: userId, role_name: roleName }, {
-            onSuccess: () => {
-                enqueueSnackbar('Role removed successfully!', { variant: 'success' });
+        router.post(
+            route('admin.users.remove-role'),
+            { user_id: userId, role_name: roleName },
+            {
+                onSuccess: () => {
+                    enqueueSnackbar('Role removed successfully!', { variant: 'success' });
+                },
+                onError: () => {
+                    enqueueSnackbar('Error removing role', { variant: 'error' });
+                },
             },
-            onError: () => {
-                enqueueSnackbar('Error removing role', { variant: 'error' });
-            },
-        });
+        );
     };
 
     const getRoleColor = (roleName) => {
@@ -86,7 +93,7 @@ const UserManagement = () => {
     };
 
     const getUserTypeIcon = (user) => {
-        if (user.roles.some(role => ['super-admin', 'admin'].includes(role.name))) {
+        if (user.roles.some((role) => ['super-admin', 'admin'].includes(role.name))) {
             return <AdminIcon sx={{ color: '#d32f2f' }} />;
         }
         if (user.employee) {
@@ -103,7 +110,7 @@ const UserManagement = () => {
                 sx={{
                     minHeight: '100vh',
                     p: 3,
-                    backgroundColor: '#f5f5f5'
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 {/* Header */}
@@ -150,21 +157,21 @@ const UserManagement = () => {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             sx={{
-                                width: "300px",
-                                backgroundColor: "transparent",
+                                width: '300px',
+                                backgroundColor: 'transparent',
 
-                                "& .MuiInputBase-root": {
-                                    height: 40,                        // 🔥 set height
-                                    backgroundColor: "transparent",    // remove white background
+                                '& .MuiInputBase-root': {
+                                    height: 40, // 🔥 set height
+                                    backgroundColor: 'transparent', // remove white background
                                     paddingRight: 0,
                                 },
 
-                                "& .MuiInputBase-input": {
-                                    padding: "0 8px",                  // vertically center input text
+                                '& .MuiInputBase-input': {
+                                    padding: '0 8px', // vertically center input text
                                 },
 
-                                "& .MuiOutlinedInput-notchedOutline": {
-                                    borderColor: "#999",               // border color (optional)
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderColor: '#999', // border color (optional)
                                 },
                             }}
                             InputProps={{
@@ -181,7 +188,7 @@ const UserManagement = () => {
                 {/* Users Table */}
                 <TableContainer component={Paper}>
                     <Table>
-                        <TableHead sx={{bgcolor:'#E5E5EA'}}>
+                        <TableHead sx={{ bgcolor: '#E5E5EA' }}>
                             <TableRow>
                                 <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
                                 <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
@@ -196,9 +203,7 @@ const UserManagement = () => {
                                 <TableRow key={user.id}>
                                     <TableCell>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                            <Avatar sx={{ mr: 2, bgcolor: '#063455' }}>
-                                                {user.name.charAt(0).toUpperCase()}
-                                            </Avatar>
+                                            <Avatar sx={{ mr: 2, bgcolor: '#063455' }}>{user.name.charAt(0).toUpperCase()}</Avatar>
                                             <Box>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                     {user.name}
@@ -213,11 +218,7 @@ const UserManagement = () => {
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             {getUserTypeIcon(user)}
                                             <Typography variant="body2" sx={{ ml: 1 }}>
-                                                {user.roles.some(role => ['super-admin', 'admin'].includes(role.name))
-                                                    ? 'Admin User'
-                                                    : user.employee
-                                                        ? 'Employee User'
-                                                        : 'Regular User'}
+                                                {user.roles.some((role) => ['super-admin', 'admin'].includes(role.name)) ? 'Admin User' : user.employee ? 'Employee User' : 'Regular User'}
                                             </Typography>
                                         </Box>
                                     </TableCell>
@@ -225,14 +226,7 @@ const UserManagement = () => {
                                     <TableCell>
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                             {user.roles.map((role) => (
-                                                <Chip
-                                                    key={role.id}
-                                                    label={role.name}
-                                                    color={getRoleColor(role.name)}
-                                                    size="small"
-                                                    variant="outlined"
-                                                    onDelete={can.edit ? () => handleRemoveRole(user.id, role.name) : undefined}
-                                                />
+                                                <Chip key={role.id} label={role.name} color={getRoleColor(role.name)} size="small" variant="outlined" onDelete={can.edit ? () => handleRemoveRole(user.id, role.name) : undefined} />
                                             ))}
                                         </Box>
                                     </TableCell>
@@ -256,16 +250,14 @@ const UserManagement = () => {
                                         {can.edit && (
                                             <FormControl size="small" sx={{ minWidth: 120 }}>
                                                 <InputLabel>Assign Role</InputLabel>
-                                                <Select
-                                                    label="Assign Role"
-                                                    onChange={(e) => handleAssignRole(user.id, e.target.value)}
-                                                    displayEmpty
-                                                >
-                                                    {roles.filter(role => !user.roles.some(userRole => userRole.name === role.name)).map((role) => (
-                                                        <MenuItem key={role.id} value={role.name}>
-                                                            {role.name}
-                                                        </MenuItem>
-                                                    ))}
+                                                <Select label="Assign Role" onChange={(e) => handleAssignRole(user.id, e.target.value)} displayEmpty>
+                                                    {roles
+                                                        .filter((role) => !user.roles.some((userRole) => userRole.name === role.name))
+                                                        .map((role) => (
+                                                            <MenuItem key={role.id} value={role.name}>
+                                                                {role.name}
+                                                            </MenuItem>
+                                                        ))}
                                                 </Select>
                                             </FormControl>
                                         )}
@@ -299,47 +291,21 @@ const UserManagement = () => {
                     <DialogContent>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Full Name"
-                                    value={newUser.name}
-                                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                                />
+                                <TextField fullWidth label="Full Name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Email"
-                                    type="email"
-                                    value={newUser.email}
-                                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                                />
+                                <TextField fullWidth label="Email" type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Password"
-                                    type="password"
-                                    value={newUser.password}
-                                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                                />
+                                <TextField fullWidth label="Password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
                             </Grid>
                             <Grid item xs={12}>
                                 <FormControl fullWidth>
                                     <InputLabel>Role</InputLabel>
-                                    <Select
-                                        value={newUser.role}
-                                        label="Role"
-                                        onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                                    >
+                                    <Select value={newUser.role} label="Role" onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
                                         {roles.map((role) => (
                                             <MenuItem key={role.id} value={role.name}>
-                                                <Chip
-                                                    label={role.name}
-                                                    color={getRoleColor(role.name)}
-                                                    size="small"
-                                                    sx={{ mr: 1 }}
-                                                />
+                                                <Chip label={role.name} color={getRoleColor(role.name)} size="small" sx={{ mr: 1 }} />
                                                 {role.name}
                                             </MenuItem>
                                         ))}
@@ -368,24 +334,10 @@ const UserManagement = () => {
                         </Typography>
                         <Grid container spacing={2} sx={{ mt: 1 }}>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Employee ID"
-                                    placeholder="Enter employee ID"
-                                    value={employeeUser.employee_id}
-                                    onChange={(e) => setEmployeeUser({ ...employeeUser, employee_id: e.target.value })}
-                                    helperText="The employee must exist in the employee system"
-                                />
+                                <TextField fullWidth label="Employee ID" placeholder="Enter employee ID" value={employeeUser.employee_id} onChange={(e) => setEmployeeUser({ ...employeeUser, employee_id: e.target.value })} helperText="The employee must exist in the employee system" />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    label="Password"
-                                    type="password"
-                                    value={employeeUser.password}
-                                    onChange={(e) => setEmployeeUser({ ...employeeUser, password: e.target.value })}
-                                    helperText="Password for the employee to login to POS system"
-                                />
+                                <TextField fullWidth label="Password" type="password" value={employeeUser.password} onChange={(e) => setEmployeeUser({ ...employeeUser, password: e.target.value })} helperText="Password for the employee to login to POS system" />
                             </Grid>
                         </Grid>
                     </DialogContent>

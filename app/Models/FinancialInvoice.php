@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class FinancialInvoice extends BaseModel
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'invoice_no',
         'customer_id',
@@ -26,26 +30,54 @@ class FinancialInvoice extends BaseModel
         'paid_for_month',
         'payment_method',
         'payment_date',
-        'receipt', // Fixed spelling from 'reciept'
+        'receipt',  // Fixed spelling from 'reciept'
         'data',
         'remarks',
         'status',
         'created_by',
         'updated_by',
         'deleted_by',
+        'deleted_at',
         // New fields for transaction system
         'fee_type',
         'payment_frequency',
         'quarter_number',
         'valid_from',
         'valid_to',
+        'valid_to',
         'credit_card_type',
+        'overdue_percentage',
+        'overdue_amount',
         // Subscription fields
         'subscription_type_id',
         'subscription_category_id',
         // Polymorphic relationship fields
         'invoiceable_id',
-        'invoiceable_type'
+        'invoiceable_type',
+        // Fields from old finance_invoices table for migration
+        'name',
+        'mem_no',
+        'address',
+        'contact',
+        'cnic',
+        'email',
+        'family_id',
+        'extra_details',
+        'tax_amount',
+        'tax_details',
+        'discount_percentage',
+        'extra_percentage',
+        'tax_percentage',
+        'charges_type',
+        'charges_amount',
+        'number_of_days',
+        'quantity',
+        'sub_total',
+        'per_day_amount',
+        'ledger_amount',
+        'is_auto_generated',
+        'coa_code',
+        'corporate_id'
     ];
 
     protected $casts = [

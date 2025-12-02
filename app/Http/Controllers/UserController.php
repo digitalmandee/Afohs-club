@@ -106,7 +106,9 @@ class UserController extends Controller
                         ->where('name', 'like', "%{$query}%")
                         ->orWhere('email', 'like', "%{$query}%")
                         ->orWhere('employee_id', 'like', "%{$query}%");
-                })->limit(10)->get();
+                })
+                ->limit(10)
+                ->get();
 
             $results = $employees->map(function ($employee) {
                 return [
@@ -127,8 +129,8 @@ class UserController extends Controller
     // get waiters
     public function waiters()
     {
-        $waiters = Employee::whereHas('employeeType', function ($q) {
-            $q->where('slug', 'waiter');
+        $waiters = Employee::whereHas('subdepartment', function ($q) {
+            $q->where('name', 'Waiter');
         })->select('id', 'employee_id', 'name', 'email')->get();
 
         return response()->json([
@@ -160,7 +162,8 @@ class UserController extends Controller
         if ($bookingType === 'employee') {
             $employees = Employee::select('id', 'name', 'employee_id', 'email', 'designation', 'phone_no')
                 ->where(function ($q) use ($query) {
-                    $q->where('name', 'like', "%{$query}%")
+                    $q
+                        ->where('name', 'like', "%{$query}%")
                         ->orWhere('employee_id', 'like', "%{$query}%")
                         ->orWhere('email', 'like', "%{$query}%");
                 })
@@ -215,7 +218,6 @@ class UserController extends Controller
                     'address' => $user->current_address,
                 ];
             });
-
 
             // Case 2: bookingType = 1 => Search in customers
         } elseif ($bookingType === '1') {

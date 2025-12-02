@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
+use App\Models\Customer;
 use App\Models\EventBooking;
 use App\Models\EventBookingMenu;
 use App\Models\EventBookingMenuAddOn;
@@ -23,7 +24,6 @@ use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
 use App\Models\RoomType;
 use App\Models\User;
-use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -153,10 +153,10 @@ class EventBookingController extends Controller
             // ✅ Assign IDs based on booking_type (same as RoomBookingController)
             if (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
                 $bookingData['member_id'] = (int) $request->guest['id'];
-                $bookingData['booking_type'] = '0'; // Member
+                $bookingData['booking_type'] = '0';  // Member
             } else {
                 $bookingData['customer_id'] = (int) $request->guest['id'];
-                $bookingData['booking_type'] = '1'; // Guest
+                $bookingData['booking_type'] = '1';  // Guest
             }
 
             // Create main event booking
@@ -205,18 +205,18 @@ class EventBookingController extends Controller
 
             // ✅ Create financial invoice using polymorphic relationship
             $invoice_no = $this->getInvoiceNo();
-            
+
             // Calculate original amount (before discount) and final amount (after discount)
             $originalAmount = round($this->calculateOriginalAmount($request));
             $finalAmount = round(floatval($request->grandTotal));
-            
+
             $invoiceData = [
                 'invoice_no' => $invoice_no,
                 'invoice_type' => 'event_booking',
                 'discount_type' => $request->discountType ?? null,
                 'discount_value' => $request->discount ?? 0,
-                'amount' => $originalAmount, // Original amount before discount
-                'total_price' => $finalAmount, // Final amount after discount
+                'amount' => $originalAmount,  // Original amount before discount
+                'total_price' => $finalAmount,  // Final amount after discount
                 'issue_date' => now(),
                 'status' => 'unpaid',
                 // Keep data for backward compatibility
@@ -263,7 +263,7 @@ class EventBookingController extends Controller
 
     private function getInvoiceNo()
     {
-        $invoiceNo = FinancialInvoice::max('invoice_no');
+        $invoiceNo = FinancialInvoice::withTrashed()->max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
     }
@@ -408,7 +408,6 @@ class EventBookingController extends Controller
                 }
             }
 
-
             // Update booking data (don't change member/customer info)
             $booking->update([
                 'booked_by' => $request->bookedBy,
@@ -480,12 +479,12 @@ class EventBookingController extends Controller
                 // Calculate original amount (before discount) and final amount (after discount)
                 $originalAmount = round($this->calculateOriginalAmount($request));
                 $finalAmount = round(floatval($request->grandTotal));
-                
+
                 $invoice->update([
                     'discount_type' => $request->discountType ?? null,
                     'discount_value' => $request->discount ?? 0,
-                    'amount' => $originalAmount, // Original amount before discount
-                    'total_price' => $finalAmount, // Final amount after discount
+                    'amount' => $originalAmount,  // Original amount before discount
+                    'total_price' => $finalAmount,  // Final amount after discount
                 ]);
             }
 
@@ -516,7 +515,7 @@ class EventBookingController extends Controller
             'menu',
             'menuAddOns',
             'otherCharges',
-            'invoice' // ✅ Eager load invoice using polymorphic relationship
+            'invoice'  // ✅ Eager load invoice using polymorphic relationship
         ])->findOrFail($id);
 
         return response()->json(['booking' => $booking]);
@@ -563,49 +562,49 @@ class EventBookingController extends Controller
     {
         $month = $request->get('month', date('m'));
         $year = $request->get('year', date('Y'));
-        
+
         // Get start and end dates for the month
         $startDate = "{$year}-{$month}-01";
         $endDate = date('Y-m-t', strtotime($startDate));
-        
+
         // Get all event venues
         $venues = EventVenue::select('id', 'name')
             ->orderBy('name')
             ->get();
-        
+
         // Get bookings for the month
         $bookings = EventBooking::with([
             'customer:id,name,email',
             'member:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])
-        ->whereBetween('event_date', [$startDate, $endDate])
-        ->orderBy('event_date')
-        ->orderBy('event_time_from')
-        ->get()
-        ->map(function ($booking) {
-            return [
-                'id' => $booking->id,
-                'booking_no' => $booking->booking_no,
-                'event_venue_id' => $booking->event_venue_id,
-                'event_date' => $booking->event_date,
-                'event_time_from' => $booking->event_time_from,
-                'event_time_to' => $booking->event_time_to,
-                'nature_of_event' => $booking->nature_of_event,
-                'booked_by' => $booking->booked_by,
-                'name' => $booking->name,
-                'mobile' => $booking->mobile,
-                'membership_no' => $booking->member ? $booking->member->membership_no : ($booking->customer ? $booking->customer->customer_no : null),
-                'no_of_guests' => $booking->no_of_guests,
-                'status' => $booking->status,
-                'total_price' => $booking->total_price,
-                'additional_notes' => $booking->additional_notes,
-                'event_venue' => $booking->eventVenue,
-                'customer' => $booking->customer,
-                'member' => $booking->member,
-            ];
-        });
-        
+            ->whereBetween('event_date', [$startDate, $endDate])
+            ->orderBy('event_date')
+            ->orderBy('event_time_from')
+            ->get()
+            ->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'booking_no' => $booking->booking_no,
+                    'event_venue_id' => $booking->event_venue_id,
+                    'event_date' => $booking->event_date,
+                    'event_time_from' => $booking->event_time_from,
+                    'event_time_to' => $booking->event_time_to,
+                    'nature_of_event' => $booking->nature_of_event,
+                    'booked_by' => $booking->booked_by,
+                    'name' => $booking->name,
+                    'mobile' => $booking->mobile,
+                    'membership_no' => $booking->member ? $booking->member->membership_no : ($booking->customer ? $booking->customer->customer_no : null),
+                    'no_of_guests' => $booking->no_of_guests,
+                    'status' => $booking->status,
+                    'total_price' => $booking->total_price,
+                    'additional_notes' => $booking->additional_notes,
+                    'event_venue' => $booking->eventVenue,
+                    'customer' => $booking->customer,
+                    'member' => $booking->member,
+                ];
+            });
+
         return response()->json([
             'venues' => $venues,
             'bookings' => $bookings
@@ -627,13 +626,14 @@ class EventBookingController extends Controller
         if ($request->filled('search_name')) {
             $searchName = $request->search_name;
             $query->where(function ($q) use ($searchName) {
-                $q->where('name', 'like', "%{$searchName}%")
-                  ->orWhereHas('customer', function ($subQ) use ($searchName) {
-                      $subQ->where('name', 'like', "%{$searchName}%");
-                  })
-                  ->orWhereHas('member', function ($subQ) use ($searchName) {
-                      $subQ->where('full_name', 'like', "%{$searchName}%");
-                  });
+                $q
+                    ->where('name', 'like', "%{$searchName}%")
+                    ->orWhereHas('customer', function ($subQ) use ($searchName) {
+                        $subQ->where('name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('member', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    });
             });
         }
 
@@ -671,7 +671,7 @@ class EventBookingController extends Controller
                 $bookingStatuses = [];
                 $includesPaid = false;
                 $includesUnpaid = false;
-                
+
                 foreach ($request->status as $status) {
                     if (in_array($status, ['confirmed', 'completed', 'cancelled'])) {
                         $bookingStatuses[] = $status;
@@ -681,26 +681,28 @@ class EventBookingController extends Controller
                         $includesUnpaid = true;
                     }
                 }
-                
+
                 // Add booking status conditions
                 if (!empty($bookingStatuses)) {
                     $q->orWhereIn('status', $bookingStatuses);
                 }
-                
+
                 // Add invoice status conditions using exists queries
                 if ($includesPaid) {
                     $q->orWhereExists(function ($subQ) {
-                        $subQ->select(DB::raw(1))
+                        $subQ
+                            ->select(DB::raw(1))
                             ->from('financial_invoices')
                             ->where('invoice_type', 'event_booking')
                             ->whereRaw('JSON_CONTAINS(data, JSON_OBJECT("booking_id", event_bookings.id))')
                             ->where('status', 'paid');
                     });
                 }
-                
+
                 if ($includesUnpaid) {
                     $q->orWhereExists(function ($subQ) {
-                        $subQ->select(DB::raw(1))
+                        $subQ
+                            ->select(DB::raw(1))
                             ->from('financial_invoices')
                             ->where('invoice_type', 'event_booking')
                             ->whereRaw('JSON_CONTAINS(data, JSON_OBJECT("booking_id", event_bookings.id))')
@@ -733,13 +735,14 @@ class EventBookingController extends Controller
         if ($request->filled('search_name')) {
             $searchName = $request->search_name;
             $query->where(function ($q) use ($searchName) {
-                $q->where('name', 'like', "%{$searchName}%")
-                  ->orWhereHas('customer', function ($subQ) use ($searchName) {
-                      $subQ->where('name', 'like', "%{$searchName}%");
-                  })
-                  ->orWhereHas('member', function ($subQ) use ($searchName) {
-                      $subQ->where('full_name', 'like', "%{$searchName}%");
-                  });
+                $q
+                    ->where('name', 'like', "%{$searchName}%")
+                    ->orWhereHas('customer', function ($subQ) use ($searchName) {
+                        $subQ->where('name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('member', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    });
             });
         }
 
@@ -790,13 +793,14 @@ class EventBookingController extends Controller
         if ($request->filled('search_name')) {
             $searchName = $request->search_name;
             $query->where(function ($q) use ($searchName) {
-                $q->where('name', 'like', "%{$searchName}%")
-                  ->orWhereHas('customer', function ($subQ) use ($searchName) {
-                      $subQ->where('name', 'like', "%{$searchName}%");
-                  })
-                  ->orWhereHas('member', function ($subQ) use ($searchName) {
-                      $subQ->where('full_name', 'like', "%{$searchName}%");
-                  });
+                $q
+                    ->where('name', 'like', "%{$searchName}%")
+                    ->orWhereHas('customer', function ($subQ) use ($searchName) {
+                        $subQ->where('name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('member', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    });
             });
         }
 

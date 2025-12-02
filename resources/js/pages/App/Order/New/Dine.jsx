@@ -58,7 +58,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
           })
         : [];
 
-    const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0 || !orderDetails.waiter || !orderDetails.table;
+    const isDisabled = !orderDetails.member || Object.keys(orderDetails.member).length === 0 || !orderDetails.waiter || typeof orderDetails.waiter !== 'object' || !orderDetails.waiter.id || !orderDetails.table;
 
     useEffect(() => {
         const handleKeyDown = (e) => {
@@ -180,7 +180,7 @@ const DineDialog = ({ memberTypes, floorTables }) => {
                 </Grid>
             </Grid>
 
-            {/* Seating Area */}
+            {/* Waiters */}
             <Box sx={{ px: 2, mb: 2 }}>
                 <Autocomplete
                     fullWidth

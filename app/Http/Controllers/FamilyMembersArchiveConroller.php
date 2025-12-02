@@ -14,9 +14,7 @@ class FamilyMembersArchiveConroller extends Controller
 {
     public function index(Request $request)
     {
-        $query = Member::whereNotNull('parent_id')
-            ->select('id', 'full_name', 'membership_no', 'parent_id', 'family_suffix', 'personal_email', 'mobile_number_a', 'cnic_no', 'date_of_birth', 'card_issue_date', 'card_expiry_date', 'card_status', 'relation', 'gender', 'status', 'expiry_extension_date', 'expiry_extension_reason', 'expiry_extended_by')
-            ->with(['parent:id,member_type_id,full_name,membership_no', 'profilePhoto:id,mediable_id,mediable_type,file_path']);
+        $query = Member::whereNotNull('parent_id')->with(['parent:id,member_type_id,full_name,membership_no', 'profilePhoto:id,mediable_id,mediable_type,file_path']);
 
         // Membership No
         if ($request->filled('membership_no')) {
@@ -217,7 +215,7 @@ class FamilyMembersArchiveConroller extends Controller
                 $member = Member::find($memberId);
 
                 if ($member && $member->isFamilyMember() && $member->shouldExpireByAge()) {
-                    $member->expireByAge("Manual expiry by Super Admin: " . Auth::user()->name);
+                    $member->expireByAge('Manual expiry by Super Admin: ' . Auth::user()->name);
                     $expiredCount++;
                 }
             } catch (\Exception $e) {

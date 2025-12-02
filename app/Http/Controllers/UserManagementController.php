@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\User;
 use App\Models\Employee;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class UserManagementController extends Controller
 {
@@ -21,9 +21,10 @@ class UserManagementController extends Controller
 
         // Search functionality
         if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q
+                    ->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('email', 'like', '%' . $request->search . '%');
             });
         }
 
@@ -63,7 +64,8 @@ class UserManagementController extends Controller
         // Assign role with web guard
         $user->assignRole($request->role);
 
-        return redirect()->route('admin.users.index')
+        return redirect()
+            ->route('admin.users.index')
             ->with('success', 'Super Admin user created successfully!');
     }
 
@@ -73,11 +75,10 @@ class UserManagementController extends Controller
     public function createEmployeeUser(Request $request)
     {
         $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'password' => 'required|string|min:8',
+            'employee_id' => 'required|exists:employees,employee_id',
         ]);
 
-        $employee = Employee::findOrFail($request->employee_id);
+        $employee = Employee::where('employee_id', $request->employee_id)->first();
 
         // Check if employee already has a user
         if ($employee->user_id) {
@@ -94,9 +95,10 @@ class UserManagementController extends Controller
         $employee->update(['user_id' => $user->id]);
 
         // Assign default role for POS system (you can customize this)
-        $user->assignRole('staff'); // or whatever role you want for POS users
+        $user->assignRole('cashier');  // or whatever role you want for POS users
 
-        return redirect()->back()
+        return redirect()
+            ->back()
             ->with('success', 'Employee user account created successfully!');
     }
 

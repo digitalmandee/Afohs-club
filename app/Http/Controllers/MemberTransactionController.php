@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
 use App\Models\MemberCategory;
-use App\Models\SubscriptionType;
+use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
+use App\Models\SubscriptionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use App\Helpers\FileHelper;
-use App\Models\Subscription;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -90,7 +90,8 @@ class MemberTransactionController extends Controller
 
         $members = Member::whereNull('parent_id')
             ->where(function ($q) use ($query) {
-                $q->where('full_name', 'like', "%{$query}%")
+                $q
+                    ->where('full_name', 'like', "%{$query}%")
                     ->orWhere('membership_no', 'like', "%{$query}%")
                     ->orWhere('cnic_no', 'like', "%{$query}%")
                     ->orWhere('mobile_number_a', 'like', "%{$query}%");
@@ -121,7 +122,8 @@ class MemberTransactionController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $membershipFeePaid = $transactions->where('fee_type', 'membership_fee')
+        $membershipFeePaid = $transactions
+            ->where('fee_type', 'membership_fee')
             ->where('status', 'paid')
             ->isNotEmpty();
 
@@ -135,7 +137,6 @@ class MemberTransactionController extends Controller
     public function store(Request $request)
     {
         try {
-
             $validator = Validator::make($request->all(), [
                 'member_id' => 'required|exists:members,id',
                 'fee_type' => 'required|in:membership_fee,maintenance_fee,subscription_fee,reinstating_fee',
@@ -143,9 +144,12 @@ class MemberTransactionController extends Controller
                 'amount' => 'required|numeric|min:0',
                 'discount_type' => 'nullable|in:percent,fixed,percentage',
                 'discount_value' => 'nullable|numeric|min:0',
+                'tax_percentage' => 'nullable|numeric|min:0|max:100',
+                'overdue_percentage' => 'nullable|numeric|min:0|max:100',
+                'remarks' => 'nullable|string|max:1000',
                 'payment_method' => 'required|in:cash,credit_card',
                 'valid_from' => 'required_if:fee_type,maintenance_fee,subscription_fee|date',
-                'valid_to' => 'nullable|date|after:valid_from',
+                'valid_to' => 'nullable|date|after_or_equal:valid_from',
                 'starting_quarter' => 'nullable|integer|min:1|max:4',
                 'credit_card_type' => 'required_if:payment_method,credit_card|in:mastercard,visa',
                 'receipt_file' => 'required_if:payment_method,credit_card|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
@@ -179,6 +183,15 @@ class MemberTransactionController extends Controller
                 }
             }
 
+            // Validate that cancelled or expired members can ONLY pay reinstating fee
+            if (in_array($member->status, ['cancelled', 'expired']) && $request->fee_type !== 'reinstating_fee') {
+                return response()->json([
+                    'errors' => [
+                        'fee_type' => ['Member status is ' . $member->status . '. You must pay the Reinstating Fee to reactivate this member before paying other fees.']
+                    ]
+                ], 422);
+            }
+
             // Handle reinstating fee - update member status to active
             if ($request->fee_type === 'reinstating_fee') {
                 // Check if member status allows reinstatement
@@ -199,13 +212,13 @@ class MemberTransactionController extends Controller
             if ($request->fee_type === 'subscription_fee') {
                 $subscription = Subscription::create([
                     'member_id' => $request->member_id,
-                    'family_member_id' => $request->family_member_id, // null = SELF (primary member)
+                    'family_member_id' => $request->family_member_id,  // null = SELF (primary member)
                     'subscription_category_id' => $request->subscription_category_id,
                     'subscription_type_id' => $request->subscription_type_id,
                     'valid_from' => $request->valid_from,
                     'valid_to' => $request->valid_to,
                     'status' => 'active',
-                    'qr_code' => null, // Will be generated after creation
+                    'qr_code' => null,  // Will be generated after creation
                 ]);
 
                 // Generate QR code for subscription
@@ -255,14 +268,29 @@ class MemberTransactionController extends Controller
             }
         }
 
-        $totalPrice = round($amount - $discountAmount);
+        $baseAmount = $amount - $discountAmount;
+        $taxAmount = 0;
+        $overdueAmount = 0;
+
+        // Calculate tax
+        if ($request->tax_percentage) {
+            $taxAmount = ($baseAmount * $request->tax_percentage) / 100;
+        }
+
+        // Calculate overdue
+        if ($request->overdue_percentage) {
+            $overdueAmount = ($baseAmount * $request->overdue_percentage) / 100;
+        }
+
+        $totalPrice = round($baseAmount + $taxAmount + $overdueAmount);
         $data = [
             'member_id' => $request->member_id,
             'member_name' => $member->full_name,
             'membership_no' => $member->membership_no,
             'fee_type' => $request->fee_type,
             'payment_frequency' => $request->payment_frequency,
-            'starting_quarter' => $request->starting_quarter
+            'starting_quarter' => $request->starting_quarter,
+            'remarks' => $request->remarks
         ];
 
         // Add subscription specific data
@@ -274,7 +302,7 @@ class MemberTransactionController extends Controller
             $data['subscription_category_id'] = $request->subscription_category_id;
             $data['subscription_type_name'] = $subscriptionType ? $subscriptionType->name : null;
             $data['subscription_category_name'] = $subscriptionCategory ? $subscriptionCategory->name : null;
-            
+
             // Handle family member selection
             if ($request->family_member_id) {
                 $familyMember = Member::find($request->family_member_id);
@@ -307,6 +335,11 @@ class MemberTransactionController extends Controller
             'amount' => $amount,
             'discount_type' => $request->discount_type,
             'discount_value' => $request->discount_value,
+            'tax_percentage' => $request->tax_percentage,
+            'tax_amount' => $taxAmount,
+            'overdue_percentage' => $request->overdue_percentage,
+            'overdue_amount' => $overdueAmount,
+            'remarks' => $request->remarks,
             'total_price' => $totalPrice,
             'paid_amount' => $totalPrice,
             'payment_method' => $request->payment_method,
@@ -329,15 +362,15 @@ class MemberTransactionController extends Controller
             // Membership fee is lifetime - set to member's joining date and far future
             $memberJoinDate = Carbon::parse($member->membership_date);
             $invoiceData['valid_from'] = $memberJoinDate->format('Y-m-d');
-            $invoiceData['valid_to'] = null; // Lifetime validity
+            $invoiceData['valid_to'] = null;  // Lifetime validity
         } elseif ($request->fee_type === 'subscription_fee') {
             // Use manual validity dates from request for subscription fees
             $invoiceData['valid_from'] = $request->valid_from;
-            $invoiceData['valid_to'] = $request->valid_to; // Can be null for unlimited
+            $invoiceData['valid_to'] = $request->valid_to;  // Can be null for unlimited
         } elseif ($request->fee_type === 'reinstating_fee') {
             // Reinstating fee is a one-time payment with no validity period
             $invoiceData['valid_from'] = now()->format('Y-m-d');
-            $invoiceData['valid_to'] = null; // No expiration for reinstating fee
+            $invoiceData['valid_to'] = null;  // No expiration for reinstating fee
         } else {
             // Use manual validity dates from request for maintenance fees
             $invoiceData['valid_from'] = $request->valid_from;
@@ -376,7 +409,7 @@ class MemberTransactionController extends Controller
         // Calculate current quarter start based on membership date
         $currentQuarterStart = $membershipDate->copy()->addMonths($quartersSinceMembership * 3);
 
-        $quartersToAdd = 1; // Default for quarterly
+        $quartersToAdd = 1;  // Default for quarterly
         if ($paymentFrequency === 'half_yearly') {
             $quartersToAdd = 2;
         } elseif ($paymentFrequency === 'three_quarters') {
@@ -397,7 +430,8 @@ class MemberTransactionController extends Controller
     private function generateInvoiceNumber()
     {
         // Get the highest invoice_no from all financial_invoices (not just transaction types)
-        $lastInvoice = FinancialInvoice::orderBy('invoice_no', 'desc')
+        $lastInvoice = FinancialInvoice::withTrashed()
+            ->orderBy('invoice_no', 'desc')
             ->whereNotNull('invoice_no')
             ->first();
 
@@ -407,7 +441,7 @@ class MemberTransactionController extends Controller
         }
 
         // Double-check that this number doesn't exist (safety check)
-        while (FinancialInvoice::where('invoice_no', $nextNumber)->exists()) {
+        while (FinancialInvoice::withTrashed()->where('invoice_no', $nextNumber)->exists()) {
             $nextNumber++;
         }
 
@@ -433,7 +467,8 @@ class MemberTransactionController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('member', function ($q) use ($search) {
-                $q->where('full_name', 'like', "%{$search}%")
+                $q
+                    ->where('full_name', 'like', "%{$search}%")
                     ->orWhere('membership_no', 'like', "%{$search}%");
             });
         }
@@ -457,7 +492,8 @@ class MemberTransactionController extends Controller
             $query->whereDate('created_at', '<=', $request->date_to);
         }
 
-        $transactions = $query->orderBy('created_at', 'desc')
+        $transactions = $query
+            ->orderBy('created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
 
@@ -486,7 +522,7 @@ class MemberTransactionController extends Controller
             'payments.*.fee_type' => 'required|in:membership_fee,maintenance_fee',
             'payments.*.amount' => 'required|numeric|min:0',
             'payments.*.valid_from' => 'required_if:payments.*.fee_type,maintenance_fee|date',
-            'payments.*.valid_to' => 'required_if:payments.*.fee_type,maintenance_fee|date|after:payments.*.valid_from',
+            'payments.*.valid_to' => 'required_if:payments.*.fee_type,maintenance_fee|date|after_or_equal:payments.*.valid_from',
             'payments.*.invoice_no' => 'required|string|unique:financial_invoices,invoice_no',
             'payments.*.payment_date' => 'required|date',
             'payments.*.payment_method' => 'sometimes|in:cash,credit_card',
@@ -547,7 +583,7 @@ class MemberTransactionController extends Controller
                     // Membership fee is lifetime - set to member's joining date and far future
                     $memberJoinDate = Carbon::parse($member->membership_date);
                     $validFrom = $memberJoinDate->format('Y-m-d');
-                    $validTo = $memberJoinDate->copy()->addYears(50)->format('Y-m-d'); // Lifetime validity
+                    $validTo = $memberJoinDate->copy()->addYears(50)->format('Y-m-d');  // Lifetime validity
                 }
 
                 // Create financial invoice
@@ -566,7 +602,7 @@ class MemberTransactionController extends Controller
                     'payment_method' => $paymentData['payment_method'] ?? 'cash',
                     'credit_card_type' => $paymentData['credit_card_type'] ?? null,
                     'receipt' => $receiptPath,
-                    'status' => 'paid', // Assuming migrated data is already paid
+                    'status' => 'paid',  // Assuming migrated data is already paid
                     'payment_date' => $paymentData['payment_date'],
                     'valid_from' => $validFrom,
                     'valid_to' => $validTo,

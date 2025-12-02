@@ -50,7 +50,14 @@ class PayrollApiController extends Controller
             'absent_deduction_type' => 'required|in:full_day,hourly,fixed_amount',
             'absent_deduction_amount' => 'required|numeric|min:0',
             'max_allowed_absents' => 'required|integer|min:0|max:10',
-            'grace_period_minutes' => 'required|integer|min:0|max:60'
+            'grace_period_minutes' => 'required|integer|min:0|max:60',
+            'tax_slabs' => 'nullable|array',
+            'tax_slabs.*.name' => 'required|string',
+            'tax_slabs.*.frequency' => 'required|in:monthly,yearly',
+            'tax_slabs.*.min_salary' => 'required|numeric|min:0',
+            'tax_slabs.*.max_salary' => 'nullable|numeric|gt:tax_slabs.*.min_salary',
+            'tax_slabs.*.tax_rate' => 'required|numeric|min:0|max:100',
+            'tax_slabs.*.fixed_amount' => 'nullable|numeric|min:0'
         ]);
 
         if ($validator->fails()) {

@@ -39,6 +39,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         discount_value: '',
         payment_method: 'cash',
         amount: '',
+        tax_percentage: '',
+        overdue_percentage: '',
+        remarks: '',
         valid_from: '',
         valid_to: '',
         starting_quarter: 1,
@@ -60,11 +63,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     // Auto-set fee type based on member status
     useEffect(() => {
         if (selectedMember) {
-            if (selectedMember.status === 'cancelled') {
-                // For cancelled members, automatically set to reinstating fee
+            if (selectedMember.status === 'cancelled' || selectedMember.status === 'expired') {
+                // For cancelled or expired members, automatically set to reinstating fee
                 setData('fee_type', 'reinstating_fee');
             } else {
-                // For non-cancelled members, clear fee type if it was reinstating fee
+                // For non-cancelled/expired members, clear fee type if it was reinstating fee
                 if (data.fee_type === 'reinstating_fee') {
                     setData('fee_type', '');
                 }
@@ -452,6 +455,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         setData('valid_to', '');
         setData('subscription_type_id', '');
         setData('subscription_category_id', '');
+        setData('tax_percentage', '');
+        setData('overdue_percentage', '');
+        setData('remarks', '');
 
         // Update amount based on fee type and selected member
         if (selectedMember && selectedMember.member_category) {
@@ -670,16 +676,22 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         const amount = parseFloat(data.amount) || 0;
         const discountValue = parseFloat(data.discount_value) || 0;
 
-        let total;
+        let baseTotal;
         if (data.discount_type === 'percent') {
-            total = amount - (amount * discountValue) / 100;
+            baseTotal = amount - (amount * discountValue) / 100;
         } else if (data.discount_type === 'fixed') {
-            total = amount - discountValue;
+            baseTotal = amount - discountValue;
         } else {
-            total = amount;
+            baseTotal = amount;
         }
 
-        return Math.round(total);
+        const taxPercentage = parseFloat(data.tax_percentage) || 0;
+        const overduePercentage = parseFloat(data.overdue_percentage) || 0;
+
+        const taxAmount = (baseTotal * taxPercentage) / 100;
+        const overdueAmount = (baseTotal * overduePercentage) / 100;
+
+        return Math.round(baseTotal + taxAmount + overdueAmount);
     };
 
     const validateDateOverlap = () => {
@@ -790,7 +802,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             // Recalculate amount if both dates are present
             const currentFromDate = field === 'valid_from' ? value : data.valid_from;
             const currentToDate = field === 'valid_to' ? value : data.valid_to;
-            
+
             if (selectedMember && currentFromDate && currentToDate) {
                 const fromDate = new Date(currentFromDate);
                 const toDate = new Date(currentToDate);
@@ -812,18 +824,17 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     } else if (data.fee_type === 'subscription_fee' && data.subscription_category_id) {
                         // Calculate amount for subscription fee based on selected category and date range
                         const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
-                        
+
                         if (selectedCategory) {
                             let newAmount;
                             let periodText;
 
                             // Calculate total days between dates
                             const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                            
+
                             // Check if it's full months or partial days
-                            const isFullMonths = fromDate.getDate() === 1 && 
-                                               (toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate());
-                            
+                            const isFullMonths = fromDate.getDate() === 1 && toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate();
+
                             if (isFullMonths) {
                                 // Full months calculation
                                 const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
@@ -1196,28 +1207,39 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     </Typography>
                                                     <FormControl fullWidth>
                                                         <Select value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                            {selectedMember?.status === 'cancelled' ? [
-                                                                // Only show Reinstating Fee for cancelled members
-                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">Reinstating Fee</MenuItem>
-                                                            ] : [
-                                                                // Show all fee types for non-cancelled members
-                                                                <MenuItem key="membership_fee" value="membership_fee" disabled={membershipFeePaid}>
-                                                                    Membership Fee {membershipFeePaid && '(Already Paid)'}
-                                                                </MenuItem>,
-                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">Maintenance Fee</MenuItem>,
-                                                                <MenuItem key="subscription_fee" value="subscription_fee">Subscription Fee</MenuItem>,
-                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">Reinstating Fee</MenuItem>
-                                                            ]}
+                                                            {selectedMember?.status === 'cancelled' || selectedMember.status === 'expired'
+                                                                ? [
+                                                                      // Only show Reinstating Fee for cancelled or expired members
+                                                                      <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                          Reinstating Fee
+                                                                      </MenuItem>,
+                                                                  ]
+                                                                : [
+                                                                      // Show all fee types for non-cancelled members
+                                                                      <MenuItem key="membership_fee" value="membership_fee" disabled={membershipFeePaid}>
+                                                                          Membership Fee {membershipFeePaid && '(Already Paid)'}
+                                                                      </MenuItem>,
+                                                                      <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                          Maintenance Fee
+                                                                      </MenuItem>,
+                                                                      <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                          Subscription Fee
+                                                                      </MenuItem>,
+                                                                      <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                          Reinstating Fee
+                                                                      </MenuItem>,
+                                                                  ]}
                                                         </Select>
                                                         {errors.fee_type && (
                                                             <Typography variant="caption" color="error" sx={{ mt: 1 }}>
                                                                 {errors.fee_type}
                                                             </Typography>
                                                         )}
-                                                        {selectedMember?.status === 'cancelled' && (
+                                                        {(selectedMember?.status === 'cancelled' || selectedMember?.status === 'expired') && (
                                                             <Alert severity="info" sx={{ mt: 2 }}>
-                                                                <strong>Member Status: Cancelled</strong><br />
-                                                                Only Reinstating Fee is available for cancelled members. This fee will reactivate the member's status upon successful payment.
+                                                                <strong>Member Status: {formatStatus(selectedMember.status)}</strong>
+                                                                <br />
+                                                                Only Reinstating Fee is available for {selectedMember.status} members. This fee will reactivate the member's status upon successful payment.
                                                             </Alert>
                                                         )}
                                                     </FormControl>
@@ -1430,7 +1452,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         >
                                                             <Grid container spacing={3}>
                                                                 <Grid item xs={6}>
-                                                                    <Typography variant="h5" sx={{ fontWeight: 600, mb: 1, color: '#063455' }}>
+                                                                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
                                                                         Subscription Type
                                                                     </Typography>
                                                                     <FormControl fullWidth>
@@ -1480,13 +1502,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                     // Auto-set dates for monthly subscription
                                                                                     const today = new Date();
                                                                                     const startDate = today.toISOString().split('T')[0];
-                                                                                    
+
                                                                                     // For monthly: valid for 1 month
                                                                                     const nextMonth = new Date(today);
                                                                                     nextMonth.setMonth(today.getMonth() + 1);
                                                                                     nextMonth.setDate(today.getDate() - 1); // End day before same date next month
                                                                                     const endDate = nextMonth.toISOString().split('T')[0];
-                                                                                    
+
                                                                                     setData('valid_from', startDate);
                                                                                     setData('valid_to', endDate);
 
@@ -1522,13 +1544,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         Family Member
                                                                     </Typography>
                                                                     <FormControl fullWidth>
-                                                                        <Select 
-                                                                            value={data.family_member_id || ''} 
-                                                                            onChange={(e) => setData('family_member_id', e.target.value || null)} 
-                                                                            error={!!errors.family_member_id} 
-                                                                            sx={{ borderRadius: 2 }} 
-                                                                            displayEmpty
-                                                                        >
+                                                                        <Select value={data.family_member_id || ''} onChange={(e) => setData('family_member_id', e.target.value || null)} error={!!errors.family_member_id} sx={{ borderRadius: 2 }} displayEmpty>
                                                                             <MenuItem value="">
                                                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                                     <Person sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
@@ -1620,7 +1636,56 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 }}
                                                             />
                                                         </Grid>
+                                                        <Grid item xs={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                label="Tax (%)"
+                                                                type="number"
+                                                                value={data.tax_percentage}
+                                                                onChange={(e) => setData('tax_percentage', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                }}
+                                                                InputProps={{
+                                                                    endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
+                                                                }}
+                                                            />
+                                                        </Grid>
+                                                        <Grid item xs={6}>
+                                                            <TextField
+                                                                fullWidth
+                                                                label="Overdue (%)"
+                                                                type="number"
+                                                                value={data.overdue_percentage}
+                                                                onChange={(e) => setData('overdue_percentage', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                }}
+                                                                InputProps={{
+                                                                    endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
+                                                                }}
+                                                            />
+                                                        </Grid>
                                                     </Grid>
+                                                </Grid>
+
+                                                {/* Remarks Section */}
+                                                <Grid item xs={12}>
+                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                        Remarks
+                                                    </Typography>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Comments / Remarks"
+                                                        multiline
+                                                        rows={3}
+                                                        value={data.remarks}
+                                                        onChange={(e) => setData('remarks', e.target.value)}
+                                                        placeholder="Enter any additional notes or comments here..."
+                                                        sx={{
+                                                            '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                        }}
+                                                    />
                                                 </Grid>
 
                                                 {/* Payment Method Section */}
@@ -1836,37 +1901,39 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
                                                                     <strong>Subscription Period:</strong> {formatDate(data.valid_from)}
                                                                     {data.valid_to ? ` to ${formatDate(data.valid_to)}` : ' (Unlimited)'}
-                                                                    {data.valid_from && data.valid_to && data.subscription_category_id && (() => {
-                                                                        const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
-                                                                        if (selectedCategory) {
-                                                                            const fromDate = new Date(data.valid_from);
-                                                                            const toDate = new Date(data.valid_to);
-                                                                            const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                                                                            const isFullMonths = fromDate.getDate() === 1 && 
-                                                                                               (toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate());
-                                                                            
-                                                                            if (isFullMonths) {
-                                                                                const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
-                                                                                return (
-                                                                                    <div style={{ marginTop: '8px', fontSize: '14px' }}>
-                                                                                        <strong>Billing:</strong> {monthsDiff} month{monthsDiff > 1 ? 's' : ''} × Rs {selectedCategory.fee?.toLocaleString()} = Rs {(selectedCategory.fee * monthsDiff)?.toLocaleString()}
-                                                                                        <br />
-                                                                                        <strong>Duration:</strong> {totalDays} days (Full month{monthsDiff > 1 ? 's' : ''})
-                                                                                    </div>
-                                                                                );
-                                                                            } else {
-                                                                                const dailyRate = Math.round(selectedCategory.fee / 30);
-                                                                                return (
-                                                                                    <div style={{ marginTop: '8px', fontSize: '14px' }}>
-                                                                                        <strong>Billing:</strong> {totalDays} day{totalDays > 1 ? 's' : ''} × Rs {dailyRate} = Rs {(dailyRate * totalDays)?.toLocaleString()}
-                                                                                        <br />
-                                                                                        <strong>Daily Rate:</strong> Rs {selectedCategory.fee?.toLocaleString()} ÷ 30 days = Rs {dailyRate}/day
-                                                                                    </div>
-                                                                                );
+                                                                    {data.valid_from &&
+                                                                        data.valid_to &&
+                                                                        data.subscription_category_id &&
+                                                                        (() => {
+                                                                            const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
+                                                                            if (selectedCategory) {
+                                                                                const fromDate = new Date(data.valid_from);
+                                                                                const toDate = new Date(data.valid_to);
+                                                                                const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                                                                const isFullMonths = fromDate.getDate() === 1 && toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate();
+
+                                                                                if (isFullMonths) {
+                                                                                    const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
+                                                                                    return (
+                                                                                        <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                                                                            <strong>Billing:</strong> {monthsDiff} month{monthsDiff > 1 ? 's' : ''} × Rs {selectedCategory.fee?.toLocaleString()} = Rs {(selectedCategory.fee * monthsDiff)?.toLocaleString()}
+                                                                                            <br />
+                                                                                            <strong>Duration:</strong> {totalDays} days (Full month{monthsDiff > 1 ? 's' : ''})
+                                                                                        </div>
+                                                                                    );
+                                                                                } else {
+                                                                                    const dailyRate = Math.round(selectedCategory.fee / 30);
+                                                                                    return (
+                                                                                        <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                                                                            <strong>Billing:</strong> {totalDays} day{totalDays > 1 ? 's' : ''} × Rs {dailyRate} = Rs {(dailyRate * totalDays)?.toLocaleString()}
+                                                                                            <br />
+                                                                                            <strong>Daily Rate:</strong> Rs {selectedCategory.fee?.toLocaleString()} ÷ 30 days = Rs {dailyRate}/day
+                                                                                        </div>
+                                                                                    );
+                                                                                }
                                                                             }
-                                                                        }
-                                                                        return null;
-                                                                    })()}
+                                                                            return null;
+                                                                        })()}
                                                                 </Alert>
                                                             )}
                                                         </Box>
@@ -1888,11 +1955,51 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             <Typography variant="h5" sx={{ fontWeight: 700, color: '#0a3d62' }}>
                                                                 Total Amount: {formatCurrency(calculateTotal())}
                                                             </Typography>
-                                                            {data.discount_value && (
-                                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                                    Original: {formatCurrency(data.amount)} | Discount: {data.discount_type === 'percent' ? `${data.discount_value}%` : formatCurrency(data.discount_value)}
-                                                                </Typography>
-                                                            )}
+                                                            <Box sx={{ mt: 1 }}>
+                                                                {data.discount_value > 0 && (
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Discount: -{data.discount_type === 'percent' ? `${formatCurrency((parseFloat(data.amount) * parseFloat(data.discount_value)) / 100)} (${data.discount_value}%)` : formatCurrency(data.discount_value)}
+                                                                    </Typography>
+                                                                )}
+                                                                {data.tax_percentage > 0 && (
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Tax: +
+                                                                        {formatCurrency(
+                                                                            (() => {
+                                                                                const amount = parseFloat(data.amount) || 0;
+                                                                                const discountValue = parseFloat(data.discount_value) || 0;
+                                                                                let baseTotal = amount;
+                                                                                if (data.discount_type === 'percent') {
+                                                                                    baseTotal = amount - (amount * discountValue) / 100;
+                                                                                } else if (data.discount_type === 'fixed') {
+                                                                                    baseTotal = amount - discountValue;
+                                                                                }
+                                                                                return (baseTotal * parseFloat(data.tax_percentage)) / 100;
+                                                                            })(),
+                                                                        )}{' '}
+                                                                        ({data.tax_percentage}%)
+                                                                    </Typography>
+                                                                )}
+                                                                {data.overdue_percentage > 0 && (
+                                                                    <Typography variant="body2" color="text.secondary">
+                                                                        Overdue: +
+                                                                        {formatCurrency(
+                                                                            (() => {
+                                                                                const amount = parseFloat(data.amount) || 0;
+                                                                                const discountValue = parseFloat(data.discount_value) || 0;
+                                                                                let baseTotal = amount;
+                                                                                if (data.discount_type === 'percent') {
+                                                                                    baseTotal = amount - (amount * discountValue) / 100;
+                                                                                } else if (data.discount_type === 'fixed') {
+                                                                                    baseTotal = amount - discountValue;
+                                                                                }
+                                                                                return (baseTotal * parseFloat(data.overdue_percentage)) / 100;
+                                                                            })(),
+                                                                        )}{' '}
+                                                                        ({data.overdue_percentage}%)
+                                                                    </Typography>
+                                                                )}
+                                                            </Box>
                                                         </Box>
                                                     </Grid>
                                                 )}

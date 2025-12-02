@@ -48,7 +48,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\UserMemberController;
 use App\Http\Controllers\VoucherController;
-use Faker\Provider\ar_EG\Payment;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -335,6 +334,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('api/check-duplicate-cnic', [MembersController::class, 'checkDuplicateCnic'])->name('api.check-duplicate-cnic');
     Route::post('api/check-duplicate-membership-no', [MembersController::class, 'checkDuplicateMembershipNo'])->name('api.check-duplicate-membership-no');
     Route::get('api/get-next-membership-number', [MembersController::class, 'getNextMembershipNumber'])->name('api.get-next-membership-number');
+    Route::get('api/members/search', [MembersController::class, 'search'])->name('api.members.search');
 
     // Financial Routes
     Route::group(['prefix' => 'admin/finance'], function () {
@@ -347,9 +347,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('store', [MemberTransactionController::class, 'store'])->name('finance.transaction.store')->middleware('permission:financial.create');
         Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('finance.transaction.search')->middleware('permission:financial.create');
         Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('finance.transaction.member')->middleware('permission:financial.create');
-
-        // Bulk Migration Routes (Temporary for data migration)
-        Route::get('bulk-migration', [MemberTransactionController::class, 'bulkMigration'])->name('finance.transaction.bulk-migration')->middleware('permission:financial.create');
     });
 
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
@@ -557,10 +554,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/stats', [DataMigrationController::class, 'getMigrationStats'])->name('data-migration.stats');
         Route::post('/migrate-members', [DataMigrationController::class, 'migrateMembers'])->name('data-migration.migrate-members');
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
+        Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoices'])->name('data-migration.migrate-invoices');
         Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
         Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');
         Route::post('/delete-profile-photos', [DataMigrationController::class, 'deleteProfilePhotos'])->name('data-migration.delete-profile-photos');
+        Route::post('/generate-qr-codes', [DataMigrationController::class, 'generateQrCodes'])->name('data-migration.generate-qr-codes');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
     });
 

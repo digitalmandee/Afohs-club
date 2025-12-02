@@ -84,9 +84,9 @@ const CreatePeriod = () => {
         try {
             const response = await axios.post('/api/payroll/periods', {
                 ...formData,
-                start_date: formData.start_date ? formData.start_date.toISOString().split('T')[0] : null,
-                end_date: formData.end_date ? formData.end_date.toISOString().split('T')[0] : null,
-                pay_date: formData.pay_date ? formData.pay_date.toISOString().split('T')[0] : null,
+                start_date: formData.start_date,
+                end_date: formData.end_date,
+                pay_date: formData.pay_date,
             });
 
             if (response.data.success) {
@@ -117,8 +117,8 @@ const CreatePeriod = () => {
 
     const generatePeriodName = () => {
         if (formData.start_date && formData.end_date) {
-            const startMonth = formData.start_date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            const endMonth = formData.end_date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const startMonth = new Date(formData.start_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const endMonth = new Date(formData.end_date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
             if (startMonth === endMonth) {
                 return startMonth;
@@ -138,16 +138,18 @@ const CreatePeriod = () => {
 
     return (
         <AdminLayout>
-            <div style={{
-                minHeight: '100vh',
-                backgroundColor: '#f5f5f5',
-                padding: "1rem"
-            }}>
+            <div
+                style={{
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
+                    padding: '1rem',
+                }}
+            >
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                            <ArrowBackIcon sx={{color:'#063455'}} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Box>
                             <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
@@ -177,13 +179,10 @@ const CreatePeriod = () => {
                                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                                     Start Date
                                 </Typography>
-                                {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
                                 <TextField
-                                    type='date'
-                                    // label="Start Date"
-                                    value={formData.start_date}
+                                    type="date"
+                                    value={formData.start_date || ''}
                                     onChange={(e) => handleInputChange('start_date', e.target.value)}
-                                    // renderInput={(params) => <TextField {...params}
                                     fullWidth
                                     InputLabelProps={{ shrink: true }}
                                     error={!!errors.start_date}
@@ -191,45 +190,44 @@ const CreatePeriod = () => {
                                     sx={{
                                         minWidth: 0,
                                         height: 40,
-                                        "& .MuiInputBase-root": {
+                                        '& .MuiInputBase-root': {
                                             minWidth: 0,
                                             height: 40,
                                         },
-                                        "& .MuiFormControl-root": {
+                                        '& .MuiFormControl-root': {
                                             minWidth: 0,
                                             height: 40,
                                         },
-                                    }} />
-                                {/* </LocalizationProvider> */}
+                                    }}
+                                />
                             </Grid>
 
                             <Grid item xs={12} sm={4}>
                                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                                     End Date
                                 </Typography>
-                                {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
                                 <TextField
-                                    type='date'
-                                    value={formData.end_date}
+                                    type="date"
+                                    value={formData.end_date || ''}
                                     onChange={(e) => handleInputChange('end_date', e.target.value)}
-                                    minDate={formData.start_date}
-                                    // renderInput={(params) => <TextField {...params} 
+                                    inputProps={{ min: formData.start_date }}
                                     fullWidth
                                     InputLabelProps={{ shrink: true }}
-                                    error={!!errors.end_date} helperText={errors.end_date}
+                                    error={!!errors.end_date}
+                                    helperText={errors.end_date}
                                     sx={{
                                         minWidth: 0,
                                         height: 40,
-                                        "& .MuiInputBase-root": {
+                                        '& .MuiInputBase-root': {
                                             minWidth: 0,
                                             height: 40,
                                         },
-                                        "& .MuiFormControl-root": {
+                                        '& .MuiFormControl-root': {
                                             minWidth: 0,
                                             height: 40,
                                         },
-                                    }} />
-                                {/* </LocalizationProvider> */}
+                                    }}
+                                />
                             </Grid>
 
                             {/* Pay Date */}
@@ -237,48 +235,54 @@ const CreatePeriod = () => {
                                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                                     Pay Date (optional)
                                 </Typography>
-                                {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
-                                    <TextField
-                                        type='date'
-                                        value={formData.pay_date} 
-                                        onChange={(e) => handleInputChange('pay_date', e.target.value)} 
-                                        minDate={formData.end_date} 
-                                        // renderInput={(params) => <TextField {...params} 
-                                        fullWidth
-                                        InputLabelProps={{ shrink: true }}
-                                        error={!!errors.pay_date} 
-                                        helperText={errors.pay_date || 'Date when salaries will be paid'}
-                                        sx={{
+                                <TextField
+                                    type="date"
+                                    value={formData.pay_date || ''}
+                                    onChange={(e) => handleInputChange('pay_date', e.target.value)}
+                                    inputProps={{ min: formData.end_date }}
+                                    fullWidth
+                                    InputLabelProps={{ shrink: true }}
+                                    error={!!errors.pay_date}
+                                    helperText={errors.pay_date || 'Date when salaries will be paid'}
+                                    sx={{
+                                        minWidth: 0,
+                                        height: 40,
+                                        '& .MuiInputBase-root': {
                                             minWidth: 0,
                                             height: 40,
-                                            "& .MuiInputBase-root": {
-                                                minWidth: 0,
-                                                height: 40,
-                                            },
-                                            "& .MuiFormControl-root": {
-                                                minWidth: 0,
-                                                height: 40,
-                                            },
-                                        }} />
-                                {/* </LocalizationProvider> */}
+                                        },
+                                        '& .MuiFormControl-root': {
+                                            minWidth: 0,
+                                            height: 40,
+                                        },
+                                    }}
+                                />
                             </Grid>
 
                             {/* Period Name */}
                             <Grid item xs={12}>
                                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
-                                    <TextField fullWidth label="Period Name" value={formData.period_name} onChange={(e) => handleInputChange('period_name', e.target.value)} error={!!errors.period_name} helperText={errors.period_name} placeholder="e.g., January 2024, Q1 2024"
+                                    <TextField
+                                        fullWidth
+                                        label="Period Name"
+                                        value={formData.period_name}
+                                        onChange={(e) => handleInputChange('period_name', e.target.value)}
+                                        error={!!errors.period_name}
+                                        helperText={errors.period_name}
+                                        placeholder="e.g., January 2024, Q1 2024"
                                         sx={{
                                             minWidth: 0,
                                             height: 50,
-                                            "& .MuiInputBase-root": {
+                                            '& .MuiInputBase-root': {
                                                 minWidth: 0,
                                                 height: 50,
                                             },
-                                            "& .MuiFormControl-root": {
+                                            '& .MuiFormControl-root': {
                                                 minWidth: 0,
                                                 height: 50,
                                             },
-                                        }} />
+                                        }}
+                                    />
                                     <Button
                                         variant="outlined"
                                         onClick={handleAutoGenerateName}
@@ -300,19 +304,23 @@ const CreatePeriod = () => {
                             <Grid item xs={12} md={4}>
                                 <FormControl fullWidth>
                                     <InputLabel>Status</InputLabel>
-                                    <Select value={formData.status} onChange={(e) => handleInputChange('status', e.target.value)} label="Status"
+                                    <Select
+                                        value={formData.status}
+                                        onChange={(e) => handleInputChange('status', e.target.value)}
+                                        label="Status"
                                         sx={{
                                             minWidth: 0,
                                             height: 40,
-                                            "& .MuiInputBase-root": {
+                                            '& .MuiInputBase-root': {
                                                 minWidth: 0,
                                                 height: 40,
                                             },
-                                            "& .MuiFormControl-root": {
+                                            '& .MuiFormControl-root': {
                                                 minWidth: 0,
                                                 height: 40,
                                             },
-                                        }}>
+                                        }}
+                                    >
                                         <MenuItem value="draft">Draft</MenuItem>
                                         <MenuItem value="active">Active</MenuItem>
                                         <MenuItem value="processing">Processing</MenuItem>
@@ -348,7 +356,7 @@ const CreatePeriod = () => {
                                                     Duration:
                                                 </Typography>
                                                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                                    {Math.ceil((formData.end_date - formData.start_date) / (1000 * 60 * 60 * 24))} days
+                                                    {Math.ceil((new Date(formData.end_date) - new Date(formData.start_date)) / (1000 * 60 * 60 * 24))} days
                                                 </Typography>
                                             </Grid>
                                             <Grid item xs={12} sm={4}>
