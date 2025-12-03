@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
 import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment, CircularProgress } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -710,84 +709,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
     return (
         <>
-            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-                {/* <Container maxWidth="lg" sx={{ py: 4 }}> */}
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <IconButton onClick={onBack}>
-                        <ArrowBackIcon sx={{ color: '#063455' }} />
-                    </IconButton>
-                    <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
-                        Membership Information
-                    </Typography>
-                </Box>
-
-                <Box
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        p: 2,
-                        mb: 3,
-                        backgroundColor: '#f0f0f0',
-                        borderRadius: '4px',
-                    }}
-                >
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box
-                            sx={{
-                                width: 30,
-                                height: 30,
-                                borderRadius: '50%',
-                                backgroundColor: '#2c3e50',
-                                color: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                mr: 2,
-                            }}
-                        >
-                            <CheckCircleIcon fontSize="small" />
-                        </Box>
-                        <Typography sx={{ fontWeight: 500 }}>Personal Information</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box
-                            sx={{
-                                width: 30,
-                                height: 30,
-                                borderRadius: '50%',
-                                backgroundColor: '#2c3e50',
-                                color: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                mr: 2,
-                            }}
-                        >
-                            <CheckCircleIcon fontSize="small" />
-                        </Box>
-                        <Typography sx={{ fontWeight: 500 }}>Contact Information</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box
-                            sx={{
-                                width: 30,
-                                height: 30,
-                                borderRadius: '50%',
-                                backgroundColor: '#2c3e50',
-                                color: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                mr: 2,
-                            }}
-                        >
-                            3
-                        </Box>
-                        <Typography sx={{ fontWeight: 500 }}>Membership Information</Typography>
-                    </Box>
-                </Box>
-
+            <>
                 {submitError && (
                     <Box sx={{ mb: 2, p: 2, bgcolor: '#ffebee', borderRadius: '4px', border: '1px solid #ef5350' }}>
                         <Typography variant="body2" sx={{ color: '#d32f2f' }}>
@@ -1992,7 +1914,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                     </Box>
                 </Box>
                 {/* </Container> */}
-            </div>
+            </>
         </>
     );
 };

@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
+import { Box, IconButton, Typography } from '@mui/material';
+import { ArrowBack } from '@mui/icons-material';
 import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';
 import AddForm3 from '@/components/App/membershipForm/AddForm3';
+import MembershipStepper from '@/components/App/membershipForm/MembershipStepper';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
@@ -70,7 +73,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             permanent_city: user.permanent_city || '',
             permanent_country: user.permanent_country || '',
             country: user.country || '',
-            documents: Array.isArray(user.documents) ? user.documents.map(doc => doc.id) : [],
+            documents: Array.isArray(user.documents) ? user.documents.map((doc) => doc.id) : [],
             // previewFiles is for display: keep full objects for showing file names
             previewFiles: Array.isArray(user.documents) ? user.documents : [],
             family_members: familyMembers || [],
@@ -278,6 +281,27 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             .finally(() => setLoading(false));
     };
 
+    const getStepTitle = () => {
+        switch (step) {
+            case 1:
+                return 'Personal Information';
+            case 2:
+                return 'Contact Information';
+            case 3:
+                return 'Membership Information';
+            default:
+                return '';
+        }
+    };
+
+    const handleBack = () => {
+        if (step === 1) {
+            window.history.back();
+        } else {
+            setStep((prev) => prev - 1);
+        }
+    };
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} />
@@ -289,11 +313,22 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div>
-                    {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
-                    {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
-                    {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
-                </div>
+            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
+                    <IconButton onClick={handleBack}>
+                        <ArrowBack sx={{ color: '#063455' }} />
+                    </IconButton>
+                    <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
+                        {getStepTitle()}
+                    </Typography>
+                </Box>
+
+                <MembershipStepper step={step} />
+                {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
+                {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
+                {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
+            </div>
             {/* </div> */}
         </>
     );

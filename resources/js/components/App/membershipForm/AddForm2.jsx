@@ -53,86 +53,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
     };
 
     return (
-        <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-            {/* Header */}
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 2 }}>
-                <IconButton onClick={onBack}>
-                    <ArrowBack sx={{ color: '#063455' }} />
-                </IconButton>
-                <Typography variant="h5" component="h1" sx={{ fontWeight: 600, color: '#063455' }}>
-                    Contact Information
-                </Typography>
-            </Box>
-
-            {/* Progress Steps */}
-            <Paper
-                elevation={0}
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    p: 2,
-                    mb: 3,
-                    backgroundColor: '#f0f0f0',
-                    borderRadius: '4px',
-                }}
-            >
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                        sx={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: '50%',
-                            backgroundColor: '#e0e0e0',
-                            color: '#333',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            mr: 2,
-                        }}
-                    >
-                        1
-                    </Box>
-                    <Typography sx={{ fontWeight: 500 }}>Personal Information</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                        sx={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: '50%',
-                            backgroundColor: '#2c3e50',
-                            color: 'white',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            mr: 2,
-                        }}
-                    >
-                        2
-                    </Box>
-                    <Typography sx={{ fontWeight: 500 }}>Contact Information</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Box
-                        sx={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: '50%',
-                            backgroundColor: '#e0e0e0',
-                            color: '#333',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            mr: 2,
-                        }}
-                    >
-                        3
-                    </Box>
-                    <Typography sx={{ fontWeight: 500 }}>Membership Information</Typography>
-                </Box>
-            </Paper>
-
+        <>
             {/* Main Form */}
             <form>
                 <Grid container>
@@ -396,7 +317,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                     </Grid>
                 </Grid>
             </form>
-        </div>
+        </>
     );
 };
 
