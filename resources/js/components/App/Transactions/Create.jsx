@@ -1103,973 +1103,984 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             </Box>
                                         )}
                                     />
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    )}
 
-                                    {selectedMember && (
-                                        <Box
-                                            sx={{
-                                                mt: 2,
-                                                p: 2,
-                                                bgcolor: 'success.50',
-                                                borderRadius: 2,
-                                                border: '1px solid',
-                                                borderColor: 'success.200',
-                                            }}
-                                        >
+                    {/* Step 2: Transaction Form and Member Details */}
+                    <Grid item xs={12}>
+                        <Grid container spacing={3}>
+                            {/* Left Column: Transaction Form */}
+                            <Grid item xs={12} md={8}>
+                                <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                                    <CardContent sx={{ p: 3 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                            <Box
+                                                sx={{
+                                                    bgcolor: selectedMember ? '#0a3d62' : 'grey.300',
+                                                    color: 'white',
+                                                    borderRadius: '50%',
+                                                    width: 32,
+                                                    height: 32,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    mr: 2,
+                                                    fontSize: '14px',
+                                                    fontWeight: 600,
+                                                }}
+                                            >
+                                                2
+                                            </Box>
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                                Transaction Details
+                                            </Typography>
+                                        </Box>
+                                        {selectedMember ? (
+                                            <form onSubmit={handleSubmit}>
+                                                <Grid container spacing={3}>
+                                                    {/* Fee Type Selection */}
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            Fee Type
+                                                        </Typography>
+                                                        <FormControl fullWidth>
+                                                            <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
+                                                                {selectedMember?.status === 'cancelled' || selectedMember.status === 'expired'
+                                                                    ? [
+                                                                          // Only show Reinstating Fee for cancelled or expired members
+                                                                          <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                              Reinstating Fee
+                                                                          </MenuItem>,
+                                                                      ]
+                                                                    : !membershipFeePaid
+                                                                      ? [
+                                                                            // Only show Membership Fee if not paid
+                                                                            <MenuItem key="membership_fee" value="membership_fee">
+                                                                                Membership Fee
+                                                                            </MenuItem>,
+                                                                        ]
+                                                                      : [
+                                                                            // Show all OTHER fee types for active members who have paid membership fee
+                                                                            <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                                Maintenance Fee
+                                                                            </MenuItem>,
+                                                                            <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                                Subscription Fee
+                                                                            </MenuItem>,
+                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                Reinstating Fee
+                                                                            </MenuItem>,
+                                                                        ]}
+                                                            </Select>
+                                                            {errors.fee_type && (
+                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                                    {errors.fee_type}
+                                                                </Typography>
+                                                            )}
+                                                            {(selectedMember?.status === 'cancelled' || selectedMember?.status === 'expired') && (
+                                                                <Alert severity="info" sx={{ mt: 2 }}>
+                                                                    <strong>Member Status: {formatStatus(selectedMember.status)}</strong>
+                                                                    <br />
+                                                                    Only Reinstating Fee is available for {selectedMember.status} members. This fee will reactivate the member's status upon successful payment.
+                                                                </Alert>
+                                                            )}
+                                                        </FormControl>
+                                                    </Grid>
+
+                                                    {/* Maintenance Fee Quarter Status */}
+                                                    {data.fee_type === 'maintenance_fee' && (
+                                                        <>
+                                                            <Grid item xs={12}>
+                                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                                    Quarter Payment Status
+                                                                </Typography>
+                                                                <Box
+                                                                    sx={{
+                                                                        p: 2,
+                                                                        bgcolor: quarterStatus.isNewCycle ? 'info.50' : 'warning.50',
+                                                                        borderRadius: 2,
+                                                                        border: '1px solid',
+                                                                        borderColor: quarterStatus.isNewCycle ? 'info.200' : 'warning.200',
+                                                                    }}
+                                                                >
+                                                                    {(() => {
+                                                                        const membershipDate = new Date(selectedMember.membership_date);
+                                                                        const membershipYear = membershipDate.getFullYear();
+                                                                        const firstYearEnd = new Date(membershipYear, 11, 31);
+                                                                        const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
+
+                                                                        return (
+                                                                            <>
+                                                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                                                                                    {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
+                                                                                </Typography>
+
+                                                                                {isFirstYear ? (
+                                                                                    <Box sx={{ mb: 2 }}>
+                                                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                                                            <strong>Payment Method:</strong> Monthly fees for remaining months in {membershipYear}
+                                                                                        </Typography>
+                                                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                                                            <strong>Membership Month:</strong> {membershipDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (Free)
+                                                                                        </Typography>
+                                                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                                                            <strong>Payable Period:</strong> {new Date(membershipYear, membershipDate.getMonth() + 1, 1).toLocaleDateString('en-US', { month: 'long' })} - December {membershipYear}
+                                                                                        </Typography>
+
+                                                                                        {/* Debug: Show paid months */}
+                                                                                        {(() => {
+                                                                                            const membershipMonth = membershipDate.getMonth();
+                                                                                            const monthsInFirstYear = [];
+                                                                                            for (let month = membershipMonth + 1; month <= 11; month++) {
+                                                                                                monthsInFirstYear.push(month);
+                                                                                            }
+
+                                                                                            const paidMonths = [];
+                                                                                            memberTransactions
+                                                                                                .filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid')
+                                                                                                .forEach((transaction) => {
+                                                                                                    const txStart = new Date(transaction.valid_from);
+                                                                                                    const txEnd = new Date(transaction.valid_to);
+
+                                                                                                    // More accurate month detection: check each month the transaction spans
+                                                                                                    let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
+                                                                                                    const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
+
+                                                                                                    while (currentDate <= endDate) {
+                                                                                                        const month = currentDate.getMonth();
+                                                                                                        const year = currentDate.getFullYear();
+
+                                                                                                        // Check if this month overlaps with the transaction period
+                                                                                                        const monthStart = new Date(year, month, 1);
+                                                                                                        const monthEnd = new Date(year, month + 1, 0); // Last day of month
+
+                                                                                                        // Transaction covers this month if there's any overlap
+                                                                                                        const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
+
+                                                                                                        if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
+                                                                                                            paidMonths.push(month);
+                                                                                                        }
+
+                                                                                                        currentDate.setMonth(currentDate.getMonth() + 1);
+                                                                                                    }
+                                                                                                });
+
+                                                                                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                                                                                            return (
+                                                                                                <Typography variant="body2" color="text.secondary">
+                                                                                                    <strong>Paid Months:</strong> {paidMonths.length > 0 ? paidMonths.map((m) => monthNames[m]).join(', ') : 'None'}
+                                                                                                    <br />
+                                                                                                    <strong>Remaining:</strong>{' '}
+                                                                                                    {monthsInFirstYear
+                                                                                                        .filter((m) => !paidMonths.includes(m))
+                                                                                                        .map((m) => monthNames[m])
+                                                                                                        .join(', ') || 'All paid!'}
+                                                                                                </Typography>
+                                                                                            );
+                                                                                        })()}
+                                                                                    </Box>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                                                                            {[1, 2, 3, 4].map((quarter) => (
+                                                                                                <Chip key={quarter} label={`Q${quarter}`} color={quarterStatus.paidQuarters.includes(quarter) ? 'success' : 'default'} variant={quarterStatus.paidQuarters.includes(quarter) ? 'filled' : 'outlined'} size="medium" sx={{ minWidth: 50, fontWeight: 600 }} />
+                                                                                            ))}
+                                                                                        </Box>
+                                                                                        <Typography variant="body2" color="text.secondary">
+                                                                                            <strong>Quarters:</strong> Q1 (Jan-Mar), Q2 (Apr-Jun), Q3 (Jul-Sep), Q4 (Oct-Dec)
+                                                                                        </Typography>
+                                                                                    </>
+                                                                                )}
+
+                                                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                                                    <strong>Next payment:</strong> Monthly payment system
+                                                                                    {!isFirstYear && quarterStatus.latestEndDate && <span> (Last payment ended: {formatDate(quarterStatus.latestEndDate)})</span>}
+                                                                                    {!quarterStatus.latestEndDate && !isFirstYear && <span> (No previous maintenance payments found)</span>}
+                                                                                </Typography>
+                                                                            </>
+                                                                        );
+                                                                    })()}
+                                                                </Box>
+                                                            </Grid>
+
+                                                            <Grid item xs={12}>
+                                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                                    Payment Period Selection
+                                                                </Typography>
+                                                                <Alert severity="info" sx={{ mb: 2 }}>
+                                                                    <Typography variant="body2">
+                                                                        <strong>Next suggested payment:</strong> Monthly maintenance fee
+                                                                        <br />
+                                                                        Select your desired payment period using the dates below. Amount will calculate automatically.
+                                                                    </Typography>
+                                                                </Alert>
+
+                                                                {/* Quick Payment Period Buttons */}
+                                                                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('monthly')} sx={{ borderRadius: 2 }}>
+                                                                        1 Month
+                                                                    </Button>
+                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('quarterly')} sx={{ borderRadius: 2 }}>
+                                                                        1 Quarter (3 months)
+                                                                    </Button>
+                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('half_yearly')} sx={{ borderRadius: 2 }}>
+                                                                        6 Months
+                                                                    </Button>
+                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('annually')} sx={{ borderRadius: 2 }}>
+                                                                        1 Year
+                                                                    </Button>
+                                                                </Box>
+                                                            </Grid>
+                                                        </>
+                                                    )}
+
+                                                    {/* Reinstating Fee Section */}
+                                                    {selectedMember && data.fee_type === 'reinstating_fee' && (
+                                                        <Grid item xs={12}>
+                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                                Member Reinstatement Information
+                                                            </Typography>
+                                                            <Box sx={{ p: 3, backgroundColor: '#fef3c7', borderRadius: 2, border: '1px solid #f59e0b' }}>
+                                                                <Grid container spacing={2}>
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
+                                                                            Current Status:
+                                                                            <Chip
+                                                                                label={formatStatus(selectedMember.status)}
+                                                                                size="small"
+                                                                                sx={{
+                                                                                    ml: 1,
+                                                                                    backgroundColor: selectedMember.status === 'active' ? '#dcfce7' : '#fecaca',
+                                                                                    color: selectedMember.status === 'active' ? '#166534' : '#dc2626',
+                                                                                }}
+                                                                            />
+                                                                        </Typography>
+                                                                    </Grid>
+                                                                    <Grid item xs={12} md={6}>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
+                                                                            Member ID: {selectedMember.id}
+                                                                        </Typography>
+                                                                    </Grid>
+                                                                    <Grid item xs={12}>
+                                                                        <Typography variant="body2" sx={{ color: '#92400e' }}>
+                                                                            <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
+                                                                        </Typography>
+                                                                    </Grid>
+                                                                    {!['cancelled', 'expired', 'suspended', 'terminated'].includes(selectedMember.status) && (
+                                                                        <Grid item xs={12}>
+                                                                            <Alert severity="warning">This member's current status ({formatStatus(selectedMember.status)}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.</Alert>
+                                                                        </Grid>
+                                                                    )}
+                                                                </Grid>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Subscription Details Section - Show before Amount & Discount */}
+                                                    {selectedMember && data.fee_type === 'subscription_fee' && (
+                                                        <Grid item xs={12}>
+                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                                Subscription Details
+                                                            </Typography>
+                                                            <Box
+                                                                sx={{
+                                                                    p: 3,
+                                                                    bgcolor: 'grey.50',
+                                                                    borderRadius: 2,
+                                                                    border: '1px solid',
+                                                                    borderColor: 'grey.200',
+                                                                }}
+                                                            >
+                                                                <Grid container spacing={3}>
+                                                                    <Grid item xs={6}>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                                                            Subscription Type
+                                                                        </Typography>
+                                                                        <FormControl fullWidth>
+                                                                            <Select
+                                                                                size="small"
+                                                                                value={data.subscription_type_id}
+                                                                                onChange={(e) => {
+                                                                                    setData('subscription_type_id', e.target.value);
+                                                                                    setData('subscription_category_id', ''); // Reset category when type changes
+                                                                                    setData('amount', ''); // Reset amount
+                                                                                }}
+                                                                                error={!!errors.subscription_type_id}
+                                                                                sx={{ borderRadius: 2 }}
+                                                                                displayEmpty
+                                                                            >
+                                                                                <MenuItem value="">Select Subscription Type</MenuItem>
+                                                                                {subscriptionTypes?.map((type) => (
+                                                                                    <MenuItem key={type.id} value={type.id}>
+                                                                                        {type.name}
+                                                                                    </MenuItem>
+                                                                                ))}
+                                                                            </Select>
+                                                                            {errors.subscription_type_id && (
+                                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                                                    {errors.subscription_type_id}
+                                                                                </Typography>
+                                                                            )}
+                                                                        </FormControl>
+                                                                    </Grid>
+
+                                                                    <Grid item xs={6}>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                                                            Subscription Category
+                                                                        </Typography>
+                                                                        <FormControl fullWidth>
+                                                                            <Select
+                                                                                size="small"
+                                                                                value={data.subscription_category_id}
+                                                                                onChange={(e) => {
+                                                                                    const categoryId = e.target.value;
+                                                                                    setData('subscription_category_id', categoryId);
+
+                                                                                    // Auto-populate amount and dates from selected category
+                                                                                    const selectedCategory = subscriptionCategories?.find((cat) => cat.id == categoryId);
+                                                                                    if (selectedCategory) {
+                                                                                        // Set amount to monthly fee (payment_type removed)
+                                                                                        setData('amount', selectedCategory.fee);
+
+                                                                                        // Auto-set dates for monthly subscription
+                                                                                        const today = new Date();
+                                                                                        const startDate = today.toISOString().split('T')[0];
+
+                                                                                        // For monthly: valid for 1 month
+                                                                                        const nextMonth = new Date(today);
+                                                                                        nextMonth.setMonth(today.getMonth() + 1);
+                                                                                        nextMonth.setDate(today.getDate() - 1); // End day before same date next month
+                                                                                        const endDate = nextMonth.toISOString().split('T')[0];
+
+                                                                                        setData('valid_from', startDate);
+                                                                                        setData('valid_to', endDate);
+
+                                                                                        // Show notification about auto-set dates
+                                                                                        enqueueSnackbar(`Auto-set dates for monthly (30 days) subscription`, { variant: 'info' });
+                                                                                    }
+                                                                                }}
+                                                                                error={!!errors.subscription_category_id}
+                                                                                sx={{ borderRadius: 2 }}
+                                                                                displayEmpty
+                                                                                disabled={!data.subscription_type_id}
+                                                                            >
+                                                                                <MenuItem value="">Select Category</MenuItem>
+                                                                                {subscriptionCategories
+                                                                                    ?.filter((cat) => cat.subscription_type_id == data.subscription_type_id)
+                                                                                    ?.map((category) => (
+                                                                                        <MenuItem key={category.id} value={category.id}>
+                                                                                            {category.name} - Rs. {category.fee}
+                                                                                        </MenuItem>
+                                                                                    ))}
+                                                                            </Select>
+                                                                            {errors.subscription_category_id && (
+                                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                                                    {errors.subscription_category_id}
+                                                                                </Typography>
+                                                                            )}
+                                                                        </FormControl>
+                                                                    </Grid>
+
+                                                                    {/* Family Member Selection */}
+                                                                    <Grid item xs={12}>
+                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                                                            Family Member
+                                                                        </Typography>
+                                                                        <FormControl fullWidth>
+                                                                            <Select size="small" value={data.family_member_id || ''} onChange={(e) => setData('family_member_id', e.target.value || null)} error={!!errors.family_member_id} sx={{ borderRadius: 2 }} displayEmpty>
+                                                                                <MenuItem value="">
+                                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                        <Person sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
+                                                                                        <Box>
+                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                                {selectedMember?.full_name} (SELF)
+                                                                                            </Typography>
+                                                                                            <Typography variant="caption" color="text.secondary">
+                                                                                                Primary Member - {selectedMember?.membership_no}
+                                                                                            </Typography>
+                                                                                        </Box>
+                                                                                    </Box>
+                                                                                </MenuItem>
+                                                                                {selectedMember?.family_members?.map((familyMember) => (
+                                                                                    <MenuItem key={familyMember.id} value={familyMember.id}>
+                                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                                            <Person sx={{ mr: 1, fontSize: 18, color: '#666' }} />
+                                                                                            <Box>
+                                                                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                                    {familyMember.full_name}
+                                                                                                </Typography>
+                                                                                                <Typography variant="caption" color="text.secondary">
+                                                                                                    {familyMember.relation} - {familyMember.membership_no}
+                                                                                                </Typography>
+                                                                                            </Box>
+                                                                                        </Box>
+                                                                                    </MenuItem>
+                                                                                ))}
+                                                                            </Select>
+                                                                            {errors.family_member_id && (
+                                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+                                                                                    {errors.family_member_id}
+                                                                                </Typography>
+                                                                            )}
+                                                                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                                                                Select the family member for whom this subscription is being purchased. Leave as "SELF" for the primary member.
+                                                                            </Typography>
+                                                                        </FormControl>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Amount and Discount Section */}
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            Amount & Discount
+                                                        </Typography>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={12}>
+                                                                <TextField
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="Amount (PKR)"
+                                                                    type="number"
+                                                                    value={data.amount}
+                                                                    onChange={(e) => setData('amount', e.target.value)}
+                                                                    error={!!errors.amount}
+                                                                    helperText={errors.amount}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                    }}
+                                                                    InputProps={{
+                                                                        startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary' }}>Rs</Typography>,
+                                                                    }}
+                                                                />
+                                                            </Grid>
+                                                            <Grid item xs={6}>
+                                                                <FormControl fullWidth>
+                                                                    <Select size="small" value={data.discount_type} onChange={(e) => setData('discount_type', e.target.value)} displayEmpty sx={{ borderRadius: 2 }}>
+                                                                        <MenuItem value="">No Discount</MenuItem>
+                                                                        <MenuItem value="percent">Percentage</MenuItem>
+                                                                        <MenuItem value="fixed">Fixed Amount</MenuItem>
+                                                                    </Select>
+                                                                </FormControl>
+                                                            </Grid>
+                                                            <Grid item xs={6}>
+                                                                <TextField
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="Discount Value"
+                                                                    type="number"
+                                                                    value={data.discount_value}
+                                                                    onChange={(e) => setData('discount_value', e.target.value)}
+                                                                    disabled={!data.discount_type}
+                                                                    error={!!errors.discount_value}
+                                                                    helperText={errors.discount_value}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                    }}
+                                                                />
+                                                            </Grid>
+                                                            <Grid item xs={6}>
+                                                                <TextField
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="Tax (%)"
+                                                                    type="number"
+                                                                    value={data.tax_percentage}
+                                                                    onChange={(e) => setData('tax_percentage', e.target.value)}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                    }}
+                                                                    InputProps={{
+                                                                        endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
+                                                                    }}
+                                                                />
+                                                            </Grid>
+                                                            <Grid item xs={6}>
+                                                                <TextField
+                                                                    size="small"
+                                                                    fullWidth
+                                                                    label="Overdue (%)"
+                                                                    type="number"
+                                                                    value={data.overdue_percentage}
+                                                                    onChange={(e) => setData('overdue_percentage', e.target.value)}
+                                                                    sx={{
+                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                    }}
+                                                                    InputProps={{
+                                                                        endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
+                                                                    }}
+                                                                />
+                                                            </Grid>
+                                                        </Grid>
+                                                    </Grid>
+
+                                                    {/* Remarks Section */}
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            Remarks
+                                                        </Typography>
+                                                        <TextField
+                                                            size="small"
+                                                            fullWidth
+                                                            label="Comments / Remarks"
+                                                            multiline
+                                                            rows={3}
+                                                            value={data.remarks}
+                                                            onChange={(e) => setData('remarks', e.target.value)}
+                                                            placeholder="Enter any additional notes or comments here..."
+                                                            sx={{
+                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                            }}
+                                                        />
+                                                    </Grid>
+
+                                                    {/* Payment Method Section */}
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            Payment Method
+                                                        </Typography>
+                                                        <FormControl fullWidth>
+                                                            <Select size="small" value={data.payment_method} onChange={(e) => setData('payment_method', e.target.value)} sx={{ borderRadius: 2 }}>
+                                                                <MenuItem value="cash">Cash Payment</MenuItem>
+                                                                <MenuItem value="credit_card">Credit Card</MenuItem>
+                                                            </Select>
+                                                        </FormControl>
+                                                    </Grid>
+
+                                                    {/* Credit Card Additional Fields */}
+                                                    {data.payment_method === 'credit_card' && (
+                                                        <Grid item xs={12}>
+                                                            <Box
+                                                                sx={{
+                                                                    p: 3,
+                                                                    bgcolor: 'primary.50',
+                                                                    borderRadius: 2,
+                                                                    border: '1px solid',
+                                                                    borderColor: 'primary.200',
+                                                                }}
+                                                            >
+                                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#0a3d62' }}>
+                                                                    Credit Card Details
+                                                                </Typography>
+                                                                <Grid container spacing={2}>
+                                                                    <Grid item xs={12} sm={6}>
+                                                                        <FormControl fullWidth>
+                                                                            <Select size="small" value={data.credit_card_type} onChange={(e) => setData('credit_card_type', e.target.value)} error={!!formErrors.credit_card_type} displayEmpty sx={{ borderRadius: 2 }}>
+                                                                                <MenuItem value="">Select Card Type</MenuItem>
+                                                                                <MenuItem value="mastercard">MasterCard</MenuItem>
+                                                                                <MenuItem value="visa">Visa</MenuItem>
+                                                                            </Select>
+                                                                            {formErrors.credit_card_type && (
+                                                                                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                                                                    {formErrors.credit_card_type[0]}
+                                                                                </Typography>
+                                                                            )}
+                                                                        </FormControl>
+                                                                    </Grid>
+                                                                    <Grid item xs={12} sm={6}>
+                                                                        <Box>
+                                                                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                                                                                Upload Receipt
+                                                                            </Typography>
+                                                                            <input
+                                                                                type="file"
+                                                                                accept="image/*,.pdf"
+                                                                                onChange={(e) => setData('receipt_file', e.target.files[0])}
+                                                                                style={{
+                                                                                    width: '100%',
+                                                                                    padding: '12px',
+                                                                                    border: `2px dashed ${formErrors.receipt_file ? '#f44336' : '#d1d5db'}`,
+                                                                                    borderRadius: '8px',
+                                                                                    fontSize: '14px',
+                                                                                    backgroundColor: '#f9fafb',
+                                                                                    cursor: 'pointer',
+                                                                                }}
+                                                                            />
+                                                                            {formErrors.receipt_file && (
+                                                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
+                                                                                    {formErrors.receipt_file[0]}
+                                                                                </Typography>
+                                                                            )}
+                                                                            {data.receipt_file && (
+                                                                                <Box sx={{ mt: 1, p: 1, bgcolor: 'success.50', borderRadius: 1, border: '1px solid', borderColor: 'success.200' }}>
+                                                                                    <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
+                                                                                        {data.receipt_file.name}
+                                                                                    </Typography>
+                                                                                </Box>
+                                                                            )}
+                                                                        </Box>
+                                                                    </Grid>
+                                                                </Grid>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Validity Period Section - Only show for maintenance fees */}
+                                                    {selectedMember && data.fee_type === 'maintenance_fee' && (
+                                                        <Grid item xs={12}>
+                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                                Validity Period
+                                                            </Typography>
+                                                            <Box
+                                                                sx={{
+                                                                    p: 3,
+                                                                    bgcolor: 'grey.50',
+                                                                    borderRadius: 2,
+                                                                    border: '1px solid',
+                                                                    borderColor: 'grey.200',
+                                                                }}
+                                                            >
+                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                                        Set Payment Period
+                                                                    </Typography>
+                                                                    <Button size="small" variant="outlined" onClick={() => (data.fee_type === 'membership_fee' ? handleFeeTypeChange('membership_fee') : suggestMaintenancePeriod(data.payment_frequency))} sx={{ borderRadius: 2 }}>
+                                                                        Auto-Suggest Dates
+                                                                    </Button>
+                                                                </Box>
+
+                                                                <Grid container spacing={2}>
+                                                                    <Grid item xs={6}>
+                                                                        <TextField
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label={data.fee_type === 'maintenance_fee' ? 'Valid From (1st of month)' : 'Valid From'}
+                                                                            type="date"
+                                                                            value={data.valid_from}
+                                                                            onChange={(e) => handleDateChange('valid_from', e.target.value)}
+                                                                            InputLabelProps={{ shrink: true }}
+                                                                            error={!!(errors.valid_from || formErrors.valid_from || !dateValidation.isValid)}
+                                                                            helperText={errors.valid_from || formErrors.valid_from?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : '')}
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                            }}
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={6}>
+                                                                        <TextField
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label={data.fee_type === 'maintenance_fee' ? 'Valid To (last day of month)' : 'Valid To'}
+                                                                            type="date"
+                                                                            value={data.valid_to}
+                                                                            onChange={(e) => handleDateChange('valid_to', e.target.value)}
+                                                                            InputLabelProps={{ shrink: true }}
+                                                                            error={!!(errors.valid_to || formErrors.valid_to || !dateValidation.isValid)}
+                                                                            helperText={errors.valid_to || formErrors.valid_to?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : '')}
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                            }}
+                                                                        />
+                                                                    </Grid>
+                                                                </Grid>
+
+                                                                {data.valid_from && data.valid_to && (
+                                                                    <>
+                                                                        {!dateValidation.isValid && (
+                                                                            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+                                                                                <strong>Date Conflict:</strong> {dateValidation.message}
+                                                                            </Alert>
+                                                                        )}
+
+                                                                        <Alert severity={dateValidation.isValid ? 'success' : 'warning'} sx={{ mt: 2, borderRadius: 2 }}>
+                                                                            <strong>Selected Period:</strong> {formatDate(data.valid_from)} to {formatDate(data.valid_to)}
+                                                                            {data.fee_type === 'membership_fee' && <span> (Membership Fee Validity)</span>}
+                                                                            {data.fee_type === 'maintenance_fee' && data.valid_from && data.valid_to && <span> ({calculatePeriodDescription(data.valid_from, data.valid_to)})</span>}
+                                                                        </Alert>
+                                                                    </>
+                                                                )}
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Subscription Validity Period Section */}
+                                                    {selectedMember && data.fee_type === 'subscription_fee' && (
+                                                        <Grid item xs={12}>
+                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                                Validity Period
+                                                            </Typography>
+                                                            <Box
+                                                                sx={{
+                                                                    p: 3,
+                                                                    bgcolor: 'grey.50',
+                                                                    borderRadius: 2,
+                                                                    border: '1px solid',
+                                                                    borderColor: 'grey.200',
+                                                                }}
+                                                            >
+                                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                                                                    Set Subscription Period
+                                                                </Typography>
+
+                                                                <Grid container spacing={3}>
+                                                                    <Grid item xs={6}>
+                                                                        <TextField
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label="Valid From"
+                                                                            type="date"
+                                                                            value={data.valid_from}
+                                                                            onChange={(e) => handleDateChange('valid_from', e.target.value)}
+                                                                            error={!!errors.valid_from}
+                                                                            helperText={errors.valid_from || 'Subscription start date'}
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                            }}
+                                                                            InputLabelProps={{ shrink: true }}
+                                                                        />
+                                                                    </Grid>
+                                                                    <Grid item xs={6}>
+                                                                        <TextField
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label="Valid To"
+                                                                            type="date"
+                                                                            value={data.valid_to}
+                                                                            onChange={(e) => handleDateChange('valid_to', e.target.value)}
+                                                                            error={!!errors.valid_to}
+                                                                            helperText={errors.valid_to || 'Leave empty for unlimited validity'}
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                            }}
+                                                                            InputLabelProps={{ shrink: true }}
+                                                                        />
+                                                                    </Grid>
+                                                                </Grid>
+
+                                                                {data.valid_from && (
+                                                                    <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
+                                                                        <strong>Subscription Period:</strong> {formatDate(data.valid_from)}
+                                                                        {data.valid_to ? ` to ${formatDate(data.valid_to)}` : ' (Unlimited)'}
+                                                                        {data.valid_from &&
+                                                                            data.valid_to &&
+                                                                            data.subscription_category_id &&
+                                                                            (() => {
+                                                                                const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
+                                                                                if (selectedCategory) {
+                                                                                    const fromDate = new Date(data.valid_from);
+                                                                                    const toDate = new Date(data.valid_to);
+                                                                                    const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                                                                    const isFullMonths = fromDate.getDate() === 1 && toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate();
+
+                                                                                    if (isFullMonths) {
+                                                                                        const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
+                                                                                        return (
+                                                                                            <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                                                                                <strong>Billing:</strong> {monthsDiff} month{monthsDiff > 1 ? 's' : ''} × Rs {selectedCategory.fee?.toLocaleString()} = Rs {(selectedCategory.fee * monthsDiff)?.toLocaleString()}
+                                                                                                <br />
+                                                                                                <strong>Duration:</strong> {totalDays} days (Full month{monthsDiff > 1 ? 's' : ''})
+                                                                                            </div>
+                                                                                        );
+                                                                                    } else {
+                                                                                        const dailyRate = Math.round(selectedCategory.fee / 30);
+                                                                                        return (
+                                                                                            <div style={{ marginTop: '8px', fontSize: '14px' }}>
+                                                                                                <strong>Billing:</strong> {totalDays} day{totalDays > 1 ? 's' : ''} × Rs {dailyRate} = Rs {(dailyRate * totalDays)?.toLocaleString()}
+                                                                                                <br />
+                                                                                                <strong>Daily Rate:</strong> Rs {selectedCategory.fee?.toLocaleString()} ÷ 30 days = Rs {dailyRate}/day
+                                                                                            </div>
+                                                                                        );
+                                                                                    }
+                                                                                }
+                                                                                return null;
+                                                                            })()}
+                                                                    </Alert>
+                                                                )}
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Total Amount Summary */}
+                                                    {data.amount > 0 && (
+                                                        <Grid item xs={12}>
+                                                            <Box
+                                                                sx={{
+                                                                    p: 2,
+                                                                    bgcolor: 'primary.50',
+                                                                    borderRadius: 2,
+                                                                    border: '2px solid',
+                                                                    borderColor: 'primary.200',
+                                                                }}
+                                                            >
+                                                                <Typography variant="h5" sx={{ fontWeight: 700, color: '#0a3d62' }}>
+                                                                    Total Amount: {formatCurrency(calculateTotal())}
+                                                                </Typography>
+                                                                <Box sx={{ mt: 1 }}>
+                                                                    {data.discount_value > 0 && (
+                                                                        <Typography variant="body2" color="text.secondary">
+                                                                            Discount: -{data.discount_type === 'percent' ? `${formatCurrency((parseFloat(data.amount) * parseFloat(data.discount_value)) / 100)} (${data.discount_value}%)` : formatCurrency(data.discount_value)}
+                                                                        </Typography>
+                                                                    )}
+                                                                    {data.tax_percentage > 0 && (
+                                                                        <Typography variant="body2" color="text.secondary">
+                                                                            Tax: +
+                                                                            {formatCurrency(
+                                                                                (() => {
+                                                                                    const amount = parseFloat(data.amount) || 0;
+                                                                                    const discountValue = parseFloat(data.discount_value) || 0;
+                                                                                    let baseTotal = amount;
+                                                                                    if (data.discount_type === 'percent') {
+                                                                                        baseTotal = amount - (amount * discountValue) / 100;
+                                                                                    } else if (data.discount_type === 'fixed') {
+                                                                                        baseTotal = amount - discountValue;
+                                                                                    }
+                                                                                    return (baseTotal * parseFloat(data.tax_percentage)) / 100;
+                                                                                })(),
+                                                                            )}{' '}
+                                                                            ({data.tax_percentage}%)
+                                                                        </Typography>
+                                                                    )}
+                                                                    {data.overdue_percentage > 0 && (
+                                                                        <Typography variant="body2" color="text.secondary">
+                                                                            Overdue: +
+                                                                            {formatCurrency(
+                                                                                (() => {
+                                                                                    const amount = parseFloat(data.amount) || 0;
+                                                                                    const discountValue = parseFloat(data.discount_value) || 0;
+                                                                                    let baseTotal = amount;
+                                                                                    if (data.discount_type === 'percent') {
+                                                                                        baseTotal = amount - (amount * discountValue) / 100;
+                                                                                    } else if (data.discount_type === 'fixed') {
+                                                                                        baseTotal = amount - discountValue;
+                                                                                    }
+                                                                                    return (baseTotal * parseFloat(data.overdue_percentage)) / 100;
+                                                                                })(),
+                                                                            )}{' '}
+                                                                            ({data.overdue_percentage}%)
+                                                                        </Typography>
+                                                                    )}
+                                                                </Box>
+                                                            </Box>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Submit Button */}
+                                                    <Grid item xs={12}>
+                                                        <Button
+                                                            type="submit"
+                                                            variant="contained"
+                                                            size="large"
+                                                            fullWidth
+                                                            disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
+                                                            sx={{
+                                                                mt: 3,
+                                                                py: 2,
+                                                                bgcolor: '#0a3d62',
+                                                                borderRadius: 2,
+                                                                fontSize: '16px',
+                                                                fontWeight: 600,
+                                                                textTransform: 'none',
+                                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                                                '&:hover': {
+                                                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                                                },
+                                                            }}
+                                                        >
+                                                            {submitting ? (
+                                                                <>
+                                                                    <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+                                                                    Creating Transaction...
+                                                                </>
+                                                            ) : !dateValidation.isValid ? (
+                                                                <>⚠️ Fix Date Conflict First</>
+                                                            ) : (
+                                                                <>
+                                                                    <Receipt sx={{ mr: 1 }} />
+                                                                    Create Transaction
+                                                                </>
+                                                            )}
+                                                        </Button>
+                                                    </Grid>
+                                                </Grid>
+                                            </form>
+                                        ) : (
+                                            <Alert severity="info">Please search and select a member to create a transaction.</Alert>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            {/* Right Column: Member Details */}
+                            {selectedMember && (
+                                <Grid item xs={12} md={4}>
+                                    <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, position: 'sticky', top: 20 }}>
+                                        <CardContent sx={{ p: 3 }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                                 <Person sx={{ mr: 1, color: 'success.main' }} />
                                                 <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
                                                     Selected Member
                                                 </Typography>
                                             </Box>
-                                            <Grid container spacing={1}>
-                                                <Grid item xs={12} sm={6} lg={4}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Full Name
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {selectedMember.full_name} ({formatStatus(selectedMember.status)})
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6} lg={4}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Membership No
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {selectedMember.membership_no}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6} lg={4}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Membership Date
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {formatDate(selectedMember.membership_date)}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6} lg={4}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Membership Fee
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
-                                                        Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6} lg={4}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Maintenance Fee (Monthly)
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
-                                                        Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6} lg={4}>
-                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                        Quarterly Fee
-                                                    </Typography>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
-                                                        Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee * 3).toLocaleString() : 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
-                                        </Box>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    )}
-
-                    {/* Step 2: Transaction Form */}
-                    <Grid item xs={12}>
-                        <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                            <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                                    <Box
-                                        sx={{
-                                            bgcolor: selectedMember ? '#0a3d62' : 'grey.300',
-                                            color: 'white',
-                                            borderRadius: '50%',
-                                            width: 32,
-                                            height: 32,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            mr: 2,
-                                            fontSize: '14px',
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        2
-                                    </Box>
-                                    <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                                        Transaction Details
-                                    </Typography>
-                                </Box>
-                                {selectedMember ? (
-                                    <form onSubmit={handleSubmit}>
-                                        <Grid container spacing={3}>
-                                            {/* Fee Type Selection */}
-                                            <Grid item xs={12}>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                    Fee Type
-                                                </Typography>
-                                                <FormControl fullWidth>
-                                                    <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                        {selectedMember?.status === 'cancelled' || selectedMember.status === 'expired'
-                                                            ? [
-                                                                  // Only show Reinstating Fee for cancelled or expired members
-                                                                  <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                      Reinstating Fee
-                                                                  </MenuItem>,
-                                                              ]
-                                                            : !membershipFeePaid
-                                                              ? [
-                                                                    // Only show Membership Fee if not paid
-                                                                    <MenuItem key="membership_fee" value="membership_fee">
-                                                                        Membership Fee
-                                                                    </MenuItem>,
-                                                                ]
-                                                              : [
-                                                                    // Show all OTHER fee types for active members who have paid membership fee
-                                                                    <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                        Maintenance Fee
-                                                                    </MenuItem>,
-                                                                    <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                        Subscription Fee
-                                                                    </MenuItem>,
-                                                                    <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                        Reinstating Fee
-                                                                    </MenuItem>,
-                                                                ]}
-                                                    </Select>
-                                                    {errors.fee_type && (
-                                                        <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                            {errors.fee_type}
-                                                        </Typography>
-                                                    )}
-                                                    {(selectedMember?.status === 'cancelled' || selectedMember?.status === 'expired') && (
-                                                        <Alert severity="info" sx={{ mt: 2 }}>
-                                                            <strong>Member Status: {formatStatus(selectedMember.status)}</strong>
-                                                            <br />
-                                                            Only Reinstating Fee is available for {selectedMember.status} members. This fee will reactivate the member's status upon successful payment.
-                                                        </Alert>
-                                                    )}
-                                                </FormControl>
-                                            </Grid>
-
-                                            {/* Maintenance Fee Quarter Status */}
-                                            {data.fee_type === 'maintenance_fee' && (
-                                                <>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                            Quarter Payment Status
-                                                        </Typography>
-                                                        <Box
-                                                            sx={{
-                                                                p: 2,
-                                                                bgcolor: quarterStatus.isNewCycle ? 'info.50' : 'warning.50',
-                                                                borderRadius: 2,
-                                                                border: '1px solid',
-                                                                borderColor: quarterStatus.isNewCycle ? 'info.200' : 'warning.200',
-                                                            }}
-                                                        >
-                                                            {(() => {
-                                                                const membershipDate = new Date(selectedMember.membership_date);
-                                                                const membershipYear = membershipDate.getFullYear();
-                                                                const firstYearEnd = new Date(membershipYear, 11, 31);
-                                                                const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
-
-                                                                return (
-                                                                    <>
-                                                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                                                                            {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
-                                                                        </Typography>
-
-                                                                        {isFirstYear ? (
-                                                                            <Box sx={{ mb: 2 }}>
-                                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                                    <strong>Payment Method:</strong> Monthly fees for remaining months in {membershipYear}
-                                                                                </Typography>
-                                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                                    <strong>Membership Month:</strong> {membershipDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (Free)
-                                                                                </Typography>
-                                                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                                    <strong>Payable Period:</strong> {new Date(membershipYear, membershipDate.getMonth() + 1, 1).toLocaleDateString('en-US', { month: 'long' })} - December {membershipYear}
-                                                                                </Typography>
-
-                                                                                {/* Debug: Show paid months */}
-                                                                                {(() => {
-                                                                                    const membershipMonth = membershipDate.getMonth();
-                                                                                    const monthsInFirstYear = [];
-                                                                                    for (let month = membershipMonth + 1; month <= 11; month++) {
-                                                                                        monthsInFirstYear.push(month);
-                                                                                    }
-
-                                                                                    const paidMonths = [];
-                                                                                    memberTransactions
-                                                                                        .filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid')
-                                                                                        .forEach((transaction) => {
-                                                                                            const txStart = new Date(transaction.valid_from);
-                                                                                            const txEnd = new Date(transaction.valid_to);
-
-                                                                                            // More accurate month detection: check each month the transaction spans
-                                                                                            let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
-                                                                                            const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-
-                                                                                            while (currentDate <= endDate) {
-                                                                                                const month = currentDate.getMonth();
-                                                                                                const year = currentDate.getFullYear();
-
-                                                                                                // Check if this month overlaps with the transaction period
-                                                                                                const monthStart = new Date(year, month, 1);
-                                                                                                const monthEnd = new Date(year, month + 1, 0); // Last day of month
-
-                                                                                                // Transaction covers this month if there's any overlap
-                                                                                                const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
-
-                                                                                                if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
-                                                                                                    paidMonths.push(month);
-                                                                                                }
-
-                                                                                                currentDate.setMonth(currentDate.getMonth() + 1);
-                                                                                            }
-                                                                                        });
-
-                                                                                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-                                                                                    return (
-                                                                                        <Typography variant="body2" color="text.secondary">
-                                                                                            <strong>Paid Months:</strong> {paidMonths.length > 0 ? paidMonths.map((m) => monthNames[m]).join(', ') : 'None'}
-                                                                                            <br />
-                                                                                            <strong>Remaining:</strong>{' '}
-                                                                                            {monthsInFirstYear
-                                                                                                .filter((m) => !paidMonths.includes(m))
-                                                                                                .map((m) => monthNames[m])
-                                                                                                .join(', ') || 'All paid!'}
-                                                                                        </Typography>
-                                                                                    );
-                                                                                })()}
-                                                                            </Box>
-                                                                        ) : (
-                                                                            <>
-                                                                                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                                                                                    {[1, 2, 3, 4].map((quarter) => (
-                                                                                        <Chip key={quarter} label={`Q${quarter}`} color={quarterStatus.paidQuarters.includes(quarter) ? 'success' : 'default'} variant={quarterStatus.paidQuarters.includes(quarter) ? 'filled' : 'outlined'} size="medium" sx={{ minWidth: 50, fontWeight: 600 }} />
-                                                                                    ))}
-                                                                                </Box>
-                                                                                <Typography variant="body2" color="text.secondary">
-                                                                                    <strong>Quarters:</strong> Q1 (Jan-Mar), Q2 (Apr-Jun), Q3 (Jul-Sep), Q4 (Oct-Dec)
-                                                                                </Typography>
-                                                                            </>
-                                                                        )}
-
-                                                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                                            <strong>Next payment:</strong> Monthly payment system
-                                                                            {!isFirstYear && quarterStatus.latestEndDate && <span> (Last payment ended: {formatDate(quarterStatus.latestEndDate)})</span>}
-                                                                            {!quarterStatus.latestEndDate && !isFirstYear && <span> (No previous maintenance payments found)</span>}
-                                                                        </Typography>
-                                                                    </>
-                                                                );
-                                                            })()}
-                                                        </Box>
-                                                    </Grid>
-
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                            Payment Period Selection
-                                                        </Typography>
-                                                        <Alert severity="info" sx={{ mb: 2 }}>
-                                                            <Typography variant="body2">
-                                                                <strong>Next suggested payment:</strong> Monthly maintenance fee
-                                                                <br />
-                                                                Select your desired payment period using the dates below. Amount will calculate automatically.
-                                                            </Typography>
-                                                        </Alert>
-
-                                                        {/* Quick Payment Period Buttons */}
-                                                        <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                                                            <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('monthly')} sx={{ borderRadius: 2 }}>
-                                                                1 Month
-                                                            </Button>
-                                                            <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('quarterly')} sx={{ borderRadius: 2 }}>
-                                                                1 Quarter (3 months)
-                                                            </Button>
-                                                            <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('half_yearly')} sx={{ borderRadius: 2 }}>
-                                                                6 Months
-                                                            </Button>
-                                                            <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('annually')} sx={{ borderRadius: 2 }}>
-                                                                1 Year
-                                                            </Button>
-                                                        </Box>
-                                                    </Grid>
-                                                </>
-                                            )}
-
-                                            {/* Reinstating Fee Section */}
-                                            {selectedMember && data.fee_type === 'reinstating_fee' && (
-                                                <Grid item xs={12}>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                        Member Reinstatement Information
-                                                    </Typography>
-                                                    <Box sx={{ p: 3, backgroundColor: '#fef3c7', borderRadius: 2, border: '1px solid #f59e0b' }}>
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={12} md={6}>
-                                                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
-                                                                    Current Status:
-                                                                    <Chip
-                                                                        label={formatStatus(selectedMember.status)}
-                                                                        size="small"
-                                                                        sx={{
-                                                                            ml: 1,
-                                                                            backgroundColor: selectedMember.status === 'active' ? '#dcfce7' : '#fecaca',
-                                                                            color: selectedMember.status === 'active' ? '#166534' : '#dc2626',
-                                                                        }}
-                                                                    />
-                                                                </Typography>
-                                                            </Grid>
-                                                            <Grid item xs={12} md={6}>
-                                                                <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
-                                                                    Member ID: {selectedMember.id}
-                                                                </Typography>
-                                                            </Grid>
-                                                            <Grid item xs={12}>
-                                                                <Typography variant="body2" sx={{ color: '#92400e' }}>
-                                                                    <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
-                                                                </Typography>
-                                                            </Grid>
-                                                            {!['cancelled', 'expired', 'suspended', 'terminated'].includes(selectedMember.status) && (
-                                                                <Grid item xs={12}>
-                                                                    <Alert severity="warning">This member's current status ({formatStatus(selectedMember.status)}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.</Alert>
-                                                                </Grid>
-                                                            )}
-                                                        </Grid>
-                                                    </Box>
-                                                </Grid>
-                                            )}
-
-                                            {/* Subscription Details Section - Show before Amount & Discount */}
-                                            {selectedMember && data.fee_type === 'subscription_fee' && (
-                                                <Grid item xs={12}>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                        Subscription Details
-                                                    </Typography>
-                                                    <Box
-                                                        sx={{
-                                                            p: 3,
-                                                            bgcolor: 'grey.50',
-                                                            borderRadius: 2,
-                                                            border: '1px solid',
-                                                            borderColor: 'grey.200',
-                                                        }}
-                                                    >
-                                                        <Grid container spacing={3}>
-                                                            <Grid item xs={6}>
-                                                                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                                                    Subscription Type
-                                                                </Typography>
-                                                                <FormControl fullWidth>
-                                                                    <Select
-                                                                        size="small"
-                                                                        value={data.subscription_type_id}
-                                                                        onChange={(e) => {
-                                                                            setData('subscription_type_id', e.target.value);
-                                                                            setData('subscription_category_id', ''); // Reset category when type changes
-                                                                            setData('amount', ''); // Reset amount
-                                                                        }}
-                                                                        error={!!errors.subscription_type_id}
-                                                                        sx={{ borderRadius: 2 }}
-                                                                        displayEmpty
-                                                                    >
-                                                                        <MenuItem value="">Select Subscription Type</MenuItem>
-                                                                        {subscriptionTypes?.map((type) => (
-                                                                            <MenuItem key={type.id} value={type.id}>
-                                                                                {type.name}
-                                                                            </MenuItem>
-                                                                        ))}
-                                                                    </Select>
-                                                                    {errors.subscription_type_id && (
-                                                                        <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                            {errors.subscription_type_id}
-                                                                        </Typography>
-                                                                    )}
-                                                                </FormControl>
-                                                            </Grid>
-
-                                                            <Grid item xs={6}>
-                                                                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                                                    Subscription Category
-                                                                </Typography>
-                                                                <FormControl fullWidth>
-                                                                    <Select
-                                                                        size="small"
-                                                                        value={data.subscription_category_id}
-                                                                        onChange={(e) => {
-                                                                            const categoryId = e.target.value;
-                                                                            setData('subscription_category_id', categoryId);
-
-                                                                            // Auto-populate amount and dates from selected category
-                                                                            const selectedCategory = subscriptionCategories?.find((cat) => cat.id == categoryId);
-                                                                            if (selectedCategory) {
-                                                                                // Set amount to monthly fee (payment_type removed)
-                                                                                setData('amount', selectedCategory.fee);
-
-                                                                                // Auto-set dates for monthly subscription
-                                                                                const today = new Date();
-                                                                                const startDate = today.toISOString().split('T')[0];
-
-                                                                                // For monthly: valid for 1 month
-                                                                                const nextMonth = new Date(today);
-                                                                                nextMonth.setMonth(today.getMonth() + 1);
-                                                                                nextMonth.setDate(today.getDate() - 1); // End day before same date next month
-                                                                                const endDate = nextMonth.toISOString().split('T')[0];
-
-                                                                                setData('valid_from', startDate);
-                                                                                setData('valid_to', endDate);
-
-                                                                                // Show notification about auto-set dates
-                                                                                enqueueSnackbar(`Auto-set dates for monthly (30 days) subscription`, { variant: 'info' });
-                                                                            }
-                                                                        }}
-                                                                        error={!!errors.subscription_category_id}
-                                                                        sx={{ borderRadius: 2 }}
-                                                                        displayEmpty
-                                                                        disabled={!data.subscription_type_id}
-                                                                    >
-                                                                        <MenuItem value="">Select Category</MenuItem>
-                                                                        {subscriptionCategories
-                                                                            ?.filter((cat) => cat.subscription_type_id == data.subscription_type_id)
-                                                                            ?.map((category) => (
-                                                                                <MenuItem key={category.id} value={category.id}>
-                                                                                    {category.name} - Rs. {category.fee}
-                                                                                </MenuItem>
-                                                                            ))}
-                                                                    </Select>
-                                                                    {errors.subscription_category_id && (
-                                                                        <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                            {errors.subscription_category_id}
-                                                                        </Typography>
-                                                                    )}
-                                                                </FormControl>
-                                                            </Grid>
-
-                                                            {/* Family Member Selection */}
-                                                            <Grid item xs={12}>
-                                                                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                                                    Family Member
-                                                                </Typography>
-                                                                <FormControl fullWidth>
-                                                                    <Select size="small" value={data.family_member_id || ''} onChange={(e) => setData('family_member_id', e.target.value || null)} error={!!errors.family_member_id} sx={{ borderRadius: 2 }} displayEmpty>
-                                                                        <MenuItem value="">
-                                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                                <Person sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
-                                                                                <Box>
-                                                                                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                                                        {selectedMember?.full_name} (SELF)
-                                                                                    </Typography>
-                                                                                    <Typography variant="caption" color="text.secondary">
-                                                                                        Primary Member - {selectedMember?.membership_no}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            </Box>
-                                                                        </MenuItem>
-                                                                        {selectedMember?.family_members?.map((familyMember) => (
-                                                                            <MenuItem key={familyMember.id} value={familyMember.id}>
-                                                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                                    <Person sx={{ mr: 1, fontSize: 18, color: '#666' }} />
-                                                                                    <Box>
-                                                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                                                            {familyMember.full_name}
-                                                                                        </Typography>
-                                                                                        <Typography variant="caption" color="text.secondary">
-                                                                                            {familyMember.relation} - {familyMember.membership_no}
-                                                                                        </Typography>
-                                                                                    </Box>
-                                                                                </Box>
-                                                                            </MenuItem>
-                                                                        ))}
-                                                                    </Select>
-                                                                    {errors.family_member_id && (
-                                                                        <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                            {errors.family_member_id}
-                                                                        </Typography>
-                                                                    )}
-                                                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                                                                        Select the family member for whom this subscription is being purchased. Leave as "SELF" for the primary member.
-                                                                    </Typography>
-                                                                </FormControl>
-                                                            </Grid>
-                                                        </Grid>
-                                                    </Box>
-                                                </Grid>
-                                            )}
-
-                                            {/* Amount and Discount Section */}
-                                            <Grid item xs={12}>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                    Amount & Discount
-                                                </Typography>
+                                            <Box
+                                                sx={{
+                                                    p: 2,
+                                                    bgcolor: 'success.50',
+                                                    borderRadius: 2,
+                                                    border: '1px solid',
+                                                    borderColor: 'success.200',
+                                                }}
+                                            >
                                                 <Grid container spacing={2}>
                                                     <Grid item xs={12}>
-                                                        <TextField
-                                                            size="small"
-                                                            fullWidth
-                                                            label="Amount (PKR)"
-                                                            type="number"
-                                                            value={data.amount}
-                                                            onChange={(e) => setData('amount', e.target.value)}
-                                                            error={!!errors.amount}
-                                                            helperText={errors.amount}
-                                                            sx={{
-                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                            }}
-                                                            InputProps={{
-                                                                startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary' }}>Rs</Typography>,
-                                                            }}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <FormControl fullWidth>
-                                                            <Select size="small" value={data.discount_type} onChange={(e) => setData('discount_type', e.target.value)} displayEmpty sx={{ borderRadius: 2 }}>
-                                                                <MenuItem value="">No Discount</MenuItem>
-                                                                <MenuItem value="percent">Percentage</MenuItem>
-                                                                <MenuItem value="fixed">Fixed Amount</MenuItem>
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <TextField
-                                                            size="small"
-                                                            fullWidth
-                                                            label="Discount Value"
-                                                            type="number"
-                                                            value={data.discount_value}
-                                                            onChange={(e) => setData('discount_value', e.target.value)}
-                                                            disabled={!data.discount_type}
-                                                            error={!!errors.discount_value}
-                                                            helperText={errors.discount_value}
-                                                            sx={{
-                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                            }}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <TextField
-                                                            size="small"
-                                                            fullWidth
-                                                            label="Tax (%)"
-                                                            type="number"
-                                                            value={data.tax_percentage}
-                                                            onChange={(e) => setData('tax_percentage', e.target.value)}
-                                                            sx={{
-                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                            }}
-                                                            InputProps={{
-                                                                endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
-                                                            }}
-                                                        />
-                                                    </Grid>
-                                                    <Grid item xs={6}>
-                                                        <TextField
-                                                            size="small"
-                                                            fullWidth
-                                                            label="Overdue (%)"
-                                                            type="number"
-                                                            value={data.overdue_percentage}
-                                                            onChange={(e) => setData('overdue_percentage', e.target.value)}
-                                                            sx={{
-                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                            }}
-                                                            InputProps={{
-                                                                endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
-                                                            }}
-                                                        />
-                                                    </Grid>
-                                                </Grid>
-                                            </Grid>
-
-                                            {/* Remarks Section */}
-                                            <Grid item xs={12}>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                    Remarks
-                                                </Typography>
-                                                <TextField
-                                                    size="small"
-                                                    fullWidth
-                                                    label="Comments / Remarks"
-                                                    multiline
-                                                    rows={3}
-                                                    value={data.remarks}
-                                                    onChange={(e) => setData('remarks', e.target.value)}
-                                                    placeholder="Enter any additional notes or comments here..."
-                                                    sx={{
-                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                    }}
-                                                />
-                                            </Grid>
-
-                                            {/* Payment Method Section */}
-                                            <Grid item xs={12}>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                    Payment Method
-                                                </Typography>
-                                                <FormControl fullWidth>
-                                                    <Select size="small" value={data.payment_method} onChange={(e) => setData('payment_method', e.target.value)} sx={{ borderRadius: 2 }}>
-                                                        <MenuItem value="cash">Cash Payment</MenuItem>
-                                                        <MenuItem value="credit_card">Credit Card</MenuItem>
-                                                    </Select>
-                                                </FormControl>
-                                            </Grid>
-
-                                            {/* Credit Card Additional Fields */}
-                                            {data.payment_method === 'credit_card' && (
-                                                <Grid item xs={12}>
-                                                    <Box
-                                                        sx={{
-                                                            p: 3,
-                                                            bgcolor: 'primary.50',
-                                                            borderRadius: 2,
-                                                            border: '1px solid',
-                                                            borderColor: 'primary.200',
-                                                        }}
-                                                    >
-                                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#0a3d62' }}>
-                                                            Credit Card Details
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Full Name
                                                         </Typography>
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={12} sm={6}>
-                                                                <FormControl fullWidth>
-                                                                    <Select size="small" value={data.credit_card_type} onChange={(e) => setData('credit_card_type', e.target.value)} error={!!formErrors.credit_card_type} displayEmpty sx={{ borderRadius: 2 }}>
-                                                                        <MenuItem value="">Select Card Type</MenuItem>
-                                                                        <MenuItem value="mastercard">MasterCard</MenuItem>
-                                                                        <MenuItem value="visa">Visa</MenuItem>
-                                                                    </Select>
-                                                                    {formErrors.credit_card_type && (
-                                                                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                                            {formErrors.credit_card_type[0]}
-                                                                        </Typography>
-                                                                    )}
-                                                                </FormControl>
-                                                            </Grid>
-                                                            <Grid item xs={12} sm={6}>
-                                                                <Box>
-                                                                    <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                                                                        Upload Receipt
-                                                                    </Typography>
-                                                                    <input
-                                                                        type="file"
-                                                                        accept="image/*,.pdf"
-                                                                        onChange={(e) => setData('receipt_file', e.target.files[0])}
-                                                                        style={{
-                                                                            width: '100%',
-                                                                            padding: '12px',
-                                                                            border: `2px dashed ${formErrors.receipt_file ? '#f44336' : '#d1d5db'}`,
-                                                                            borderRadius: '8px',
-                                                                            fontSize: '14px',
-                                                                            backgroundColor: '#f9fafb',
-                                                                            cursor: 'pointer',
-                                                                        }}
-                                                                    />
-                                                                    {formErrors.receipt_file && (
-                                                                        <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
-                                                                            {formErrors.receipt_file[0]}
-                                                                        </Typography>
-                                                                    )}
-                                                                    {data.receipt_file && (
-                                                                        <Box sx={{ mt: 1, p: 1, bgcolor: 'success.50', borderRadius: 1, border: '1px solid', borderColor: 'success.200' }}>
-                                                                            <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
-                                                                                {data.receipt_file.name}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    )}
-                                                                </Box>
-                                                            </Grid>
-                                                        </Grid>
-                                                    </Box>
-                                                </Grid>
-                                            )}
-
-                                            {/* Validity Period Section - Only show for maintenance fees */}
-                                            {selectedMember && data.fee_type === 'maintenance_fee' && (
-                                                <Grid item xs={12}>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                        Validity Period
-                                                    </Typography>
-                                                    <Box
-                                                        sx={{
-                                                            p: 3,
-                                                            bgcolor: 'grey.50',
-                                                            borderRadius: 2,
-                                                            border: '1px solid',
-                                                            borderColor: 'grey.200',
-                                                        }}
-                                                    >
-                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                                Set Payment Period
-                                                            </Typography>
-                                                            <Button size="small" variant="outlined" onClick={() => (data.fee_type === 'membership_fee' ? handleFeeTypeChange('membership_fee') : suggestMaintenancePeriod(data.payment_frequency))} sx={{ borderRadius: 2 }}>
-                                                                Auto-Suggest Dates
-                                                            </Button>
-                                                        </Box>
-
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={6}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label={data.fee_type === 'maintenance_fee' ? 'Valid From (1st of month)' : 'Valid From'}
-                                                                    type="date"
-                                                                    value={data.valid_from}
-                                                                    onChange={(e) => handleDateChange('valid_from', e.target.value)}
-                                                                    InputLabelProps={{ shrink: true }}
-                                                                    error={!!(errors.valid_from || formErrors.valid_from || !dateValidation.isValid)}
-                                                                    helperText={errors.valid_from || formErrors.valid_from?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : '')}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                />
-                                                            </Grid>
-                                                            <Grid item xs={6}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label={data.fee_type === 'maintenance_fee' ? 'Valid To (last day of month)' : 'Valid To'}
-                                                                    type="date"
-                                                                    value={data.valid_to}
-                                                                    onChange={(e) => handleDateChange('valid_to', e.target.value)}
-                                                                    InputLabelProps={{ shrink: true }}
-                                                                    error={!!(errors.valid_to || formErrors.valid_to || !dateValidation.isValid)}
-                                                                    helperText={errors.valid_to || formErrors.valid_to?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : '')}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                />
-                                                            </Grid>
-                                                        </Grid>
-
-                                                        {data.valid_from && data.valid_to && (
-                                                            <>
-                                                                {!dateValidation.isValid && (
-                                                                    <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
-                                                                        <strong>Date Conflict:</strong> {dateValidation.message}
-                                                                    </Alert>
-                                                                )}
-
-                                                                <Alert severity={dateValidation.isValid ? 'success' : 'warning'} sx={{ mt: 2, borderRadius: 2 }}>
-                                                                    <strong>Selected Period:</strong> {formatDate(data.valid_from)} to {formatDate(data.valid_to)}
-                                                                    {data.fee_type === 'membership_fee' && <span> (Membership Fee Validity)</span>}
-                                                                    {data.fee_type === 'maintenance_fee' && data.valid_from && data.valid_to && <span> ({calculatePeriodDescription(data.valid_from, data.valid_to)})</span>}
-                                                                </Alert>
-                                                            </>
-                                                        )}
-                                                    </Box>
-                                                </Grid>
-                                            )}
-
-                                            {/* Subscription Validity Period Section */}
-                                            {selectedMember && data.fee_type === 'subscription_fee' && (
-                                                <Grid item xs={12}>
-                                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                        Validity Period
-                                                    </Typography>
-                                                    <Box
-                                                        sx={{
-                                                            p: 3,
-                                                            bgcolor: 'grey.50',
-                                                            borderRadius: 2,
-                                                            border: '1px solid',
-                                                            borderColor: 'grey.200',
-                                                        }}
-                                                    >
-                                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                                                            Set Subscription Period
+                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                            {selectedMember.full_name} ({formatStatus(selectedMember.status)})
                                                         </Typography>
-
-                                                        <Grid container spacing={3}>
-                                                            <Grid item xs={6}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="Valid From"
-                                                                    type="date"
-                                                                    value={data.valid_from}
-                                                                    onChange={(e) => handleDateChange('valid_from', e.target.value)}
-                                                                    error={!!errors.valid_from}
-                                                                    helperText={errors.valid_from || 'Subscription start date'}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                    InputLabelProps={{ shrink: true }}
-                                                                />
-                                                            </Grid>
-                                                            <Grid item xs={6}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="Valid To"
-                                                                    type="date"
-                                                                    value={data.valid_to}
-                                                                    onChange={(e) => handleDateChange('valid_to', e.target.value)}
-                                                                    error={!!errors.valid_to}
-                                                                    helperText={errors.valid_to || 'Leave empty for unlimited validity'}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                    InputLabelProps={{ shrink: true }}
-                                                                />
-                                                            </Grid>
-                                                        </Grid>
-
-                                                        {data.valid_from && (
-                                                            <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
-                                                                <strong>Subscription Period:</strong> {formatDate(data.valid_from)}
-                                                                {data.valid_to ? ` to ${formatDate(data.valid_to)}` : ' (Unlimited)'}
-                                                                {data.valid_from &&
-                                                                    data.valid_to &&
-                                                                    data.subscription_category_id &&
-                                                                    (() => {
-                                                                        const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
-                                                                        if (selectedCategory) {
-                                                                            const fromDate = new Date(data.valid_from);
-                                                                            const toDate = new Date(data.valid_to);
-                                                                            const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                                                                            const isFullMonths = fromDate.getDate() === 1 && toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate();
-
-                                                                            if (isFullMonths) {
-                                                                                const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
-                                                                                return (
-                                                                                    <div style={{ marginTop: '8px', fontSize: '14px' }}>
-                                                                                        <strong>Billing:</strong> {monthsDiff} month{monthsDiff > 1 ? 's' : ''} × Rs {selectedCategory.fee?.toLocaleString()} = Rs {(selectedCategory.fee * monthsDiff)?.toLocaleString()}
-                                                                                        <br />
-                                                                                        <strong>Duration:</strong> {totalDays} days (Full month{monthsDiff > 1 ? 's' : ''})
-                                                                                    </div>
-                                                                                );
-                                                                            } else {
-                                                                                const dailyRate = Math.round(selectedCategory.fee / 30);
-                                                                                return (
-                                                                                    <div style={{ marginTop: '8px', fontSize: '14px' }}>
-                                                                                        <strong>Billing:</strong> {totalDays} day{totalDays > 1 ? 's' : ''} × Rs {dailyRate} = Rs {(dailyRate * totalDays)?.toLocaleString()}
-                                                                                        <br />
-                                                                                        <strong>Daily Rate:</strong> Rs {selectedCategory.fee?.toLocaleString()} ÷ 30 days = Rs {dailyRate}/day
-                                                                                    </div>
-                                                                                );
-                                                                            }
-                                                                        }
-                                                                        return null;
-                                                                    })()}
-                                                            </Alert>
-                                                        )}
-                                                    </Box>
-                                                </Grid>
-                                            )}
-
-                                            {/* Total Amount Summary */}
-                                            {data.amount > 0 && (
-                                                <Grid item xs={12}>
-                                                    <Box
-                                                        sx={{
-                                                            p: 2,
-                                                            bgcolor: 'primary.50',
-                                                            borderRadius: 2,
-                                                            border: '2px solid',
-                                                            borderColor: 'primary.200',
-                                                        }}
-                                                    >
-                                                        <Typography variant="h5" sx={{ fontWeight: 700, color: '#0a3d62' }}>
-                                                            Total Amount: {formatCurrency(calculateTotal())}
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Membership No
                                                         </Typography>
-                                                        <Box sx={{ mt: 1 }}>
-                                                            {data.discount_value > 0 && (
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    Discount: -{data.discount_type === 'percent' ? `${formatCurrency((parseFloat(data.amount) * parseFloat(data.discount_value)) / 100)} (${data.discount_value}%)` : formatCurrency(data.discount_value)}
-                                                                </Typography>
-                                                            )}
-                                                            {data.tax_percentage > 0 && (
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    Tax: +
-                                                                    {formatCurrency(
-                                                                        (() => {
-                                                                            const amount = parseFloat(data.amount) || 0;
-                                                                            const discountValue = parseFloat(data.discount_value) || 0;
-                                                                            let baseTotal = amount;
-                                                                            if (data.discount_type === 'percent') {
-                                                                                baseTotal = amount - (amount * discountValue) / 100;
-                                                                            } else if (data.discount_type === 'fixed') {
-                                                                                baseTotal = amount - discountValue;
-                                                                            }
-                                                                            return (baseTotal * parseFloat(data.tax_percentage)) / 100;
-                                                                        })(),
-                                                                    )}{' '}
-                                                                    ({data.tax_percentage}%)
-                                                                </Typography>
-                                                            )}
-                                                            {data.overdue_percentage > 0 && (
-                                                                <Typography variant="body2" color="text.secondary">
-                                                                    Overdue: +
-                                                                    {formatCurrency(
-                                                                        (() => {
-                                                                            const amount = parseFloat(data.amount) || 0;
-                                                                            const discountValue = parseFloat(data.discount_value) || 0;
-                                                                            let baseTotal = amount;
-                                                                            if (data.discount_type === 'percent') {
-                                                                                baseTotal = amount - (amount * discountValue) / 100;
-                                                                            } else if (data.discount_type === 'fixed') {
-                                                                                baseTotal = amount - discountValue;
-                                                                            }
-                                                                            return (baseTotal * parseFloat(data.overdue_percentage)) / 100;
-                                                                        })(),
-                                                                    )}{' '}
-                                                                    ({data.overdue_percentage}%)
-                                                                </Typography>
-                                                            )}
-                                                        </Box>
-                                                    </Box>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                            {selectedMember.membership_no}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Membership Date
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                            {formatDate(selectedMember.membership_date)}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Membership Fee
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
+                                                            Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Maintenance Fee (Monthly)
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
+                                                            Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                            Quarterly Fee
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
+                                                            Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee * 3).toLocaleString() : 'N/A'}
+                                                        </Typography>
+                                                    </Grid>
                                                 </Grid>
-                                            )}
-
-                                            {/* Submit Button */}
-                                            <Grid item xs={12}>
-                                                <Button
-                                                    type="submit"
-                                                    variant="contained"
-                                                    size="large"
-                                                    fullWidth
-                                                    disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
-                                                    sx={{
-                                                        mt: 3,
-                                                        py: 2,
-                                                        bgcolor: '#0a3d62',
-                                                        borderRadius: 2,
-                                                        fontSize: '16px',
-                                                        fontWeight: 600,
-                                                        textTransform: 'none',
-                                                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                                        '&:hover': {
-                                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                                        },
-                                                    }}
-                                                >
-                                                    {submitting ? (
-                                                        <>
-                                                            <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
-                                                            Creating Transaction...
-                                                        </>
-                                                    ) : !dateValidation.isValid ? (
-                                                        <>⚠️ Fix Date Conflict First</>
-                                                    ) : (
-                                                        <>
-                                                            <Receipt sx={{ mr: 1 }} />
-                                                            Create Transaction
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            </Grid>
-                                        </Grid>
-                                    </form>
-                                ) : (
-                                    <Alert severity="info">Please search and select a member to create a transaction.</Alert>
-                                )}
-                            </CardContent>
-                        </Card>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                            )}
+                        </Grid>
                     </Grid>
 
                     {/* Step 3: Transaction History */}

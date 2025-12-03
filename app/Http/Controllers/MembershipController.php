@@ -470,6 +470,7 @@ class MembershipController extends Controller
 
             DB::commit();
 
+            $mainMember->load('memberCategory');
             return response()->json(['message' => 'Membership created successfully.', 'member' => $mainMember], 200);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
@@ -805,6 +806,7 @@ class MembershipController extends Controller
 
             DB::commit();
 
+            $member->load('memberCategory');
             return response()->json(['message' => 'Membership updated successfully.', 'member' => $member]);
         } catch (\Throwable $th) {
             DB::rollBack();
