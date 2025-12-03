@@ -48,6 +48,7 @@ class FinancialInvoice extends BaseModel
         'credit_card_type',
         'overdue_percentage',
         'overdue_amount',
+        'additional_charges',
         // Subscription fields
         'subscription_type_id',
         'subscription_category_id',

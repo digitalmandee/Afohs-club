@@ -146,6 +146,7 @@ class MemberTransactionController extends Controller
                 'discount_value' => 'nullable|numeric|min:0',
                 'tax_percentage' => 'nullable|numeric|min:0|max:100',
                 'overdue_percentage' => 'nullable|numeric|min:0|max:100',
+                'additional_charges' => 'nullable|numeric|min:0',
                 'remarks' => 'nullable|string|max:1000',
                 'payment_method' => 'required|in:cash,credit_card',
                 'valid_from' => 'required_if:fee_type,maintenance_fee,subscription_fee|date',
@@ -233,7 +234,32 @@ class MemberTransactionController extends Controller
                 $invoiceData['invoiceable_type'] = Subscription::class;
             }
 
-            $invoice = FinancialInvoice::create($invoiceData);
+            // Check for existing unpaid membership fee invoice
+            $existingUnpaidInvoice = null;
+            if ($request->fee_type === 'membership_fee') {
+                $existingUnpaidInvoice = FinancialInvoice::where('member_id', $request->member_id)
+                    ->where('fee_type', 'membership_fee')
+                    ->where('status', 'unpaid')
+                    ->first();
+            }
+
+            if ($existingUnpaidInvoice) {
+                // Update the existing invoice
+                $invoiceData['status'] = 'paid';
+                $invoiceData['payment_date'] = now();
+                $invoiceData['issue_date'] = now();
+                $invoiceData['due_date'] = now()->addDays(30);
+                $invoiceData['created_by'] = Auth::id();
+
+                // Keep the original invoice number
+                $invoiceData['invoice_no'] = $existingUnpaidInvoice->invoice_no;
+
+                $existingUnpaidInvoice->update($invoiceData);
+                $invoice = $existingUnpaidInvoice;
+            } else {
+                // Create new invoice
+                $invoice = FinancialInvoice::create($invoiceData);
+            }
 
             // Update member status to active if reinstating fee is paid
             if ($request->fee_type === 'reinstating_fee') {
@@ -282,7 +308,12 @@ class MemberTransactionController extends Controller
             $overdueAmount = ($baseAmount * $request->overdue_percentage) / 100;
         }
 
-        $totalPrice = round($baseAmount + $taxAmount + $overdueAmount);
+        $additionalCharges = 0;
+        if ($request->additional_charges) {
+            $additionalCharges = $request->additional_charges;
+        }
+
+        $totalPrice = round($baseAmount + $taxAmount + $overdueAmount + $additionalCharges);
         $data = [
             'member_id' => $request->member_id,
             'member_name' => $member->full_name,
@@ -337,8 +368,10 @@ class MemberTransactionController extends Controller
             'discount_value' => $request->discount_value,
             'tax_percentage' => $request->tax_percentage,
             'tax_amount' => $taxAmount,
+            'tax_amount' => $taxAmount,
             'overdue_percentage' => $request->overdue_percentage,
             'overdue_amount' => $overdueAmount,
+            'additional_charges' => $additionalCharges,
             'remarks' => $request->remarks,
             'total_price' => $totalPrice,
             'paid_amount' => $totalPrice,

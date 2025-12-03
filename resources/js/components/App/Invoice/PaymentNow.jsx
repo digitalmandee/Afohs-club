@@ -614,10 +614,18 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
                                 <Typography variant="subtitle1">Reason</Typography>
                                 <Select fullWidth value={entReason} onChange={(e) => setEntReason(e.target.value)} sx={{ mb: 1 }} size="small">
-                                    <MenuItem value="birthday">Birthday</MenuItem>
-                                    <MenuItem value="guest">Special Guest</MenuItem>
-                                    <MenuItem value="management">Management Approval</MenuItem>
-                                    <MenuItem value="other">Other</MenuItem>
+                                    <MenuItem value="Marketing">Marketing</MenuItem>
+                                    <MenuItem value="Director/CEO">Director/CEO</MenuItem>
+                                    <MenuItem value="Club Guest">Club Guest</MenuItem>
+                                    <MenuItem value="Rooms Guest">Rooms Guest</MenuItem>
+                                    <MenuItem value="Others">Others</MenuItem>
+                                    <MenuItem value="Discover Pakistan">Discover Pakistan</MenuItem>
+                                    <MenuItem value="FnB Management">FnB Management</MenuItem>
+                                    <MenuItem value="Front Office">Front Office</MenuItem>
+                                    <MenuItem value="Front Vouchers">Front Vouchers</MenuItem>
+                                    <MenuItem value="Labour ENT">Labour ENT</MenuItem>
+                                    <MenuItem value="iTRIP ENT">iTRIP ENT</MenuItem>
+                                    <MenuItem value="Food Complain">Food Complain</MenuItem>
                                 </Select>
 
                                 <Typography variant="subtitle1">Comment</Typography>

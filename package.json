@@ -61,6 +61,7 @@
         "dayjs": "^1.11.13",
         "daypilot-pro-react": "https://npm.daypilot.org/daypilot-pro-react/trial/2024.1.5890.tar.gz",
         "globals": "^15.14.0",
+        "html2canvas": "^1.4.1",
         "immutability-helper": "^3.1.1",
         "laravel-vite-plugin": "^1.0",
         "lodash.debounce": "^4.0.8",

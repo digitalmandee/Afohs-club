@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, Card, CardContent, Typography, Avatar, Button, Grid, styled, Drawer } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
+import DownloadIcon from '@mui/icons-material/Download';
+import html2canvas from 'html2canvas';
 
 const MembershipCard = styled(Card)(() => ({
     width: '100%',
@@ -24,7 +26,7 @@ const MembershipFooter = styled(Box)(() => ({
     textAlign: 'center',
 }));
 
-const handlePrintMembershipCard = (member) => {
+export const handlePrintMembershipCard = (member) => {
     if (!member) return;
 
     const printWindow = window.open('', '_blank');
@@ -171,25 +173,23 @@ const handlePrintMembershipCard = (member) => {
 
                         <!-- LEFT COLUMN -->
                         <div class="col left">
-                            <img class="avatar" src="${member?.profile_photo?.file_path || "/placeholder.svg"}" />
-                            <div class="name">${member?.full_name || "N/A"}</div>
+                            <img class="avatar" src="${member?.profile_photo?.file_path || '/placeholder.svg'}" />
+                            <div class="name">${member?.full_name || 'N/A'}</div>
                         </div>
 
                         <!-- CENTER COLUMN -->
                         <div class="col center">
                             <img src="/assets/Logo.png" class="logo" />
                             <div class="label">Membership ID</div>
-                            <div class="value">${member?.membership_no || "N/A"}</div>
+                            <div class="value">${member?.membership_no || 'N/A'}</div>
                         </div>
 
                         <!-- RIGHT COLUMN -->
                         <div class="col right">
-                            <img src="/${member?.qr_code || ""}" class="qr" />
+                            <img src="/${member?.qr_code || ''}" class="qr" />
                             <div class="label label-valid-until">Valid Until</div>
                             <div class="value">
-                                ${member?.card_expiry_date
-            ? new Date(member.card_expiry_date).toLocaleDateString()
-            : "N/A"}
+                                ${member?.card_expiry_date ? new Date(member.card_expiry_date).toLocaleDateString() : 'N/A'}
                             </div>
                         </div>
 
@@ -197,7 +197,7 @@ const handlePrintMembershipCard = (member) => {
                 </div>
 
                 <div class="footer">
-                    ${member?.parent_id ? "Supplementary Member" : "Primary Member"}
+                    ${member?.parent_id ? 'Supplementary Member' : 'Primary Member'}
                 </div>
             </div>
         </body>
@@ -213,23 +213,9 @@ const handlePrintMembershipCard = (member) => {
     }, 500);
 };
 
-const MembershipCardComponent = ({ open, onClose, member }) => {
+export const MembershipCardContent = ({ member, id }) => {
     return (
-        <Drawer
-            anchor="top"
-            open={open}
-            onClose={onClose}
-            ModalProps={{ keepMounted: true }}
-            PaperProps={{
-                sx: {
-                    margin: '20px auto 0',
-                    width: 500,
-                    borderRadius: '8px',
-                },
-            }}
-        >
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
-                <MembershipCard>
+        <MembershipCard id={id}>
                     <CardContent sx={{ py: 2 }}>
                         <Grid container spacing={0} sx={{ width: "100%", m: 0 }}>
                             <Grid item xs={12} sm={4}>
@@ -279,7 +265,51 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                             {member?.parent_id ? 'Supplementary Member' : 'Primary Member'}
                         </Typography>
                     </MembershipFooter>
-                </MembershipCard>
+        </MembershipCard>
+    );
+};
+
+const MembershipCardComponent = ({ open, onClose, member }) => {
+    const handleDownload = async () => {
+        const element = document.getElementById('membership-card-content');
+        if (!element) return;
+
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 2, // Higher scale for better quality
+                backgroundColor: '#ffffff',
+                logging: false,
+                useCORS: true, // Enable CORS for images
+            });
+
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `Membership_Card_${member?.membership_no || 'card'}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Error downloading card:', error);
+        }
+    };
+
+    return (
+        <Drawer
+            anchor="top"
+            open={open}
+            onClose={onClose}
+            ModalProps={{ keepMounted: true }}
+            PaperProps={{
+                sx: {
+                    margin: '20px auto 0',
+                    width: 500,
+                    borderRadius: '8px',
+                },
+            }}
+        >
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <MembershipCardContent member={member} id="membership-card-content" />
             </Box>
 
             {member?.is_document_enabled && (
@@ -297,6 +327,9 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                 </Button>
                 <Button onClick={() => handlePrintMembershipCard(member)} variant="contained" disabled={member?.is_document_enabled} startIcon={<PrintIcon />} sx={{ bgcolor: '#0a3d62', '&:hover': { bgcolor: '#0c2461' } }}>
                     Print
+                </Button>
+                <Button onClick={handleDownload} variant="contained" disabled={member?.is_document_enabled} startIcon={<DownloadIcon />} sx={{ bgcolor: '#0a3d62', '&:hover': { bgcolor: '#0c2461' } }}>
+                    Download
                 </Button>
             </Box>
         </Drawer>
