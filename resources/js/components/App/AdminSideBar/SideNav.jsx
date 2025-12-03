@@ -639,7 +639,8 @@ export default function SideNav({ open, setOpen }) {
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        p: 0,
+                        pt: 6,
+                        pb:7,
                         position: 'sticky',
                         top: 0,
                         zIndex: 1000,
@@ -691,7 +692,7 @@ export default function SideNav({ open, setOpen }) {
                         '&::-webkit-scrollbar': { display: 'none' },
                     }}
                 >
-                    <List sx={{ mt: 2 }}>
+                    <List>
                         {menuItems.map(({ text, icon, path, children }) => {
                             const isDropdownOpen = openDropdown[text];
                             // const isSelected = url === normalizePath(path) || (children && children.some((child) => url === normalizePath(child.path)));

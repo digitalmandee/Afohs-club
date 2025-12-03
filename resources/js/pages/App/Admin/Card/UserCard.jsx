@@ -247,6 +247,7 @@ const UserCardComponent = ({ open, onClose, member }) => {
                                                 width: 100,
                                                 height: 100,
                                                 objectFit: 'contain',
+                                                border: 'none',
                                             }}
                                         />
                                     </Box>
