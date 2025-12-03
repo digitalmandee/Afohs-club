@@ -10,14 +10,18 @@ import MembershipStepper from '@/components/App/membershipForm/MembershipStepper
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
+import CreateTransaction from '@/components/App/Transactions/Create';
 
 const LOCAL_STORAGE_KEY = 'membershipFormData';
 
-const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user }) => {
+const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, membercategories, familyMembers, user, subscriptionTypes, subscriptionCategories }) => {
     // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState(1);
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialStep = parseInt(urlParams.get('step')) || 1;
+    const [step, setStep] = useState(initialStep);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
+    const [createdMember, setCreatedMember] = useState(null);
 
     const getNormalizedUserData = (user) => {
         if (!user) return defaultFormData;
@@ -266,7 +270,19 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             .then((response) => {
                 enqueueSnackbar(`Membership ${isEditMode ? 'updated' : 'created'} successfully.`, { variant: 'success' });
                 localStorage.removeItem(LOCAL_STORAGE_KEY);
-                router.visit(route('membership.dashboard'));
+
+                if (response.data.member) {
+                    if (!isEditMode) {
+                        // Redirect to edit page with step 4
+                        router.visit(route('membership.edit', response.data.member.id) + '?step=4');
+                    } else {
+                        setCreatedMember(response.data.member);
+                        setStep(4);
+                        window.scrollTo(0, 0);
+                    }
+                } else {
+                    router.visit(route('membership.dashboard'));
+                }
             })
             .catch((error) => {
                 if (error.response?.status === 422 && error.response.data.errors) {
@@ -289,6 +305,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 return 'Contact Information';
             case 3:
                 return 'Membership Information';
+            case 4:
+                return 'Payment';
             default:
                 return '';
         }
@@ -328,6 +346,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
                 {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                 {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
+                {step === 4 && <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} preSelectedMember={createdMember || user} />}
             </div>
             {/* </div> */}
         </>

@@ -8,7 +8,7 @@ import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { Person, Receipt, Search } from '@mui/icons-material';
 
-export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [] }) {
+export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null }) {
     // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
@@ -59,6 +59,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             suggestMaintenancePeriod(currentFrequency);
         }
     }, [selectedMember, memberTransactions]); // Trigger when member or their transactions change
+
+    // Handle pre-selected member
+    useEffect(() => {
+        if (preSelectedMember) {
+            handleMemberSelect(preSelectedMember);
+        }
+    }, [preSelectedMember]);
 
     // Auto-set fee type based on member status
     useEffect(() => {
@@ -1016,150 +1023,152 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                 <Grid container spacing={3}>
                     {/* Step 1: Member Search */}
-                    <Grid item xs={12}>
-                        <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                            <CardContent sx={{ p: 3 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                                    <Box
-                                        sx={{
-                                            bgcolor: '#0a3d62',
-                                            color: 'white',
-                                            borderRadius: '50%',
-                                            width: 32,
-                                            height: 32,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            mr: 2,
-                                            fontSize: '14px',
-                                            fontWeight: 600,
-                                        }}
-                                    >
-                                        1
-                                    </Box>
-                                    <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                                        Select Member
-                                    </Typography>
-                                </Box>
-
-                                <Autocomplete
-                                    size="small"
-                                    options={searchResults}
-                                    getOptionLabel={(option) => `${option.full_name} (${option.membership_no})`}
-                                    loading={searchLoading}
-                                    onInputChange={(event, value) => {
-                                        searchMembers(value);
-                                    }}
-                                    onChange={(event, value) => {
-                                        if (value) handleMemberSelect(value);
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            size="small"
-                                            {...params}
-                                            label="Search by name, membership no, CNIC, or phone"
-                                            variant="outlined"
-                                            fullWidth
-                                            sx={{ mb: 2 }}
-                                            InputProps={{
-                                                ...params.InputProps,
-                                                startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
-                                                endAdornment: (
-                                                    <>
-                                                        {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
+                    {!preSelectedMember && (
+                        <Grid item xs={12}>
+                            <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: '#0a3d62',
+                                                color: 'white',
+                                                borderRadius: '50%',
+                                                width: 32,
+                                                height: 32,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                mr: 2,
+                                                fontSize: '14px',
+                                                fontWeight: 600,
                                             }}
-                                        />
-                                    )}
-                                    renderOption={(props, option) => (
-                                        <Box component="li" {...props} sx={{ p: 2 }}>
-                                            <Person sx={{ mr: 2, color: 'text.secondary' }} />
-                                            <Box>
-                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                    {option.full_name}
-                                                </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {option.membership_no} • {option.cnic_no} • {option.phone_no}
+                                        >
+                                            1
+                                        </Box>
+                                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                            Select Member
+                                        </Typography>
+                                    </Box>
+
+                                    <Autocomplete
+                                        size="small"
+                                        options={searchResults}
+                                        getOptionLabel={(option) => `${option.full_name} (${option.membership_no})`}
+                                        loading={searchLoading}
+                                        onInputChange={(event, value) => {
+                                            searchMembers(value);
+                                        }}
+                                        onChange={(event, value) => {
+                                            if (value) handleMemberSelect(value);
+                                        }}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                size="small"
+                                                {...params}
+                                                label="Search by name, membership no, CNIC, or phone"
+                                                variant="outlined"
+                                                fullWidth
+                                                sx={{ mb: 2 }}
+                                                InputProps={{
+                                                    ...params.InputProps,
+                                                    startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
+                                                    endAdornment: (
+                                                        <>
+                                                            {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                            {params.InputProps.endAdornment}
+                                                        </>
+                                                    ),
+                                                }}
+                                            />
+                                        )}
+                                        renderOption={(props, option) => (
+                                            <Box component="li" {...props} sx={{ p: 2 }}>
+                                                <Person sx={{ mr: 2, color: 'text.secondary' }} />
+                                                <Box>
+                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                        {option.full_name}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {option.membership_no} • {option.cnic_no} • {option.phone_no}
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                        )}
+                                    />
+
+                                    {selectedMember && (
+                                        <Box
+                                            sx={{
+                                                mt: 2,
+                                                p: 2,
+                                                bgcolor: 'success.50',
+                                                borderRadius: 2,
+                                                border: '1px solid',
+                                                borderColor: 'success.200',
+                                            }}
+                                        >
+                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                                <Person sx={{ mr: 1, color: 'success.main' }} />
+                                                <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
+                                                    Selected Member
                                                 </Typography>
                                             </Box>
+                                            <Grid container spacing={1}>
+                                                <Grid item xs={12} sm={6} lg={4}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                        Full Name
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                        {selectedMember.full_name} ({formatStatus(selectedMember.status)})
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} lg={4}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                        Membership No
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                        {selectedMember.membership_no}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} lg={4}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                        Membership Date
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                        {formatDate(selectedMember.membership_date)}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} lg={4}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                        Membership Fee
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
+                                                        Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} lg={4}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                        Maintenance Fee (Monthly)
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
+                                                        Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid item xs={12} sm={6} lg={4}>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                                                        Quarterly Fee
+                                                    </Typography>
+                                                    <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
+                                                        Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee * 3).toLocaleString() : 'N/A'}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
                                         </Box>
                                     )}
-                                />
-
-                                {selectedMember && (
-                                    <Box
-                                        sx={{
-                                            mt: 2,
-                                            p: 2,
-                                            bgcolor: 'success.50',
-                                            borderRadius: 2,
-                                            border: '1px solid',
-                                            borderColor: 'success.200',
-                                        }}
-                                    >
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <Person sx={{ mr: 1, color: 'success.main' }} />
-                                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
-                                                Selected Member
-                                            </Typography>
-                                        </Box>
-                                        <Grid container spacing={1}>
-                                            <Grid item xs={12} sm={6} lg={4}>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                    Full Name
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                    {selectedMember.full_name} ({formatStatus(selectedMember.status)})
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item xs={12} sm={6} lg={4}>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                    Membership No
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                    {selectedMember.membership_no}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item xs={12} sm={6} lg={4}>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                    Membership Date
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                    {formatDate(selectedMember.membership_date)}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item xs={12} sm={6} lg={4}>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                    Membership Fee
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
-                                                    Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item xs={12} sm={6} lg={4}>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                    Maintenance Fee (Monthly)
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
-                                                    Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
-                                                </Typography>
-                                            </Grid>
-                                            <Grid item xs={12} sm={6} lg={4}>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                    Quarterly Fee
-                                                </Typography>
-                                                <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
-                                                    Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee * 3).toLocaleString() : 'N/A'}
-                                                </Typography>
-                                            </Grid>
-                                        </Grid>
-                                    </Box>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </Grid>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    )}
 
                     {/* Step 2: Transaction Form */}
                     <Grid item xs={12}>

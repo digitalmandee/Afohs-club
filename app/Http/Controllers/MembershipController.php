@@ -10,6 +10,8 @@ use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\MemberStatusHistory;
 use App\Models\MemberType;
+use App\Models\SubscriptionCategory;
+use App\Models\SubscriptionType;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -58,7 +60,13 @@ class MembershipController extends Controller
 
         $memberTypesData = MemberType::select('id', 'name')->get();
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
+
+        $subscriptionTypes = SubscriptionType::all(['id', 'name']);
+        $subscriptionCategories = SubscriptionCategory::where('status', 'active')
+            ->with('subscriptionType:id,name')
+            ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
+
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories', 'subscriptionTypes', 'subscriptionCategories'));
     }
 
     public function edit(Request $request)
@@ -143,7 +151,13 @@ class MembershipController extends Controller
 
         $memberTypesData = MemberType::all();
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories'));
+
+        $subscriptionTypes = SubscriptionType::all(['id', 'name']);
+        $subscriptionCategories = SubscriptionCategory::where('status', 'active')
+            ->with('subscriptionType:id,name')
+            ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
+
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories', 'subscriptionTypes', 'subscriptionCategories'));
     }
 
     public function allMembers(Request $request)
@@ -461,7 +475,7 @@ class MembershipController extends Controller
 
             DB::commit();
 
-            return response()->json(['message' => 'Membership created successfully.'], 200);
+            return response()->json(['message' => 'Membership created successfully.', 'member' => $mainMember], 200);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
             return response()->json(['error' => 'Failed to submit membership details: ' . $th->getMessage()], 500);
@@ -796,7 +810,7 @@ class MembershipController extends Controller
 
             DB::commit();
 
-            return response()->json(['message' => 'Membership updated successfully.']);
+            return response()->json(['message' => 'Membership updated successfully.', 'member' => $member]);
         } catch (\Throwable $th) {
             DB::rollBack();
             Log::error('Error updating member: ' . $th->getMessage());
