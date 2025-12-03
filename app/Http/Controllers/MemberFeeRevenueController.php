@@ -2309,7 +2309,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Maintenance Fee Revenue',
                 'description' => 'View maintenance fee revenue by member categories with payment statistics',
                 'icon' => 'AttachMoney',
-                'color' => '#059669',
+                'color' => '#063455',
                 'route' => 'membership.maintanance-fee-revenue',
                 'stats' => 'Revenue Analysis'
             ],
@@ -2318,7 +2318,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Pending Maintenance Report',
                 'description' => 'Track members with pending maintenance fee payments',
                 'icon' => 'Schedule',
-                'color' => '#dc2626',
+                'color' => '#063455',
                 'route' => 'membership.pending-maintenance-report',
                 'stats' => 'Payment Tracking'
             ],
@@ -2327,7 +2327,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Monthly Maintenance Fee Report',
                 'description' => 'Monthly breakdown of maintenance fee transactions',
                 'icon' => 'CalendarMonth',
-                'color' => '#0ea5e9',
+                'color' => '#063455',
                 'route' => 'membership.monthly-maintenance-fee-report',
                 'stats' => 'Monthly Analysis'
             ],
@@ -2336,7 +2336,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Sports Subscriptions Report',
                 'description' => 'Track sports facility subscriptions and family member usage',
                 'icon' => 'FitnessCenter',
-                'color' => '#8b5cf6',
+                'color' => '#063455',
                 'route' => 'membership.sports-subscriptions-report',
                 'stats' => 'Sports Analytics'
             ],
@@ -2345,7 +2345,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'New Year Eve Report',
                 'description' => 'Special event fee collections and member participation',
                 'icon' => 'Celebration',
-                'color' => '#f59e0b',
+                'color' => '#063455',
                 'route' => 'membership.new-year-eve-report',
                 'stats' => 'Event Revenue'
             ],
@@ -2354,7 +2354,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Reinstating Fee Report',
                 'description' => 'Track member reactivation fees and reinstatement process',
                 'icon' => 'Refresh',
-                'color' => '#10b981',
+                'color' => '#063455',
                 'route' => 'membership.reinstating-fee-report',
                 'stats' => 'Reactivation Tracking'
             ],
@@ -2363,7 +2363,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Subscriptions & Maintenance Summary',
                 'description' => 'Category-wise revenue summary by payment methods',
                 'icon' => 'Assessment',
-                'color' => '#6366f1',
+                'color' => '#063455',
                 'route' => 'membership.subscriptions-maintenance-summary',
                 'stats' => 'Revenue Summary'
             ],
@@ -2372,7 +2372,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Pending Maintenance Quarters Report',
                 'description' => 'Quarter-wise analysis of pending maintenance payments',
                 'icon' => 'Timeline',
-                'color' => '#ef4444',
+                'color' => '#063455',
                 'route' => 'membership.pending-maintenance-quarters-report',
                 'stats' => 'Quarter Analysis'
             ],
@@ -2381,7 +2381,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Supplementary Card Report',
                 'description' => 'Track supplementary membership cards and family members',
                 'icon' => 'CreditCard',
-                'color' => '#06b6d4',
+                'color' => '#063455',
                 'route' => 'membership.supplementary-card-report',
                 'stats' => 'Card Management'
             ],
@@ -2390,7 +2390,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Sleeping Members Report',
                 'description' => 'Identify inactive members and dormant accounts',
                 'icon' => 'PersonOff',
-                'color' => '#64748b',
+                'color' => '#063455',
                 'route' => 'membership.sleeping-members-report',
                 'stats' => 'Member Activity'
             ],
@@ -2399,7 +2399,7 @@ class MemberFeeRevenueController extends Controller
                 'title' => 'Member Card Detail Report',
                 'description' => 'Detailed member card information and status tracking',
                 'icon' => 'Badge',
-                'color' => '#7c3aed',
+                'color' => '#063455',
                 'route' => 'membership.member-card-detail-report',
                 'stats' => 'Card Details'
             ]

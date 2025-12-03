@@ -122,8 +122,8 @@ const handlePrintMembershipCard = (member) => {
 .qr {
     width: 60px;
     height: 60px;
-    border: 1px solid #0a3d62;
     border-radius: 4px;
+    border: 'none';
     object-fit: contain;
 }
 
@@ -234,7 +234,8 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                         <Grid container spacing={0} sx={{ width: "100%", m: 0 }}>
                             <Grid item xs={12} sm={4}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 7, pl: 1 }}>
-                                    <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{ width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62' }} variant="square" />
+                                    <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
+                                        width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62', objectFit: 'cover', objectPosition: 'center'}} variant="square" />
                                     <Typography sx={{ fontSize: "14px", fontWeight: "bold" }} color="#0a3d62">
                                         {member?.full_name || 'N/A'}
                                     </Typography>
@@ -255,12 +256,19 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                             </Grid>
                             <Grid item xs={12} sm={4}>
                                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pr: 1, pt: 7 }}>
-                                    <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: 80, height: 80, p: 1, borderRadius: 1, border: '1px solid #0a3d62' }} />
+                                    <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: 80, height: 80, p: 1, borderRadius: 1 }} />
                                     <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
                                         Valid Until
                                     </Typography>
                                     <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.card_expiry_date ? new Date(member.card_expiry_date).toLocaleDateString() : 'N/A'}
+                                        {member?.card_expiry_date
+                                            ? (() => {
+                                                const d = new Date(member.card_expiry_date);
+                                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                                const year = d.getFullYear();
+                                                return `${month}/${year}`;
+                                            })()
+                                            : 'N/A'}
                                     </Typography>
                                 </Box>
                             </Grid>
