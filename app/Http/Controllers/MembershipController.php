@@ -61,12 +61,7 @@ class MembershipController extends Controller
         $memberTypesData = MemberType::select('id', 'name')->get();
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
 
-        $subscriptionTypes = SubscriptionType::all(['id', 'name']);
-        $subscriptionCategories = SubscriptionCategory::where('status', 'active')
-            ->with('subscriptionType:id,name')
-            ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
-
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories', 'subscriptionTypes', 'subscriptionCategories'));
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
     }
 
     public function edit(Request $request)

@@ -72,15 +72,18 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         if (selectedMember) {
             if (selectedMember.status === 'cancelled' || selectedMember.status === 'expired') {
                 // For cancelled or expired members, automatically set to reinstating fee
-                setData('fee_type', 'reinstating_fee');
+                handleFeeTypeChange('reinstating_fee');
+            } else if (!membershipFeePaid) {
+                // If membership fee is not paid, force it
+                handleFeeTypeChange('membership_fee');
             } else {
                 // For non-cancelled/expired members, clear fee type if it was reinstating fee
-                if (data.fee_type === 'reinstating_fee') {
-                    setData('fee_type', '');
+                if (data.fee_type === 'reinstating_fee' || data.fee_type === 'membership_fee') {
+                    handleFeeTypeChange('maintenance_fee');
                 }
             }
         }
-    }, [selectedMember?.status]); // Trigger when member status changes
+    }, [selectedMember?.status, membershipFeePaid]); // Trigger when member status or payment status changes
 
     const analyzeQuarterStatus = (transactions, membershipDate) => {
         if (!membershipDate) {
@@ -454,44 +457,49 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     };
 
     const handleFeeTypeChange = (feeType) => {
-        setData('fee_type', feeType);
+        setData((prevData) => {
+            const newData = {
+                ...prevData,
+                fee_type: feeType,
+                amount: '',
+                valid_from: '',
+                valid_to: '',
+                subscription_type_id: '',
+                subscription_category_id: '',
+                tax_percentage: '',
+                overdue_percentage: '',
+                remarks: '',
+            };
 
-        // Reset fields when changing fee type
-        setData('amount', '');
-        setData('valid_from', '');
-        setData('valid_to', '');
-        setData('subscription_type_id', '');
-        setData('subscription_category_id', '');
-        setData('tax_percentage', '');
-        setData('overdue_percentage', '');
-        setData('remarks', '');
-
-        // Update amount based on fee type and selected member
-        if (selectedMember && selectedMember.member_category) {
-            if (feeType === 'membership_fee') {
-                setData('amount', selectedMember.member_category.fee);
-                // Auto-suggest 4 years validity for membership fee
-                const today = new Date();
-                const fourYearsLater = new Date(today.getFullYear() + 4, today.getMonth(), today.getDate());
-                setData('valid_from', today.toISOString().split('T')[0]);
-                setData('valid_to', fourYearsLater.toISOString().split('T')[0]);
-            } else if (feeType === 'maintenance_fee') {
-                setData('amount', selectedMember.member_category.subscription_fee);
-                // Auto-suggest monthly period based on member joining date
-                suggestMaintenancePeriod('monthly');
-            } else if (feeType === 'subscription_fee') {
-                // For subscription fees, user will select type and category manually
-                // Set default start date to today
-                const today = new Date();
-                setData('valid_from', today.toISOString().split('T')[0]);
-            } else if (feeType === 'reinstating_fee') {
-                // For reinstating fees, set a standard amount (can be customized)
-                setData('amount', 25000); // Standard reinstating fee amount
-                // No validity period needed for reinstating fees
-                setData('valid_from', '');
-                setData('valid_to', '');
+            // Update amount based on fee type and selected member
+            if (selectedMember && selectedMember.member_category) {
+                if (feeType === 'membership_fee') {
+                    newData.amount = selectedMember.member_category.fee;
+                    // Auto-suggest 4 years validity for membership fee
+                    const today = new Date();
+                    const fourYearsLater = new Date(today.getFullYear() + 4, today.getMonth(), today.getDate());
+                    newData.valid_from = today.toISOString().split('T')[0];
+                    newData.valid_to = fourYearsLater.toISOString().split('T')[0];
+                } else if (feeType === 'maintenance_fee') {
+                    newData.amount = selectedMember.member_category.subscription_fee;
+                    // Auto-suggest monthly period based on member joining date
+                    // Note: suggestMaintenancePeriod needs to be called separately as it depends on state
+                    setTimeout(() => suggestMaintenancePeriod('monthly'), 0);
+                } else if (feeType === 'subscription_fee') {
+                    // For subscription fees, user will select type and category manually
+                    // Set default start date to today
+                    const today = new Date();
+                    newData.valid_from = today.toISOString().split('T')[0];
+                } else if (feeType === 'reinstating_fee') {
+                    // For reinstating fees, set a standard amount (can be customized)
+                    newData.amount = 25000; // Standard reinstating fee amount
+                    // No validity period needed for reinstating fees
+                    newData.valid_from = '';
+                    newData.valid_to = '';
+                }
             }
-        }
+            return newData;
+        });
     };
 
     const suggestMaintenancePeriod = (frequency) => {
@@ -1213,21 +1221,25 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                       Reinstating Fee
                                                                   </MenuItem>,
                                                               ]
-                                                            : [
-                                                                  // Show all fee types for non-cancelled members
-                                                                  <MenuItem key="membership_fee" value="membership_fee" disabled={membershipFeePaid}>
-                                                                      Membership Fee {membershipFeePaid && '(Already Paid)'}
-                                                                  </MenuItem>,
-                                                                  <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                      Maintenance Fee
-                                                                  </MenuItem>,
-                                                                  <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                      Subscription Fee
-                                                                  </MenuItem>,
-                                                                  <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                      Reinstating Fee
-                                                                  </MenuItem>,
-                                                              ]}
+                                                            : !membershipFeePaid
+                                                              ? [
+                                                                    // Only show Membership Fee if not paid
+                                                                    <MenuItem key="membership_fee" value="membership_fee">
+                                                                        Membership Fee
+                                                                    </MenuItem>,
+                                                                ]
+                                                              : [
+                                                                    // Show all OTHER fee types for active members who have paid membership fee
+                                                                    <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                        Maintenance Fee
+                                                                    </MenuItem>,
+                                                                    <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                        Subscription Fee
+                                                                    </MenuItem>,
+                                                                    <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                        Reinstating Fee
+                                                                    </MenuItem>,
+                                                                ]}
                                                     </Select>
                                                     {errors.fee_type && (
                                                         <Typography variant="caption" color="error" sx={{ mt: 1 }}>
