@@ -146,6 +146,7 @@ class MemberTransactionController extends Controller
                 'discount_value' => 'nullable|numeric|min:0',
                 'tax_percentage' => 'nullable|numeric|min:0|max:100',
                 'overdue_percentage' => 'nullable|numeric|min:0|max:100',
+                'additional_charges' => 'nullable|numeric|min:0',
                 'remarks' => 'nullable|string|max:1000',
                 'payment_method' => 'required|in:cash,credit_card',
                 'valid_from' => 'required_if:fee_type,maintenance_fee,subscription_fee|date',
@@ -282,7 +283,12 @@ class MemberTransactionController extends Controller
             $overdueAmount = ($baseAmount * $request->overdue_percentage) / 100;
         }
 
-        $totalPrice = round($baseAmount + $taxAmount + $overdueAmount);
+        $additionalCharges = 0;
+        if ($request->additional_charges) {
+            $additionalCharges = $request->additional_charges;
+        }
+
+        $totalPrice = round($baseAmount + $taxAmount + $overdueAmount + $additionalCharges);
         $data = [
             'member_id' => $request->member_id,
             'member_name' => $member->full_name,
@@ -337,8 +343,10 @@ class MemberTransactionController extends Controller
             'discount_value' => $request->discount_value,
             'tax_percentage' => $request->tax_percentage,
             'tax_amount' => $taxAmount,
+            'tax_amount' => $taxAmount,
             'overdue_percentage' => $request->overdue_percentage,
             'overdue_amount' => $overdueAmount,
+            'additional_charges' => $additionalCharges,
             'remarks' => $request->remarks,
             'total_price' => $totalPrice,
             'paid_amount' => $totalPrice,

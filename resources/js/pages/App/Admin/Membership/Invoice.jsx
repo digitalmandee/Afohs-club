@@ -42,6 +42,7 @@ const handlePrintReceipt = (invoice) => {
             taxPercentage: invoice.tax_percentage || 0,
             overdueAmount: invoice.overdue_amount || 0,
             overduePercentage: invoice.overdue_percentage || 0,
+            additionalCharges: invoice.additional_charges || 0,
             remarks: invoice.remarks || '',
         },
         note: 'This is a computer-generated receipt. It does not require any signature or stamp.',
@@ -221,6 +222,15 @@ const handlePrintReceipt = (invoice) => {
                     <div class="summary-row">
                       <span class="typography-body2-bold">Overdue (${invoiceData.summary.overduePercentage}%)</span>
                       <span class="typography-body2">Rs ${invoiceData.summary.overdueAmount}</span>
+                    </div>`
+                            : ''
+                    }
+                    ${
+                        invoiceData.summary.additionalCharges > 0
+                            ? `
+                    <div class="summary-row">
+                      <span class="typography-body2-bold">Additional Charges</span>
+                      <span class="typography-body2">Rs ${invoiceData.summary.additionalCharges}</span>
                     </div>`
                             : ''
                     }
@@ -499,6 +509,16 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                 </Typography>
                                                 <Typography variant="body2" sx={{ fontSize: '13px' }}>
                                                     Rs {invoice.overdue_amount}
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                        {invoice.additional_charges > 0 && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, borderBottom: '1px solid #eee' }}>
+                                                <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                                    Additional Charges
+                                                </Typography>
+                                                <Typography variant="body2" sx={{ fontSize: '13px' }}>
+                                                    Rs {invoice.additional_charges}
                                                 </Typography>
                                             </Box>
                                         )}

@@ -41,6 +41,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         amount: '',
         tax_percentage: '',
         overdue_percentage: '',
+        additional_charges: '',
         remarks: '',
         valid_from: '',
         valid_to: '',
@@ -687,26 +688,43 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         setData('amount', amount);
     };
 
-    const calculateTotal = () => {
+    const calculateBreakdown = () => {
         const amount = parseFloat(data.amount) || 0;
         const discountValue = parseFloat(data.discount_value) || 0;
+        const additionalCharges = parseFloat(data.additional_charges) || 0;
 
-        let baseTotal;
+        let discountAmount = 0;
+        let netAmount = amount;
+
         if (data.discount_type === 'percent') {
-            baseTotal = amount - (amount * discountValue) / 100;
+            discountAmount = (amount * discountValue) / 100;
+            netAmount = amount - discountAmount;
         } else if (data.discount_type === 'fixed') {
-            baseTotal = amount - discountValue;
-        } else {
-            baseTotal = amount;
+            discountAmount = discountValue;
+            netAmount = amount - discountAmount;
         }
 
         const taxPercentage = parseFloat(data.tax_percentage) || 0;
         const overduePercentage = parseFloat(data.overdue_percentage) || 0;
 
-        const taxAmount = (baseTotal * taxPercentage) / 100;
-        const overdueAmount = (baseTotal * overduePercentage) / 100;
+        const taxAmount = (netAmount * taxPercentage) / 100;
+        const overdueAmount = (netAmount * overduePercentage) / 100;
 
-        return Math.round(baseTotal + taxAmount + overdueAmount);
+        const totalAmount = Math.round(netAmount + taxAmount + overdueAmount + additionalCharges);
+
+        return {
+            grossAmount: amount,
+            discountAmount,
+            netAmount,
+            taxAmount,
+            overdueAmount,
+            additionalCharges,
+            totalAmount,
+        };
+    };
+
+    const calculateTotal = () => {
+        return calculateBreakdown().totalAmount;
     };
 
     const validateDateOverlap = () => {
@@ -1616,6 +1634,26 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     }}
                                                                 />
                                                             </Grid>
+                                                            {(data.fee_type === 'membership_fee' || data.fee_type === 'maintenance_fee') && (
+                                                                <Grid item xs={12}>
+                                                                    <TextField
+                                                                        size="small"
+                                                                        fullWidth
+                                                                        label="Additional Charges (PKR)"
+                                                                        type="number"
+                                                                        value={data.additional_charges}
+                                                                        onChange={(e) => setData('additional_charges', e.target.value)}
+                                                                        error={!!errors.additional_charges}
+                                                                        helperText={errors.additional_charges}
+                                                                        sx={{
+                                                                            '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                        }}
+                                                                        InputProps={{
+                                                                            startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary' }}>Rs</Typography>,
+                                                                        }}
+                                                                    />
+                                                                </Grid>
+                                                            )}
                                                         </Grid>
                                                     </Grid>
 
@@ -1907,54 +1945,106 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     borderColor: 'primary.200',
                                                                 }}
                                                             >
-                                                                <Typography variant="h5" sx={{ fontWeight: 700, color: '#0a3d62' }}>
-                                                                    Total Amount: {formatCurrency(calculateTotal())}
-                                                                </Typography>
-                                                                <Box sx={{ mt: 1 }}>
-                                                                    {data.discount_value > 0 && (
-                                                                        <Typography variant="body2" color="text.secondary">
-                                                                            Discount: -{data.discount_type === 'percent' ? `${formatCurrency((parseFloat(data.amount) * parseFloat(data.discount_value)) / 100)} (${data.discount_value}%)` : formatCurrency(data.discount_value)}
-                                                                        </Typography>
-                                                                    )}
-                                                                    {data.tax_percentage > 0 && (
-                                                                        <Typography variant="body2" color="text.secondary">
-                                                                            Tax: +
-                                                                            {formatCurrency(
-                                                                                (() => {
-                                                                                    const amount = parseFloat(data.amount) || 0;
-                                                                                    const discountValue = parseFloat(data.discount_value) || 0;
-                                                                                    let baseTotal = amount;
-                                                                                    if (data.discount_type === 'percent') {
-                                                                                        baseTotal = amount - (amount * discountValue) / 100;
-                                                                                    } else if (data.discount_type === 'fixed') {
-                                                                                        baseTotal = amount - discountValue;
-                                                                                    }
-                                                                                    return (baseTotal * parseFloat(data.tax_percentage)) / 100;
-                                                                                })(),
-                                                                            )}{' '}
-                                                                            ({data.tax_percentage}%)
-                                                                        </Typography>
-                                                                    )}
-                                                                    {data.overdue_percentage > 0 && (
-                                                                        <Typography variant="body2" color="text.secondary">
-                                                                            Overdue: +
-                                                                            {formatCurrency(
-                                                                                (() => {
-                                                                                    const amount = parseFloat(data.amount) || 0;
-                                                                                    const discountValue = parseFloat(data.discount_value) || 0;
-                                                                                    let baseTotal = amount;
-                                                                                    if (data.discount_type === 'percent') {
-                                                                                        baseTotal = amount - (amount * discountValue) / 100;
-                                                                                    } else if (data.discount_type === 'fixed') {
-                                                                                        baseTotal = amount - discountValue;
-                                                                                    }
-                                                                                    return (baseTotal * parseFloat(data.overdue_percentage)) / 100;
-                                                                                })(),
-                                                                            )}{' '}
-                                                                            ({data.overdue_percentage}%)
-                                                                        </Typography>
-                                                                    )}
-                                                                </Box>
+                                                                {(() => {
+                                                                    const breakdown = calculateBreakdown();
+                                                                    return (
+                                                                        <>
+                                                                            <Grid container spacing={1} sx={{ mb: 1 }}>
+                                                                                <Grid item xs={6}>
+                                                                                    <Typography variant="body2" color="text.secondary">
+                                                                                        Subtotal:
+                                                                                    </Typography>
+                                                                                </Grid>
+                                                                                <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                                    <Typography variant="body2">{formatCurrency(breakdown.grossAmount)}</Typography>
+                                                                                </Grid>
+
+                                                                                {breakdown.discountAmount > 0 && (
+                                                                                    <>
+                                                                                        <Grid item xs={6}>
+                                                                                            <Typography variant="body2" color="text.secondary">
+                                                                                                Discount {data.discount_type === 'percent' ? `(${data.discount_value}%)` : ''}:
+                                                                                            </Typography>
+                                                                                        </Grid>
+                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                                            <Typography variant="body2" color="error.main">
+                                                                                                - {formatCurrency(breakdown.discountAmount)}
+                                                                                            </Typography>
+                                                                                        </Grid>
+                                                                                    </>
+                                                                                )}
+
+                                                                                {breakdown.discountAmount > 0 && (
+                                                                                    <>
+                                                                                        <Grid item xs={6}>
+                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                                Net Amount:
+                                                                                            </Typography>
+                                                                                        </Grid>
+                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                                {formatCurrency(breakdown.netAmount)}
+                                                                                            </Typography>
+                                                                                        </Grid>
+                                                                                    </>
+                                                                                )}
+
+                                                                                {breakdown.taxAmount > 0 && (
+                                                                                    <>
+                                                                                        <Grid item xs={6}>
+                                                                                            <Typography variant="body2" color="text.secondary">
+                                                                                                Tax ({data.tax_percentage}%):
+                                                                                            </Typography>
+                                                                                        </Grid>
+                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                                            <Typography variant="body2">+ {formatCurrency(breakdown.taxAmount)}</Typography>
+                                                                                        </Grid>
+                                                                                    </>
+                                                                                )}
+
+                                                                                {breakdown.overdueAmount > 0 && (
+                                                                                    <>
+                                                                                        <Grid item xs={6}>
+                                                                                            <Typography variant="body2" color="text.secondary">
+                                                                                                Overdue ({data.overdue_percentage}%):
+                                                                                            </Typography>
+                                                                                        </Grid>
+                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                                            <Typography variant="body2">+ {formatCurrency(breakdown.overdueAmount)}</Typography>
+                                                                                        </Grid>
+                                                                                    </>
+                                                                                )}
+
+                                                                                {breakdown.additionalCharges > 0 && (
+                                                                                    <>
+                                                                                        <Grid item xs={6}>
+                                                                                            <Typography variant="body2" color="text.secondary">
+                                                                                                Additional Charges:
+                                                                                            </Typography>
+                                                                                        </Grid>
+                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                                            <Typography variant="body2">+ {formatCurrency(breakdown.additionalCharges)}</Typography>
+                                                                                        </Grid>
+                                                                                    </>
+                                                                                )}
+                                                                            </Grid>
+                                                                            <Box sx={{ borderTop: '1px dashed', borderColor: 'primary.300', pt: 1, mt: 1 }}>
+                                                                                <Grid container spacing={1} alignItems="center">
+                                                                                    <Grid item xs={6}>
+                                                                                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#0a3d62' }}>
+                                                                                            Total Payable:
+                                                                                        </Typography>
+                                                                                    </Grid>
+                                                                                    <Grid item xs={6} sx={{ textAlign: 'right' }}>
+                                                                                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#0a3d62' }}>
+                                                                                            {formatCurrency(breakdown.totalAmount)}
+                                                                                        </Typography>
+                                                                                    </Grid>
+                                                                                </Grid>
+                                                                            </Box>
+                                                                        </>
+                                                                    );
+                                                                })()}
                                                             </Box>
                                                         </Grid>
                                                     )}

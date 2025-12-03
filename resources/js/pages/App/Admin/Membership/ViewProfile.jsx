@@ -179,7 +179,7 @@ const ViewProfile = ({ member }) => {
                 sx={{
                     flexGrow: 1,
                     p: 2,
-                    bgcolor:'#f5f5f5'
+                    bgcolor: '#f5f5f5',
                 }}
             >
                 {/* Header */}
@@ -323,14 +323,16 @@ const ViewProfile = ({ member }) => {
                                                 {member.member_type?.name || 'N/A'}
                                             </Typography>
                                         </Box>
-                                        <Box>
-                                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '12px', mb: 0.5 }}>
-                                                KINSHIP
-                                            </Typography>
-                                            <Typography variant="body1" sx={{ fontWeight: 600, color: '#063455' }}>
-                                                {member.kinship_member?.full_name ? `${member.kinship_member.full_name}${member.kinship_member.membership_no ? ` (${member.kinship_member.membership_no})` : ''}` : 'Primary Member'}
-                                            </Typography>
-                                        </Box>
+                                        {member.kinship && (
+                                            <Box>
+                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '12px', mb: 0.5 }}>
+                                                    KINSHIP
+                                                </Typography>
+                                                <Typography variant="body1" sx={{ fontWeight: 600, color: '#063455' }}>
+                                                    {member.kinship_member?.full_name ? `${member.kinship_member.full_name}${member.kinship_member.membership_no ? ` (${member.kinship_member.membership_no})` : ''}` : 'Primary Member'}
+                                                </Typography>
+                                            </Box>
+                                        )}
                                     </Box>
                                 </Box>
                             </Box>
@@ -743,7 +745,7 @@ const ViewProfile = ({ member }) => {
                                             </Grid>
                                             <Grid item xs={12}>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Guardian Name
+                                                    Father Name
                                                 </Typography>
                                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                     {member.guardian_name || 'N/A'}
@@ -751,7 +753,7 @@ const ViewProfile = ({ member }) => {
                                             </Grid>
                                             <Grid item xs={12}>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    Guardian Membership
+                                                    Father Membership
                                                 </Typography>
                                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                     {member.guardian_membership || 'N/A'}
@@ -1030,12 +1032,7 @@ const ViewProfile = ({ member }) => {
                                                                 {formatDate(order.created_at)}
                                                             </Typography>
                                                         </Box>
-                                                        <Chip
-                                                            label={formatStatus(order.status)}
-                                                            color={order.status === 'completed' ? 'success' : order.status === 'pending' ? 'warning' : 'default'}
-                                                            size="small"
-                                                            sx={{ fontWeight: 600 }}
-                                                        />
+                                                        <Chip label={formatStatus(order.status)} color={order.status === 'completed' ? 'success' : order.status === 'pending' ? 'warning' : 'default'} size="small" sx={{ fontWeight: 600 }} />
                                                     </Box>
 
                                                     {/* Order Details */}
@@ -1058,14 +1055,7 @@ const ViewProfile = ({ member }) => {
                                                         <Typography variant="h5" sx={{ fontWeight: 700, color: '#063455' }}>
                                                             {formatCurrency(order.amount)}
                                                         </Typography>
-                                                        {order.payment_status && (
-                                                            <Chip
-                                                                label={order.payment_status === 'paid' ? 'Paid' : 'Unpaid'}
-                                                                color={order.payment_status === 'paid' ? 'success' : 'error'}
-                                                                size="small"
-                                                                sx={{ mt: 1, fontWeight: 600 }}
-                                                            />
-                                                        )}
+                                                        {order.payment_status && <Chip label={order.payment_status === 'paid' ? 'Paid' : 'Unpaid'} color={order.payment_status === 'paid' ? 'success' : 'error'} size="small" sx={{ mt: 1, fontWeight: 600 }} />}
                                                     </Box>
 
                                                     {/* Action Button */}
@@ -1159,12 +1149,7 @@ const ViewProfile = ({ member }) => {
             >
                 <Box sx={{ display: 'flex', height: '100vh' }}>
                     {/* Receipt Component */}
-                    <ReceiptComponent
-                        invoiceId={selectedOrderForReceipt?.invoice_id || selectedOrderForReceipt?.id}
-                        invoiceRoute="member.orderhistory.invoice"
-                        openModal={openReceiptModal}
-                        closeModal={handleCloseReceiptModal}
-                    />
+                    <ReceiptComponent invoiceId={selectedOrderForReceipt?.invoice_id || selectedOrderForReceipt?.id} invoiceRoute="member.orderhistory.invoice" openModal={openReceiptModal} closeModal={handleCloseReceiptModal} />
                 </Box>
             </Dialog>
         </>
