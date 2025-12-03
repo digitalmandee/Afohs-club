@@ -11,6 +11,11 @@ import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import CreateTransaction from '@/components/App/Transactions/Create';
+import { MembershipCardContent, handlePrintMembershipCard } from './UserCard';
+import html2canvas from 'html2canvas';
+import { Download as DownloadIcon, Print as PrintIcon, Visibility } from '@mui/icons-material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button as MuiButton, Chip, Drawer } from '@mui/material';
+import MembershipCardComponent from './UserCard';
 
 const LOCAL_STORAGE_KEY = 'membershipFormData';
 
@@ -22,6 +27,32 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
     const [step, setStep] = useState(initialStep);
     const [sameAsCurrent, setSameAsCurrent] = useState(false);
     const [createdMember, setCreatedMember] = useState(null);
+    const [openFamilyCardModal, setOpenFamilyCardModal] = useState(false);
+    const [selectedFamilyMember, setSelectedFamilyMember] = useState(null);
+
+    const handleDownloadCard = async (elementId, memberNo) => {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+                useCORS: true,
+            });
+
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `Membership_Card_${memberNo || 'card'}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Error downloading card:', error);
+        }
+    };
 
     const getNormalizedUserData = (user) => {
         if (!user) return defaultFormData;
@@ -297,6 +328,108 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             .finally(() => setLoading(false));
     };
 
+    const isStep1Valid = (data) => {
+        if (!data.first_name) return false;
+        if (!data.guardian_name) return false;
+        if (!data.gender) return false;
+        if (!data.cnic_no) return false;
+        if (!/^\d{5}-\d{7}-\d{1}$/.test(data.cnic_no)) return false;
+        if (!data.date_of_birth) return false;
+        return true;
+    };
+
+    const isStep2Valid = (data) => {
+        if (!data.current_address) return false;
+        if (!data.current_city) return false;
+        if (!data.current_country) return false;
+        return true;
+    };
+
+    const isStep3Valid = (data) => {
+        if (!data.member_type_id) return false;
+        if (!data.membership_category) return false;
+        if (!data.membership_date) return false;
+        if (data.is_document_missing && !data.missing_documents) return false;
+        return true;
+    };
+
+    const handleStepClick = (targetStep) => {
+        // Allow going back without validation
+        if (targetStep < step) {
+            setStep(targetStep);
+            return;
+        }
+
+        // Validate steps sequentially up to targetStep
+        // Example: Current 1, Target 3. Check 1, then 2.
+        let canProceed = true;
+        let nextStep = step;
+
+        for (let i = step; i < targetStep; i++) {
+            if (i === 1) {
+                if (!isStep1Valid(formsData)) {
+                    canProceed = false;
+                    enqueueSnackbar('Please complete Personal Information first.', { variant: 'error' });
+                    break;
+                }
+            } else if (i === 2) {
+                if (!isStep2Valid(formsData)) {
+                    canProceed = false;
+                    enqueueSnackbar('Please complete Contact Information first.', { variant: 'error' });
+                    break;
+                }
+            } else if (i === 3) {
+                if (!isStep3Valid(formsData)) {
+                    canProceed = false;
+                    enqueueSnackbar('Please complete Membership Information first.', { variant: 'error' });
+                    break;
+                }
+                // Special check for Step 3 -> 4: Must have created member (unless in edit mode)
+                // If we are in create mode and haven't saved (no createdMember), we can't go to 4, 5, 6
+                if (!createdMember && !user) {
+                    canProceed = false;
+                    enqueueSnackbar('Please save the membership information first.', { variant: 'warning' });
+                    break;
+                }
+            }
+            nextStep = i + 1;
+        }
+
+        if (canProceed) {
+            setStep(targetStep);
+        } else {
+            // If we failed at some intermediate step, we might want to go to that step
+            // But the loop breaks at the failing step 'i'.
+            // So if we are at 1, click 3. 1 is valid. 2 is invalid. Loop breaks at i=2.
+            // We should probably go to 2?
+            // The current logic stays at 'step' (1) if validation fails.
+            // User asked: "if step 2 to first then it go easily but if gp frm first to third then vlaidaiton both first 2 step check"
+            // If 2 fails, maybe we should move to 2 so user sees errors?
+            // But AddForm components show errors on 'handleSubmit'.
+            // If I just switch to step 2, the errors won't be visible immediately unless I trigger validation there.
+            // For now, I'll just prevent navigation and show snackbar.
+        }
+    };
+
+    const getStepLabel = (step) => {
+        switch (step) {
+            case 1:
+                return 'Personal Information';
+            case 2:
+                return 'Contact Information';
+            case 3:
+                return 'Membership Information';
+            case 4:
+                return 'Payment';
+            case 5:
+                return 'Card';
+            case 6:
+                return 'Family Cards';
+            default:
+                return '';
+        }
+    };
+
     const getStepTitle = () => {
         switch (step) {
             case 1:
@@ -307,6 +440,10 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 return 'Membership Information';
             case 4:
                 return 'Payment';
+            case 5:
+                return 'Card';
+            case 6:
+                return 'Family Cards';
             default:
                 return '';
         }
@@ -341,13 +478,87 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                         {getStepTitle()}
                     </Typography>
                 </Box>
-
-                <MembershipStepper step={step} />
+                <Box sx={{ mb: 4 }}>
+                    <MembershipStepper step={step} onStepClick={handleStepClick} />
+                </Box>
                 {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
                 {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                 {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 {step === 4 && <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} preSelectedMember={createdMember || user} />}
+                {step === 5 && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
+                        <Box sx={{ mb: 3 }}>
+                            <MembershipCardContent member={createdMember || user} id="main-member-card" />
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                            <MuiButton variant="contained" startIcon={<PrintIcon />} onClick={() => handlePrintMembershipCard(createdMember || user)} sx={{ bgcolor: '#0a3d62', '&:hover': { bgcolor: '#0c2461' } }}>
+                                Print
+                            </MuiButton>
+                            <MuiButton variant="contained" startIcon={<DownloadIcon />} onClick={() => handleDownloadCard('main-member-card', (createdMember || user)?.membership_no)} sx={{ bgcolor: '#0a3d62', '&:hover': { bgcolor: '#0c2461' } }}>
+                                Download
+                            </MuiButton>
+                        </Box>
+                    </Box>
+                )}
+                {step === 6 && (
+                    <Box sx={{ mt: 4 }}>
+                        <Typography variant="h6" sx={{ mb: 2, color: '#063455', fontWeight: 600 }}>
+                            Family Members Cards
+                        </Typography>
+                        <TableContainer component={Paper} sx={{ borderRadius: '12px', border: '1px solid #E5E5EA', boxShadow: 'none' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Photo</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Name</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Membership No</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Relation</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Action</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {(formsData.family_members || []).map((fm, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>
+                                                <Avatar src={fm.profile_photo?.file_path || fm.picture_preview || '/placeholder.svg'} sx={{ width: 40, height: 40 }} />
+                                            </TableCell>
+                                            <TableCell>{fm.full_name}</TableCell>
+                                            <TableCell>{fm.membership_no || 'N/A'}</TableCell>
+                                            <TableCell>{fm.relation}</TableCell>
+                                            <TableCell>
+                                                <Chip label={fm.status || 'Active'} size="small" color={fm.status === 'active' ? 'success' : 'default'} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <MuiButton
+                                                    size="small"
+                                                    startIcon={<Visibility />}
+                                                    onClick={() => {
+                                                        setSelectedFamilyMember(fm);
+                                                        setOpenFamilyCardModal(true);
+                                                    }}
+                                                    sx={{ color: '#063455' }}
+                                                >
+                                                    View Card
+                                                </MuiButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {(!formsData.family_members || formsData.family_members.length === 0) && (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                                No family members found.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Box>
+                )}
             </div>
+
+            <MembershipCardComponent open={openFamilyCardModal} onClose={() => setOpenFamilyCardModal(false)} member={selectedFamilyMember} />
             {/* </div> */}
         </>
     );

@@ -2,12 +2,14 @@ import React from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-const MembershipStepper = ({ step }) => {
+const MembershipStepper = ({ step, onStepClick }) => {
     const steps = [
         { number: 1, label: 'Personal Information' },
         { number: 2, label: 'Contact Information' },
         { number: 3, label: 'Membership Information' },
         { number: 4, label: 'Payment' },
+        { number: 5, label: 'Card' },
+        { number: 6, label: 'Family Cards' },
     ];
 
     return (
@@ -21,6 +23,7 @@ const MembershipStepper = ({ step }) => {
                 mb: 3,
                 backgroundColor: '#f0f0f0',
                 borderRadius: '4px',
+                overflowX: 'auto', // Handle overflow on small screens
             }}
         >
             {steps.map((s) => {
@@ -28,7 +31,21 @@ const MembershipStepper = ({ step }) => {
                 const isCompleted = step > s.number;
 
                 return (
-                    <Box key={s.number} sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Box
+                        key={s.number}
+                        onClick={() => onStepClick && onStepClick(s.number)}
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            opacity: isActive || isCompleted ? 1 : 0.6, // Visual cue for inactive steps
+                            '&:hover': {
+                                opacity: 1,
+                            },
+                            minWidth: 'fit-content', // Prevent squishing
+                            mr: 2,
+                        }}
+                    >
                         <Box
                             sx={{
                                 width: 30,
@@ -39,12 +56,12 @@ const MembershipStepper = ({ step }) => {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                mr: 2,
+                                mr: 1, // Reduced margin slightly
                             }}
                         >
                             {isCompleted ? <CheckCircleIcon fontSize="small" /> : s.number}
                         </Box>
-                        <Typography sx={{ fontWeight: 500 }}>{s.label}</Typography>
+                        <Typography sx={{ fontWeight: 500, fontSize: '0.9rem', color: isActive ? '#2c3e50' : '#666' }}>{s.label}</Typography>
                     </Box>
                 );
             })}

@@ -234,7 +234,32 @@ class MemberTransactionController extends Controller
                 $invoiceData['invoiceable_type'] = Subscription::class;
             }
 
-            $invoice = FinancialInvoice::create($invoiceData);
+            // Check for existing unpaid membership fee invoice
+            $existingUnpaidInvoice = null;
+            if ($request->fee_type === 'membership_fee') {
+                $existingUnpaidInvoice = FinancialInvoice::where('member_id', $request->member_id)
+                    ->where('fee_type', 'membership_fee')
+                    ->where('status', 'unpaid')
+                    ->first();
+            }
+
+            if ($existingUnpaidInvoice) {
+                // Update the existing invoice
+                $invoiceData['status'] = 'paid';
+                $invoiceData['payment_date'] = now();
+                $invoiceData['issue_date'] = now();
+                $invoiceData['due_date'] = now()->addDays(30);
+                $invoiceData['created_by'] = Auth::id();
+
+                // Keep the original invoice number
+                $invoiceData['invoice_no'] = $existingUnpaidInvoice->invoice_no;
+
+                $existingUnpaidInvoice->update($invoiceData);
+                $invoice = $existingUnpaidInvoice;
+            } else {
+                // Create new invoice
+                $invoice = FinancialInvoice::create($invoiceData);
+            }
 
             // Update member status to active if reinstating fee is paid
             if ($request->fee_type === 'reinstating_fee') {

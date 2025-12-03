@@ -472,17 +472,23 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 remarks: '',
             };
 
+            // Helper to parse amount (remove commas if present)
+            const parseAmount = (val) => {
+                if (!val) return '';
+                return parseFloat(String(val).replace(/,/g, ''));
+            };
+
             // Update amount based on fee type and selected member
             if (selectedMember && selectedMember.member_category) {
                 if (feeType === 'membership_fee') {
-                    newData.amount = selectedMember.member_category.fee;
+                    newData.amount = parseAmount(selectedMember.member_category.fee);
                     // Auto-suggest 4 years validity for membership fee
                     const today = new Date();
                     const fourYearsLater = new Date(today.getFullYear() + 4, today.getMonth(), today.getDate());
                     newData.valid_from = today.toISOString().split('T')[0];
                     newData.valid_to = fourYearsLater.toISOString().split('T')[0];
                 } else if (feeType === 'maintenance_fee') {
-                    newData.amount = selectedMember.member_category.subscription_fee;
+                    newData.amount = parseAmount(selectedMember.member_category.subscription_fee);
                     // Auto-suggest monthly period based on member joining date
                     // Note: suggestMaintenancePeriod needs to be called separately as it depends on state
                     setTimeout(() => suggestMaintenancePeriod('monthly'), 0);
@@ -504,7 +510,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     };
 
     const suggestMaintenancePeriod = (frequency) => {
-        if (!selectedMember) {
+        if (!selectedMember || !selectedMember.member_category) {
             return;
         }
 
@@ -601,7 +607,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
             // Calculate amount based on actual months covered
             const actualMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-            const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
+            const monthlyFee = parseFloat(String(selectedMember.member_category.subscription_fee).replace(/,/g, '')); // Monthly fee (base fee)
             amount = Math.round(monthlyFee * actualMonths);
         } else {
             // SUBSEQUENT YEARS OR FIRST YEAR COMPLETE: Quarterly payment system (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
@@ -668,16 +674,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             endDate.setUTCDate(0); // Last day of previous month (complete month)
 
             // Calculate amount based on frequency and monthly fee logic
+            const monthlyFee = parseFloat(String(selectedMember.member_category.subscription_fee).replace(/,/g, '')); // Monthly fee (base fee)
+
             if (frequency === 'monthly') {
-                const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
                 amount = Math.round(monthlyFee);
             } else if (currentPartialQuarter && frequency === 'quarterly') {
                 // For partial quarter completion, charge only for remaining months
-                const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
                 amount = Math.round(monthlyFee * monthsToAdd);
             } else {
                 // For quarterly, half-yearly, or annual payments, multiply monthly fee by number of months
-                const monthlyFee = selectedMember.member_category.subscription_fee; // Monthly fee (base fee)
                 amount = Math.round(monthlyFee * monthsToAdd);
             }
         }
@@ -936,9 +941,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             });
 
             if (response.data.success) {
-                // Reset form
+                // Reset form but keep member if pre-selected
                 setData({
-                    member_id: '',
+                    member_id: preSelectedMember ? preSelectedMember.id : '',
                     fee_type: 'maintenance_fee',
                     payment_frequency: 'monthly',
                     amount: '',
@@ -950,17 +955,28 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     starting_quarter: 1,
                     credit_card_type: '',
                     receipt_file: null,
+                    additional_charges: '',
+                    tax_percentage: '',
+                    overdue_percentage: '',
+                    remarks: '',
                 });
-                setSelectedMember(null);
-                setMemberTransactions([]);
-                setMembershipFeePaid(false);
+
+                if (!preSelectedMember) {
+                    setSelectedMember(null);
+                    setMemberTransactions([]);
+                    setMembershipFeePaid(false);
+                    setQuarterStatus({
+                        paidQuarters: [],
+                        nextAvailableQuarter: 1,
+                        currentYear: new Date().getFullYear(),
+                    });
+                } else {
+                    // Refresh transactions for the pre-selected member
+                    handleMemberSelect(preSelectedMember);
+                }
+
                 setFormErrors({});
                 setDateValidation({ isValid: true });
-                setQuarterStatus({
-                    paidQuarters: [],
-                    nextAvailableQuarter: 1,
-                    currentYear: new Date().getFullYear(),
-                });
 
                 // Show success message
                 enqueueSnackbar('Transaction created successfully!', { variant: 'success' });
