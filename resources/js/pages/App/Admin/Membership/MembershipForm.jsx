@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
-import { Box, IconButton, Typography } from '@mui/material';
+import { Box, IconButton, Avatar, Typography } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';

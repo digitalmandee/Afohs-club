@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Box } from '@mui/material';
-import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon, Visibility } from '@mui/icons-material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon, Visibility, Delete } from '@mui/icons-material';
+import axios from 'axios';
+import { useSnackbar } from 'notistack';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import MembershipSuspensionDialog from './Modal';
@@ -13,7 +15,6 @@ import { MdModeEdit } from 'react-icons/md';
 import { FaEdit } from 'react-icons/fa';
 import MembershipPauseDialog from './MembershipPauseDialog';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-
 
 const styles = {
     root: {
@@ -38,6 +39,33 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [pauseModalOpen, setPauseModalOpen] = useState(false);
     const [openDocumentModal, setOpenDocumentModal] = useState(false);
+    const { enqueueSnackbar } = useSnackbar();
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [memberToDelete, setMemberToDelete] = useState(null);
+
+    const handleDeleteClick = (member) => {
+        setMemberToDelete(member);
+        setDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (memberToDelete) {
+            axios
+                .delete(route('membership.destroy', memberToDelete.id))
+                .then(() => {
+                    // Remove member from local state to avoid full reload
+                    setFilteredMembers((prev) => prev.filter((m) => m.id !== memberToDelete.id));
+                    setDeleteDialogOpen(false);
+                    setMemberToDelete(null);
+                    enqueueSnackbar('Member deleted successfully', { variant: 'success' });
+                })
+                .catch((error) => {
+                    console.error('Error deleting member:', error);
+                    enqueueSnackbar('Failed to delete member. Please try again.', { variant: 'error' });
+                    setDeleteDialogOpen(false);
+                });
+        }
+    };
 
     // Extract unique status and member type values from members
     const handleCancelMembership = () => {
@@ -67,250 +95,251 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-                    {/* Header */}
-                    <div className="d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Membership Dashboard</Typography>
-                        </div>
-                        <Button
-                            variant="contained"
-                            startIcon={<span>+</span>}
-                            style={{
-                                backgroundColor: '#063455',
-                                textTransform: 'none',
-                                borderRadius: '4px',
-                                height: 40,
-                                width: 170,
-                            }}
-                            onClick={() => router.visit(route('membership.add'))}
-                        >
-                            Add Member
-                        </Button>
+            <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
+                {/* Header */}
+                <div className="d-flex justify-content-between align-items-center">
+                    <div className="d-flex align-items-center">
+                        <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Membership Dashboard</Typography>
                     </div>
+                    <Button
+                        variant="contained"
+                        startIcon={<span>+</span>}
+                        style={{
+                            backgroundColor: '#063455',
+                            textTransform: 'none',
+                            borderRadius: '4px',
+                            height: 40,
+                            width: 170,
+                        }}
+                        onClick={() => router.visit(route('membership.add'))}
+                    >
+                        Add Member
+                    </Button>
+                </div>
 
-                    {/* Stats Cards */}
-                    <div className="row mb-4 mt-5">
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                            <People />
-                                        </Avatar>
-                                    </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Membership</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_members ?? 0}</Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                            <CreditCard />
-                                        </Avatar>
-                                    </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Payment</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_payment ?? 0}</Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        <div className="col-md-4 mb-3">
-                            <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
-                                <CardContent className="text-center py-4">
-                                    <div className="mb-2">
-                                        <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                            <CreditCard />
-                                        </Avatar>
-                                    </div>
-                                    <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Current Balance</Typography>
-                                    <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
-                                </CardContent>
-                            </Card>
-                        </div>
+                {/* Stats Cards */}
+                <div className="row mb-4 mt-5">
+                    <div className="col-md-4 mb-3">
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                            <CardContent className="text-center py-4">
+                                <div className="mb-2">
+                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
+                                        <People />
+                                    </Avatar>
+                                </div>
+                                <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Membership</Typography>
+                                <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_members ?? 0}</Typography>
+                            </CardContent>
+                        </Card>
                     </div>
-                    {/* Recently Joined Section */}
-                    <div className="mx-0">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                            <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
-                        </div>
-                        {/* Members Table */}
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredMembers.map((user) => (
-                                        <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>{user.membership_no || 'N/A'}</TableCell>
-                                            <TableCell>
-                                                <div className="d-flex align-items-center">
-                                                    <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
-                                                    <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
-                                                            {user.full_name}
-
-                                                            {user.is_document_enabled && (
-                                                                <Tooltip title="Documents missing" arrow>
-                                                                    <WarningAmberIcon color="warning" fontSize="small" />
-                                                                </Tooltip>
-                                                            )}
-                                                        </Typography>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
-                                            <TableCell>
-                                                <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
-                                                    {(popupState) => (
-                                                        <>
-                                                            <span
-                                                                style={{
-                                                                    color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
-                                                                    fontWeight: 'medium',
-                                                                    cursor: 'pointer',
-                                                                }}
-                                                                {...bindTrigger(popupState)}
-                                                            >
-                                                                {user.status || 'N/A'}
-                                                                {user.status === 'suspended' && (
-                                                                    <img
-                                                                        src="/assets/system-expired.png"
-                                                                        alt=""
-                                                                        style={{
-                                                                            width: 25,
-                                                                            height: 25,
-                                                                            marginLeft: 2,
-                                                                            marginBottom: 5,
-                                                                        }}
-                                                                    />
-                                                                )}
-                                                                <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
-                                                            </span>
-                                                            <Menu {...bindMenu(popupState)}>
-                                                                {getAvailableStatusActions(user.status).map((statusOption) => (
-                                                                    <MenuItem
-                                                                        key={statusOption}
-                                                                        onClick={() => {
-                                                                            popupState.close();
-                                                                            setSelectMember(user);
-                                                                            if (statusOption === 'suspended') setSuspensionModalOpen(true);
-                                                                            else if (statusOption === 'cancelled') setCancelModalOpen(true);
-                                                                            else if (statusOption === 'active') setActivateModalOpen(true);
-                                                                            else if (statusOption === 'absent') setPauseModalOpen(true);
-                                                                        }}
-                                                                    >
-                                                                        {statusOption === 'active' ? 'Activate' : statusOption}
-                                                                    </MenuItem>
-                                                                ))}
-                                                            </Menu>
-                                                        </>
-                                                    )}
-                                                </PopupState>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    style={{
-                                                        color: '#0C67AA',
-                                                        textDecoration: 'underline',
-                                                        textTransform: 'none',
-                                                    }}
-                                                    onClick={() => {
-                                                        setSelectMember(user);
-                                                        setOpenCardModal(true);
-                                                    }}
-                                                >
-                                                    View
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell>
-                                                {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
-                                                    <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
-                                                ) : (
-                                                    <Button
-                                                        style={{
-                                                            color: '#0C67AA',
-                                                            textDecoration: 'underline',
-                                                            textTransform: 'none',
-                                                        }}
-                                                        onClick={() => {
-                                                            setSelectMember(user);
-                                                            setOpenInvoiceModal(true);
-                                                        }}
-                                                    >
-                                                        View
-                                                    </Button>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button
-                                                    style={{
-                                                        color: '#0C67AA',
-                                                        textDecoration: 'underline',
-                                                        textTransform: 'none',
-                                                    }}
-                                                    onClick={() => {
-                                                        setSelectMember(user);
-                                                        setOpenDocumentModal(true);
-                                                    }}
-                                                >
-                                                    View
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                                    <Tooltip title="View Profile">
-                                                        <IconButton 
-                                                            onClick={() => router.visit(route('membership.profile', user.id))}
-                                                            sx={{ color: '#063455' }}
-                                                        >
-                                                            <Visibility size={18} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Edit Member">
-                                                        <IconButton 
-                                                            onClick={() => router.visit(route('membership.edit', user.id))}
-                                                            sx={{ color: '#f57c00' }}
-                                                        >
-                                                            <FaEdit size={18} />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                    <div className="col-md-4 mb-3">
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                            <CardContent className="text-center py-4">
+                                <div className="mb-2">
+                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
+                                        <CreditCard />
+                                    </Avatar>
+                                </div>
+                                <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Payment</Typography>
+                                <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_payment ?? 0}</Typography>
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="col-md-4 mb-3">
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                            <CardContent className="text-center py-4">
+                                <div className="mb-2">
+                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
+                                        <CreditCard />
+                                    </Avatar>
+                                </div>
+                                <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Current Balance</Typography>
+                                <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>0</Typography>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
+                {/* Recently Joined Section */}
+                <div className="mx-0">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
+                    </div>
+                    {/* Members Table */}
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredMembers.map((user) => (
+                                    <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
+                                        <TableCell onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
+                                            {user.membership_no || 'N/A'}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="d-flex align-items-center">
+                                                <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
+                                                <div>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
+                                                        {user.full_name}
+
+                                                        {user.is_document_enabled && (
+                                                            <Tooltip title="Documents missing" arrow>
+                                                                <WarningAmberIcon color="warning" fontSize="small" />
+                                                            </Tooltip>
+                                                        )}
+                                                    </Typography>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
+                                        <TableCell>
+                                            <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
+                                                {(popupState) => (
+                                                    <>
+                                                        <span
+                                                            style={{
+                                                                color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
+                                                                fontWeight: 'medium',
+                                                                cursor: 'pointer',
+                                                            }}
+                                                            {...bindTrigger(popupState)}
+                                                        >
+                                                            {user.status || 'N/A'}
+                                                            {user.status === 'suspended' && (
+                                                                <img
+                                                                    src="/assets/system-expired.png"
+                                                                    alt=""
+                                                                    style={{
+                                                                        width: 25,
+                                                                        height: 25,
+                                                                        marginLeft: 2,
+                                                                        marginBottom: 5,
+                                                                    }}
+                                                                />
+                                                            )}
+                                                            <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
+                                                        </span>
+                                                        <Menu {...bindMenu(popupState)}>
+                                                            {getAvailableStatusActions(user.status).map((statusOption) => (
+                                                                <MenuItem
+                                                                    key={statusOption}
+                                                                    onClick={() => {
+                                                                        popupState.close();
+                                                                        setSelectMember(user);
+                                                                        if (statusOption === 'suspended') setSuspensionModalOpen(true);
+                                                                        else if (statusOption === 'cancelled') setCancelModalOpen(true);
+                                                                        else if (statusOption === 'active') setActivateModalOpen(true);
+                                                                        else if (statusOption === 'absent') setPauseModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    {statusOption === 'active' ? 'Activate' : statusOption}
+                                                                </MenuItem>
+                                                            ))}
+                                                        </Menu>
+                                                    </>
+                                                )}
+                                            </PopupState>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                style={{
+                                                    color: '#0C67AA',
+                                                    textDecoration: 'underline',
+                                                    textTransform: 'none',
+                                                }}
+                                                onClick={() => {
+                                                    setSelectMember(user);
+                                                    setOpenCardModal(true);
+                                                }}
+                                            >
+                                                View
+                                            </Button>
+                                        </TableCell>
+                                        <TableCell>
+                                            {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
+                                                <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
+                                            ) : (
+                                                <Button
+                                                    style={{
+                                                        color: '#0C67AA',
+                                                        textDecoration: 'underline',
+                                                        textTransform: 'none',
+                                                    }}
+                                                    onClick={() => {
+                                                        setSelectMember(user);
+                                                        setOpenInvoiceModal(true);
+                                                    }}
+                                                >
+                                                    View
+                                                </Button>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                style={{
+                                                    color: '#0C67AA',
+                                                    textDecoration: 'underline',
+                                                    textTransform: 'none',
+                                                }}
+                                                onClick={() => {
+                                                    setSelectMember(user);
+                                                    setOpenDocumentModal(true);
+                                                }}
+                                            >
+                                                View
+                                            </Button>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                                <Tooltip title="View Profile">
+                                                    <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
+                                                        <Visibility size={18} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Edit Member">
+                                                    <IconButton onClick={() => router.visit(route('membership.edit', user.id))} sx={{ color: '#f57c00' }}>
+                                                        <FaEdit size={18} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Delete Member">
+                                                    <IconButton onClick={() => handleDeleteClick(user)} sx={{ color: '#d32f2f' }}>
+                                                        <Delete size={18} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </div>
+            </div>
             {/* </div> */}
 
             <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
@@ -320,12 +349,12 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
             <ActivateMembershipDialog open={activateModalOpen} onClose={() => setActivateModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
 
             <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={selectMember} memberData={members} />
-            <InvoiceSlip 
-                open={openInvoiceModal} 
+            <InvoiceSlip
+                open={openInvoiceModal}
                 onClose={() => {
                     setOpenInvoiceModal(false);
                     setSelectMember(null); // ✅ Clear selected member when closing
-                }} 
+                }}
                 invoiceNo={selectMember?.membership_invoice?.id ? null : selectMember?.id}
                 invoiceId={selectMember?.membership_invoice?.id || null}
             />
@@ -404,6 +433,22 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                     </Button>
                 </Box>
             </Drawer>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+                <DialogTitle id="alert-dialog-title">{'Confirm Deletion'}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">Are you sure you want to delete this member? This action cannot be undone.</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={confirmDelete} color="error" autoFocus>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

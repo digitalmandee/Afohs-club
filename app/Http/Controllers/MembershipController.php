@@ -1023,4 +1023,30 @@ class MembershipController extends Controller
             return response()->json(['error' => 'Failed to fetch profession info: ' . $th->getMessage()], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        try {
+            $member = Member::findOrFail($id);
+
+            DB::beginTransaction();
+
+            // Soft delete family members
+            $member->familyMembers()->delete();
+
+            // Soft delete related media (documents, profile photo, etc.)
+            $member->media()->delete();
+
+            // Soft delete the member
+            $member->delete();
+
+            DB::commit();
+
+            return response()->json(['message' => 'Member deleted successfully.'], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            Log::error('Error deleting member: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to delete member: ' . $th->getMessage()], 500);
+        }
+    }
 }
