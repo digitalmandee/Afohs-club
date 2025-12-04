@@ -438,6 +438,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update')->middleware('permission:members.edit');
         Route::post('store', [MembershipController::class, 'store'])->name('membership.store')->middleware('permission:members.create');
         Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status')->middleware('permission:members.edit');
+        Route::post('profession-info', [MembershipController::class, 'saveProfessionInfo'])->name('membership.profession-info')->middleware('permission:members.create');
+        Route::get('profession-info/{id}', [MembershipController::class, 'getProfessionInfo'])->name('membership.profession-info.get')->middleware('permission:members.view');
         // Card Routes
         Route::get('/cards', [CardController::class, 'index'])->name('cards.dashboard');
 

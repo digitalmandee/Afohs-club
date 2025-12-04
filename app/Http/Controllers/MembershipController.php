@@ -985,4 +985,42 @@ class MembershipController extends Controller
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
     }
+
+    public function saveProfessionInfo(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'member_id' => 'required|exists:members,id',
+                'profession_info' => 'required|array',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $member = Member::findOrFail($request->member_id);
+
+            if ($member->professionInfo) {
+                $member->professionInfo->update($request->profession_info);
+            } else {
+                $member->professionInfo()->create($request->profession_info);
+            }
+
+            return response()->json(['message' => 'Profession info saved successfully.'], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error saving profession info: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to save profession info: ' . $th->getMessage()], 500);
+        }
+    }
+
+    public function getProfessionInfo($id)
+    {
+        try {
+            $member = Member::with('professionInfo')->findOrFail($id);
+            return response()->json(['profession_info' => $member->professionInfo], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error fetching profession info: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to fetch profession info: ' . $th->getMessage()], 500);
+        }
+    }
 }
