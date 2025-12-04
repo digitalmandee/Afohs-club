@@ -3,6 +3,7 @@ import { Box, Grid, TextField, Typography, Button, MenuItem, FormControl, InputL
 import { Add, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
 const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -66,6 +67,28 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+    };
+
+    const handleReferralSelect = (e) => {
+        const { value } = e.target;
+        if (value) {
+            setFormData({
+                ...formData,
+                referral_member_name: value.full_name,
+                referral_membership_no: value.membership_no,
+                referral_contact: value.mobile_number_a,
+            });
+        } else {
+            // If cleared or typing, we might want to clear the other fields or keep them?
+            // For now, if value is null (cleared/typing), we don't clear the name immediately in formData
+            // because AsyncSearchTextField clears 'value' on typing.
+            // But we should probably allow manual entry if needed.
+            // However, the requirement is specific about auto-fill.
+            // Let's just update the name if it's cleared?
+            // Actually, AsyncSearchTextField doesn't pass the typed text in 'value' when typing, it passes null.
+            // So we can't update 'referral_member_name' with typed text here.
+            // We'll rely on selection.
+        }
     };
 
     const handleOtherClubChange = (index, field, value) => {
@@ -208,7 +231,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} md={6}>
-                                <TextField size="small" fullWidth label="Member Name" name="referral_member_name" value={formData.referral_member_name} onChange={handleChange} />
+                                <AsyncSearchTextField label="Member Name" name="referral_member_name" value={{ label: formData.referral_member_name }} onChange={handleReferralSelect} endpoint="api.members.search" queryParam="query" resultsKey="members" size="small" resultFormat={(item) => `${item.full_name} (${item.membership_no})`} />
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <TextField size="small" fullWidth label="Membership No." name="referral_membership_no" value={formData.referral_membership_no} onChange={handleChange} />
