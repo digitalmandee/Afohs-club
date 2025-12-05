@@ -73,16 +73,17 @@ export const handlePrintMembershipCard = (member) => {
                 /* LEFT COLUMN (Avatar + Name) */
                 .left {
                     padding-left: 20px;
-                    padding-top: 56px;
+                    padding-top: 46px;
                     align-items: flex-start;
                 }
 
                 .avatar {
-                    width: 70px;
-                    height: 70px;
+                    width: 90px;
+                    height: 90px;
                     border-radius: 4px;
                     border: 1px solid #0a3d62;
                     object-fit: cover;
+                    objectPosition: center
                 }
 
                 .name {
@@ -103,7 +104,7 @@ export const handlePrintMembershipCard = (member) => {
                 }
 
                 .label {
-                    margin-top: 32px;
+                    margin-top: 42px;
                     font-size: 12px;
                     color: gray;
                 }
@@ -137,7 +138,7 @@ export const handlePrintMembershipCard = (member) => {
 
 /* Only this label (under QR) gets spacing */
 .label-valid-until {
-    margin-top: 16px;   /* <-- your required padding from top */
+    margin-top: 26px;   /* <-- your required padding from top */
 }
 
 .value {
