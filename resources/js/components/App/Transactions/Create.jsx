@@ -1274,7 +1274,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         const membershipDate = new Date(selectedMember.membership_date);
                                                                         const membershipYear = membershipDate.getFullYear();
                                                                         const firstYearEnd = new Date(membershipYear, 11, 31);
-                                                                        const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
+                                                                        // Only consider first year if there are remaining months (i.e., joined before December)
+                                                                        const isFirstYear = (!quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd) && membershipDate.getMonth() < 11;
 
                                                                         return (
                                                                             <>
