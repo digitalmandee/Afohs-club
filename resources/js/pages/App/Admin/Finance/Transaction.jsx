@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment, Pagination, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
-import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment, Pagination, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Grid, Box, Chip } from '@mui/material';
+import { Search, FilterAlt, People, CreditCard, Payment } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
@@ -10,6 +10,8 @@ import InvoiceSlip from '../Subscription/Invoice';
 import MembershipInvoiceSlip from '../Membership/Invoice';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
+import axios from 'axios';
+import { enqueueSnackbar } from 'notistack';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -71,6 +73,56 @@ const Transaction = ({ transactions, filters }) => {
                 preserveScroll: true,
             },
         );
+    };
+
+    // Payment Confirmation State
+    const [paymentConfirmationOpen, setPaymentConfirmationOpen] = useState(false);
+    const [transactionToPay, setTransactionToPay] = useState(null);
+
+    // Payment Confirmation Handlers
+    const handlePayClick = (transaction) => {
+        setTransactionToPay(transaction);
+        setPaymentConfirmationOpen(true);
+    };
+
+    const handleConfirmPayment = async () => {
+        if (!transactionToPay) return;
+
+        try {
+            const response = await axios.post(route('finance.transaction.update-status', transactionToPay.id), {
+                status: 'paid',
+            });
+            if (response.data.success) {
+                enqueueSnackbar('Invoice marked as paid successfully!', { variant: 'success' });
+                // Refresh transactions using Inertia reload
+                router.reload({ only: ['transactions'] });
+                setPaymentConfirmationOpen(false);
+                setTransactionToPay(null);
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            enqueueSnackbar('Failed to update status', { variant: 'error' });
+        }
+    };
+
+    // Helper function to format currency
+    const formatCurrency = (amount) => {
+        if (!amount) return 'Rs 0';
+        return `Rs ${parseFloat(amount).toLocaleString()}`;
+    };
+
+    // Helper function to format date
+    const formatDate = (date) => {
+        if (!date) return '';
+        try {
+            return new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+            });
+        } catch (error) {
+            return date;
+        }
     };
 
     return (
@@ -272,13 +324,14 @@ const Transaction = ({ transactions, filters }) => {
                                                         <span style={{ color: '#7F7F7F' }}>-</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell>
-                                                    <span
+                                                <TableCell sx={{ display: 'flex', gap: '4px' }}>
+                                                    <Button
+                                                        variant="contained"
+                                                        size="small"
                                                         style={{
-                                                            color: '#0C67AA',
-                                                            textDecoration: 'underline',
-                                                            cursor: 'pointer',
-                                                            fontWeight: 500,
+                                                            backgroundColor: '#003366',
+                                                            textTransform: 'none',
+                                                            color: 'white',
                                                         }}
                                                         onClick={() => {
                                                             // Check invoice type and open appropriate modal
@@ -308,7 +361,12 @@ const Transaction = ({ transactions, filters }) => {
                                                         }}
                                                     >
                                                         View
-                                                    </span>
+                                                    </Button>
+                                                    {transaction.status === 'unpaid' && (
+                                                        <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap', mr: 1 }}>
+                                                            Pay Now
+                                                        </Button>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -374,6 +432,55 @@ const Transaction = ({ transactions, filters }) => {
                     setBookings={setTransactionList}
                     financeView={true}
                 />
+
+                {/* Payment Confirmation Dialog */}
+                <Dialog open={paymentConfirmationOpen} onClose={() => setPaymentConfirmationOpen(false)} aria-labelledby="payment-dialog-title" aria-describedby="payment-dialog-description">
+                    <DialogTitle id="payment-dialog-title" sx={{ color: '#0a3d62', fontWeight: 600 }}>
+                        Confirm Payment
+                    </DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="payment-dialog-description">Are you sure you want to mark this invoice as paid?</DialogContentText>
+                        {transactionToPay && (
+                            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2, border: '1px solid', borderColor: 'grey.200' }}>
+                                <Grid container spacing={1}>
+                                    <Grid item xs={12}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            <strong>Invoice No:</strong> {transactionToPay.invoice_no}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            <strong>Member:</strong> {transactionToPay.member?.full_name || transactionToPay.customer?.name || 'N/A'}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            <strong>Type:</strong> {transactionToPay.fee_type?.replace(/_/g, ' ').toUpperCase() || transactionToPay.invoice_type?.replace(/_/g, ' ').toUpperCase()}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            <strong>Amount:</strong> {formatCurrency(transactionToPay.total_price || transactionToPay.amount)}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            <strong>Period:</strong> {transactionToPay.valid_from && transactionToPay.valid_to ? `${formatDate(transactionToPay.valid_from)} - ${formatDate(transactionToPay.valid_to)}` : '-'}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            </Box>
+                        )}
+                    </DialogContent>
+                    <DialogActions sx={{ p: 2 }}>
+                        <Button onClick={() => setPaymentConfirmationOpen(false)} color="inherit">
+                            Cancel
+                        </Button>
+                        <Button onClick={handleConfirmPayment} variant="contained" color="success" autoFocus startIcon={<Payment />}>
+                            Confirm Payment
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </div>
             {/* </div> */}
         </>
