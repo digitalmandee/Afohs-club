@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
@@ -23,6 +23,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [createdInvoiceId, setCreatedInvoiceId] = useState(null);
     const [createdMemberId, setCreatedMemberId] = useState(null);
+    const [paymentConfirmationOpen, setPaymentConfirmationOpen] = useState(false);
+    const [transactionToPay, setTransactionToPay] = useState(null);
 
     // Pagination and search states
     const [searchInvoice, setSearchInvoice] = useState('');
@@ -1078,6 +1080,32 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 return 'warning';
             default:
                 return 'default';
+        }
+    };
+
+    // Payment Confirmation Handlers
+    const handlePayClick = (transaction) => {
+        setTransactionToPay(transaction);
+        setPaymentConfirmationOpen(true);
+    };
+
+    const handleConfirmPayment = async () => {
+        if (!transactionToPay) return;
+
+        try {
+            const response = await axios.post(route('finance.transaction.update-status', transactionToPay.id), {
+                status: 'paid',
+            });
+            if (response.data.success) {
+                enqueueSnackbar('Invoice marked as paid successfully!', { variant: 'success' });
+                // Refresh transactions
+                fetchMemberTransactions(selectedMember.id);
+                setPaymentConfirmationOpen(false);
+                setTransactionToPay(null);
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            enqueueSnackbar('Failed to update status', { variant: 'error' });
         }
     };
 
@@ -2364,30 +2392,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         {transaction.status === 'unpaid' && (
-                                                                            <Button
-                                                                                size="small"
-                                                                                variant="contained"
-                                                                                color="success"
-                                                                                startIcon={<Payment />}
-                                                                                onClick={async () => {
-                                                                                    if (confirm('Are you sure you want to mark this invoice as paid?')) {
-                                                                                        try {
-                                                                                            const response = await axios.post(route('finance.transaction.update-status', transaction.id), {
-                                                                                                status: 'paid',
-                                                                                            });
-                                                                                            if (response.data.success) {
-                                                                                                enqueueSnackbar('Invoice marked as paid successfully!', { variant: 'success' });
-                                                                                                // Refresh transactions
-                                                                                                fetchMemberTransactions(selectedMember.id);
-                                                                                            }
-                                                                                        } catch (error) {
-                                                                                            console.error('Error updating status:', error);
-                                                                                            enqueueSnackbar('Failed to update status', { variant: 'error' });
-                                                                                        }
-                                                                                    }
-                                                                                }}
-                                                                                sx={{ fontSize: '11px', py: 0.5, px: 1 }}
-                                                                            >
+                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
                                                                                 Pay Now
                                                                             </Button>
                                                                         )}
@@ -2450,6 +2455,50 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 invoiceNo={createdMemberId}
                 invoiceId={createdInvoiceId}
             />
+
+            {/* Payment Confirmation Dialog */}
+            <Dialog open={paymentConfirmationOpen} onClose={() => setPaymentConfirmationOpen(false)} aria-labelledby="payment-dialog-title" aria-describedby="payment-dialog-description">
+                <DialogTitle id="payment-dialog-title" sx={{ color: '#0a3d62', fontWeight: 600 }}>
+                    Confirm Payment
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="payment-dialog-description">Are you sure you want to mark this invoice as paid?</DialogContentText>
+                    {transactionToPay && (
+                        <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2, border: '1px solid', borderColor: 'grey.200' }}>
+                            <Grid container spacing={1}>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Invoice No:</strong> {transactionToPay.invoice_no}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Fee Type:</strong> {transactionToPay.fee_type?.replace('_', ' ').toUpperCase()}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Amount:</strong> {formatCurrency(transactionToPay.total_price)}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Period:</strong> {transactionToPay.valid_from && transactionToPay.valid_to ? `${formatDate(transactionToPay.valid_from)} - ${formatDate(transactionToPay.valid_to)}` : '-'}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setPaymentConfirmationOpen(false)} color="inherit">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmPayment} variant="contained" color="success" autoFocus startIcon={<Payment />}>
+                        Confirm Payment
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 }
