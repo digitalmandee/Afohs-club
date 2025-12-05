@@ -11,7 +11,6 @@ class Member extends BaseModel
     use SoftDeletes;
 
     protected $fillable = [
-        'application_no',
         'old_family_id',
         'old_member_id',
         'barcode_no',
@@ -118,19 +117,6 @@ class Member extends BaseModel
 
         // Minimum 3 digits, but will grow if needed (e.g., "001", "099", "1000")
         return str_pad((string) $next, 3, '0', STR_PAD_LEFT);
-    }
-
-    public static function generateNextApplicationNo(): string
-    {
-        $last = self::whereNotNull('application_no')
-            ->whereNull('parent_id')
-            ->pluck('application_no')
-            ->map(fn($no) => (int) $no)
-            ->max() ?? 0;
-
-        $next = $last + 1;
-
-        return $next;
     }
 
     public function memberType()

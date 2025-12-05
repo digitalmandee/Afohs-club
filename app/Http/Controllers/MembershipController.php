@@ -56,18 +56,17 @@ class MembershipController extends Controller
     public function create()
     {
         $membershipNo = Member::generateNextMembershipNumber();
-        $applicationNo = Member::generateNextApplicationNo();
 
         $memberTypesData = MemberType::select('id', 'name')->get();
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
 
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'memberTypesData', 'membercategories'));
     }
 
     public function edit(Request $request)
     {
         $user = Member::where('id', $request->id)
-            ->with(['memberType', 'kinshipMember', 'documents', 'profilePhoto'])
+            ->with(['memberType', 'kinshipMember', 'documents', 'profilePhoto', 'memberCategory'])
             ->first();
 
         $user->profile_photo = $user->profilePhoto
@@ -116,7 +115,6 @@ class MembershipController extends Controller
             return [
                 'id' => $member->id,
                 'membership_no' => $member->membership_no,
-                'application_no' => $member->application_no,
                 'barcode_no' => $member->barcode_no,
                 'family_suffix' => $member->family_suffix,
                 'first_name' => $member->first_name,
@@ -283,11 +281,9 @@ class MembershipController extends Controller
             $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
 
             $membershipNo = Member::generateNextMembershipNumber();
-            $applicationNo = Member::generateNextApplicationNo();
 
             // Create primary member record
             $mainMember = Member::create([
-                'application_no' => $applicationNo,
                 'first_name' => $request->first_name,
                 'barcode_no' => $request->barcode_no ?? null,
                 'middle_name' => $request->middle_name,

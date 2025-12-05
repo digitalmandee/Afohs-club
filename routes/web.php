@@ -347,6 +347,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('store', [MemberTransactionController::class, 'store'])->name('finance.transaction.store')->middleware('permission:financial.create');
         Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('finance.transaction.search')->middleware('permission:financial.create');
         Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('finance.transaction.member')->middleware('permission:financial.create');
+        Route::post('transaction/{id}/update-status', [MemberTransactionController::class, 'updateStatus'])->name('finance.transaction.update-status')->middleware('permission:financial.edit');
     });
 
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
