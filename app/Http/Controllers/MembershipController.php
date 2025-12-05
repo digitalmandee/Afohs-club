@@ -1012,8 +1012,15 @@ class MembershipController extends Controller
     public function getProfessionInfo($id)
     {
         try {
-            $member = Member::with('professionInfo')->findOrFail($id);
-            return response()->json(['profession_info' => $member->professionInfo], 200);
+            $member = Member::with(['professionInfo.businessDeveloper'])->findOrFail($id);
+
+            $data = $member->professionInfo ? $member->professionInfo->toArray() : [];
+
+            if ($member->professionInfo && $member->professionInfo->businessDeveloper) {
+                $data['business_developer'] = $member->professionInfo->businessDeveloper;
+            }
+
+            return response()->json(['profession_info' => $data], 200);
         } catch (\Throwable $th) {
             Log::error('Error fetching profession info: ' . $th->getMessage());
             return response()->json(['error' => 'Failed to fetch profession info: ' . $th->getMessage()], 500);
@@ -1043,6 +1050,41 @@ class MembershipController extends Controller
             DB::rollBack();
             Log::error('Error deleting member: ' . $th->getMessage());
             return response()->json(['error' => 'Failed to delete member: ' . $th->getMessage()], 500);
+        }
+    }
+
+    public function storeStep4(Request $request)
+    {
+        try {
+            $member = Member::find($request->member_id);
+            if (!$member) {
+                return response()->json(['error' => 'Member not found'], 404);
+            }
+
+            // Prepare data for MemberProfessionInfo
+            $professionData = $request->except([
+                'member_id',
+                'business_developer',
+                'id',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'created_by',
+                'updated_by',
+                'deleted_by'
+            ]);
+
+            // Update or Create MemberProfessionInfo
+            if ($member->professionInfo) {
+                $member->professionInfo->update($professionData);
+            } else {
+                $member->professionInfo()->create($professionData);
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            Log::error('Error saving step 4: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to save information'], 500);
         }
     }
 }

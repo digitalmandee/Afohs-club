@@ -398,4 +398,9 @@ class Member extends BaseModel
     {
         return $this->membership_date ?: $this->created_at;
     }
+
+    public function businessDeveloper()
+    {
+        return $this->belongsTo(Employee::class, 'business_developer_id');
+    }
 }

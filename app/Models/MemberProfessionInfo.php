@@ -20,4 +20,9 @@ class MemberProfessionInfo extends Model
     {
         return $this->belongsTo(Member::class);
     }
+
+    public function businessDeveloper()
+    {
+        return $this->belongsTo(Employee::class, 'business_developer_id');
+    }
 }

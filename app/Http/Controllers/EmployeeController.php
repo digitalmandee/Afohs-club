@@ -527,4 +527,24 @@ class EmployeeController extends Controller
             // If inactive structure exists, respect admin's decision - don't auto-create
         }
     }
+
+    public function getBusinessDevelopers(Request $request)
+    {
+        $query = Employee::whereHas('subdepartment', function ($q) {
+            $q->where('name', 'Business Developer');
+        });
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%");
+            });
+        }
+
+        $employees = $query->limit(10)->get(['id', 'name', 'employee_id']);
+
+        return response()->json($employees);
+    }
 }

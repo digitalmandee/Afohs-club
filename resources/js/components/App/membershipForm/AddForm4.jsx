@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Grid, TextField, Typography, Button, MenuItem, FormControl, InputLabel, Select, FormControlLabel, Radio, RadioGroup, FormLabel, IconButton } from '@mui/material';
+import { Box, Grid, TextField, Typography, Button, MenuItem, FormControl, InputLabel, Select, FormControlLabel, Radio, RadioGroup, FormLabel, IconButton, Autocomplete, CircularProgress } from '@mui/material';
 import { Add, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
@@ -38,6 +38,54 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
         criminal_details: '',
     });
 
+    const [bdSearch, setBdSearch] = useState('');
+    const [bdOptions, setBdOptions] = useState([]);
+    const [bdLoading, setBdLoading] = useState(false);
+    const [selectedBd, setSelectedBd] = useState(null);
+
+    useEffect(() => {
+        if (initialData) {
+            setFormData((prev) => ({
+                ...prev,
+                profession: initialData.profession || '',
+                organization: initialData.organization || '',
+                designation: initialData.designation || '',
+                office_address: initialData.office_address || '',
+                office_phone: initialData.office_phone || '',
+                referral_name: initialData.referral_name || '',
+                referral_membership_no: initialData.referral_membership_no || '',
+                referral_contact: initialData.referral_contact || '',
+                business_developer_id: initialData.business_developer_id || '',
+            }));
+            if (initialData.business_developer_id && initialData.business_developer) {
+                setSelectedBd(initialData.business_developer);
+            }
+        }
+    }, [initialData]);
+
+    // Fetch Business Developers
+    useEffect(() => {
+        const fetchBusinessDevelopers = async () => {
+            setBdLoading(true);
+            try {
+                const response = await axios.get(route('employees.business-developers'), {
+                    params: { search: bdSearch },
+                });
+                setBdOptions(response.data);
+            } catch (error) {
+                console.error('Error fetching business developers:', error);
+            } finally {
+                setBdLoading(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            fetchBusinessDevelopers();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [bdSearch]);
+
     useEffect(() => {
         const fetchProfessionInfo = async () => {
             if (!memberId) return;
@@ -46,15 +94,19 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                 const response = await axios.get(route('membership.profession-info.get', memberId));
                 const info = response.data.profession_info;
                 if (info) {
-                    setFormData({
-                        ...formData,
+                    setFormData((prev) => ({
+                        ...prev,
                         ...info,
                         applied_before: info.applied_before ? '1' : '0',
                         foreign_affiliation: info.foreign_affiliation ? '1' : '0',
                         stayed_abroad: info.stayed_abroad ? '1' : '0',
                         criminal_conviction: info.criminal_conviction ? '1' : '0',
                         other_club_membership: Array.isArray(info.other_club_membership) ? info.other_club_membership : [],
-                    });
+                        business_developer_id: info.business_developer_id || '',
+                    }));
+                    if (info.business_developer) {
+                        setSelectedBd(info.business_developer);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch profession info:', error);
@@ -112,23 +164,18 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const payload = {
+            const dataToSubmit = {
+                ...formData,
                 member_id: memberId,
-                profession_info: {
-                    ...formData,
-                    applied_before: formData.applied_before === '1',
-                    foreign_affiliation: formData.foreign_affiliation === '1',
-                    stayed_abroad: formData.stayed_abroad === '1',
-                    criminal_conviction: formData.criminal_conviction === '1',
-                },
             };
-
-            await axios.post(route('membership.profession-info'), payload);
-            enqueueSnackbar('Profession info saved successfully', { variant: 'success' });
-            onNext();
+            const response = await axios.post(route('membership.store-step-4'), dataToSubmit);
+            if (response.data.success) {
+                enqueueSnackbar('Profession & Referral information saved successfully', { variant: 'success' });
+                onNext();
+            }
         } catch (error) {
-            console.error(error);
-            enqueueSnackbar('Failed to save profession info', { variant: 'error' });
+            console.error('Error saving step 4:', error);
+            enqueueSnackbar('Failed to save information', { variant: 'error' });
         } finally {
             setLoading(false);
         }
@@ -226,6 +273,43 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                 {/* Referral */}
                 <Grid item xs={12}>
                     <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 1, boxShadow: 1 }}>
+                        <Grid item xs={12} md={6}>
+                            <Autocomplete
+                                options={bdOptions}
+                                getOptionLabel={(option) => `${option.name} (${option.employee_id})`}
+                                value={selectedBd}
+                                onChange={(event, newValue) => {
+                                    setSelectedBd(newValue);
+                                    setFormData((prev) => ({ ...prev, business_developer_id: newValue ? newValue.id : '' }));
+                                }}
+                                onInputChange={(event, newInputValue) => {
+                                    setBdSearch(newInputValue);
+                                }}
+                                loading={bdLoading}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Membership Done By (Business Developer)"
+                                        fullWidth
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            endAdornment: (
+                                                <>
+                                                    {bdLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                    {params.InputProps.endAdornment}
+                                                </>
+                                            ),
+                                        }}
+                                    />
+                                )}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12}>
+                            <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 2, mt: 2 }}>
+                                Referral Information
+                            </Typography>
+                        </Grid>
                         <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', fontWeight: 600, color: '#063455' }}>
                             Referral
                         </Typography>
