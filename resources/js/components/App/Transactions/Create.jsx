@@ -9,7 +9,7 @@ import axios from 'axios';
 import { Person, Search, Save, Print, Receipt, Visibility, Payment } from '@mui/icons-material';
 import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
 
-export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null }) {
+export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null }) {
     // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
@@ -77,20 +77,29 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     // Auto-set fee type based on member status
     useEffect(() => {
         if (selectedMember) {
-            if (selectedMember.status === 'cancelled' || selectedMember.status === 'expired') {
+            const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
+
+            if ((selectedMember.status === 'cancelled' || selectedMember.status === 'expired') && isAllowed('reinstating_fee')) {
                 // For cancelled or expired members, automatically set to reinstating fee
                 handleFeeTypeChange('reinstating_fee');
             } else if (!membershipFeePaid) {
-                // If membership fee is not paid, force it
-                handleFeeTypeChange('membership_fee');
+                if (isAllowed('membership_fee')) {
+                    // If membership fee is not paid, force it
+                    handleFeeTypeChange('membership_fee');
+                }
             } else {
                 // For non-cancelled/expired members, clear fee type if it was reinstating fee
+                // validation for allowed types on auto-switch
                 if (data.fee_type === 'reinstating_fee' || data.fee_type === 'membership_fee') {
-                    handleFeeTypeChange('maintenance_fee');
+                    if (isAllowed('maintenance_fee')) {
+                        handleFeeTypeChange('maintenance_fee');
+                    } else if (isAllowed('subscription_fee')) {
+                        handleFeeTypeChange('subscription_fee');
+                    }
                 }
             }
         }
-    }, [selectedMember?.status, membershipFeePaid]); // Trigger when member status or payment status changes
+    }, [selectedMember?.status, membershipFeePaid, allowedFeeTypes]); // Trigger when member status or payment status changes
 
     const analyzeQuarterStatus = (transactions, membershipDate) => {
         if (!membershipDate) {
@@ -1240,32 +1249,49 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Typography>
                                                         <FormControl fullWidth>
                                                             <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                                {selectedMember?.status === 'cancelled' || selectedMember.status === 'expired'
-                                                                    ? [
-                                                                          // Only show Reinstating Fee for cancelled or expired members
-                                                                          <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                              Reinstating Fee
-                                                                          </MenuItem>,
-                                                                      ]
-                                                                    : !membershipFeePaid
-                                                                      ? [
-                                                                            // Only show Membership Fee if not paid
-                                                                            <MenuItem key="membership_fee" value="membership_fee">
-                                                                                Membership Fee
-                                                                            </MenuItem>,
-                                                                        ]
-                                                                      : [
-                                                                            // Show all OTHER fee types for active members who have paid membership fee
-                                                                            <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                                Maintenance Fee
-                                                                            </MenuItem>,
-                                                                            <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                                Subscription Fee
-                                                                            </MenuItem>,
-                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                Reinstating Fee
-                                                                            </MenuItem>,
-                                                                        ]}
+                                                                {(() => {
+                                                                    const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
+                                                                    const options = [];
+
+                                                                    if (selectedMember?.status === 'cancelled' || selectedMember.status === 'expired') {
+                                                                        if (isAllowed('reinstating_fee')) {
+                                                                            options.push(
+                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                    Reinstating Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        }
+                                                                    } else if (!membershipFeePaid) {
+                                                                        if (isAllowed('membership_fee')) {
+                                                                            options.push(
+                                                                                <MenuItem key="membership_fee" value="membership_fee">
+                                                                                    Membership Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        }
+                                                                        // Strict: No other options if membership fee is unpaid.
+                                                                    } else {
+                                                                        if (isAllowed('maintenance_fee'))
+                                                                            options.push(
+                                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                                    Maintenance Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        if (isAllowed('subscription_fee'))
+                                                                            options.push(
+                                                                                <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                                    Subscription Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        if (isAllowed('reinstating_fee'))
+                                                                            options.push(
+                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                    Reinstating Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                    }
+                                                                    return options;
+                                                                })()}
                                                             </Select>
                                                             {errors.fee_type && (
                                                                 <Typography variant="caption" color="error" sx={{ mt: 1 }}>
