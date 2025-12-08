@@ -293,11 +293,26 @@ class MemberTransactionController extends Controller
 
             DB::commit();
 
+            $transactionType = str_replace('_', ' ', $request->fee_type);
+            try {
+                $member = Member::find($request->member_id);
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "New Transaction: {$transactionType} - {$request->amount}",
+                    "Transaction created for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),  // detailed transaction view might be better if available
+                    auth()->user(),
+                    'Finance'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => 'Transaction created successfully!',
-                'transaction' => $invoice->load('member:id,full_name,membership_no')
-            ], 201);
+                'message' => 'Transaction created successfully.',
+                'transaction' => $invoice,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Transaction creation failed: ' . $e->getMessage());
@@ -704,6 +719,20 @@ class MemberTransactionController extends Controller
             $this->cancelOverlappingInvoices($transaction);
         }
         $transaction->save();
+
+        try {
+            $member = \App\Models\Member::find($transaction->member_id);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                "Transaction Status Updated: {$request->status}",
+                "Invoice #{$transaction->invoice_no} status changed to {$request->status}",
+                route('member.profile', $member->id),
+                auth()->user(),
+                'Finance'
+            ));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send notification: ' . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,

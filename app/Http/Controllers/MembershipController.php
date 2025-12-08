@@ -467,6 +467,24 @@ class MembershipController extends Controller
             DB::commit();
 
             $mainMember->load('memberCategory');
+
+            // Dispatch Notification to Super Admins
+            $superAdmins = User::role('super-admin')->get();
+            Log::info('Dispatching notification. Super Admins count: ' . $superAdmins->count());
+
+            try {
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "New Member: {$mainMember->full_name}",
+                    "Membership #{$mainMember->membership_no} added to {$mainMember->memberCategory->name}",
+                    route('member.profile', $mainMember->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+                Log::info('Notification sent successfully.');
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
+            }
+
             return response()->json(['message' => 'Membership created successfully.', 'member' => $mainMember], 200);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
@@ -803,6 +821,21 @@ class MembershipController extends Controller
             DB::commit();
 
             $member->load('memberCategory');
+
+            // Dispatch Notification
+            try {
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "Member Updated: {$member->full_name}",
+                    "Profile details updated for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
+            }
+
             return response()->json(['message' => 'Membership updated successfully.', 'member' => $member]);
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -1002,6 +1035,21 @@ class MembershipController extends Controller
                 $member->professionInfo()->create($request->profession_info);
             }
 
+            // Dispatch Notification for saveProfessionInfo
+            try {
+                // Ensure User and Notification facades are imported or fully qualified
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "Profession Updated: {$member->full_name}",
+                    "Profession details updated for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification for profession update: ' . $e->getMessage());
+            }
+
             return response()->json(['message' => 'Profession info saved successfully.'], 200);
         } catch (\Throwable $th) {
             Log::error('Error saving profession info: ' . $th->getMessage());
@@ -1071,7 +1119,11 @@ class MembershipController extends Controller
                 'deleted_at',
                 'created_by',
                 'updated_by',
-                'deleted_by'
+                'deleted_by',
+                'profession',
+                'office_address',
+                'office_phone',
+                'referral_name'
             ]);
 
             // Update or Create MemberProfessionInfo
@@ -1079,6 +1131,20 @@ class MembershipController extends Controller
                 $member->professionInfo->update($professionData);
             } else {
                 $member->professionInfo()->create($professionData);
+            }
+
+            // Dispatch Notification
+            try {
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "Profession Updated: {$member->full_name}",
+                    "Profession details updated for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
             }
 
             return response()->json(['success' => true]);

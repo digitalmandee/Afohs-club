@@ -964,7 +964,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
+            console.log(response.data);
             if (response.data.success) {
                 // Set invoice details for modal
                 if (response.data.transaction) {
