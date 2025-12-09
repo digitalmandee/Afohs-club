@@ -30,6 +30,7 @@ class UserController extends Controller
                 'members.current_address',
                 'members.personal_email',
                 'members.mobile_number_a',
+                'members.status',
                 'member_categories.name as category_name',
             )
                 ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
@@ -47,7 +48,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->full_name,
                     'booking_type' => 'member',
-                    'label' => "{$user->full_name} ({$user->membership_no})",
+                    'label' => "{$user->full_name} ({$user->membership_no}) - " . ucfirst($user->status),
                     'membership_no' => $user->membership_no,
                     'email' => $user->personal_email,
                     'cnic' => $user->cnic_no,
