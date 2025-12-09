@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
-import { Box, IconButton, Typography } from '@mui/material';
+import { Box, IconButton, Avatar, Typography } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import AddForm1 from '@/components/App/membershipForm/AddForm1';
 import AddForm2 from '@/components/App/membershipForm/AddForm2';
 import AddForm3 from '@/components/App/membershipForm/AddForm3';
+import AddForm4 from '@/components/App/membershipForm/AddForm4';
 import MembershipStepper from '@/components/App/membershipForm/MembershipStepper';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
@@ -420,10 +421,12 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             case 3:
                 return 'Membership Information';
             case 4:
-                return 'Payment';
+                return 'Profession & Referral';
             case 5:
-                return 'Card';
+                return 'Payment';
             case 6:
+                return 'Card';
+            case 7:
                 return 'Family Cards';
             default:
                 return '';
@@ -439,10 +442,12 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             case 3:
                 return 'Membership Information';
             case 4:
-                return 'Payment';
+                return 'Profession & Referral';
             case 5:
-                return 'Card';
+                return 'Payment';
             case 6:
+                return 'Card';
+            case 7:
                 return 'Family Cards';
             default:
                 return '';
@@ -484,8 +489,9 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}
                 {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                 {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
-                {step === 4 && <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} preSelectedMember={createdMember || user} />}
-                {step === 5 && (
+                {step === 4 && <AddForm4 onNext={() => setStep(5)} onBack={() => setStep(3)} memberId={(createdMember || user)?.id} initialData={createdMember || user} />}
+                {step === 5 && <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} preSelectedMember={createdMember || user} allowedFeeTypes={['membership_fee', 'maintenance_fee', 'reinstating_fee']} />}
+                {step === 6 && (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
                         <Box sx={{ mb: 3 }}>
                             <MembershipCardContent member={createdMember || user} id="main-member-card" />
@@ -500,7 +506,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                         </Box>
                     </Box>
                 )}
-                {step === 6 && (
+                {step === 7 && (
                     <Box sx={{ mt: 4 }}>
                         <Typography variant="h6" sx={{ mb: 2, color: '#063455', fontWeight: 600 }}>
                             Family Members Cards

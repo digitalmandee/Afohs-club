@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
-import { Person, Receipt, Search } from '@mui/icons-material';
+import { Person, Search, Save, Print, Receipt, Visibility, Payment } from '@mui/icons-material';
+import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
 
-export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null }) {
+export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null }) {
     // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
@@ -19,6 +20,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [loadingTransactions, setLoadingTransactions] = useState(false);
     const [formErrors, setFormErrors] = useState({});
     const [dateValidation, setDateValidation] = useState({ isValid: true, message: '' });
+    const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+    const [createdInvoiceId, setCreatedInvoiceId] = useState(null);
+    const [createdMemberId, setCreatedMemberId] = useState(null);
+    const [paymentConfirmationOpen, setPaymentConfirmationOpen] = useState(false);
+    const [transactionToPay, setTransactionToPay] = useState(null);
 
     // Pagination and search states
     const [searchInvoice, setSearchInvoice] = useState('');
@@ -71,20 +77,29 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     // Auto-set fee type based on member status
     useEffect(() => {
         if (selectedMember) {
-            if (selectedMember.status === 'cancelled' || selectedMember.status === 'expired') {
+            const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
+
+            if ((selectedMember.status === 'cancelled' || selectedMember.status === 'expired') && isAllowed('reinstating_fee')) {
                 // For cancelled or expired members, automatically set to reinstating fee
                 handleFeeTypeChange('reinstating_fee');
             } else if (!membershipFeePaid) {
-                // If membership fee is not paid, force it
-                handleFeeTypeChange('membership_fee');
+                if (isAllowed('membership_fee')) {
+                    // If membership fee is not paid, force it
+                    handleFeeTypeChange('membership_fee');
+                }
             } else {
                 // For non-cancelled/expired members, clear fee type if it was reinstating fee
+                // validation for allowed types on auto-switch
                 if (data.fee_type === 'reinstating_fee' || data.fee_type === 'membership_fee') {
-                    handleFeeTypeChange('maintenance_fee');
+                    if (isAllowed('maintenance_fee')) {
+                        handleFeeTypeChange('maintenance_fee');
+                    } else if (isAllowed('subscription_fee')) {
+                        handleFeeTypeChange('subscription_fee');
+                    }
                 }
             }
         }
-    }, [selectedMember?.status, membershipFeePaid]); // Trigger when member status or payment status changes
+    }, [selectedMember?.status, membershipFeePaid, allowedFeeTypes]); // Trigger when member status or payment status changes
 
     const analyzeQuarterStatus = (transactions, membershipDate) => {
         if (!membershipDate) {
@@ -407,31 +422,36 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
     };
 
-    const handleMemberSelect = async (member) => {
-        setSelectedMember(member);
-        setData('member_id', member.id);
+    const fetchMemberTransactions = async (memberId) => {
         setLoadingTransactions(true);
-
         try {
-            const response = await axios.get(route('finance.transaction.member', member.id));
+            const response = await axios.get(route('finance.transaction.member', memberId));
+            // Only update member details if we are fetching for the currently selected member
+            // This prevents overwriting if the user switched members quickly (though unlikely here)
             setSelectedMember(response.data.member);
             setMemberTransactions(response.data.transactions);
             setFilteredTransactions(response.data.transactions);
             setMembershipFeePaid(response.data.membership_fee_paid);
-            setCurrentPage(1); // Reset pagination
-            setSearchInvoice(''); // Reset search
 
             // Analyze quarter payment status
-            const quarterAnalysis = analyzeQuarterStatus(response.data.transactions, member.membership_date);
+            const quarterAnalysis = analyzeQuarterStatus(response.data.transactions, response.data.member.membership_date);
             setQuarterStatus(quarterAnalysis);
 
-            enqueueSnackbar(`Selected member: ${member.full_name}`, { variant: 'info' });
+            return response.data;
         } catch (error) {
             console.log(error);
-            enqueueSnackbar('Error loading member data', { variant: 'error' });
+            enqueueSnackbar('Error loading member transactions', { variant: 'error' });
         } finally {
             setLoadingTransactions(false);
         }
+    };
+
+    const handleMemberSelect = async (member) => {
+        setSelectedMember(member);
+        setData('member_id', member.id);
+
+        await fetchMemberTransactions(member.id);
+        enqueueSnackbar(`Selected member: ${member.full_name}`, { variant: 'info' });
     };
 
     // Search function for invoice numbers
@@ -479,16 +499,18 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             };
 
             // Update amount based on fee type and selected member
-            if (selectedMember && selectedMember.member_category) {
+            const memberCategory = selectedMember?.member_category || selectedMember?.memberCategory;
+
+            if (selectedMember && memberCategory) {
                 if (feeType === 'membership_fee') {
-                    newData.amount = parseAmount(selectedMember.member_category.fee);
+                    newData.amount = parseAmount(memberCategory.fee);
                     // Auto-suggest 4 years validity for membership fee
                     const today = new Date();
                     const fourYearsLater = new Date(today.getFullYear() + 4, today.getMonth(), today.getDate());
                     newData.valid_from = today.toISOString().split('T')[0];
                     newData.valid_to = fourYearsLater.toISOString().split('T')[0];
                 } else if (feeType === 'maintenance_fee') {
-                    newData.amount = parseAmount(selectedMember.member_category.subscription_fee);
+                    newData.amount = parseAmount(memberCategory.subscription_fee);
                     // Auto-suggest monthly period based on member joining date
                     // Note: suggestMaintenancePeriod needs to be called separately as it depends on state
                     setTimeout(() => suggestMaintenancePeriod('monthly'), 0);
@@ -897,8 +919,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }, 100);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async (e, targetStatus = 'paid') => {
+        if (e) e.preventDefault();
 
         // Validate date overlap before submitting
         const validation = validateDateOverlap();
@@ -934,13 +956,23 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 }
             });
 
+            // Append status
+            formData.append('status', targetStatus);
+
             const response = await axios.post(route('finance.transaction.store'), formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
+            console.log(response.data);
             if (response.data.success) {
+                // Set invoice details for modal
+                if (response.data.transaction) {
+                    setCreatedInvoiceId(response.data.transaction.id);
+                    setCreatedMemberId(response.data.transaction.member_id);
+                    setShowInvoiceModal(true);
+                }
+
                 // Reset form but keep member if pre-selected
                 setData({
                     member_id: preSelectedMember ? preSelectedMember.id : '',
@@ -962,14 +994,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 });
 
                 if (!preSelectedMember) {
-                    setSelectedMember(null);
-                    setMemberTransactions([]);
-                    setMembershipFeePaid(false);
-                    setQuarterStatus({
-                        paidQuarters: [],
-                        nextAvailableQuarter: 1,
-                        currentYear: new Date().getFullYear(),
-                    });
+                    // Don't clear member immediately so we can show the invoice
+                    // setSelectedMember(null);
+                    // setMemberTransactions([]);
+                    // setMembershipFeePaid(false);
+                    // setQuarterStatus({
+                    //     paidQuarters: [],
+                    //     nextAvailableQuarter: 1,
+                    //     currentYear: new Date().getFullYear(),
+                    // });
                 } else {
                     // Refresh transactions for the pre-selected member
                     handleMemberSelect(preSelectedMember);
@@ -978,17 +1011,26 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 setFormErrors({});
                 setDateValidation({ isValid: true });
 
-                // Show success message
-                enqueueSnackbar('Transaction created successfully!', { variant: 'success' });
+                fetchMemberTransactions(selectedMember.id);
 
-                // Optionally redirect to transaction details
-                // window.location.href = route('membership.transactions.show', response.data.transaction.id);
+                // Show success message
+                enqueueSnackbar(`Transaction created successfully (${targetStatus})!`, { variant: 'success' });
             }
         } catch (error) {
             if (error.response && error.response.status === 422) {
                 // Validation errors
-                setFormErrors(error.response.data.errors || {});
-                enqueueSnackbar('Please check the form for validation errors.', { variant: 'error' });
+                const errors = error.response.data.errors || {};
+                setFormErrors(errors);
+
+                // Show specific error messages in snackbar
+                const errorMessages = Object.values(errors).flat();
+                if (errorMessages.length > 0) {
+                    errorMessages.forEach((msg) => {
+                        enqueueSnackbar(msg, { variant: 'error' });
+                    });
+                } else {
+                    enqueueSnackbar('Please check the form for validation errors.', { variant: 'error' });
+                }
             } else if (error.response && error.response.data.error) {
                 // Business logic errors
                 enqueueSnackbar(error.response.data.error, { variant: 'error' });
@@ -1047,6 +1089,32 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 return 'warning';
             default:
                 return 'default';
+        }
+    };
+
+    // Payment Confirmation Handlers
+    const handlePayClick = (transaction) => {
+        setTransactionToPay(transaction);
+        setPaymentConfirmationOpen(true);
+    };
+
+    const handleConfirmPayment = async () => {
+        if (!transactionToPay) return;
+
+        try {
+            const response = await axios.post(route('finance.transaction.update-status', transactionToPay.id), {
+                status: 'paid',
+            });
+            if (response.data.success) {
+                enqueueSnackbar('Invoice marked as paid successfully!', { variant: 'success' });
+                // Refresh transactions
+                fetchMemberTransactions(selectedMember.id);
+                setPaymentConfirmationOpen(false);
+                setTransactionToPay(null);
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            enqueueSnackbar('Failed to update status', { variant: 'error' });
         }
     };
 
@@ -1181,32 +1249,49 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Typography>
                                                         <FormControl fullWidth>
                                                             <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                                {selectedMember?.status === 'cancelled' || selectedMember.status === 'expired'
-                                                                    ? [
-                                                                          // Only show Reinstating Fee for cancelled or expired members
-                                                                          <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                              Reinstating Fee
-                                                                          </MenuItem>,
-                                                                      ]
-                                                                    : !membershipFeePaid
-                                                                      ? [
-                                                                            // Only show Membership Fee if not paid
-                                                                            <MenuItem key="membership_fee" value="membership_fee">
-                                                                                Membership Fee
-                                                                            </MenuItem>,
-                                                                        ]
-                                                                      : [
-                                                                            // Show all OTHER fee types for active members who have paid membership fee
-                                                                            <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                                Maintenance Fee
-                                                                            </MenuItem>,
-                                                                            <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                                Subscription Fee
-                                                                            </MenuItem>,
-                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                Reinstating Fee
-                                                                            </MenuItem>,
-                                                                        ]}
+                                                                {(() => {
+                                                                    const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
+                                                                    const options = [];
+
+                                                                    if (selectedMember?.status === 'cancelled' || selectedMember.status === 'expired') {
+                                                                        if (isAllowed('reinstating_fee')) {
+                                                                            options.push(
+                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                    Reinstating Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        }
+                                                                    } else if (!membershipFeePaid) {
+                                                                        if (isAllowed('membership_fee')) {
+                                                                            options.push(
+                                                                                <MenuItem key="membership_fee" value="membership_fee">
+                                                                                    Membership Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        }
+                                                                        // Strict: No other options if membership fee is unpaid.
+                                                                    } else {
+                                                                        if (isAllowed('maintenance_fee'))
+                                                                            options.push(
+                                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                                    Maintenance Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        if (isAllowed('subscription_fee'))
+                                                                            options.push(
+                                                                                <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                                    Subscription Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                        if (isAllowed('reinstating_fee'))
+                                                                            options.push(
+                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                    Reinstating Fee
+                                                                                </MenuItem>,
+                                                                            );
+                                                                    }
+                                                                    return options;
+                                                                })()}
                                                             </Select>
                                                             {errors.fee_type && (
                                                                 <Typography variant="caption" color="error" sx={{ mt: 1 }}>
@@ -1243,7 +1328,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         const membershipDate = new Date(selectedMember.membership_date);
                                                                         const membershipYear = membershipDate.getFullYear();
                                                                         const firstYearEnd = new Date(membershipYear, 11, 31);
-                                                                        const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
+                                                                        // Only consider first year if there are remaining months (i.e., joined before December)
+                                                                        const isFirstYear = (!quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd) && membershipDate.getMonth() < 11;
 
                                                                         return (
                                                                             <>
@@ -2067,40 +2153,55 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                     {/* Submit Button */}
                                                     <Grid item xs={12}>
-                                                        <Button
-                                                            type="submit"
-                                                            variant="contained"
-                                                            size="large"
-                                                            fullWidth
-                                                            disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
-                                                            sx={{
-                                                                mt: 3,
-                                                                py: 2,
-                                                                bgcolor: '#0a3d62',
-                                                                borderRadius: 2,
-                                                                fontSize: '16px',
-                                                                fontWeight: 600,
-                                                                textTransform: 'none',
-                                                                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                                                '&:hover': {
-                                                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            {submitting ? (
-                                                                <>
-                                                                    <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
-                                                                    Creating Transaction...
-                                                                </>
-                                                            ) : !dateValidation.isValid ? (
-                                                                <>⚠️ Fix Date Conflict First</>
-                                                            ) : (
-                                                                <>
-                                                                    <Receipt sx={{ mr: 1 }} />
-                                                                    Create Transaction
-                                                                </>
-                                                            )}
-                                                        </Button>
+                                                        <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+                                                            <Button
+                                                                type="button"
+                                                                onClick={(e) => handleSubmit(e, 'unpaid')}
+                                                                variant="outlined"
+                                                                size="large"
+                                                                fullWidth
+                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
+                                                                sx={{
+                                                                    py: 2,
+                                                                    borderColor: '#0a3d62',
+                                                                    color: '#0a3d62',
+                                                                    borderRadius: 2,
+                                                                    fontSize: '16px',
+                                                                    fontWeight: 600,
+                                                                    textTransform: 'none',
+                                                                    '&:hover': {
+                                                                        borderColor: '#082f4b',
+                                                                        bgcolor: 'rgba(10, 61, 98, 0.04)',
+                                                                    },
+                                                                }}
+                                                            >
+                                                                {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
+                                                                Save & Print
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                onClick={(e) => handleSubmit(e, 'paid')}
+                                                                variant="contained"
+                                                                size="large"
+                                                                fullWidth
+                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
+                                                                sx={{
+                                                                    py: 2,
+                                                                    bgcolor: '#0a3d62',
+                                                                    borderRadius: 2,
+                                                                    fontSize: '16px',
+                                                                    fontWeight: 600,
+                                                                    textTransform: 'none',
+                                                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                                                    '&:hover': {
+                                                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                                                    },
+                                                                }}
+                                                            >
+                                                                {submitting ? <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} /> : <Save sx={{ mr: 1 }} />}
+                                                                Save & Receive
+                                                            </Button>
+                                                        </Box>
                                                     </Grid>
                                                 </Grid>
                                             </form>
@@ -2256,7 +2357,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             <TableCell>Details</TableCell>
                                                             <TableCell>Amount</TableCell>
                                                             <TableCell>Payment Method</TableCell>
-                                                            <TableCell>Receipt</TableCell>
+                                                            <TableCell>Invoice</TableCell>
+                                                            <TableCell>Action</TableCell>
                                                             <TableCell>Status</TableCell>
                                                             <TableCell>Payment Date</TableCell>
                                                             <TableCell>Period</TableCell>
@@ -2300,14 +2402,25 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         <Chip label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} size="small" />
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        {transaction.receipt ? (
-                                                                            <Button size="small" variant="outlined" startIcon={<Receipt />} onClick={() => window.open(`${transaction.receipt}`, '_blank')} sx={{ fontSize: '11px', py: 0.5, px: 1 }}>
-                                                                                View
+                                                                        <Button
+                                                                            size="small"
+                                                                            variant="outlined"
+                                                                            startIcon={<Visibility />}
+                                                                            onClick={() => {
+                                                                                setCreatedInvoiceId(transaction.id);
+                                                                                setCreatedMemberId(transaction.invoice_no);
+                                                                                setShowInvoiceModal(true);
+                                                                            }}
+                                                                            sx={{ fontSize: '11px', py: 0.5, px: 1 }}
+                                                                        >
+                                                                            View
+                                                                        </Button>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        {transaction.status === 'unpaid' && (
+                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
+                                                                                Pay Now
                                                                             </Button>
-                                                                        ) : (
-                                                                            <Typography variant="caption" color="text.secondary">
-                                                                                No Receipt
-                                                                            </Typography>
                                                                         )}
                                                                     </TableCell>
                                                                     <TableCell>
@@ -2358,6 +2471,60 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     )}
                 </Grid>
             </Box>
+
+            {/* Invoice Modal */}
+            <MembershipInvoiceSlip
+                open={showInvoiceModal}
+                onClose={() => {
+                    setShowInvoiceModal(false);
+                }}
+                invoiceNo={createdMemberId}
+                invoiceId={createdInvoiceId}
+            />
+
+            {/* Payment Confirmation Dialog */}
+            <Dialog open={paymentConfirmationOpen} onClose={() => setPaymentConfirmationOpen(false)} aria-labelledby="payment-dialog-title" aria-describedby="payment-dialog-description">
+                <DialogTitle id="payment-dialog-title" sx={{ color: '#0a3d62', fontWeight: 600 }}>
+                    Confirm Payment
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="payment-dialog-description">Are you sure you want to mark this invoice as paid?</DialogContentText>
+                    {transactionToPay && (
+                        <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2, border: '1px solid', borderColor: 'grey.200' }}>
+                            <Grid container spacing={1}>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Invoice No:</strong> {transactionToPay.invoice_no}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Fee Type:</strong> {transactionToPay.fee_type?.replace('_', ' ').toUpperCase()}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Amount:</strong> {formatCurrency(transactionToPay.total_price)}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        <strong>Period:</strong> {transactionToPay.valid_from && transactionToPay.valid_to ? `${formatDate(transactionToPay.valid_from)} - ${formatDate(transactionToPay.valid_to)}` : '-'}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setPaymentConfirmationOpen(false)} color="inherit">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmPayment} variant="contained" color="success" autoFocus startIcon={<Payment />}>
+                        Confirm Payment
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 }

@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 
 class Member extends BaseModel
 {
     use SoftDeletes;
 
     protected $fillable = [
-        'application_no',
         'old_family_id',
         'old_member_id',
         'barcode_no',
@@ -120,19 +119,6 @@ class Member extends BaseModel
         return str_pad((string) $next, 3, '0', STR_PAD_LEFT);
     }
 
-    public static function generateNextApplicationNo(): string
-    {
-        $last = self::whereNotNull('application_no')
-            ->whereNull('parent_id')
-            ->pluck('application_no')
-            ->map(fn($no) => (int) $no)
-            ->max() ?? 0;
-
-        $next = $last + 1;
-
-        return $next;
-    }
-
     public function memberType()
     {
         return $this->belongsTo(MemberType::class);
@@ -180,9 +166,15 @@ class Member extends BaseModel
 
     public function membershipInvoice()
     {
-        return $this->hasOne(FinancialInvoice::class, 'member_id', 'id')
+        return $this
+            ->hasOne(FinancialInvoice::class, 'member_id', 'id')
             ->where('fee_type', 'membership_fee')
             ->orderBy('id', 'desc');
+    }
+
+    public function professionInfo()
+    {
+        return $this->hasOne(MemberProfessionInfo::class);
     }
 
     /**
@@ -198,7 +190,8 @@ class Member extends BaseModel
      */
     public function profilePhoto()
     {
-        return $this->morphOne(Media::class, 'mediable')
+        return $this
+            ->morphOne(Media::class, 'mediable')
             ->where('type', 'profile_photo')
             ->latest();
     }
@@ -208,7 +201,8 @@ class Member extends BaseModel
      */
     public function documents()
     {
-        return $this->morphMany(Media::class, 'mediable')
+        return $this
+            ->morphMany(Media::class, 'mediable')
             ->where('type', 'member_docs');
     }
 
@@ -250,10 +244,10 @@ class Member extends BaseModel
             return false;
         }
 
-        return $this->isFamilyMember() && 
-               $this->age >= 25 && 
-               $this->status !== 'expired' &&
-               !$this->hasValidExtension();
+        return $this->isFamilyMember() &&
+            $this->age >= 25 &&
+            $this->status !== 'expired' &&
+            !$this->hasValidExtension();
     }
 
     /**
@@ -264,12 +258,12 @@ class Member extends BaseModel
         if (is_null($this->expiry_extension_date)) {
             return false;
         }
-        
+
         // Convert to Carbon if it's a string
-        $extensionDate = $this->expiry_extension_date instanceof \Carbon\Carbon 
-            ? $this->expiry_extension_date 
+        $extensionDate = $this->expiry_extension_date instanceof \Carbon\Carbon
+            ? $this->expiry_extension_date
             : \Carbon\Carbon::parse($this->expiry_extension_date);
-            
+
         return $extensionDate->isFuture();
     }
 
@@ -293,7 +287,7 @@ class Member extends BaseModel
         $this->update([
             'status' => 'expired',
             'card_status' => 'Expired',
-            'updated_by' => Auth::id() ?? 1, // System user
+            'updated_by' => Auth::id() ?? 1,  // System user
         ]);
 
         // Log the status change
@@ -301,7 +295,7 @@ class Member extends BaseModel
             'status' => 'expired',
             'reason' => $reason,
             'start_date' => now()->toDateString(),
-            'end_date' => null, // No end date for expired status
+            'end_date' => null,  // No end date for expired status
             'created_by' => Auth::id() ?? 1,
         ]);
     }
@@ -313,12 +307,12 @@ class Member extends BaseModel
     {
         // Convert string date to Carbon object if needed
         $carbonDate = is_string($extensionDate) ? Carbon::parse($extensionDate) : $extensionDate;
-        
+
         $this->update([
             'expiry_extension_date' => $carbonDate,
             'expiry_extension_reason' => $reason,
             'expiry_extended_by' => $extendedBy,
-            'status' => 'active', // Reactivate if expired
+            'status' => 'active',  // Reactivate if expired
             'updated_by' => $extendedBy,
         ]);
 
@@ -337,15 +331,17 @@ class Member extends BaseModel
      */
     public function scopeFamilyMembersToExpire($query)
     {
-        return $query->whereNotNull('parent_id')
-                    ->whereNotNull('date_of_birth')
-                    ->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 25')
-                    ->where('status', '!=', 'expired')
-                    ->where('relation', '!=', 'Wife') // Exclude wives from age-based expiry
-                    ->where(function($q) {
-                        $q->whereNull('expiry_extension_date')
-                          ->orWhere('expiry_extension_date', '<', now());
-                    });
+        return $query
+            ->whereNotNull('parent_id')
+            ->whereNotNull('date_of_birth')
+            ->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 25')
+            ->where('status', '!=', 'expired')
+            ->where('relation', '!=', 'Wife')  // Exclude wives from age-based expiry
+            ->where(function ($q) {
+                $q
+                    ->whereNull('expiry_extension_date')
+                    ->orWhere('expiry_extension_date', '<', now());
+            });
     }
 
     /**
@@ -363,17 +359,17 @@ class Member extends BaseModel
     {
         // Use membership_date if available, otherwise fall back to created_at
         $startDate = $this->membership_date ? Carbon::parse($this->membership_date) : $this->created_at;
-        
+
         if (!$startDate) {
             return 'N/A';
         }
 
         try {
             $now = Carbon::now();
-            
+
             // Calculate total months first
             $totalMonths = $startDate->diffInMonths($now);
-            
+
             // Convert to years and remaining months
             $years = intval($totalMonths / 12);
             $months = $totalMonths % 12;
@@ -401,5 +397,10 @@ class Member extends BaseModel
     public function getMembershipStartDateAttribute()
     {
         return $this->membership_date ?: $this->created_at;
+    }
+
+    public function businessDeveloper()
+    {
+        return $this->belongsTo(Employee::class, 'business_developer_id');
     }
 }

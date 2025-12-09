@@ -16,6 +16,7 @@ const AsyncSearchTextField = ({
     debounceTime = 300,
     size = 'medium',
     resultFormat = (item) => `${item.label}`,
+    resultsKey = 'results',
 }) => {
     const [inputValue, setInputValue] = useState(value?.label || '');
     const [suggestions, setSuggestions] = useState([]);
@@ -34,6 +35,12 @@ const AsyncSearchTextField = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        if (value && value.label !== inputValue) {
+            setInputValue(value.label || '');
+        }
+    }, [value]);
+
     const fetchResults = async (query) => {
         if (!query) {
             setSuggestions([]);
@@ -47,7 +54,7 @@ const AsyncSearchTextField = ({
             const res = await axios.get(url);
             console.log(res.data);
 
-            setSuggestions(res.data.results);
+            setSuggestions(res.data[resultsKey] || []);
         } catch (err) {
             console.error('Search failed:', err);
         } finally {
@@ -68,7 +75,8 @@ const AsyncSearchTextField = ({
     };
 
     const handleSelect = (item) => {
-        setInputValue(item.label);
+        const displayValue = resultFormat(item);
+        setInputValue(displayValue);
         onChange({ target: { name, value: item } });
         setOpen(false);
     };

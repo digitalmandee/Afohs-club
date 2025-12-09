@@ -64,6 +64,8 @@ Route::get('/members/{id}', [MembershipController::class, 'viewProfile'])->name(
 Route::middleware(['auth:web', 'verified'])->group(function () {
     // admin dashboard routes
     Route::get('dashboard', [AdminController::class, 'index'])->name('dashboard')->middleware('super.admin:dashboard.view');
+    Route::get('activity-log', [App\Http\Controllers\Admin\ActivityController::class, 'index'])->name('activity-log');
+    Route::post('notifications/{id}/read', [AdminController::class, 'markNotificationRead'])->name('notifications.read');
     Route::get('dashboard/print', [AdminController::class, 'printDashboard'])->name('dashboard.print')->middleware('super.admin:dashboard.view');
 
     // Employeee Management
@@ -347,7 +349,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('store', [MemberTransactionController::class, 'store'])->name('finance.transaction.store')->middleware('permission:financial.create');
         Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('finance.transaction.search')->middleware('permission:financial.create');
         Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('finance.transaction.member')->middleware('permission:financial.create');
+        Route::post('/finance/transaction/update-status/{id}', [MemberTransactionController::class, 'updateStatus'])->name('finance.transaction.update-status');
     });
+
+    // Route for business developers, outside the 'admin/finance' group as per user's snippet structure
+    Route::get('/employees/business-developers', [EmployeeController::class, 'getBusinessDevelopers'])->name('employees.business-developers')->middleware('permission:financial.edit');
 
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
 
@@ -429,6 +435,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::group(['prefix' => 'admin/membership'], function () {
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
+        Route::delete('/{id}', [MembershipController::class, 'destroy'])->name('membership.destroy')->middleware('permission:members.delete');
         Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('permission:members.create');
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('permission:members.edit');
         Route::get('profile/{id}', [MembershipController::class, 'showMemberProfile'])->name('membership.profile')->middleware('permission:members.view');
@@ -437,7 +444,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('member.orderhistory.invoice');
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update')->middleware('permission:members.edit');
         Route::post('store', [MembershipController::class, 'store'])->name('membership.store')->middleware('permission:members.create');
+        Route::post('store-step-4', [MembershipController::class, 'storeStep4'])->name('membership.store-step-4')->middleware('permission:members.create');
         Route::post('update-status', [MembershipController::class, 'updateStatus'])->name('membership.update-status')->middleware('permission:members.edit');
+        Route::post('profession-info', [MembershipController::class, 'saveProfessionInfo'])->name('membership.profession-info')->middleware('permission:members.create');
+        Route::get('profession-info/{id}', [MembershipController::class, 'getProfessionInfo'])->name('membership.profession-info.get')->middleware('permission:members.view');
         // Card Routes
         Route::get('/cards', [CardController::class, 'index'])->name('cards.dashboard');
 

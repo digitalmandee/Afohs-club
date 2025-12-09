@@ -2,25 +2,52 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FinancialInvoice;
-use App\Models\RoomBooking;
-use App\Models\EventBooking;
-use App\Models\Member;
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\EventBooking;
+use App\Models\FinancialInvoice;
+use App\Models\Member;
 use App\Models\Order;
+use App\Models\RoomBooking;
 use App\Models\Subscription;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        // Just render the page, data will be fetched via API
-        return Inertia::render('App/Admin/Dashboard');
+        // Get recent notifications for the authenticated user
+        $notifications = \App\Models\User::find(auth()->id())
+            ->notifications()
+            ->latest()
+            ->take(15)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'text' => $notification->data['description'] ?? '',
+                    'time' => $notification->created_at->diffForHumans(),
+                    'title' => $notification->data['title'] ?? '',
+                    'read_at' => $notification->read_at,
+                    'actor_name' => $notification->data['actor_name'] ?? 'System',
+                ];
+            });
+
+        return Inertia::render('App/Admin/Dashboard', [
+            'recentActivities' => $notifications
+        ]);
+    }
+
+    public function markNotificationRead($id)
+    {
+        $notification = auth()->user()->notifications()->find($id);
+        if ($notification) {
+            $notification->markAsRead();
+        }
+        return back();
     }
 
     public function getDashboardStats(Request $request)
@@ -43,7 +70,7 @@ class AdminController extends Controller
             ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
             ->sum('total_price');
 
-        $totalExpenses = 0; // You can calculate from expenses table if you have one
+        $totalExpenses = 0;  // You can calculate from expenses table if you have one
         $totalProfit = $totalRevenue - $totalExpenses;
 
         // Bookings
@@ -73,7 +100,7 @@ class AdminController extends Controller
                 ->whereBetween('created_at', [$monthStart, $monthEnd])
                 ->sum('total_price');
 
-            $expenses = 0; // Calculate from your expenses table
+            $expenses = 0;  // Calculate from your expenses table
             $profit = $income - $expenses;
 
             $chartData[] = [
@@ -99,6 +126,20 @@ class AdminController extends Controller
                 'totalSubscriptionOrders' => $totalSubscriptionOrders,
             ],
             'chartData' => $chartData,
+            'recentActivities' => $request
+                ->user()
+                ->notifications()
+                ->latest()
+                ->take(10)
+                ->get()
+                ->map(function ($n) {
+                    return [
+                        'id' => $n->id,
+                        'text' => $n->data['description'] ?? '',
+                        'time' => $n->created_at->diffForHumans(),
+                        'title' => $n->data['title'] ?? '',
+                    ];
+                }),
         ]);
     }
 

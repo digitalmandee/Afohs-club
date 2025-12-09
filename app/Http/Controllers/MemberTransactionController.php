@@ -158,6 +158,7 @@ class MemberTransactionController extends Controller
                 'subscription_type_id' => 'required_if:fee_type,subscription_fee|exists:subscription_types,id',
                 'subscription_category_id' => 'required_if:fee_type,subscription_fee|exists:subscription_categories,id',
                 'family_member_id' => 'nullable|exists:members,id',
+                'status' => 'nullable|in:paid,unpaid',
             ]);
 
             if ($validator->fails()) {
@@ -206,6 +207,24 @@ class MemberTransactionController extends Controller
                 }
             }
 
+            // Check for existing maintenance fee invoice for the same period
+            if ($request->fee_type === 'maintenance_fee') {
+                $existingMaintenanceFee = FinancialInvoice::where('member_id', $request->member_id)
+                    ->where('fee_type', 'maintenance_fee')
+                    ->where('valid_from', $request->valid_from)
+                    ->where('valid_to', $request->valid_to)
+                    ->where('status', '!=', 'cancelled')
+                    ->exists();
+
+                if ($existingMaintenanceFee) {
+                    return response()->json([
+                        'errors' => [
+                            'fee_type' => ['Maintenance fee for this period (' . $request->valid_from . ' to ' . $request->valid_to . ') already exists.']
+                        ]
+                    ], 422);
+                }
+            }
+
             $invoiceData = $this->prepareInvoiceData($request, $member);
 
             // Create subscription first if fee_type is subscription_fee
@@ -241,23 +260,24 @@ class MemberTransactionController extends Controller
                     ->where('fee_type', 'membership_fee')
                     ->where('status', 'unpaid')
                     ->first();
-            }
 
-            if ($existingUnpaidInvoice) {
-                // Update the existing invoice
-                $invoiceData['status'] = 'paid';
-                $invoiceData['payment_date'] = now();
-                $invoiceData['issue_date'] = now();
-                $invoiceData['due_date'] = now()->addDays(30);
-                $invoiceData['created_by'] = Auth::id();
+                if ($existingUnpaidInvoice) {
+                    if ($request->status === 'unpaid') {
+                        return response()->json([
+                            'errors' => [
+                                'fee_type' => ['An unpaid membership fee invoice already exists. Please view or pay the existing invoice.']
+                            ]
+                        ], 422);
+                    }
 
-                // Keep the original invoice number
-                $invoiceData['invoice_no'] = $existingUnpaidInvoice->invoice_no;
-
-                $existingUnpaidInvoice->update($invoiceData);
-                $invoice = $existingUnpaidInvoice;
+                    // Update the existing invoice if paying
+                    $invoiceData['invoice_no'] = $existingUnpaidInvoice->invoice_no;
+                    $existingUnpaidInvoice->update($invoiceData);
+                    $invoice = $existingUnpaidInvoice;
+                } else {
+                    $invoice = FinancialInvoice::create($invoiceData);
+                }
             } else {
-                // Create new invoice
                 $invoice = FinancialInvoice::create($invoiceData);
             }
 
@@ -266,13 +286,33 @@ class MemberTransactionController extends Controller
                 $member->update(['status' => 'active']);
             }
 
+            if ($request->status === 'paid') {
+                // Auto-cancel overlapping/duplicate unpaid invoices
+                $this->cancelOverlappingInvoices($invoice);
+            }
+
             DB::commit();
+
+            $transactionType = str_replace('_', ' ', $request->fee_type);
+            try {
+                $member = Member::find($request->member_id);
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "New Transaction: {$transactionType} - {$request->amount}",
+                    "Transaction created for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),  // detailed transaction view might be better if available
+                    auth()->user(),
+                    'Finance'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Transaction created successfully!',
-                'transaction' => $invoice->load('member:id,full_name,membership_no')
-            ], 201);
+                'message' => 'Transaction created successfully.',
+                'transaction' => $invoice,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Transaction creation failed: ' . $e->getMessage());
@@ -379,7 +419,8 @@ class MemberTransactionController extends Controller
             'payment_date' => now(),
             'issue_date' => now(),
             'due_date' => now()->addDays(30),
-            'status' => 'paid',
+            'due_date' => now()->addDays(30),
+            'status' => $request->status ?? 'paid',
             'data' => $data,
             'created_by' => Auth::id(),
         ];
@@ -651,17 +692,89 @@ class MemberTransactionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Successfully created ' . count($createdTransactions) . ' transactions',
-                'transactions' => $createdTransactions
+                'message' => 'Bulk migration completed successfully',
+                'count' => count($createdTransactions)
             ]);
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Bulk transaction creation failed: ' . $e->getMessage());
-
+            DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create transactions: ' . $e->getMessage()
+                'message' => 'Migration failed: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function updateStatus(Request $request, $id)
+    {
+        $transaction = FinancialInvoice::findOrFail($id);
+
+        $request->validate([
+            'status' => 'required|in:paid,unpaid,cancelled',
+        ]);
+
+        $transaction->status = $request->status;
+        if ($request->status === 'paid') {
+            $transaction->payment_date = now();
+            // Auto-cancel overlapping/duplicate unpaid invoices
+            $this->cancelOverlappingInvoices($transaction);
+        }
+        $transaction->save();
+
+        try {
+            $member = \App\Models\Member::find($transaction->member_id);
+            $superAdmins = \App\Models\User::role('super-admin')->get();
+            \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                "Transaction Status Updated: {$request->status}",
+                "Invoice #{$transaction->invoice_no} status changed to {$request->status}",
+                route('member.profile', $member->id),
+                auth()->user(),
+                'Finance'
+            ));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send notification: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Transaction status updated successfully',
+            'transaction' => $transaction
+        ]);
+    }
+
+    /**
+     * Cancel overlapping or duplicate unpaid invoices
+     */
+    private function cancelOverlappingInvoices($transaction)
+    {
+        // Skip if not paid
+        if ($transaction->status !== 'paid') {
+            return;
+        }
+
+        $query = FinancialInvoice::where('member_id', $transaction->member_id)
+            ->where('id', '!=', $transaction->id)
+            ->where('status', 'unpaid')
+            ->where('fee_type', $transaction->fee_type);
+
+        if ($transaction->fee_type === 'membership_fee') {
+            return;  // Do not cancel existing membership fee invoices
+        }
+
+        // For maintenance, subscription, etc., check for date overlaps
+        // Overlap logic: (StartA <= EndB) and (EndA >= StartB)
+        $query->where(function ($q) use ($transaction) {
+            $q
+                ->where('valid_from', '<=', $transaction->valid_to)
+                ->where('valid_to', '>=', $transaction->valid_from);
+        });
+
+        $invoicesToCancel = $query->get();
+
+        foreach ($invoicesToCancel as $invoice) {
+            $invoice->update([
+                'status' => 'cancelled',
+                'remarks' => $invoice->remarks . " [System: Auto-cancelled due to payment of Invoice #{$transaction->invoice_no}]"
+            ]);
         }
     }
 }

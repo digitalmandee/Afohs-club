@@ -12,7 +12,7 @@ export default function TransactionCreate({ subscriptionTypes = [], subscription
                     minHeight: '100vh',
                 }}
             >
-                <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} />
+                <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} allowedFeeTypes={['subscription_fee']} />
             </div>
         </>
     );

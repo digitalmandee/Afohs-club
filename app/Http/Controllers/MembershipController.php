@@ -56,18 +56,17 @@ class MembershipController extends Controller
     public function create()
     {
         $membershipNo = Member::generateNextMembershipNumber();
-        $applicationNo = Member::generateNextApplicationNo();
 
         $memberTypesData = MemberType::select('id', 'name')->get();
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')->where('status', 'active')->get();
 
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'applicationNo', 'memberTypesData', 'membercategories'));
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('membershipNo', 'memberTypesData', 'membercategories'));
     }
 
     public function edit(Request $request)
     {
         $user = Member::where('id', $request->id)
-            ->with(['memberType', 'kinshipMember', 'documents', 'profilePhoto'])
+            ->with(['memberType', 'kinshipMember', 'documents', 'profilePhoto', 'memberCategory'])
             ->first();
 
         $user->profile_photo = $user->profilePhoto
@@ -116,7 +115,6 @@ class MembershipController extends Controller
             return [
                 'id' => $member->id,
                 'membership_no' => $member->membership_no,
-                'application_no' => $member->application_no,
                 'barcode_no' => $member->barcode_no,
                 'family_suffix' => $member->family_suffix,
                 'first_name' => $member->first_name,
@@ -283,11 +281,9 @@ class MembershipController extends Controller
             $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
 
             $membershipNo = Member::generateNextMembershipNumber();
-            $applicationNo = Member::generateNextApplicationNo();
 
             // Create primary member record
             $mainMember = Member::create([
-                'application_no' => $applicationNo,
                 'first_name' => $request->first_name,
                 'barcode_no' => $request->barcode_no ?? null,
                 'middle_name' => $request->middle_name,
@@ -471,6 +467,24 @@ class MembershipController extends Controller
             DB::commit();
 
             $mainMember->load('memberCategory');
+
+            // Dispatch Notification to Super Admins
+            $superAdmins = User::role('super-admin')->get();
+            Log::info('Dispatching notification. Super Admins count: ' . $superAdmins->count());
+
+            try {
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "New Member: {$mainMember->full_name}",
+                    "Membership #{$mainMember->membership_no} added to {$mainMember->memberCategory->name}",
+                    route('member.profile', $mainMember->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+                Log::info('Notification sent successfully.');
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
+            }
+
             return response()->json(['message' => 'Membership created successfully.', 'member' => $mainMember], 200);
         } catch (\Throwable $th) {
             Log::error('Error submitting membership details: ' . $th->getMessage());
@@ -807,6 +821,21 @@ class MembershipController extends Controller
             DB::commit();
 
             $member->load('memberCategory');
+
+            // Dispatch Notification
+            try {
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "Member Updated: {$member->full_name}",
+                    "Profile details updated for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
+            }
+
             return response()->json(['message' => 'Membership updated successfully.', 'member' => $member]);
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -984,5 +1013,144 @@ class MembershipController extends Controller
         $invoiceNo = FinancialInvoice::max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
+    }
+
+    public function saveProfessionInfo(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'member_id' => 'required|exists:members,id',
+                'profession_info' => 'required|array',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $member = Member::findOrFail($request->member_id);
+
+            if ($member->professionInfo) {
+                $member->professionInfo->update($request->profession_info);
+            } else {
+                $member->professionInfo()->create($request->profession_info);
+            }
+
+            // Dispatch Notification for saveProfessionInfo
+            try {
+                // Ensure User and Notification facades are imported or fully qualified
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "Profession Updated: {$member->full_name}",
+                    "Profession details updated for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification for profession update: ' . $e->getMessage());
+            }
+
+            return response()->json(['message' => 'Profession info saved successfully.'], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error saving profession info: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to save profession info: ' . $th->getMessage()], 500);
+        }
+    }
+
+    public function getProfessionInfo($id)
+    {
+        try {
+            $member = Member::with(['professionInfo.businessDeveloper'])->findOrFail($id);
+
+            $data = $member->professionInfo ? $member->professionInfo->toArray() : [];
+
+            if ($member->professionInfo && $member->professionInfo->businessDeveloper) {
+                $data['business_developer'] = $member->professionInfo->businessDeveloper;
+            }
+
+            return response()->json(['profession_info' => $data], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error fetching profession info: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to fetch profession info: ' . $th->getMessage()], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $member = Member::findOrFail($id);
+
+            DB::beginTransaction();
+
+            // Soft delete family members
+            $member->familyMembers()->delete();
+
+            // Soft delete related media (documents, profile photo, etc.)
+            $member->media()->delete();
+
+            // Soft delete the member
+            $member->delete();
+
+            DB::commit();
+
+            return response()->json(['message' => 'Member deleted successfully.'], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            Log::error('Error deleting member: ' . $th->getMessage());
+            return response()->json(['error' => 'Failed to delete member: ' . $th->getMessage()], 500);
+        }
+    }
+
+    public function storeStep4(Request $request)
+    {
+        try {
+            $member = Member::find($request->member_id);
+            if (!$member) {
+                return response()->json(['error' => 'Member not found'], 404);
+            }
+
+            // Prepare data for MemberProfessionInfo
+            $professionData = $request->except([
+                'member_id',
+                'business_developer',
+                'id',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'created_by',
+                'updated_by',
+                'deleted_by',
+                'profession',
+                'office_address',
+                'office_phone',
+                'referral_name'
+            ]);
+
+            // Update or Create MemberProfessionInfo
+            if ($member->professionInfo) {
+                $member->professionInfo->update($professionData);
+            } else {
+                $member->professionInfo()->create($professionData);
+            }
+
+            // Dispatch Notification
+            try {
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "Profession Updated: {$member->full_name}",
+                    "Profession details updated for Membership #{$member->membership_no}",
+                    route('member.profile', $member->id),
+                    auth()->user(),
+                    'Membership'
+                ));
+            } catch (\Exception $e) {
+                Log::error('Failed to send notification: ' . $e->getMessage());
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            Log::error('Error saving step 4: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to save information'], 500);
+        }
     }
 }

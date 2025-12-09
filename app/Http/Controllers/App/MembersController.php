@@ -167,7 +167,7 @@ class MembersController extends Controller
                     ->orWhere('membership_no', 'like', "%{$query}%")
                     ->orWhere('cnic_no', 'like', "%{$query}%");
             })
-            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'status')
+            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'status', 'mobile_number_a')
             ->limit(10)
             ->get();
 

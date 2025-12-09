@@ -134,7 +134,7 @@ const MembershipDashboardFilter = () => {
                         Reset
                     </Button>
                     <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ width: '100%', backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
-                        Sort
+                        Search
                     </Button>
                 </Box>
             </Box>
