@@ -527,7 +527,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                                     {(formsData.family_members || []).map((fm, index) => (
                                         <TableRow key={index}>
                                             <TableCell>
-                                                <Avatar src={fm.profile_photo?.file_path || fm.picture_preview || '/placeholder.svg'} sx={{ width: 40, height: 40 }} />
+                                                <Avatar src={fm.picture || fm.picture_preview || '/placeholder.svg'} sx={{ width: 40, height: 40 }} />
                                             </TableCell>
                                             <TableCell>{fm.full_name}</TableCell>
                                             <TableCell>{fm.membership_no || 'N/A'}</TableCell>

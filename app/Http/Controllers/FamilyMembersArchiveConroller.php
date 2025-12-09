@@ -235,4 +235,26 @@ class FamilyMembersArchiveConroller extends Controller
             'errors' => $errors,
         ]);
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (!$query) {
+            return response()->json(['members' => []]);
+        }
+
+        $members = Member::whereNotNull('parent_id')
+            ->where(function ($q) use ($query) {
+                $q
+                    ->where('full_name', 'like', "%{$query}%")
+                    ->orWhere('membership_no', 'like', "%{$query}%")
+                    ->orWhere('cnic_no', 'like', "%{$query}%");
+            })
+            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'status', 'mobile_number_a')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['members' => $members]);
+    }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import axios from 'axios';
 import { Search, FilterAlt, Visibility, Delete } from '@mui/icons-material';
@@ -39,7 +39,7 @@ const AllMembers = ({ members }) => {
     const [openDocumentModal, setOpenDocumentModal] = useState(false);
 
     // Sync filteredMembers with props.members.data when props change (e.g. pagination)
-    useState(() => {
+    useEffect(() => {
         setFilteredMembers(members.data);
     }, [members.data]);
 
