@@ -105,17 +105,17 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                     <Table>
                                         <TableHead>
                                             <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>ID</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Name</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Email</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Phone Number</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Address</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>CNIC</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Amount Paid</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Start Date</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>End Date</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
-                                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Actions</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>ID</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Email</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Address</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Amount Paid</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Start Date</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>End Date</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>

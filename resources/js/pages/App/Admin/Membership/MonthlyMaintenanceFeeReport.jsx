@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
+import { TextField, Chip, IconButton, Autocomplete, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
 
 
@@ -145,125 +145,125 @@ const MonthlyMaintenanceFeeReport = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-                    {/* Top Bar */}
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <div className="d-flex align-items-center">
-                            <IconButton onClick={() => window.history.back()}>
-                                <ArrowBack sx={{color:'#063455'}} />
-                            </IconButton>
-                            <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Monthly Maintenance Fee Report</Typography>
-                        </div>
-                        <Button
-                            variant="contained"
-                            startIcon={<Print />}
-                            onClick={handlePrint}
-                            sx={{
-                                backgroundColor: '#063455',
-                                color: 'white',
-                                textTransform: 'none',
-                                '&:hover': {
-                                    backgroundColor: '#052d47',
-                                },
-                            }}
-                        >
-                            Print
-                        </Button>
+            <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
+                {/* Top Bar */}
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div className="d-flex align-items-center">
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBack sx={{ color: '#063455' }} />
+                        </IconButton>
+                        <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Monthly Maintenance Fee Report</Typography>
                     </div>
+                    <Button
+                        variant="contained"
+                        startIcon={<Print />}
+                        onClick={handlePrint}
+                        sx={{
+                            backgroundColor: '#063455',
+                            color: 'white',
+                            textTransform: 'none',
+                            '&:hover': {
+                                backgroundColor: '#052d47',
+                            },
+                        }}
+                    >
+                        Print
+                    </Button>
+                </div>
 
-                    {/* Search and Filters */}
-                    <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                        <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
+                {/* Search and Filters */}
+                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
 
-                        {/* Search Fields */}
-                        <Grid container spacing={2} sx={{ mb: 3 }}>
-                            <Grid item xs={12} md={2.4}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Search by Name"
-                                    value={allFilters.member_search}
-                                    onChange={(e) => handleFilterChange('member_search', e.target.value)}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    placeholder="Search by Invoice No"
-                                    value={allFilters.invoice_search}
-                                    onChange={(e) => handleFilterChange('invoice_search', e.target.value)}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    type="date"
-                                    label="From (dd/mm/yyyy)"
-                                    value={allFilters.date_from}
-                                    onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    type="date"
-                                    label="To (dd/mm/yyyy)"
-                                    value={allFilters.date_to}
-                                    onChange={(e) => handleFilterChange('date_to', e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <Button
-                                    fullWidth
-                                    variant="contained"
-                                    onClick={handleSearch}
-                                    sx={{
-                                        backgroundColor: '#059669',
-                                        height: '40px',
-                                        textTransform: 'none',
-                                        '&:hover': {
-                                            backgroundColor: '#047857',
-                                        },
-                                    }}
-                                >
-                                    Search
-                                </Button>
-                            </Grid>
+                    {/* Search Fields */}
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                        <Grid item xs={12} md={2.4}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Search by Name"
+                                value={allFilters.member_search}
+                                onChange={(e) => handleFilterChange('member_search', e.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
                         </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                placeholder="Search by Invoice No"
+                                value={allFilters.invoice_search}
+                                onChange={(e) => handleFilterChange('invoice_search', e.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label="From (dd/mm/yyyy)"
+                                value={allFilters.date_from}
+                                onChange={(e) => handleFilterChange('date_from', e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label="To (dd/mm/yyyy)"
+                                value={allFilters.date_to}
+                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            <Button
+                                fullWidth
+                                variant="contained"
+                                onClick={handleSearch}
+                                sx={{
+                                    backgroundColor: '#059669',
+                                    height: '40px',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        backgroundColor: '#047857',
+                                    },
+                                }}
+                            >
+                                Search
+                            </Button>
+                        </Grid>
+                    </Grid>
 
-                        {/* Filter Fields */}
-                        <Grid container spacing={2}>
-                            <Grid item xs={12} md={2.4}>
-                                <FormControl fullWidth size="small">
+                    {/* Filter Fields */}
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={2.4}>
+                            {/* <FormControl fullWidth size="small">
                                     <InputLabel>Search by City</InputLabel>
                                     <Select
                                         value={allFilters.city}
@@ -276,204 +276,255 @@ const MonthlyMaintenanceFeeReport = () => {
                                             </MenuItem>
                                         ))}
                                     </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Choose Payment Method</InputLabel>
-                                    <Select
-                                        value={allFilters.payment_method}
-                                        onChange={(e) => handleFilterChange('payment_method', e.target.value)}
-                                    >
-                                        <MenuItem value="">All Methods</MenuItem>
-                                        {all_payment_methods && all_payment_methods.map((method) => (
-                                            <MenuItem key={method} value={method}>
-                                                {method}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Choose Categories</InputLabel>
-                                    <Select
-                                        multiple
-                                        value={allFilters.categories}
-                                        onChange={(e) => handleFilterChange('categories', e.target.value)}
-                                        renderValue={(selected) => (
-                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                {selected.map((value) => {
-                                                    const category = all_categories?.find(cat => cat.id === value);
-                                                    return <Chip key={value} label={category?.name || value} size="small" />;
-                                                })}
-                                            </Box>
-                                        )}
-                                    >
-                                        {all_categories && all_categories.map((category) => (
-                                            <MenuItem key={category.id} value={category.id}>
-                                                {category.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Choose Gender</InputLabel>
-                                    <Select
-                                        value={allFilters.gender}
-                                        onChange={(e) => handleFilterChange('gender', e.target.value)}
-                                    >
-                                        <MenuItem value="">All Genders</MenuItem>
-                                        {all_genders && all_genders.map((gender) => (
-                                            <MenuItem key={gender} value={gender}>
-                                                {gender}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={2.4}>
-                                <Button
-                                    fullWidth
-                                    variant="outlined"
-                                    onClick={handleReset}
-                                    sx={{
-                                        borderColor: '#dc2626',
-                                        color: '#dc2626',
-                                        height: '40px',
-                                        textTransform: 'none',
-                                        '&:hover': {
-                                            backgroundColor: '#fef2f2',
-                                            borderColor: '#dc2626',
-                                        },
-                                    }}
-                                >
-                                    Reset
-                                </Button>
-                            </Grid>
+                                </FormControl> */}
+                            <Autocomplete
+                                fullWidth
+                                size="small"
+                                options={all_cities || []}
+                                value={allFilters.city}
+                                onChange={(e, value) => handleFilterChange('city', value)}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Search by City" placeholder="Enter city name" />
+                                )}
+                                freeSolo
+                            />
                         </Grid>
-                    </Box>
+                        <Grid item xs={12} md={2.4}>
+                            {/* <FormControl fullWidth size="small">
+                                <InputLabel>Choose Payment Method</InputLabel>
+                                <Select
+                                    value={allFilters.payment_method}
+                                    onChange={(e) => handleFilterChange('payment_method', e.target.value)}
+                                >
+                                    <MenuItem value="">All Methods</MenuItem>
+                                    {all_payment_methods && all_payment_methods.map((method) => (
+                                        <MenuItem key={method} value={method}>
+                                            {method}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl> */}
+                            <Autocomplete
+                                fullWidth
+                                size="small"
+                                options={all_payment_methods || []}
+                                value={allFilters.payment_method || ''}
+                                onChange={(e, value) => handleFilterChange('payment_method', value)}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Choose Payment Method" placeholder="Select or type method" />
+                                )}
+                                freeSolo
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            {/* <FormControl fullWidth size="small">
+                                <InputLabel>Choose Categories</InputLabel>
+                                <Select
+                                    multiple
+                                    value={allFilters.categories}
+                                    onChange={(e) => handleFilterChange('categories', e.target.value)}
+                                    renderValue={(selected) => (
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {selected.map((value) => {
+                                                const category = all_categories?.find(cat => cat.id === value);
+                                                return <Chip key={value} label={category?.name || value} size="small" />;
+                                            })}
+                                        </Box>
+                                    )}
+                                >
+                                    {all_categories && all_categories.map((category) => (
+                                        <MenuItem key={category.id} value={category.id}>
+                                            {category.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl> */}
+                            <Autocomplete
+                                fullWidth
+                                size="small"
+                                multiple
+                                options={all_categories || []}
+                                value={all_categories?.filter(cat => allFilters.categories?.includes(cat.id)) || []}
+                                onChange={(e, value) => handleFilterChange('categories', value.map(cat => cat.id))}
+                                getOptionLabel={(option) => option.name || ''}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) => (
+                                        <Chip key={option.id} label={option.name} size="small" {...getTagProps({ index })} />
+                                    ))
+                                }
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Choose Categories" placeholder="Select or type category" />
+                                )}
+                                freeSolo
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            {/* <FormControl fullWidth size="small">
+                                <InputLabel>Choose Gender</InputLabel>
+                                <Select
+                                    value={allFilters.gender}
+                                    onChange={(e) => handleFilterChange('gender', e.target.value)}
+                                >
+                                    <MenuItem value="">All Genders</MenuItem>
+                                    {all_genders && all_genders.map((gender) => (
+                                        <MenuItem key={gender} value={gender}>
+                                            {gender}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl> */}
+                            <Autocomplete
+                                fullWidth
+                                size="small"
+                                options={all_genders || []}
+                                value={allFilters.gender || ''}
+                                onChange={(e, value) => handleFilterChange('gender', value)}
+                                renderInput={(params) => (
+                                    <TextField {...params} label="Choose Gender" placeholder="Select or type gender" />
+                                )}
+                                freeSolo
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                onClick={handleReset}
+                                sx={{
+                                    borderColor: '#dc2626',
+                                    color: '#dc2626',
+                                    height: '40px',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        backgroundColor: '#fef2f2',
+                                        borderColor: '#dc2626',
+                                    },
+                                }}
+                            >
+                                Reset
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Box>
 
-                    {/* Monthly Maintenance Fee Table */}
-                    <Box sx={{ mb: 3 }}>
-                        <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>Monthly Maintenance Fee List</Typography>
-                        <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455' }}>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Invoice #</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Address (City)</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Member Name</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Amount Received</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Payment Method</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Category</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Dated</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Duration</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Membership #</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>User</TableCell>
+                {/* Monthly Maintenance Fee Table */}
+                <Box sx={{ mb: 3 }}>
+                    <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>Monthly Maintenance Fee List</Typography>
+                    <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Invoice #</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Address (City)</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Member Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Amount Received</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Payment Method</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Category</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Dated</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Duration</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Membership #</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>User</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {transactions?.data && transactions.data.length > 0 ? (
+                                    transactions.data.map((transaction, index) => (
+                                        <TableRow
+                                            key={transaction.id}
+                                            sx={{
+                                                '&:nth-of-type(odd)': { backgroundColor: '#f9fafb' },
+                                                '&:hover': { backgroundColor: '#f3f4f6' },
+                                                borderBottom: '1px solid #e5e7eb',
+                                            }}
+                                        >
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice_no}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.current_city || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.member?.full_name}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total_price).replace('PKR', 'Rs.')}</TableCell>
+                                            <TableCell>
+                                                <Chip
+                                                    label={transaction.payment_method}
+                                                    size="small"
+                                                    sx={{
+                                                        backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,
+                                                        color: getPaymentMethodColor(transaction.payment_method),
+                                                        fontWeight: 600
+                                                    }}
+                                                />
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.member?.member_category?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
+                                                {transaction.quarter_start_date && transaction.quarter_end_date
+                                                    ? `${formatDate(transaction.quarter_start_date)} - ${formatDate(transaction.quarter_end_date)}`
+                                                    : 'N/A'
+                                                }
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.membership_no}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>System</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                                            <Typography color="textSecondary">
+                                                No maintenance fee records found
+                                            </Typography>
+                                        </TableCell>
                                     </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {transactions?.data && transactions.data.length > 0 ? (
-                                        transactions.data.map((transaction, index) => (
-                                            <TableRow
-                                                key={transaction.id}
-                                                sx={{
-                                                    '&:nth-of-type(odd)': { backgroundColor: '#f9fafb' },
-                                                    '&:hover': { backgroundColor: '#f3f4f6' },
-                                                    borderBottom: '1px solid #e5e7eb',
-                                                }}
-                                            >
-                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice_no}</TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.current_city || 'N/A'}</TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.member?.full_name}</TableCell>
-                                                <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total_price).replace('PKR', 'Rs.')}</TableCell>
-                                                <TableCell>
-                                                    <Chip
-                                                        label={transaction.payment_method}
-                                                        size="small"
-                                                        sx={{
-                                                            backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,
-                                                            color: getPaymentMethodColor(transaction.payment_method),
-                                                            fontWeight: 600
-                                                        }}
-                                                    />
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.member?.member_category?.name || 'N/A'}</TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                    {transaction.quarter_start_date && transaction.quarter_end_date
-                                                        ? `${formatDate(transaction.quarter_start_date)} - ${formatDate(transaction.quarter_end_date)}`
-                                                        : 'N/A'
-                                                    }
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.membership_no}</TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>System</TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                                                <Typography color="textSecondary">
-                                                    No maintenance fee records found
-                                                </Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
+                                )}
 
-                                    {/* Footer Row */}
-                                    {transactions?.data && transactions.data.length > 0 && (
-                                        <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={3}>
-                                                TOTAL ({statistics?.total_transactions || 0} Transactions)
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                                {formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
-                                                Avg: {formatCurrency(statistics?.average_amount || 0).replace('PKR', 'Rs.')}
-                                            </TableCell>
-                                            <TableCell colSpan={5} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
-                                                Monthly Maintenance Fee Collection Report
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                {/* Footer Row */}
+                                {transactions?.data && transactions.data.length > 0 && (
+                                    <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={3}>
+                                            TOTAL ({statistics?.total_transactions || 0} Transactions)
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
+                                            {formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
+                                            Avg: {formatCurrency(statistics?.average_amount || 0).replace('PKR', 'Rs.')}
+                                        </TableCell>
+                                        <TableCell colSpan={5} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
+                                            Monthly Maintenance Fee Collection Report
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-                        {/* Pagination */}
-                        {transactions?.data && transactions.data.length > 0 && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                                <Pagination
-                                    count={transactions.last_page}
-                                    page={transactions.current_page}
-                                    onChange={handlePageChange}
-                                    color="primary"
-                                    size="large"
-                                    showFirstButton
-                                    showLastButton
-                                    sx={{
-                                        '& .MuiPaginationItem-root': {
-                                            fontSize: '16px',
-                                        },
-                                    }}
-                                />
-                            </Box>
-                        )}
+                    {/* Pagination */}
+                    {transactions?.data && transactions.data.length > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                            <Pagination
+                                count={transactions.last_page}
+                                page={transactions.current_page}
+                                onChange={handlePageChange}
+                                color="primary"
+                                size="large"
+                                showFirstButton
+                                showLastButton
+                                sx={{
+                                    '& .MuiPaginationItem-root': {
+                                        fontSize: '16px',
+                                    },
+                                }}
+                            />
+                        </Box>
+                    )}
 
-                        {/* Pagination Info */}
-                        {transactions?.data && transactions.data.length > 0 && (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                                <Typography variant="body2" color="textSecondary">
-                                    Showing {transactions.from} to {transactions.to} of {transactions.total} results
-                                </Typography>
-                            </Box>
-                        )}
-                    </Box>
-                </div>
+                    {/* Pagination Info */}
+                    {transactions?.data && transactions.data.length > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                            <Typography variant="body2" color="textSecondary">
+                                Showing {transactions.from} to {transactions.to} of {transactions.total} results
+                            </Typography>
+                        </Box>
+                    )}
+                </Box>
+            </div>
             {/* </div> */}
         </>
     );
