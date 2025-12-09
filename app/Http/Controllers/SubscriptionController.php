@@ -20,36 +20,77 @@ class SubscriptionController extends Controller
 {
     public function index()
     {
-        // Get subscription fee statistics from the new transaction system
-        $totalActiveSubscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')
-            ->where('status', 'paid')
-            ->where(function($query) {
-                $query->whereNull('valid_to')
-                      ->orWhere('valid_to', '>=', now());
-            })
+        // 1. Total Active Subscriptions
+        $totalActiveSubscriptions = Subscription::where(function ($query) {
+            $query
+                ->whereNull('valid_to')
+                ->orWhere('valid_to', '>=', now());
+        })
             ->count();
 
-        // New subscriptions today
-        $newSubscriptionsToday = FinancialInvoice::where('fee_type', 'subscription_fee')
-            ->where('status', 'paid')
-            ->whereDate('created_at', today())
-            ->count();
+        // 2. New Subscriptions Today
+        $newSubscriptionsToday = Subscription::whereDate('created_at', today())->count();
 
-        // Total subscription revenue
+        // 3. Total Revenue (From Invoices)
         $totalRevenue = FinancialInvoice::where('fee_type', 'subscription_fee')
             ->where('status', 'paid')
             ->sum('total_price');
 
-        // Recent subscription transactions (latest 10)
-        $recentSubscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')
-            ->with([
-                'member:id,full_name,membership_no',
-                'subscriptionType:id,name',
-                'subscriptionCategory:id,name,fee'
-            ])
+        // 4. Recent Subscriptions
+        $recentSubscriptions = Subscription::with([
+            'member:id,full_name,membership_no',
+            'subscriptionType:id,name',
+            'subscriptionCategory:id,name,fee',
+            'financialInvoice',
+            'legacyInvoice'
+        ])
             ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->limit(10)
-            ->get();
+            ->get()
+            ->map(function ($sub) {
+                $invoice = $sub->invoice;  // Accessor
+
+                $amount = 0;
+                $invoiceNo = 'N/A';
+                $status = 'pending';
+                $paymentDate = null;
+                $invoiceId = null;
+
+                if ($invoice) {
+                    $invoiceNo = $invoice->invoice_no;
+                    $status = $invoice->status;
+                    $paymentDate = $invoice->payment_date;
+                    $invoiceId = $invoice->id;
+                    $amount = $invoice->total_price;  // Default
+
+                    if (!empty($invoice->data['items']) && is_array($invoice->data['items'])) {
+                        foreach ($invoice->data['items'] as $item) {
+                            if (
+                                ($item['subscription_type_id'] ?? null) == $sub->subscription_type_id &&
+                                ($item['subscription_category_id'] ?? null) == $sub->subscription_category_id
+                            ) {
+                                $amount = $item['amount'] ?? $amount;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return [
+                    'id' => $sub->id,
+                    'invoice_id' => $invoiceId,
+                    'invoice_no' => $invoiceNo,
+                    'member' => $sub->member,
+                    'subscription_type' => $sub->subscriptionType,
+                    'subscription_category' => $sub->subscriptionCategory,
+                    'total_price' => $amount,
+                    'valid_from' => $sub->valid_from,
+                    'valid_to' => $sub->valid_to,
+                    'status' => $status,
+                    'payment_date' => $paymentDate,
+                ];
+            });
 
         return Inertia::render('App/Admin/Subscription/Dashboard', [
             'statistics' => [
@@ -64,19 +105,16 @@ class SubscriptionController extends Controller
     public function management(Request $request)
     {
         // Get subscription fee statistics for management page
-        $totalSubscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')->count();
-        
-        $activeSubscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')
-            ->where('status', 'paid')
-            ->where(function($query) {
-                $query->whereNull('valid_to')
-                      ->orWhere('valid_to', '>=', now());
-            })
+        $totalSubscriptions = Subscription::count();
+
+        $activeSubscriptions = Subscription::where(function ($query) {
+            $query
+                ->whereNull('valid_to')
+                ->orWhere('valid_to', '>=', now());
+        })
             ->count();
 
-        $expiredSubscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')
-            ->where('status', 'paid')
-            ->where('valid_to', '<', now())
+        $expiredSubscriptions = Subscription::where('valid_to', '<', now())
             ->whereNotNull('valid_to')
             ->count();
 
@@ -85,25 +123,72 @@ class SubscriptionController extends Controller
             ->sum('total_price');
 
         // Get paginated subscription transactions with search
-        $query = FinancialInvoice::where('fee_type', 'subscription_fee')
-            ->with([
-                'member:id,full_name,membership_no',
-                'subscriptionType:id,name',
-                'subscriptionCategory:id,name,fee'
-            ]);
+        $query = Subscription::with([
+            'member:id,full_name,membership_no',
+            'subscriptionType:id,name',
+            'subscriptionCategory:id,name,fee',
+            'financialInvoice',
+            'legacyInvoice'
+        ]);
 
         // Add search functionality
         if ($request->has('search') && $request->search) {
             $searchTerm = $request->search;
-            $query->whereHas('member', function($q) use ($searchTerm) {
-                $q->where('full_name', 'like', "%{$searchTerm}%")
-                  ->orWhere('membership_no', 'like', "%{$searchTerm}%");
+            $query->whereHas('member', function ($q) use ($searchTerm) {
+                $q
+                    ->where('full_name', 'like', "%{$searchTerm}%")
+                    ->orWhere('membership_no', 'like', "%{$searchTerm}%");
             });
         }
 
-        $subscriptions = $query->orderBy('created_at', 'desc')
+        $subscriptions = $query
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->paginate(15)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(function ($sub) {
+                $invoice = $sub->invoice;  // Accessor
+
+                $amount = 0;
+                $invoiceNo = 'N/A';
+                $status = 'pending';
+                $paymentDate = null;
+                $invoiceId = null;
+
+                if ($invoice) {
+                    $invoiceNo = $invoice->invoice_no;
+                    $status = $invoice->status;
+                    $paymentDate = $invoice->payment_date;
+                    $invoiceId = $invoice->id;
+                    $amount = $invoice->total_price;  // Default
+
+                    if (!empty($invoice->data['items']) && is_array($invoice->data['items'])) {
+                        foreach ($invoice->data['items'] as $item) {
+                            if (
+                                ($item['subscription_type_id'] ?? null) == $sub->subscription_type_id &&
+                                ($item['subscription_category_id'] ?? null) == $sub->subscription_category_id
+                            ) {
+                                $amount = $item['amount'] ?? $amount;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                return [
+                    'id' => $sub->id,
+                    'invoice_id' => $invoiceId,
+                    'invoice_no' => $invoiceNo,
+                    'member' => $sub->member,
+                    'subscription_type' => $sub->subscriptionType,
+                    'subscription_category' => $sub->subscriptionCategory,
+                    'total_price' => $amount,
+                    'valid_from' => $sub->valid_from,
+                    'valid_to' => $sub->valid_to,
+                    'status' => $status,
+                    'payment_date' => $paymentDate,
+                ];
+            });
 
         return Inertia::render('App/Admin/Subscription/Management', [
             'statistics' => [
@@ -404,7 +489,7 @@ class SubscriptionController extends Controller
             'member:id,full_name,membership_no,personal_email,mobile_number_a,profile_photo',
             'subscriptionCategory:id,name,fee,description',
             'subscriptionType:id,name',
-            'invoice' => function($query) {
+            'invoice' => function ($query) {
                 $query->select('id', 'invoiceable_id', 'invoiceable_type', 'invoice_no', 'total_price', 'status', 'payment_method', 'payment_date', 'created_at');
             }
         ])->findOrFail($id);

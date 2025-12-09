@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
+use App\Models\MaintenanceFee;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\Subscription;
@@ -137,11 +138,15 @@ class MemberTransactionController extends Controller
     public function store(Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
+            // Logic to handle multiple subscriptions
+            $isMultiSubscription = $request->fee_type === 'subscription_fee' && $request->has('subscriptions');
+
+            // Conditional Validation
+            $rules = [
                 'member_id' => 'required|exists:members,id',
                 'fee_type' => 'required|in:membership_fee,maintenance_fee,subscription_fee,reinstating_fee',
                 'payment_frequency' => 'required_if:fee_type,maintenance_fee|in:monthly,quarterly,half_yearly,three_quarters,annually',
-                'amount' => 'required|numeric|min:0',
+                'amount' => 'required|numeric|min:0',  // This is total amount
                 'discount_type' => 'nullable|in:percent,fixed,percentage',
                 'discount_value' => 'nullable|numeric|min:0',
                 'tax_percentage' => 'nullable|numeric|min:0|max:100',
@@ -149,159 +154,227 @@ class MemberTransactionController extends Controller
                 'additional_charges' => 'nullable|numeric|min:0',
                 'remarks' => 'nullable|string|max:1000',
                 'payment_method' => 'required|in:cash,credit_card',
-                'valid_from' => 'required_if:fee_type,maintenance_fee,subscription_fee|date',
-                'valid_to' => 'nullable|date|after_or_equal:valid_from',
+                // valid_from/to required if NOT multi-subscription (checked below)
                 'starting_quarter' => 'nullable|integer|min:1|max:4',
                 'credit_card_type' => 'required_if:payment_method,credit_card|in:mastercard,visa',
                 'receipt_file' => 'required_if:payment_method,credit_card|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
-                // Subscription fee specific validation
-                'subscription_type_id' => 'required_if:fee_type,subscription_fee|exists:subscription_types,id',
-                'subscription_category_id' => 'required_if:fee_type,subscription_fee|exists:subscription_categories,id',
-                'family_member_id' => 'nullable|exists:members,id',
                 'status' => 'nullable|in:paid,unpaid',
-            ]);
+            ];
+
+            if (!$isMultiSubscription) {
+                // Standard validation for single item
+                $rules['valid_from'] = 'required_if:fee_type,maintenance_fee,subscription_fee|date';
+                $rules['valid_to'] = 'nullable|date|after_or_equal:valid_from';
+                $rules['subscription_type_id'] = 'required_if:fee_type,subscription_fee|exists:subscription_types,id';
+                $rules['subscription_category_id'] = 'required_if:fee_type,subscription_fee|exists:subscription_categories,id';
+                $rules['family_member_id'] = 'nullable|exists:members,id';
+            } else {
+                // Validate array structure if needed, or rely on logic loop
+                // We trust the structure from frontend but good to check basic presence
+                // We will validate items in loop or assume valid.
+            }
+
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
                 Log::warning('Validation failed', $validator->errors()->toArray());
                 return response()->json(['errors' => $validator->errors()], 422);
             }
+
             DB::beginTransaction();
 
             $member = Member::where('id', $request->member_id)->first();
 
-            // Check if membership fee already paid for membership fee type
-            if ($request->fee_type === 'membership_fee') {
-                $existingMembershipFee = FinancialInvoice::where('member_id', $request->member_id)
-                    ->where('fee_type', 'membership_fee')
-                    ->where('status', 'paid')
-                    ->exists();
-
-                if ($existingMembershipFee) {
-                    return response()->json([
-                        'errors' => [
-                            'fee_type' => ['Membership fee already paid for this member. Each member can only pay membership fee once.']
-                        ]
-                    ], 422);
-                }
+            // Handling Receipts: Upload once if present
+            $receiptPath = null;
+            if ($request->hasFile('receipt_file')) {
+                $receiptPath = FileHelper::saveImage($request->file('receipt_file'), 'receipts');
+                // Remove file from request to check duplication in prepareInvoiceData if called,
+                // but we will manually set receipt_path in data.
             }
 
-            // Validate that cancelled or expired members can ONLY pay reinstating fee
-            if (in_array($member->status, ['cancelled', 'expired']) && $request->fee_type !== 'reinstating_fee') {
-                return response()->json([
-                    'errors' => [
-                        'fee_type' => ['Member status is ' . $member->status . '. You must pay the Reinstating Fee to reactivate this member before paying other fees.']
-                    ]
-                ], 422);
-            }
+            $invoicesCreated = [];
+            $sharedInvoiceNo = $this->generateInvoiceNumber();  // Shared Number (Integer)
 
-            // Handle reinstating fee - update member status to active
-            if ($request->fee_type === 'reinstating_fee') {
-                // Check if member status allows reinstatement
-                $allowedStatuses = ['cancelled', 'expired', 'suspended', 'terminated'];
-                if (!in_array($member->status, $allowedStatuses)) {
-                    return response()->json([
-                        'errors' => [
-                            'fee_type' => ['Member status does not require reinstatement. Current status: ' . $member->status . '. Only cancelled, expired, suspended, or terminated members can be reinstated.']
-                        ]
-                    ], 422);
-                }
-            }
+            // Prepare items to process
+            $itemsToProcess = [];
 
-            // Check for existing maintenance fee invoice for the same period
-            if ($request->fee_type === 'maintenance_fee') {
-                $existingMaintenanceFee = FinancialInvoice::where('member_id', $request->member_id)
-                    ->where('fee_type', 'maintenance_fee')
-                    ->where('valid_from', $request->valid_from)
-                    ->where('valid_to', $request->valid_to)
-                    ->where('status', '!=', 'cancelled')
-                    ->exists();
-
-                if ($existingMaintenanceFee) {
-                    return response()->json([
-                        'errors' => [
-                            'fee_type' => ['Maintenance fee for this period (' . $request->valid_from . ' to ' . $request->valid_to . ') already exists.']
-                        ]
-                    ], 422);
-                }
-            }
-
-            $invoiceData = $this->prepareInvoiceData($request, $member);
-
-            // Create subscription first if fee_type is subscription_fee
-            $subscription = null;
-            if ($request->fee_type === 'subscription_fee') {
-                $subscription = Subscription::create([
-                    'member_id' => $request->member_id,
-                    'family_member_id' => $request->family_member_id,  // null = SELF (primary member)
-                    'subscription_category_id' => $request->subscription_category_id,
-                    'subscription_type_id' => $request->subscription_type_id,
-                    'valid_from' => $request->valid_from,
-                    'valid_to' => $request->valid_to,
-                    'status' => 'active',
-                    'qr_code' => null,  // Will be generated after creation
-                ]);
-
-                // Generate QR code for subscription
-                $qrCodeData = route('subscription.details', ['id' => $subscription->id]);
-                $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
-                $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'subscription_qr_codes');
-                $subscription->qr_code = $qrImagePath;
-                $subscription->save();
-
-                // Set polymorphic relationship
-                $invoiceData['invoiceable_id'] = $subscription->id;
-                $invoiceData['invoiceable_type'] = Subscription::class;
-            }
-
-            // Check for existing unpaid membership fee invoice
-            $existingUnpaidInvoice = null;
-            if ($request->fee_type === 'membership_fee') {
-                $existingUnpaidInvoice = FinancialInvoice::where('member_id', $request->member_id)
-                    ->where('fee_type', 'membership_fee')
-                    ->where('status', 'unpaid')
-                    ->first();
-
-                if ($existingUnpaidInvoice) {
-                    if ($request->status === 'unpaid') {
-                        return response()->json([
-                            'errors' => [
-                                'fee_type' => ['An unpaid membership fee invoice already exists. Please view or pay the existing invoice.']
-                            ]
-                        ], 422);
-                    }
-
-                    // Update the existing invoice if paying
-                    $invoiceData['invoice_no'] = $existingUnpaidInvoice->invoice_no;
-                    $existingUnpaidInvoice->update($invoiceData);
-                    $invoice = $existingUnpaidInvoice;
-                } else {
-                    $invoice = FinancialInvoice::create($invoiceData);
+            if ($isMultiSubscription) {
+                $subs = json_decode($request->subscriptions, true);
+                foreach ($subs as $sub) {
+                    $itemsToProcess[] = [
+                        'type' => 'subscription_fee',
+                        'data' => $sub,  // contains amount, type, cat, family, valid dates
+                        'amount' => $sub['net_amount'] ?? $sub['amount'],  // Use Net Amount for total calculation
+                    ];
                 }
             } else {
-                $invoice = FinancialInvoice::create($invoiceData);
+                // Single Item
+                $itemsToProcess[] = [
+                    'type' => $request->fee_type,
+                    'data' => $request->all(),  // Contains everything
+                    'amount' => $request->amount,
+                ];
             }
 
-            // Update member status to active if reinstating fee is paid
-            if ($request->fee_type === 'reinstating_fee') {
-                $member->update(['status' => 'active']);
+            // 1. Calculate Totals and Prepare Data for Single Invoice
+            $totalAmount = 0;
+            $allItemsData = [];
+
+            foreach ($itemsToProcess as $item) {
+                $totalAmount += $item['amount'];
+
+                $itemPayload = $item['data'];
+                // Save Base Amount as Original Amount (Frontend sends 'amount' as Base, 'net_amount' as Net)
+                $itemPayload['original_amount'] = $itemPayload['amount'];
+
+                $itemPayload['amount'] = $item['amount'];  // Overwrite with Net Amount (from itemsToProcess)
+                $itemPayload['invoice_type'] = $item['type'] === 'subscription_fee' ? 'subscription' : str_replace('_', ' ', $item['type']);
+                $itemPayload['description'] = ucfirst($itemPayload['invoice_type']);
+
+                // Preserve pricing details if available in data
+                // (Assumes frontend sends item_discount_type, item_discount_value in the item object)
+
+                // Lookup Names for Subscription (Prioritize DB, fallback to Frontend provided names)
+                if ($item['type'] === 'subscription_fee') {
+                    // Initialize with frontend names or N/A
+                    $itemPayload['subscription_type_name'] = $itemPayload['type_name'] ?? 'N/A';
+                    $itemPayload['subscription_category_name'] = $itemPayload['category_name'] ?? 'N/A';
+
+                    if (!empty($itemPayload['subscription_type_id'])) {
+                        $st = \App\Models\SubscriptionType::find($itemPayload['subscription_type_id']);
+                        if ($st) {
+                            $itemPayload['subscription_type_name'] = $st->name;
+                        }
+                    }
+                    if (!empty($itemPayload['subscription_category_id'])) {
+                        $sc = \App\Models\SubscriptionCategory::find($itemPayload['subscription_category_id']);
+                        if ($sc) {
+                            $itemPayload['subscription_category_name'] = $sc->name;
+                        }
+                    }
+                }
+
+                $allItemsData[] = $itemPayload;
             }
 
-            if ($request->status === 'paid') {
-                // Auto-cancel overlapping/duplicate unpaid invoices
-                $this->cancelOverlappingInvoices($invoice);
+            // 2. Prepare Main Invoice Data
+            $mainRequest = $request->duplicate();
+            $mainRequest->merge([
+                'amount' => $totalAmount,
+                // discount/tax are global in $request, prepareInvoiceData will apply them to this Total Amount
+            ]);
+
+            $invoiceData = $this->prepareInvoiceData($mainRequest, $member);
+
+            // Ensure unique Invoice Number (Integer)
+            $invoiceData['invoice_no'] = $this->generateInvoiceNumber();
+
+            // Embed items into 'data' JSON
+            $existingJsonData = $invoiceData['data'] ?? [];
+            $existingJsonData['items'] = $allItemsData;
+
+            // If multiple subscriptions, clear specific foreign keys on Invoice level to avoid ambiguity
+            if ($isMultiSubscription) {
+                $invoiceData['subscription_type_id'] = null;
+                $invoiceData['subscription_category_id'] = null;
+            }
+
+            $invoiceData['data'] = $existingJsonData;
+
+            // Set Receipt Path if available
+            if ($receiptPath) {
+                $invoiceData['receipt_path'] = $receiptPath;
+            }
+
+            // 3. Create the ONE Financial Invoice
+            $invoice = FinancialInvoice::create($invoiceData);
+            $invoicesCreated[] = $invoice;
+
+            // 4. Process Items (Create Subscriptions / MaintenanceFees linked to Invoice)
+            foreach ($itemsToProcess as $item) {
+                if ($item['type'] === 'subscription_fee') {
+                    $subData = $item['data'];
+
+                    $subscription = Subscription::create([
+                        'member_id' => $request->member_id,
+                        'family_member_id' => $subData['family_member_id'] ?? null,
+                        'subscription_category_id' => $subData['subscription_category_id'],
+                        'subscription_type_id' => $subData['subscription_type_id'],
+                        'valid_from' => $subData['valid_from'],
+                        'valid_to' => $subData['valid_to'],
+                        'status' => 'active',
+                        'invoice_id' => $invoice->id,
+                        'qr_code' => null,
+                    ]);
+
+                    // Generate QR
+                    $qrCodeData = route('subscription.details', ['id' => $subscription->id]);
+                    $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
+                    $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'subscription_qr_codes');
+                    $subscription->qr_code = $qrImagePath;
+                    $subscription->save();
+
+                    // If not multi-subscription, we can set invoiceable for backward compatibility
+                    if (!$isMultiSubscription) {
+                        $invoice->invoiceable_id = $subscription->id;
+                        $invoice->invoiceable_type = Subscription::class;
+                        $invoice->save();
+                    }
+                } elseif ($item['type'] === 'membership_fee') {
+                    $invoice->invoiceable_id = $request->member_id;
+                    $invoice->invoiceable_type = Member::class;
+                    $invoice->save();
+                } elseif ($item['type'] === 'maintenance_fee') {
+                    if ($this->checkMaintenanceExists($request->member_id, $item['data']['valid_from'], $item['data']['valid_to'])) {
+                        DB::rollBack();
+                        return response()->json(['errors' => ['fee_type' => ['Maintenance fee for this period already exists.']]], 422);
+                    }
+
+                    $currentYear = date('Y', strtotime($item['data']['valid_from']));
+                    $currentMonth = date('n', strtotime($item['data']['valid_from']));
+
+                    $maintenanceFee = \App\Models\MaintenanceFee::create([
+                        'member_id' => $request->member_id,
+                        'year' => $currentYear,
+                        'month' => $currentMonth,
+                        'amount' => $item['amount'],
+                        'status' => 'paid',
+                    ]);
+
+                    $invoice->invoiceable_id = $maintenanceFee->id;
+                    $invoice->invoiceable_type = \App\Models\MaintenanceFee::class;
+                    $invoice->save();
+                } elseif ($item['type'] === 'reinstating_fee') {
+                    $invoice->invoiceable_id = $request->member_id;
+                    $invoice->invoiceable_type = Member::class;
+                    $invoice->save();
+
+                    if ($request->fee_type === 'reinstating_fee') {
+                        $member->update(['status' => 'active']);
+                    }
+                }
+            }
+
+            // Post-creation actions
+            foreach ($invoicesCreated as $invoice) {
+                if ($request->status === 'paid') {
+                    $this->cancelOverlappingInvoices($invoice);
+                }
             }
 
             DB::commit();
 
+            // Notification (using first invoice for details)
+            $firstInvoice = $invoicesCreated[0];
             $transactionType = str_replace('_', ' ', $request->fee_type);
             try {
-                $member = Member::find($request->member_id);
                 $superAdmins = \App\Models\User::role('super-admin')->get();
                 \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
-                    "New Transaction: {$transactionType} - {$request->amount}",
-                    "Transaction created for Membership #{$member->membership_no}",
-                    route('member.profile', $member->id),  // detailed transaction view might be better if available
-                    auth()->user(),
+                    "New Transaction: {$transactionType} - Total {$request->amount}",
+                    "Transaction created for Membership #{$member->membership_no} (Invoice: {$sharedInvoiceNo})",
+                    route('member.profile', $member->id),
+                    \Illuminate\Support\Facades\Auth::user(),
                     'Finance'
                 ));
             } catch (\Exception $e) {
@@ -311,13 +384,23 @@ class MemberTransactionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Transaction created successfully.',
-                'transaction' => $invoice,
+                'transaction' => $firstInvoice,  // Return first invoice as representative
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Transaction creation failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create transaction'], 500);
+            return response()->json(['error' => 'Failed to create transaction: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function checkMaintenanceExists($memberId, $from, $to)
+    {
+        return FinancialInvoice::where('member_id', $memberId)
+            ->where('fee_type', 'maintenance_fee')
+            ->where('valid_from', $from)
+            ->where('valid_to', $to)
+            ->where('status', '!=', 'cancelled')
+            ->exists();
     }
 
     private function prepareInvoiceData($request, $member)

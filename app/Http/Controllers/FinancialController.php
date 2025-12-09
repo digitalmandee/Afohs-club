@@ -210,24 +210,22 @@ class FinancialController extends Controller
     // Get Member Invoices - Accepts either member_id or invoice_id
     public function getFinancialInvoices($id)
     {
-        // First, try to find by invoice ID directly
-        $invoice = FinancialInvoice::with([
+        // Common relations to load
+        $relations = [
             'member',
             'member.memberType',
             'subscriptionType',
             'subscriptionCategory'
-        ])->find($id);
+        ];
 
-        // If not found by invoice ID, try to find by member ID (latest membership invoice)
+        // 1. Try to find by invoice ID directly
+        $invoice = FinancialInvoice::with($relations)->find($id);
+
+        // 2. If not found by invoice ID, try to find by member ID (latest membership invoice)
         if (!$invoice) {
             $invoice = FinancialInvoice::where('member_id', $id)
                 ->where('invoice_type', 'membership')
-                ->with([
-                    'member',
-                    'member.memberType',
-                    'subscriptionType',
-                    'subscriptionCategory'
-                ])
+                ->with($relations)
                 ->latest()
                 ->first();
         }
