@@ -2,16 +2,17 @@ import { useState } from 'react';
 import { Box, Typography, TextField, MenuItem, Button, Grid, FormControl, InputLabel, Select, Chip } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
+import OutlinedInput from '@mui/material/OutlinedInput';
 
 const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
     const { all_categories } = usePage().props;
-    
+
     // Define status options locally
     const all_statuses = ['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status) => {
         const label = status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         return { value: status, label: label };
     });
-    
+
     const [filters, setFilters] = useState({
         status: initialFilters?.status || [],
         categories: initialFilters?.categories ? initialFilters.categories.map(id => parseInt(id)) : [],
@@ -24,8 +25,8 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
     };
 
     const handleReset = () => {
-        setFilters({ 
-            status: [], 
+        setFilters({
+            status: [],
             categories: [],
             date_from: '',
             date_to: '',
@@ -45,7 +46,7 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
             <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>
                 Search & Filter Options
             </Typography>
-            
+
             <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={3}>
                     <TextField
@@ -84,8 +85,10 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                     />
                 </Grid>
                 <Grid item xs={12} md={3}>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Member Status</InputLabel>
+                    {/* <FormControl fullWidth size="small" variant="outlined">
+                        <InputLabel shrink={filters.status.length > 0 ? true : false}>
+                            Member Status
+                        </InputLabel>
                         <Select
                             multiple
                             value={filters.status}
@@ -105,31 +108,71 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                                 </MenuItem>
                             ))}
                         </Select>
-                    </FormControl>
-                </Grid>
-                <Grid item xs={12} md={3}>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Member Categories</InputLabel>
-                        <Select
-                            multiple
-                            value={filters.categories}
-                            onChange={(e) => handleFilterChange('categories', e.target.value)}
-                            renderValue={(selected) => (
+                    </FormControl> */}
+                    <TextField
+                        select
+                        label="Member Status"
+                        size="small"
+                        fullWidth
+                        value={filters.status}
+                        SelectProps={{
+                            multiple: true,
+                            renderValue: (selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {selected.map((value) => {
-                                        const category = all_categories?.find(cat => cat.id === value);
-                                        return <Chip key={value} label={category?.name || value} size="small" />;
+                                        const statusObj = all_statuses.find((s) => s.value === value);
+                                        return (
+                                            <Chip
+                                                key={value}
+                                                label={statusObj?.label || value}
+                                                size="small"
+                                            />
+                                        );
                                     })}
                                 </Box>
-                            )}
-                        >
-                            {all_categories && all_categories.map((category) => (
-                                <MenuItem key={category.id} value={category.id}>
-                                    {category.name}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
+                            ),
+                        }}
+                        onChange={(e) => handleFilterChange("status", e.target.value)}
+                    >
+                        {all_statuses?.map((status) => (
+                            <MenuItem key={status.value} value={status.value}>
+                                {status.label}
+                            </MenuItem>
+                        ))}
+                    </TextField>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                    <TextField
+                        select
+                        label="Member Categories"
+                        size="small"
+                        fullWidth
+                        value={filters.categories}
+                        SelectProps={{
+                            multiple: true,
+                            renderValue: (selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((value) => {
+                                        const category = all_categories?.find((cat) => cat.id === value);
+                                        return (
+                                            <Chip
+                                                key={value}
+                                                label={category?.name || value}
+                                                size="small"
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            ),
+                        }}
+                        onChange={(e) => handleFilterChange("categories", e.target.value)}
+                    >
+                        {all_categories?.map((category) => (
+                            <MenuItem key={category.id} value={category.id}>
+                                {category.name}
+                            </MenuItem>
+                        ))}
+                    </TextField>
                 </Grid>
             </Grid>
 
