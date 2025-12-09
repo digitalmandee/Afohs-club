@@ -433,6 +433,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('kitchen.history');
 
     Route::group(['prefix' => 'admin/membership'], function () {
+        Route::resource('partners-affiliates', App\Http\Controllers\Admin\PartnerAffiliateController::class)->names('admin.membership.partners-affiliates');
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
         Route::delete('/{id}', [MembershipController::class, 'destroy'])->name('membership.destroy')->middleware('permission:members.delete');
