@@ -77,17 +77,28 @@ export const handlePrintMembershipCard = (member) => {
                     align-items: flex-start;
                 }
 
-                .avatar {
-                    width: 90px;
-                    height: 90px;
-                    border-radius: 4px;
-                    border: 1px solid #0a3d62;
-                    object-fit: cover;
-                    objectPosition: center;
-                    padding: 4px;
-                    box-sizing: border-box;
-                    background-color: #BDBDBD;
-                }
+                .avatar-wrapper {
+    width: 90px;
+    height: 90px;
+    border: 1px solid #0a3d62;
+    border-radius: 4px;
+    background-color: #BDBDBD;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
 
                 .name {
                     font-size: 14px;
@@ -177,9 +188,11 @@ export const handlePrintMembershipCard = (member) => {
 
                         <!-- LEFT COLUMN -->
                         <div class="col left">
-                            <img class="avatar" src="${member?.profile_photo?.file_path || '/placeholder.svg'}" />
-                            <div class="name">${member?.full_name || 'N/A'}</div>
-                        </div>
+    <div class="avatar-wrapper">
+        <img class="avatar-img" src="${member?.profile_photo?.file_path || '/placeholder.svg'}" />
+    </div>
+    <div class="name">${member?.full_name || 'N/A'}</div>
+</div>
 
                         <!-- CENTER COLUMN -->
                         <div class="col center">
@@ -232,9 +245,35 @@ export const MembershipCardContent = ({ member, id }) => {
                 <Grid container spacing={0} sx={{ width: "100%", m: 0 }}>
                     <Grid item xs={12} sm={4}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 7, pl: 1 }}>
-                            <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
+                            {/* <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
                                 width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62', objectFit: 'cover', objectPosition: 'center', p: "4px", bgcolor:'#BDBDBD'
-                            }} variant="square" />
+                            }} variant="square" /> */}
+                            <Box
+                                sx={{
+                                    width: 100,
+                                    height: 100,
+                                    border: '1px solid #0a3d62',
+                                    borderRadius: 1,
+                                    p: "4px",
+                                    bgcolor: '#BDBDBD',
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <Box
+                                    component="img"
+                                    src={member?.profile_photo?.file_path}
+                                    alt="Member Photo"
+                                    sx={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        objectPosition: "center",
+                                    }}
+                                />
+                            </Box>
                             <Typography sx={{ fontSize: "14px", fontWeight: "bold" }} color="#0a3d62">
                                 {member?.full_name || 'N/A'}
                             </Typography>
