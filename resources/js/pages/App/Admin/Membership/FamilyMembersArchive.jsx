@@ -329,7 +329,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Age Status</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Gender</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Relationship</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Expiry Date</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>

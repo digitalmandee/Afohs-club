@@ -141,7 +141,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                     </Avatar>
                                 </div>
                                 <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Payment</Typography>
-                                <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{total_payment ?? 0}</Typography>
+                                <Typography sx={{ fontWeight: 700, fontSize: '24px', color: '#FFFFFF' }}>{(total_payment ?? 0).toLocaleString()}</Typography>
                             </CardContent>
                         </Card>
                     </div>
@@ -173,7 +173,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Cnic</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
@@ -189,7 +189,12 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             <TableBody>
                                 {filteredMembers.map((user) => (
                                     <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
+                                        <TableCell onClick={() => router.visit(route('membership.profile', user.id))} sx={{
+                                            color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer', "&:hover": {
+                                                color: '#000',               // dark text on hover
+                                                fontWeight: 600             // bold on hover
+                                            }
+                                        }}>
                                             {user.membership_no || 'N/A'}
                                         </TableCell>
                                         <TableCell>

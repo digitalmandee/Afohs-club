@@ -4,7 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 
 const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
     const { all_statuses, all_categories } = usePage().props;
-    
+
     const [localFilters, setLocalFilters] = useState({
         status: filters?.status || [],
         categories: filters?.categories || [],
@@ -22,11 +22,11 @@ const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
     }, [filters]);
 
     const handleReset = () => {
-        setLocalFilters({ 
-            status: [], 
-            categories: [], 
-            date_from: '', 
-            date_to: '' 
+        setLocalFilters({
+            status: [],
+            categories: [],
+            date_from: '',
+            date_to: ''
         });
         router.get(route('membership.pending-maintenance-report'));
         onClose();
@@ -64,55 +64,73 @@ const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
                     <Grid container spacing={3}>
                         {/* Status Filter */}
                         <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
-                                <InputLabel>Member Status</InputLabel>
-                                <Select
-                                    multiple
-                                    value={localFilters.status}
-                                    onChange={handleStatusChange}
-                                    renderValue={(selected) => (
+                            <TextField
+                                select
+                                label="Member Status"
+                                size='small'
+                                fullWidth
+                                value={localFilters.status}
+                                SelectProps={{
+                                    multiple: true,
+                                    renderValue: (selected) => (
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {selected.map((value) => (
-                                                <Chip key={value} label={value} size="small" />
-                                            ))}
+                                            {selected.map((value) => {
+                                                const status = all_statuses?.find((sat) => sat.id === value);
+                                                return (
+                                                    <Chip key={value}
+                                                        label={status?.name || value}
+                                                        size="small"
+                                                    />
+                                                );
+                                            })}
                                         </Box>
-                                    )}
-                                >
-                                    {all_statuses && all_statuses.map((status) => (
-                                        <MenuItem key={status} value={status}>
-                                            {status}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                                    ),
+                                }}
+                                onChange={(e) => handleStatusChange("status", e.target.value)}
+                            >
+                                {all_statuses?.map((status) => (
+                                    <MenuItem key={status.id} value={status.id}>
+                                        {status.name}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
                         </Grid>
 
                         {/* Category Filter */}
                         <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
-                                <InputLabel>Member Category</InputLabel>
-                                <Select
-                                    multiple
-                                    value={localFilters.categories}
-                                    onChange={handleCategoryChange}
-                                    renderValue={(selected) => (
+                            <TextField
+                                select
+                                label="Member Category"
+                                size="small"
+                                fullWidth
+                                value={Array.isArray(localFilters.categories) ? localFilters.categories : []}
+                                SelectProps={{
+                                    multiple: true,
+                                    renderValue: (selected) => (
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                             {selected.map((value) => {
-                                                const category = all_categories?.find(cat => cat.id === value);
+                                                const category = all_categories?.find(
+                                                    (cat) => String(cat.id) === String(value)
+                                                );
                                                 return (
-                                                    <Chip key={value} label={category?.name || value} size="small" />
+                                                    <Chip
+                                                        key={value}
+                                                        label={category?.name || value}
+                                                        size="small"
+                                                    />
                                                 );
                                             })}
                                         </Box>
-                                    )}
-                                >
-                                    {all_categories && all_categories.map((category) => (
-                                        <MenuItem key={category.id} value={category.id}>
-                                            {category.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                                    ),
+                                }}
+                                onChange={(e) => handleCategoryChange(e.target.value)}
+                            >
+                                {all_categories?.map((category) => (
+                                    <MenuItem key={category.id} value={String(category.id)}>
+                                        {category.name}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
                         </Grid>
 
                         {/* Date From */}
@@ -146,9 +164,9 @@ const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
                 </Box>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 3 }}>
-                <Button 
+                <Button
                     onClick={handleReset}
-                    sx={{ 
+                    sx={{
                         color: '#6B7280',
                         textTransform: 'none',
                         '&:hover': {
@@ -158,9 +176,9 @@ const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
                 >
                     Reset
                 </Button>
-                <Button 
+                <Button
                     onClick={onClose}
-                    sx={{ 
+                    sx={{
                         color: '#6B7280',
                         textTransform: 'none',
                         '&:hover': {
@@ -170,7 +188,7 @@ const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
                 >
                     Cancel
                 </Button>
-                <Button 
+                <Button
                     onClick={handleApply}
                     variant="contained"
                     sx={{

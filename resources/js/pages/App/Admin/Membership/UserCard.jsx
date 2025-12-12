@@ -83,7 +83,10 @@ export const handlePrintMembershipCard = (member) => {
                     border-radius: 4px;
                     border: 1px solid #0a3d62;
                     object-fit: cover;
-                    objectPosition: center
+                    objectPosition: center;
+                    padding: 4px;
+                    box-sizing: border-box;
+                    background-color: #BDBDBD;
                 }
 
                 .name {
@@ -190,7 +193,15 @@ export const handlePrintMembershipCard = (member) => {
                             <img src="/${member?.qr_code || ''}" class="qr" />
                             <div class="label label-valid-until">Valid Until</div>
                             <div class="value">
-                                ${member?.card_expiry_date ? new Date(member.card_expiry_date).toLocaleDateString() : 'N/A'}
+                                ${member?.card_expiry_date
+            ? (() => {
+                const d = new Date(member.card_expiry_date);
+                const month = String(d.getMonth() + 1).padStart(2, '0'); // MM
+                const year = d.getFullYear(); // YYYY
+                return `${month}/${year}`;
+            })()
+            : 'N/A'
+        }
                             </div>
                         </div>
 
@@ -217,55 +228,56 @@ export const handlePrintMembershipCard = (member) => {
 export const MembershipCardContent = ({ member, id }) => {
     return (
         <MembershipCard id={id}>
-                    <CardContent sx={{ py: 2 }}>
-                        <Grid container spacing={0} sx={{ width: "100%", m: 0 }}>
-                            <Grid item xs={12} sm={4}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 7, pl: 1 }}>
-                                    <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
-                                        width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62', objectFit: 'cover', objectPosition: 'center'}} variant="square" />
-                                    <Typography sx={{ fontSize: "14px", fontWeight: "bold" }} color="#0a3d62">
-                                        {member?.full_name || 'N/A'}
-                                    </Typography>
-                                </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={4}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
-                                        <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 120 }} />
-                                    </Box>
-                                    <Typography variant="caption" color="text.secondary" sx={{ pt: 4 }}>
-                                        Membership ID
-                                    </Typography>
-                                    <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.membership_no || 'N/A'}
-                                    </Typography>
-                                </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={4}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pr: 1, pt: 7 }}>
-                                    <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: 80, height: 80, p: 1, borderRadius: 1 }} />
-                                    <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
-                                        Valid Until
-                                    </Typography>
-                                    <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                        {member?.card_expiry_date
-                                            ? (() => {
-                                                const d = new Date(member.card_expiry_date);
-                                                const month = String(d.getMonth() + 1).padStart(2, '0');
-                                                const year = d.getFullYear();
-                                                return `${month}/${year}`;
-                                            })()
-                                            : 'N/A'}
-                                    </Typography>
-                                </Box>
-                            </Grid>
-                        </Grid>
-                    </CardContent>
-                    <MembershipFooter>
-                        <Typography variant="h6" fontWeight="medium">
-                            {member?.parent_id ? 'Supplementary Member' : 'Primary Member'}
-                        </Typography>
-                    </MembershipFooter>
+            <CardContent sx={{ py: 2 }}>
+                <Grid container spacing={0} sx={{ width: "100%", m: 0 }}>
+                    <Grid item xs={12} sm={4}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 7, pl: 1 }}>
+                            <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
+                                width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62', objectFit: 'cover', objectPosition: 'center', p: "4px", bgcolor:'#BDBDBD'
+                            }} variant="square" />
+                            <Typography sx={{ fontSize: "14px", fontWeight: "bold" }} color="#0a3d62">
+                                {member?.full_name || 'N/A'}
+                            </Typography>
+                        </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 120 }} />
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ pt: 4 }}>
+                                Membership ID
+                            </Typography>
+                            <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
+                                {member?.membership_no || 'N/A'}
+                            </Typography>
+                        </Box>
+                    </Grid>
+                    <Grid item xs={12} sm={4}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pr: 1, pt: 7 }}>
+                            <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: 80, height: 80, p: 1, borderRadius: 1 }} />
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
+                                Valid Until
+                            </Typography>
+                            <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
+                                {member?.card_expiry_date
+                                    ? (() => {
+                                        const d = new Date(member.card_expiry_date);
+                                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                                        const year = d.getFullYear();
+                                        return `${month}/${year}`;
+                                    })()
+                                    : 'N/A'}
+                            </Typography>
+                        </Box>
+                    </Grid>
+                </Grid>
+            </CardContent>
+            <MembershipFooter>
+                <Typography variant="h6" fontWeight="medium">
+                    {member?.parent_id ? 'Supplementary Member' : 'Primary Member'}
+                </Typography>
+            </MembershipFooter>
         </MembershipCard>
     );
 };
