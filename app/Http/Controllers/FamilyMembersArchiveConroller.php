@@ -135,6 +135,17 @@ class FamilyMembersArchiveConroller extends Controller
         ]);
     }
 
+    private function formatDateForDatabase($date)
+    {
+        if (!$date)
+            return null;
+        try {
+            return Carbon::createFromFormat('d-m-Y', $date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return $date;
+        }
+    }
+
     /**
      * Extend expiry date for a family member (Super Admin only)
      */
@@ -155,13 +166,13 @@ class FamilyMembersArchiveConroller extends Controller
         }
 
         $request->validate([
-            'extension_date' => 'required|date|after:today',
+            'extension_date' => 'required|date_format:d-m-Y|after:today',
             'reason' => 'required|string|min:10|max:500',
         ]);
 
         try {
             $member->extendExpiry(
-                $request->extension_date,
+                $this->formatDateForDatabase($request->extension_date),
                 $request->reason,
                 Auth::id()
             );

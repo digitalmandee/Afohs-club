@@ -5,6 +5,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 
@@ -557,13 +559,13 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DatePicker
                                         label="Date of Birth"
-                                        format="YYYY-MM-DD"
-                                        value={data.date_of_birth ? dayjs(data.date_of_birth) : null}
+                                        format="DD-MM-YYYY"
+                                        value={data.date_of_birth ? dayjs(data.date_of_birth, 'DD-MM-YYYY') : null}
                                         onChange={(newValue) =>
                                             handleChange({
                                                 target: {
                                                     name: 'date_of_birth',
-                                                    value: newValue ? newValue.format('YYYY-MM-DD') : '',
+                                                    value: newValue ? newValue.format('DD-MM-YYYY') : '',
                                                 },
                                             })
                                         }

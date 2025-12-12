@@ -3,6 +3,9 @@ import { Box, Card, CardContent, Typography, Avatar, Button, Grid, styled, Drawe
 import PrintIcon from '@mui/icons-material/Print';
 import DownloadIcon from '@mui/icons-material/Download';
 import html2canvas from 'html2canvas';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
 const MembershipCard = styled(Card)(() => ({
     width: '100%',
@@ -25,6 +28,14 @@ const MembershipFooter = styled(Box)(() => ({
     padding: 10,
     textAlign: 'center',
 }));
+
+const formatExpiryDate = (date) => {
+    if (!date) return 'N/A';
+    const formats = ['DD-MM-YYYY', 'YYYY-MM-DD'];
+    let d = dayjs(date, formats, true);
+    if (!d.isValid()) d = dayjs(date); // Fallback
+    return d.isValid() ? d.format('MM/YYYY') : 'N/A';
+};
 
 export const handlePrintMembershipCard = (member) => {
     if (!member) return;
@@ -95,8 +106,6 @@ export const handlePrintMembershipCard = (member) => {
 .avatar-img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center;
     display: block;
 }
 
@@ -206,15 +215,7 @@ export const handlePrintMembershipCard = (member) => {
                             <img src="/${member?.qr_code || ''}" class="qr" />
                             <div class="label label-valid-until">Valid Until</div>
                             <div class="value">
-                                ${member?.card_expiry_date
-            ? (() => {
-                const d = new Date(member.card_expiry_date);
-                const month = String(d.getMonth() + 1).padStart(2, '0'); // MM
-                const year = d.getFullYear(); // YYYY
-                return `${month}/${year}`;
-            })()
-            : 'N/A'
-        }
+                                ${formatExpiryDate(member?.card_expiry_date)}
                             </div>
                         </div>
 
@@ -242,7 +243,7 @@ export const MembershipCardContent = ({ member, id }) => {
     return (
         <MembershipCard id={id}>
             <CardContent sx={{ py: 2 }}>
-                <Grid container spacing={0} sx={{ width: "100%", m: 0 }}>
+                <Grid container spacing={0} sx={{ width: '100%', m: 0 }}>
                     <Grid item xs={12} sm={4}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 7, pl: 1 }}>
                             {/* <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
@@ -254,12 +255,12 @@ export const MembershipCardContent = ({ member, id }) => {
                                     height: 100,
                                     border: '1px solid #0a3d62',
                                     borderRadius: 1,
-                                    p: "4px",
+                                    p: '4px',
                                     bgcolor: '#BDBDBD',
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    overflow: "hidden",
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    overflow: 'hidden',
                                 }}
                             >
                                 <Box
@@ -267,14 +268,12 @@ export const MembershipCardContent = ({ member, id }) => {
                                     src={member?.profile_photo?.file_path}
                                     alt="Member Photo"
                                     sx={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                        objectPosition: "center",
+                                        width: '100%',
+                                        height: '100%',
                                     }}
                                 />
                             </Box>
-                            <Typography sx={{ fontSize: "14px", fontWeight: "bold" }} color="#0a3d62">
+                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }} color="#0a3d62">
                                 {member?.full_name || 'N/A'}
                             </Typography>
                         </Box>
@@ -299,14 +298,7 @@ export const MembershipCardContent = ({ member, id }) => {
                                 Valid Until
                             </Typography>
                             <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                {member?.card_expiry_date
-                                    ? (() => {
-                                        const d = new Date(member.card_expiry_date);
-                                        const month = String(d.getMonth() + 1).padStart(2, '0');
-                                        const year = d.getFullYear();
-                                        return `${month}/${year}`;
-                                    })()
-                                    : 'N/A'}
+                                {formatExpiryDate(member?.card_expiry_date)}
                             </Typography>
                         </Box>
                     </Grid>

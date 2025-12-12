@@ -136,6 +136,7 @@ class MembershipController extends Controller
                 'end_date' => $member->end_date,
                 'card_issue_date' => $member->card_issue_date,
                 'card_expiry_date' => $member->card_expiry_date,
+                'profile_photo' => $member->profilePhoto,
                 'status' => $member->status,
                 'picture' => $pictureUrl,  // Full URL from file_path
                 'picture_id' => $pictureId,  // Media ID for tracking
@@ -240,6 +241,17 @@ class MembershipController extends Controller
         return Inertia::render('App/Admin/Membership/Members', compact('members'));
     }
 
+    private function formatDateForDatabase($date)
+    {
+        if (!$date)
+            return null;
+        try {
+            return Carbon::createFromFormat('d-m-Y', $date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return $date;
+        }
+    }
+
     public function store(Request $request)
     {
         try {
@@ -294,11 +306,11 @@ class MembershipController extends Controller
                 'membership_no' => $request->membership_no ?? $membershipNo,
                 'member_type_id' => $request->member_type_id,
                 'member_category_id' => $request->membership_category,
-                'membership_date' => $request->membership_date,
+                'membership_date' => $this->formatDateForDatabase($request->membership_date),
                 'card_status' => $request->card_status,
                 'status' => $request->status,
-                'card_issue_date' => $request->card_issue_date,
-                'card_expiry_date' => $request->card_expiry_date,
+                'card_issue_date' => $this->formatDateForDatabase($request->card_issue_date),
+                'card_expiry_date' => $this->formatDateForDatabase($request->card_expiry_date),
                 'is_document_missing' => filter_var($request->is_document_missing ?? false, FILTER_VALIDATE_BOOLEAN),
                 'missing_documents' => $request->missing_documents ?? null,
                 'coa_category_id' => $request->coa_category_id,
@@ -310,7 +322,7 @@ class MembershipController extends Controller
                 'passport_no' => $request->passport_no,
                 'gender' => $request->gender,
                 'ntn' => $request->ntn,
-                'date_of_birth' => $request->date_of_birth,
+                'date_of_birth' => $this->formatDateForDatabase($request->date_of_birth),
                 'education' => $request->education,
                 'mobile_number_a' => $request->mobile_number_a,
                 'mobile_number_b' => $request->mobile_number_b,
@@ -396,12 +408,12 @@ class MembershipController extends Controller
                         'full_name' => $familyMemberData['full_name'],
                         'personal_email' => $familyMemberData['email'],
                         'relation' => $familyMemberData['relation'],
-                        'date_of_birth' => $familyMemberData['date_of_birth'],
+                        'date_of_birth' => $this->formatDateForDatabase($familyMemberData['date_of_birth']),
                         'status' => $familyMemberData['status'],
-                        'start_date' => $familyMemberData['start_date'] ?? null,
-                        'end_date' => $familyMemberData['end_date'] ?? null,
-                        'card_issue_date' => $familyMemberData['card_issue_date'] ?? null,
-                        'card_expiry_date' => $familyMemberData['card_expiry_date'] ?? null,
+                        'start_date' => $this->formatDateForDatabase($familyMemberData['start_date'] ?? null),
+                        'end_date' => $this->formatDateForDatabase($familyMemberData['end_date'] ?? null),
+                        'card_issue_date' => $this->formatDateForDatabase($familyMemberData['card_issue_date'] ?? null),
+                        'card_expiry_date' => $this->formatDateForDatabase($familyMemberData['card_expiry_date'] ?? null),
                         'cnic_no' => $familyMemberData['cnic'],
                         'mobile_number_a' => $familyMemberData['phone_number'],
                         'passport_no' => $familyMemberData['passport_no'] ?? null,
@@ -456,7 +468,7 @@ class MembershipController extends Controller
                     'discount_value' => 0,
                     'total_price' => $memberCategory->fee,
                     'payment_method' => null,  // Will be set when payment is made
-                    'valid_from' => $request->membership_date,
+                    'valid_from' => $this->formatDateForDatabase($request->membership_date),
                     'valid_to' => null,
                     'status' => 'unpaid',
                     'invoiceable_id' => $mainMember->id,
@@ -628,11 +640,11 @@ class MembershipController extends Controller
                 'kinship' => $request->kinship['id'] ?? null,
                 'member_type_id' => $request->member_type_id,
                 'member_category_id' => $request->membership_category,
-                'membership_date' => $request->membership_date,
+                'membership_date' => $this->formatDateForDatabase($request->membership_date),
                 'card_status' => $request->card_status,
                 'status' => $request->status,
-                'card_issue_date' => $request->card_issue_date,
-                'card_expiry_date' => $request->card_expiry_date,
+                'card_issue_date' => $this->formatDateForDatabase($request->card_issue_date),
+                'card_expiry_date' => $this->formatDateForDatabase($request->card_expiry_date),
                 'is_document_missing' => filter_var($request->is_document_missing ?? false, FILTER_VALIDATE_BOOLEAN),
                 'missing_documents' => $request->missing_documents ?? null,
                 'coa_category_id' => $request->coa_category_id,
@@ -644,7 +656,7 @@ class MembershipController extends Controller
                 'passport_no' => $request->passport_no,
                 'gender' => $request->gender,
                 'ntn' => $request->ntn,
-                'date_of_birth' => $request->date_of_birth,
+                'date_of_birth' => $this->formatDateForDatabase($request->date_of_birth),
                 'education' => $request->education,
                 'mobile_number_a' => $request->mobile_number_a,
                 'mobile_number_b' => $request->mobile_number_b,
@@ -681,12 +693,12 @@ class MembershipController extends Controller
                             'full_name' => $newMemberData['full_name'],
                             'personal_email' => $newMemberData['email'] ?? null,
                             'relation' => $newMemberData['relation'],
-                            'date_of_birth' => $newMemberData['date_of_birth'],
+                            'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']),
                             'status' => $newMemberData['status'],
-                            'start_date' => $newMemberData['start_date'] ?? null,
-                            'end_date' => $newMemberData['end_date'] ?? null,
-                            'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
-                            'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
+                            'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null),
+                            'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null),
+                            'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null),
+                            'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null),
                             'cnic_no' => $newMemberData['cnic'],
                             'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                             'passport_no' => $newMemberData['passport_no'] ?? null,
@@ -768,12 +780,12 @@ class MembershipController extends Controller
                                 'barcode_no' => $newMemberData['barcode_no'] ?? null,
                                 'personal_email' => $newMemberData['email'] ?? null,
                                 'relation' => $newMemberData['relation'],
-                                'date_of_birth' => $newMemberData['date_of_birth'],
+                                'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']),
                                 'status' => $newMemberData['status'] ?? null,
-                                'start_date' => $newMemberData['start_date'] ?? null,
-                                'end_date' => $newMemberData['end_date'] ?? null,
-                                'card_issue_date' => $newMemberData['card_issue_date'] ?? null,
-                                'card_expiry_date' => $newMemberData['card_expiry_date'] ?? null,
+                                'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null),
+                                'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null),
+                                'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null),
+                                'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null),
                                 'cnic_no' => $newMemberData['cnic'] ?? null,
                                 'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                                 'passport_no' => $newMemberData['passport_no'] ?? null,

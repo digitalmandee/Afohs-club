@@ -15,6 +15,7 @@ import { MdModeEdit } from 'react-icons/md';
 import { FaEdit } from 'react-icons/fa';
 import MembershipPauseDialog from './MembershipPauseDialog';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import dayjs from 'dayjs';
 
 const styles = {
     root: {
@@ -189,12 +190,19 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                             <TableBody>
                                 {filteredMembers.map((user) => (
                                     <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell onClick={() => router.visit(route('membership.profile', user.id))} sx={{
-                                            color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer', "&:hover": {
-                                                color: '#000',               // dark text on hover
-                                                fontWeight: 600             // bold on hover
-                                            }
-                                        }}>
+                                        <TableCell
+                                            onClick={() => router.visit(route('membership.profile', user.id))}
+                                            sx={{
+                                                color: '#7F7F7F',
+                                                fontWeight: 400,
+                                                fontSize: '14px',
+                                                cursor: 'pointer',
+                                                '&:hover': {
+                                                    color: '#000', // dark text on hover
+                                                    fontWeight: 600, // bold on hover
+                                                },
+                                            }}
+                                        >
                                             {user.membership_no || 'N/A'}
                                         </TableCell>
                                         <TableCell>
@@ -218,7 +226,7 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>

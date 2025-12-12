@@ -4,6 +4,13 @@ import { ArrowBack } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
+dayjs.extend(customParseFormat);
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -39,12 +46,18 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                 address: memberData.address || '',
                 cnic: memberData.cnic || '',
                 amount_paid: memberData.amount_paid !== null ? memberData.amount_paid.toString() : '',
-                start_date: memberData.start_date || '',
-                end_date: memberData.end_date || '',
+                start_date: memberData.start_date ? dayjs(memberData.start_date).format('DD-MM-YYYY') : '',
+                end_date: memberData.end_date ? dayjs(memberData.end_date).format('DD-MM-YYYY') : '',
                 is_permanent_member: memberData.is_permanent_member || false,
             });
+        } else {
+            setFormData((prev) => ({
+                ...prev,
+                start_date: dayjs().format('DD-MM-YYYY'),
+                end_date: dayjs().add(1, 'year').format('DD-MM-YYYY'),
+            }));
         }
-    }, [memberData]);
+    }, [memberData, isEditMode]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -181,25 +194,27 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor: "#f5f5f5",
+                    backgroundColor: '#f5f5f5',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     // padding: '20px',
                 }}
             >
-                <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    // maxWidth: '600px',
-                    justifyContent: 'flex-start',
-                    mb: 2
-                }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        // maxWidth: '600px',
+                        justifyContent: 'flex-start',
+                        mb: 2,
+                    }}
+                >
                     <IconButton onClick={() => router.get(route('applied-member.index'))} sx={{ color: '#000' }}>
-                        <ArrowBack sx={{color:'#063455'}} />
+                        <ArrowBack sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography variant="h5" sx={{color:'#063455', fontWeight:600}}>
+                    <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                         {isEditMode ? 'Edit Applied Member' : 'Add Applied Member'}
                     </Typography>
                 </Box>
@@ -209,134 +224,92 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                             {/* Name */}
                             <Grid item xs={12} sm={6}>
                                 <Typography>Name *</Typography>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
-                                    required
-                                    error={!!errors.name}
-                                    helperText={errors.name}
-                                />
+                                <TextField fullWidth size="small" name="name" value={formData.name} onChange={handleInputChange} required error={!!errors.name} helperText={errors.name} />
                             </Grid>
 
                             {/* Email */}
                             <Grid item xs={12} sm={6}>
                                 <Typography>Email *</Typography>
-                                <TextField
-                                    type="email"
-                                    fullWidth
-                                    size="small"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleInputChange}
-                                    required
-                                    error={!!errors.email}
-                                    helperText={errors.email}
-                                />
+                                <TextField type="email" fullWidth size="small" name="email" value={formData.email} onChange={handleInputChange} required error={!!errors.email} helperText={errors.email} />
                             </Grid>
 
                             {/* Phone Number */}
                             <Grid item xs={12} sm={6}>
                                 <Typography>Phone Number *</Typography>
-                                <TextField
-                                    type="tel"
-                                    inputProps={{ maxLength: 11 }}
-                                    fullWidth
-                                    size="small"
-                                    name="phone_number"
-                                    placeholder="Enter 11-digit phone number"
-                                    value={formData.phone_number}
-                                    onChange={handlePhoneChange}
-                                    required
-                                    error={!!errors.phone_number}
-                                    helperText={errors.phone_number}
-                                />
+                                <TextField type="tel" inputProps={{ maxLength: 11 }} fullWidth size="small" name="phone_number" placeholder="Enter 11-digit phone number" value={formData.phone_number} onChange={handlePhoneChange} required error={!!errors.phone_number} helperText={errors.phone_number} />
                             </Grid>
 
                             {/* Address */}
                             <Grid item xs={12} sm={6}>
                                 <Typography>Address</Typography>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    name="address"
-                                    value={formData.address}
-                                    onChange={handleInputChange}
-                                    error={!!errors.address}
-                                    helperText={errors.address}
-                                />
+                                <TextField fullWidth size="small" name="address" value={formData.address} onChange={handleInputChange} error={!!errors.address} helperText={errors.address} />
                             </Grid>
 
                             {/* CNIC */}
                             <Grid item xs={12} sm={6}>
                                 <Typography>CNIC *</Typography>
-                                <TextField
-                                    fullWidth
-                                    variant="outlined"
-                                    placeholder="XXXXX-XXXXXXX-X"
-                                    size="small"
-                                    name="cnic"
-                                    value={formData.cnic}
-                                    error={!!errors.cnic}
-                                    helperText={errors.cnic}
-                                    onChange={handleCnicChange}
-                                    inputProps={{ maxLength: 15 }}
-                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
-                                />
+                                <TextField fullWidth variant="outlined" placeholder="XXXXX-XXXXXXX-X" size="small" name="cnic" value={formData.cnic} error={!!errors.cnic} helperText={errors.cnic} onChange={handleCnicChange} inputProps={{ maxLength: 15 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Amount Paid */}
                             <Grid item xs={12} sm={6}>
                                 <Typography>Amount Paid *</Typography>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    name="amount_paid"
-                                    value={formData.amount_paid}
-                                    onChange={handleInputChange}
-                                    type="number"
-                                    inputProps={{ min: 0, step: '0.01' }}
-                                    required
-                                    error={!!errors.amount_paid}
-                                    helperText={errors.amount_paid}
-                                />
+                                <TextField fullWidth size="small" name="amount_paid" value={formData.amount_paid} onChange={handleInputChange} type="number" inputProps={{ min: 0, step: '0.01' }} required error={!!errors.amount_paid} helperText={errors.amount_paid} />
                             </Grid>
 
                             {/* Start Date */}
                             <Grid item xs={12} sm={6}>
-                                <Typography>Start Date *</Typography>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    name="start_date"
-                                    disabled={isEditMode}
-                                    value={formData.start_date}
-                                    onChange={handleInputChange}
-                                    type="date"
-                                    InputLabelProps={{ shrink: true }}
-                                    required
-                                    error={!!errors.start_date}
-                                    helperText={errors.start_date}
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Start Date"
+                                        value={formData.start_date ? dayjs(formData.start_date, 'DD-MM-YYYY') : null}
+                                        onChange={(newValue) => {
+                                            const formattedDate = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                            setFormData((prev) => ({ ...prev, start_date: formattedDate }));
+                                            setErrors((prev) => ({ ...prev, start_date: '' }));
+                                        }}
+                                        format="DD-MM-YYYY"
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                size: 'small',
+                                                name: 'start_date',
+                                                disabled: isEditMode,
+                                                required: true,
+                                                error: !!errors.start_date,
+                                                helperText: errors.start_date,
+                                                InputLabelProps: { shrink: true },
+                                            },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
 
                             {/* End Date */}
                             <Grid item xs={12} sm={6}>
-                                <Typography>End Date *</Typography>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    name="end_date"
-                                    value={formData.end_date}
-                                    onChange={handleInputChange}
-                                    type="date"
-                                    InputLabelProps={{ shrink: true }}
-                                    required
-                                    error={!!errors.end_date}
-                                    helperText={errors.end_date}
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="End Date"
+                                        value={formData.end_date ? dayjs(formData.end_date, 'DD-MM-YYYY') : null}
+                                        onChange={(newValue) => {
+                                            const formattedDate = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                            setFormData((prev) => ({ ...prev, end_date: formattedDate }));
+                                            setErrors((prev) => ({ ...prev, end_date: '' }));
+                                        }}
+                                        format="DD-MM-YYYY"
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                size: 'small',
+                                                name: 'end_date',
+                                                required: true,
+                                                error: !!errors.end_date,
+                                                helperText: errors.end_date,
+                                                InputLabelProps: { shrink: true },
+                                            },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
 
                             {/* Checkbox only for edit mode */}
@@ -363,10 +336,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
 
                         {/* Buttons */}
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
-                            <Button
-                                variant="outlined"
-                                onClick={() => router.get(route('applied-member.index'))}
-                            >
+                            <Button variant="outlined" onClick={() => router.get(route('applied-member.index'))}>
                                 Cancel
                             </Button>
                             <Button
@@ -378,13 +348,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                     '&:hover': { backgroundColor: '#083854' },
                                 }}
                             >
-                                {isEditMode
-                                    ? loading
-                                        ? 'Updating...'
-                                        : 'Update'
-                                    : loading
-                                        ? 'Saving...'
-                                        : 'Save'}
+                                {isEditMode ? (loading ? 'Updating...' : 'Update') : loading ? 'Saving...' : 'Save'}
                             </Button>
                         </Box>
                     </form>

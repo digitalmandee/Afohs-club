@@ -17,6 +17,9 @@ import html2canvas from 'html2canvas';
 import { Download as DownloadIcon, Print as PrintIcon, Visibility } from '@mui/icons-material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button as MuiButton, Chip, Drawer } from '@mui/material';
 import MembershipCardComponent from './UserCard';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
 const LOCAL_STORAGE_KEY = 'membershipFormData';
 
@@ -71,8 +74,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             kinship: user.kinship || '',
             member_type_id: user.member_type_id || '',
             membership_category: user.member_category_id || '',
-            membership_date: user.membership_date || new Date().toISOString().split('T')[0],
-            card_issue_date: user.card_issue_date || new Date().toISOString().split('T')[0],
+            membership_date: user.membership_date || dayjs().format('DD-MM-YYYY'),
+            card_issue_date: user.card_issue_date || dayjs().format('DD-MM-YYYY'),
             card_expiry_date: user.card_expiry_date || '',
             is_document_missing: user.is_document_missing || false,
             missing_documents: user.missing_documents || [],
@@ -131,8 +134,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         membership_category: '',
         is_document_missing: false,
         missing_documents: '',
-        membership_date: new Date().toISOString().split('T')[0],
-        card_issue_date: new Date().toISOString().split('T')[0],
+        membership_date: dayjs().format('DD-MM-YYYY'),
+        card_issue_date: dayjs().format('DD-MM-YYYY'),
         card_expiry_date: '',
         card_status: 'In-Process',
         status: 'active',
@@ -239,14 +242,19 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
         if (!card_issue_date || !card_expiry_date) return;
 
-        const issueDate = new Date(card_issue_date);
-        const expiryDate = new Date(card_expiry_date);
+        const parseDate = (dateStr) => {
+            const d = dayjs(dateStr, 'DD-MM-YYYY', true);
+            return d.isValid() ? d.toDate() : new Date(dateStr);
+        };
+
+        const issueDate = parseDate(card_issue_date);
+        const expiryDate = parseDate(card_expiry_date);
 
         formsData.family_members.forEach((fm, idx) => {
-            const start = new Date(fm.start_date);
-            const end = new Date(fm.end_date);
+            const start = parseDate(fm.start_date);
+            const end = parseDate(fm.end_date);
 
-            if (isNaN(start) || isNaN(end)) return;
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
 
             const isFuture = start > expiryDate && end > expiryDate;
             const isInRange = start >= issueDate && end <= expiryDate;

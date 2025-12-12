@@ -13,6 +13,11 @@ import { router } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
 const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
@@ -34,7 +39,9 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const calculateAge = (dateOfBirth) => {
         if (!dateOfBirth) return 0;
         const today = new Date();
-        const birthDate = new Date(dateOfBirth);
+        // Parse DD-MM-YYYY
+        const birthDate = dayjs(dateOfBirth, 'DD-MM-YYYY', true).isValid() ? dayjs(dateOfBirth, 'DD-MM-YYYY').toDate() : new Date(dateOfBirth);
+
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
 
@@ -100,10 +107,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
     const calculateExpiryDate = (dateOfBirth) => {
         if (!dateOfBirth) return '';
-        const birthDate = new Date(dateOfBirth);
+        // Parse DD-MM-YYYY
+        const birthDate = dayjs(dateOfBirth, 'DD-MM-YYYY', true).isValid() ? dayjs(dateOfBirth, 'DD-MM-YYYY').toDate() : new Date(dateOfBirth);
+
         const expiryDate = new Date(birthDate);
         expiryDate.setFullYear(birthDate.getFullYear() + 25);
-        return expiryDate.toISOString().split('T')[0];
+        return dayjs(expiryDate).format('DD-MM-YYYY');
     };
 
     const validateEmailFormat = (email) => {
@@ -687,9 +696,10 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         if (!data.membership_date) {
             errors.membership_date = 'Membership Date is required.';
         } else {
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            // Regex for DD-MM-YYYY
+            const dateRegex = /^\d{2}-\d{2}-\d{4}$/;
             if (!dateRegex.test(data.membership_date)) {
-                errors.membership_date = 'Membership Date must be in YYYY-MM-DD format.';
+                errors.membership_date = 'Membership Date must be in DD-MM-YYYY format.';
             }
         }
 
@@ -998,26 +1008,29 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                 <Grid item xs={4}>
                                     <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                         <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Date *</Typography>
-                                        <TextField
-                                            fullWidth
-                                            type="date"
-                                            InputLabelProps={{ shrink: true }}
-                                            placeholder="dd/mm/yyyy"
-                                            variant="outlined"
-                                            name="membership_date"
-                                            value={data.membership_date}
-                                            onChange={handleChange}
-                                            sx={{
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#ccc',
-                                                },
-                                            }}
-                                        />
-                                        {fieldErrors.membership_date && (
-                                            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                {fieldErrors.membership_date}
-                                            </Typography>
-                                        )}
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <DatePicker
+                                                format="DD-MM-YYYY"
+                                                value={data.membership_date ? dayjs(data.membership_date, 'DD-MM-YYYY') : null}
+                                                onChange={(newValue) => {
+                                                    const formatted = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                                    handleChange({ target: { name: 'membership_date', value: formatted } });
+                                                }}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        variant: 'outlined',
+                                                        size: 'small',
+                                                        error: !!fieldErrors.membership_date,
+                                                        helperText: fieldErrors.membership_date,
+                                                        sx: {
+                                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                            '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                        </LocalizationProvider>
                                     </Box>
                                 </Grid>
                                 <Grid item xs={4}>
@@ -1062,41 +1075,53 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                 <Grid item xs={4}>
                                     <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                         <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
-                                        <TextField
-                                            fullWidth
-                                            type="date"
-                                            InputLabelProps={{ shrink: true }}
-                                            placeholder="dd/mm/yyyy"
-                                            variant="outlined"
-                                            name="card_issue_date"
-                                            value={data.card_issue_date}
-                                            onChange={handleChange}
-                                            sx={{
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#ccc',
-                                                },
-                                            }}
-                                        />
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <DatePicker
+                                                format="DD-MM-YYYY"
+                                                value={data.card_issue_date ? dayjs(data.card_issue_date, 'DD-MM-YYYY') : null}
+                                                onChange={(newValue) => {
+                                                    const formatted = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                                    handleChange({ target: { name: 'card_issue_date', value: formatted } });
+                                                }}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        variant: 'outlined',
+                                                        size: 'small',
+                                                        sx: {
+                                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                            '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                        </LocalizationProvider>
                                     </Box>
                                 </Grid>
                                 <Grid item xs={4}>
                                     <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                         <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
-                                        <TextField
-                                            fullWidth
-                                            type="date"
-                                            InputLabelProps={{ shrink: true }}
-                                            placeholder="dd/mm/yyyy"
-                                            variant="outlined"
-                                            name="card_expiry_date"
-                                            value={data.card_expiry_date}
-                                            onChange={handleChange}
-                                            sx={{
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#ccc',
-                                                },
-                                            }}
-                                        />
+                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                            <DatePicker
+                                                format="DD-MM-YYYY"
+                                                value={data.card_expiry_date ? dayjs(data.card_expiry_date, 'DD-MM-YYYY') : null}
+                                                onChange={(newValue) => {
+                                                    const formatted = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                                    handleChange({ target: { name: 'card_expiry_date', value: formatted } });
+                                                }}
+                                                slotProps={{
+                                                    textField: {
+                                                        fullWidth: true,
+                                                        variant: 'outlined',
+                                                        size: 'small',
+                                                        sx: {
+                                                            '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                            '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                        },
+                                                    },
+                                                }}
+                                            />
+                                        </LocalizationProvider>
                                     </Box>
                                 </Grid>
                                 <Grid item xs={4}>
@@ -1752,23 +1777,29 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     <Grid item xs={4}>
                                                         <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Date of Birth *</Typography>
-                                                            <TextField
-                                                                fullWidth
-                                                                type="date"
-                                                                InputLabelProps={{ shrink: true }}
-                                                                placeholder="dd/mm/yyyy"
-                                                                variant="outlined"
-                                                                name="date_of_birth"
-                                                                error={!!familyMemberErrors.date_of_birth}
-                                                                helperText={familyMemberErrors.date_of_birth || (currentFamilyMember.date_of_birth ? `Age: ${calculateAge(currentFamilyMember.date_of_birth)} years` : '')}
-                                                                value={currentFamilyMember.date_of_birth}
-                                                                onChange={(e) => handleFamilyMemberChange('date_of_birth', e.target.value)}
-                                                                sx={{
-                                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                                        borderColor: '#ccc',
-                                                                    },
-                                                                }}
-                                                            />
+                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                <DatePicker
+                                                                    format="DD-MM-YYYY"
+                                                                    value={currentFamilyMember.date_of_birth ? dayjs(currentFamilyMember.date_of_birth, 'DD-MM-YYYY') : null}
+                                                                    onChange={(newValue) => {
+                                                                        const formatted = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                                                        handleFamilyMemberChange('date_of_birth', formatted);
+                                                                    }}
+                                                                    slotProps={{
+                                                                        textField: {
+                                                                            fullWidth: true,
+                                                                            variant: 'outlined',
+                                                                            size: 'small',
+                                                                            error: !!familyMemberErrors.date_of_birth,
+                                                                            helperText: familyMemberErrors.date_of_birth || (currentFamilyMember.date_of_birth ? `Age: ${calculateAge(currentFamilyMember.date_of_birth)} years` : ''),
+                                                                            sx: {
+                                                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                                                '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                                            },
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </LocalizationProvider>
                                                             {currentFamilyMember.date_of_birth && calculateAge(currentFamilyMember.date_of_birth) >= 25 && (
                                                                 <Typography variant="caption" sx={{ color: '#ff9800', mt: 1, display: 'block' }}>
                                                                     ⚠️ Member is 25+ years old. Membership will expire automatically unless extended by Super Admin.
@@ -1779,39 +1810,53 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     <Grid item xs={4}>
                                                         <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Issue Date</Typography>
-                                                            <TextField
-                                                                fullWidth
-                                                                type="date"
-                                                                InputLabelProps={{ shrink: true }}
-                                                                placeholder="Select date"
-                                                                variant="outlined"
-                                                                value={currentFamilyMember.card_issue_date}
-                                                                onChange={(e) => handleFamilyMemberChange('card_issue_date', e.target.value)}
-                                                                sx={{
-                                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                                        borderColor: '#ccc',
-                                                                    },
-                                                                }}
-                                                            />
+                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                <DatePicker
+                                                                    format="DD-MM-YYYY"
+                                                                    value={currentFamilyMember.card_issue_date ? dayjs(currentFamilyMember.card_issue_date, 'DD-MM-YYYY') : null}
+                                                                    onChange={(newValue) => {
+                                                                        const formatted = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                                                        handleFamilyMemberChange('card_issue_date', formatted);
+                                                                    }}
+                                                                    slotProps={{
+                                                                        textField: {
+                                                                            fullWidth: true,
+                                                                            variant: 'outlined',
+                                                                            size: 'small',
+                                                                            sx: {
+                                                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                                                '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                                            },
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </LocalizationProvider>
                                                         </Box>
                                                     </Grid>
                                                     <Grid item xs={4}>
                                                         <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
                                                             <Typography sx={{ mb: 1, fontWeight: 500 }}>Card Expiry Date</Typography>
-                                                            <TextField
-                                                                fullWidth
-                                                                type="date"
-                                                                InputLabelProps={{ shrink: true }}
-                                                                placeholder="Select date"
-                                                                variant="outlined"
-                                                                value={currentFamilyMember.card_expiry_date}
-                                                                onChange={(e) => handleFamilyMemberChange('card_expiry_date', e.target.value)}
-                                                                sx={{
-                                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                                        borderColor: '#ccc',
-                                                                    },
-                                                                }}
-                                                            />
+                                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                <DatePicker
+                                                                    format="DD-MM-YYYY"
+                                                                    value={currentFamilyMember.card_expiry_date ? dayjs(currentFamilyMember.card_expiry_date, 'DD-MM-YYYY') : null}
+                                                                    onChange={(newValue) => {
+                                                                        const formatted = newValue ? newValue.format('DD-MM-YYYY') : '';
+                                                                        handleFamilyMemberChange('card_expiry_date', formatted);
+                                                                    }}
+                                                                    slotProps={{
+                                                                        textField: {
+                                                                            fullWidth: true,
+                                                                            variant: 'outlined',
+                                                                            size: 'small',
+                                                                            sx: {
+                                                                                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                                                '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                                            },
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            </LocalizationProvider>
                                                             {currentFamilyMember.auto_expiry_calculated && (
                                                                 <Typography variant="caption" sx={{ color: '#2196f3', mt: 1, display: 'block' }}>
                                                                     📅 Auto-calculated based on 25th birthday
