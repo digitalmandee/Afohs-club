@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Tooltip } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Tooltip, Autocomplete, CircularProgress, Chip } from '@mui/material';
 import { router, usePage } from '@inertiajs/react';
 import { useSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
 import { Delete } from '@mui/icons-material';
+import axios from 'axios';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -20,14 +21,32 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
     });
 
     const handleFilterChange = (key, value) => {
-        const newFilters = { ...filterValues, [key]: value };
-        setFilterValues(newFilters);
+        setFilterValues({ ...filterValues, [key]: value });
+    };
 
-        router.get(route('admin.membership.partners-affiliates.index'), newFilters, {
+    const handleApplyFilters = () => {
+        router.get(route('admin.membership.partners-affiliates.index'), filterValues, {
             preserveState: true,
             preserveScroll: true,
             replace: true,
         });
+    };
+
+    const handleResetFilters = () => {
+        setFilterValues({
+            search: '',
+            type: 'all',
+            status: 'all',
+        });
+        router.get(
+            route('admin.membership.partners-affiliates.index'),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
     };
 
     const handleDeleteClick = (item) => {
@@ -50,6 +69,37 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
         }
     };
 
+    const [open, setOpen] = useState(false);
+    const [options, setOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // Debounce function to fetch partners
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (open) {
+                if (filterValues.search) {
+                    fetchPartners(filterValues.search);
+                }
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [filterValues.search, open]);
+
+    const fetchPartners = async (query) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(route('admin.membership.partners-affiliates.search'), {
+                params: { query },
+            });
+            setOptions(response.data.partners || []);
+        } catch (error) {
+            console.error('Failed to fetch partners', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
             <div>
@@ -62,7 +112,65 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
 
                 {/* Filters */}
                 <Box component={Paper} elevation={0} sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <TextField size="small" placeholder="Search..." value={filterValues.search} onChange={(e) => handleFilterChange('search', e.target.value)} sx={{ minWidth: 250 }} />
+                    <Autocomplete
+                        sx={{ minWidth: 250 }}
+                        open={open}
+                        onOpen={() => setOpen(true)}
+                        onClose={() => setOpen(false)}
+                        isOptionEqualToValue={(option, value) => option.organization_name === value.organization_name}
+                        getOptionLabel={(option) => option.organization_name || ''}
+                        options={options}
+                        loading={loading}
+                        value={options.find((opt) => opt.organization_name === filterValues.search) || (filterValues.search ? { organization_name: filterValues.search } : null)}
+                        onInputChange={(event, newInputValue) => {
+                            handleFilterChange('search', newInputValue);
+                        }}
+                        onChange={(event, newValue) => {
+                            handleFilterChange('search', newValue ? newValue.organization_name : '');
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                placeholder="Search..."
+                                size="small"
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <>
+                                            {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </>
+                                    ),
+                                }}
+                            />
+                        )}
+                        renderOption={(props, option) => (
+                            <li {...props} key={option.id}>
+                                <Box sx={{ width: '100%' }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="body2" fontWeight="bold">
+                                            {option.organization_name}
+                                        </Typography>
+                                        <Chip
+                                            component="span"
+                                            label={option.status}
+                                            size="small"
+                                            sx={{
+                                                height: '20px',
+                                                fontSize: '10px',
+                                                backgroundColor: option.status === 'Active' ? '#e8f5e9' : '#ffebee',
+                                                color: option.status === 'Active' ? '#2e7d32' : '#c62828',
+                                                textTransform: 'capitalize',
+                                            }}
+                                        />
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {option.email} | {option.focal_person_name}
+                                    </Typography>
+                                </Box>
+                            </li>
+                        )}
+                    />
                     <TextField select size="small" label="Type" value={filterValues.type} onChange={(e) => handleFilterChange('type', e.target.value)} sx={{ minWidth: 150 }} SelectProps={{ native: true }}>
                         <option value="all">All Types</option>
                         <option value="Club">Club</option>
@@ -74,6 +182,15 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                     </TextField>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none' }}>
+                            Reset
+                        </Button>
+                        <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                            Search
+                        </Button>
+                    </div>
                 </Box>
 
                 <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>

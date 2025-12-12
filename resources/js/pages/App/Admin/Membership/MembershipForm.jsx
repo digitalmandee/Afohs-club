@@ -540,7 +540,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                                                     size="small"
                                                     startIcon={<Visibility />}
                                                     onClick={() => {
-                                                        setSelectedFamilyMember(fm);
+                                                        setSelectedFamilyMember({ ...fm, parent_id: createdMember?.id || user?.id });
                                                         setOpenFamilyCardModal(true);
                                                     }}
                                                     sx={{ color: '#063455' }}

@@ -171,10 +171,24 @@ const MembershipDashboardFilter = () => {
                     )}
                     renderOption={(props, option) => (
                         <li {...props} key={option.id}>
-                            <Box>
-                                <Typography variant="body2" fontWeight="bold">
-                                    {option.full_name}
-                                </Typography>
+                            <Box sx={{ width: '100%' }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                    <Typography variant="body2" fontWeight="bold">
+                                        {option.full_name}
+                                    </Typography>
+                                    <Chip
+                                        component="span"
+                                        label={option.status}
+                                        size="small"
+                                        sx={{
+                                            height: '20px',
+                                            fontSize: '10px',
+                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                            textTransform: 'capitalize',
+                                        }}
+                                    />
+                                </Box>
                                 <Typography variant="caption" color="text.secondary">
                                     {option.membership_no} | {option.mobile_number_a}
                                 </Typography>

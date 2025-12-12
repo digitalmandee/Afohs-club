@@ -179,4 +179,25 @@ class PartnerAffiliateController extends Controller
             ->route('admin.membership.partners-affiliates.index')
             ->with('success', 'Partner/Affiliate deleted successfully.');
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (!$query) {
+            return response()->json(['partners' => []]);
+        }
+
+        $partners = PartnerAffiliate::where(function ($q) use ($query) {
+            $q
+                ->where('organization_name', 'like', "%{$query}%")
+                ->orWhere('focal_person_name', 'like', "%{$query}%")
+                ->orWhere('email', 'like', "%{$query}%");
+        })
+            ->select('id', 'organization_name', 'focal_person_name', 'email', 'status', 'type')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['partners' => $partners]);
+    }
 }

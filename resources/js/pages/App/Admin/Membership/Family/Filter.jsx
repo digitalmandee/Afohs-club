@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Typography, Button, Box, Dialog, IconButton, TextField, MenuItem, FormControlLabel, Checkbox, Autocomplete, CircularProgress } from '@mui/material';
+import { Typography, Button, Box, Dialog, IconButton, TextField, MenuItem, FormControlLabel, Checkbox, Autocomplete, CircularProgress, Chip } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
@@ -87,6 +87,38 @@ const FamilyFilter = () => {
         }
     };
 
+    const [parentOpen, setParentOpen] = useState(false);
+    const [parentOptions, setParentOptions] = useState([]);
+    const [parentLoading, setParentLoading] = useState(false);
+
+    // Debounce for parent member search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (parentOpen) {
+                if (filters.parent_name) {
+                    fetchParentMembers(filters.parent_name);
+                }
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [filters.parent_name, parentOpen]);
+
+    const fetchParentMembers = async (query) => {
+        setParentLoading(true);
+        try {
+            const response = await axios.get(route('api.members.search'), {
+                params: { query },
+            });
+
+            setParentOptions(response.data.members || []);
+        } catch (error) {
+            console.error('Failed to fetch parent members', error);
+        } finally {
+            setParentLoading(false);
+        }
+    };
+
     return (
         <Box backgroundColor="white" mb={3} p={2}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(5, 1fr)' } }} gap={2} mb={2}>
@@ -126,10 +158,24 @@ const FamilyFilter = () => {
                     )}
                     renderOption={(props, option) => (
                         <li {...props} key={option.id}>
-                            <Box>
-                                <Typography variant="body2" fontWeight="bold">
-                                    {option.full_name}
-                                </Typography>
+                            <Box sx={{ width: '100%' }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                    <Typography variant="body2" fontWeight="bold">
+                                        {option.full_name}
+                                    </Typography>
+                                    <Chip
+                                        component="span"
+                                        label={option.status}
+                                        size="small"
+                                        sx={{
+                                            height: '20px',
+                                            fontSize: '10px',
+                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                            textTransform: 'capitalize',
+                                        }}
+                                    />
+                                </Box>
                                 <Typography variant="caption" color="text.secondary">
                                     {option.membership_no} | {option.mobile_number_a}
                                 </Typography>
@@ -139,7 +185,66 @@ const FamilyFilter = () => {
                 />
                 <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} fullWidth />
                 <TextField label="Contact" size="small" value={filters.contact} onChange={(e) => handleFilterChange('contact', e.target.value)} fullWidth />
-                <TextField label="Member Name" size="small" value={filters.parent_name} onChange={(e) => handleFilterChange('parent_name', e.target.value)} fullWidth />
+
+                <Autocomplete
+                    open={parentOpen}
+                    onOpen={() => setParentOpen(true)}
+                    onClose={() => setParentOpen(false)}
+                    isOptionEqualToValue={(option, value) => option.full_name === value.full_name}
+                    getOptionLabel={(option) => option.full_name || ''}
+                    options={parentOptions}
+                    loading={parentLoading}
+                    value={parentOptions.find((opt) => opt.full_name === filters.parent_name) || (filters.parent_name ? { full_name: filters.parent_name } : null)}
+                    onInputChange={(event, newInputValue) => {
+                        handleFilterChange('parent_name', newInputValue);
+                    }}
+                    onChange={(event, newValue) => {
+                        handleFilterChange('parent_name', newValue ? newValue.full_name : '');
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Member Name"
+                            size="small"
+                            fullWidth
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <>
+                                        {parentLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                ),
+                            }}
+                        />
+                    )}
+                    renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                            <Box sx={{ width: '100%' }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                    <Typography variant="body2" fontWeight="bold">
+                                        {option.full_name}
+                                    </Typography>
+                                    <Chip
+                                        component="span"
+                                        label={option.status}
+                                        size="small"
+                                        sx={{
+                                            height: '20px',
+                                            fontSize: '10px',
+                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                            textTransform: 'capitalize',
+                                        }}
+                                    />
+                                </Box>
+                                <Typography variant="caption" color="text.secondary">
+                                    {option.membership_no} | {option.mobile_number_a}
+                                </Typography>
+                            </Box>
+                        </li>
+                    )}
+                />
                 <TextField label="Min Age" type="number" size="small" value={filters.min_age} onChange={(e) => handleFilterChange('min_age', e.target.value)} fullWidth />
                 <TextField label="Max Age" type="number" size="small" value={filters.max_age} onChange={(e) => handleFilterChange('max_age', e.target.value)} fullWidth />
                 <FormControlLabel control={<Checkbox checked={filters.age_over_25} onChange={(e) => handleFilterChange('age_over_25', e.target.checked)} />} label="Age over 25" />
