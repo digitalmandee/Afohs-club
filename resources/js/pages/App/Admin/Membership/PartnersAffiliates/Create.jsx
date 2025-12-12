@@ -40,7 +40,8 @@ const CreatePartnerAffiliate = ({ partner }) => {
             onSuccess: () => {
                 enqueueSnackbar(`Partner/Affiliate ${partner ? 'updated' : 'created'} successfully`, { variant: 'success' });
             },
-            onError: () => {
+            onError: (err) => {
+                console.error('Validation Errors:', err);
                 enqueueSnackbar('Please check the form for errors.', { variant: 'error' });
             },
         });
@@ -127,6 +128,18 @@ const CreatePartnerAffiliate = ({ partner }) => {
                                         Choose Files
                                         <input type="file" hidden multiple onChange={(e) => setData('documents', Array.from(e.target.files))} />
                                     </Button>
+                                    {errors.documents && (
+                                        <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
+                                            {errors.documents}
+                                        </Typography>
+                                    )}
+                                    {Object.keys(errors)
+                                        .filter((key) => key.startsWith('documents.'))
+                                        .map((key) => (
+                                            <Typography key={key} variant="caption" color="error" display="block" sx={{ mt: 1 }}>
+                                                {errors[key]}
+                                            </Typography>
+                                        ))}
                                     {data.documents.length > 0 && (
                                         <Typography variant="caption" display="block" sx={{ mt: 1 }}>
                                             {data.documents.length} files selected
