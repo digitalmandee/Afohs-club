@@ -11,7 +11,7 @@ import MembershipStepper from '@/components/App/membershipForm/MembershipStepper
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
-import CreateTransaction from '@/components/App/Transactions/Create';
+
 import { MembershipCardContent, handlePrintMembershipCard } from './UserCard';
 import html2canvas from 'html2canvas';
 import { Download as DownloadIcon, Print as PrintIcon, Visibility } from '@mui/icons-material';
@@ -112,6 +112,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             permanent_city: user.permanent_city || '',
             permanent_country: user.permanent_country || '',
             country: user.country || '',
+            business_developer_id: user.business_developer_id || '',
+            business_developer: user.business_developer || null,
             documents: Array.isArray(user.documents) ? user.documents.map((doc) => doc.id) : [],
             // previewFiles is for display: keep full objects for showing file names
             previewFiles: Array.isArray(user.documents) ? user.documents : [],
@@ -169,6 +171,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         permanent_city: '',
         permanent_country: '',
         country: '',
+        business_developer_id: '',
         documents: [],
         previewFiles: [],
         family_members: [],
@@ -431,10 +434,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             case 4:
                 return 'Profession & Referral';
             case 5:
-                return 'Payment';
-            case 6:
                 return 'Card';
-            case 7:
+            case 6:
                 return 'Family Cards';
             default:
                 return '';
@@ -452,10 +453,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             case 4:
                 return 'Profession & Referral';
             case 5:
-                return 'Payment';
-            case 6:
                 return 'Card';
-            case 7:
+            case 6:
                 return 'Family Cards';
             default:
                 return '';
@@ -498,8 +497,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                 {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 {step === 4 && <AddForm4 onNext={() => setStep(5)} onBack={() => setStep(3)} memberId={(createdMember || user)?.id} initialData={createdMember || user} />}
-                {step === 5 && <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} preSelectedMember={createdMember || user} allowedFeeTypes={['membership_fee', 'maintenance_fee', 'reinstating_fee']} />}
-                {step === 6 && (
+                {step === 5 && (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
                         <Box sx={{ mb: 3 }}>
                             <MembershipCardContent member={createdMember || user} id="main-member-card" />
@@ -514,7 +512,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                         </Box>
                     </Box>
                 )}
-                {step === 7 && (
+                {step === 6 && (
                     <Box sx={{ mt: 4 }}>
                         <Typography variant="h6" sx={{ mb: 2, color: '#063455', fontWeight: 600 }}>
                             Family Members Cards

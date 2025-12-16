@@ -500,29 +500,59 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 tax_percentage: '',
                 overdue_percentage: '',
                 remarks: '',
+                additional_charges: '',
+                discount_type: '',
+                discount_value: '',
             };
 
             // Helper to parse amount (remove commas if present)
             const parseAmount = (val) => {
-                if (!val) return '';
+                if (!val) return 0;
                 return parseFloat(String(val).replace(/,/g, ''));
             };
 
             // Update amount based on fee type and selected member
             const memberCategory = selectedMember?.member_category || selectedMember?.memberCategory;
 
-            if (selectedMember && memberCategory) {
+            if (selectedMember) {
                 if (feeType === 'membership_fee') {
-                    newData.amount = parseAmount(memberCategory.fee);
+                    // 1. Try to use Member Specific Membership Fee Details
+                    const specFee = parseAmount(selectedMember.membership_fee);
+
+                    if (specFee > 0) {
+                        newData.amount = specFee;
+                        newData.additional_charges = parseAmount(selectedMember.additional_membership_charges) || '';
+
+                        const discVal = parseAmount(selectedMember.membership_fee_discount);
+                        if (discVal > 0) {
+                            newData.discount_type = 'fixed';
+                            newData.discount_value = discVal;
+                        }
+
+                        // Combine remarks
+                        const remarks = [selectedMember.comment_box, selectedMember.membership_fee_additional_remarks, selectedMember.membership_fee_discount_remarks].filter(Boolean).join('; ');
+                        newData.remarks = remarks;
+                    } else if (memberCategory) {
+                        // Fallback to Category Default
+                        newData.amount = parseAmount(memberCategory.fee);
+                    }
+
                     // Auto-suggest 4 years validity for membership fee
                     const today = new Date();
                     const fourYearsLater = new Date(today.getFullYear() + 4, today.getMonth(), today.getDate());
                     newData.valid_from = today.toISOString().split('T')[0];
                     newData.valid_to = fourYearsLater.toISOString().split('T')[0];
                 } else if (feeType === 'maintenance_fee') {
-                    newData.amount = parseAmount(memberCategory.subscription_fee);
-                    // Auto-suggest monthly period based on member joining date
-                    // Note: suggestMaintenancePeriod needs to be called separately as it depends on state
+                    // For maintenance, we use the effective monthly rate (Total Maintenance Fee) if available,
+                    // otherwise the category fee. The calculation happens in suggestMaintenancePeriod.
+                    // We trigger it here.
+
+                    // We only populate remarks here as suggestMaintenancePeriod handles amount/dates
+                    // We only populate remarks here as suggestMaintenancePeriod handles amount/dates
+                    const maintRemarks = [selectedMember.comment_box, selectedMember.maintenance_fee_additional_remarks, selectedMember.maintenance_fee_discount_remarks].filter(Boolean).join('; ');
+                    newData.remarks = maintRemarks;
+
+                    // Auto-suggest monthly period
                     setTimeout(() => suggestMaintenancePeriod('monthly'), 0);
                 } else if (feeType === 'subscription_fee') {
                     // For subscription fees, reset items and amount
@@ -531,7 +561,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 } else if (feeType === 'reinstating_fee') {
                     // For reinstating fees, set a standard amount (can be customized)
                     newData.amount = 25000; // Standard reinstating fee amount
-                    // No validity period needed for reinstating fees
                     newData.valid_from = '';
                     newData.valid_to = '';
                 }
@@ -733,7 +762,12 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
             // Calculate amount based on actual months covered
             const actualMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-            const monthlyFee = parseFloat(String(selectedMember.member_category.subscription_fee).replace(/,/g, '')); // Monthly fee (base fee)
+
+            // Determine monthly fee (Member specific or Category default)
+            const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
+            let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
+            if (monthlyFee <= 0) monthlyFee = parseAmount(selectedMember.member_category?.subscription_fee);
+
             amount = Math.round(monthlyFee * actualMonths);
         } else {
             // SUBSEQUENT YEARS OR FIRST YEAR COMPLETE: Quarterly payment system (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
@@ -800,7 +834,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             endDate.setUTCDate(0); // Last day of previous month (complete month)
 
             // Calculate amount based on frequency and monthly fee logic
-            const monthlyFee = parseFloat(String(selectedMember.member_category.subscription_fee).replace(/,/g, '')); // Monthly fee (base fee)
+            const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
+            let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
+            if (monthlyFee <= 0) monthlyFee = parseAmount(selectedMember.member_category?.subscription_fee);
 
             if (frequency === 'monthly') {
                 amount = Math.round(monthlyFee);
@@ -977,7 +1013,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
 
                         // Calculate amount based on monthly fee
-                        const monthlyFee = selectedMember.member_category.subscription_fee;
+                        const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
+                        let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
+                        if (monthlyFee <= 0) monthlyFee = parseAmount(selectedMember.member_category?.subscription_fee);
+
                         const newAmount = monthlyFee * monthsDiff;
 
                         setData('amount', newAmount);
@@ -1011,7 +1050,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                 periodText = `${totalDays} day${totalDays > 1 ? 's' : ''} (Rs ${dailyRate}/day)`;
                             }
 
-                            setData('amount', newAmount);
+                            setData('item_amount', newAmount);
 
                             enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${periodText}`, {
                                 variant: 'info',
@@ -1377,49 +1416,56 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Typography>
                                                         <FormControl fullWidth>
                                                             <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                                {(() => {
+                                                                {/* {(() => {
                                                                     const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
                                                                     const options = [];
 
                                                                     if (selectedMember?.status === 'cancelled' || selectedMember.status === 'expired') {
-                                                                        if (isAllowed('reinstating_fee')) {
-                                                                            options.push(
-                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                    Reinstating Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        }
+                                                                        options.push(
+                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                Reinstating Fee
+                                                                            </MenuItem>,
+                                                                        );
                                                                     } else if (!membershipFeePaid) {
-                                                                        if (isAllowed('membership_fee')) {
-                                                                            options.push(
-                                                                                <MenuItem key="membership_fee" value="membership_fee">
-                                                                                    Membership Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        }
+                                                                        options.push(
+                                                                            <MenuItem key="membership_fee" value="membership_fee">
+                                                                                Membership Fee
+                                                                            </MenuItem>,
+                                                                        );
                                                                         // Strict: No other options if membership fee is unpaid.
                                                                     } else {
-                                                                        if (isAllowed('maintenance_fee'))
-                                                                            options.push(
-                                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                                    Maintenance Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        if (isAllowed('subscription_fee'))
-                                                                            options.push(
-                                                                                <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                                    Subscription Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        if (isAllowed('reinstating_fee'))
-                                                                            options.push(
-                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                    Reinstating Fee
-                                                                                </MenuItem>,
-                                                                            );
+                                                                        options.push(
+                                                                            <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                                Maintenance Fee
+                                                                            </MenuItem>,
+                                                                        );
+                                                                        options.push(
+                                                                            <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                                Subscription Fee
+                                                                            </MenuItem>,
+                                                                        );
+                                                                        options.push(
+                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                Reinstating Fee
+                                                                            </MenuItem>,
+                                                                        );
                                                                     }
                                                                     return options;
-                                                                })()}
+                                                                })()} */}
+                                                                {!membershipFeePaid && (
+                                                                    <MenuItem key="membership_fee" value="membership_fee">
+                                                                        Membership Fee
+                                                                    </MenuItem>
+                                                                )}
+                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                    Maintenance Fee
+                                                                </MenuItem>
+                                                                <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                    Subscription Fee
+                                                                </MenuItem>
+                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                    Reinstating Fee
+                                                                </MenuItem>
                                                             </Select>
                                                             {errors.fee_type && (
                                                                 <Typography variant="caption" color="error" sx={{ mt: 1 }}>
@@ -1725,10 +1771,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                                     {/* Dates for the item */}
                                                                     <Grid item xs={6}>
-                                                                        <TextField size="small" fullWidth label="Valid From" type="date" value={data.valid_from} onChange={(e) => setData('valid_from', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_from || formErrors.valid_from)} />
+                                                                        <TextField size="small" fullWidth label="Valid From" type="date" value={data.valid_from} onChange={(e) => handleDateChange('valid_from', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_from || formErrors.valid_from)} />
                                                                     </Grid>
                                                                     <Grid item xs={6}>
-                                                                        <TextField size="small" fullWidth label="Valid To" type="date" value={data.valid_to} onChange={(e) => setData('valid_to', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_to || formErrors.valid_to)} />
+                                                                        <TextField size="small" fullWidth label="Valid To" type="date" value={data.valid_to} onChange={(e) => handleDateChange('valid_to', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_to || formErrors.valid_to)} />
                                                                     </Grid>
 
                                                                     <Grid item xs={12}>

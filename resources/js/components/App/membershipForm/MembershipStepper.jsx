@@ -8,9 +8,8 @@ const MembershipStepper = ({ step, onStepClick }) => {
         { number: 2, label: 'Contact Information' },
         { number: 3, label: 'Membership Information' },
         { number: 4, label: 'Profession & Referral' },
-        { number: 5, label: 'Payment' },
-        { number: 6, label: 'Card' },
-        { number: 7, label: 'Family Cards' },
+        { number: 5, label: 'Card' },
+        { number: 6, label: 'Family Cards' },
     ];
 
     return (

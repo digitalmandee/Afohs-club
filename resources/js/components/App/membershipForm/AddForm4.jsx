@@ -38,11 +38,6 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
         criminal_details: '',
     });
 
-    const [bdSearch, setBdSearch] = useState('');
-    const [bdOptions, setBdOptions] = useState([]);
-    const [bdLoading, setBdLoading] = useState(false);
-    const [selectedBd, setSelectedBd] = useState(null);
-
     useEffect(() => {
         if (initialData) {
             setFormData((prev) => ({
@@ -55,36 +50,15 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                 referral_name: initialData.referral_name || '',
                 referral_membership_no: initialData.referral_membership_no || '',
                 referral_contact: initialData.referral_contact || '',
-                business_developer_id: initialData.business_developer_id || '',
+                referral_contact: initialData.referral_contact || '',
             }));
             if (initialData.business_developer_id && initialData.business_developer) {
-                setSelectedBd(initialData.business_developer);
+                // Remove logic
             }
         }
     }, [initialData]);
 
     // Fetch Business Developers
-    useEffect(() => {
-        const fetchBusinessDevelopers = async () => {
-            setBdLoading(true);
-            try {
-                const response = await axios.get(route('employees.business-developers'), {
-                    params: { search: bdSearch },
-                });
-                setBdOptions(response.data);
-            } catch (error) {
-                console.error('Error fetching business developers:', error);
-            } finally {
-                setBdLoading(false);
-            }
-        };
-
-        const timeoutId = setTimeout(() => {
-            fetchBusinessDevelopers();
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-    }, [bdSearch]);
 
     useEffect(() => {
         const fetchProfessionInfo = async () => {
@@ -102,10 +76,10 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                         stayed_abroad: info.stayed_abroad ? '1' : '0',
                         criminal_conviction: info.criminal_conviction ? '1' : '0',
                         other_club_membership: Array.isArray(info.other_club_membership) ? info.other_club_membership : [],
-                        business_developer_id: info.business_developer_id || '',
+                        other_club_membership: Array.isArray(info.other_club_membership) ? info.other_club_membership : [],
                     }));
                     if (info.business_developer) {
-                        setSelectedBd(info.business_developer);
+                        // Remove logic
                     }
                 }
             } catch (error) {
@@ -274,35 +248,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                 <Grid item xs={12}>
                     <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 1, boxShadow: 1 }}>
                         <Grid item xs={12} md={6}>
-                            <Autocomplete
-                                options={bdOptions}
-                                getOptionLabel={(option) => `${option.name} (${option.employee_id})`}
-                                value={selectedBd}
-                                onChange={(event, newValue) => {
-                                    setSelectedBd(newValue);
-                                    setFormData((prev) => ({ ...prev, business_developer_id: newValue ? newValue.id : '' }));
-                                }}
-                                onInputChange={(event, newInputValue) => {
-                                    setBdSearch(newInputValue);
-                                }}
-                                loading={bdLoading}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Membership Done By (Business Developer)"
-                                        fullWidth
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            endAdornment: (
-                                                <>
-                                                    {bdLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                    {params.InputProps.endAdornment}
-                                                </>
-                                            ),
-                                        }}
-                                    />
-                                )}
-                            />
+                            {/* Removed Business Developer Autocomplete */}
                         </Grid>
 
                         <Grid item xs={12}>

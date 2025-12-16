@@ -340,6 +340,21 @@ class MembershipController extends Controller
                 'permanent_city' => $request->permanent_city,
                 'permanent_country' => $request->permanent_country,
                 'country' => $request->country,
+                'business_developer_id' => $request->business_developer_id,
+                'membership_fee' => $request->membership_fee,
+                'additional_membership_charges' => $request->additional_membership_charges,
+                'membership_fee_additional_remarks' => $request->membership_fee_additional_remarks,
+                'membership_fee_discount' => $request->membership_fee_discount,
+                'membership_fee_discount_remarks' => $request->membership_fee_discount_remarks,
+                'total_membership_fee' => $request->total_membership_fee,
+                'maintenance_fee' => $request->maintenance_fee,
+                'additional_maintenance_charges' => $request->additional_maintenance_charges,
+                'maintenance_fee_additional_remarks' => $request->maintenance_fee_additional_remarks,
+                'maintenance_fee_discount' => $request->maintenance_fee_discount,
+                'maintenance_fee_discount_remarks' => $request->maintenance_fee_discount_remarks,
+                'total_maintenance_fee' => $request->total_maintenance_fee,
+                'per_day_maintenance_fee' => $request->per_day_maintenance_fee,
+                'comment_box' => $request->comment_box,
             ]);
 
             // Handle profile photo using Media model
@@ -455,26 +470,25 @@ class MembershipController extends Controller
             }
 
             // Create unpaid membership fee invoice
-            $memberCategory = MemberCategory::find($request->membership_category);
-
-            if ($memberCategory && $memberCategory->fee > 0) {
-                $invoice = FinancialInvoice::create([
-                    'invoice_no' => $this->generateInvoiceNumber(),
-                    'member_id' => $mainMember->id,
-                    'fee_type' => 'membership_fee',
-                    'invoice_type' => 'membership',
-                    'amount' => $memberCategory->fee,
-                    'discount_type' => null,
-                    'discount_value' => 0,
-                    'total_price' => $memberCategory->fee,
-                    'payment_method' => null,  // Will be set when payment is made
-                    'valid_from' => $this->formatDateForDatabase($request->membership_date),
-                    'valid_to' => null,
-                    'status' => 'unpaid',
-                    'invoiceable_id' => $mainMember->id,
-                    'invoiceable_type' => Member::class,
-                ]);
-            }
+            FinancialInvoice::create([
+                'invoice_no' => $this->generateInvoiceNumber(),
+                'member_id' => $mainMember->id,
+                'fee_type' => 'membership_fee',
+                'invoice_type' => 'membership',
+                'amount' => $request->membership_fee ?? 0,
+                'additional_charges' => $request->additional_membership_charges ?? 0,
+                'discount_type' => 'fixed',
+                'discount_value' => $request->membership_fee_discount ?? 0,
+                'discount_details' => $request->membership_fee_discount_remarks,
+                'total_price' => $request->total_membership_fee,
+                'payment_method' => null,  // Will be set when payment is made
+                'valid_from' => $this->formatDateForDatabase($request->membership_date),
+                'valid_to' => null,
+                'status' => 'unpaid',
+                'remarks' => $request->membership_fee_additional_remarks,
+                'invoiceable_id' => $mainMember->id,
+                'invoiceable_type' => Member::class,
+            ]);
 
             DB::commit();
 
@@ -674,6 +688,21 @@ class MembershipController extends Controller
                 'permanent_city' => $request->permanent_city,
                 'permanent_country' => $request->permanent_country,
                 'country' => $request->country,
+                'business_developer_id' => $request->business_developer_id,
+                'membership_fee' => $request->membership_fee,
+                'additional_membership_charges' => $request->additional_membership_charges,
+                'membership_fee_additional_remarks' => $request->membership_fee_additional_remarks,
+                'membership_fee_discount' => $request->membership_fee_discount,
+                'membership_fee_discount_remarks' => $request->membership_fee_discount_remarks,
+                'total_membership_fee' => $request->total_membership_fee,
+                'maintenance_fee' => $request->maintenance_fee,
+                'additional_maintenance_charges' => $request->additional_maintenance_charges,
+                'maintenance_fee_additional_remarks' => $request->maintenance_fee_additional_remarks,
+                'maintenance_fee_discount' => $request->maintenance_fee_discount,
+                'maintenance_fee_discount_remarks' => $request->maintenance_fee_discount_remarks,
+                'total_maintenance_fee' => $request->total_maintenance_fee,
+                'per_day_maintenance_fee' => $request->per_day_maintenance_fee,
+                'comment_box' => $request->comment_box,
             ]);
 
             // Update Family Members

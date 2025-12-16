@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment, CircularProgress } from '@mui/material';
+import { useState, useRef, useEffect } from 'react';
+import { Box, Button, Container, FormControl, Grid, IconButton, MenuItem, Radio, Select, TextField, Typography, Checkbox, FormControlLabel, InputLabel, Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment, CircularProgress, Autocomplete } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -35,6 +35,12 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [familyCnicStatus, setFamilyCnicStatus] = useState(null); // 'available', 'exists', 'error'
     const [membershipNoSuggestion, setMembershipNoSuggestion] = useState(null);
     const fileInputRef = useRef(null);
+
+    // Business Developer State
+    const [bdSearch, setBdSearch] = useState('');
+    const [bdOptions, setBdOptions] = useState([]);
+    const [bdLoading, setBdLoading] = useState(false);
+    const [selectedBd, setSelectedBd] = useState(null);
 
     const calculateAge = (dateOfBirth) => {
         if (!dateOfBirth) return 0;
@@ -113,6 +119,63 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         const expiryDate = new Date(birthDate);
         expiryDate.setFullYear(birthDate.getFullYear() + 25);
         return dayjs(expiryDate).format('DD-MM-YYYY');
+    };
+
+    // --- Fee Calculation Logic ---
+    useEffect(() => {
+        if (!membercategories) return;
+
+        if (!data.membership_category) {
+            // Reset if no category selected
+            handleChangeData('membership_fee', '');
+            handleChangeData('additional_membership_charges', '');
+            handleChangeData('membership_fee_additional_remarks', '');
+            handleChangeData('membership_fee_discount', '');
+            handleChangeData('membership_fee_discount_remarks', '');
+            handleChangeData('total_membership_fee', '');
+
+            handleChangeData('maintenance_fee', '');
+            handleChangeData('additional_maintenance_charges', '');
+            handleChangeData('maintenance_fee_additional_remarks', '');
+            handleChangeData('maintenance_fee_discount', '');
+            handleChangeData('maintenance_fee_discount_remarks', '');
+            handleChangeData('total_maintenance_fee', '');
+            handleChangeData('per_day_maintenance_fee', '');
+            return;
+        }
+
+        const category = membercategories.find((c) => c.id == data.membership_category);
+        if (category) {
+            // Update fees on category change
+            handleChangeData('membership_fee', category.fee || 0);
+            handleChangeData('maintenance_fee', category.subscription_fee || 0);
+        }
+    }, [data.membership_category, membercategories]);
+
+    // Recalculate Total Membership Fee
+    useEffect(() => {
+        const fee = parseFloat(data.membership_fee || 0);
+        const add = parseFloat(data.additional_membership_charges || 0);
+        const disc = parseFloat(data.membership_fee_discount || 0);
+        const total = fee + add - disc;
+        handleChangeData('total_membership_fee', total);
+    }, [data.membership_fee, data.additional_membership_charges, data.membership_fee_discount]);
+
+    // Recalculate Total Maintenance Fee & Per Day
+    useEffect(() => {
+        const fee = parseFloat(data.maintenance_fee || 0);
+        const add = parseFloat(data.additional_maintenance_charges || 0);
+        const disc = parseFloat(data.maintenance_fee_discount || 0);
+        const total = fee + add - disc;
+        handleChangeData('total_maintenance_fee', total);
+        handleChangeData('per_day_maintenance_fee', (total / 30).toFixed(2));
+    }, [data.maintenance_fee, data.additional_maintenance_charges, data.maintenance_fee_discount]);
+
+    const numberToWords = (amount) => {
+        // Basic implementation or placeholder. Ideally use a library like 'number-to-words'
+        // For now returning simple string
+        if (!amount) return '';
+        return `${amount} (Amount in Words)`; // Placeholder
     };
 
     const validateEmailFormat = (email) => {
@@ -717,6 +780,39 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         }
     };
 
+    // Initialize BD selection from data
+    useEffect(() => {
+        if (data.business_developer) {
+            setSelectedBd(data.business_developer);
+        } else if (data.business_developer_id && !selectedBd) {
+            // If we have ID but no object, we might want to fetch or just leave it.
+            // But MembershipForm passes the object now if available.
+        }
+    }, [data.business_developer]);
+
+    // Fetch Business Developers
+    useEffect(() => {
+        const fetchBusinessDevelopers = async () => {
+            setBdLoading(true);
+            try {
+                const response = await axios.get(route('employees.business-developers'), {
+                    params: { search: bdSearch },
+                });
+                setBdOptions(response.data);
+            } catch (error) {
+                console.error('Error fetching business developers:', error);
+            } finally {
+                setBdLoading(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            fetchBusinessDevelopers();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [bdSearch]);
+
     return (
         <>
             <>
@@ -1225,6 +1321,121 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             {fieldErrors.missing_documents}
                                         </Typography>
                                     )}
+                                </Grid>
+
+                                {/* --- Membership Fee Section --- */}
+                                <Grid item xs={12}>
+                                    <Typography variant="h6" sx={{ mt: 2, mb: 1, color: '#0c4b6e' }}>
+                                        MEMBERSHIP FEE
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField fullWidth label="Membership Fee *" name="membership_fee" type="number" value={data.membership_fee || ''} onChange={handleChange} size="small" />
+                                </Grid>
+                                <Grid item xs={12} md={6}></Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <TextField fullWidth label="Additional Membership Charges" name="additional_membership_charges" type="number" value={data.additional_membership_charges || ''} onChange={handleChange} size="small" placeholder="(if any)" />
+                                </Grid>
+                                <Grid item xs={12} md={8}>
+                                    <TextField fullWidth label="Remarks for Additional Charges" name="membership_fee_additional_remarks" multiline rows={1} value={data.membership_fee_additional_remarks || ''} onChange={handleChange} size="small" />
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <TextField fullWidth label="Discount Amount" name="membership_fee_discount" type="number" value={data.membership_fee_discount || ''} onChange={handleChange} size="small" placeholder="(if any)" />
+                                </Grid>
+                                <Grid item xs={12} md={8}>
+                                    <TextField fullWidth label="Remarks for Discount" name="membership_fee_discount_remarks" multiline rows={1} value={data.membership_fee_discount_remarks || ''} onChange={handleChange} size="small" />
+                                </Grid>
+
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Total Membership Fee *" name="total_membership_fee" value={data.total_membership_fee || ''} InputProps={{ readOnly: true }} size="small" sx={{ bgcolor: '#f5f5f5' }} />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Amount in Words" value={numberToWords(data.total_membership_fee)} InputProps={{ readOnly: true }} size="small" sx={{ bgcolor: '#cfd8dc' }} />
+                                </Grid>
+
+                                {/* --- Maintenance Charges Section --- */}
+                                <Grid item xs={12}>
+                                    <Typography variant="h6" sx={{ mt: 3, mb: 1, color: '#0c4b6e' }}>
+                                        MAINTENANCE CHARGES
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <TextField fullWidth label="Maintenance Charges *" name="maintenance_fee" type="number" value={data.maintenance_fee || ''} onChange={handleChange} size="small" />
+                                </Grid>
+                                <Grid item xs={12} md={6}></Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <TextField fullWidth label="Additional Maintenance Charges" name="additional_maintenance_charges" type="number" value={data.additional_maintenance_charges || ''} onChange={handleChange} size="small" placeholder="(if any)" />
+                                </Grid>
+                                <Grid item xs={12} md={8}>
+                                    <TextField fullWidth label="Remarks for Additional Charges" name="maintenance_fee_additional_remarks" multiline rows={1} value={data.maintenance_fee_additional_remarks || ''} onChange={handleChange} size="small" />
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <TextField fullWidth label="Discount Amount" name="maintenance_fee_discount" type="number" value={data.maintenance_fee_discount || ''} onChange={handleChange} size="small" placeholder="(if any)" />
+                                </Grid>
+                                <Grid item xs={12} md={8}>
+                                    <TextField fullWidth label="Remarks for Discount" name="maintenance_fee_discount_remarks" multiline rows={1} value={data.maintenance_fee_discount_remarks || ''} onChange={handleChange} size="small" />
+                                </Grid>
+
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Total Maintenance Charges *" name="total_maintenance_fee" value={data.total_maintenance_fee || ''} InputProps={{ readOnly: true }} size="small" sx={{ bgcolor: '#f5f5f5' }} />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Amount in Words" value={numberToWords(data.total_maintenance_fee)} InputProps={{ readOnly: true }} size="small" sx={{ bgcolor: '#cfd8dc' }} />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Per Day Maintenance Charges *" name="per_day_maintenance_fee" value={data.per_day_maintenance_fee || ''} InputProps={{ readOnly: true }} size="small" sx={{ bgcolor: '#cfd8dc' }} />
+                                </Grid>
+
+                                {/* Business Developer Field */}
+                                <Grid item xs={12} md={6} sx={{ mt: 3 }}>
+                                    <Autocomplete
+                                        options={bdOptions}
+                                        getOptionLabel={(option) => `${option.name} (${option.employee_id})`}
+                                        value={selectedBd}
+                                        onChange={(event, newValue) => {
+                                            setSelectedBd(newValue);
+                                            // Handle direct data update or use handleChange
+                                            // Assuming handleChange treats name/value:
+                                            if (handleChangeData) {
+                                                handleChangeData('business_developer_id', newValue ? newValue.id : '');
+                                                handleChangeData('business_developer', newValue);
+                                            } else {
+                                                handleChange({ target: { name: 'business_developer_id', value: newValue ? newValue.id : '' } });
+                                            }
+                                        }}
+                                        onInputChange={(event, newInputValue) => {
+                                            setBdSearch(newInputValue);
+                                        }}
+                                        loading={bdLoading}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Membership Done By (Business Developer)"
+                                                fullWidth
+                                                size="small"
+                                                InputProps={{
+                                                    ...params.InputProps,
+                                                    endAdornment: (
+                                                        <>
+                                                            {bdLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                            {params.InputProps.endAdornment}
+                                                        </>
+                                                    ),
+                                                }}
+                                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }}
+                                            />
+                                        )}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={6}></Grid>
+
+                                {/* Comment Box */}
+                                <Grid item xs={12} sx={{ mt: 2 }}>
+                                    <TextField fullWidth label="Comment Box" name="comment_box" multiline rows={3} value={data.comment_box || ''} onChange={handleChange} placeholder="Enter Remarks" />
                                 </Grid>
                             </Grid>
                         </Grid>
