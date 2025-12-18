@@ -10,7 +10,6 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { DateRange } from 'react-date-range';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import PeopleIcon from '@mui/icons-material/People';
 
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
@@ -103,16 +102,13 @@ const dialogStyles = `
 }
 `;
 
-const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomTypes }) => {
+const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
     const [bookingType, setBookingType] = useState('room');
-    const [roomType, setRoomType] = useState('');
     const [filterApplied, setFilterApplied] = useState(false);
     const [errors, setErrors] = useState({
         date: '',
-        persons: '',
     });
 
-    const [initialAdults] = useState(adults);
     const [open, setOpen] = useState(false);
     const anchorRef = useRef(null);
     const popperRef = useRef(null);
@@ -144,7 +140,6 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
 
         const newErrors = {
             date: '',
-            persons: '',
         };
 
         let hasError = false;
@@ -154,10 +149,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
             hasError = true;
         }
 
-        if (adults <= 0) {
-            newErrors.persons = 'Please enter at least 1 person.';
-            hasError = true;
-        }
+        // Persons is now optional - no validation required
 
         setErrors(newErrors);
 
@@ -167,7 +159,6 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
             bookingType,
             checkin: checkin.toLocaleDateString('en-CA'),
             checkout: checkout.toLocaleDateString('en-CA'),
-            persons: adults,
         };
 
         onSearch(payload);
@@ -176,13 +167,11 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
 
     const handleClear = () => {
         setBookingType('room');
-        setErrors({ date: '', persons: '' });
-        setRoomType('');
+        setErrors({ date: '' });
         setRange([]);
-        setAdults(initialAdults);
         setFilterApplied(false);
         clearFilter(false);
-        onSearch({ bookingType: 'room', checkin: '', checkout: '', persons: initialAdults });
+        onSearch({ bookingType: 'room', checkin: '', checkout: '' });
     };
 
     const startDate = range[0]?.startDate;
@@ -204,7 +193,7 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                 <div
                     style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr 160px 60px',
+                        gridTemplateColumns: '1fr 160px 60px',
                         alignItems: 'center',
                         border: '4px solid #063455',
                         borderRadius: '6px',
@@ -255,40 +244,6 @@ const CustomDateRangePicker = ({ adults, setAdults, onSearch, clearFilter, roomT
                         )}
                     </Box>
 
-                    {/* Persons Input */}
-                    <div style={{ flex: '1', backgroundColor: '#fff', padding: '8px 12px', borderLeft: '2px solid #063455', height: '100%' }}>
-                        <div
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                            }}
-                        >
-                            <span>
-                                <PeopleIcon fontSize="medium" sx={{ color: '#063455' }} />
-                            </span>
-                            <span style={{ whiteSpace: 'nowrap' }}>Total Person:</span>
-                            <input
-                                type="number"
-                                min="0"
-                                value={adults}
-                                onChange={(e) => setAdults(Math.max(0, parseInt(e.target.value) || 0))}
-                                style={{
-                                    width: '100%',
-                                    padding: '5px 8px',
-                                    border: '0',
-                                    borderBottom: '2px solid #063455',
-                                }}
-                                placeholder="0"
-                            />
-                        </div>
-                        {errors.persons && (
-                            <Typography color="error" variant="caption" sx={{ ml: 1 }}>
-                                {errors.persons}
-                            </Typography>
-                        )}
-                    </div>
-
                     {/* Search Button */}
                     <Button
                         style={{
@@ -318,7 +273,6 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const [searchResultsFilter, setSearchResultsFilter] = useState(false);
-    const [adults, setAdults] = useState(2);
     const [checkin, setCheckIn] = useState('');
     const [checkout, setCheckOut] = useState('');
     const [bookingType, setBookingType] = useState('room');
@@ -486,7 +440,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
 
                     <Row className="mb-4 align-items-center">
                         <Col>
-                            <CustomDateRangePicker adults={adults} setAdults={setAdults} onSearch={handleSearch} clearFilter={setSearchResultsFilter} roomTypes={roomTypes} />
+                            <CustomDateRangePicker onSearch={handleSearch} clearFilter={setSearchResultsFilter} />
                         </Col>
                     </Row>
 
@@ -496,7 +450,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                         </div>
                     )}
 
-                    {!loading && searchResultsFilter && <AvailableRooms data={searchResults} type={bookingType} checkin={checkin} checkout={checkout} persons={adults} />}
+                    {!loading && searchResultsFilter && <AvailableRooms data={searchResults} type={bookingType} checkin={checkin} checkout={checkout} />}
                 </Container>
             </ThemeProvider>
             {/* </div> */}

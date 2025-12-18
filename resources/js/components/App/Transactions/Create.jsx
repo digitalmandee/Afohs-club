@@ -516,26 +516,22 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
             if (selectedMember) {
                 if (feeType === 'membership_fee') {
-                    // 1. Try to use Member Specific Membership Fee Details
+                    // Use Member Specific Membership Fee Details from member table only (no fallback to category)
                     const specFee = parseAmount(selectedMember.membership_fee);
 
-                    if (specFee > 0) {
-                        newData.amount = specFee;
-                        newData.additional_charges = parseAmount(selectedMember.additional_membership_charges) || '';
+                    // Always use member's specific fee (even if 0)
+                    newData.amount = specFee;
+                    newData.additional_charges = parseAmount(selectedMember.additional_membership_charges) || '';
 
-                        const discVal = parseAmount(selectedMember.membership_fee_discount);
-                        if (discVal > 0) {
-                            newData.discount_type = 'fixed';
-                            newData.discount_value = discVal;
-                        }
-
-                        // Combine remarks
-                        const remarks = [selectedMember.comment_box, selectedMember.membership_fee_additional_remarks, selectedMember.membership_fee_discount_remarks].filter(Boolean).join('; ');
-                        newData.remarks = remarks;
-                    } else if (memberCategory) {
-                        // Fallback to Category Default
-                        newData.amount = parseAmount(memberCategory.fee);
+                    const discVal = parseAmount(selectedMember.membership_fee_discount);
+                    if (discVal > 0) {
+                        newData.discount_type = 'fixed';
+                        newData.discount_value = discVal;
                     }
+
+                    // Combine remarks
+                    const remarks = [selectedMember.comment_box, selectedMember.membership_fee_additional_remarks, selectedMember.membership_fee_discount_remarks].filter(Boolean).join('; ');
+                    newData.remarks = remarks;
 
                     // Auto-suggest 4 years validity for membership fee
                     const today = new Date();
@@ -665,7 +661,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     };
 
     const suggestMaintenancePeriod = (frequency) => {
-        if (!selectedMember || !selectedMember.member_category) {
+        if (!selectedMember) {
             return;
         }
 
@@ -763,10 +759,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             // Calculate amount based on actual months covered
             const actualMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
 
-            // Determine monthly fee (Member specific or Category default)
+            // Determine monthly fee from member table only (no category fallback)
             const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
             let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
-            if (monthlyFee <= 0) monthlyFee = parseAmount(selectedMember.member_category?.subscription_fee);
 
             amount = Math.round(monthlyFee * actualMonths);
         } else {
@@ -833,10 +828,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
             endDate.setUTCDate(0); // Last day of previous month (complete month)
 
-            // Calculate amount based on frequency and monthly fee logic
+            // Calculate amount based on frequency and monthly fee from member table only (no category fallback)
             const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
             let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
-            if (monthlyFee <= 0) monthlyFee = parseAmount(selectedMember.member_category?.subscription_fee);
 
             if (frequency === 'monthly') {
                 amount = Math.round(monthlyFee);
@@ -1012,10 +1006,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         // Calculate number of months between dates for maintenance fee
                         const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
 
-                        // Calculate amount based on monthly fee
+                        // Calculate amount based on monthly fee from member table only (no category fallback)
                         const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
                         let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
-                        if (monthlyFee <= 0) monthlyFee = parseAmount(selectedMember.member_category?.subscription_fee);
 
                         const newAmount = monthlyFee * monthsDiff;
 
@@ -2465,7 +2458,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Membership Fee
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
-                                                            Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
+                                                            Rs {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
                                                         </Typography>
                                                     </Grid>
                                                     <Grid item xs={12}>
@@ -2473,7 +2466,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Maintenance Fee (Monthly)
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
-                                                            Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
                                                         </Typography>
                                                     </Grid>
                                                     <Grid item xs={12}>
@@ -2481,7 +2474,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Quarterly Fee
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
-                                                            Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee * 3).toLocaleString() : 'N/A'}
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
                                                         </Typography>
                                                     </Grid>
                                                 </Grid>

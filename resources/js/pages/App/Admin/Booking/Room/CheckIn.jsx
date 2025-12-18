@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search, Visibility } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
+import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -22,6 +23,10 @@ const RoomCheckIn = ({ bookings, filters }) => {
     const [startDate, setStartDate] = useState(filters?.start_date || '');
     const [endDate, setEndDate] = useState(filters?.end_date || '');
 
+    // View Documents Modal state
+    const [showDocsModal, setShowDocsModal] = useState(false);
+    const [selectedBookingForDocs, setSelectedBookingForDocs] = useState(null);
+
     // ✅ Open Invoice Modal
     const handleOpenInvoice = (booking) => {
         setSelectedBooking(booking);
@@ -32,6 +37,17 @@ const RoomCheckIn = ({ bookings, filters }) => {
     const handleCloseInvoice = () => {
         setShowInvoiceModal(false);
         setSelectedBooking(null);
+    };
+
+    // View Documents handlers
+    const handleShowDocs = (booking) => {
+        setSelectedBookingForDocs(booking);
+        setShowDocsModal(true);
+    };
+
+    const handleCloseDocs = () => {
+        setShowDocsModal(false);
+        setSelectedBookingForDocs(null);
     };
 
     // ✅ Handle Filter/Search - Send to backend
@@ -46,7 +62,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
             {
                 preserveState: true,
                 preserveScroll: true,
-            }
+            },
         );
     };
 
@@ -66,7 +82,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                 style={{
                     minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
-                    overflowX: 'hidden'
+                    overflowX: 'hidden',
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -169,7 +185,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                         </Box>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
@@ -207,8 +223,11 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                         flexWrap: 'nowrap', // ensures they stay on the same line
                                                     }}
                                                 >
-                                                    <Button variant="outlined" size="small" style={{ marginRight: '8px', width:100 }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                    <Button variant="outlined" size="small" style={{ marginRight: '8px', width: 100 }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                         Check Out
+                                                    </Button>
+                                                    <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1 }}>
+                                                        <Visibility fontSize="small" />
                                                     </Button>
                                                     <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
                                                         View
@@ -252,6 +271,9 @@ const RoomCheckIn = ({ bookings, filters }) => {
             </div>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
+
+            {/* View Documents Modal */}
+            <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
         </>
     );
 };

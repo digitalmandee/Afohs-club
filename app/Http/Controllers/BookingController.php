@@ -91,9 +91,7 @@ class BookingController extends Controller
     {
         $checkin = $request->query('checkin');  // Y-m-d
         $checkout = $request->query('checkout');  // Y-m-d
-        $persons = (int) $request->query('persons');  // int
-
-        $maxCapacityLimit = $persons + 2;
+        $persons = (int) $request->query('persons', 0);  // Optional - default to 0
 
         // Find conflicted rooms (already booked)
         $conflicted = RoomBooking::query()
@@ -105,12 +103,18 @@ class BookingController extends Controller
             })
             ->pluck('room_id');
 
-        // Get available rooms with capacity rule
-        $available = Room::query()
+        // Get available rooms - optionally filter by capacity if persons provided
+        $query = Room::query()
             ->whereNotIn('id', $conflicted)
-            ->whereBetween('max_capacity', [$persons, $maxCapacityLimit])
-            ->with(['roomType', 'categoryCharges', 'categoryCharges.Category'])
-            ->get();
+            ->with(['roomType', 'categoryCharges', 'categoryCharges.Category']);
+
+        // Only apply capacity filter if persons > 0
+        if ($persons > 0) {
+            $maxCapacityLimit = $persons + 2;
+            $query->whereBetween('max_capacity', [$persons, $maxCapacityLimit]);
+        }
+
+        $available = $query->get();
 
         return response()->json($available);
     }

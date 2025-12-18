@@ -1,14 +1,14 @@
 import { router } from '@inertiajs/react';
-import { ArrowBack, Search } from '@mui/icons-material';
+import { ArrowBack, Search, Visibility } from '@mui/icons-material';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, TextField, FormControl, Select, MenuItem, Grid, Chip } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Container } from 'react-bootstrap';
 import dayjs from 'dayjs';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
+import EventViewDocumentsModal from '@/components/App/Events/EventViewDocumentsModal';
 import debounce from 'lodash.debounce';
 import axios from 'axios';
-
 
 const theme = createTheme({
     palette: {
@@ -42,6 +42,10 @@ const EventsManage = ({ bookings, filters = {} }) => {
     const [selectedBookingId, setSelectedBookingId] = useState(null);
     const [venues, setVenues] = useState([]);
 
+    // View Documents Modal state
+    const [showDocsModal, setShowDocsModal] = useState(false);
+    const [selectedBookingForDocs, setSelectedBookingForDocs] = useState(null);
+
     const debouncedSearch = useMemo(
         () =>
             debounce((value) => {
@@ -69,6 +73,17 @@ const EventsManage = ({ bookings, filters = {} }) => {
         router.reload({ only: ['bookings'] });
     };
 
+    // View Documents handlers
+    const handleShowDocs = (booking) => {
+        setSelectedBookingForDocs(booking);
+        setShowDocsModal(true);
+    };
+
+    const handleCloseDocs = () => {
+        setShowDocsModal(false);
+        setSelectedBookingForDocs(null);
+    };
+
     const handleReset = () => {
         setSearchTerm('');
         setSearchId('');
@@ -80,10 +95,14 @@ const EventsManage = ({ bookings, filters = {} }) => {
         setSelectedStatus([]);
 
         // Clear URL parameters
-        router.get(route('events.manage'), {}, {
-            preserveState: true,
-            preserveScroll: true
-        });
+        router.get(
+            route('events.manage'),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     const handleApply = () => {
@@ -100,7 +119,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
 
         router.get(route('events.manage'), filterParams, {
             preserveState: true,
-            preserveScroll: true
+            preserveScroll: true,
         });
     };
 
@@ -145,7 +164,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                 style={{
                     minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
-                    overflowX: 'hidden'
+                    overflowX: 'hidden',
                 }}
             >
                 <ThemeProvider theme={theme}>
@@ -156,9 +175,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                 <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ mr: 2 }}>
                                     <ArrowBack />
                                 </IconButton>
-                                <Typography style={{ color: '#003366', fontWeight: 500, fontSize: '30px' }}>
-                                    Manage Event Bookings
-                                </Typography>
+                                <Typography style={{ color: '#003366', fontWeight: 500, fontSize: '30px' }}>Manage Event Bookings</Typography>
                             </Box>
                         </Box>
 
@@ -167,78 +184,32 @@ const EventsManage = ({ bookings, filters = {} }) => {
                             <Grid container spacing={2} alignItems="center">
                                 {/* Search by Name */}
                                 <Grid item xs={12} md={2}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        label="Search by Name"
-                                        placeholder="Enter guest name..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
+                                    <TextField fullWidth size="small" label="Search by Name" placeholder="Enter guest name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                                 </Grid>
 
                                 {/* Search by ID */}
                                 <Grid item xs={12} md={2}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        label="Search by ID"
-                                        placeholder="Enter booking ID..."
-                                        value={searchId}
-                                        onChange={(e) => setSearchId(e.target.value)}
-                                    />
+                                    <TextField fullWidth size="small" label="Search by ID" placeholder="Enter booking ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} />
                                 </Grid>
 
                                 {/* Booking Date From */}
                                 <Grid item xs={12} md={2}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        type="date"
-                                        label="Booking Date From"
-                                        value={bookingDateFrom}
-                                        onChange={(e) => setBookingDateFrom(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
+                                    <TextField fullWidth size="small" type="date" label="Booking Date From" value={bookingDateFrom} onChange={(e) => setBookingDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
                                 </Grid>
 
                                 {/* Booking Date To */}
                                 <Grid item xs={12} md={2}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        type="date"
-                                        label="Booking Date To"
-                                        value={bookingDateTo}
-                                        onChange={(e) => setBookingDateTo(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
+                                    <TextField fullWidth size="small" type="date" label="Booking Date To" value={bookingDateTo} onChange={(e) => setBookingDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
                                 </Grid>
 
                                 {/* Event Date From */}
                                 <Grid item xs={12} md={2}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        type="date"
-                                        label="Event Date From"
-                                        value={eventDateFrom}
-                                        onChange={(e) => setEventDateFrom(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
+                                    <TextField fullWidth size="small" type="date" label="Event Date From" value={eventDateFrom} onChange={(e) => setEventDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
                                 </Grid>
 
                                 {/* Event Date To */}
                                 <Grid item xs={12} md={2}>
-                                    <TextField
-                                        fullWidth
-                                        size="small"
-                                        type="date"
-                                        label="Event Date To"
-                                        value={eventDateTo}
-                                        onChange={(e) => setEventDateTo(e.target.value)}
-                                        InputLabelProps={{ shrink: true }}
-                                    />
+                                    <TextField fullWidth size="small" type="date" label="Event Date To" value={eventDateTo} onChange={(e) => setEventDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
                                 </Grid>
 
                                 {/* Choose Venues */}
@@ -256,7 +227,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                 return (
                                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                         {selected.map((value) => {
-                                                            const venueObj = venues.find(v => v.value === value);
+                                                            const venueObj = venues.find((v) => v.value === value);
                                                             return <Chip key={value} label={venueObj?.label || value} size="small" />;
                                                         })}
                                                     </Box>
@@ -294,7 +265,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                 return (
                                                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                         {selected.map((value) => {
-                                                            const statusObj = statusOptions.find(s => s.value === value);
+                                                            const statusObj = statusOptions.find((s) => s.value === value);
                                                             return <Chip key={value} label={statusObj?.label || value} size="small" />;
                                                         })}
                                                     </Box>
@@ -370,9 +341,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                 <TableCell>{booking.event_venue?.name || 'N/A'}</TableCell>
                                                 <TableCell>{booking.created_at ? dayjs(booking.created_at).format('MMM DD, YYYY') : 'N/A'}</TableCell>
                                                 <TableCell>{booking.event_date ? dayjs(booking.event_date).format('MMM DD, YYYY') : 'N/A'}</TableCell>
-                                                <TableCell>
-                                                    {getStatusBadge(booking)}
-                                                </TableCell>
+                                                <TableCell>{getStatusBadge(booking)}</TableCell>
                                                 <TableCell>
                                                     <Box
                                                         sx={{
@@ -382,6 +351,9 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                             flexWrap: 'nowrap', // ensures they stay on the same line
                                                         }}
                                                     >
+                                                        <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                            <Visibility fontSize="small" />
+                                                        </Button>
                                                         <Button
                                                             variant="outlined"
                                                             size="small"
@@ -390,7 +362,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                                 border: '1px solid #003366',
                                                                 color: '#003366',
                                                                 textTransform: 'none',
-                                                                width:100
+                                                                width: 100,
                                                             }}
                                                         >
                                                             View Details
@@ -440,6 +412,9 @@ const EventsManage = ({ bookings, filters = {} }) => {
 
                     {/* Event Booking Invoice Modal */}
                     <EventBookingInvoiceModal open={showInvoiceModal} onClose={handleCloseInvoice} bookingId={selectedBookingId} setBookings={handleBookingUpdate} />
+
+                    {/* View Documents Modal */}
+                    <EventViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
                 </ThemeProvider>
             </div>
         </>
