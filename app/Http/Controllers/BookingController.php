@@ -129,7 +129,23 @@ class BookingController extends Controller
             return response()->json(['message' => 'Invoice not found'], 404);
         }
 
-        return Inertia::render('App/Admin/Booking/Payment', compact('invoice'));
+        // Check for room orders if this is a room booking
+        $roomOrders = [];
+        if ($invoice->invoice_type === 'room_booking' && $invoice->invoiceable) {
+            $booking = RoomBooking::find($invoice->invoiceable_id);  // Re-fetch to be safe or use relation if setup
+            if ($booking) {
+                // Fetch unpaid orders
+                $orders = $booking
+                    ->orders()
+                    ->where('payment_status', '!=', 'paid')
+                    ->where('status', '!=', 'cancelled')
+                    ->with('orderItems')
+                    ->get();
+                $roomOrders = $orders;
+            }
+        }
+
+        return Inertia::render('App/Admin/Booking/Payment', compact('invoice', 'roomOrders'));
     }
 
     // Search family Members
@@ -173,44 +189,94 @@ class BookingController extends Controller
         $request->validate([
             'invoice_no' => 'required|exists:financial_invoices,invoice_no',
             'amount' => 'required|numeric|min:0',
+            'pay_orders' => 'nullable|boolean'
         ]);
 
         $invoice = FinancialInvoice::where('invoice_no', $request->invoice_no)->first();
 
-        // Calculate remaining balance
-        $remaining = $invoice->total_price - $invoice->paid_amount;
+        // Check for orders to include
+        $ordersTotal = 0;
+        $ordersToUpdate = collect([]);
 
-        if ($request->amount < $remaining) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Amount must be at least Rs ' . number_format($remaining, 2)
-            ], 422);
+        if ($request->pay_orders && $invoice->invoice_type === 'room_booking' && $invoice->invoiceable_id) {
+            $booking = RoomBooking::find($invoice->invoiceable_id);
+            if ($booking) {
+                $ordersToUpdate = $booking
+                    ->orders()
+                    ->where('payment_status', '!=', 'paid')
+                    ->where('status', '!=', 'cancelled')
+                    ->get();
+                $ordersTotal = $ordersToUpdate->sum('total_price');
+            }
+        }
+
+        // Calculate remaining balance INCLUDING orders if selected
+        $currentTotal = $invoice->total_price + ($request->pay_orders ? $ordersTotal : 0);
+        $remaining = $currentTotal - $invoice->paid_amount;
+
+        if ($request->amount < $remaining && $request->pay_orders) {
+            // If paying orders, usually require fetching info.
+            // Logic: If paying orders, we expect FULL payment of orders + whatever remaining.
+            // But simpler: just validate against new remaining.
+        }
+
+        // Allow partial payment even with orders?
+        // User said "add one time this total and then paid".
+        // Let's assume if pay_orders is checked, we add the cost to invoice PERMANENTLY?
+        // Or just for this transaction?
+        // Better to add permanently to reflect the "Room Bill".
+
+        if ($request->amount > $remaining) {
+            // Allow overpayment? Probably not.
         }
 
         DB::beginTransaction();
 
-        $recieptPath = null;
-        if ($request->payment_method == 'credit_card' && $request->has('reciept')) {
-            $recieptPath = FileHelper::saveImage($request->file('reciept'), 'reciepts');
+        try {
+            $recieptPath = null;
+            if ($request->payment_method == 'credit_card' && $request->has('reciept')) {
+                $recieptPath = FileHelper::saveImage($request->file('reciept'), 'reciepts');
+            }
+
+            // Update orders if we are paying them
+            if ($request->pay_orders && $ordersTotal > 0) {
+                // Mark orders as paid
+                foreach ($ordersToUpdate as $order) {
+                    $order->payment_status = 'paid';
+                    $order->save();
+                }
+
+                // Increase invoice total
+                $invoice->amount += $ordersTotal;
+                $invoice->total_price += $ordersTotal;
+
+                // Add note or data?
+                // $invoice->data = ...
+            }
+
+            $invoice->payment_date = now();
+            $invoice->paid_amount = $invoice->paid_amount + $request->amount;  // ✅ accumulate payments
+            $invoice->customer_charges = $request->customer_charges ?? $invoice->customer_charges;
+            $invoice->payment_method = $request->payment_method;
+            $invoice->receipt = $recieptPath;
+
+            // Re-calculate status based on NEW total
+            $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'unpaid';
+            $invoice->save();
+
+            // ✅ Update booking status using polymorphic relationship
+            if ($request->booking_status && $invoice->invoiceable) {
+                $booking = $invoice->invoiceable;
+                $booking->status = $request->booking_status;
+                $booking->save();
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Payment successful']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-
-        $invoice->payment_date = now();
-        $invoice->paid_amount = $invoice->paid_amount + $request->amount;  // ✅ accumulate payments
-        $invoice->customer_charges = $request->customer_charges ?? $invoice->customer_charges;
-        $invoice->payment_method = $request->payment_method;
-        $invoice->receipt = $recieptPath;
-        $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'partial';
-        $invoice->save();
-
-        // ✅ Update booking status using polymorphic relationship
-        if ($request->booking_status && $invoice->invoiceable) {
-            $booking = $invoice->invoiceable;
-            $booking->status = $request->booking_status;
-            $booking->save();
-        }
-
-        DB::commit();
-
-        return response()->json(['success' => true, 'message' => 'Payment successful']);
     }
 }

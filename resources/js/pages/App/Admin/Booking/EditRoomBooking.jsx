@@ -10,6 +10,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
+import RoomOrderHistoryModal from '@/components/App/Rooms/RoomOrderHistoryModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -21,6 +22,9 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     const { url } = usePage();
     const urlParams = new URLSearchParams(url.split('?')[1] || '');
     const isCheckout = urlParams.get('type') === 'checkout';
+
+    // Order History Modal
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
     // Main state for booking type
     // const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
@@ -202,6 +206,9 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                     <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
                         Room Booking
                     </h2>
+                    <Button variant="outlined" size="small" onClick={() => setShowHistoryModal(true)} sx={{ ml: 'auto', mr: 2, borderColor: '#063455', color: '#063455' }}>
+                        View Orders
+                    </Button>
                 </Box>
 
                 <Box
@@ -249,7 +256,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                                 <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
                                     Back
                                 </Button>
-                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition='start'>
+                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition="start">
                                     {activeStep === steps.length - 1 ? (isCheckout ? 'Checkout' : 'Finish') : 'Next'}
                                 </Button>
                             </Box>
@@ -257,6 +264,8 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                     </Box>
                 </Box>
             </div>
+
+            <RoomOrderHistoryModal open={showHistoryModal} onClose={() => setShowHistoryModal(false)} bookingId={booking.id} />
         </>
     );
 };
@@ -652,8 +661,8 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
             const syntheticEvent = {
                 target: {
                     name: 'documents',
-                    files: files
-                }
+                    files: files,
+                },
             };
             handleFileChange(syntheticEvent);
         }
@@ -671,12 +680,15 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
         const previewUrl = isFileObject ? URL.createObjectURL(file) : file;
 
         return (
-            <div key={index} style={{
-                position: 'relative',
-                width: '100px',
-                textAlign: 'center',
-                marginBottom: '10px'
-            }}>
+            <div
+                key={index}
+                style={{
+                    position: 'relative',
+                    width: '100px',
+                    textAlign: 'center',
+                    marginBottom: '10px',
+                }}
+            >
                 <IconButton
                     size="small"
                     onClick={() => handleFileRemove(index)}
@@ -689,9 +701,9 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                         width: 24,
                         height: 24,
                         '&:hover': {
-                            backgroundColor: '#d32f2f'
+                            backgroundColor: '#d32f2f',
                         },
-                        zIndex: 1
+                        zIndex: 1,
                     }}
                 >
                     <CloseIcon fontSize="small" />
@@ -708,7 +720,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 objectFit: 'cover',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                border: '2px solid #ddd'
+                                border: '2px solid #ddd',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         />
@@ -726,7 +738,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -748,7 +760,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -770,7 +782,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -778,9 +790,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 FILE
                             </Typography>
                         </div>
-                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
-                            {ext.toUpperCase()}
-                        </p>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>{ext.toUpperCase()}</p>
                     </div>
                 )}
             </div>
@@ -810,19 +820,11 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                             borderColor: '#0a3d62',
                             backgroundColor: '#f5f5f5',
                             transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        },
                     }}
                 >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,image/*"
-                        name="documents"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                    />
+                    <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,image/*" name="documents" onChange={handleFileChange} style={{ display: 'none' }} />
 
                     <Box sx={{ mb: 2 }}>
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -849,15 +851,17 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         Uploaded Documents ({formData.previewFiles.length})
                     </Typography>
-                    <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '15px',
-                        padding: '15px',
-                        backgroundColor: '#f9f9f9',
-                        borderRadius: '8px',
-                        border: '1px solid #e0e0e0'
-                    }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '15px',
+                            padding: '15px',
+                            backgroundColor: '#f9f9f9',
+                            borderRadius: '8px',
+                            border: '1px solid #e0e0e0',
+                        }}
+                    >
                         {formData.previewFiles.map((file, index) => getFilePreview(file, index))}
                     </div>
                 </Grid>

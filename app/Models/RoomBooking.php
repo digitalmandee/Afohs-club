@@ -61,7 +61,7 @@ class RoomBooking extends BaseModel
     {
         // Try polymorphic relationship first, fallback to JSON data
         $invoice = $this->invoice()->select('id', 'status')->first();
-        
+
         return $invoice;
     }
 
@@ -96,5 +96,10 @@ class RoomBooking extends BaseModel
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id', 'id');
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'room_booking_id', 'id');
     }
 }

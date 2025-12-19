@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
+import RoomOrderHistoryModal from '@/components/App/Rooms/RoomOrderHistoryModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -26,6 +27,15 @@ const RoomCheckIn = ({ bookings, filters }) => {
     // View Documents Modal state
     const [showDocsModal, setShowDocsModal] = useState(false);
     const [selectedBookingForDocs, setSelectedBookingForDocs] = useState(null);
+
+    // Order History Modal state
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedBookingForHistory, setSelectedBookingForHistory] = useState(null);
+
+    const handleShowHistory = (booking) => {
+        setSelectedBookingForHistory(booking);
+        setShowHistoryModal(true);
+    };
 
     // ✅ Open Invoice Modal
     const handleOpenInvoice = (booking) => {
@@ -232,6 +242,11 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                     <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
                                                         View
                                                     </Button>
+                                                    <Button variant="outlined" size="small" color="primary" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600 }}>
+                                                            Orders
+                                                        </Box>
+                                                    </Button>
                                                 </Box>
                                             </TableCell>
                                         </TableRow>
@@ -274,6 +289,16 @@ const RoomCheckIn = ({ bookings, filters }) => {
 
             {/* View Documents Modal */}
             <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+
+            {/* Room Order History Modal */}
+            <RoomOrderHistoryModal
+                open={showHistoryModal}
+                onClose={() => {
+                    setShowHistoryModal(false);
+                    setSelectedBookingForHistory(null);
+                }}
+                bookingId={selectedBookingForHistory?.id}
+            />
         </>
     );
 };

@@ -464,4 +464,15 @@ class RoomBookingController extends Controller
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
     }
+
+    public function getOrders($id)
+    {
+        $booking = RoomBooking::findOrFail($id);
+        $orders = $booking->orders()->with('orderItems')->latest()->get();
+
+        return response()->json([
+            'success' => true,
+            'orders' => $orders
+        ]);
+    }
 }
