@@ -103,4 +103,9 @@ class Order extends Model
     {
         return $this->belongsTo(Payslip::class, 'deducted_in_payslip_id');
     }
+
+    public function roomBooking()
+    {
+        return $this->belongsTo(RoomBooking::class, 'room_booking_id');
+    }
 }

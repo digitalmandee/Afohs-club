@@ -548,9 +548,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                             }}
                         >
                             <Box display="flex" gap={1} mb={2}>
-                                {['all', 'dineIn', 'delivery', 'takeaway', 'reservation'].map((type) => (
+                                {['all', 'dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'].map((type) => (
                                     <Button key={type} style={activeTab === type ? styles.activeTabButton : styles.tabButton} variant={activeTab === type ? 'contained' : 'outlined'} onClick={() => handleTabChange(type)}>
-                                        {type === 'all' ? 'All Transactions' : type.charAt(0).toUpperCase() + type.slice(1)}
+                                        {type === 'all' ? 'All Transactions' : type === 'room_service' ? 'Room Service' : type.charAt(0).toUpperCase() + type.slice(1)}
                                     </Button>
                                 ))}
                             </Box>
@@ -627,7 +627,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                         >
                                             <CardContent>
                                                 <Box display="flex" alignItems="center">
-                                                    <Avatar style={getAvatarStyle(order.order_type)}>{order.table?.table_no}</Avatar>
+                                                    <Avatar style={getAvatarStyle(order.order_type)}>{order.order_type === 'room_service' ? order.room_booking?.room?.name || 'R' : order.table?.table_no}</Avatar>
 
                                                     <Avatar
                                                         style={{

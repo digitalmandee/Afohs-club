@@ -24,4 +24,9 @@ class Room extends Model
     {
         return $this->hasMany(RoomCategoryCharge::class, 'room_id');
     }
+
+    public function bookings()
+    {
+        return $this->hasMany(RoomBooking::class);
+    }
 }

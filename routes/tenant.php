@@ -66,6 +66,7 @@ Route::group([
         Route::post('/order/reservation', [ReservationController::class, 'orderReservation'])->name('order.reservation');
         Route::get('/order/new', [OrderController::class, 'index'])->name('order.new');
         Route::get('/order/menu', [OrderController::class, 'orderMenu'])->name('order.menu');
+        Route::get('/rooms-for-order', [OrderController::class, 'getRoomsForOrder'])->name('rooms.order');
         Route::get('/order/search-products', [OrderController::class, 'searchProducts'])->name('order.search.products');
         Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
         Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
@@ -134,7 +135,7 @@ Route::group([
         Route::delete('/inventory/ingredients/{ingredient}', [IngredientController::class, 'destroy'])->name('ingredients.destroy');
         Route::get('/inventory/ingredients/{ingredient}/add-stock', [IngredientController::class, 'showAddStock'])->name('ingredients.add-stock.form');
         Route::post('/inventory/ingredients/{ingredient}/add-stock', [IngredientController::class, 'addStock'])->name('ingredients.add-stock');
-        
+
         // API Routes for Ingredients
         Route::get('/api/ingredients', [IngredientController::class, 'getIngredients'])->name('api.ingredients');
         Route::post('/api/ingredients/check-availability', [IngredientController::class, 'checkAvailability'])->name('api.ingredients.check-availability');
