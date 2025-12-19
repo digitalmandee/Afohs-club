@@ -287,6 +287,16 @@ class MemberTransactionController extends Controller
                 $invoiceData['receipt_path'] = $receiptPath;
             }
 
+            // Pre-Validation: Check for existing maintenance fee BEFORE creating the new invoice to avoid self-collision
+            foreach ($itemsToProcess as $item) {
+                if ($item['type'] === 'maintenance_fee') {
+                    if ($this->checkMaintenanceExists($request->member_id, $item['data']['valid_from'], $item['data']['valid_to'])) {
+                        DB::rollBack();
+                        return response()->json(['errors' => ['fee_type' => ['Maintenance fee for this period already exists.']]], 422);
+                    }
+                }
+            }
+
             // 3. Create the ONE Financial Invoice
             $invoice = FinancialInvoice::create($invoiceData);
             $invoicesCreated[] = $invoice;
@@ -326,10 +336,7 @@ class MemberTransactionController extends Controller
                     $invoice->invoiceable_type = Member::class;
                     $invoice->save();
                 } elseif ($item['type'] === 'maintenance_fee') {
-                    if ($this->checkMaintenanceExists($request->member_id, $item['data']['valid_from'], $item['data']['valid_to'])) {
-                        DB::rollBack();
-                        return response()->json(['errors' => ['fee_type' => ['Maintenance fee for this period already exists.']]], 422);
-                    }
+                    // Check handled before invoice creation
 
                     $currentYear = date('Y', strtotime($item['data']['valid_from']));
                     $currentMonth = date('n', strtotime($item['data']['valid_from']));
