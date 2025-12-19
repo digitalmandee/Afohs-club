@@ -11,12 +11,15 @@ import MembershipStepper from '@/components/App/membershipForm/MembershipStepper
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
-import CreateTransaction from '@/components/App/Transactions/Create';
+
 import { MembershipCardContent, handlePrintMembershipCard } from './UserCard';
 import html2canvas from 'html2canvas';
 import { Download as DownloadIcon, Print as PrintIcon, Visibility } from '@mui/icons-material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button as MuiButton, Chip, Drawer } from '@mui/material';
 import MembershipCardComponent from './UserCard';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+dayjs.extend(customParseFormat);
 
 const LOCAL_STORAGE_KEY = 'membershipFormData';
 
@@ -71,8 +74,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             kinship: user.kinship || '',
             member_type_id: user.member_type_id || '',
             membership_category: user.member_category_id || '',
-            membership_date: user.membership_date || new Date().toISOString().split('T')[0],
-            card_issue_date: user.card_issue_date || new Date().toISOString().split('T')[0],
+            membership_date: user.membership_date || dayjs().format('DD-MM-YYYY'),
+            card_issue_date: user.card_issue_date || dayjs().format('DD-MM-YYYY'),
             card_expiry_date: user.card_expiry_date || '',
             is_document_missing: user.is_document_missing || false,
             missing_documents: user.missing_documents || [],
@@ -109,6 +112,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             permanent_city: user.permanent_city || '',
             permanent_country: user.permanent_country || '',
             country: user.country || '',
+            business_developer_id: user.business_developer_id || '',
+            business_developer: user.business_developer || null,
             documents: Array.isArray(user.documents) ? user.documents.map((doc) => doc.id) : [],
             // previewFiles is for display: keep full objects for showing file names
             previewFiles: Array.isArray(user.documents) ? user.documents : [],
@@ -131,8 +136,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         membership_category: '',
         is_document_missing: false,
         missing_documents: '',
-        membership_date: new Date().toISOString().split('T')[0],
-        card_issue_date: new Date().toISOString().split('T')[0],
+        membership_date: dayjs().format('DD-MM-YYYY'),
+        card_issue_date: dayjs().format('DD-MM-YYYY'),
         card_expiry_date: '',
         card_status: 'In-Process',
         status: 'active',
@@ -166,6 +171,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         permanent_city: '',
         permanent_country: '',
         country: '',
+        business_developer_id: '',
         documents: [],
         previewFiles: [],
         family_members: [],
@@ -239,14 +245,19 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
 
         if (!card_issue_date || !card_expiry_date) return;
 
-        const issueDate = new Date(card_issue_date);
-        const expiryDate = new Date(card_expiry_date);
+        const parseDate = (dateStr) => {
+            const d = dayjs(dateStr, 'DD-MM-YYYY', true);
+            return d.isValid() ? d.toDate() : new Date(dateStr);
+        };
+
+        const issueDate = parseDate(card_issue_date);
+        const expiryDate = parseDate(card_expiry_date);
 
         formsData.family_members.forEach((fm, idx) => {
-            const start = new Date(fm.start_date);
-            const end = new Date(fm.end_date);
+            const start = parseDate(fm.start_date);
+            const end = parseDate(fm.end_date);
 
-            if (isNaN(start) || isNaN(end)) return;
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) return;
 
             const isFuture = start > expiryDate && end > expiryDate;
             const isInRange = start >= issueDate && end <= expiryDate;
@@ -423,10 +434,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             case 4:
                 return 'Profession & Referral';
             case 5:
-                return 'Payment';
-            case 6:
                 return 'Card';
-            case 7:
+            case 6:
                 return 'Family Cards';
             default:
                 return '';
@@ -444,10 +453,8 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
             case 4:
                 return 'Profession & Referral';
             case 5:
-                return 'Payment';
-            case 6:
                 return 'Card';
-            case 7:
+            case 6:
                 return 'Family Cards';
             default:
                 return '';
@@ -490,8 +497,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                 {step === 2 && <AddForm2 data={formsData} handleChange={handleChange} onNext={() => setStep(3)} onBack={() => setStep(1)} sameAsCurrent={sameAsCurrent} setSameAsCurrent={setSameAsCurrent} />}
                 {step === 3 && <AddForm3 data={formsData} handleChange={handleChange} handleChangeData={handleChangeData} setCurrentFamilyMember={setCurrentFamilyMember} currentFamilyMember={currentFamilyMember} memberTypesData={memberTypesData} onSubmit={handleFinalSubmit} onBack={() => setStep(2)} loading={loading} membercategories={membercategories} />}
                 {step === 4 && <AddForm4 onNext={() => setStep(5)} onBack={() => setStep(3)} memberId={(createdMember || user)?.id} initialData={createdMember || user} />}
-                {step === 5 && <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} preSelectedMember={createdMember || user} allowedFeeTypes={['membership_fee', 'maintenance_fee', 'reinstating_fee']} />}
-                {step === 6 && (
+                {step === 5 && (
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 4 }}>
                         <Box sx={{ mb: 3 }}>
                             <MembershipCardContent member={createdMember || user} id="main-member-card" />
@@ -506,7 +512,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                         </Box>
                     </Box>
                 )}
-                {step === 7 && (
+                {step === 6 && (
                     <Box sx={{ mt: 4 }}>
                         <Typography variant="h6" sx={{ mb: 2, color: '#063455', fontWeight: 600 }}>
                             Family Members Cards
@@ -527,7 +533,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                                     {(formsData.family_members || []).map((fm, index) => (
                                         <TableRow key={index}>
                                             <TableCell>
-                                                <Avatar src={fm.profile_photo?.file_path || fm.picture_preview || '/placeholder.svg'} sx={{ width: 40, height: 40 }} />
+                                                <Avatar src={fm.picture || fm.picture_preview || '/placeholder.svg'} sx={{ width: 40, height: 40 }} />
                                             </TableCell>
                                             <TableCell>{fm.full_name}</TableCell>
                                             <TableCell>{fm.membership_no || 'N/A'}</TableCell>
@@ -540,7 +546,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
                                                     size="small"
                                                     startIcon={<Visibility />}
                                                     onClick={() => {
-                                                        setSelectedFamilyMember(fm);
+                                                        setSelectedFamilyMember({ ...fm, parent_id: createdMember?.id || user?.id });
                                                         setOpenFamilyCardModal(true);
                                                     }}
                                                     sx={{ color: '#063455' }}

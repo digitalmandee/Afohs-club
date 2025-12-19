@@ -264,6 +264,10 @@ export default function SideNav({ open, setOpen }) {
                         path: route('applied-member.index'),
                     },
                     {
+                        text: 'Partners / Affiliates',
+                        path: route('admin.membership.partners-affiliates.index'),
+                    },
+                    {
                         text: 'Finance',
                         path: route('membership.finance'),
                     },
@@ -640,7 +644,7 @@ export default function SideNav({ open, setOpen }) {
                         justifyContent: 'center',
                         alignItems: 'center',
                         pt: 6,
-                        pb:7,
+                        pb: 7,
                         position: 'sticky',
                         top: 0,
                         zIndex: 1000,

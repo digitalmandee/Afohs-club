@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PartnerAffiliateController;
 use App\Http\Controllers\App\MembersController;
 use App\Http\Controllers\App\MemberTypeController;
 use App\Http\Controllers\App\SubscriptionTypeController;
@@ -166,6 +167,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
             // get room booking data
             Route::get('api/bookings/{id}', [RoomBookingController::class, 'showRoomBooking'])->name('api.room.booking.show')->middleware('permission:rooms.bookings.view');
+            Route::get('api/bookings/{id}/orders', [RoomBookingController::class, 'getOrders'])->name('api.room.booking.orders')->middleware('permission:rooms.bookings.view');
             Route::post('api/bookings/check-in', [RoomBookingController::class, 'checkIn'])->name('api.room.booking.checkin')->middleware('permission:rooms.bookings.checkin');
             // Route::get('/types', [RoomController::class, 'mamageTypes'])->name('rooms.types');
             Route::group(['prefix' => 'requests', 'middleware' => 'super.admin:rooms.bookings.requests'], function () {
@@ -433,6 +435,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('kitchen.history');
 
     Route::group(['prefix' => 'admin/membership'], function () {
+        Route::get('partners-affiliates/search', [PartnerAffiliateController::class, 'search'])->name('admin.membership.partners-affiliates.search');
+        Route::resource('partners-affiliates', PartnerAffiliateController::class)->names('admin.membership.partners-affiliates');
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
         Route::delete('/{id}', [MembershipController::class, 'destroy'])->name('membership.destroy')->middleware('permission:members.delete');
@@ -500,6 +504,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Family Members Archive route
         Route::get('family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members')->middleware('permission:family-members.view');
+        Route::get('family-members-archive/search', [FamilyMembersArchiveConroller::class, 'search'])->name('membership.family-members.search');
 
         // Family Applied Member
         Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');

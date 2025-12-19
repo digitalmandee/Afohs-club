@@ -18,6 +18,9 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
 use App\Models\Reservation;
+use App\Models\Room;
+use App\Models\RoomBooking;
+use App\Models\RoomType;
 use App\Models\Table;
 use App\Models\Tenant;
 use App\Models\User;
@@ -173,6 +176,22 @@ class OrderController extends Controller
         return response()->json($floorTables);
     }
 
+    public function getRoomsForOrder()
+    {
+        $roomTypes = RoomType::with(['rooms' => function ($query) {
+            $query
+                ->select('id', 'name', 'room_type_id')
+                ->with(['bookings' => function ($q) {
+                    $q
+                        ->where('status', 'checked_in')
+                        ->select('id', 'room_id', 'booking_no', 'status', 'member_id', 'customer_id', 'guest_first_name', 'guest_last_name', 'check_in_date', 'check_out_date')
+                        ->with(['member:id,full_name,membership_no,personal_email,current_address,status', 'customer:id,name,customer_no,email,address']);
+                }]);
+        }])->get();
+
+        return response()->json($roomTypes);
+    }
+
     public function orderManagement(Request $request)
     {
         $query = Order::with([
@@ -265,6 +284,8 @@ class OrderController extends Controller
         $latestCategory = Category::where('tenant_id', $activeTenantId)->latest()->first();
         $firstCategoryId = $latestCategory->id ?? null;
 
+        $orderContext = null;
+
         // 🔎 Case 1: Reservation flow
         $reservation = null;
         if ($request->has('reservation_id')) {
@@ -277,9 +298,59 @@ class OrderController extends Controller
                 ->first();
         }
 
+        // 🔎 Case 1b: Room Booking flow (from Rooms selection)
+        if ($request->has('room_booking_id')) {
+            $roomBooking = RoomBooking::where('id', $request->room_booking_id)
+                ->with([
+                    'member:id,full_name,membership_no,personal_email,current_address',
+                    'customer:id,name,customer_no,email,address',
+                    'room:id,name'
+                ])
+                ->first();
+
+            if ($roomBooking) {
+                // Determine member details similar to direct flow
+                $memberData = [];
+                if ($roomBooking->member) {
+                    $memberData = [
+                        'id' => $roomBooking->member->id,
+                        'booking_type' => 'member',
+                        'name' => $roomBooking->member->full_name,
+                        'membership_no' => $roomBooking->member->membership_no,
+                        'email' => $roomBooking->member->personal_email,
+                        'address' => $roomBooking->member->current_address
+                    ];
+                } elseif ($roomBooking->customer) {
+                    $memberData = [
+                        'id' => $roomBooking->customer->id,
+                        'customer_no' => $roomBooking->customer->customer_no,
+                        'booking_type' => 'guest',
+                        'name' => $roomBooking->customer->name,
+                        'email' => $roomBooking->customer->email,
+                        'address' => $roomBooking->customer->address
+                    ];
+                } else {
+                    // Walk-in guest in room? Use Guest info from booking
+                    $memberData = [
+                        'id' => null,  // No customer ID
+                        'booking_type' => 'guest',
+                        'name' => $roomBooking->guest_first_name . ' ' . $roomBooking->guest_last_name,
+                        'email' => $roomBooking->guest_email ?? '',
+                        'address' => $roomBooking->guest_address ?? ''
+                    ];
+                }
+
+                $orderContext = [
+                    'order_type' => 'room_service',
+                    'room_booking_id' => $roomBooking->id,
+                    'room' => $roomBooking->room,
+                    'member' => $memberData
+                ];
+            }
+        }
+
         // 🔎 Case 2: Direct order flow (via query params)
-        $orderContext = null;
-        if ($request->has('order_type')) {
+        if (!$orderContext && $request->has('order_type')) {
             if ($request->filled('order_type')) {
                 $orderContext = [
                     'order_type' => $request->get('order_type'),
@@ -347,6 +418,13 @@ class OrderController extends Controller
             if ($request->filled('floor_id')) {
                 $orderContext['floor'] = $request->get('floor_id');
             }
+            // Room (from direct flow if needed)
+            if ($request->filled('room_id')) {
+                $room = Room::find($request->room_id);
+                if ($room) {
+                    $orderContext['room'] = $room;
+                }
+            }
         }
 
         $orderNo = $this->getOrderNo();
@@ -387,7 +465,10 @@ class OrderController extends Controller
             'kitchen_note' => 'nullable|string',
             'staff_note' => 'nullable|string',
             'payment_note' => 'nullable|string',
+            'staff_note' => 'nullable|string',
+            'payment_note' => 'nullable|string',
             'reservation_id' => 'nullable|exists:reservations,id',
+            'room_booking_id' => 'nullable|exists:room_bookings,id',
         ]);
 
         DB::beginTransaction();
@@ -414,6 +495,7 @@ class OrderController extends Controller
                 'staff_note' => $request->staff_note,
                 'payment_note' => $request->payment_note,
                 'reservation_id' => $request->reservation_id ?? null,
+                'room_booking_id' => $request->room_booking_id ?? null,
                 'address' => $request->address
             ];
 
@@ -721,8 +803,8 @@ class OrderController extends Controller
 
         $productsQuery = Product::with(['variants:id,product_id,name', 'variants.values', 'category'])->where('category_id', $category_id);
 
-        // Only filter by order_type if it exists
-        if ($order_type) {
+        // Only filter by order_type if it exists and is not 'room_service'
+        if ($order_type && $order_type !== 'room_service') {
             $productsQuery->whereJsonContains('available_order_types', $order_type);
         }
 

@@ -162,7 +162,7 @@ class RoomBookingController extends Controller
                 'acc_relationship' => $data['guestRelation'] ?? null,
                 'booked_by' => $data['bookedBy'] ?? null,
                 'room_id' => $data['room']['id'] ?? null,
-                'persons' => $data['persons'] ?? null,
+                'persons' => $data['persons'] ?? 0,
                 'category' => $data['bookingCategory'] ?? null,
                 'nights' => $data['nights'] ?? null,
                 'per_day_charge' => $data['perDayCharge'] ?? null,
@@ -306,7 +306,7 @@ class RoomBookingController extends Controller
                 'acc_relationship' => $data['guestRelation'] ?? null,
                 'booked_by' => $data['bookedBy'] ?? null,
                 'room_id' => $data['room']['id'] ?? null,
-                'persons' => $data['persons'] ?? null,
+                'persons' => $data['persons'] ?? 0,
                 'category' => $data['bookingCategory'] ?? null,
                 'nights' => $data['nights'] ?? null,
                 'per_day_charge' => $data['perDayCharge'] ?? null,
@@ -463,5 +463,16 @@ class RoomBookingController extends Controller
         $invoiceNo = FinancialInvoice::withTrashed()->max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
+    }
+
+    public function getOrders($id)
+    {
+        $booking = RoomBooking::findOrFail($id);
+        $orders = $booking->orders()->with('orderItems')->latest()->get();
+
+        return response()->json([
+            'success' => true,
+            'orders' => $orders
+        ]);
     }
 }

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search, Visibility } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
+import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
+import RoomOrderHistoryModal from '@/components/App/Rooms/RoomOrderHistoryModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -22,6 +24,19 @@ const RoomCheckOut = ({ bookings, filters }) => {
     const [startDate, setStartDate] = useState(filters?.start_date || '');
     const [endDate, setEndDate] = useState(filters?.end_date || '');
 
+    // View Documents Modal state
+    const [showDocsModal, setShowDocsModal] = useState(false);
+    const [selectedBookingForDocs, setSelectedBookingForDocs] = useState(null);
+
+    // Order History Modal state
+    const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [selectedBookingForHistory, setSelectedBookingForHistory] = useState(null);
+
+    const handleShowHistory = (booking) => {
+        setSelectedBookingForHistory(booking);
+        setShowHistoryModal(true);
+    };
+
     // ✅ Open Invoice Modal
     const handleOpenInvoice = (booking) => {
         setSelectedBooking(booking);
@@ -32,6 +47,17 @@ const RoomCheckOut = ({ bookings, filters }) => {
     const handleCloseInvoice = () => {
         setShowInvoiceModal(false);
         setSelectedBooking(null);
+    };
+
+    // View Documents handlers
+    const handleShowDocs = (booking) => {
+        setSelectedBookingForDocs(booking);
+        setShowDocsModal(true);
+    };
+
+    const handleCloseDocs = () => {
+        setShowDocsModal(false);
+        setSelectedBookingForDocs(null);
     };
 
     // ✅ Handle Filter/Search - Send to backend
@@ -46,7 +72,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
             {
                 preserveState: true,
                 preserveScroll: true,
-            }
+            },
         );
     };
 
@@ -64,8 +90,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
 
             <div
                 style={{
-                    minHeight:'100vh',
-                    backgroundColor:'#f5f5f5',
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -168,7 +194,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                         </Box>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
@@ -198,9 +224,19 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             <TableCell>{booking.per_day_charge}</TableCell>
                                             <TableCell>{booking.status.replace(/_/g, ' ')}</TableCell>
                                             <TableCell>
-                                                <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
-                                                    View
-                                                </Button>
+                                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                    <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                        <Visibility fontSize="small" />
+                                                    </Button>
+                                                    <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
+                                                        View
+                                                    </Button>
+                                                    <Button variant="outlined" size="small" color="primary" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600 }}>
+                                                            Orders
+                                                        </Box>
+                                                    </Button>
+                                                </Box>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -239,6 +275,19 @@ const RoomCheckOut = ({ bookings, filters }) => {
             </div>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
+
+            {/* View Documents Modal */}
+            <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+
+            {/* Room Order History Modal */}
+            <RoomOrderHistoryModal
+                open={showHistoryModal}
+                onClose={() => {
+                    setShowHistoryModal(false);
+                    setSelectedBookingForHistory(null);
+                }}
+                bookingId={selectedBookingForHistory?.id}
+            />
         </>
     );
 };

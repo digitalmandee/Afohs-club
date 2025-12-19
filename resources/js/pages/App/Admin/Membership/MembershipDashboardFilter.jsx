@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Typography, Button, Box, Dialog, Collapse, Chip, IconButton, TextField, MenuItem } from '@mui/material';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Typography, Button, Box, Dialog, Collapse, Chip, IconButton, TextField, MenuItem, Autocomplete, CircularProgress } from '@mui/material';
 import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
@@ -97,11 +98,105 @@ const MembershipDashboardFilter = () => {
         });
     };
 
+    const [open, setOpen] = useState(false);
+    const [options, setOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    // Debounce function to limit API calls
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (open) {
+                // If the user has typed something that isn't already in the filter, use that
+                // But typically for autocomplete, we want to search based on input
+                // Here we will use the name filter as the query if it exists
+                if (filters.name) {
+                    fetchMembers(filters.name);
+                }
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [filters.name, open]);
+
+    const fetchMembers = async (query) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(route('api.members.search'), {
+                params: { query },
+            });
+            setOptions(response.data.members || []);
+        } catch (error) {
+            console.error('Failed to fetch members', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <Box backgroundColor="white" mb={3} p={2}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(4, 1fr)' } }} gap={2} mb={2}>
                 <TextField label="Membership #" size="small" value={filters.membership_no} onChange={(e) => handleFilterChange('membership_no', e.target.value)} fullWidth />
-                <TextField label="Name" size="small" value={filters.name} onChange={(e) => handleFilterChange('name', e.target.value)} fullWidth />
+
+                <Autocomplete
+                    open={open}
+                    onOpen={() => setOpen(true)}
+                    onClose={() => setOpen(false)}
+                    isOptionEqualToValue={(option, value) => option.full_name === value.full_name}
+                    getOptionLabel={(option) => option.full_name || ''}
+                    options={options}
+                    loading={loading}
+                    value={options.find((opt) => opt.full_name === filters.name) || (filters.name ? { full_name: filters.name } : null)}
+                    onInputChange={(event, newInputValue) => {
+                        handleFilterChange('name', newInputValue);
+                    }}
+                    onChange={(event, newValue) => {
+                        handleFilterChange('name', newValue ? newValue.full_name : '');
+                    }}
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label="Name"
+                            size="small"
+                            fullWidth
+                            InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                    <>
+                                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                        {params.InputProps.endAdornment}
+                                    </>
+                                ),
+                            }}
+                        />
+                    )}
+                    renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                            <Box sx={{ width: '100%' }}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                    <Typography variant="body2" fontWeight="bold">
+                                        {option.full_name}
+                                    </Typography>
+                                    <Chip
+                                        component="span"
+                                        label={option.status}
+                                        size="small"
+                                        sx={{
+                                            height: '20px',
+                                            fontSize: '10px',
+                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                            textTransform: 'capitalize',
+                                        }}
+                                    />
+                                </Box>
+                                <Typography variant="caption" color="text.secondary">
+                                    {option.membership_no} | {option.mobile_number_a}
+                                </Typography>
+                            </Box>
+                        </li>
+                    )}
+                />
+
                 <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} fullWidth />
                 <TextField label="Contact" size="small" value={filters.contact} onChange={(e) => handleFilterChange('contact', e.target.value)} fullWidth />
                 <TextField select label="Card Status" size="small" value={filters.card_status} onChange={(e) => handleFilterChange('card_status', e.target.value)} fullWidth>

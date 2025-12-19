@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AppliedMemberInvoice from './AppliedMemberInvoice';
 import AppliedMemberForm from './AppliedMemberForm';
+import dayjs from 'dayjs';
 
 const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) => {
     const [open, setOpen] = useState(true);
@@ -128,8 +129,8 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.address || 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.cnic}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount_paid}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.end_date}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date ? dayjs(member.start_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.end_date ? dayjs(member.end_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <Button variant="text" onClick={() => handleViewInvoice(member)}>
                                                             View

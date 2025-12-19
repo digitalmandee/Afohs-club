@@ -85,6 +85,21 @@ class Member extends BaseModel
         'created_by',
         'updated_by',
         'deleted_by',
+        'business_developer_id',
+        'membership_fee',
+        'additional_membership_charges',
+        'membership_fee_additional_remarks',
+        'membership_fee_discount',
+        'membership_fee_discount_remarks',
+        'total_membership_fee',
+        'maintenance_fee',
+        'additional_maintenance_charges',
+        'maintenance_fee_additional_remarks',
+        'maintenance_fee_discount',
+        'maintenance_fee_discount_remarks',
+        'total_maintenance_fee',
+        'per_day_maintenance_fee',
+        'comment_box',
     ];
 
     protected $casts = [

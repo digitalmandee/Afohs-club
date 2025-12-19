@@ -16,8 +16,8 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $query = Order::query()
-            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation'])
-            ->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'table:id,table_no', 'orderItems:id,order_id']);
+            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
+            ->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'table:id,table_no', 'orderItems:id,order_id', 'roomBooking.room:id,name']);
 
         // ===============================
         // FILTER: Search by member name or membership_no
@@ -40,6 +40,7 @@ class TransactionController extends Controller
                 'takeaway' => 'takeaway',
                 'delivery' => 'delivery',
                 'reservation' => 'reservation',
+                'room_service' => 'room_service',
             ];
             if (isset($orderTypeMap[$request->orderType])) {
                 $query->where('order_type', $orderTypeMap[$request->orderType]);

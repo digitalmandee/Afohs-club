@@ -127,4 +127,9 @@ class FinancialInvoice extends BaseModel
     {
         return $this->morphTo();
     }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'invoice_id');
+    }
 }

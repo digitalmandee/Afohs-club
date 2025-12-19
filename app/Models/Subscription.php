@@ -17,6 +17,7 @@ class Subscription extends Model
         'valid_from',
         'valid_to',
         'status',
+        'invoice_id',
         'qr_code'
     ];
 
@@ -25,10 +26,22 @@ class Subscription extends Model
         'valid_to' => 'date',
     ];
 
-    // Polymorphic relationship to invoice
-    public function invoice()
+    // New Relationship (Single Invoice, Multi-Sub)
+    public function financialInvoice()
+    {
+        return $this->belongsTo(FinancialInvoice::class, 'invoice_id');
+    }
+
+    // Legacy Relationship (One-to-One)
+    public function legacyInvoice()
     {
         return $this->morphOne(FinancialInvoice::class, 'invoiceable');
+    }
+
+    // Helper to resolve invoice transparently
+    public function getInvoiceAttribute()
+    {
+        return $this->financialInvoice ?? $this->legacyInvoice;
     }
 
     public function member()

@@ -37,6 +37,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         currentYear: new Date().getFullYear(),
     });
 
+    const [subscriptionItems, setSubscriptionItems] = useState([]); // Array to store multiple subscriptions
+
     const { data, setData, post, processing, errors, reset } = useForm({
         member_id: '',
         fee_type: '',
@@ -54,9 +56,17 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         starting_quarter: 1,
         credit_card_type: '',
         receipt_file: null,
+        // Temporary fields for adding a subscription
         subscription_type_id: '',
         subscription_category_id: '',
         family_member_id: null, // null means SELF (primary member)
+        item_amount: '', // Editable amount for the item being added
+        item_discount_type: '',
+        item_discount_value: '',
+        subscriptions: [], // Array to send to backend
+        item_amount: '',
+        item_discount_type: '',
+        item_discount_value: '',
     });
 
     // Auto-update payment suggestions when member changes
@@ -490,39 +500,63 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 tax_percentage: '',
                 overdue_percentage: '',
                 remarks: '',
+                additional_charges: '',
+                discount_type: '',
+                discount_value: '',
             };
 
             // Helper to parse amount (remove commas if present)
             const parseAmount = (val) => {
-                if (!val) return '';
+                if (!val) return 0;
                 return parseFloat(String(val).replace(/,/g, ''));
             };
 
             // Update amount based on fee type and selected member
             const memberCategory = selectedMember?.member_category || selectedMember?.memberCategory;
 
-            if (selectedMember && memberCategory) {
+            if (selectedMember) {
                 if (feeType === 'membership_fee') {
-                    newData.amount = parseAmount(memberCategory.fee);
+                    // Use Member Specific Membership Fee Details from member table only (no fallback to category)
+                    const specFee = parseAmount(selectedMember.membership_fee);
+
+                    // Always use member's specific fee (even if 0)
+                    newData.amount = specFee;
+                    newData.additional_charges = parseAmount(selectedMember.additional_membership_charges) || '';
+
+                    const discVal = parseAmount(selectedMember.membership_fee_discount);
+                    if (discVal > 0) {
+                        newData.discount_type = 'fixed';
+                        newData.discount_value = discVal;
+                    }
+
+                    // Combine remarks
+                    const remarks = [selectedMember.comment_box, selectedMember.membership_fee_additional_remarks, selectedMember.membership_fee_discount_remarks].filter(Boolean).join('; ');
+                    newData.remarks = remarks;
+
                     // Auto-suggest 4 years validity for membership fee
                     const today = new Date();
                     const fourYearsLater = new Date(today.getFullYear() + 4, today.getMonth(), today.getDate());
                     newData.valid_from = today.toISOString().split('T')[0];
                     newData.valid_to = fourYearsLater.toISOString().split('T')[0];
                 } else if (feeType === 'maintenance_fee') {
-                    newData.amount = parseAmount(memberCategory.subscription_fee);
-                    // Auto-suggest monthly period based on member joining date
-                    // Note: suggestMaintenancePeriod needs to be called separately as it depends on state
+                    // For maintenance, we use the effective monthly rate (Total Maintenance Fee) if available,
+                    // otherwise the category fee. The calculation happens in suggestMaintenancePeriod.
+                    // We trigger it here.
+
+                    // We only populate remarks here as suggestMaintenancePeriod handles amount/dates
+                    // We only populate remarks here as suggestMaintenancePeriod handles amount/dates
+                    const maintRemarks = [selectedMember.comment_box, selectedMember.maintenance_fee_additional_remarks, selectedMember.maintenance_fee_discount_remarks].filter(Boolean).join('; ');
+                    newData.remarks = maintRemarks;
+
+                    // Auto-suggest monthly period
                     setTimeout(() => suggestMaintenancePeriod('monthly'), 0);
                 } else if (feeType === 'subscription_fee') {
-                    // For subscription fees, user will select type and category manually
-                    // Set default start date to today
-                    const today = new Date();
-                    newData.valid_from = today.toISOString().split('T')[0];
+                    // For subscription fees, reset items and amount
+                    setSubscriptionItems([]);
+                    newData.amount = '';
                 } else if (feeType === 'reinstating_fee') {
                     // For reinstating fees, set a standard amount (can be customized)
                     newData.amount = 25000; // Standard reinstating fee amount
-                    // No validity period needed for reinstating fees
                     newData.valid_from = '';
                     newData.valid_to = '';
                 }
@@ -531,8 +565,103 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         });
     };
 
+    const handleAddSubscription = () => {
+        // Validate required fields
+        const newErrors = {};
+        if (!data.subscription_type_id) newErrors.subscription_type_id = 'Subscription Type is required';
+        if (!data.subscription_category_id) newErrors.subscription_category_id = 'Subscription Category is required';
+        if (!data.valid_from) newErrors.valid_from = 'Start Date is required';
+        if (!data.valid_to) newErrors.valid_to = 'End Date is required';
+
+        if (Object.keys(newErrors).length > 0) {
+            setFormErrors((prev) => ({ ...prev, ...newErrors }));
+            enqueueSnackbar('Please fill all required subscription fields', { variant: 'error' });
+            return;
+        }
+
+        // Get details for display
+        const type = subscriptionTypes.find((t) => t.id == data.subscription_type_id);
+        const category = subscriptionCategories.find((c) => c.id == data.subscription_category_id);
+
+        let familyMemberName = 'SELF';
+        let familyMemberRelation = 'Primary Member';
+        if (data.family_member_id) {
+            const familyMember = selectedMember.family_members.find((f) => f.id == data.family_member_id);
+            if (familyMember) {
+                familyMemberName = familyMember.full_name;
+                familyMemberRelation = familyMember.relation;
+            }
+        }
+
+        // Calculate net amount for this item
+        const baseAmount = parseFloat(data.item_amount) || 0;
+        const discountVal = parseFloat(data.item_discount_value) || 0;
+        let netAmount = baseAmount;
+
+        if (data.item_discount_type === 'fixed') {
+            netAmount = Math.max(0, baseAmount - discountVal);
+        } else if (data.item_discount_type === 'percent') {
+            netAmount = Math.max(0, baseAmount - (baseAmount * discountVal) / 100);
+        }
+
+        const newItem = {
+            id: Date.now(), // Temporary ID
+            subscription_type_id: data.subscription_type_id,
+            subscription_category_id: data.subscription_category_id,
+            family_member_id: data.family_member_id,
+            valid_from: data.valid_from,
+            valid_to: data.valid_to,
+
+            // Financials
+            amount: baseAmount,
+            discount_type: data.item_discount_type,
+            discount_value: data.item_discount_value,
+            net_amount: netAmount,
+
+            // Display only props
+            type_name: type?.name,
+            category_name: category?.name,
+            family_member_name: familyMemberName,
+            family_member_relation: familyMemberRelation,
+        };
+
+        const updatedItems = [...subscriptionItems, newItem];
+        setSubscriptionItems(updatedItems);
+
+        // Update total amount (Sum of Net Amounts)
+        const totalAmount = updatedItems.reduce((sum, item) => sum + item.net_amount, 0);
+
+        // Reset inputs
+        setData((prev) => ({
+            ...prev,
+            amount: totalAmount,
+            subscription_type_id: '',
+            subscription_category_id: '',
+            family_member_id: null,
+            item_amount: '',
+            item_discount_type: '',
+            item_discount_value: '',
+            // valid_from: '', // Optional: keep or reset
+            // valid_to: '',
+        }));
+
+        enqueueSnackbar('Subscription added to list', { variant: 'success' });
+        setFormErrors({});
+    };
+
+    const handleRemoveSubscription = (index) => {
+        const updatedItems = [...subscriptionItems];
+        updatedItems.splice(index, 1);
+        setSubscriptionItems(updatedItems);
+
+        // Recalculate total amount
+        // Recalculate total amount
+        const totalAmount = updatedItems.reduce((sum, item) => sum + item.net_amount, 0);
+        setData('amount', totalAmount || '');
+    };
+
     const suggestMaintenancePeriod = (frequency) => {
-        if (!selectedMember || !selectedMember.member_category) {
+        if (!selectedMember) {
             return;
         }
 
@@ -629,7 +758,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
             // Calculate amount based on actual months covered
             const actualMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-            const monthlyFee = parseFloat(String(selectedMember.member_category.subscription_fee).replace(/,/g, '')); // Monthly fee (base fee)
+
+            // Determine monthly fee from member table only (no category fallback)
+            const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
+            let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
+
             amount = Math.round(monthlyFee * actualMonths);
         } else {
             // SUBSEQUENT YEARS OR FIRST YEAR COMPLETE: Quarterly payment system (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
@@ -695,8 +828,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
             endDate.setUTCDate(0); // Last day of previous month (complete month)
 
-            // Calculate amount based on frequency and monthly fee logic
-            const monthlyFee = parseFloat(String(selectedMember.member_category.subscription_fee).replace(/,/g, '')); // Monthly fee (base fee)
+            // Calculate amount based on frequency and monthly fee from member table only (no category fallback)
+            const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
+            let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
 
             if (frequency === 'monthly') {
                 amount = Math.round(monthlyFee);
@@ -872,8 +1006,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         // Calculate number of months between dates for maintenance fee
                         const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
 
-                        // Calculate amount based on monthly fee
-                        const monthlyFee = selectedMember.member_category.subscription_fee;
+                        // Calculate amount based on monthly fee from member table only (no category fallback)
+                        const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
+                        let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
+
                         const newAmount = monthlyFee * monthsDiff;
 
                         setData('amount', newAmount);
@@ -907,7 +1043,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                 periodText = `${totalDays} day${totalDays > 1 ? 's' : ''} (Rs ${dailyRate}/day)`;
                             }
 
-                            setData('amount', newAmount);
+                            setData('item_amount', newAmount);
 
                             enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${periodText}`, {
                                 variant: 'info',
@@ -951,10 +1087,25 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             Object.keys(data).forEach((key) => {
                 if (key === 'receipt_file' && data[key]) {
                     formData.append('receipt_file', data[key]);
+                } else if (key === 'subscriptions') {
+                    // Skip handling here, we'll do it separately for subscription_fee
                 } else if (data[key] !== null && data[key] !== '') {
                     formData.append(key, data[key]);
                 }
             });
+
+            // Special handling for subscription items
+            if (data.fee_type === 'subscription_fee') {
+                if (subscriptionItems.length === 0) {
+                    enqueueSnackbar('Please add at least one subscription item', { variant: 'error' });
+                    setSubmitting(false);
+                    return;
+                }
+                formData.append('subscriptions', JSON.stringify(subscriptionItems));
+                // We'll also append the first item's dates as a fallback/reference for the "invoice" if needed,
+                // but the backend will iterate over items.
+                // Actually, the main amount is already updated in data.amount
+            }
 
             // Append status
             formData.append('status', targetStatus);
@@ -968,12 +1119,18 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             if (response.data.success) {
                 // Set invoice details for modal
                 if (response.data.transaction) {
-                    setCreatedInvoiceId(response.data.transaction.id);
+                    setCreatedInvoiceId(response.data.transaction.id); // For single, or first of many
                     setCreatedMemberId(response.data.transaction.member_id);
                     setShowInvoiceModal(true);
                 }
 
+                // If we got multiple transactions (should generally share invoice_no, so we can pick any id for the slip?)
+                // The backend response format needs to be checked.
+                // Assuming it returns one representative transaction object or a list.
+                // We will adjust backend to return the first one or a clear "main" one.
+
                 // Reset form but keep member if pre-selected
+                setSubscriptionItems([]); // Clear subscription items
                 setData({
                     member_id: preSelectedMember ? preSelectedMember.id : '',
                     fee_type: 'maintenance_fee',
@@ -991,6 +1148,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     tax_percentage: '',
                     overdue_percentage: '',
                     remarks: '',
+                    subscription_type_id: '',
+                    subscription_category_id: '',
+                    family_member_id: null,
                 });
 
                 if (!preSelectedMember) {
@@ -1249,49 +1409,56 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Typography>
                                                         <FormControl fullWidth>
                                                             <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                                {(() => {
+                                                                {/* {(() => {
                                                                     const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
                                                                     const options = [];
 
                                                                     if (selectedMember?.status === 'cancelled' || selectedMember.status === 'expired') {
-                                                                        if (isAllowed('reinstating_fee')) {
-                                                                            options.push(
-                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                    Reinstating Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        }
+                                                                        options.push(
+                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                Reinstating Fee
+                                                                            </MenuItem>,
+                                                                        );
                                                                     } else if (!membershipFeePaid) {
-                                                                        if (isAllowed('membership_fee')) {
-                                                                            options.push(
-                                                                                <MenuItem key="membership_fee" value="membership_fee">
-                                                                                    Membership Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        }
+                                                                        options.push(
+                                                                            <MenuItem key="membership_fee" value="membership_fee">
+                                                                                Membership Fee
+                                                                            </MenuItem>,
+                                                                        );
                                                                         // Strict: No other options if membership fee is unpaid.
                                                                     } else {
-                                                                        if (isAllowed('maintenance_fee'))
-                                                                            options.push(
-                                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                                    Maintenance Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        if (isAllowed('subscription_fee'))
-                                                                            options.push(
-                                                                                <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                                    Subscription Fee
-                                                                                </MenuItem>,
-                                                                            );
-                                                                        if (isAllowed('reinstating_fee'))
-                                                                            options.push(
-                                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                    Reinstating Fee
-                                                                                </MenuItem>,
-                                                                            );
+                                                                        options.push(
+                                                                            <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                                Maintenance Fee
+                                                                            </MenuItem>,
+                                                                        );
+                                                                        options.push(
+                                                                            <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                                Subscription Fee
+                                                                            </MenuItem>,
+                                                                        );
+                                                                        options.push(
+                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                                Reinstating Fee
+                                                                            </MenuItem>,
+                                                                        );
                                                                     }
                                                                     return options;
-                                                                })()}
+                                                                })()} */}
+                                                                {!membershipFeePaid && (
+                                                                    <MenuItem key="membership_fee" value="membership_fee">
+                                                                        Membership Fee
+                                                                    </MenuItem>
+                                                                )}
+                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                    Maintenance Fee
+                                                                </MenuItem>
+                                                                <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                    Subscription Fee
+                                                                </MenuItem>
+                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                    Reinstating Fee
+                                                                </MenuItem>
                                                             </Select>
                                                             {errors.fee_type && (
                                                                 <Typography variant="caption" color="error" sx={{ mt: 1 }}>
@@ -1512,8 +1679,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     borderRadius: 2,
                                                                     border: '1px solid',
                                                                     borderColor: 'grey.200',
+                                                                    mb: 3,
                                                                 }}
                                                             >
+                                                                {/* Add New Subscription Form */}
                                                                 <Grid container spacing={3}>
                                                                     <Grid item xs={6}>
                                                                         <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
@@ -1526,9 +1695,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                 onChange={(e) => {
                                                                                     setData('subscription_type_id', e.target.value);
                                                                                     setData('subscription_category_id', ''); // Reset category when type changes
-                                                                                    setData('amount', ''); // Reset amount
+                                                                                    // Do NOT reset main amount, as it may hold total of other items
                                                                                 }}
-                                                                                error={!!errors.subscription_type_id}
+                                                                                error={!!(errors.subscription_type_id || formErrors.subscription_type_id)}
                                                                                 sx={{ borderRadius: 2 }}
                                                                                 displayEmpty
                                                                             >
@@ -1539,11 +1708,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                     </MenuItem>
                                                                                 ))}
                                                                             </Select>
-                                                                            {errors.subscription_type_id && (
-                                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                                    {errors.subscription_type_id}
-                                                                                </Typography>
-                                                                            )}
                                                                         </FormControl>
                                                                     </Grid>
 
@@ -1559,30 +1723,29 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                     const categoryId = e.target.value;
                                                                                     setData('subscription_category_id', categoryId);
 
-                                                                                    // Auto-populate amount and dates from selected category
+                                                                                    // Auto-populate dates from selected category for THIS item (not yet added)
                                                                                     const selectedCategory = subscriptionCategories?.find((cat) => cat.id == categoryId);
                                                                                     if (selectedCategory) {
-                                                                                        // Set amount to monthly fee (payment_type removed)
-                                                                                        setData('amount', selectedCategory.fee);
-
-                                                                                        // Auto-set dates for monthly subscription
+                                                                                        // Default dates: 1 month from today
                                                                                         const today = new Date();
                                                                                         const startDate = today.toISOString().split('T')[0];
 
-                                                                                        // For monthly: valid for 1 month
                                                                                         const nextMonth = new Date(today);
                                                                                         nextMonth.setMonth(today.getMonth() + 1);
-                                                                                        nextMonth.setDate(today.getDate() - 1); // End day before same date next month
+                                                                                        nextMonth.setDate(today.getDate() - 1);
                                                                                         const endDate = nextMonth.toISOString().split('T')[0];
 
-                                                                                        setData('valid_from', startDate);
-                                                                                        setData('valid_to', endDate);
-
-                                                                                        // Show notification about auto-set dates
-                                                                                        enqueueSnackbar(`Auto-set dates for monthly (30 days) subscription`, { variant: 'info' });
+                                                                                        setData((prev) => ({
+                                                                                            ...prev,
+                                                                                            valid_from: startDate,
+                                                                                            valid_to: endDate,
+                                                                                            item_amount: selectedCategory.fee, // Set default amount
+                                                                                            item_discount_type: '',
+                                                                                            item_discount_value: '',
+                                                                                        }));
                                                                                     }
                                                                                 }}
-                                                                                error={!!errors.subscription_category_id}
+                                                                                error={!!(errors.subscription_category_id || formErrors.subscription_category_id)}
                                                                                 sx={{ borderRadius: 2 }}
                                                                                 displayEmpty
                                                                                 disabled={!data.subscription_type_id}
@@ -1596,30 +1759,29 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                         </MenuItem>
                                                                                     ))}
                                                                             </Select>
-                                                                            {errors.subscription_category_id && (
-                                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                                    {errors.subscription_category_id}
-                                                                                </Typography>
-                                                                            )}
                                                                         </FormControl>
                                                                     </Grid>
 
-                                                                    {/* Family Member Selection */}
+                                                                    {/* Dates for the item */}
+                                                                    <Grid item xs={6}>
+                                                                        <TextField size="small" fullWidth label="Valid From" type="date" value={data.valid_from} onChange={(e) => handleDateChange('valid_from', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_from || formErrors.valid_from)} />
+                                                                    </Grid>
+                                                                    <Grid item xs={6}>
+                                                                        <TextField size="small" fullWidth label="Valid To" type="date" value={data.valid_to} onChange={(e) => handleDateChange('valid_to', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_to || formErrors.valid_to)} />
+                                                                    </Grid>
+
                                                                     <Grid item xs={12}>
                                                                         <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
                                                                             Family Member
                                                                         </Typography>
                                                                         <FormControl fullWidth>
-                                                                            <Select size="small" value={data.family_member_id || ''} onChange={(e) => setData('family_member_id', e.target.value || null)} error={!!errors.family_member_id} sx={{ borderRadius: 2 }} displayEmpty>
+                                                                            <Select size="small" value={data.family_member_id || ''} onChange={(e) => setData('family_member_id', e.target.value || null)} sx={{ borderRadius: 2 }} displayEmpty>
                                                                                 <MenuItem value="">
                                                                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                                         <Person sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
                                                                                         <Box>
                                                                                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
                                                                                                 {selectedMember?.full_name} (SELF)
-                                                                                            </Typography>
-                                                                                            <Typography variant="caption" color="text.secondary">
-                                                                                                Primary Member - {selectedMember?.membership_no}
                                                                                             </Typography>
                                                                                         </Box>
                                                                                     </Box>
@@ -1633,25 +1795,151 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                                     {familyMember.full_name}
                                                                                                 </Typography>
                                                                                                 <Typography variant="caption" color="text.secondary">
-                                                                                                    {familyMember.relation} - {familyMember.membership_no}
+                                                                                                    {familyMember.relation}
                                                                                                 </Typography>
                                                                                             </Box>
                                                                                         </Box>
                                                                                     </MenuItem>
                                                                                 ))}
                                                                             </Select>
-                                                                            {errors.family_member_id && (
-                                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                                    {errors.family_member_id}
-                                                                                </Typography>
-                                                                            )}
-                                                                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                                                                                Select the family member for whom this subscription is being purchased. Leave as "SELF" for the primary member.
-                                                                            </Typography>
                                                                         </FormControl>
+                                                                    </Grid>
+
+                                                                    {/* Override Amount for Item */}
+                                                                    {/* Amount and Discount - Compact Row */}
+                                                                    <Grid item xs={12} sm={6}>
+                                                                        <TextField
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label="Amount"
+                                                                            type="number"
+                                                                            value={data.item_amount}
+                                                                            onChange={(e) => setData('item_amount', e.target.value)}
+                                                                            InputProps={{
+                                                                                startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary', fontSize: '0.8rem' }}>Rs</Typography>,
+                                                                            }}
+                                                                        />
+                                                                    </Grid>
+
+                                                                    <Grid item xs={12} sm={6}>
+                                                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                                                            <FormControl fullWidth size="small">
+                                                                                <Select
+                                                                                    value={data.item_discount_type}
+                                                                                    onChange={(e) => {
+                                                                                        setData('item_discount_type', e.target.value);
+                                                                                        if (!e.target.value) setData('item_discount_value', '');
+                                                                                    }}
+                                                                                    displayEmpty
+                                                                                    sx={{ borderRadius: 2 }}
+                                                                                >
+                                                                                    <MenuItem value="">Dsc Type</MenuItem>
+                                                                                    <MenuItem value="fixed">Fixed</MenuItem>
+                                                                                    <MenuItem value="percent">%</MenuItem>
+                                                                                </Select>
+                                                                            </FormControl>
+                                                                            <TextField size="small" fullWidth label="Val" type="number" value={data.item_discount_value} onChange={(e) => setData('item_discount_value', e.target.value)} disabled={!data.item_discount_type} />
+                                                                        </Box>
+                                                                    </Grid>
+
+                                                                    <Grid item xs={12}>
+                                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                                                                            {/* Net Calculation Display */}
+                                                                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                                                                                Net Item:{' '}
+                                                                                {formatCurrency(
+                                                                                    (() => {
+                                                                                        const amt = parseFloat(data.item_amount) || 0;
+                                                                                        const dVal = parseFloat(data.item_discount_value) || 0;
+                                                                                        if (data.item_discount_type === 'fixed') return Math.max(0, amt - dVal);
+                                                                                        if (data.item_discount_type === 'percent') return Math.max(0, amt - (amt * dVal) / 100);
+                                                                                        return amt;
+                                                                                    })(),
+                                                                                )}
+                                                                            </Typography>
+
+                                                                            <Button variant="contained" onClick={handleAddSubscription} disabled={!data.subscription_type_id || !data.subscription_category_id}>
+                                                                                Add to Invoice
+                                                                            </Button>
+                                                                        </Box>
                                                                     </Grid>
                                                                 </Grid>
                                                             </Box>
+
+                                                            {/* Added Subscriptions List */}
+                                                            {subscriptionItems.length > 0 && (
+                                                                <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                                                                    <Table size="small">
+                                                                        <TableHead sx={{ bgcolor: 'grey.100' }}>
+                                                                            <TableRow>
+                                                                                <TableCell>
+                                                                                    <strong>Type</strong>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <strong>Member</strong>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <strong>Period</strong>
+                                                                                </TableCell>
+                                                                                <TableCell align="right">
+                                                                                    <strong>Amount</strong>
+                                                                                </TableCell>
+                                                                                <TableCell align="right">
+                                                                                    <strong>Action</strong>
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        </TableHead>
+                                                                        <TableBody>
+                                                                            {subscriptionItems.map((item, index) => (
+                                                                                <TableRow key={index}>
+                                                                                    <TableCell>
+                                                                                        {item.type_name}
+                                                                                        <Typography variant="caption" display="block" color="text.secondary">
+                                                                                            {item.category_name}
+                                                                                        </Typography>
+                                                                                    </TableCell>
+                                                                                    <TableCell>
+                                                                                        {item.family_member_name}
+                                                                                        <Typography variant="caption" display="block" color="text.secondary">
+                                                                                            {item.family_member_relation}
+                                                                                        </Typography>
+                                                                                    </TableCell>
+                                                                                    <TableCell>
+                                                                                        {formatDate(item.valid_from)} - {formatDate(item.valid_to)}
+                                                                                    </TableCell>
+                                                                                    <TableCell align="right">
+                                                                                        {formatCurrency(item.amount)}
+                                                                                        {item.discount_type && (
+                                                                                            <Typography variant="caption" display="block" color="error">
+                                                                                                -{item.discount_type === 'percent' ? `${item.discount_value}%` : formatCurrency(item.discount_value)}
+                                                                                            </Typography>
+                                                                                        )}
+                                                                                        {item.discount_type && (
+                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                                {formatCurrency(item.net_amount)}
+                                                                                            </Typography>
+                                                                                        )}
+                                                                                    </TableCell>
+                                                                                    <TableCell align="right">
+                                                                                        <Button size="small" color="error" onClick={() => handleRemoveSubscription(index)}>
+                                                                                            Remove
+                                                                                        </Button>
+                                                                                    </TableCell>
+                                                                                </TableRow>
+                                                                            ))}
+                                                                            <TableRow sx={{ bgcolor: 'grey.50' }}>
+                                                                                <TableCell colSpan={3} align="right">
+                                                                                    <strong>Total Subscriptions:</strong>
+                                                                                </TableCell>
+                                                                                <TableCell align="right">
+                                                                                    <strong>{formatCurrency(subscriptionItems.reduce((acc, item) => acc + item.net_amount, 0))}</strong>
+                                                                                </TableCell>
+                                                                                <TableCell />
+                                                                            </TableRow>
+                                                                        </TableBody>
+                                                                    </Table>
+                                                                </TableContainer>
+                                                            )}
                                                         </Grid>
                                                     )}
 
@@ -1671,6 +1959,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     onChange={(e) => setData('amount', e.target.value)}
                                                                     error={!!errors.amount}
                                                                     helperText={errors.amount}
+                                                                    disabled={data.fee_type === 'subscription_fee'} // Readonly for subscription fees
                                                                     sx={{
                                                                         '& .MuiOutlinedInput-root': { borderRadius: 2 },
                                                                     }}
@@ -1679,31 +1968,35 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     }}
                                                                 />
                                                             </Grid>
-                                                            <Grid item xs={6}>
-                                                                <FormControl fullWidth>
-                                                                    <Select size="small" value={data.discount_type} onChange={(e) => setData('discount_type', e.target.value)} displayEmpty sx={{ borderRadius: 2 }}>
-                                                                        <MenuItem value="">No Discount</MenuItem>
-                                                                        <MenuItem value="percent">Percentage</MenuItem>
-                                                                        <MenuItem value="fixed">Fixed Amount</MenuItem>
-                                                                    </Select>
-                                                                </FormControl>
-                                                            </Grid>
-                                                            <Grid item xs={6}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="Discount Value"
-                                                                    type="number"
-                                                                    value={data.discount_value}
-                                                                    onChange={(e) => setData('discount_value', e.target.value)}
-                                                                    disabled={!data.discount_type}
-                                                                    error={!!errors.discount_value}
-                                                                    helperText={errors.discount_value}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                />
-                                                            </Grid>
+                                                            {data.fee_type !== 'subscription_fee' && (
+                                                                <>
+                                                                    <Grid item xs={6}>
+                                                                        <FormControl fullWidth>
+                                                                            <Select size="small" value={data.discount_type} onChange={(e) => setData('discount_type', e.target.value)} displayEmpty sx={{ borderRadius: 2 }}>
+                                                                                <MenuItem value="">No Discount</MenuItem>
+                                                                                <MenuItem value="percent">Percentage</MenuItem>
+                                                                                <MenuItem value="fixed">Fixed Amount</MenuItem>
+                                                                            </Select>
+                                                                        </FormControl>
+                                                                    </Grid>
+                                                                    <Grid item xs={6}>
+                                                                        <TextField
+                                                                            size="small"
+                                                                            fullWidth
+                                                                            label="Discount Value"
+                                                                            type="number"
+                                                                            value={data.discount_value}
+                                                                            onChange={(e) => setData('discount_value', e.target.value)}
+                                                                            disabled={!data.discount_type}
+                                                                            error={!!errors.discount_value}
+                                                                            helperText={errors.discount_value}
+                                                                            sx={{
+                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                                                                            }}
+                                                                        />
+                                                                    </Grid>
+                                                                </>
+                                                            )}
                                                             <Grid item xs={6}>
                                                                 <TextField
                                                                     size="small"
@@ -1938,103 +2231,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Grid>
                                                     )}
 
-                                                    {/* Subscription Validity Period Section */}
-                                                    {selectedMember && data.fee_type === 'subscription_fee' && (
-                                                        <Grid item xs={12}>
-                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                Validity Period
-                                                            </Typography>
-                                                            <Box
-                                                                sx={{
-                                                                    p: 3,
-                                                                    bgcolor: 'grey.50',
-                                                                    borderRadius: 2,
-                                                                    border: '1px solid',
-                                                                    borderColor: 'grey.200',
-                                                                }}
-                                                            >
-                                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                                                                    Set Subscription Period
-                                                                </Typography>
-
-                                                                <Grid container spacing={3}>
-                                                                    <Grid item xs={6}>
-                                                                        <TextField
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label="Valid From"
-                                                                            type="date"
-                                                                            value={data.valid_from}
-                                                                            onChange={(e) => handleDateChange('valid_from', e.target.value)}
-                                                                            error={!!errors.valid_from}
-                                                                            helperText={errors.valid_from || 'Subscription start date'}
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                            }}
-                                                                            InputLabelProps={{ shrink: true }}
-                                                                        />
-                                                                    </Grid>
-                                                                    <Grid item xs={6}>
-                                                                        <TextField
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label="Valid To"
-                                                                            type="date"
-                                                                            value={data.valid_to}
-                                                                            onChange={(e) => handleDateChange('valid_to', e.target.value)}
-                                                                            error={!!errors.valid_to}
-                                                                            helperText={errors.valid_to || 'Leave empty for unlimited validity'}
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                            }}
-                                                                            InputLabelProps={{ shrink: true }}
-                                                                        />
-                                                                    </Grid>
-                                                                </Grid>
-
-                                                                {data.valid_from && (
-                                                                    <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
-                                                                        <strong>Subscription Period:</strong> {formatDate(data.valid_from)}
-                                                                        {data.valid_to ? ` to ${formatDate(data.valid_to)}` : ' (Unlimited)'}
-                                                                        {data.valid_from &&
-                                                                            data.valid_to &&
-                                                                            data.subscription_category_id &&
-                                                                            (() => {
-                                                                                const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
-                                                                                if (selectedCategory) {
-                                                                                    const fromDate = new Date(data.valid_from);
-                                                                                    const toDate = new Date(data.valid_to);
-                                                                                    const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                                                                                    const isFullMonths = fromDate.getDate() === 1 && toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate();
-
-                                                                                    if (isFullMonths) {
-                                                                                        const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
-                                                                                        return (
-                                                                                            <div style={{ marginTop: '8px', fontSize: '14px' }}>
-                                                                                                <strong>Billing:</strong> {monthsDiff} month{monthsDiff > 1 ? 's' : ''} × Rs {selectedCategory.fee?.toLocaleString()} = Rs {(selectedCategory.fee * monthsDiff)?.toLocaleString()}
-                                                                                                <br />
-                                                                                                <strong>Duration:</strong> {totalDays} days (Full month{monthsDiff > 1 ? 's' : ''})
-                                                                                            </div>
-                                                                                        );
-                                                                                    } else {
-                                                                                        const dailyRate = Math.round(selectedCategory.fee / 30);
-                                                                                        return (
-                                                                                            <div style={{ marginTop: '8px', fontSize: '14px' }}>
-                                                                                                <strong>Billing:</strong> {totalDays} day{totalDays > 1 ? 's' : ''} × Rs {dailyRate} = Rs {(dailyRate * totalDays)?.toLocaleString()}
-                                                                                                <br />
-                                                                                                <strong>Daily Rate:</strong> Rs {selectedCategory.fee?.toLocaleString()} ÷ 30 days = Rs {dailyRate}/day
-                                                                                            </div>
-                                                                                        );
-                                                                                    }
-                                                                                }
-                                                                                return null;
-                                                                            })()}
-                                                                    </Alert>
-                                                                )}
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-
                                                     {/* Total Amount Summary */}
                                                     {data.amount > 0 && (
                                                         <Grid item xs={12}>
@@ -2160,7 +2356,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 variant="outlined"
                                                                 size="large"
                                                                 fullWidth
-                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
+                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && subscriptionItems.length === 0)}
                                                                 sx={{
                                                                     py: 2,
                                                                     borderColor: '#0a3d62',
@@ -2184,7 +2380,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 variant="contained"
                                                                 size="large"
                                                                 fullWidth
-                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && (!data.valid_from || !data.subscription_type_id || !data.subscription_category_id))}
+                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && subscriptionItems.length === 0)}
                                                                 sx={{
                                                                     py: 2,
                                                                     bgcolor: '#0a3d62',
@@ -2262,7 +2458,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Membership Fee
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
-                                                            Rs {selectedMember.member_category?.fee?.toLocaleString() || 'N/A'}
+                                                            Rs {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
                                                         </Typography>
                                                     </Grid>
                                                     <Grid item xs={12}>
@@ -2270,7 +2466,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Maintenance Fee (Monthly)
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
-                                                            Rs {selectedMember.member_category?.subscription_fee?.toLocaleString() || 'N/A'}
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
                                                         </Typography>
                                                     </Grid>
                                                     <Grid item xs={12}>
@@ -2278,7 +2474,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Quarterly Fee
                                                         </Typography>
                                                         <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
-                                                            Rs {selectedMember.member_category?.subscription_fee ? Math.round(selectedMember.member_category.subscription_fee * 3).toLocaleString() : 'N/A'}
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
                                                         </Typography>
                                                     </Grid>
                                                 </Grid>

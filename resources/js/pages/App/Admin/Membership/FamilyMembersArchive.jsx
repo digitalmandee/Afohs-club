@@ -7,6 +7,10 @@ import MembershipCardComponent from './UserCard';
 import { router } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
+import dayjs from 'dayjs';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     // const [open, setOpen] = useState(true);
@@ -99,7 +103,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     const getAgeStatusColor = (age, shouldExpire, hasExtension, relation) => {
         // Wives are not subject to age-based expiry
         if (relation === 'Wife') return '#063455'; // Blue for normal
-        
+
         if (hasExtension) return '#27ae60'; // Green for extended
         if (age >= 25) return '#e74c3c'; // Red for should expire
         if (age >= 24) return '#ff6b35'; // Orange for warning
@@ -109,7 +113,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     const getAgeStatusIcon = (age, shouldExpire, hasExtension, relation) => {
         // Wives are not subject to age-based expiry
         if (relation === 'Wife') return <CheckCircle color="white" fontSize="small" />;
-        
+
         if (hasExtension) return <Extension color="white" fontSize="small" />;
         if (shouldExpire) return <Warning color="white" fontSize="small" />;
         if (age >= 23) return <Schedule color="white" fontSize="small" />;
@@ -119,7 +123,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
     const getAgeStatusText = (age, shouldExpire, hasExtension, relation) => {
         // Wives are not subject to age-based expiry
         if (relation === 'Wife') return 'Active';
-        
+
         if (hasExtension) return 'Extended';
         if (shouldExpire) return 'Should Expire';
         if (age >= 23) return 'Warning';
@@ -386,7 +390,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.relation}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_expiry_date ? new Date(user.card_expiry_date).toLocaleDateString() : 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_expiry_date ? dayjs(user.card_expiry_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <Chip
@@ -505,7 +509,22 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                 <strong>Current Status:</strong> {selectedMemberForExtension.status}
                             </Typography>
 
-                            <TextField fullWidth type="date" label="Extension Date" value={extensionDate} onChange={(e) => setExtensionDate(e.target.value)} InputLabelProps={{ shrink: true }} inputProps={{ min: new Date().toISOString().split('T')[0] }} sx={{ mb: 2 }} />
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="Extension Date"
+                                    value={extensionDate ? dayjs(extensionDate, 'DD-MM-YYYY') : null}
+                                    onChange={(newValue) => setExtensionDate(newValue ? newValue.format('DD-MM-YYYY') : '')}
+                                    format="DD-MM-YYYY"
+                                    minDate={dayjs()}
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            sx: { mb: 2 },
+                                            InputLabelProps: { shrink: true },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
 
                             <TextField fullWidth multiline rows={4} label="Reason for Extension" value={extensionReason} onChange={(e) => setExtensionReason(e.target.value)} placeholder="Please provide a detailed reason for extending this member's expiry date..." helperText="Minimum 10 characters required" />
                         </Box>

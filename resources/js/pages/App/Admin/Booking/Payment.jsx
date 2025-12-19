@@ -10,7 +10,7 @@ import { enqueueSnackbar } from 'notistack';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const BookingPayment = ({ invoice }) => {
+const BookingPayment = ({ invoice, roomOrders }) => {
     // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
 
@@ -18,7 +18,25 @@ const BookingPayment = ({ invoice }) => {
 
     const advancePayment = parseFloat(invoice?.advance_payment || 0);
     const totalPrice = parseFloat(invoice?.total_price || 0);
-    const remainingAmount = totalPrice - advancePayment;
+
+    // Calculate Orders Total
+    const ordersTotal = roomOrders ? roomOrders.reduce((sum, order) => sum + parseFloat(order.total_price), 0) : 0;
+
+    const [includeOrders, setIncludeOrders] = useState(true);
+    const [ordersAmount, setOrdersAmount] = useState(0);
+
+    // Update orders amount based on checkbox
+    useEffect(() => {
+        setOrdersAmount(includeOrders ? ordersTotal : 0);
+    }, [includeOrders, ordersTotal]);
+
+    const remainingAmount = totalPrice + ordersAmount - advancePayment - (parseFloat(invoice?.paid_amount) || 0);
+
+    // Update input amount when remaining changes (auto-fill)
+    useEffect(() => {
+        // Only auto-fill if user hasn't typed? Or just reset to remaining
+        setInvoiceForm((prev) => ({ ...prev, inputAmount: remainingAmount.toString() }));
+    }, [remainingAmount]);
 
     const [invoiceForm, setInvoiceForm] = useState({
         user_id: invoice.customer ? invoice.customer.id : invoice.member ? invoice.member.id : '',
@@ -127,6 +145,7 @@ const BookingPayment = ({ invoice }) => {
         data.append('customer_charges', parseFloat(invoiceForm.customerCharges));
         data.append('booking_status', invoiceForm.bookingStatus);
         data.append('payment_method', paymentMethod);
+        data.append('pay_orders', includeOrders ? 1 : 0);
 
         if (invoiceForm.paymentMethod === 'credit_card' && invoiceForm.receipt) {
             data.append('receipt', invoiceForm.receipt);
@@ -184,9 +203,11 @@ const BookingPayment = ({ invoice }) => {
                     // paddingBottom: '2rem',
                 }}
             >
-                <div style={{
-                    paddingBottom: "2rem"
-                }}>
+                <div
+                    style={{
+                        paddingBottom: '2rem',
+                    }}
+                >
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
                         <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
@@ -314,6 +335,39 @@ const BookingPayment = ({ invoice }) => {
                             </Col>
                         </Row>
 
+                        {/* Room Orders Section */}
+                        {roomOrders && roomOrders.length > 0 && (
+                            <Card className="mb-4">
+                                <Card.Body>
+                                    <h6 style={{ color: '#003366', fontWeight: 600, marginBottom: '15px' }}>Unpaid Room Orders</h6>
+                                    {roomOrders.map((order) => (
+                                        <div key={order.id} className="d-flex justify-content-between border-bottom py-2">
+                                            <div>
+                                                <strong>Order #{order.id}</strong>
+                                                <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                                                    {order.order_items &&
+                                                        order.order_items.map((d) => (
+                                                            <span key={d.id} className="me-2">
+                                                                {d.order_item?.name} (x{d.order_item?.quantity})
+                                                            </span>
+                                                        ))}
+                                                </div>
+                                            </div>
+                                            <span style={{ fontWeight: 500 }}>Rs {parseFloat(order.total_price).toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                    <div className="d-flex justify-content-between mt-3 pt-2 border-top">
+                                        <strong>Total Unpaid Orders:</strong>
+                                        <strong style={{ color: '#d32f2f' }}>Rs {parseFloat(roomOrders.reduce((sum, o) => sum + parseFloat(o.total_price), 0)).toFixed(2)}</strong>
+                                    </div>
+
+                                    <Form.Group className="mt-3">
+                                        <Form.Check type="checkbox" label="Include Unpaid Orders in Payment" checked={includeOrders} onChange={(e) => setIncludeOrders(e.target.checked)} />
+                                    </Form.Group>
+                                </Card.Body>
+                            </Card>
+                        )}
+
                         {paymentMethod === 'cash' || paymentMethod === 'credit_card' ? (
                             <>
                                 <Row className="mb-3 gx-3">
@@ -379,12 +433,8 @@ const BookingPayment = ({ invoice }) => {
                                     <Box>
                                         <Select fullWidth name="bookingStatus" value={invoiceForm.bookingStatus} onChange={handleInputChange} displayEmpty sx={{ backgroundColor: '#fff', borderRadius: '4px' }}>
                                             <MenuItem value="">Select Status</MenuItem>
-                                            {invoice.invoice_type === 'room_booking' && (
-                                                <MenuItem value="checked_out">Check Out</MenuItem>
-                                            )}
-                                            {invoice.invoice_type === 'event_booking' && (
-                                                <MenuItem value="completed">Completed</MenuItem>
-                                            )}
+                                            {invoice.invoice_type === 'room_booking' && <MenuItem value="checked_out">Check Out</MenuItem>}
+                                            {invoice.invoice_type === 'event_booking' && <MenuItem value="completed">Completed</MenuItem>}
                                         </Select>
                                     </Box>
                                 </Form.Group>

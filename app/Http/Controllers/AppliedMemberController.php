@@ -60,6 +60,17 @@ class AppliedMemberController extends Controller
         ]);
     }
 
+    private function formatDateForDatabase($date)
+    {
+        if (!$date)
+            return null;
+        try {
+            return \Carbon\Carbon::createFromFormat('d-m-Y', $date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return $date;
+        }
+    }
+
     public function store(Request $request)
     {
         try {
@@ -70,8 +81,8 @@ class AppliedMemberController extends Controller
                 'address' => 'nullable|string|max:500',
                 'cnic' => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic',
                 'amount_paid' => 'required|numeric|min:0',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
+                'start_date' => 'required|date_format:d-m-Y',
+                'end_date' => 'required|date_format:d-m-Y|after_or_equal:start_date',
                 'is_permanent_member' => 'required|boolean',
             ], [
                 'email.unique' => 'The email address is already in use.',
@@ -95,8 +106,8 @@ class AppliedMemberController extends Controller
                 'address' => $request->address ?: null,
                 'cnic' => $request->cnic,  // Use raw CNIC with hyphens
                 'amount_paid' => (float) $request->amount_paid,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
+                'start_date' => $this->formatDateForDatabase($request->start_date),
+                'end_date' => $this->formatDateForDatabase($request->end_date),
                 'is_permanent_member' => $request->is_permanent_member,
             ]);
 
@@ -138,8 +149,8 @@ class AppliedMemberController extends Controller
                 'address' => 'nullable|string|max:500',
                 'cnic' => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic,' . $id,
                 'amount_paid' => 'required|numeric|min:0',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after_or_equal:start_date',
+                'start_date' => 'required|date_format:d-m-Y',
+                'end_date' => 'required|date_format:d-m-Y|after_or_equal:start_date',
                 'is_permanent_member' => 'required|boolean',
             ], [
                 'email.unique' => 'The email address is already in use.',
@@ -166,8 +177,8 @@ class AppliedMemberController extends Controller
                 'address' => $request->address ?: null,
                 'cnic' => $request->cnic,  // Use raw CNIC with hyphens
                 'amount_paid' => (float) $request->amount_paid,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
+                'start_date' => $this->formatDateForDatabase($request->start_date),
+                'end_date' => $this->formatDateForDatabase($request->end_date),
                 'is_permanent_member' => $request->is_permanent_member,
             ]);
             $newMemberId = null;
@@ -184,8 +195,8 @@ class AppliedMemberController extends Controller
                         'mobile_number_a' => $request->phone_number,
                         'current_address' => $request->address ?: null,
                         'cnic_no' => $request->cnic,
-                        'start_date' => $request->start_date,
-                        'end_date' => $request->end_date,
+                        'start_date' => $this->formatDateForDatabase($request->start_date),
+                        'end_date' => $this->formatDateForDatabase($request->end_date),
                     ]
                 );
 

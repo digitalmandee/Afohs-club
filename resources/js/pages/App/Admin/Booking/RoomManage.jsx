@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { FilterAlt, Search } from '@mui/icons-material';
+import { FilterAlt, Search, Visibility } from '@mui/icons-material';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
@@ -7,6 +7,7 @@ import { Badge, Col, Container, Form, Modal, Row } from 'react-bootstrap';
 import RoomBookingFilter from './BookingFilter';
 import dayjs from 'dayjs'; // Added for duration calculation
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
+import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
 import debounce from 'lodash.debounce';
 
 // const drawerWidthOpen = 240;
@@ -106,6 +107,10 @@ const RoomScreen = ({ bookings }) => {
     // TODO: Remove selected booking state when reverting to original print functionality
     const [selectedBooking, setSelectedBooking] = useState(null);
 
+    // View Documents Modal state
+    const [showDocsModal, setShowDocsModal] = useState(false);
+    const [selectedBookingForDocs, setSelectedBookingForDocs] = useState(null);
+
     const debouncedSearch = useMemo(
         () =>
             debounce((value) => {
@@ -135,6 +140,17 @@ const RoomScreen = ({ bookings }) => {
     const handleFilterClose = () => setShowFilter(false);
     const handleFilterShow = () => setShowFilter(true);
 
+    // View Documents handlers
+    const handleShowDocs = (booking) => {
+        setSelectedBookingForDocs(booking);
+        setShowDocsModal(true);
+    };
+
+    const handleCloseDocs = () => {
+        setShowDocsModal(false);
+        setSelectedBookingForDocs(null);
+    };
+
     useEffect(() => {
         setFilteredBookings(bookings.data || []);
     }, [bookings]);
@@ -149,173 +165,181 @@ const RoomScreen = ({ bookings }) => {
                     marginTop: '5rem',
                 }}
             > */}
-                <ThemeProvider theme={theme}>
-                    <style>{dialogStyles}</style>
-                    <Container
-                        fluid
-                        className="p-4"
-                        style={{
-                            backgroundColor: '#F6F6F6',
-                        }}
-                    >
-                        {/* Search and Filter */}
-                        <Row className="align-items-center mt-2 mb-3">
-                            <Col>
-                                <Typography variant="h4" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '32px' }}>
-                                    Room Bookings
-                                </Typography>
-                            </Col>
-                            <Col xs="auto" className="d-flex gap-3">
-                                <div style={{ position: 'relative', width: '400px', border: '1px solid #121212' }}>
-                                    <Form.Control
-                                        placeholder="Search"
-                                        aria-label="Search"
-                                        value={searchTerm}
-                                        onChange={handleSearchChange}
-                                        style={{
-                                            paddingLeft: '2rem',
-                                            borderColor: '#ced4da',
-                                            borderRadius: '4px',
-                                            height: '38px',
-                                            fontSize: '0.9rem',
-                                        }}
-                                    />
-
-                                    <Search
-                                        style={{
-                                            position: 'absolute',
-                                            left: '8px',
-                                            top: '53%',
-                                            transform: 'translateY(-50%)',
-                                            color: '#adb5bd',
-                                            fontSize: '1.5rem',
-                                            pointerEvents: 'none',
-                                        }}
-                                    />
-                                </div>
-
-                                <Button
-                                    variant="outline-secondary"
-                                    className="d-flex align-items-center gap-1"
+            <ThemeProvider theme={theme}>
+                <style>{dialogStyles}</style>
+                <Container
+                    fluid
+                    className="p-4"
+                    style={{
+                        backgroundColor: '#F6F6F6',
+                    }}
+                >
+                    {/* Search and Filter */}
+                    <Row className="align-items-center mt-2 mb-3">
+                        <Col>
+                            <Typography variant="h4" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '32px' }}>
+                                Room Bookings
+                            </Typography>
+                        </Col>
+                        <Col xs="auto" className="d-flex gap-3">
+                            <div style={{ position: 'relative', width: '400px', border: '1px solid #121212' }}>
+                                <Form.Control
+                                    placeholder="Search"
+                                    aria-label="Search"
+                                    value={searchTerm}
+                                    onChange={handleSearchChange}
                                     style={{
-                                        border: '1px solid #063455',
-                                        borderRadius: '0px',
-                                        backgroundColor: 'transparent',
-                                        color: '#495057',
+                                        paddingLeft: '2rem',
+                                        borderColor: '#ced4da',
+                                        borderRadius: '4px',
+                                        height: '38px',
+                                        fontSize: '0.9rem',
                                     }}
-                                    onClick={handleFilterShow}
-                                >
-                                    <FilterAlt fontSize="small" /> Filter
-                                </Button>
-                            </Col>
-                        </Row>
+                                />
 
-                        {/* TODO: Updated to use filteredBookings from data.bookings */}
+                                <Search
+                                    style={{
+                                        position: 'absolute',
+                                        left: '8px',
+                                        top: '53%',
+                                        transform: 'translateY(-50%)',
+                                        color: '#adb5bd',
+                                        fontSize: '1.5rem',
+                                        pointerEvents: 'none',
+                                    }}
+                                />
+                            </div>
 
-                        <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ fontWeight: 600 }}>Booking ID</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Booking Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Check-In</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Check-Out</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Per Day Charge</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredBookings.length > 0 ? (
-                                        filteredBookings.map((booking, index) => {
-                                            const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
+                            <Button
+                                variant="outline-secondary"
+                                className="d-flex align-items-center gap-1"
+                                style={{
+                                    border: '1px solid #063455',
+                                    borderRadius: '0px',
+                                    backgroundColor: 'transparent',
+                                    color: '#495057',
+                                }}
+                                onClick={handleFilterShow}
+                            >
+                                <FilterAlt fontSize="small" /> Filter
+                            </Button>
+                        </Col>
+                    </Row>
 
-                                            return (
-                                                <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                    <TableCell>#{booking.booking_no}</TableCell>
-                                                    <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
-                                                    <TableCell>{booking.booking_date}</TableCell>
-                                                    <TableCell>{booking.check_in_date}</TableCell>
-                                                    <TableCell>{booking.check_out_date}</TableCell>
-                                                    <TableCell>{booking.room?.name}</TableCell>
-                                                    <TableCell>{booking.persons}</TableCell>
-                                                    <TableCell>{durationInDays}</TableCell>
-                                                    <TableCell>{booking.per_day_charge}</TableCell>
-                                                    <TableCell>{booking.grand_total}</TableCell>
-                                                    <TableCell>
-                                                        <Badge
-                                                            bg=""
-                                                            style={{
-                                                                backgroundColor: booking.status.replace(/_/g, '').toLowerCase() === 'confirmed' ? '#0e5f3c' : '#842029',
-                                                                color: 'white',
-                                                                padding: '5px 10px',
-                                                                borderRadius: '6px',
-                                                                fontSize: '0.8rem',
-                                                                fontWeight: 500,
-                                                                minWidth: '100px',
-                                                                textAlign: 'center',
-                                                                borderRadius: '10px',
-                                                                textTransform: 'capitalize',
-                                                            }}
-                                                        >
-                                                            {booking.status.replace(/_/g, ' ')}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
+                    {/* TODO: Updated to use filteredBookings from data.bookings */}
+
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
+                                    <TableCell sx={{ fontWeight: 600 }}>Booking ID</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Booking Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Check-In</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Check-Out</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredBookings.length > 0 ? (
+                                    filteredBookings.map((booking, index) => {
+                                        const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
+
+                                        return (
+                                            <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                <TableCell>#{booking.booking_no}</TableCell>
+                                                <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
+                                                <TableCell>{booking.booking_date}</TableCell>
+                                                <TableCell>{booking.check_in_date}</TableCell>
+                                                <TableCell>{booking.check_out_date}</TableCell>
+                                                <TableCell>{booking.room?.name}</TableCell>
+                                                <TableCell>{booking.persons}</TableCell>
+                                                <TableCell>{durationInDays}</TableCell>
+                                                <TableCell>{booking.per_day_charge}</TableCell>
+                                                <TableCell>{booking.grand_total}</TableCell>
+                                                <TableCell>
+                                                    <Badge
+                                                        bg=""
+                                                        style={{
+                                                            backgroundColor: booking.status.replace(/_/g, '').toLowerCase() === 'confirmed' ? '#0e5f3c' : '#842029',
+                                                            color: 'white',
+                                                            padding: '5px 10px',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: 500,
+                                                            minWidth: '100px',
+                                                            textAlign: 'center',
+                                                            borderRadius: '10px',
+                                                            textTransform: 'capitalize',
+                                                        }}
+                                                    >
+                                                        {booking.status.replace(/_/g, ' ')}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                        <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                            <Visibility fontSize="small" />
+                                                        </Button>
                                                         <Button variant="outlined" size="small" color="secondary" onClick={() => handleShowInvoice(booking)}>
                                                             View
                                                         </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={11} align="center">
-                                                No bookings found.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={11} align="center">
+                                            No bookings found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-                        <Box display="flex" justifyContent="center" mt={2}>
-                            {bookings.links?.map((link, index) => (
-                                <Button
-                                    key={index}
-                                    onClick={() => link.url && router.visit(link.url)}
-                                    disabled={!link.url}
-                                    variant={link.active ? 'contained' : 'outlined'}
-                                    size="small"
-                                    style={{
-                                        margin: '0 5px',
-                                        minWidth: '36px',
-                                        padding: '6px 10px',
-                                        fontWeight: link.active ? 'bold' : 'normal',
-                                        backgroundColor: link.active ? '#333' : '#fff',
-                                    }}
-                                >
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                </Button>
-                            ))}
-                        </Box>
+                    <Box display="flex" justifyContent="center" mt={2}>
+                        {bookings.links?.map((link, index) => (
+                            <Button
+                                key={index}
+                                onClick={() => link.url && router.visit(link.url)}
+                                disabled={!link.url}
+                                variant={link.active ? 'contained' : 'outlined'}
+                                size="small"
+                                style={{
+                                    margin: '0 5px',
+                                    minWidth: '36px',
+                                    padding: '6px 10px',
+                                    fontWeight: link.active ? 'bold' : 'normal',
+                                    backgroundColor: link.active ? '#333' : '#fff',
+                                }}
+                            >
+                                <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                            </Button>
+                        ))}
+                    </Box>
 
-                        {/* Booking Invoice Modal */}
-                        <BookingInvoiceModal open={showInvoiceModal} onClose={() => handleCloseInvoice()} bookingId={selectedBooking?.id} setBookings={setFilteredBookings} />
+                    {/* Booking Invoice Modal */}
+                    <BookingInvoiceModal open={showInvoiceModal} onClose={() => handleCloseInvoice()} bookingId={selectedBooking?.id} setBookings={setFilteredBookings} />
 
-                        <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
-                            <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                                <RoomBookingFilter onClose={handleFilterClose} />
-                            </Modal.Body>
-                        </Modal>
-                    </Container>
-                </ThemeProvider>
+                    {/* View Documents Modal */}
+                    <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+
+                    <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
+                        <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
+                            <RoomBookingFilter onClose={handleFilterClose} />
+                        </Modal.Body>
+                    </Modal>
+                </Container>
+            </ThemeProvider>
             {/* </div> */}
         </>
     );

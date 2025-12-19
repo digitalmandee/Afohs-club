@@ -9,8 +9,10 @@ import { useEffect, useState } from 'react';
 import DineDialog from './Dine';
 import ReservationDialog from './Reservation';
 import TakeAwayDialog from './Takeaway';
+import RoomDialog from './RoomDialog';
 import axios from 'axios';
-import { CiDeliveryTruck } from "react-icons/ci";
+import { CiDeliveryTruck } from 'react-icons/ci';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -20,6 +22,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
 
     const [open, setOpen] = useState(true);
     const [floorTables, setFloorTables] = useState([]);
+    const [roomTypes, setRoomTypes] = useState([]);
 
     // get weeks in month
     useEffect(() => {
@@ -55,10 +58,21 @@ const NewOrder = ({ orderNo, memberTypes }) => {
         }
     };
 
-    // Call when user selects DineIn or Reservation
+    const loadRooms = async () => {
+        try {
+            const response = await axios.get(route('rooms.order'));
+            setRoomTypes(response.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // Call when user selects DineIn or Reservation or Room
     useEffect(() => {
         if (orderDetails.order_type === 'dineIn' || orderDetails.order_type === 'reservation') {
             loadFloorTables();
+        } else if (orderDetails.order_type === 'room') {
+            loadRooms();
         }
     }, [orderDetails.order_type]);
 
@@ -70,7 +84,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     paddingTop: '5rem',
-                    backgroundColor:'#f5f5f5'
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 {/* Order Detailss */}
@@ -305,11 +319,12 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                                     /> */}
                                     <CiDeliveryTruck
                                         style={{
-                                            height: "35px",
-                                            width: "35px",
+                                            height: '35px',
+                                            width: '35px',
                                             // marginBottom: "2px",
-                                            fill: orderDetails.order_type === "delivery" ? "#063455" : "inherit",
-                                        }} />
+                                            fill: orderDetails.order_type === 'delivery' ? '#063455' : 'inherit',
+                                        }}
+                                    />
                                     <Typography variant="body2">Delivery</Typography>
                                 </ToggleButton>
 
@@ -366,6 +381,33 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                                     />
                                     <Typography variant="body2">Reservation</Typography>
                                 </ToggleButton>
+
+                                <ToggleButton
+                                    value="room"
+                                    aria-label="room"
+                                    sx={{
+                                        flex: 1,
+                                        py: 1.5,
+                                        flexDirection: 'column',
+                                        textTransform: 'none',
+                                        border: '1px solid #063455',
+                                        '&.Mui-selected': {
+                                            backgroundColor: '#B0DEFF',
+                                            color: '#1976d2',
+                                            '&:hover': {
+                                                backgroundColor: '#B0DEFF',
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MeetingRoomIcon
+                                        sx={{
+                                            mb: 0.5,
+                                            color: orderDetails.order_type === 'room' ? '#063455' : 'inherit',
+                                        }}
+                                    />
+                                    <Typography variant="body2">Room</Typography>
+                                </ToggleButton>
                             </ToggleButtonGroup>
                         </Box>
 
@@ -373,6 +415,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                         {orderDetails.order_type === 'dineIn' && <DineDialog memberTypes={memberTypes} floorTables={floorTables} />}
                         {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog />}
                         {orderDetails.order_type === 'reservation' && <ReservationDialog />}
+                        {orderDetails.order_type === 'room' && <RoomDialog roomTypes={roomTypes} />}
                     </Paper>
                 </Box>
             </div>

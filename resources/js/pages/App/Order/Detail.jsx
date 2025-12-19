@@ -294,6 +294,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                 </Box>
                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                     {orderDetails.table && <Avatar sx={{ width: 28, height: 28, bgcolor: '#0C67AA', fontSize: 12 }}>{orderDetails.table?.table_no}</Avatar>}
+                                    {orderDetails.room && <Avatar sx={{ width: 'auto', height: 28, bgcolor: '#0C67AA', fontSize: 12, px: 1 }}>Room {orderDetails.room.name}</Avatar>}
                                     <Box
                                         sx={{
                                             height: 30,
