@@ -106,7 +106,7 @@ const MemberCategories = ({ memberCategories }) => {
                                             <strong>Fee:</strong> {category.fee.toLocaleString()} Rs
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            <strong>Subscription Fee:</strong> {category.subscription_fee.toLocaleString()} Rs
+                                            <strong>Maintenance Fee:</strong> {category.subscription_fee.toLocaleString()} Rs
                                         </Typography>
                                     </Box>
                                     <Typography variant="body2" color="text.secondary">

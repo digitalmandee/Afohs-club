@@ -334,7 +334,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                                     backgroundColor: '#063455',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '2px',
+                                    borderRadius: '4px',
                                     height: '150px',
                                 }}
                             >
@@ -384,7 +384,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                                     backgroundColor: '#063455',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '2px',
+                                    borderRadius: '4px',
                                     height: '150px',
                                 }}
                             >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, MenuItem, Chip, Box, TextField, Grid } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl, InputLabel, Select, Autocomplete, MenuItem, Chip, Box, TextField, Grid } from '@mui/material';
 import { router, usePage } from '@inertiajs/react';
 
 const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
@@ -94,6 +94,41 @@ const PendingMaintenanceFilter = ({ open, onClose, filters }) => {
                                     </MenuItem>
                                 ))}
                             </TextField>
+                            {/* <Autocomplete
+                                multiple
+                                size="small"
+                                fullWidth
+                                options={all_statuses || []}
+                                getOptionLabel={(option) => option.name}
+                                value={
+                                    all_statuses?.filter((status) =>
+                                        localFilters.status.includes(status.id)
+                                    ) || []
+                                }
+                                onChange={(event, newValue) => {
+                                    handleStatusChange(
+                                        'status',
+                                        newValue.map((item) => item.id)
+                                    );
+                                }}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) => (
+                                        <Chip
+                                            label={option.name}
+                                            size="small"
+                                            {...getTagProps({ index })}
+                                            key={option.id}
+                                        />
+                                    ))
+                                }
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Member Status"
+                                        placeholder="Select status"
+                                    />
+                                )}
+                            /> */}
                         </Grid>
 
                         {/* Category Filter */}

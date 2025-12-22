@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem, Autocomplete } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
 
 const PendingMaintenanceQuartersReport = () => {
@@ -79,75 +79,75 @@ const PendingMaintenanceQuartersReport = () => {
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-                <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX:'hidden' }}>
-                    {/* Top Bar */}
-                    <div className="d-flex justify-content-between align-items-center mb-4">
-                        <div className="d-flex align-items-center">
-                            <IconButton onClick={() => window.history.back()}>
-                                <ArrowBack sx={{color:'#063455'}} />
-                            </IconButton>
-                            <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>
-                                Pending Maintenance Report (Category-wise)
-                            </Typography>
-                        </div>
-                        <Button
-                            variant="contained"
-                            startIcon={<Print />}
-                            onClick={handlePrint}
-                            sx={{
-                                backgroundColor: '#063455',
-                                color: 'white',
-                                textTransform: 'none',
-                                '&:hover': {
-                                    backgroundColor: '#052d47',
-                                },
-                            }}
-                        >
-                            Print
-                        </Button>
+            <div className="container-fluid px-4 py-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
+                {/* Top Bar */}
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div className="d-flex align-items-center">
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBack sx={{ color: '#063455' }} />
+                        </IconButton>
+                        <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>
+                            Pending Maintenance Report (Category-wise)
+                        </Typography>
                     </div>
+                    <Button
+                        variant="contained"
+                        startIcon={<Print />}
+                        onClick={handlePrint}
+                        sx={{
+                            backgroundColor: '#063455',
+                            color: 'white',
+                            textTransform: 'none',
+                            '&:hover': {
+                                backgroundColor: '#052d47',
+                            },
+                        }}
+                    >
+                        Print
+                    </Button>
+                </div>
 
-                    {/* Search and Filters */}
-                    <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    type="date"
-                                    label="From Date"
-                                    value={allFilters.date_from}
-                                    onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    fullWidth
-                                    size="small"
-                                    type="date"
-                                    label="To Date"
-                                    value={allFilters.date_to}
-                                    onChange={(e) => handleFilterChange('date_to', e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 2,
-                                        },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <FormControl fullWidth size="small">
+                {/* Search and Filters */}
+                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label="From Date"
+                                value={allFilters.date_from}
+                                onChange={(e) => handleFilterChange('date_from', e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label="To Date"
+                                value={allFilters.date_to}
+                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 2,
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            {/* <FormControl fullWidth size="small">
                                     <InputLabel>Choose Category</InputLabel>
                                     <Select
                                         value={allFilters.category}
@@ -160,255 +160,275 @@ const PendingMaintenanceQuartersReport = () => {
                                             </MenuItem>
                                         ))}
                                     </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<Search />}
-                                        onClick={handleSearch}
-                                        sx={{
-                                            backgroundColor: '#063455',
-                                            flex: 1,
-                                            textTransform: 'none',
-                                            '&:hover': {
-                                                backgroundColor: '#047857',
-                                            },
-                                        }}
-                                    >
-                                        Search
-                                    </Button>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleReset}
-                                        sx={{
+                                </FormControl> */}
+                            <Autocomplete
+                                multiple
+                                value={all_categories.filter(cat => allFilters.category?.includes(cat.id)) || []}
+                                onChange={(event, newValue) => {
+                                    const categoryIds = newValue.map(cat => cat.id);
+                                    handleFilterChange('category', categoryIds);
+                                }}
+                                options={all_categories || []}
+                                getOptionLabel={(option) => option.name || ''}
+                                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Choose Categories"
+                                        placeholder="All Categories"
+                                        size="small"
+                                        fullWidth
+                                    />
+                                )}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<Search />}
+                                    onClick={handleSearch}
+                                    sx={{
+                                        backgroundColor: '#063455',
+                                        flex: 1,
+                                        textTransform: 'none',
+                                        '&:hover': {
+                                            backgroundColor: '#047857',
+                                        },
+                                    }}
+                                >
+                                    Search
+                                </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleReset}
+                                    sx={{
+                                        borderColor: '#dc2626',
+                                        color: '#dc2626',
+                                        textTransform: 'none',
+                                        '&:hover': {
+                                            backgroundColor: '#fef2f2',
                                             borderColor: '#dc2626',
-                                            color: '#dc2626',
-                                            textTransform: 'none',
-                                            '&:hover': {
-                                                backgroundColor: '#fef2f2',
-                                                borderColor: '#dc2626',
-                                            },
-                                        }}
-                                    >
-                                        Reset
-                                    </Button>
+                                        },
+                                    }}
+                                >
+                                    Reset
+                                </Button>
+                            </Box>
+                        </Grid>
+                    </Grid>
+                </Box>
+
+                {/* Pending Maintenance Quarters Table */}
+                <Box sx={{ mb: 3 }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, overflowX: 'auto' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', width: '50px' }}>
+                                        SR #
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
+                                        CATEGORY
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#059669' }}>
+                                        1 QUARTER PENDING
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#0ea5e9' }}>
+                                        2 QUARTERS PENDING
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#8b5cf6' }}>
+                                        3 QUARTERS PENDING
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#f59e0b' }}>
+                                        4 QUARTERS PENDING
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#ef4444' }}>
+                                        5 QUARTERS PENDING
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#dc2626' }}>
+                                        MORE THAN 5 QUARTERS PENDING
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
+                                        MAINTENANCE FEE (QUARTERLY)
+                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
+                                        TOTAL VALUES
+                                    </TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {summary && Object.keys(summary).length > 0 ? (
+                                    Object.entries(summary).map(([categoryName, data], index) => (
+                                        <TableRow
+                                            key={categoryName}
+                                            sx={{
+                                                '&:nth-of-type(odd)': { backgroundColor: '#f9fafb' },
+                                                '&:hover': { backgroundColor: '#f3f4f6' },
+                                                borderBottom: '1px solid #e5e7eb',
+                                            }}
+                                        >
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {index + 1}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>
+                                                {categoryName}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {data['1_quarter_pending'] || 0}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#0ea5e9', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {data['2_quarters_pending'] || 0}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#8b5cf6', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {data['3_quarters_pending'] || 0}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#f59e0b', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {data['4_quarters_pending'] || 0}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {data['5_quarters_pending'] || 0}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#dc2626', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {data['more_than_5_quarters_pending'] || 0}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                {formatCurrency(data['maintenance_fee_quarterly']).replace('PKR', '')}
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#dc2626', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
+                                                {formatCurrency(data['total_values']).replace('PKR', '')}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                                            <Typography color="textSecondary">
+                                                No pending maintenance records found for the selected criteria
+                                            </Typography>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+
+                                {/* Grand Total Row */}
+                                {summary && Object.keys(summary).length > 0 && (
+                                    <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
+                                            GRAND TOTAL
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {grand_totals['1_quarter_pending'] || 0}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {grand_totals['2_quarters_pending'] || 0}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {grand_totals['3_quarters_pending'] || 0}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {grand_totals['4_quarters_pending'] || 0}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {grand_totals['5_quarters_pending'] || 0}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {grand_totals['more_than_5_quarters_pending'] || 0}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {formatCurrency(grand_totals['maintenance_fee_quarterly']).replace('PKR', '')}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
+                                            {formatCurrency(grand_totals['total_values']).replace('PKR', '')}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </Box>
+
+                {/* Summary Statistics */}
+                {summary && Object.keys(summary).length > 0 && (
+                    <Box sx={{ mt: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#374151', mb: 2 }}>
+                            Pending Quarters Summary
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} md={2}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#dcfce7', borderRadius: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#059669' }}>
+                                        {grand_totals['1_quarter_pending'] || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#047857', fontWeight: 600 }}>
+                                        1 Quarter Pending
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#dbeafe', borderRadius: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#0ea5e9' }}>
+                                        {grand_totals['2_quarters_pending'] || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#0284c7', fontWeight: 600 }}>
+                                        2 Quarters Pending
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#ede9fe', borderRadius: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#8b5cf6' }}>
+                                        {grand_totals['3_quarters_pending'] || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#7c3aed', fontWeight: 600 }}>
+                                        3 Quarters Pending
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fef3c7', borderRadius: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b' }}>
+                                        {grand_totals['4_quarters_pending'] || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#d97706', fontWeight: 600 }}>
+                                        4 Quarters Pending
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fee2e2', borderRadius: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#ef4444' }}>
+                                        {grand_totals['5_quarters_pending'] || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 600 }}>
+                                        5 Quarters Pending
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fecaca', borderRadius: 2 }}>
+                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#dc2626' }}>
+                                        {grand_totals['more_than_5_quarters_pending'] || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#b91c1c', fontWeight: 600 }}>
+                                        5+ Quarters Pending
+                                    </Typography>
                                 </Box>
                             </Grid>
                         </Grid>
-                    </Box>
-
-                    {/* Pending Maintenance Quarters Table */}
-                    <Box sx={{ mb: 3 }}>
-                        <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, overflowX:'auto' }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455' }}>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', width: '50px' }}>
-                                            SR #
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
-                                            CATEGORY
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#059669' }}>
-                                            1 QUARTER PENDING
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#0ea5e9' }}>
-                                            2 QUARTERS PENDING
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#8b5cf6' }}>
-                                            3 QUARTERS PENDING
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#f59e0b' }}>
-                                            4 QUARTERS PENDING
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#ef4444' }}>
-                                            5 QUARTERS PENDING
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#dc2626' }}>
-                                            MORE THAN 5 QUARTERS PENDING
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                            MAINTENANCE FEE (QUARTERLY)
-                                        </TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                            TOTAL VALUES
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {summary && Object.keys(summary).length > 0 ? (
-                                        Object.entries(summary).map(([categoryName, data], index) => (
-                                            <TableRow
-                                                key={categoryName}
-                                                sx={{
-                                                    '&:nth-of-type(odd)': { backgroundColor: '#f9fafb' },
-                                                    '&:hover': { backgroundColor: '#f3f4f6' },
-                                                    borderBottom: '1px solid #e5e7eb',
-                                                }}
-                                            >
-                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {index + 1}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>
-                                                    {categoryName}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {data['1_quarter_pending'] || 0}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#0ea5e9', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {data['2_quarters_pending'] || 0}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#8b5cf6', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {data['3_quarters_pending'] || 0}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#f59e0b', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {data['4_quarters_pending'] || 0}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {data['5_quarters_pending'] || 0}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#dc2626', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {data['more_than_5_quarters_pending'] || 0}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                    {formatCurrency(data['maintenance_fee_quarterly']).replace('PKR', '')}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#dc2626', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
-                                                    {formatCurrency(data['total_values']).replace('PKR', '')}
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                                                <Typography color="textSecondary">
-                                                    No pending maintenance records found for the selected criteria
-                                                </Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-
-                                    {/* Grand Total Row */}
-                                    {summary && Object.keys(summary).length > 0 && (
-                                        <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                                GRAND TOTAL
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {grand_totals['1_quarter_pending'] || 0}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {grand_totals['2_quarters_pending'] || 0}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {grand_totals['3_quarters_pending'] || 0}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {grand_totals['4_quarters_pending'] || 0}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {grand_totals['5_quarters_pending'] || 0}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {grand_totals['more_than_5_quarters_pending'] || 0}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {formatCurrency(grand_totals['maintenance_fee_quarterly']).replace('PKR', '')}
-                                            </TableCell>
-                                            <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                                {formatCurrency(grand_totals['total_values']).replace('PKR', '')}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Box>
-
-                    {/* Summary Statistics */}
-                    {summary && Object.keys(summary).length > 0 && (
-                        <Box sx={{ mt: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#374151', mb: 2 }}>
-                                Pending Quarters Summary
+                        <Box sx={{ mt: 3, textAlign: 'center', p: 3, backgroundColor: '#f3f4f6', borderRadius: 2 }}>
+                            <Typography variant="h3" sx={{ fontWeight: 700, color: '#dc2626' }}>
+                                {formatCurrency(grand_totals['total_values']).replace('PKR', '')}
                             </Typography>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12} md={2}>
-                                    <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#dcfce7', borderRadius: 2 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#059669' }}>
-                                            {grand_totals['1_quarter_pending'] || 0}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: '#047857', fontWeight: 600 }}>
-                                            1 Quarter Pending
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#dbeafe', borderRadius: 2 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#0ea5e9' }}>
-                                            {grand_totals['2_quarters_pending'] || 0}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: '#0284c7', fontWeight: 600 }}>
-                                            2 Quarters Pending
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#ede9fe', borderRadius: 2 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#8b5cf6' }}>
-                                            {grand_totals['3_quarters_pending'] || 0}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: '#7c3aed', fontWeight: 600 }}>
-                                            3 Quarters Pending
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fef3c7', borderRadius: 2 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b' }}>
-                                            {grand_totals['4_quarters_pending'] || 0}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: '#d97706', fontWeight: 600 }}>
-                                            4 Quarters Pending
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fee2e2', borderRadius: 2 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#ef4444' }}>
-                                            {grand_totals['5_quarters_pending'] || 0}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 600 }}>
-                                            5 Quarters Pending
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fecaca', borderRadius: 2 }}>
-                                        <Typography variant="h4" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                                            {grand_totals['more_than_5_quarters_pending'] || 0}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ color: '#b91c1c', fontWeight: 600 }}>
-                                            5+ Quarters Pending
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-                            <Box sx={{ mt: 3, textAlign: 'center', p: 3, backgroundColor: '#f3f4f6', borderRadius: 2 }}>
-                                <Typography variant="h3" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                                    {formatCurrency(grand_totals['total_values']).replace('PKR', '')}
-                                </Typography>
-                                <Typography variant="h6" sx={{ color: '#374151', fontWeight: 600 }}>
-                                    Total Pending Amount
-                                </Typography>
-                            </Box>
+                            <Typography variant="h6" sx={{ color: '#374151', fontWeight: 600 }}>
+                                Total Pending Amount
+                            </Typography>
                         </Box>
-                    )}
-                </div>
+                    </Box>
+                )}
+            </div>
             {/* </div> */}
         </>
     );

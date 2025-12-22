@@ -113,6 +113,17 @@ const Dashboard = () => {
         });
         window.open(`/dashboard/print?${params.toString()}`, '_blank');
     };
+
+    const getResponsiveFontSize = (value) => {
+        const length = value?.toString()?.length || 0;
+
+        if (length <= 10) return "36px";   // up to 1,000,000,000
+        if (length <= 13) return "30px";   // millions
+        if (length <= 16) return "26px";   // billions
+        if (length <= 19) return "22px";   // very large
+        return "20px";                     // extreme values
+    };
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -203,7 +214,12 @@ const Dashboard = () => {
                                             {/* Total Revenue */}
                                             <Box sx={{ flex: 1, textAlign: 'flex-start' }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Revenue</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalRevenue)}</Typography>
+                                                <Typography sx={{
+                                                    fontWeight: 500,
+                                                    fontSize: getResponsiveFontSize(formatCurrency(stats.totalRevenue)),
+                                                    color: '#FFFFFF',
+                                                    whiteSpace: 'nowrap',
+                                                }}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalRevenue)}</Typography>
                                             </Box>
 
                                             {/* Divider */}
@@ -212,7 +228,12 @@ const Dashboard = () => {
                                             {/* Total Profit */}
                                             <Box sx={{ flex: 1, textAlign: 'right' }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Profit</Typography>
-                                                <Typography sx={{ fontWeight: 500, fontSize: '36px', color: '#FFFFFF' }}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalProfit)}</Typography>
+                                                <Typography sx={{
+                                                    fontWeight: 500,
+                                                    fontSize: getResponsiveFontSize(formatCurrency(stats.totalProfit)),
+                                                    color: '#FFFFFF',
+                                                    whiteSpace: 'nowrap',
+                                                }}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalProfit)}</Typography>
                                             </Box>
                                         </CardContent>
                                     </Card>
@@ -503,57 +524,64 @@ const Dashboard = () => {
                                 <Typography variant="h6" sx={{ p: 2, fontWeight: 'bold', borderBottom: '1px solid #eee' }}>
                                     Recent Activity
                                 </Typography>
-                                <List sx={{ p: 0 }}>
-                                    {activities.map((activity, index) => (
-                                        <React.Fragment key={index}>
-                                            <ListItem
-                                                disablePadding
-                                                sx={{
-                                                    borderLeft: !activity.read_at ? '4px solid #063455' : 'none',
-                                                    bgcolor: !activity.read_at ? '#f0f7ff' : 'transparent',
-                                                }}
-                                            >
-                                                <ListItemButton
-                                                    alignItems="flex-start"
-                                                    onClick={() => {
-                                                        // Optimistic update
-                                                        setActivities((prev) => prev.map((a) => (a.id === activity.id ? { ...a, read_at: new Date().toISOString() } : a)));
-                                                        if (!activity.read_at && activity.id) {
-                                                            router.post(`/notifications/${activity.id}/read`, {}, { preserveScroll: true });
-                                                        }
+                                <Box
+                                    sx={{
+                                        maxHeight: 360,          // ≈ 5 items height (adjust if needed)
+                                        overflowY: 'auto',
+                                    }}
+                                >
+                                    <List sx={{ p: 0 }}>
+                                        {activities.map((activity, index) => (
+                                            <React.Fragment key={index}>
+                                                <ListItem
+                                                    disablePadding
+                                                    sx={{
+                                                        borderLeft: !activity.read_at ? '4px solid #063455' : 'none',
+                                                        bgcolor: !activity.read_at ? '#f0f7ff' : 'transparent',
                                                     }}
                                                 >
-                                                    {/* <ListItemAvatar>
+                                                    <ListItemButton
+                                                        alignItems="flex-start"
+                                                        onClick={() => {
+                                                            // Optimistic update
+                                                            setActivities((prev) => prev.map((a) => (a.id === activity.id ? { ...a, read_at: new Date().toISOString() } : a)));
+                                                            if (!activity.read_at && activity.id) {
+                                                                router.post(`/notifications/${activity.id}/read`, {}, { preserveScroll: true });
+                                                            }
+                                                        }}
+                                                    >
+                                                        {/* <ListItemAvatar>
                                                         <Avatar sx={{ width: 40, height: 40, bgcolor: '#063455' }}>{activity.actor_name ? activity.actor_name.charAt(0).toUpperCase() : 'S'}</Avatar>
                                                     </ListItemAvatar> */}
-                                                    <ListItemText
-                                                        primary={
-                                                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                                {activity.title}
-                                                            </Typography>
-                                                        }
-                                                        secondary={
-                                                            <React.Fragment>
-                                                                <Typography component="span" variant="body2" color="text.primary" sx={{ display: 'block', mb: 0.5 }}>
-                                                                    {activity.text}
+                                                        <ListItemText
+                                                            primary={
+                                                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                                    {activity.title}
                                                                 </Typography>
-                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                                    <Typography variant="caption" sx={{ color: '#666' }}>
-                                                                        by {activity.actor_name || 'System'}
+                                                            }
+                                                            secondary={
+                                                                <React.Fragment>
+                                                                    <Typography component="span" variant="body2" color="text.primary" sx={{ display: 'block', mb: 0.5 }}>
+                                                                        {activity.text}
                                                                     </Typography>
-                                                                    <Typography variant="caption" sx={{ color: '#999' }}>
-                                                                        {activity.time}
-                                                                    </Typography>
-                                                                </Box>
-                                                            </React.Fragment>
-                                                        }
-                                                    />
-                                                </ListItemButton>
-                                            </ListItem>
-                                            {index < activities.length - 1 && <Divider component="li" />}
-                                        </React.Fragment>
-                                    ))}
-                                </List>
+                                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                                        <Typography variant="caption" sx={{ color: '#666' }}>
+                                                                            by {activity.actor_name || 'System'}
+                                                                        </Typography>
+                                                                        <Typography variant="caption" sx={{ color: '#999' }}>
+                                                                            {activity.time}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </React.Fragment>
+                                                            }
+                                                        />
+                                                    </ListItemButton>
+                                                </ListItem>
+                                                {index < activities.length - 1 && <Divider component="li" />}
+                                            </React.Fragment>
+                                        ))}
+                                    </List>
+                                </Box>
                             </CardContent>
                         </Card>
                     </Grid>
