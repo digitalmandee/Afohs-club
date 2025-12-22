@@ -53,9 +53,9 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
             })
             .catch((err) => {
                 if (err.response?.data?.message) {
-                    alert(err.response.data.message);
+                    enqueueSnackbar(err.response.data.message, { variant: 'error' });
                 } else {
-                    alert('Check-in failed.');
+                    enqueueSnackbar('Check-in failed.', { variant: 'error' });
                 }
             })
             .finally(() => setSubmitting(false));
