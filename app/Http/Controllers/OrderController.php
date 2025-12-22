@@ -181,10 +181,11 @@ class OrderController extends Controller
         $roomTypes = RoomType::with(['rooms' => function ($query) {
             $query
                 ->select('id', 'name', 'room_type_id')
-                ->with(['bookings' => function ($q) {
+                ->with(['currentBooking' => function ($q) {
                     $q
-                        ->where('status', 'checked_in')
                         ->select('id', 'room_id', 'booking_no', 'status', 'member_id', 'customer_id', 'guest_first_name', 'guest_last_name', 'check_in_date', 'check_out_date')
+                        ->whereDate('check_in_date', '<=', Carbon::today())
+                        ->whereDate('check_out_date', '>=', Carbon::today())
                         ->with(['member:id,full_name,membership_no,personal_email,current_address,status', 'customer:id,name,customer_no,email,address']);
                 }]);
         }])->get();

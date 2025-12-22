@@ -23,6 +23,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
     const [open, setOpen] = useState(true);
     const [floorTables, setFloorTables] = useState([]);
     const [roomTypes, setRoomTypes] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     // get weeks in month
     useEffect(() => {
@@ -59,11 +60,14 @@ const NewOrder = ({ orderNo, memberTypes }) => {
     };
 
     const loadRooms = async () => {
+        setLoading(true);
         try {
             const response = await axios.get(route('rooms.order'));
             setRoomTypes(response.data);
         } catch (error) {
             console.error(error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -415,7 +419,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                         {orderDetails.order_type === 'dineIn' && <DineDialog memberTypes={memberTypes} floorTables={floorTables} />}
                         {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog />}
                         {orderDetails.order_type === 'reservation' && <ReservationDialog />}
-                        {orderDetails.order_type === 'room' && <RoomDialog roomTypes={roomTypes} />}
+                        {orderDetails.order_type === 'room' && <RoomDialog roomTypes={roomTypes} loading={loading} />}
                     </Paper>
                 </Box>
             </div>

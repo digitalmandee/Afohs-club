@@ -4,10 +4,10 @@ import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Button, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-const RoomDialog = ({ roomTypes }) => {
+const RoomDialog = ({ roomTypes, loading }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [filterOption, setFilterOption] = useState('occupied');
@@ -35,19 +35,19 @@ const RoomDialog = ({ roomTypes }) => {
 
     const filteredRooms = currentRoomType?.rooms?.length
         ? currentRoomType.rooms.filter((room) => {
-              const isOccupied = room.bookings && room.bookings.length > 0;
+              const isOccupied = !!room.current_booking;
               if (filterOption === 'occupied' && !isOccupied) return false;
               if (filterOption === 'vacant' && isOccupied) return false;
 
               const keyword = searchTerm.toLowerCase();
-              const booking = isOccupied ? room.bookings[0] : null;
+              const booking = room.current_booking;
               const guestName = booking ? booking.guest_first_name + ' ' + booking.guest_last_name : '';
 
               return room.name.toLowerCase().includes(keyword) || guestName.toLowerCase().includes(keyword);
           })
         : [];
 
-    const isDisabled = !orderDetails.room || !(orderDetails.room.bookings && orderDetails.room.bookings.length > 0);
+    const isDisabled = !orderDetails.room || !orderDetails.room.current_booking;
 
     return (
         <Box>
@@ -129,7 +129,7 @@ const RoomDialog = ({ roomTypes }) => {
                         handleOrderDetailChange('room', room);
 
                         // Extract member info from booking
-                        const booking = room.bookings && room.bookings.length > 0 ? room.bookings[0] : null;
+                        const booking = room.current_booking;
                         if (booking) {
                             let memberData = null;
                             let memberType = null;
@@ -165,10 +165,14 @@ const RoomDialog = ({ roomTypes }) => {
                     }}
                 >
                     <Grid container spacing={1}>
-                        {filteredRooms.length > 0 ? (
+                        {loading ? (
+                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+                                <CircularProgress />
+                            </Grid>
+                        ) : filteredRooms.length > 0 ? (
                             filteredRooms.map((room) => {
-                                const isOccupied = room.bookings && room.bookings.length > 0;
-                                const booking = isOccupied ? room.bookings[0] : null;
+                                const isOccupied = !!room.current_booking;
+                                const booking = room.current_booking;
                                 const isSelected = orderDetails.room?.id === room.id;
 
                                 const handleSelectRoom = () => {
@@ -288,13 +292,13 @@ const RoomDialog = ({ roomTypes }) => {
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textTransform: 'capitalize' }}>
-                                            Room Status: {orderDetails.room?.bookings?.[0]?.status?.replace('_', ' ') || 'Occupied'}
+                                            Room Status: {orderDetails.room?.current_booking?.status?.replace('_', ' ') || 'Occupied'}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                            Check-In: {orderDetails.room?.bookings?.[0]?.check_in_date}
+                                            Check-In: {orderDetails.room?.current_booking?.check_in_date}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                            Check-Out: {orderDetails.room?.bookings?.[0]?.check_out_date}
+                                            Check-Out: {orderDetails.room?.current_booking?.check_out_date}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -328,7 +332,7 @@ const RoomDialog = ({ roomTypes }) => {
                     onClick={() => {
                         const room = orderDetails.room;
                         // If room is occupied, pass booking id
-                        const booking = room.bookings && room.bookings.length > 0 ? room.bookings[0] : null;
+                        const booking = room.current_booking;
 
                         router.visit(
                             route('order.menu', {
