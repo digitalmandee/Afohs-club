@@ -105,9 +105,25 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
             <div>
                 <div className="d-flex justify-content-between align-items-center mb-3">
                     <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Partners & Affiliates</Typography>
-                    <Button variant="contained" style={{ backgroundColor: '#063455', color: '#fff' }} onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}>
-                        Add New
-                    </Button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => router.get(route('admin.membership.partners-affiliates.trashed'))}
+                            sx={{
+                                color: '#d32f2f',
+                                borderColor: '#d32f2f',
+                                '&:hover': {
+                                    backgroundColor: '#ffebee',
+                                    borderColor: '#d32f2f',
+                                },
+                            }}
+                        >
+                            Deleted Partners
+                        </Button>
+                        <Button variant="contained" style={{ backgroundColor: '#063455', color: '#fff' }} onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}>
+                            Add New
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Filters */}

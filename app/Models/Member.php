@@ -134,6 +134,17 @@ class Member extends BaseModel
         return str_pad((string) $next, 3, '0', STR_PAD_LEFT);
     }
 
+    public static function generateNextApplicationNo()
+    {
+        $lastMember = self::orderBy('id', 'desc')->first();
+        if ($lastMember && preg_match('/APP-(\d+)/', $lastMember->application_number, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;  // Start from 1 if no members exist or format doesn't match
+        }
+        return 'APP-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+    }
+
     public function memberType()
     {
         return $this->belongsTo(MemberType::class);

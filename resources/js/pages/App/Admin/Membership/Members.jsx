@@ -133,6 +133,22 @@ const AllMembers = ({ members }) => {
                 <div className="mx-3">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                         <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>All Members</Typography>
+                        <Button
+                            variant="outlined"
+                            startIcon={<Delete />}
+                            component="a"
+                            onClick={() => router.get(route('membership.trashed'))}
+                            sx={{
+                                color: '#d32f2f',
+                                borderColor: '#d32f2f',
+                                '&:hover': {
+                                    backgroundColor: '#ffebee',
+                                    borderColor: '#d32f2f',
+                                },
+                            }}
+                        >
+                            Deleted Members
+                        </Button>
                     </div>
 
                     {/* Filter Modal */}

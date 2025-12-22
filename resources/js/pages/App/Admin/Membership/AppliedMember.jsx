@@ -53,20 +53,36 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                 <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Applied Member</Typography>
                                 {/* <pre>{JSON.stringify(familyGroups, null, 2)}</pre> */}
                             </div>
-                            <Button
-                                variant="contained"
-                                startIcon={<span>+</span>}
-                                style={{
-                                    backgroundColor: '#063455',
-                                    textTransform: 'none',
-                                    borderRadius: '4px',
-                                    height: 40,
-                                    width: 200,
-                                }}
-                                onClick={() => router.visit(route('applied-member.index'), { data: { mode: 'create' } })}
-                            >
-                                Add Applied Member
-                            </Button>
+                            <div className="d-flex align-items-center gap-2">
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => router.get(route('applied-member.trashed'))}
+                                    sx={{
+                                        color: '#d32f2f',
+                                        borderColor: '#d32f2f',
+                                        '&:hover': {
+                                            backgroundColor: '#ffebee',
+                                            borderColor: '#d32f2f',
+                                        },
+                                    }}
+                                >
+                                    Deleted Applied Members
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<span>+</span>}
+                                    style={{
+                                        backgroundColor: '#063455',
+                                        textTransform: 'none',
+                                        borderRadius: '4px',
+                                        height: 40,
+                                        width: 200,
+                                    }}
+                                    onClick={() => router.visit(route('applied-member.index'), { data: { mode: 'create' } })}
+                                >
+                                    Add Applied Member
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="mb-4 mt-5">

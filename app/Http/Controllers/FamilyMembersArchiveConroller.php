@@ -268,4 +268,35 @@ class FamilyMembersArchiveConroller extends Controller
 
         return response()->json(['members' => $members]);
     }
+
+    public function trashed(Request $request)
+    {
+        // Fetch trashed family members (where parent_id is not null)
+        $query = Member::onlyTrashed()->whereNotNull('parent_id')->with(['parent:id,member_type_id,full_name,membership_no']);
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('membership_no', 'like', "%{$search}%")
+                    ->orWhere('cnic_no', 'like', "%{$search}%");
+            });
+        }
+
+        $familyMembers = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Membership/TrashedFamilyMembers', [
+            'familyMembers' => $familyMembers,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $member = Member::withTrashed()->whereNotNull('parent_id')->findOrFail($id);
+        $member->restore();
+
+        return redirect()->back()->with('success', 'Family member restored successfully.');
+    }
 }

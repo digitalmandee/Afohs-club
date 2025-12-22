@@ -1222,4 +1222,41 @@ class MembershipController extends Controller
             return response()->json(['error' => 'Failed to save information'], 500);
         }
     }
+
+    /**
+     * Display a listing of trashed members.
+     */
+    public function trashed(Request $request)
+    {
+        $query = Member::onlyTrashed()->with(['memberCategory', 'memberType', 'statusHistories']);
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('membership_no', 'like', "%{$search}%")
+                    ->orWhere('cnic_no', 'like', "%{$search}%")
+                    ->orWhere('personal_email', 'like', "%{$search}%");
+            });
+        }
+
+        $members = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Membership/TrashedMembers', [
+            'members' => $members,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    /**
+     * Restore the specified trashed member.
+     */
+    public function restore($id)
+    {
+        $member = Member::withTrashed()->findOrFail($id);
+        $member->restore();
+
+        return redirect()->back()->with('success', 'Member restored successfully.');
+    }
 }

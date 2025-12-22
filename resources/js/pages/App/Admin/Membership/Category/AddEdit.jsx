@@ -88,17 +88,19 @@ const AddEditMembershipCategory = ({ onBack }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     marginTop: '5rem',
                     backgroundColor: '#F6F6F6',
-                    
+
                 }}
             > */}
-            <div style={{
-                minHeight: '100vh',
-                backgroundColor: "#f5f5f5",
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                paddingTop: '1rem',
-            }}>
+            <div
+                style={{
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    paddingTop: '1rem',
+                }}
+            >
                 <Box
                     sx={{
                         display: 'flex',
@@ -106,16 +108,14 @@ const AddEditMembershipCategory = ({ onBack }) => {
                         width: '100%',
                         // maxWidth: '600px',
                         justifyContent: 'flex-start',
-                        ml:4,
+                        ml: 4,
                         mb: 2,
                     }}
                 >
                     <IconButton onClick={() => window.history.back()} sx={{ color: '#000' }}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography variant="h5">
-                        {isEditMode ? 'Edit Membership Category' : 'Add Membership Category'}
-                    </Typography>
+                    <Typography variant="h5">{isEditMode ? 'Edit Membership Category' : 'Add Membership Category'}</Typography>
                 </Box>
                 <Paper sx={{ p: 3, maxWidth: '600px', width: '100%' }}>
                     <form onSubmit={handleSubmit}>
@@ -132,7 +132,7 @@ const AddEditMembershipCategory = ({ onBack }) => {
                             <TextField fullWidth size="small" name="fee" value={formData.fee} onChange={handleInputChange} type="number" required />
                         </Box>
                         <Box sx={{ mb: 2 }}>
-                            <Typography>Subscription Fee</Typography>
+                            <Typography>Maintenance Fee</Typography>
                             <TextField fullWidth size="small" name="subscription_fee" value={formData.subscription_fee} onChange={handleInputChange} type="number" required />
                         </Box>
                         <Box sx={{ mb: 2 }}>

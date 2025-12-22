@@ -5,7 +5,6 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-
 const MemberCategories = ({ memberCategories }) => {
     // const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -62,21 +61,39 @@ const MemberCategories = ({ memberCategories }) => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                            <ArrowBackIcon sx={{color:'#063455'}} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{color:'#063455', fontWeight:600}}>Member Categories</Typography>
+                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                            Member Categories
+                        </Typography>
                     </Box>
-                    <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => router.visit(route('member-categories.create'))}
-                        sx={{
-                            backgroundColor: '#003366',
-                            '&:hover': { backgroundColor: '#002244' },
-                        }}
-                    >
-                        Add Category
-                    </Button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => router.get(route('member-categories.trashed'))}
+                            sx={{
+                                color: '#d32f2f',
+                                borderColor: '#d32f2f',
+                                '&:hover': {
+                                    backgroundColor: '#ffebee',
+                                    borderColor: '#d32f2f',
+                                },
+                            }}
+                        >
+                            Deleted Categories
+                        </Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => router.visit(route('member-categories.create'))}
+                            sx={{
+                                backgroundColor: '#003366',
+                                '&:hover': { backgroundColor: '#002244' },
+                            }}
+                        >
+                            Add Category
+                        </Button>
+                    </div>
                 </Box>
 
                 <Grid container spacing={3}>
@@ -106,7 +123,7 @@ const MemberCategories = ({ memberCategories }) => {
                                             <strong>Fee:</strong> {category.fee.toLocaleString()} Rs
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            <strong>Subscription Fee:</strong> {category.subscription_fee.toLocaleString()} Rs
+                                            <strong>Maintenance Fee:</strong> {category.subscription_fee.toLocaleString()} Rs
                                         </Typography>
                                     </Box>
                                     <Typography variant="body2" color="text.secondary">

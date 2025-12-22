@@ -266,4 +266,45 @@ class AppliedMemberController extends Controller
 
         return response()->json(['members' => $members]);
     }
+
+    public function destroy($id)
+    {
+        try {
+            $member = AppliedMember::findOrFail($id);
+            $member->delete();
+            return redirect()->back()->with('success', 'Applied member deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to delete applied member.');
+        }
+    }
+
+    public function trashed(Request $request)
+    {
+        $query = AppliedMember::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('cnic', 'like', "%{$search}%");
+            });
+        }
+
+        $members = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Membership/TrashedAppliedMembers', [
+            'members' => $members,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $member = AppliedMember::withTrashed()->findOrFail($id);
+        $member->restore();
+
+        return redirect()->back()->with('success', 'Applied member restored successfully.');
+    }
 }
