@@ -281,12 +281,15 @@ class MembershipController extends Controller
                 'barcode_no' => 'nullable|string|unique:members,barcode_no',
                 'family_members' => 'array',
                 'family_members.*.email' => 'nullable|email|distinct|different:email|unique:members,personal_email',
+                'family_members.*.barcode_no' => 'nullable|string|distinct|unique:members,barcode_no',
                 'cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
                 'family_members.*.cnic' => 'nullable|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no',
             ], [
                 'membership_no.unique' => 'Membership number already exists.⚠️',
                 'cnic_no.unique' => 'Member CNIC already exists.⚠️',
+                'barcode_no.unique' => 'Barcode number already exists.⚠️',
                 'family_members.*.cnic.unique' => "Family member's CNIC already exists.⚠️",
+                'family_members.*.barcode_no.unique' => "Family member's barcode number already exists.⚠️",
             ]);
 
             // Custom validation to check if family member CNIC matches primary user CNIC
@@ -565,8 +568,13 @@ class MembershipController extends Controller
             $validator = Validator::make($request->all(), [
                 'member_id' => 'required|exists:members,id',
                 'personal_email' => 'nullable|email|unique:members,personal_email,' . $request->member_id,
+                'barcode_no' => 'nullable|string|unique:members,barcode_no,' . $request->member_id,
+                'cnic_no' => 'required|string|regex:/^\d{5}-\d{7}-\d{1}$/|unique:members,cnic_no,' . $request->member_id,
                 'family_members' => 'array',
                 // 'family_members.*.email' => 'required|email|distinct|different:email|unique:members,personal_email',
+            ], [
+                'barcode_no.unique' => 'Barcode number already exists.⚠️',
+                'cnic_no.unique' => 'Member CNIC already exists.⚠️',
             ]);
 
             if ($validator->fails()) {

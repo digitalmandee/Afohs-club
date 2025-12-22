@@ -337,6 +337,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPay']);
     Route::post('api/check-duplicate-cnic', [MembersController::class, 'checkDuplicateCnic'])->name('api.check-duplicate-cnic');
     Route::post('api/check-duplicate-membership-no', [MembersController::class, 'checkDuplicateMembershipNo'])->name('api.check-duplicate-membership-no');
+    Route::post('api/check-duplicate-barcode', [MembersController::class, 'checkDuplicateBarcode'])->name('api.check-duplicate-barcode');
     Route::get('api/get-next-membership-number', [MembersController::class, 'getNextMembershipNumber'])->name('api.get-next-membership-number');
     Route::get('api/members/search', [MembersController::class, 'search'])->name('api.members.search');
 
