@@ -159,8 +159,24 @@ const handlePrintReceipt = (invoice) => {
                       Lahore, Pakistan
                     </div>
                   </div>
-                  <div class="grid-item-center">
-                    <div class="typography-h6" style="color: #333;">Invoice</div>
+                  <div class="grid-item-right">
+                    <div style="text-align: right;">
+                        <div class="typography-h6" style="color: #333;">Invoice</div>
+                        <div style="
+                            margin-top: 4px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            color: ${invoice.status === 'paid' ? '#155724' : invoice.status === 'checked_in' ? '#004085' : invoice.status === 'checked_out' ? '#0c5460' : '#721c24'};
+                            background-color: ${invoice.status === 'paid' ? '#d4edda' : invoice.status === 'checked_in' ? '#cce5ff' : invoice.status === 'checked_out' ? '#d1ecf1' : '#f8d7da'};
+                            text-transform: uppercase;
+                            border: 1px solid ${invoice.status === 'paid' ? '#c3e6cb' : invoice.status === 'checked_in' ? '#b8daff' : invoice.status === 'checked_out' ? '#bee5eb' : '#f5c6cb'};
+                            padding: 2px 8px;
+                            display: inline-block;
+                            border-radius: 4px;
+                        ">
+                            ${(invoice.status || 'Unpaid').replace(/_/g, ' ')}
+                        </div>
+                    </div>
                   </div>
                 </div>
 
@@ -480,9 +496,29 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                             </Typography>
                         </Grid>
                         <Grid item xs={4} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', fontSize: '18px' }}>
-                                Invoice
-                            </Typography>
+                            <Box sx={{ textAlign: 'right' }}>
+                                <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#333', fontSize: '18px' }}>
+                                    Invoice
+                                </Typography>
+                                {invoice && (
+                                    <div
+                                        style={{
+                                            marginTop: '4px',
+                                            fontSize: '14px',
+                                            fontWeight: 'bold',
+                                            color: invoice.status === 'paid' ? '#155724' : invoice.status === 'checked_in' ? '#004085' : invoice.status === 'checked_out' ? '#0c5460' : '#721c24',
+                                            backgroundColor: invoice.status === 'paid' ? '#d4edda' : invoice.status === 'checked_in' ? '#cce5ff' : invoice.status === 'checked_out' ? '#d1ecf1' : '#f8d7da',
+                                            textTransform: 'uppercase',
+                                            border: `1px solid ${invoice.status === 'paid' ? '#c3e6cb' : invoice.status === 'checked_in' ? '#b8daff' : invoice.status === 'checked_out' ? '#bee5eb' : '#f5c6cb'}`,
+                                            padding: '2px 8px',
+                                            display: 'inline-block',
+                                            borderRadius: '4px',
+                                        }}
+                                    >
+                                        {(invoice.status || 'Unpaid').replace(/_/g, ' ')}
+                                    </div>
+                                )}
+                            </Box>
                         </Grid>
                     </Grid>
 

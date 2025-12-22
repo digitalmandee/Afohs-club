@@ -259,11 +259,14 @@ const Transaction = ({ transactions, filters }) => {
 
                                         // Get status badge style
                                         const getStatusBadge = (status) => {
+                                            const formattedText = status ? status.replace(/_/g, ' ') : 'N/A';
                                             const styles = {
                                                 paid: { bg: '#d4edda', color: '#155724', text: 'Paid' },
                                                 unpaid: { bg: '#f8d7da', color: '#721c24', text: 'Unpaid' },
                                                 partial: { bg: '#fff3cd', color: '#856404', text: 'Partial' },
-                                                default: { bg: '#e2e3e5', color: '#383d41', text: status || 'N/A' },
+                                                checked_in: { bg: '#cce5ff', color: '#004085', text: 'Checked In' },
+                                                checked_out: { bg: '#d1ecf1', color: '#0c5460', text: 'Checked Out' },
+                                                default: { bg: '#e2e3e5', color: '#383d41', text: formattedText },
                                             };
                                             return styles[status] || styles.default;
                                         };
