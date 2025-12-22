@@ -116,6 +116,35 @@ class Member extends BaseModel
         'membership_start_date'
     ];
 
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($member) {
+            if ($member->isForceDeleting()) {
+                // Force delete relationships if member is force deleted
+                $member->familyMembers()->forceDelete();
+                $member->media()->forceDelete();
+                $member->professionInfo()->forceDelete();
+            } else {
+                // Soft delete relationships
+                $member->familyMembers()->delete();
+                $member->media()->delete();
+                $member->professionInfo()->delete();
+            }
+        });
+
+        static::restored(function ($member) {
+            // Restore relationships
+            $member->familyMembers()->restore();
+            $member->media()->restore();
+            $member->professionInfo()->restore();
+        });
+    }
+
     public static function generateNextMembershipNumber(): string
     {
         $lastNumber = self::orderBy('id', 'desc')

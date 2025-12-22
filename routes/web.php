@@ -442,8 +442,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::resource('partners-affiliates', PartnerAffiliateController::class)->names('admin.membership.partners-affiliates');
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
+
         Route::get('trashed', [MembershipController::class, 'trashed'])->name('membership.trashed')->middleware('permission:members.delete');
         Route::post('restore/{id}', [MembershipController::class, 'restore'])->name('membership.restore')->middleware('permission:members.delete');
+
         Route::delete('/{id}', [MembershipController::class, 'destroy'])->name('membership.destroy')->middleware('permission:members.delete');
         Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('permission:members.create');
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('permission:members.edit');
