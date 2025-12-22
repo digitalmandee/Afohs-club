@@ -509,6 +509,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Family Applied Member
         Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
+        Route::get('api/applied-members/search', [AppliedMemberController::class, 'search'])->name('api.applied-members.search');
         Route::post('applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
         Route::put('applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
 
