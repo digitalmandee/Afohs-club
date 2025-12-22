@@ -179,7 +179,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                         backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '2px',
+                                        borderRadius: '4px',
                                         height: '150px',
                                     }}
                                 >
@@ -229,7 +229,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                         backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '2px',
+                                        borderRadius: '4px',
                                         height: '150px',
                                     }}
                                 >

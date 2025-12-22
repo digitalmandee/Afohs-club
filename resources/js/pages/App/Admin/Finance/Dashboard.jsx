@@ -289,7 +289,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
 
                         <Col md={3}>
                             <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
-                                <Card.Body style={{ height: '150px' }}>
+                                <Card.Body style={{ height: '150px', padding:5 }}>
                                     <div className="d-flex gap-3">
                                         <div
                                             style={{
@@ -306,7 +306,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                             <EventNote />
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Booking Revenue</div>
+                                            <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Booking Revenue</div>
                                             <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Rs {total_booking_revenue?.toLocaleString() || 0}</div>
                                         </div>
                                     </div>
@@ -314,11 +314,11 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                         <Row>
                                             <Col>
                                                 <div style={{ fontSize: '12px', color: '#C6C6C6', fontWeight: 400, marginTop: 10 }}>Room Rev</div>
-                                                <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Rs {room_revenue?.toLocaleString() || 0}</div>
+                                                <div style={{ fontSize: '16px', fontWeight: 500, color: '#FFFFFF' }}>Rs {room_revenue?.toLocaleString() || 0}</div>
                                             </Col>
                                             <Col>
                                                 <div style={{ fontSize: '12px', color: '#C6C6C6', fontWeight: 400, marginTop: 10 }}>Event Rev</div>
-                                                <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Rs {event_revenue?.toLocaleString() || 0}</div>
+                                                <div style={{ fontSize: '16px', fontWeight: 500, color: '#FFFFFF' }}>Rs {event_revenue?.toLocaleString() || 0}</div>
                                             </Col>
                                         </Row>
                                     </div>
@@ -345,7 +345,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                             <CardMembership />
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Membership Rev</div>
+                                            <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Membership Revenue</div>
                                             <div style={{ fontSize: '20px', fontWeight: 500, marginBottom: '10px' }}>Rs {total_membership_revenue?.toLocaleString() || 0}</div>
                                         </div>
                                     </div>
