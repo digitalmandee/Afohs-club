@@ -798,28 +798,63 @@ class MemberTransactionController extends Controller
     {
         $transaction = FinancialInvoice::findOrFail($id);
 
-        $request->validate([
+        $rules = [
             'status' => 'required|in:paid,unpaid,cancelled',
-        ]);
+        ];
+
+        if ($request->status === 'paid') {
+            $rules['payment_method'] = 'required|in:cash,credit_card';
+            $rules['credit_card_type'] = 'required_if:payment_method,credit_card|in:mastercard,visa';
+            // Receipt validation: only required for credit card if not previously uploaded
+            if ($request->payment_method === 'credit_card' && empty($transaction->receipt)) {
+                $rules['receipt_file'] = 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048';
+            } else {
+                $rules['receipt_file'] = 'nullable|file|mimes:jpeg,png,jpg,gif,pdf|max:2048';
+            }
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
         $transaction->status = $request->status;
+
         if ($request->status === 'paid') {
             $transaction->payment_date = now();
+            $transaction->payment_method = $request->payment_method;
+            if ($request->payment_method === 'credit_card') {
+                $transaction->credit_card_type = $request->credit_card_type;
+
+                if ($request->hasFile('receipt_file')) {
+                    $receiptPath = FileHelper::saveImage($request->file('receipt_file'), 'receipts');
+                    $transaction->receipt = $receiptPath;
+                }
+            } else {
+                // If switching to cash, maybe clear card details? keeping it simple for now as overwrite behavior is safer
+                $transaction->credit_card_type = null;
+            }
+
             // Auto-cancel overlapping/duplicate unpaid invoices
             $this->cancelOverlappingInvoices($transaction);
         }
+
         $transaction->save();
 
         try {
             $member = \App\Models\Member::find($transaction->member_id);
-            $superAdmins = \App\Models\User::role('super-admin')->get();
-            \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
-                "Transaction Status Updated: {$request->status}",
-                "Invoice #{$transaction->invoice_no} status changed to {$request->status}",
-                route('member.profile', $member->id),
-                auth()->user(),
-                'Finance'
-            ));
+            // Check if member exists (could be null for walk-ins/others)
+            if ($member) {
+                $superAdmins = \App\Models\User::role('super-admin')->get();
+                \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
+                    "Transaction Status Updated: {$request->status}",
+                    "Invoice #{$transaction->invoice_no} status changed to {$request->status}",
+                    route('member.profile', $member->id),
+                    auth()->user(),
+                    'Finance'
+                ));
+            }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to send notification: ' . $e->getMessage());
         }
@@ -848,6 +883,11 @@ class MemberTransactionController extends Controller
 
         if ($transaction->fee_type === 'membership_fee') {
             return;  // Do not cancel existing membership fee invoices
+        }
+
+        // Check if dates are set
+        if (!$transaction->valid_from || !$transaction->valid_to) {
+            return;  // Cannot check for overlaps without dates
         }
 
         // For maintenance, subscription, etc., check for date overlaps

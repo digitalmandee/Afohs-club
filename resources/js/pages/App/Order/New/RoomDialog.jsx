@@ -1,13 +1,14 @@
 'use client';
 
+import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Button, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-const RoomDialog = ({ roomTypes }) => {
+const RoomDialog = ({ roomTypes, loading }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [filterOption, setFilterOption] = useState('occupied');
@@ -24,30 +25,67 @@ const RoomDialog = ({ roomTypes }) => {
         handleOrderDetailChange('room', null);
     };
 
-    // Auto-select first room type if not selected - REMOVED per user request
-    // useEffect(() => {
-    //     if (!orderDetails.room_type && roomTypes.length > 0) {
-    //         handleOrderDetailChange('room_type', roomTypes[0].id);
-    //     }
-    // }, [roomTypes]);
+    const handleMemberType = (value) => {
+        handleOrderDetailChange('member_type', value);
+        handleOrderDetailChange('member', {});
+    };
+
+    // Auto-select room based on selected member
+    useEffect(() => {
+        if (orderDetails.member && orderDetails.member.id && roomTypes.length > 0) {
+            for (const type of roomTypes) {
+                if (type.rooms) {
+                    const foundRoom = type.rooms.find((r) => {
+                        const booking = r.current_booking;
+                        if (!booking) return false;
+                        if (orderDetails.member_type == 1) return booking.member_id == orderDetails.member.id;
+                        if (orderDetails.member_type == 2) return booking.customer_id == orderDetails.member.id;
+                        return false;
+                    });
+
+                    if (foundRoom) {
+                        handleOrderDetailChange('room_type', type.id);
+                        handleOrderDetailChange('room', foundRoom);
+                        break;
+                    }
+                }
+            }
+        }
+    }, [orderDetails.member, roomTypes]);
 
     const currentRoomType = roomTypes.find((r) => r.id === orderDetails.room_type);
 
     const filteredRooms = currentRoomType?.rooms?.length
         ? currentRoomType.rooms.filter((room) => {
-              const isOccupied = room.bookings && room.bookings.length > 0;
+              const isOccupied = !!room.current_booking;
               if (filterOption === 'occupied' && !isOccupied) return false;
               if (filterOption === 'vacant' && isOccupied) return false;
 
+              // If a member is selected, filter by that member's booking
+              if (orderDetails.member && orderDetails.member.id) {
+                  const booking = room.current_booking;
+                  if (!booking) return false;
+
+                  // Check if booking matches selected member
+                  if (orderDetails.member_type == 1) {
+                      // Member
+                      if (booking.member_id != orderDetails.member.id) return false;
+                  } else if (orderDetails.member_type == 2) {
+                      // Guest
+                      if (booking.customer_id != orderDetails.member.id) return false;
+                  }
+                  // For employee or walk-in, logic might vary, but for now strict match
+              }
+
               const keyword = searchTerm.toLowerCase();
-              const booking = isOccupied ? room.bookings[0] : null;
+              const booking = room.current_booking;
               const guestName = booking ? booking.guest_first_name + ' ' + booking.guest_last_name : '';
 
               return room.name.toLowerCase().includes(keyword) || guestName.toLowerCase().includes(keyword);
           })
         : [];
 
-    const isDisabled = !orderDetails.room || !(orderDetails.room.bookings && orderDetails.room.bookings.length > 0);
+    const isDisabled = !orderDetails.room || !orderDetails.room.current_booking;
 
     return (
         <Box>
@@ -76,6 +114,67 @@ const RoomDialog = ({ roomTypes }) => {
                     </Typography>
                 </Box>
             </Box>
+
+            <Box sx={{ px: 2, mb: 2 }}>
+                <FormControl component="fieldset">
+                    <RadioGroup row name="membership-type" value={orderDetails.member_type} onChange={(e) => handleMemberType(e.target.value)}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: 1,
+                                width: '100%',
+                            }}
+                        >
+                            {[
+                                { id: 1, name: 'Member' },
+                                { id: 2, name: 'Guest' },
+                                { id: 3, name: 'Employee' },
+                            ].map((option) => {
+                                const isSelected = orderDetails.member_type == option.id;
+                                return (
+                                    <Box
+                                        key={option.id}
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            border: `1px solid ${isSelected ? '#A27B5C' : '#E3E3E3'}`,
+                                            bgcolor: isSelected ? '#FCF7EF' : 'transparent',
+                                            borderRadius: 1,
+                                            px: 2,
+                                            py: 1,
+                                            transition: 'all 0.2s ease-in-out',
+                                        }}
+                                    >
+                                        <FormControlLabel
+                                            value={option.id}
+                                            control={<Radio size="small" />}
+                                            label={<Typography variant="body2">{option.name}</Typography>}
+                                            sx={{
+                                                m: 0,
+                                                width: '100%',
+                                                '& .MuiFormControlLabel-label': {
+                                                    flexGrow: 1,
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+                                );
+                            })}
+                        </Box>
+                    </RadioGroup>
+                </FormControl>
+            </Box>
+
+            {/* Customer Information */}
+            <Grid container spacing={2} sx={{ px: 2, mb: 2 }}>
+                <Grid item xs={12}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                        Customer Name
+                    </Typography>
+                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ type: orderDetails.member_type }} onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
+                </Grid>
+            </Grid>
 
             {/* Search and Filter */}
             <Box sx={{ px: 2, mb: 2, display: 'flex' }}>
@@ -129,7 +228,7 @@ const RoomDialog = ({ roomTypes }) => {
                         handleOrderDetailChange('room', room);
 
                         // Extract member info from booking
-                        const booking = room.bookings && room.bookings.length > 0 ? room.bookings[0] : null;
+                        const booking = room.current_booking;
                         if (booking) {
                             let memberData = null;
                             let memberType = null;
@@ -165,10 +264,14 @@ const RoomDialog = ({ roomTypes }) => {
                     }}
                 >
                     <Grid container spacing={1}>
-                        {filteredRooms.length > 0 ? (
+                        {loading ? (
+                            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', py: 5 }}>
+                                <CircularProgress />
+                            </Grid>
+                        ) : filteredRooms.length > 0 ? (
                             filteredRooms.map((room) => {
-                                const isOccupied = room.bookings && room.bookings.length > 0;
-                                const booking = isOccupied ? room.bookings[0] : null;
+                                const isOccupied = !!room.current_booking;
+                                const booking = room.current_booking;
                                 const isSelected = orderDetails.room?.id === room.id;
 
                                 const handleSelectRoom = () => {
@@ -235,7 +338,8 @@ const RoomDialog = ({ roomTypes }) => {
                                                     {isOccupied ? (
                                                         <Box>
                                                             <Typography variant="caption" sx={{ color: 'green', display: 'block' }}>
-                                                                Guest: {booking.guest_first_name} {booking.guest_last_name}
+                                                                {booking.member ? 'Member: ' : booking.customer ? 'Guest: ' : booking.employee ? 'Employee: ' : 'Guest: '}
+                                                                {booking.member ? booking.member.full_name : booking.customer ? booking.customer.name : booking.employee ? booking.employee.name : `${booking.guest_first_name} ${booking.guest_last_name}`}
                                                             </Typography>
                                                             <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', fontSize: '0.7rem' }}>
                                                                 Check-In: {booking.check_in_date}
@@ -288,13 +392,13 @@ const RoomDialog = ({ roomTypes }) => {
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textTransform: 'capitalize' }}>
-                                            Room Status: {orderDetails.room?.bookings?.[0]?.status?.replace('_', ' ') || 'Occupied'}
+                                            Room Status: {orderDetails.room?.current_booking?.status?.replace('_', ' ') || 'Occupied'}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                            Check-In: {orderDetails.room?.bookings?.[0]?.check_in_date}
+                                            Check-In: {orderDetails.room?.current_booking?.check_in_date}
                                         </Typography>
                                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                            Check-Out: {orderDetails.room?.bookings?.[0]?.check_out_date}
+                                            Check-Out: {orderDetails.room?.current_booking?.check_out_date}
                                         </Typography>
                                     </Box>
                                 </Box>
@@ -328,7 +432,7 @@ const RoomDialog = ({ roomTypes }) => {
                     onClick={() => {
                         const room = orderDetails.room;
                         // If room is occupied, pass booking id
-                        const booking = room.bookings && room.bookings.length > 0 ? room.bookings[0] : null;
+                        const booking = room.current_booking;
 
                         router.visit(
                             route('order.menu', {

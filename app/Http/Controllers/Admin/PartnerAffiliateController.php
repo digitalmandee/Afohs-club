@@ -200,4 +200,33 @@ class PartnerAffiliateController extends Controller
 
         return response()->json(['partners' => $partners]);
     }
+
+    public function trashed(Request $request)
+    {
+        $query = PartnerAffiliate::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('organization_name', 'like', "%{$search}%")
+                    ->orWhere('focal_person_name', 'like', "%{$search}%");
+            });
+        }
+
+        $partners = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Membership/PartnersAffiliates/TrashedPartners', [
+            'partners' => $partners,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $partner = PartnerAffiliate::withTrashed()->findOrFail($id);
+        $partner->restore();
+
+        return redirect()->back()->with('success', 'Partner/Affiliate restored successfully.');
+    }
 }

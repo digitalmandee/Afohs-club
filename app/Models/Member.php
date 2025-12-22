@@ -116,6 +116,35 @@ class Member extends BaseModel
         'membership_start_date'
     ];
 
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($member) {
+            if ($member->isForceDeleting()) {
+                // Force delete relationships if member is force deleted
+                $member->familyMembers()->forceDelete();
+                $member->media()->forceDelete();
+                $member->professionInfo()->forceDelete();
+            } else {
+                // Soft delete relationships
+                $member->familyMembers()->delete();
+                $member->media()->delete();
+                $member->professionInfo()->delete();
+            }
+        });
+
+        static::restored(function ($member) {
+            // Restore relationships
+            $member->familyMembers()->restore();
+            $member->media()->restore();
+            $member->professionInfo()->restore();
+        });
+    }
+
     public static function generateNextMembershipNumber(): string
     {
         $lastNumber = self::orderBy('id', 'desc')
@@ -132,6 +161,17 @@ class Member extends BaseModel
 
         // Minimum 3 digits, but will grow if needed (e.g., "001", "099", "1000")
         return str_pad((string) $next, 3, '0', STR_PAD_LEFT);
+    }
+
+    public static function generateNextApplicationNo()
+    {
+        $lastMember = self::orderBy('id', 'desc')->first();
+        if ($lastMember && preg_match('/APP-(\d+)/', $lastMember->application_number, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;  // Start from 1 if no members exist or format doesn't match
+        }
+        return 'APP-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 
     public function memberType()

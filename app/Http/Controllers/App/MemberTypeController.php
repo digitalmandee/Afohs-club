@@ -16,6 +16,7 @@ class MemberTypeController extends Controller
         $this->middleware('permission:member-types.edit')->only('edit', 'update');
         $this->middleware('permission:member-types.delete')->only('destroy');
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -64,5 +65,30 @@ class MemberTypeController extends Controller
         $memberType->delete();
 
         return response()->json(['success' => true, 'message' => 'Member Type deleted.']);
+    }
+
+    public function trashed(Request $request)
+    {
+        $query = MemberType::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $memberTypes = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Membership/TrashedMemberTypes', [
+            'memberTypes' => $memberTypes,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $memberType = MemberType::withTrashed()->findOrFail($id);
+        $memberType->restore();
+
+        return redirect()->back()->with('success', 'Member Type restored successfully.');
     }
 }

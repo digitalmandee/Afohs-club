@@ -29,4 +29,9 @@ class Room extends Model
     {
         return $this->hasMany(RoomBooking::class);
     }
+
+    public function currentBooking()
+    {
+        return $this->hasOne(RoomBooking::class)->where('status', 'checked_in');
+    }
 }

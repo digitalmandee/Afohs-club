@@ -43,6 +43,14 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [bdLoading, setBdLoading] = useState(false);
     const [selectedBd, setSelectedBd] = useState(null);
 
+    // Barcode Validation State
+    const [barcodeStatus, setBarcodeStatus] = useState(null); // 'available', 'exists', 'error'
+    const [isValidatingBarcode, setIsValidatingBarcode] = useState(false);
+    const [barcodeValidationTimeout, setBarcodeValidationTimeout] = useState(null);
+    const [familyBarcodeStatus, setFamilyBarcodeStatus] = useState(null); // 'available', 'exists', 'error'
+    const [isValidatingFamilyBarcode, setIsValidatingFamilyBarcode] = useState(false);
+    const [familyBarcodeValidationTimeout, setFamilyBarcodeValidationTimeout] = useState(null);
+
     const calculateAge = (dateOfBirth) => {
         if (!dateOfBirth) return 0;
         const today = new Date();
@@ -92,6 +100,90 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
         }
 
         setIsValidatingMembershipNo(false);
+    };
+
+    const validateBarcodeRealTime = async (barcodeValue) => {
+        if (barcodeValidationTimeout) {
+            clearTimeout(barcodeValidationTimeout);
+        }
+
+        if (!barcodeValue || barcodeValue.trim() === '') {
+            setBarcodeStatus(null);
+            return;
+        }
+
+        setBarcodeStatus(null);
+
+        const timeoutId = setTimeout(async () => {
+            setIsValidatingBarcode(true);
+            try {
+                const memberId = data.member_id || data.id || null;
+                const response = await axios.post('/api/check-duplicate-barcode', {
+                    barcode_no: barcodeValue,
+                    member_id: memberId,
+                });
+
+                if (response.data.exists) {
+                    setBarcodeStatus('exists');
+                } else {
+                    setBarcodeStatus('available');
+                }
+            } catch (error) {
+                console.error('Error checking barcode:', error);
+                setBarcodeStatus('error');
+            } finally {
+                setIsValidatingBarcode(false);
+            }
+        }, 500);
+
+        setBarcodeValidationTimeout(timeoutId);
+    };
+
+    const validateFamilyBarcodeRealTime = async (barcodeValue) => {
+        if (familyBarcodeValidationTimeout) {
+            clearTimeout(familyBarcodeValidationTimeout);
+        }
+
+        if (!barcodeValue || barcodeValue.trim() === '') {
+            setFamilyBarcodeStatus(null);
+            return;
+        }
+
+        setFamilyBarcodeStatus(null);
+
+        const timeoutId = setTimeout(async () => {
+            setIsValidatingFamilyBarcode(true);
+
+            // Check against primary member's barcode
+            if (data.barcode_no && barcodeValue === data.barcode_no) {
+                setFamilyBarcodeStatus('exists'); // Same as primary
+                setIsValidatingFamilyBarcode(false);
+                return;
+            }
+
+            try {
+                // Attempt to get ID if editing a saved family member
+                const familyMemberId = currentFamilyMember.id || null;
+
+                const response = await axios.post('/api/check-duplicate-barcode', {
+                    barcode_no: barcodeValue,
+                    member_id: familyMemberId,
+                });
+
+                if (response.data.exists) {
+                    setFamilyBarcodeStatus('exists');
+                } else {
+                    setFamilyBarcodeStatus('available');
+                }
+            } catch (error) {
+                console.error('Error checking family barcode:', error);
+                setFamilyBarcodeStatus('error');
+            } finally {
+                setIsValidatingFamilyBarcode(false);
+            }
+        }, 500);
+
+        setFamilyBarcodeValidationTimeout(timeoutId);
     };
 
     const generateUniqueMembershipNumber = async (categoryName, isKinship = false) => {
@@ -1096,7 +1188,20 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             value={data.barcode_no}
                                             onChange={(e) => {
                                                 handleChange(e);
+                                                validateBarcodeRealTime(e.target.value);
                                             }}
+                                            InputProps={{
+                                                endAdornment: (
+                                                    <InputAdornment position="end">
+                                                        {isValidatingBarcode && <CircularProgress size={20} />}
+                                                        {!isValidatingBarcode && barcodeStatus === 'available' && <CheckIcon sx={{ color: '#4caf50' }} />}
+                                                        {!isValidatingBarcode && barcodeStatus === 'exists' && <CloseRoundedIcon sx={{ color: '#f44336' }} />}
+                                                        {!isValidatingBarcode && barcodeStatus === 'error' && <CloseRoundedIcon sx={{ color: '#ff9800' }} />}
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            error={barcodeStatus === 'exists'}
+                                            helperText={isValidatingBarcode ? 'Checking availability...' : barcodeStatus === 'available' ? <span style={{ color: '#4caf50' }}>Barcode is available</span> : barcodeStatus === 'exists' ? 'Barcode already exists' : barcodeStatus === 'error' ? 'Error checking barcode' : ''}
                                             sx={{
                                                 // height: 10,
                                                 display: 'flex',
@@ -1107,7 +1212,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     paddingY: 0,
                                                 },
                                                 '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderColor: '#ccc',
+                                                    borderColor: barcodeStatus === 'available' ? '#4caf50' : barcodeStatus === 'exists' ? '#f44336' : '#ccc',
                                                 },
                                             }}
                                         />
@@ -1929,14 +2034,29 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 variant="outlined"
                                                                 name="barcode_no"
                                                                 value={currentFamilyMember.barcode_no}
-                                                                onChange={(e) => handleFamilyMemberChange('barcode_no', e.target.value)}
+                                                                onChange={(e) => {
+                                                                    handleFamilyMemberChange('barcode_no', e.target.value);
+                                                                    validateFamilyBarcodeRealTime(e.target.value);
+                                                                }}
                                                                 inputProps={{
                                                                     maxLength: 12,
                                                                     inputMode: 'numeric',
                                                                 }}
+                                                                InputProps={{
+                                                                    endAdornment: (
+                                                                        <InputAdornment position="end">
+                                                                            {isValidatingFamilyBarcode && <CircularProgress size={20} />}
+                                                                            {!isValidatingFamilyBarcode && familyBarcodeStatus === 'available' && <CheckIcon sx={{ color: '#4caf50' }} />}
+                                                                            {!isValidatingFamilyBarcode && familyBarcodeStatus === 'exists' && <CloseRoundedIcon sx={{ color: '#f44336' }} />}
+                                                                            {!isValidatingFamilyBarcode && familyBarcodeStatus === 'error' && <CloseRoundedIcon sx={{ color: '#ff9800' }} />}
+                                                                        </InputAdornment>
+                                                                    ),
+                                                                }}
+                                                                error={familyBarcodeStatus === 'exists'}
+                                                                helperText={isValidatingFamilyBarcode ? 'Checking availability...' : familyBarcodeStatus === 'available' ? <span style={{ color: '#4caf50' }}>Barcode is available</span> : familyBarcodeStatus === 'exists' ? 'Barcode already exists' : familyBarcodeStatus === 'error' ? 'Error checking barcode' : ''}
                                                                 sx={{
                                                                     '& .MuiOutlinedInput-notchedOutline': {
-                                                                        borderColor: '#ccc',
+                                                                        borderColor: familyBarcodeStatus === 'available' ? '#4caf50' : familyBarcodeStatus === 'exists' ? '#f44336' : '#ccc',
                                                                     },
                                                                 }}
                                                             />

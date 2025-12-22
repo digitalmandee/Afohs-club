@@ -5,11 +5,11 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AppliedMemberInvoice from './AppliedMemberInvoice';
 import AppliedMemberForm from './AppliedMemberForm';
+import AppliedMemberFilter from './AppliedMemberFilter';
 import dayjs from 'dayjs';
 
 const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) => {
     const [open, setOpen] = useState(true);
-    const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
 
@@ -53,53 +53,40 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                 <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Applied Member</Typography>
                                 {/* <pre>{JSON.stringify(familyGroups, null, 2)}</pre> */}
                             </div>
-                            <Button
-                                variant="contained"
-                                startIcon={<span>+</span>}
-                                style={{
-                                    backgroundColor: '#063455',
-                                    textTransform: 'none',
-                                    borderRadius: '4px',
-                                    height: 40,
-                                    width: 200,
-                                }}
-                                onClick={() => router.visit(route('applied-member.index'), { data: { mode: 'create' } })}
-                            >
-                                Add Applied Member
-                            </Button>
+                            <div className="d-flex align-items-center gap-2">
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => router.get(route('applied-member.trashed'))}
+                                    sx={{
+                                        color: '#d32f2f',
+                                        borderColor: '#d32f2f',
+                                        '&:hover': {
+                                            backgroundColor: '#ffebee',
+                                            borderColor: '#d32f2f',
+                                        },
+                                    }}
+                                >
+                                    Deleted Applied Members
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    startIcon={<span>+</span>}
+                                    style={{
+                                        backgroundColor: '#063455',
+                                        textTransform: 'none',
+                                        borderRadius: '4px',
+                                        height: 40,
+                                        width: 200,
+                                    }}
+                                    onClick={() => router.visit(route('applied-member.index'), { data: { mode: 'create' } })}
+                                >
+                                    Add Applied Member
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="mb-4 mt-5">
-                            <div className="d-flex justify-content-end align-items-center mb-3">
-                                <div className="d-flex">
-                                    <TextField
-                                        placeholder="Search by name, email, etc."
-                                        variant="outlined"
-                                        size="small"
-                                        style={{ width: '350px', marginRight: '10px' }}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Search />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
-                                    <Button
-                                        variant="outlined"
-                                        startIcon={<FilterAlt />}
-                                        style={{
-                                            border: '1px solid #063455',
-                                            color: '#333',
-                                            textTransform: 'none',
-                                            backgroundColor: 'transparent',
-                                        }}
-                                        onClick={() => setOpenFilterModal(true)}
-                                    >
-                                        Filter
-                                    </Button>
-                                </div>
-                            </div>
+                            <AppliedMemberFilter open={true} />
 
                             <div style={{ overflowX: 'auto', width: '100%' }}>
                                 <TableContainer component={Paper} style={{ boxShadow: 'none', minWidth: '1000px' }}>

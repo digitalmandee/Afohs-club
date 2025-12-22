@@ -434,9 +434,40 @@ class RoomBookingController extends Controller
 
         $booking = RoomBooking::findOrFail($request->booking_id);
 
+        // 1. Status Validation
+        if ($booking->status === 'checked_in') {
+            return response()->json(['message' => 'This booking is already checked in.'], 422);
+        }
+        if ($booking->status === 'checked_out') {
+            return response()->json(['message' => 'This booking is already checked out.'], 422);
+        }
+        if ($booking->status === 'cancelled') {
+            return response()->json(['message' => 'This booking is cancelled.'], 422);
+        }
+
+        // 2. Date Validation (Cannot check in for future)
+        $checkInDate = Carbon::parse($request->check_in_date)->startOfDay();
+        $today = Carbon::today();
+
+        if ($checkInDate->gt($today)) {
+            return response()->json(['message' => 'Cannot check in. The booking date is in the future.'], 422);
+        }
+
         // Validate: Check-in date must not be after check-out date
         if (!empty($booking->check_out_date) && $request->check_in_date > $booking->check_out_date) {
             return response()->json(['message' => 'Check-in date cannot be after check-out date.'], 422);
+        }
+
+        // 3. Room Occupancy Validation
+        if ($booking->room_id) {
+            $isOccupied = RoomBooking::where('room_id', $booking->room_id)
+                ->where('status', 'checked_in')
+                ->where('id', '!=', $booking->id)
+                ->exists();
+
+            if ($isOccupied) {
+                return response()->json(['message' => 'This room is currently occupied by another guest (Status: Checked In). Cannot check in new guest until the room is vacated.'], 422);
+            }
         }
 
         // Save check-in info

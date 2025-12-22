@@ -16,6 +16,7 @@ class MemberCategoryController extends Controller
         $this->middleware('permission:member-categories.edit')->only('edit', 'update');
         $this->middleware('permission:member-categories.delete')->only('destroy');
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -103,10 +104,36 @@ class MemberCategoryController extends Controller
      * @param  \App\Models\MemberCategory  $memberCategory
      * @return \Illuminate\Http\Response
      */
-    public function destroy(MemberCategory $memberCategory)
+    public function destroy($id)
     {
+        $memberCategory = MemberCategory::findOrFail($id);
         $memberCategory->delete();
 
         return response()->json(['message' => 'Member category deleted successfully']);
+    }
+
+    public function trashed(Request $request)
+    {
+        $query = MemberCategory::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $categories = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Membership/Category/TrashedMemberCategories', [
+            'categories' => $categories,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $category = MemberCategory::withTrashed()->findOrFail($id);
+        $category->restore();
+
+        return redirect()->back()->with('success', 'Member category restored successfully.');
     }
 }

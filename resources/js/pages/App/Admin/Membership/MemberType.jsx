@@ -8,7 +8,6 @@ import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddMemberModal from '@/components/App/MemberTypes/AddModal';
 
-
 const MembersType = ({ memberTypesData }) => {
     // const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -88,9 +87,25 @@ const MembersType = ({ memberTypesData }) => {
                             Members Type
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
-                        Add Type
-                    </Button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => router.get(route('member-types.trashed'))}
+                            sx={{
+                                color: '#d32f2f',
+                                borderColor: '#d32f2f',
+                                '&:hover': {
+                                    backgroundColor: '#ffebee',
+                                    borderColor: '#d32f2f',
+                                },
+                            }}
+                        >
+                            Deleted Member Types
+                        </Button>
+                        <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
+                            Add Type
+                        </Button>
+                    </div>
                 </Box>
 
                 <Grid container spacing={3}>

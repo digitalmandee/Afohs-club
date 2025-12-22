@@ -183,6 +183,32 @@ export const generateInvoiceContent = (booking) => {
                         <div class="typography-h6" style="color: #333; margin-top: 20px">
                         ${getBookingTypeLabel(booking.booking_type)}
                         </div>
+                        <div style="
+                            margin-top: 4px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            color: ${booking.status === 'paid' ? '#155724' :
+            booking.status === 'checked_in' ? '#004085' :
+                booking.status === 'checked_out' ? '#0c5460' :
+                    '#721c24'
+        };
+                            background-color: ${booking.status === 'paid' ? '#d4edda' :
+            booking.status === 'checked_in' ? '#cce5ff' :
+                booking.status === 'checked_out' ? '#d1ecf1' :
+                    '#f8d7da'
+        };
+                            text-transform: uppercase;
+                            border: 1px solid ${booking.status === 'paid' ? '#c3e6cb' :
+            booking.status === 'checked_in' ? '#b8daff' :
+                booking.status === 'checked_out' ? '#bee5eb' :
+                    '#f5c6cb'
+        };
+                            padding: 2px 8px;
+                            display: inline-block;
+                            border-radius: 4px;
+                        ">
+                            ${(booking.status || 'Unpaid').replace(/_/g, ' ')}
+                        </div>
                     </div>
                 </div>
 
@@ -221,7 +247,6 @@ export const generateInvoiceContent = (booking) => {
                         <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('MMMM D, YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Status: </span>${booking.status || 'N/A'}</div>
                         ${booking.cancellation_reason ? `<div class="typography-body2"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>` : ''}
                     </div>
                 </div>

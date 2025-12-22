@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
-import { People, CheckCircle, Timer, Cancel, BarChart, EventNote, CardMembership, Fastfood, Print } from '@mui/icons-material';
+import { People, CheckCircle, Timer, Cancel, BarChart, EventNote, CardMembership, Fastfood, Print, Payment } from '@mui/icons-material';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import { router } from '@inertiajs/react';
 import InvoiceSlip from '../Subscription/Invoice';
 import MembershipInvoiceSlip from '../Membership/Invoice';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
+import PaymentDialog from '@/components/App/Transactions/PaymentDialog';
 import axios from 'axios';
 
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
@@ -31,6 +32,52 @@ const Dashboard = ({ statistics, recent_transactions }) => {
 
     // Extract statistics from backend
     const { total_members = 0, active_members = 0, expired_members = 0, canceled_members = 0, total_revenue = 0, total_expenses = 0, room_revenue = 0, event_revenue = 0, total_membership_revenue = 0, subscription_fee_revenue = 0, food_revenue = 0, total_booking_revenue = 0 } = statistics || {};
+
+    // Payment Confirmation State
+    const [paymentConfirmationOpen, setPaymentConfirmationOpen] = useState(false);
+    const [transactionToPay, setTransactionToPay] = useState(null);
+    const [submittingPayment, setSubmittingPayment] = useState(false);
+
+    // Payment Confirmation Handlers
+    const handlePayClick = (transaction) => {
+        setTransactionToPay(transaction);
+        setPaymentConfirmationOpen(true);
+    };
+
+    const handleConfirmPayment = async (paymentData) => {
+        if (!transactionToPay) return;
+
+        setSubmittingPayment(true);
+        const formData = new FormData();
+        formData.append('status', 'paid');
+        formData.append('payment_method', paymentData.payment_method);
+        if (paymentData.payment_method === 'credit_card') {
+            formData.append('credit_card_type', paymentData.credit_card_type);
+            if (paymentData.receipt_file) {
+                formData.append('receipt_file', paymentData.receipt_file);
+            }
+        }
+
+        try {
+            const response = await axios.post(route('finance.transaction.update-status', transactionToPay.id), formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            if (response.data.success) {
+                // enqueueSnackbar('Invoice marked as paid successfully!', { variant: 'success' }); // Snackbar not imported yet
+                // Refresh transactions using Inertia reload
+                router.reload({ only: ['recent_transactions'] });
+                setPaymentConfirmationOpen(false);
+                setTransactionToPay(null);
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            // enqueueSnackbar('Failed to update status', { variant: 'error' });
+        } finally {
+            setSubmittingPayment(false);
+        }
+    };
 
     // Format number with commas
     const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -478,7 +525,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                                 <span style={{ color: '#7F7F7F' }}>-</span>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                             <span
                                                                 style={{
                                                                     color: '#0C67AA',
@@ -569,6 +616,18 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                     bookingId={selectedBookingId}
                     setBookings={setTransactions}
                     financeView={true}
+                />
+
+                {/* Payment Dialog */}
+                <PaymentDialog
+                    open={paymentConfirmationOpen}
+                    onClose={() => {
+                        setPaymentConfirmationOpen(false);
+                        setTransactionToPay(null);
+                    }}
+                    transaction={transactionToPay}
+                    onConfirm={handleConfirmPayment}
+                    submitting={submittingPayment}
                 />
             </div>
             {/* </div> */}

@@ -62,6 +62,26 @@ class MembersController extends Controller
         ]);
     }
 
+    public function checkDuplicateBarcode(Request $request)
+    {
+        $barcode = $request->barcode_no;
+        $memberId = $request->member_id;
+
+        if (!$barcode) {
+            return response()->json(['exists' => false]);
+        }
+
+        $query = Member::where('barcode_no', $barcode);
+
+        if ($memberId) {
+            $query->where('id', '!=', $memberId);
+        }
+
+        $exists = $query->exists();
+
+        return response()->json(['exists' => $exists]);
+    }
+
     public function checkDuplicateMembershipNo(Request $request)
     {
         $request->validate([

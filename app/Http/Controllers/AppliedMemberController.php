@@ -17,7 +17,34 @@ class AppliedMemberController extends Controller
 {
     public function index(Request $request)
     {
-        $members = AppliedMember::with('financialInvoice')->get()->map(function ($member) {
+        $query = AppliedMember::query()->with('financialInvoice');
+
+        // Apply Filters
+        if ($request->has('name') && $request->name) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        if ($request->has('email') && $request->email) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        if ($request->has('phone_number') && $request->phone_number) {
+            $query->where('phone_number', 'like', '%' . $request->phone_number . '%');
+        }
+
+        if ($request->has('cnic') && $request->cnic) {
+            $query->where('cnic', 'like', '%' . $request->cnic . '%');
+        }
+
+        if ($request->has('status') && $request->status !== 'all') {
+            if ($request->status === 'permanent') {
+                $query->where('is_permanent_member', true);
+            } elseif ($request->status === 'not_permanent') {
+                $query->where('is_permanent_member', false);
+            }
+        }
+
+        $members = $query->get()->map(function ($member) {
             return [
                 'id' => $member->id,
                 'name' => $member->name,
@@ -57,6 +84,7 @@ class AppliedMemberController extends Controller
             'memberData' => $memberData,
             'membershipNo' => $membershipNo,
             'mode' => $request->query('mode', 'list'),
+            'filters' => $request->only(['name', 'email', 'phone_number', 'cnic', 'status']),
         ]);
     }
 
@@ -216,5 +244,67 @@ class AppliedMemberController extends Controller
             Log::error('Unexpected error updating applied member: ' . $th->getMessage(), ['id' => $id, 'request' => $request->all()]);
             return response()->json(['error' => 'Failed to update applied member: ' . $th->getMessage()], 500);
         }
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (!$query) {
+            return response()->json(['members' => []]);
+        }
+
+        $members = AppliedMember::where(function ($q) use ($query) {
+            $q
+                ->where('name', 'like', "%{$query}%")
+                ->orWhere('email', 'like', "%{$query}%")
+                ->orWhere('cnic', 'like', "%{$query}%");
+        })
+            ->select('id', 'name', 'email', 'cnic', 'phone_number', 'is_permanent_member')
+            ->limit(10)
+            ->get();
+
+        return response()->json(['members' => $members]);
+    }
+
+    public function destroy($id)
+    {
+        try {
+            $member = AppliedMember::findOrFail($id);
+            $member->delete();
+            return redirect()->back()->with('success', 'Applied member deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to delete applied member.');
+        }
+    }
+
+    public function trashed(Request $request)
+    {
+        $query = AppliedMember::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('cnic', 'like', "%{$search}%");
+            });
+        }
+
+        $members = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Membership/TrashedAppliedMembers', [
+            'members' => $members,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $member = AppliedMember::withTrashed()->findOrFail($id);
+        $member->restore();
+
+        return redirect()->back()->with('success', 'Applied member restored successfully.');
     }
 }

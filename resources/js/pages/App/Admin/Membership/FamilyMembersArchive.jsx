@@ -284,22 +284,40 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                     <div className="d-flex align-items-center">
                         <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Family Members Archive</Typography>
                     </div>
-                    {isSuperAdmin && selectedMembers.length > 0 && (
+                    <div className="d-flex gap-2">
                         <Button
-                            variant="contained"
-                            onClick={handleBulkExpire}
-                            disabled={loading}
-                            startIcon={<PersonOff />}
-                            style={{
-                                backgroundColor: '#e74c3c',
-                                textTransform: 'none',
-                                borderRadius: '4px',
+                            variant="outlined"
+                            onClick={() => router.get(route('membership.family-members.trashed'))}
+                            sx={{
+                                color: '#d32f2f',
+                                borderColor: '#d32f2f',
                                 height: 40,
+                                textTransform: 'none',
+                                '&:hover': {
+                                    backgroundColor: '#ffebee',
+                                    borderColor: '#d32f2f',
+                                },
                             }}
                         >
-                            Expire Selected ({selectedMembers.length})
+                            Deleted Family Members
                         </Button>
-                    )}
+                        {isSuperAdmin && selectedMembers.length > 0 && (
+                            <Button
+                                variant="contained"
+                                onClick={handleBulkExpire}
+                                disabled={loading}
+                                startIcon={<PersonOff />}
+                                style={{
+                                    backgroundColor: '#e74c3c',
+                                    textTransform: 'none',
+                                    borderRadius: '4px',
+                                    height: 40,
+                                }}
+                            >
+                                Expire Selected ({selectedMembers.length})
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Recently Joined Section */}

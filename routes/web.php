@@ -337,6 +337,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPay']);
     Route::post('api/check-duplicate-cnic', [MembersController::class, 'checkDuplicateCnic'])->name('api.check-duplicate-cnic');
     Route::post('api/check-duplicate-membership-no', [MembersController::class, 'checkDuplicateMembershipNo'])->name('api.check-duplicate-membership-no');
+    Route::post('api/check-duplicate-barcode', [MembersController::class, 'checkDuplicateBarcode'])->name('api.check-duplicate-barcode');
     Route::get('api/get-next-membership-number', [MembersController::class, 'getNextMembershipNumber'])->name('api.get-next-membership-number');
     Route::get('api/members/search', [MembersController::class, 'search'])->name('api.members.search');
 
@@ -436,9 +437,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::group(['prefix' => 'admin/membership'], function () {
         Route::get('partners-affiliates/search', [PartnerAffiliateController::class, 'search'])->name('admin.membership.partners-affiliates.search');
+        Route::get('partners-affiliates/trashed', [PartnerAffiliateController::class, 'trashed'])->name('admin.membership.partners-affiliates.trashed');
+        Route::post('partners-affiliates/restore/{id}', [PartnerAffiliateController::class, 'restore'])->name('admin.membership.partners-affiliates.restore');
         Route::resource('partners-affiliates', PartnerAffiliateController::class)->names('admin.membership.partners-affiliates');
         Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
         Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
+
+        Route::get('trashed', [MembershipController::class, 'trashed'])->name('membership.trashed')->middleware('permission:members.delete');
+        Route::post('restore/{id}', [MembershipController::class, 'restore'])->name('membership.restore')->middleware('permission:members.delete');
+
         Route::delete('/{id}', [MembershipController::class, 'destroy'])->name('membership.destroy')->middleware('permission:members.delete');
         Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('permission:members.create');
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('permission:members.edit');
@@ -504,18 +511,28 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Family Members Archive route
         Route::get('family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members')->middleware('permission:family-members.view');
+        Route::get('family-members-archive/trashed', [FamilyMembersArchiveConroller::class, 'trashed'])->name('membership.family-members.trashed');
+        Route::post('family-members-archive/restore/{id}', [FamilyMembersArchiveConroller::class, 'restore'])->name('membership.family-members.restore');
         Route::get('family-members-archive/search', [FamilyMembersArchiveConroller::class, 'search'])->name('membership.family-members.search');
 
         // Family Applied Member
         Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
+        Route::get('applied-member/trashed', [AppliedMemberController::class, 'trashed'])->name('applied-member.trashed');
+        Route::post('applied-member/restore/{id}', [AppliedMemberController::class, 'restore'])->name('applied-member.restore');
+        Route::get('api/applied-members/search', [AppliedMemberController::class, 'search'])->name('api.applied-members.search');
         Route::post('applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
         Route::put('applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
+        Route::delete('applied-member/{id}', [AppliedMemberController::class, 'destroy'])->name('applied-member.destroy');
 
         // Member Categories
+        Route::get('member-categories/trashed', [MemberCategoryController::class, 'trashed'])->name('member-categories.trashed');
+        Route::post('member-categories/restore/{id}', [MemberCategoryController::class, 'restore'])->name('member-categories.restore');
         Route::resource('member-categories', MemberCategoryController::class)->except('show');
 
         // Members types
         Route::get('member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
+        Route::get('member-types/trashed', [MemberTypeController::class, 'trashed'])->name('member-types.trashed');
+        Route::post('member-types/restore/{id}', [MemberTypeController::class, 'restore'])->name('member-types.restore');
         Route::post('member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
         Route::post('member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
         Route::delete('member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
