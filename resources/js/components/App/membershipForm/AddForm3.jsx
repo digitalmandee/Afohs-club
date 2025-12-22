@@ -35,6 +35,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [familyCnicStatus, setFamilyCnicStatus] = useState(null); // 'available', 'exists', 'error'
     const [membershipNoSuggestion, setMembershipNoSuggestion] = useState(null);
     const fileInputRef = useRef(null);
+    const prevCategoryRef = useRef(data.membership_category);
 
     // Business Developer State
     const [bdSearch, setBdSearch] = useState('');
@@ -125,9 +126,18 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     useEffect(() => {
         if (!membercategories) return;
 
+        // Prevent overwrite on initial load if category is same as initialized data
+        if (data.membership_category == prevCategoryRef.current && prevCategoryRef.current !== undefined && prevCategoryRef.current !== '') {
+            // Only return if we have a valid previous category (meaning it's an edit or stable state)
+            // But if we are switching from empty to something, prev might be empty.
+            return;
+        }
+
+        // If switching TO empty
         if (!data.membership_category) {
             // Reset if no category selected
             handleChangeData('membership_fee', '');
+            handleChangeData('maintenance_fee', '');
             handleChangeData('additional_membership_charges', '');
             handleChangeData('membership_fee_additional_remarks', '');
             handleChangeData('membership_fee_discount', '');
@@ -141,6 +151,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             handleChangeData('maintenance_fee_discount_remarks', '');
             handleChangeData('total_maintenance_fee', '');
             handleChangeData('per_day_maintenance_fee', '');
+            prevCategoryRef.current = data.membership_category;
             return;
         }
 
@@ -150,6 +161,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             handleChangeData('membership_fee', category.fee || 0);
             handleChangeData('maintenance_fee', category.subscription_fee || 0);
         }
+
+        prevCategoryRef.current = data.membership_category;
     }, [data.membership_category, membercategories]);
 
     // Recalculate Total Membership Fee
