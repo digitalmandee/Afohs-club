@@ -101,6 +101,23 @@ class MembershipController extends Controller
             ];
         }
 
+        // Convert to array to avoid Model casting reverting our format changes
+        $userData = $user->toArray();
+
+        // Format primary member dates
+        if ($userData['membership_date']) {
+            $userData['membership_date'] = \Carbon\Carbon::parse($userData['membership_date'])->format('d-m-Y');
+        }
+        if ($userData['card_issue_date']) {
+            $userData['card_issue_date'] = \Carbon\Carbon::parse($userData['card_issue_date'])->format('d-m-Y');
+        }
+        // card_expiry_date is cast to date in Model
+        if ($userData['card_expiry_date']) {
+            $userData['card_expiry_date'] = is_string($userData['card_expiry_date'])
+                ? \Carbon\Carbon::parse($userData['card_expiry_date'])->format('d-m-Y')
+                : \Carbon\Carbon::parse($userData['card_expiry_date'])->format('d-m-Y');
+        }
+
         $familyMembers = $user->familyMembers()->with('profilePhoto')->get()->map(function ($member) use ($user) {
             // Get profile photo media for family member
             $profilePhotoMedia = $member->profilePhoto;
@@ -129,13 +146,13 @@ class MembershipController extends Controller
                 'passport_no' => $member->passport_no,
                 'martial_status' => $member->martial_status,
                 'cnic' => $member->cnic_no,
-                'date_of_birth' => optional($member->date_of_birth)->format('Y-m-d'),
+                'date_of_birth' => optional($member->date_of_birth)->format('d-m-Y'),
                 'phone_number' => $member->mobile_number_a,
                 'email' => $member->personal_email,
-                'start_date' => $member->start_date,
-                'end_date' => $member->end_date,
-                'card_issue_date' => $member->card_issue_date,
-                'card_expiry_date' => $member->card_expiry_date,
+                'start_date' => $member->start_date ? \Carbon\Carbon::parse($member->start_date)->format('d-m-Y') : null,
+                'end_date' => $member->end_date ? \Carbon\Carbon::parse($member->end_date)->format('d-m-Y') : null,
+                'card_issue_date' => $member->card_issue_date ? \Carbon\Carbon::parse($member->card_issue_date)->format('d-m-Y') : null,
+                'card_expiry_date' => optional($member->card_expiry_date)->format('d-m-Y'),
                 'profile_photo' => $member->profilePhoto,
                 'status' => $member->status,
                 'picture' => $pictureUrl,  // Full URL from file_path
@@ -151,7 +168,10 @@ class MembershipController extends Controller
             ->with('subscriptionType:id,name')
             ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
 
-        return Inertia::render('App/Admin/Membership/MembershipForm', compact('user', 'familyMembers', 'memberTypesData', 'membercategories', 'subscriptionTypes', 'subscriptionCategories'));
+        return Inertia::render('App/Admin/Membership/MembershipForm', compact('familyMembers', 'memberTypesData', 'membercategories', 'subscriptionTypes', 'subscriptionCategories'))
+            ->with([
+                'user' => $userData,
+            ]);
     }
 
     public function allMembers(Request $request)
