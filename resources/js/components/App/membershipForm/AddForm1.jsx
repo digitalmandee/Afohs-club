@@ -20,6 +20,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
     const [memberImage, setMemberImage] = useState(initialImage);
     const [showImageButtons, setShowImageButtons] = useState(!!initialImage);
     const [dateError, setDateError] = useState(''); // New state for date validation
+    const [dobOpen, setDobOpen] = useState(false); // State for Date of Birth picker
     const fileInputRef = useRef(null);
     const [formErrors, setFormErrors] = useState({});
     const [isValidatingCnic, setIsValidatingCnic] = useState(false);
@@ -569,7 +570,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                                 },
                                             })
                                         }
-                                        maxDate={dayjs()} // 👈 Prevent future dates
+                                        maxDate={dayjs()}
                                         slotProps={{
                                             textField: {
                                                 fullWidth: true,
@@ -579,8 +580,15 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                                 error: !!formErrors.date_of_birth || !!dateError,
                                                 helperText: formErrors.date_of_birth || dateError,
                                                 sx: { '& .MuiOutlinedInput-root': { borderRadius: '4px' } },
+                                                onClick: () => setDobOpen(true), // 👈 Open on click
+                                            },
+                                            actionBar: {
+                                                actions: ['clear', 'today', 'cancel', 'accept'],
                                             },
                                         }}
+                                        open={dobOpen}
+                                        onClose={() => setDobOpen(false)}
+                                        onOpen={() => setDobOpen(true)}
                                     />
                                 </LocalizationProvider>
                             </Grid>

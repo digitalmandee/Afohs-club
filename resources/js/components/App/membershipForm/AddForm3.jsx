@@ -42,6 +42,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [bdOptions, setBdOptions] = useState([]);
     const [bdLoading, setBdLoading] = useState(false);
     const [selectedBd, setSelectedBd] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [membershipDateOpen, setMembershipDateOpen] = useState(false);
+    const [cardIssueDateOpen, setCardIssueDateOpen] = useState(false);
+    const [cardExpiryDateOpen, setCardExpiryDateOpen] = useState(false);
+    const [familyDobOpen, setFamilyDobOpen] = useState(false);
+    const [familyCardIssueOpen, setFamilyCardIssueOpen] = useState(false);
+    const [familyCardExpiryOpen, setFamilyCardExpiryOpen] = useState(false);
 
     // Barcode Validation State
     const [barcodeStatus, setBarcodeStatus] = useState(null); // 'available', 'exists', 'error'
@@ -1241,8 +1248,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
                                                             '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
                                                         },
+                                                        onClick: () => setMembershipDateOpen(true),
                                                     },
+                                                    actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                                 }}
+                                                open={membershipDateOpen}
+                                                onClose={() => setMembershipDateOpen(false)}
+                                                onOpen={() => setMembershipDateOpen(true)}
                                             />
                                         </LocalizationProvider>
                                     </Box>
@@ -1306,8 +1318,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
                                                             '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
                                                         },
+                                                        onClick: () => setCardIssueDateOpen(true),
                                                     },
+                                                    actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                                 }}
+                                                open={cardIssueDateOpen}
+                                                onClose={() => setCardIssueDateOpen(false)}
+                                                onOpen={() => setCardIssueDateOpen(true)}
                                             />
                                         </LocalizationProvider>
                                     </Box>
@@ -1332,8 +1349,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                             '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
                                                             '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
                                                         },
+                                                        onClick: () => setCardExpiryDateOpen(true),
                                                     },
+                                                    actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                                 }}
+                                                open={cardExpiryDateOpen}
+                                                onClose={() => setCardExpiryDateOpen(false)}
+                                                onOpen={() => setCardExpiryDateOpen(true)}
                                             />
                                         </LocalizationProvider>
                                     </Box>
@@ -2140,8 +2162,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                                 '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
                                                                                 '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
                                                                             },
+                                                                            onClick: () => setFamilyDobOpen(true),
                                                                         },
+                                                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                                                     }}
+                                                                    open={familyDobOpen}
+                                                                    onClose={() => setFamilyDobOpen(false)}
+                                                                    onOpen={() => setFamilyDobOpen(true)}
                                                                 />
                                                             </LocalizationProvider>
                                                             {currentFamilyMember.date_of_birth && calculateAge(currentFamilyMember.date_of_birth) >= 25 && (
@@ -2171,8 +2198,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                                 '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
                                                                                 '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
                                                                             },
+                                                                            onClick: () => setFamilyCardIssueOpen(true),
                                                                         },
+                                                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                                                     }}
+                                                                    open={familyCardIssueOpen}
+                                                                    onClose={() => setFamilyCardIssueOpen(false)}
+                                                                    onOpen={() => setFamilyCardIssueOpen(true)}
                                                                 />
                                                             </LocalizationProvider>
                                                         </Box>
@@ -2197,8 +2229,13 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                                 '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
                                                                                 '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
                                                                             },
+                                                                            onClick: () => setFamilyCardExpiryOpen(true),
                                                                         },
+                                                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                                                     }}
+                                                                    open={familyCardExpiryOpen}
+                                                                    onClose={() => setFamilyCardExpiryOpen(false)}
+                                                                    onOpen={() => setFamilyCardExpiryOpen(true)}
                                                                 />
                                                             </LocalizationProvider>
                                                             {currentFamilyMember.auto_expiry_calculated && (

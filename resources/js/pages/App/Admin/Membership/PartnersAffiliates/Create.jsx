@@ -23,7 +23,8 @@ const CreatePartnerAffiliate = ({ partner }) => {
         focal_telephone: partner?.focal_telephone || '',
         focal_email: partner?.focal_email || '',
 
-        agreement_date: partner?.agreement_date || '',
+        agreement_date: partner?.agreement_date ? partner.agreement_date.split('T')[0] : '',
+        agreement_end_date: partner?.agreement_end_date ? partner.agreement_end_date.split('T')[0] : '',
         status: partner?.status || 'Active',
         comments: partner?.comments || '',
         documents: [], // For new file uploads
@@ -159,6 +160,9 @@ const CreatePartnerAffiliate = ({ partner }) => {
 
                                 <Grid item xs={12}>
                                     <TextField fullWidth label="Agreement Date" type="date" size="small" InputLabelProps={{ shrink: true }} value={data.agreement_date} onChange={(e) => setData('agreement_date', e.target.value)} error={!!errors.agreement_date} helperText={errors.agreement_date} required />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Agreement End Date" type="date" size="small" InputLabelProps={{ shrink: true }} value={data.agreement_end_date} onChange={(e) => setData('agreement_end_date', e.target.value)} error={!!errors.agreement_end_date} helperText={errors.agreement_end_date} />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <TextField select fullWidth label="Status" size="small" value={data.status} onChange={(e) => setData('status', e.target.value)} error={!!errors.status} helperText={errors.status} required>

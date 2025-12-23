@@ -27,6 +27,7 @@ class PartnerAffiliate extends BaseModel
         'focal_telephone',
         'focal_email',
         'agreement_date',
+        'agreement_end_date',
         'status',
         'comments',
         'created_by',
@@ -36,6 +37,7 @@ class PartnerAffiliate extends BaseModel
 
     protected $casts = [
         'agreement_date' => 'date',
+        'agreement_end_date' => 'date',
     ];
 
     /**

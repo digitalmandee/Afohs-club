@@ -10,10 +10,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('member_profession_infos', function (Blueprint $table) {
-            if (!Schema::hasColumn('member_profession_infos', 'deleted_at')) {
-                $table->softDeletes();
-            }
+        Schema::table('partners_affiliates', function (Blueprint $table) {
+            $table->date('agreement_end_date')->nullable()->after('agreement_date');
         });
     }
 
@@ -22,8 +20,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('member_profession_infos', function (Blueprint $table) {
-            $table->dropSoftDeletes();
+        Schema::table('partners_affiliates', function (Blueprint $table) {
+            $table->dropColumn('agreement_end_date');
         });
     }
 };
