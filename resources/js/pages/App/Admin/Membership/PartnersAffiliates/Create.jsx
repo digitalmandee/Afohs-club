@@ -1,4 +1,8 @@
 import React, { useEffect } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { useForm, usePage } from '@inertiajs/react';
 import { Box, TextField, Button, Grid, Typography, MenuItem, Paper, Divider } from '@mui/material';
 import { useSnackbar } from 'notistack';
@@ -81,13 +85,13 @@ const CreatePartnerAffiliate = ({ partner }) => {
                                     <TextField fullWidth label="Address" size="small" multiline rows={2} value={data.address} onChange={(e) => setData('address', e.target.value)} error={!!errors.address} helperText={errors.address} required />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Telephone" size="small" value={data.telephone} onChange={(e) => setData('telephone', e.target.value)} error={!!errors.telephone} helperText={errors.telephone} required />
+                                    <TextField fullWidth label="Telephone" size="small" value={data.telephone} onChange={(e) => setData('telephone', e.target.value.replace(/[^0-9+\-]/g, ''))} error={!!errors.telephone} helperText={errors.telephone} required />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Mobile (a)" size="small" value={data.mobile_a} onChange={(e) => setData('mobile_a', e.target.value)} error={!!errors.mobile_a} helperText={errors.mobile_a} required />
+                                    <TextField fullWidth label="Mobile (a)" size="small" value={data.mobile_a} onChange={(e) => setData('mobile_a', e.target.value.replace(/[^0-9+\-]/g, ''))} error={!!errors.mobile_a} helperText={errors.mobile_a} required />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Mobile (b)" size="small" value={data.mobile_b} onChange={(e) => setData('mobile_b', e.target.value)} error={!!errors.mobile_b} helperText={errors.mobile_b} />
+                                    <TextField fullWidth label="Mobile (b)" size="small" value={data.mobile_b} onChange={(e) => setData('mobile_b', e.target.value.replace(/[^0-9+\-]/g, ''))} error={!!errors.mobile_b} helperText={errors.mobile_b} />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <TextField fullWidth label="Email" size="small" value={data.email} onChange={(e) => setData('email', e.target.value)} error={!!errors.email} helperText={errors.email} required />
@@ -109,13 +113,13 @@ const CreatePartnerAffiliate = ({ partner }) => {
                                     <TextField fullWidth label="Focal Person Name" size="small" value={data.focal_person_name} onChange={(e) => setData('focal_person_name', e.target.value)} error={!!errors.focal_person_name} helperText={errors.focal_person_name} required />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Mobile (a)" size="small" value={data.focal_mobile_a} onChange={(e) => setData('focal_mobile_a', e.target.value)} error={!!errors.focal_mobile_a} helperText={errors.focal_mobile_a} required />
+                                    <TextField fullWidth label="Mobile (a)" size="small" value={data.focal_mobile_a} onChange={(e) => setData('focal_mobile_a', e.target.value.replace(/[^0-9+\-]/g, ''))} error={!!errors.focal_mobile_a} helperText={errors.focal_mobile_a} required />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Mobile (b)" size="small" value={data.focal_mobile_b} onChange={(e) => setData('focal_mobile_b', e.target.value)} error={!!errors.focal_mobile_b} helperText={errors.focal_mobile_b} />
+                                    <TextField fullWidth label="Mobile (b)" size="small" value={data.focal_mobile_b} onChange={(e) => setData('focal_mobile_b', e.target.value.replace(/[^0-9+\-]/g, ''))} error={!!errors.focal_mobile_b} helperText={errors.focal_mobile_b} />
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Telephone" size="small" value={data.focal_telephone} onChange={(e) => setData('focal_telephone', e.target.value)} error={!!errors.focal_telephone} helperText={errors.focal_telephone} />
+                                    <TextField fullWidth label="Telephone" size="small" value={data.focal_telephone} onChange={(e) => setData('focal_telephone', e.target.value.replace(/[^0-9+\-]/g, ''))} error={!!errors.focal_telephone} helperText={errors.focal_telephone} />
                                 </Grid>
                                 <Grid item xs={12}>
                                     <TextField fullWidth label="Email" size="small" value={data.focal_email} onChange={(e) => setData('focal_email', e.target.value)} error={!!errors.focal_email} helperText={errors.focal_email} required />
@@ -159,10 +163,32 @@ const CreatePartnerAffiliate = ({ partner }) => {
                                 </Grid>
 
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Agreement Date" type="date" size="small" InputLabelProps={{ shrink: true }} value={data.agreement_date} onChange={(e) => setData('agreement_date', e.target.value)} error={!!errors.agreement_date} helperText={errors.agreement_date} required />
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker
+                                            label="Agreement Date"
+                                            format="DD-MM-YYYY"
+                                            value={data.agreement_date ? dayjs(data.agreement_date) : null}
+                                            onChange={(newValue) => setData('agreement_date', newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            slotProps={{
+                                                textField: { fullWidth: true, size: 'small', error: !!errors.agreement_date, helperText: errors.agreement_date, required: true, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                            }}
+                                        />
+                                    </LocalizationProvider>
                                 </Grid>
                                 <Grid item xs={12}>
-                                    <TextField fullWidth label="Agreement End Date" type="date" size="small" InputLabelProps={{ shrink: true }} value={data.agreement_end_date} onChange={(e) => setData('agreement_end_date', e.target.value)} error={!!errors.agreement_end_date} helperText={errors.agreement_end_date} />
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker
+                                            label="Agreement End Date"
+                                            format="DD-MM-YYYY"
+                                            value={data.agreement_end_date ? dayjs(data.agreement_end_date) : null}
+                                            onChange={(newValue) => setData('agreement_end_date', newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            slotProps={{
+                                                textField: { fullWidth: true, size: 'small', error: !!errors.agreement_end_date, helperText: errors.agreement_end_date, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                            }}
+                                        />
+                                    </LocalizationProvider>
                                 </Grid>
                                 <Grid item xs={12}>
                                     <TextField select fullWidth label="Status" size="small" value={data.status} onChange={(e) => setData('status', e.target.value)} error={!!errors.status} helperText={errors.status} required>

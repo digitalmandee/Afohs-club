@@ -1,4 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { Button } from 'react-bootstrap';
 import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
@@ -291,10 +295,34 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                 </Grid>
                 {JSON.stringify()}
                 <Grid item xs={12} sm={3}>
-                    <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} readOnly />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Booking Date"
+                            format="DD-MM-YYYY"
+                            value={formData.bookingDate ? dayjs(formData.bookingDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'bookingDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: { fullWidth: true, name: 'bookingDate' },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                            readOnly
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Check-In Date"
+                            format="DD-MM-YYYY"
+                            value={formData.checkInDate ? dayjs(formData.checkInDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'checkInDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: { fullWidth: true, name: 'checkInDate', onClick: (e) => !isCheckout && e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                            disabled={isCheckout}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 {isCheckout && (
                     <Grid item xs={6} sm={3}>
@@ -302,7 +330,19 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                     </Grid>
                 )}
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Check-Out Date"
+                            format="DD-MM-YYYY"
+                            value={formData.checkOutDate ? dayjs(formData.checkOutDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'checkOutDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: { fullWidth: true, name: 'checkOutDate', onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                            minDate={formData.checkInDate ? dayjs(formData.checkInDate) : null}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 {isCheckout && (
                     <Grid item xs={6} sm={3}>
@@ -384,13 +424,27 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                     <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={handleChange} fullWidth disabled={isCheckout} />
+                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={5}>
                     <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={4}>
-                    <TextField label="CNIC / Passport No." name="cnic" value={formData.cnic} onChange={handleChange} fullWidth disabled={isCheckout} />
+                    <TextField
+                        label="CNIC / Passport No."
+                        name="cnic"
+                        value={formData.cnic}
+                        onChange={(e) => {
+                            let value = e.target.value.replace(/\D/g, '');
+                            if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                            if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                            if (value.length > 15) value = value.slice(0, 15);
+                            handleChange({ target: { name: 'cnic', value } });
+                        }}
+                        fullWidth
+                        disabled={isCheckout}
+                        placeholder="XXXXX-XXXXXXX-X"
+                    />
                 </Grid>
                 <Grid item xs={6}>
                     <TextField label="Enter Relationship" name="guestRelation" value={formData.guestRelation} onChange={handleChange} fullWidth disabled={isCheckout} />

@@ -177,7 +177,7 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
     const startDate = range[0]?.startDate;
     const endDate = range[0]?.endDate;
 
-    const displayText = startDate && endDate ? `${format(startDate, 'dd MMM yyyy')} — ${format(endDate, 'dd MMM yyyy')}` : 'Check-in date — Check-out date';
+    const displayText = startDate && endDate ? `${format(startDate, 'dd-MM-yyyy')} — ${format(endDate, 'dd-MM-yyyy')}` : 'Check-in date — Check-out date';
 
     return (
         <div

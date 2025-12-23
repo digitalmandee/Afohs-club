@@ -2092,7 +2092,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 placeholder="Enter Phone Number"
                                                                 variant="outlined"
                                                                 value={currentFamilyMember.phone_number}
-                                                                onChange={(e) => handleFamilyMemberChange('phone_number', e.target.value)}
+                                                                onChange={(e) => handleFamilyMemberChange('phone_number', e.target.value.replace(/[^0-9+\-]/g, ''))}
                                                                 sx={{
                                                                     '& .MuiOutlinedInput-notchedOutline': {
                                                                         borderColor: '#ccc',
@@ -2113,7 +2113,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                 helperText={isValidatingFamilyCnic ? 'Checking CNIC availability...' : familyCnicStatus === 'available' ? 'CNIC is available' : familyMemberErrors.cnic}
                                                                 onChange={(e) => {
                                                                     let value = e.target.value;
-                                                                    value = value.replace(/[^\d-]/g, '');
+                                                                    value = value.replace(/\D/g, ''); // Remove non-digits
                                                                     if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
                                                                     if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
                                                                     if (value.length > 15) value = value.slice(0, 15);

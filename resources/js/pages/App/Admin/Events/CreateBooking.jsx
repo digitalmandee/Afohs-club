@@ -1,4 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, Button, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -9,7 +13,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
-
 
 const steps = ['Booking Details', 'Charges', 'Upload'];
 
@@ -61,12 +64,12 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         const venue = urlParams.get('venue');
 
         if (date || timeFrom || timeTo || venue) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
                 ...prev,
                 ...(date && { eventDate: date }),
                 // ...(timeFrom && { eventTimeFrom: decodeURIComponent(timeFrom) }),
                 // ...(timeTo && { eventTimeTo: decodeURIComponent(timeTo) }),
-                ...(venue && { venue: parseInt(venue) })
+                ...(venue && { venue: parseInt(venue) }),
             }));
         }
     }, []);
@@ -85,7 +88,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                     cnic: bookingData.cnic,
                     address: bookingData.address,
                     phone: bookingData.mobile,
-                    booking_type: 'member'
+                    booking_type: 'member',
                 };
             } else if (bookingData.customer) {
                 guestObject = {
@@ -96,7 +99,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                     cnic: bookingData.cnic,
                     address: bookingData.address,
                     phone: bookingData.mobile,
-                    booking_type: 'customer'
+                    booking_type: 'customer',
                 };
             }
 
@@ -116,18 +119,24 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 selectedMenu: bookingData.menu?.event_menu_id || '',
                 menuAmount: bookingData.menu?.amount || 0,
                 menuItems: bookingData.menu?.items || [],
-                menu_addons: (Array.isArray(bookingData.menuAddOns) && bookingData.menuAddOns.length > 0) ? bookingData.menuAddOns.map(addon => ({
-                    type: addon.type || '',
-                    details: addon.details || '',
-                    amount: addon.amount || '',
-                    is_complementary: Boolean(addon.is_complementary)
-                })) : [{ type: '', details: '', amount: '', is_complementary: false }],
-                other_charges: (Array.isArray(bookingData.otherCharges) && bookingData.otherCharges.length > 0) ? bookingData.otherCharges.map(charge => ({
-                    type: charge.type || '',
-                    details: charge.details || '',
-                    amount: charge.amount || '',
-                    is_complementary: Boolean(charge.is_complementary)
-                })) : [{ type: '', details: '', amount: '', is_complementary: false }],
+                menu_addons:
+                    Array.isArray(bookingData.menuAddOns) && bookingData.menuAddOns.length > 0
+                        ? bookingData.menuAddOns.map((addon) => ({
+                              type: addon.type || '',
+                              details: addon.details || '',
+                              amount: addon.amount || '',
+                              is_complementary: Boolean(addon.is_complementary),
+                          }))
+                        : [{ type: '', details: '', amount: '', is_complementary: false }],
+                other_charges:
+                    Array.isArray(bookingData.otherCharges) && bookingData.otherCharges.length > 0
+                        ? bookingData.otherCharges.map((charge) => ({
+                              type: charge.type || '',
+                              details: charge.details || '',
+                              amount: charge.amount || '',
+                              is_complementary: Boolean(charge.is_complementary),
+                          }))
+                        : [{ type: '', details: '', amount: '', is_complementary: false }],
                 discountType: bookingData.reduction_type || 'fixed',
                 discount: bookingData.reduction_amount || '',
                 grandTotal: bookingData.total_price || '',
@@ -218,7 +227,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
             updatedPreviewFiles.splice(index, 1);
 
             // Update documents array (only keep File objects, not string paths)
-            const updatedDocuments = (prev.documents || []).filter(doc => doc instanceof File);
+            const updatedDocuments = (prev.documents || []).filter((doc) => doc instanceof File);
 
             return {
                 ...prev,
@@ -250,7 +259,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
 
         // Process previewFiles to separate new files from existing paths
         if (formDataToSubmit.previewFiles) {
-            formDataToSubmit.previewFiles.forEach(file => {
+            formDataToSubmit.previewFiles.forEach((file) => {
                 if (typeof file === 'string') {
                     // It's an existing document path
                     existingDocs.push(file);
@@ -272,9 +281,9 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         const url = editMode ? route('events.booking.update', { id: bookingData.id }) : route('events.booking.store');
         const method = editMode ? 'put' : 'post';
 
-        axios.post(url, payload)
+        axios
+            .post(url, payload)
             .then((res) => {
-
                 enqueueSnackbar(editMode ? 'Booking updated successfully' : 'Booking submitted successfully', { variant: 'success' });
 
                 if (editMode) {
@@ -372,14 +381,14 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                                 <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
                                     Back
                                 </Button>
-                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition='start'>
+                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition="start">
                                     {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
                                 </Button>
                             </Box>
                         </Box>
                     </Box>
-                </Box >
-            </div >
+                </Box>
+            </div>
         </>
     );
 };
@@ -415,7 +424,22 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                 </Grid>
                 {JSON.stringify()}
                 <Grid item xs={12} sm={3}>
-                    <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Booking Date"
+                            format="DD-MM-YYYY"
+                            value={formData.bookingDate ? dayjs(formData.bookingDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'bookingDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: {
+                                    fullWidth: true,
+                                    name: 'bookingDate',
+                                    onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6}>
                     <FormLabel>Booking Type</FormLabel>
@@ -426,16 +450,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                 </Grid>
 
                 <Grid item xs={6}>
-                    <AsyncSearchTextField
-                        label="Member / Guest Name"
-                        name="guest"
-                        value={formData.guest}
-                        onChange={handleChange}
-                        endpoint="admin.api.search-users"
-                        params={{ type: formData.bookingType }}
-                        placeholder="Search members..."
-                        disabled={editMode}
-                    />
+                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: formData.bookingType }} placeholder="Search members..." disabled={editMode} />
 
                     {errors.guest && (
                         <Typography variant="body2" color="error">
@@ -484,7 +499,24 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                     <TextField label="Nature of Event*" name="natureOfEvent" value={formData.natureOfEvent} onChange={handleChange} fullWidth error={!!errors.natureOfEvent} helperText={errors.natureOfEvent} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Event Date*" type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventDate} helperText={errors.eventDate} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Event Date*"
+                            format="DD-MM-YYYY"
+                            value={formData.eventDate ? dayjs(formData.eventDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'eventDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: {
+                                    fullWidth: true,
+                                    name: 'eventDate',
+                                    error: !!errors.eventDate,
+                                    helperText: errors.eventDate,
+                                    onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6} sm={3}>
                     <TextField label="Timing (From)*" type="time" name="eventTimeFrom" value={formData.eventTimeFrom} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeFrom} helperText={errors.eventTimeFrom} />
@@ -685,8 +717,8 @@ const ChargesInfo = ({ formData, handleChange }) => {
                     ))}
 
                     {/* <Grid item xs={12}>
-                        <Button 
-                            onClick={addMenuItem} 
+                        <Button
+                            onClick={addMenuItem}
                             style={{ backgroundColor: '#063455', color: '#fff' }} variant="contained"
                             sx={{ mt: 1 }}
                         >
@@ -855,8 +887,8 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
             const syntheticEvent = {
                 target: {
                     name: 'documents',
-                    files: files
-                }
+                    files: files,
+                },
             };
             handleFileChange(syntheticEvent);
         }
@@ -875,12 +907,15 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
         const previewUrl = isFileObject ? URL.createObjectURL(file) : file;
 
         return (
-            <div key={index} style={{
-                position: 'relative',
-                width: '100px',
-                textAlign: 'center',
-                marginBottom: '10px'
-            }}>
+            <div
+                key={index}
+                style={{
+                    position: 'relative',
+                    width: '100px',
+                    textAlign: 'center',
+                    marginBottom: '10px',
+                }}
+            >
                 {/* Delete Icon */}
                 <IconButton
                     size="small"
@@ -894,9 +929,9 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                         width: 24,
                         height: 24,
                         '&:hover': {
-                            backgroundColor: '#d32f2f'
+                            backgroundColor: '#d32f2f',
                         },
-                        zIndex: 1
+                        zIndex: 1,
                     }}
                 >
                     <CloseIcon fontSize="small" />
@@ -915,7 +950,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 objectFit: 'cover',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                border: '2px solid #ddd'
+                                border: '2px solid #ddd',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         />
@@ -934,7 +969,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -957,7 +992,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -980,7 +1015,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -988,9 +1023,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 FILE
                             </Typography>
                         </div>
-                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
-                            {ext.toUpperCase()}
-                        </p>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>{ext.toUpperCase()}</p>
                     </div>
                 )}
             </div>
@@ -1020,20 +1053,12 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                             borderColor: '#0a3d62',
                             backgroundColor: '#f5f5f5',
                             transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        },
                     }}
                 >
                     {/* Hidden file input */}
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,image/*"
-                        name="documents"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                    />
+                    <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,image/*" name="documents" onChange={handleFileChange} style={{ display: 'none' }} />
 
                     {/* Upload Icon */}
                     <Box sx={{ mb: 2 }}>
@@ -1062,31 +1087,24 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         Uploaded Documents ({formData.previewFiles.length})
                     </Typography>
-                    <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '15px',
-                        padding: '15px',
-                        backgroundColor: '#f9f9f9',
-                        borderRadius: '8px',
-                        border: '1px solid #e0e0e0'
-                    }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '15px',
+                            padding: '15px',
+                            backgroundColor: '#f9f9f9',
+                            borderRadius: '8px',
+                            border: '1px solid #e0e0e0',
+                        }}
+                    >
                         {formData.previewFiles.map((file, index) => getFilePreview(file, index))}
                     </div>
                 </Grid>
             )}
 
             <Grid item xs={12}>
-                <TextField
-                    label="Additional Notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleChange}
-                    fullWidth
-                    multiline
-                    rows={3}
-                    placeholder="Enter any additional notes or instructions..."
-                />
+                <TextField label="Additional Notes" name="notes" value={formData.notes} onChange={handleChange} fullWidth multiline rows={3} placeholder="Enter any additional notes or instructions..." />
             </Grid>
         </Grid>
     );

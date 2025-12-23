@@ -3,6 +3,8 @@ import { Modal, Box, Typography, Button, Table, TableBody, TableCell, TableConta
 import { Close } from '@mui/icons-material';
 import axios from 'axios';
 
+import dayjs from 'dayjs';
+
 const RoomOrderHistoryModal = ({ open, onClose, bookingId }) => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -99,7 +101,7 @@ const RoomOrderHistoryModal = ({ open, onClose, bookingId }) => {
                                     orders.map((order) => (
                                         <TableRow key={order.id}>
                                             <TableCell>#{order.id}</TableCell>
-                                            <TableCell>{new Date(order.created_at).toLocaleString()}</TableCell>
+                                            <TableCell>{dayjs(order.created_at).format('DD-MM-YYYY')}</TableCell>
                                             <TableCell>
                                                 <ul style={{ paddingLeft: '20px', margin: 0 }}>
                                                     {order.order_items &&

@@ -8,6 +8,8 @@ import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import RoomCheckInModal from './CheckInModal';
 import { router, usePage } from '@inertiajs/react';
 
+import dayjs from 'dayjs';
+
 // Create Material-UI theme to ensure consistent styling
 const theme = createTheme({
     palette: {
@@ -272,12 +274,12 @@ const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeVie
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body2">
-                                            <strong>Check-in Date:</strong> {selectedBooking.check_in_date || 'N/A'}
+                                            <strong>Check-in Date:</strong> {selectedBooking.check_in_date ? dayjs(selectedBooking.check_in_date).format('DD-MM-YYYY') : 'N/A'}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body2">
-                                            <strong>Check-out Date:</strong> {selectedBooking.check_out_date || 'N/A'}
+                                            <strong>Check-out Date:</strong> {selectedBooking.check_out_date ? dayjs(selectedBooking.check_out_date).format('DD-MM-YYYY') : 'N/A'}
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={6}>

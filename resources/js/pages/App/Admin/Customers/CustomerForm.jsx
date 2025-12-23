@@ -129,8 +129,9 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 fullWidth
                                 label="Contact*"
                                 margin="normal"
+                                placeholder="03XXXXXXXX"
                                 value={data.contact}
-                                onChange={(e) => setData('contact', e.target.value)}
+                                onChange={(e) => setData('contact', e.target.value.replace(/[^0-9+\-]/g, ''))}
                                 error={!!errors.contact}
                                 helperText={errors.contact}
                                 sx={{
@@ -233,8 +234,15 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                 fullWidth
                                 label="CNIC"
                                 margin="normal"
+                                placeholder="XXXXX-XXXXXXX-X"
                                 value={data.cnic}
-                                onChange={(e) => setData('cnic', e.target.value)}
+                                onChange={(e) => {
+                                    let value = e.target.value.replace(/\D/g, '');
+                                    if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                                    if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                                    if (value.length > 15) value = value.slice(0, 15);
+                                    setData('cnic', value);
+                                }}
                                 sx={{
                                     width: '100%',
                                     '& .MuiInputBase-root': {
@@ -333,21 +341,15 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                         <Grid item xs={12} sm={6}>
                             <Box
                                 sx={{
-                                    width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' }, '& label': {
+                                    width: '100%',
+                                    '& .MuiInputBase-root': { height: 40, alignItems: 'center' },
+                                    '& .MuiInputBase-input': { padding: '0 14px' },
+                                    '& label': {
                                         top: '-10px', // tweak this to move label vertically
                                     },
                                 }}
                             >
-                                <AsyncSearchTextField
-                                    label="Member Name"
-                                    name="guest"
-                                    value={data.guest}
-                                    onChange={handleChange}
-                                    endpoint="admin.api.search-users"
-                                    params={{ type: '0' }}
-                                    placeholder="Search members..."
-                                    fullWidth
-                                />
+                                <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: '0' }} placeholder="Search members..." fullWidth />
                             </Box>
                         </Grid>
 

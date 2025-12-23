@@ -172,7 +172,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                                 <TextField size="small" fullWidth label="Relationship" name="nominee_relation" value={formData.nominee_relation} onChange={handleChange} />
                             </Grid>
                             <Grid item xs={12} md={4}>
-                                <TextField size="small" fullWidth label="Contact" name="nominee_contact" value={formData.nominee_contact} onChange={handleChange} />
+                                <TextField size="small" fullWidth label="Contact" name="nominee_contact" value={formData.nominee_contact} onChange={(e) => handleChange({ target: { name: 'nominee_contact', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} />
                             </Grid>
                         </Grid>
                     </Box>
@@ -270,7 +270,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                                 <TextField size="small" fullWidth label="Relation with Member" name="referral_relation" value={formData.referral_relation} onChange={handleChange} />
                             </Grid>
                             <Grid item xs={12} md={6}>
-                                <TextField size="small" fullWidth label="Contact" name="referral_contact" value={formData.referral_contact} onChange={handleChange} />
+                                <TextField size="small" fullWidth label="Contact" name="referral_contact" value={formData.referral_contact} onChange={(e) => handleChange({ target: { name: 'referral_contact', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} />
                             </Grid>
                         </Grid>
                     </Box>

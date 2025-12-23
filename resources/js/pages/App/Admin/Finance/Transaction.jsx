@@ -13,6 +13,7 @@ import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoic
 import PaymentDialog from '@/components/App/Transactions/PaymentDialog';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import dayjs from 'dayjs';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -134,11 +135,7 @@ const Transaction = ({ transactions, filters }) => {
     const formatDate = (date) => {
         if (!date) return '';
         try {
-            return new Date(date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            });
+            return dayjs(date).format('DD-MM-YYYY');
         } catch (error) {
             return date;
         }
@@ -232,7 +229,9 @@ const Transaction = ({ transactions, filters }) => {
                                     <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Payment Method</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Valid Until</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>From</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>To</TableCell>
+                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Days</TableCell>
                                     <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -333,6 +332,20 @@ const Transaction = ({ transactions, filters }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.payment_date || transaction.created_at)}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                    {transaction.valid_from ? (
+                                                        <span
+                                                            style={{
+                                                                color: new Date(transaction.valid_from) > new Date() ? '#28a745' : '#dc3545',
+                                                                fontWeight: 500,
+                                                            }}
+                                                        >
+                                                            {formatDate(transaction.valid_from)}
+                                                        </span>
+                                                    ) : (
+                                                        <span style={{ color: '#7F7F7F' }}>-</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     {transaction.valid_to ? (
                                                         <span
                                                             style={{
@@ -346,6 +359,7 @@ const Transaction = ({ transactions, filters }) => {
                                                         <span style={{ color: '#7F7F7F' }}>-</span>
                                                     )}
                                                 </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.valid_from && transaction.valid_to ? <span>{dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1}</span> : <span style={{ color: '#7F7F7F' }}>-</span>}</TableCell>
                                                 <TableCell sx={{ display: 'flex', gap: '4px' }}>
                                                     <Button
                                                         variant="contained"

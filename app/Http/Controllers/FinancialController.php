@@ -86,7 +86,7 @@ class FinancialController extends Controller
                 'member_id', 'customer_id', 'fee_type', 'amount', 'total_price',
                 'paid_amount', 'status', 'payment_method', 'payment_date',
                 'valid_to', 'created_at', 'created_by',
-                'tax_amount', 'tax_percentage', 'overdue_amount', 'overdue_percentage', 'remarks')
+                'valid_from', 'tax_amount', 'tax_percentage', 'overdue_amount', 'overdue_percentage', 'remarks')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -174,7 +174,7 @@ class FinancialController extends Controller
             ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type',
                 'member_id', 'customer_id', 'fee_type', 'amount', 'total_price',
                 'paid_amount', 'status', 'payment_method', 'payment_date',
-                'valid_to', 'created_at', 'created_by',
+                'valid_to', 'valid_from', 'created_at', 'created_by',
                 'tax_amount', 'tax_percentage', 'overdue_amount', 'overdue_percentage', 'remarks');
 
         // Apply search filter

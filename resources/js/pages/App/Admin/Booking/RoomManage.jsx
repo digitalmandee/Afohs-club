@@ -255,9 +255,9 @@ const RoomScreen = ({ bookings }) => {
                                             <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell>#{booking.booking_no}</TableCell>
                                                 <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
-                                                <TableCell>{booking.booking_date}</TableCell>
-                                                <TableCell>{booking.check_in_date}</TableCell>
-                                                <TableCell>{booking.check_out_date}</TableCell>
+                                                <TableCell>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell>{booking.room?.name}</TableCell>
                                                 <TableCell>{booking.persons}</TableCell>
                                                 <TableCell>{durationInDays}</TableCell>

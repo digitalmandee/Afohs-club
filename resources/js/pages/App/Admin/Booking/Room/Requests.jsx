@@ -7,6 +7,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
+import dayjs from 'dayjs';
+
 const BookingRequests = () => {
     const { props } = usePage();
     const { requests } = props;
@@ -75,18 +77,11 @@ const BookingRequests = () => {
                                 {requests.map((req) => (
                                     <TableRow key={req.id} style={{ borderBottom: '1px solid #eee' }}>
                                         <TableCell>{req.id}</TableCell>
-                                        <TableCell>{req.booking_date}</TableCell>
-                                        <TableCell>{req.check_in_date || 'N/A'}</TableCell>
-                                        <TableCell>{req.check_out_date || 'N/A'}</TableCell>
+                                        <TableCell>{req.booking_date ? dayjs(req.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                        <TableCell>{req.check_in_date ? dayjs(req.check_in_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                        <TableCell>{req.check_out_date ? dayjs(req.check_out_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                         <TableCell>{req.booking_type == 0 ? 'Member' : req.booking_type == 2 ? 'Corporate Member' : req.booking_type == 'guest-1' ? 'Applied Member' : req.booking_type == 'guest-2' ? 'Affiliated Member' : 'VIP Guest'}</TableCell>
-                                        <TableCell>
-                                            {req.booking_type.startsWith('guest-') 
-                                                ? req.customer?.name 
-                                                : req.member?.full_name 
-                                                    ? `${req.member.full_name} (${req.member.membership_no})` 
-                                                    : 'N/A'
-                                            }
-                                        </TableCell>
+                                        <TableCell>{req.booking_type.startsWith('guest-') ? req.customer?.name : req.member?.full_name ? `${req.member.full_name} (${req.member.membership_no})` : 'N/A'}</TableCell>
                                         <TableCell>{req.room?.name}</TableCell>
                                         <TableCell>{req.persons}</TableCell>
                                         <TableCell>{req.per_day_charge}</TableCell>
