@@ -83,7 +83,7 @@ const MembersType = ({ memberTypesData }) => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 700, fontSize:'30px', color: '#063455' }}>
                             Members Type
                         </Typography>
                     </Box>
@@ -94,6 +94,7 @@ const MembersType = ({ memberTypesData }) => {
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
+                                borderRadius:'16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -102,7 +103,7 @@ const MembersType = ({ memberTypesData }) => {
                         >
                             Deleted Member Types
                         </Button>
-                        <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
+                        <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: '20px' }} />}  sx={{ backgroundColor: '#063455', borderRadius:'16px' }} onClick={handleAdd}>
                             Add Type
                         </Button>
                     </div>

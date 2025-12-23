@@ -166,7 +166,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
@@ -189,7 +189,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
@@ -212,7 +212,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
@@ -235,7 +235,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
@@ -258,11 +258,11 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                     <Row className="mb-4 gx-2">
                         <Col md={3}>
                             <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
-                                <Card.Body style={{ height: '150px' }}>
+                                <Card.Body style={{ height: '150px', padding:5 }}>
                                     <div className="d-flex gap-3">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
@@ -275,13 +275,13 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                             <BarChart />
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Total Revenue</div>
-                                            <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Rs {total_revenue?.toLocaleString() || 0}</div>
+                                            <div style={{ fontSize: '14px', color: '#C6C6C6', fontWeight: 400 }}>Total Revenue</div>
+                                            <div style={{ fontSize: '16px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Rs {total_revenue?.toLocaleString() || 0}</div>
                                         </div>
                                     </div>
                                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
                                         <div style={{ fontSize: '12px', color: '#C6C6C6', fontWeight: 400, marginTop: 10 }}>Total Expenses</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Rs {total_expenses?.toLocaleString() || 0}</div>
+                                        <div style={{ fontSize: '16px', fontWeight: 500, color: '#FFFFFF' }}>Rs {total_expenses?.toLocaleString() || 0}</div>
                                     </div>
                                 </Card.Body>
                             </Card>
@@ -293,7 +293,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     <div className="d-flex gap-3">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
@@ -306,8 +306,8 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                             <EventNote />
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Booking Revenue</div>
-                                            <div style={{ fontSize: '20px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Rs {total_booking_revenue?.toLocaleString() || 0}</div>
+                                            <div style={{ fontSize: '14px', color: '#C6C6C6', fontWeight: 400 }}>Booking Revenue</div>
+                                            <div style={{ fontSize: '16px', fontWeight: 500, color: '#FFFFFF', marginBottom: '10px' }}>Rs {total_booking_revenue?.toLocaleString() || 0}</div>
                                         </div>
                                     </div>
                                     <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
@@ -332,7 +332,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     <div className="d-flex gap-3">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
@@ -363,7 +363,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
                                             style={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '40px',
                                                 height: '40px',
