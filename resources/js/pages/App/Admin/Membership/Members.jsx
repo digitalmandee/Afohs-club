@@ -128,11 +128,11 @@ const AllMembers = ({ members }) => {
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-            <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
+            <div className="container-fluid p-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Recently Joined Section */}
                 <div className="mx-3">
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>All Members</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Members</Typography>
                         <Button
                             variant="outlined"
                             startIcon={<Delete />}
@@ -141,6 +141,7 @@ const AllMembers = ({ members }) => {
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
+                                borderRadius:'16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -155,25 +156,25 @@ const AllMembers = ({ members }) => {
                     <MembershipDashboardFilter />
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '20px' }}>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

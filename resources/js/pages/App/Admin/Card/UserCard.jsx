@@ -159,10 +159,29 @@ const handlePrintMembershipCard = (member) => {
     }, 250);
 };
 
+const formatExpiryMMYY = (value) => {
+    if (!value) return '06/25';
+
+    // MM/YYYY
+    if (typeof value === 'string' && value.includes('/')) {
+        const [mm, yyyy] = value.split('/');
+        return `${mm}/${yyyy.slice(-2)}`;
+    }
+
+    // ISO / YYYY-MM-DD
+    if (typeof value === 'string' && value.includes('-')) {
+        const parts = value.split('-');
+        return `${parts[1]}/${parts[0].slice(-2)}`;
+    }
+
+    return value;
+};
+
 const UserCardComponent = ({ open, onClose, member }) => {
     const [openJsonModal, setOpenJsonModal] = useState(false);
 
     if (!member) return null;
+
 
     return (
         <>
@@ -236,7 +255,7 @@ const UserCardComponent = ({ open, onClose, member }) => {
                                             Valid Until
                                         </Typography>
                                         <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
-                                            {member.expiry_date ? new Date(member.expiry_date).toLocaleDateString() : '10/08/2027'}
+                                            {formatExpiryMMYY(member.expiry_date)}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ mt: 1 }}>

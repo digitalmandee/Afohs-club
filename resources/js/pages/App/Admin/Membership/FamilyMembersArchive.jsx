@@ -292,6 +292,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
                                 height: 40,
+                                borderRadius: '16px',
                                 textTransform: 'none',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
@@ -326,12 +327,20 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                     <FamilyFilter />
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '40px' }}>
+                                <TableRow sx={{
+                                    backgroundColor: '#063455',
+                                    height: 40,  // Reduced height
+                                    '& .MuiTableCell-root': {
+                                        padding: '7px 10px',  // Reduced padding
+                                        height: 40,
+                                        verticalAlign: 'middle'
+                                    }
+                                }}>
                                     {isSuperAdmin && (
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600, width: '50px' }}>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, width: '50px' }}>
                                             <Checkbox
                                                 checked={selectedMembers.length === familyGroups.data.length && familyGroups.data.length > 0}
                                                 indeterminate={selectedMembers.length > 0 && selectedMembers.length < familyGroups.data.length}
@@ -345,19 +354,19 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                             />
                                         </TableCell>
                                     )}
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card No</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Name</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Age Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Gender</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Relationship</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Expiry Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member Name</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Age Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Gender</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Relationship</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card Expiry Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

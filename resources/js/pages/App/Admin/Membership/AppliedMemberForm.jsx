@@ -214,7 +214,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                     <IconButton onClick={() => router.get(route('applied-member.index'))} sx={{ color: '#000' }}>
                         <ArrowBack sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                         {isEditMode ? 'Edit Applied Member' : 'Add Applied Member'}
                     </Typography>
                 </Box>

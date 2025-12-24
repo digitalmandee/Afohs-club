@@ -98,34 +98,42 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
             > */}
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Header */}
-                <div className="d-flex justify-content-between align-items-center">
-                    <div className="d-flex align-items-center">
-                        <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Membership Dashboard</Typography>
+                <div className="d-flex justify-content-between align-items-center"
+                style={{width:'100%', paddingLeft:0, paddingRight:0}}>
+                    <div className="align-items-center">
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Membership Dashboard</Typography>
                     </div>
                     <Button
                         variant="contained"
-                        startIcon={<span>+</span>}
+                        startIcon={<span style={{
+                            fontSize: '1.75rem', marginBottom:5
+                        }}>+</span>}
                         style={{
                             backgroundColor: '#063455',
-                            textTransform: 'none',
-                            borderRadius: '4px',
+                            // textTransform: 'none',
+                            borderRadius: '16px',
                             height: 40,
                             width: 170,
+                            display: 'flex',
+                            alignItems: 'center'
                         }}
                         onClick={() => router.visit(route('membership.add'))}
                     >
                         Add Member
                     </Button>
                 </div>
+                <Typography style={{color:'#063455', fontSize:'15px', fontWeight:'400'}}>
+                    Details of all the records regarding membership
+                </Typography>
 
                 {/* Stats Cards */}
                 <div className="row mb-4 mt-5">
                     <div className="col-md-4 mb-3">
-                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px', borderRadius: '16px' }}>
                             <CardContent className="text-center py-4">
                                 <div className="mb-2">
-                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                        <People />
+                                    <Avatar style={{ backgroundColor: 'transparent', margin: '0 auto', }}>
+                                        <People style={{ height: 40, width: 40 }} />
                                     </Avatar>
                                 </div>
                                 <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Membership</Typography>
@@ -134,11 +142,11 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                         </Card>
                     </div>
                     <div className="col-md-4 mb-3">
-                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px', borderRadius: '16px' }}>
                             <CardContent className="text-center py-4">
                                 <div className="mb-2">
-                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                        <CreditCard />
+                                    <Avatar style={{ backgroundColor: 'transparent', margin: '0 auto' }}>
+                                        <CreditCard style={{ height: 40, width: 40 }} />
                                     </Avatar>
                                 </div>
                                 <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Total Payment</Typography>
@@ -147,11 +155,11 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                         </Card>
                     </div>
                     <div className="col-md-4 mb-3">
-                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px', borderRadius: '16px' }}>
                             <CardContent className="text-center py-4">
                                 <div className="mb-2">
-                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
-                                        <CreditCard />
+                                    <Avatar style={{ backgroundColor: 'transparent', margin: '0 auto' }}>
+                                        <CreditCard style={{ height: 40, width: 40 }} />
                                     </Avatar>
                                 </div>
                                 <Typography sx={{ mt: 1, marginBottom: '5px', fontSize: '16px', fontWeight: 400, color: '#C6C6C6' }}>Current Balance</Typography>
@@ -163,28 +171,30 @@ const MembershipDashboard = ({ members = [], total_members, total_payment }) => 
                 {/* Recently Joined Section */}
                 <div className="mx-0">
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
+                        <Typography style={{ fontWeight: 600, fontSize: '24px', color: '#000000' }}>Recently Joined</Typography>
                     </div>
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
-                        <Table>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                        <Table 
+                        // sx={{ border: '2px solid #063455' }}
+                        >
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

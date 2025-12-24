@@ -117,58 +117,58 @@ const AttendanceDashboard = () => {
                             {[
                                 {
                                     label: 'Leave Category',
-                                    icon: <CategoryIcon style={{ color: '#FF9933' }} />,
-                                    bgColor: '#FFF2E5',
-                                    borderColor: '#FFE0C2',
+                                    icon: <CategoryIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#FFE0C2',
                                     path: route('employees.leaves.category.index'),
                                 },
                                 {
                                     label: 'Leave Application',
-                                    icon: <AssignmentIcon style={{ color: '#FF66B2' }} />,
-                                    bgColor: '#FFE5F1',
-                                    borderColor: '#FCCFEF',
+                                    icon: <AssignmentIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#FCCFEF',
                                     path: route('employees.leaves.application.index'),
                                 },
                                 {
                                     label: 'Leave Management',
-                                    icon: <SettingsIcon style={{ color: '#33CC33' }} />,
-                                    bgColor: '#E5FFE5',
-                                    borderColor: '#A4FFBF',
+                                    icon: <SettingsIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#A4FFBF',
                                     path: route('employees.leaves.application.index'),
                                 },
                                 {
                                     label: 'Leave Report',
-                                    icon: <BarChartIcon style={{ color: '#6666FF' }} />,
-                                    bgColor: '#E5E5FF',
-                                    borderColor: '#BEC0FF',
+                                    icon: <BarChartIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#BEC0FF',
                                     path: route('employees.leaves.application.report'),
                                 },
                                 {
                                     label: 'Manage Attendance',
-                                    icon: <AssignmentIcon style={{ color: '#FF9933' }} />,
-                                    bgColor: '#FFF2E5',
-                                    borderColor: '#F8EF91',
+                                    icon: <AssignmentIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#F8EF91',
                                     path: route('employees.attendances.management'),
                                 },
                                 {
                                     label: 'Monthly Report',
-                                    icon: <DescriptionIcon style={{ color: '#33CC33' }} />,
-                                    bgColor: '#F2FFF2',
-                                    borderColor: '#A6FFD7',
+                                    icon: <DescriptionIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#A6FFD7',
                                     path: route('employees.attendances.monthly.report'),
                                 },
                                 {
                                     label: 'Attendance Report',
-                                    icon: <EventNoteIcon style={{ color: '#33CC33' }} />,
-                                    bgColor: '#F0FFF0',
-                                    borderColor: '#B8FF8F',
+                                    icon: <EventNoteIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#B8FF8F',
                                     path: route('employees.attendances.report'),
                                 },
                                 {
                                     label: 'Leave Reports',
-                                    icon: <BarChartIcon style={{ color: '#6666FF' }} />,
-                                    bgColor: '#E5E5FF',
-                                    borderColor: '#BEC0FF',
+                                    icon: <BarChartIcon style={{ color: '#fff' }} />,
+                                    // bgColor: '#063455',
+                                    // borderColor: '#BEC0FF',
                                     path: route('employees.leaves.application.report'),
                                 },
                             ].map((card, index) => (
@@ -179,7 +179,7 @@ const AttendanceDashboard = () => {
                                         maxWidth: '220px',
                                         maxHeight: '160px',
                                         padding: '20px',
-                                        backgroundColor: 'white',
+                                        backgroundColor: '#063455',
                                         borderRadius: '12px',
                                         border: `2px solid ${card.borderColor}`,
                                         cursor: 'pointer',
@@ -196,7 +196,7 @@ const AttendanceDashboard = () => {
                                             width: '40px',
                                             height: '40px',
                                             borderRadius: '50%',
-                                            backgroundColor: card.bgColor,
+                                            // backgroundColor: "#fff",
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
@@ -205,7 +205,7 @@ const AttendanceDashboard = () => {
                                     >
                                         {card.icon}
                                     </div>
-                                    <div style={{ fontSize: '14px', color: '#333' }}>{card.label}</div>
+                                    <div style={{ fontSize: '14px', color: '#fff' }}>{card.label}</div>
                                 </div>
                             ))}
                         </div>

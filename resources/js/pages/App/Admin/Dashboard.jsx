@@ -199,26 +199,29 @@ const Dashboard = () => {
                                             bgcolor: '#063455',
                                             color: 'white',
                                             borderRadius: '4px',
-                                            height: '166px',
+                                            // height: '166px',
+                                            height: { xs: 'auto', md: '166px' },
                                         }}
                                     >
                                         <CardContent
                                             sx={{
                                                 display: 'flex',
+                                                flexDirection: { xs: 'column', md: 'row' }, // 👈 KEY FIX
                                                 justifyContent: 'space-between',
-                                                alignItems: 'center',
-                                                px: 1,
+                                                alignItems: 'stretch',
+                                                px: 2,
                                                 py: 3,
+                                                gap: { xs: 2, md: 0 },
                                             }}
                                         >
                                             {/* Total Revenue */}
-                                            <Box sx={{ flex: 1, textAlign: 'flex-start' }}>
+                                            <Box sx={{ flex: 1, textAlign: { xs: 'center', md: 'left' } }}>
                                                 <Typography sx={{ mb: 1, fontWeight: 400, fontSize: '14px', color: '#FFFFFF' }}>Total Revenue</Typography>
                                                 <Typography sx={{
                                                     fontWeight: 500,
                                                     fontSize: getResponsiveFontSize(formatCurrency(stats.totalRevenue)),
                                                     color: '#FFFFFF',
-                                                    whiteSpace: 'nowrap',
+                                                    wordBreak: 'break-word',
                                                 }}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalRevenue)}</Typography>
                                             </Box>
 
@@ -232,7 +235,7 @@ const Dashboard = () => {
                                                     fontWeight: 500,
                                                     fontSize: getResponsiveFontSize(formatCurrency(stats.totalProfit)),
                                                     color: '#FFFFFF',
-                                                    whiteSpace: 'nowrap',
+                                                    wordBreak: 'break-word',
                                                 }}>{isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : formatCurrency(stats.totalProfit)}</Typography>
                                             </Box>
                                         </CardContent>
@@ -526,8 +529,9 @@ const Dashboard = () => {
                                 </Typography>
                                 <Box
                                     sx={{
-                                        maxHeight: 360,          // ≈ 5 items height (adjust if needed)
+                                        maxHeight: 750,          // ≈ 5 items height (adjust if needed)
                                         overflowY: 'auto',
+                                        // bgcolor:'pink'
                                     }}
                                 >
                                     <List sx={{ p: 0 }}>

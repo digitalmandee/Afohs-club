@@ -104,7 +104,7 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
             <div>
                 <div className="d-flex justify-content-between align-items-center mb-3">
-                    <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Partners & Affiliates</Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Partners & Affiliates</Typography>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <Button
                             variant="outlined"
@@ -112,6 +112,7 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
+                                borderRadius: '16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -120,16 +121,36 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                         >
                             Deleted Partners
                         </Button>
-                        <Button variant="contained" style={{ backgroundColor: '#063455', color: '#fff' }} onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}>
+                        {/* <Button variant="contained" style={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px', color: '#fff' }} onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}>
+                            Add New
+                        </Button> */}
+                        <Button
+                            variant="contained"
+                            startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>}
+                            style={{
+                                backgroundColor: '#063455',
+                                textTransform: 'none',
+                                borderRadius: '4px',
+                                height: 40,
+                                width: 120,
+                                borderRadius: '16px',
+                            }}
+                            onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}
+                        >
                             Add New
                         </Button>
                     </div>
                 </div>
 
                 {/* Filters */}
-                <Box component={Paper} elevation={0} sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Box component={Paper} elevation={0} sx={{ mb: 3, bgcolor: 'transparent', display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Autocomplete
-                        sx={{ minWidth: 250 }}
+                        sx={{
+                            minWidth: 250,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '16px'
+                            }
+                        }}
                         open={open}
                         onOpen={() => setOpen(true)}
                         onClose={() => setOpen(false)}
@@ -187,32 +208,42 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                             </li>
                         )}
                     />
-                    <TextField select size="small" label="Type" value={filterValues.type} onChange={(e) => handleFilterChange('type', e.target.value)} sx={{ minWidth: 150 }} SelectProps={{ native: true }}>
+                    <TextField select size="small" label="Type" value={filterValues.type} onChange={(e) => handleFilterChange('type', e.target.value)} sx={{
+                        minWidth: 150,
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }} SelectProps={{ native: true }}>
                         <option value="all">All Types</option>
                         <option value="Club">Club</option>
                         <option value="Company">Company</option>
                         <option value="Other">Other</option>
                     </TextField>
-                    <TextField select size="small" label="Status" value={filterValues.status} onChange={(e) => handleFilterChange('status', e.target.value)} sx={{ minWidth: 150 }} SelectProps={{ native: true }}>
+                    <TextField select size="small" label="Status" value={filterValues.status} onChange={(e) => handleFilterChange('status', e.target.value)} sx={{
+                        minWidth: 150,
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }} SelectProps={{ native: true }}>
                         <option value="all">All Status</option>
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                     </TextField>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none' }}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderRadius:'16px', borderColor: '#ddd', textTransform: 'none' }}>
                             Reset
                         </Button>
-                        <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                        <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#063455', borderRadius:'16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
                             Search
                         </Button>
                     </div>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#000', height: '50px' }}>
+                            <TableRow style={{ backgroundColor: '#063455', height: '50px' }}>
                                 <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>SR #</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>ID</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>PARTNER / AFFILIATE</TableCell>

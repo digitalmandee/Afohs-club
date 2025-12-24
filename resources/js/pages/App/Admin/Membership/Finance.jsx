@@ -160,7 +160,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                         {/* <IconButton sx={{ color: '#333', mr: 1 }}>
                             <ArrowBack />
                         </IconButton> */}
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize:'30px' }}>
                             Finance
                             {/* <pre>{JSON.stringify(membersdata, null, 2)}</pre> */}
                         </Typography>
@@ -170,11 +170,11 @@ const MembersFinance = ({ membersdata = [] }) => {
                     <Box sx={{ px: 2, mb: 4 }}>
                         <Grid container spacing={2}>
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%' }}>
+                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%', borderRadius:'16px' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
                                         <Box
                                             sx={{
-                                                bgcolor: 'rgba(255,255,255,0.1)',
+                                                bgcolor: 'transparent',
                                                 width: 40,
                                                 height: 40,
                                                 borderRadius: '50%',
@@ -196,11 +196,11 @@ const MembersFinance = ({ membersdata = [] }) => {
                             </Grid>
 
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%' }}>
+                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%', borderRadius:'16px' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
                                         <Box
                                             sx={{
-                                                bgcolor: 'rgba(255,255,255,0.1)',
+                                                bgcolor: 'transparent',
                                                 width: 40,
                                                 height: 40,
                                                 borderRadius: '50%',
@@ -222,11 +222,11 @@ const MembersFinance = ({ membersdata = [] }) => {
                             </Grid>
 
                             <Grid item xs={12} md={4}>
-                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%' }}>
+                                <Card sx={{ bgcolor: '#063455', color: 'white', height: '100%', borderRadius:'16px' }}>
                                     <CardContent sx={{ textAlign: 'center', py: 3 }}>
                                         <Box
                                             sx={{
-                                                bgcolor: 'rgba(255,255,255,0.1)',
+                                                bgcolor: 'transparent',
                                                 width: 40,
                                                 height: 40,
                                                 borderRadius: '50%',
@@ -300,6 +300,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                                         borderColor: '#ddd',
                                         color: '#333',
                                         bgcolor: 'white',
+                                        borderRadius:'16px',
                                         '&:hover': {
                                             bgcolor: '#f5f5f5',
                                             borderColor: '#ccc',
@@ -315,6 +316,7 @@ const MembersFinance = ({ membersdata = [] }) => {
                                         borderColor: '#ddd',
                                         color: '#333',
                                         bgcolor: 'white',
+                                        borderRadius:'16px',
                                         '&:hover': {
                                             bgcolor: '#f5f5f5',
                                             borderColor: '#ccc',
@@ -328,16 +330,16 @@ const MembersFinance = ({ membersdata = [] }) => {
                         </Box>
 
                         {/* Payments Table */}
-                        <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius: 1 }}>
+                        <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius:'16px' }}>
                             <Table sx={{ minWidth: 650 }}>
-                                <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                                <TableHead sx={{ bgcolor: '#063455' }}>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Membership ID</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Members</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Member Type</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Amount</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Membership ID</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Members</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Member Type</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff' }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

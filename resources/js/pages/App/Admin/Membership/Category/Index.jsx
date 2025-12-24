@@ -63,7 +63,7 @@ const MemberCategories = ({ memberCategories }) => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                             Member Categories
                         </Typography>
                     </Box>
@@ -74,6 +74,7 @@ const MemberCategories = ({ memberCategories }) => {
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
+                                borderRadius:'16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -84,10 +85,11 @@ const MemberCategories = ({ memberCategories }) => {
                         </Button>
                         <Button
                             variant="contained"
-                            startIcon={<AddIcon />}
+                            startIcon={<AddIcon sx={{fontSize:'1.5rem'}} />}
                             onClick={() => router.visit(route('member-categories.create'))}
                             sx={{
-                                backgroundColor: '#003366',
+                                backgroundColor: '#063455',
+                                borderRadius:'16px',
                                 '&:hover': { backgroundColor: '#002244' },
                             }}
                         >
