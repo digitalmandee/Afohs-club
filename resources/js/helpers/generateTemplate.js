@@ -238,14 +238,14 @@ export const generateInvoiceContent = (booking) => {
                     <div class="two-column">
                         <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no ? booking.booking_no : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('MMMM D, YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('MMMM D, YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
                         ${booking.cancellation_reason ? `<div class="typography-body2"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>` : ''}
                     </div>

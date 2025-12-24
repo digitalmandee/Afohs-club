@@ -3,11 +3,13 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { Person, Search, Save, Print, Receipt, Visibility, Payment } from '@mui/icons-material';
 import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
+import PaymentDialog from './PaymentDialog';
 
 export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null }) {
     // const [open, setOpen] = useState(true);
@@ -972,7 +974,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     };
 
     // Real-time validation when dates change
-    const handleDateChange = (field, value) => {
+    const handleDateChange = (field, dateValue) => {
+        let value = dateValue ? dayjs(dateValue).format('YYYY-MM-DD') : '';
+
         // For maintenance fees, enforce month boundaries
         if (data.fee_type === 'maintenance_fee' && value) {
             if (field === 'valid_from') {
@@ -1132,7 +1136,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 // Reset form but keep member if pre-selected
                 setSubscriptionItems([]); // Clear subscription items
                 setData({
-                    member_id: preSelectedMember ? preSelectedMember.id : '',
+                    member_id: preSelectedMember ? preSelectedMember.id : selectedMember ? selectedMember.id : '',
                     fee_type: 'maintenance_fee',
                     payment_frequency: 'monthly',
                     amount: '',
@@ -1229,11 +1233,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const formatDate = (date) => {
         if (!date) return '';
         try {
-            return new Date(date).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-            });
+            return dayjs(date).format('DD-MM-YYYY');
         } catch (error) {
             return date;
         }
@@ -1781,10 +1781,40 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                                     {/* Dates for the item */}
                                                                     <Grid item xs={6}>
-                                                                        <TextField size="small" fullWidth label="Valid From" type="date" value={data.valid_from} onChange={(e) => handleDateChange('valid_from', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_from || formErrors.valid_from)} />
+                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                            <DatePicker
+                                                                                label="Valid From"
+                                                                                value={data.valid_from ? dayjs(data.valid_from) : null}
+                                                                                onChange={(newValue) => handleDateChange('valid_from', newValue)}
+                                                                                format="DD-MM-YYYY"
+                                                                                slotProps={{
+                                                                                    textField: {
+                                                                                        size: 'small',
+                                                                                        fullWidth: true,
+                                                                                        error: !!(errors.valid_from || formErrors.valid_from),
+                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                                                                    },
+                                                                                }}
+                                                                            />
+                                                                        </LocalizationProvider>
                                                                     </Grid>
                                                                     <Grid item xs={6}>
-                                                                        <TextField size="small" fullWidth label="Valid To" type="date" value={data.valid_to} onChange={(e) => handleDateChange('valid_to', e.target.value)} InputLabelProps={{ shrink: true }} error={!!(errors.valid_to || formErrors.valid_to)} />
+                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                            <DatePicker
+                                                                                label="Valid To"
+                                                                                value={data.valid_to ? dayjs(data.valid_to) : null}
+                                                                                onChange={(newValue) => handleDateChange('valid_to', newValue)}
+                                                                                format="DD-MM-YYYY"
+                                                                                slotProps={{
+                                                                                    textField: {
+                                                                                        size: 'small',
+                                                                                        fullWidth: true,
+                                                                                        error: !!(errors.valid_to || formErrors.valid_to),
+                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                                                                    },
+                                                                                }}
+                                                                            />
+                                                                        </LocalizationProvider>
                                                                     </Grid>
 
                                                                     <Grid item xs={12}>
@@ -2196,36 +2226,42 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                                 <Grid container spacing={2}>
                                                                     <Grid item xs={6}>
-                                                                        <TextField
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label={data.fee_type === 'maintenance_fee' ? 'Valid From (1st of month)' : 'Valid From'}
-                                                                            type="date"
-                                                                            value={data.valid_from}
-                                                                            onChange={(e) => handleDateChange('valid_from', e.target.value)}
-                                                                            InputLabelProps={{ shrink: true }}
-                                                                            error={!!(errors.valid_from || formErrors.valid_from || !dateValidation.isValid)}
-                                                                            helperText={errors.valid_from || formErrors.valid_from?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : '')}
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                            }}
-                                                                        />
+                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                            <DatePicker
+                                                                                label={data.fee_type === 'maintenance_fee' ? 'Valid From (1st of month)' : 'Valid From'}
+                                                                                value={data.valid_from ? dayjs(data.valid_from) : null}
+                                                                                onChange={(newValue) => handleDateChange('valid_from', newValue)}
+                                                                                format="DD-MM-YYYY"
+                                                                                slotProps={{
+                                                                                    textField: {
+                                                                                        size: 'small',
+                                                                                        fullWidth: true,
+                                                                                        error: !!(errors.valid_from || formErrors.valid_from || !dateValidation.isValid),
+                                                                                        helperText: errors.valid_from || formErrors.valid_from?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : ''),
+                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                                                                    },
+                                                                                }}
+                                                                            />
+                                                                        </LocalizationProvider>
                                                                     </Grid>
                                                                     <Grid item xs={6}>
-                                                                        <TextField
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label={data.fee_type === 'maintenance_fee' ? 'Valid To (last day of month)' : 'Valid To'}
-                                                                            type="date"
-                                                                            value={data.valid_to}
-                                                                            onChange={(e) => handleDateChange('valid_to', e.target.value)}
-                                                                            InputLabelProps={{ shrink: true }}
-                                                                            error={!!(errors.valid_to || formErrors.valid_to || !dateValidation.isValid)}
-                                                                            helperText={errors.valid_to || formErrors.valid_to?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : '')}
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                            }}
-                                                                        />
+                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                                            <DatePicker
+                                                                                label={data.fee_type === 'maintenance_fee' ? 'Valid To (last day of month)' : 'Valid To'}
+                                                                                value={data.valid_to ? dayjs(data.valid_to) : null}
+                                                                                onChange={(newValue) => handleDateChange('valid_to', newValue)}
+                                                                                format="DD-MM-YYYY"
+                                                                                slotProps={{
+                                                                                    textField: {
+                                                                                        size: 'small',
+                                                                                        fullWidth: true,
+                                                                                        error: !!(errors.valid_to || formErrors.valid_to || !dateValidation.isValid),
+                                                                                        helperText: errors.valid_to || formErrors.valid_to?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : ''),
+                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                                                                    },
+                                                                                }}
+                                                                            />
+                                                                        </LocalizationProvider>
                                                                     </Grid>
                                                                 </Grid>
 

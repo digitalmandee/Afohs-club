@@ -1,4 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, Button, IconButton, Select, MenuItem, FormControl } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -182,7 +186,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor: '#f5f5f5'
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 {/* Header */}
@@ -240,7 +244,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                                 <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
                                     Back
                                 </Button>
-                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} disabled={isSubmitting} loading={isSubmitting} loadingPosition='start' onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}>
+                                <Button style={{ backgroundColor: '#063455', color: '#fff' }} disabled={isSubmitting} loading={isSubmitting} loadingPosition="start" onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext}>
                                     {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
                                 </Button>
                             </Box>
@@ -271,13 +275,46 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 </Grid>
                 {JSON.stringify()}
                 <Grid item xs={12} sm={4}>
-                    <TextField label="Booking Date" name="bookingDate" type="date" value={formData.bookingDate} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Booking Date"
+                            format="DD-MM-YYYY"
+                            value={formData.bookingDate ? dayjs(formData.bookingDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'bookingDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: { fullWidth: true, name: 'bookingDate', onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6} sm={4}>
-                    <TextField label="Check-In Date" name="checkInDate" type="date" value={formData.checkInDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Check-In Date"
+                            format="DD-MM-YYYY"
+                            value={formData.checkInDate ? dayjs(formData.checkInDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'checkInDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: { fullWidth: true, name: 'checkInDate', onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6} sm={4}>
-                    <TextField label="Check-Out Date" name="checkOutDate" type="date" value={formData.checkOutDate} fullWidth InputLabelProps={{ shrink: true }} inputProps={{ readOnly: true }} />
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="Check-Out Date"
+                            format="DD-MM-YYYY"
+                            value={formData.checkOutDate ? dayjs(formData.checkOutDate) : null}
+                            onChange={(newValue) => handleChange({ target: { name: 'checkOutDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            slotProps={{
+                                textField: { fullWidth: true, name: 'checkOutDate', onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                            }}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6} sm={4}>
                     <TextField label="Arrival Details" name="arrivalDetails" value={formData.arrivalDetails} onChange={handleChange} fullWidth multiline rows={1} />
@@ -359,13 +396,26 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                     <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth />
                 </Grid>
                 <Grid item xs={4}>
-                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={handleChange} fullWidth />
+                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} fullWidth />
                 </Grid>
                 <Grid item xs={6} sm={4}>
                     <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth />
                 </Grid>
                 <Grid item xs={6} sm={4}>
-                    <TextField label="CNIC / Passport No." name="cnic" value={formData.cnic} onChange={handleChange} fullWidth />
+                    <TextField
+                        label="CNIC / Passport No."
+                        name="cnic"
+                        value={formData.cnic}
+                        onChange={(e) => {
+                            let value = e.target.value.replace(/\D/g, '');
+                            if (value.length > 5 && value[5] !== '-') value = value.slice(0, 5) + '-' + value.slice(5);
+                            if (value.length > 13 && value[13] !== '-') value = value.slice(0, 13) + '-' + value.slice(13);
+                            if (value.length > 15) value = value.slice(0, 15);
+                            handleChange({ target: { name: 'cnic', value } });
+                        }}
+                        fullWidth
+                        placeholder="XXXXX-XXXXXXX-X"
+                    />
                 </Grid>
                 <Grid item xs={6} sm={4}>
                     <TextField label="Enter Relationship" name="guestRelation" value={formData.guestRelation} onChange={handleChange} fullWidth />
@@ -636,8 +686,8 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
             const syntheticEvent = {
                 target: {
                     name: 'documents',
-                    files: files
-                }
+                    files: files,
+                },
             };
             handleFileChange(syntheticEvent);
         }
@@ -655,12 +705,15 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
         const previewUrl = isFileObject ? URL.createObjectURL(file) : file;
 
         return (
-            <div key={index} style={{
-                position: 'relative',
-                width: '100px',
-                textAlign: 'center',
-                marginBottom: '10px'
-            }}>
+            <div
+                key={index}
+                style={{
+                    position: 'relative',
+                    width: '100px',
+                    textAlign: 'center',
+                    marginBottom: '10px',
+                }}
+            >
                 <IconButton
                     size="small"
                     onClick={() => handleFileRemove(index)}
@@ -673,9 +726,9 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                         width: 24,
                         height: 24,
                         '&:hover': {
-                            backgroundColor: '#d32f2f'
+                            backgroundColor: '#d32f2f',
                         },
-                        zIndex: 1
+                        zIndex: 1,
                     }}
                 >
                     <CloseIcon fontSize="small" />
@@ -692,7 +745,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 objectFit: 'cover',
                                 borderRadius: '6px',
                                 cursor: 'pointer',
-                                border: '2px solid #ddd'
+                                border: '2px solid #ddd',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         />
@@ -710,7 +763,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -732,7 +785,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -754,7 +807,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
-                                margin: '0 auto'
+                                margin: '0 auto',
                             }}
                             onClick={() => window.open(previewUrl, '_blank')}
                         >
@@ -762,9 +815,7 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                                 FILE
                             </Typography>
                         </div>
-                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>
-                            {ext.toUpperCase()}
-                        </p>
+                        <p style={{ fontSize: '12px', marginTop: '5px', margin: 0 }}>{ext.toUpperCase()}</p>
                     </div>
                 )}
             </div>
@@ -794,19 +845,11 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                             borderColor: '#0a3d62',
                             backgroundColor: '#f5f5f5',
                             transform: 'translateY(-2px)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        },
                     }}
                 >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept=".pdf,.doc,.docx,image/*"
-                        name="documents"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                    />
+                    <input ref={fileInputRef} type="file" multiple accept=".pdf,.doc,.docx,image/*" name="documents" onChange={handleFileChange} style={{ display: 'none' }} />
 
                     <Box sx={{ mb: 2 }}>
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -833,15 +876,17 @@ const UploadInfo = ({ formData, handleChange, handleFileChange, handleFileRemove
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         Uploaded Documents ({formData.previewFiles.length})
                     </Typography>
-                    <div style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '15px',
-                        padding: '15px',
-                        backgroundColor: '#f9f9f9',
-                        borderRadius: '8px',
-                        border: '1px solid #e0e0e0'
-                    }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '15px',
+                            padding: '15px',
+                            backgroundColor: '#f9f9f9',
+                            borderRadius: '8px',
+                            border: '1px solid #e0e0e0',
+                        }}
+                    >
                         {formData.previewFiles.map((file, index) => getFilePreview(file, index))}
                     </div>
                 </Grid>

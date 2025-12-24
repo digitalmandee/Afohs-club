@@ -4,6 +4,7 @@ import { Print, Close, Send } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { toWords } from 'number-to-words';
+import dayjs from 'dayjs';
 
 const handlePrintReceipt = (invoice) => {
     if (!invoice) return;
@@ -215,7 +216,7 @@ const handlePrintReceipt = (invoice) => {
                           invoiceData.details.validFrom
                               ? `
                       <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Valid From: </span>${new Date(invoiceData.details.validFrom).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        <span style="font-weight: bold;">From: </span>${new Date(invoiceData.details.validFrom).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                       </div>`
                               : ''
                       }
@@ -223,10 +224,18 @@ const handlePrintReceipt = (invoice) => {
                           invoiceData.details.validTo
                               ? `
                       <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Valid To: </span>
+                        <span style="font-weight: bold;">To: </span>
                         <span style="color: ${new Date(invoiceData.details.validTo) > new Date() ? '#28a745' : '#dc3545'}; font-weight: 500;">
                           ${new Date(invoiceData.details.validTo).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </span>
+                      </div>`
+                              : ''
+                      }
+                      ${
+                          invoiceData.details.validFrom && invoiceData.details.validTo
+                              ? `
+                      <div class="typography-body2" style="margin-bottom: 4px;">
+                        <span style="font-weight: bold;">Number of days: </span>${dayjs(invoiceData.details.validTo).diff(dayjs(invoiceData.details.validFrom), 'day') + 1}
                       </div>`
                               : ''
                       }
@@ -579,7 +588,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                             <>
                                                 {invoice.valid_from && (
                                                     <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                                        <span style={{ fontWeight: 'bold' }}>Valid From: </span>
+                                                        <span style={{ fontWeight: 'bold' }}>From: </span>
                                                         {new Date(invoice.valid_from).toLocaleDateString('en-US', {
                                                             year: 'numeric',
                                                             month: 'long',
@@ -589,7 +598,7 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                 )}
                                                 {invoice.valid_to && (
                                                     <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
-                                                        <span style={{ fontWeight: 'bold' }}>Valid To: </span>
+                                                        <span style={{ fontWeight: 'bold' }}>To: </span>
                                                         <span
                                                             style={{
                                                                 color: new Date(invoice.valid_to) > new Date() ? '#28a745' : '#dc3545',
@@ -602,6 +611,12 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                                                 day: 'numeric',
                                                             })}
                                                         </span>
+                                                    </Typography>
+                                                )}
+                                                {invoice.valid_from && invoice.valid_to && (
+                                                    <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                                        <span style={{ fontWeight: 'bold' }}>Number of days: </span>
+                                                        {dayjs(invoice.valid_to).diff(dayjs(invoice.valid_from), 'day') + 1}
                                                     </Typography>
                                                 )}
                                             </>

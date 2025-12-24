@@ -1,6 +1,9 @@
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search, Visibility } from '@mui/icons-material';
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, TextField, FormControl, Select, MenuItem, Grid, Chip } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Container } from 'react-bootstrap';
@@ -168,253 +171,291 @@ const EventsManage = ({ bookings, filters = {} }) => {
                 }}
             >
                 <ThemeProvider theme={theme}>
-                    <Container fluid className="p-4 bg-light">
-                        {/* Header */}
-                        <Box className="mb-4 d-flex justify-content-between align-items-center">
-                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ mr: 2 }}>
-                                    <ArrowBack />
-                                </IconButton>
-                                <Typography style={{ color: '#003366', fontWeight: 500, fontSize: '30px' }}>Manage Event Bookings</Typography>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <Container fluid className="p-4 bg-light">
+                            {/* Header */}
+                            <Box className="mb-4 d-flex justify-content-between align-items-center">
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ mr: 2 }}>
+                                        <ArrowBack />
+                                    </IconButton>
+                                    <Typography style={{ color: '#003366', fontWeight: 500, fontSize: '30px' }}>Manage Event Bookings</Typography>
+                                </Box>
                             </Box>
-                        </Box>
 
-                        {/* Filter Section */}
-                        <Paper sx={{ p: 3, mb: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
-                            <Grid container spacing={2} alignItems="center">
-                                {/* Search by Name */}
-                                <Grid item xs={12} md={2}>
-                                    <TextField fullWidth size="small" label="Search by Name" placeholder="Enter guest name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                                </Grid>
+                            {/* Filter Section */}
+                            <Paper sx={{ p: 3, mb: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+                                <Grid container spacing={2} alignItems="center">
+                                    {/* Search by Name */}
+                                    <Grid item xs={12} md={2}>
+                                        <TextField fullWidth size="small" label="Search by Name" placeholder="Enter guest name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                                    </Grid>
 
-                                {/* Search by ID */}
-                                <Grid item xs={12} md={2}>
-                                    <TextField fullWidth size="small" label="Search by ID" placeholder="Enter booking ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} />
-                                </Grid>
+                                    {/* Search by ID */}
+                                    <Grid item xs={12} md={2}>
+                                        <TextField fullWidth size="small" label="Search by ID" placeholder="Enter booking ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} />
+                                    </Grid>
 
-                                {/* Booking Date From */}
-                                <Grid item xs={12} md={2}>
-                                    <TextField fullWidth size="small" type="date" label="Booking Date From" value={bookingDateFrom} onChange={(e) => setBookingDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
-                                </Grid>
-
-                                {/* Booking Date To */}
-                                <Grid item xs={12} md={2}>
-                                    <TextField fullWidth size="small" type="date" label="Booking Date To" value={bookingDateTo} onChange={(e) => setBookingDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
-                                </Grid>
-
-                                {/* Event Date From */}
-                                <Grid item xs={12} md={2}>
-                                    <TextField fullWidth size="small" type="date" label="Event Date From" value={eventDateFrom} onChange={(e) => setEventDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
-                                </Grid>
-
-                                {/* Event Date To */}
-                                <Grid item xs={12} md={2}>
-                                    <TextField fullWidth size="small" type="date" label="Event Date To" value={eventDateTo} onChange={(e) => setEventDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
-                                </Grid>
-
-                                {/* Choose Venues */}
-                                <Grid item xs={12} md={4}>
-                                    <FormControl fullWidth size="small">
-                                        <Select
-                                            multiple
-                                            value={selectedVenue}
-                                            onChange={(e) => setSelectedVenue(e.target.value)}
-                                            displayEmpty
-                                            renderValue={(selected) => {
-                                                if (selected.length === 0) {
-                                                    return <em style={{ color: '#999' }}>Choose Venues</em>;
-                                                }
-                                                return (
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                        {selected.map((value) => {
-                                                            const venueObj = venues.find((v) => v.value === value);
-                                                            return <Chip key={value} label={venueObj?.label || value} size="small" />;
-                                                        })}
-                                                    </Box>
-                                                );
+                                    {/* Booking Date From */}
+                                    <Grid item xs={12} md={2}>
+                                        <DatePicker
+                                            label="Booking Date From"
+                                            format="DD-MM-YYYY"
+                                            value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
+                                            onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                             }}
-                                        >
-                                            {venues.map((venue) => (
-                                                <MenuItem key={venue.value} value={venue.value}>
-                                                    {venue.label}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
+                                        />
+                                    </Grid>
 
-                                {/* Status Filter */}
-                                <Grid item xs={12} md={4}>
-                                    <FormControl fullWidth size="small">
-                                        <Select
-                                            multiple
-                                            value={selectedStatus}
-                                            onChange={(e) => setSelectedStatus(e.target.value)}
-                                            displayEmpty
-                                            renderValue={(selected) => {
-                                                if (selected.length === 0) {
-                                                    return <em style={{ color: '#999' }}>Choose Status</em>;
-                                                }
-                                                const statusOptions = [
-                                                    { value: 'confirmed', label: 'Confirmed' },
-                                                    { value: 'completed', label: 'Completed' },
-                                                    { value: 'cancelled', label: 'Cancelled' },
-                                                    // { value: 'unpaid', label: 'Unpaid' },
-                                                    // { value: 'paid', label: 'Paid' }
-                                                ];
-                                                return (
-                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                        {selected.map((value) => {
-                                                            const statusObj = statusOptions.find((s) => s.value === value);
-                                                            return <Chip key={value} label={statusObj?.label || value} size="small" />;
-                                                        })}
-                                                    </Box>
-                                                );
+                                    {/* Booking Date To */}
+                                    <Grid item xs={12} md={2}>
+                                        <DatePicker
+                                            label="Booking Date To"
+                                            format="DD-MM-YYYY"
+                                            value={bookingDateTo ? dayjs(bookingDateTo) : null}
+                                            onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                             }}
-                                        >
-                                            <MenuItem value="confirmed">Confirmed</MenuItem>
-                                            <MenuItem value="completed">Completed</MenuItem>
-                                            <MenuItem value="cancelled">Cancelled</MenuItem>
-                                            {/* <MenuItem value="unpaid">Unpaid</MenuItem>
+                                        />
+                                    </Grid>
+
+                                    {/* Event Date From */}
+                                    <Grid item xs={12} md={2}>
+                                        <DatePicker
+                                            label="Event Date From"
+                                            format="DD-MM-YYYY"
+                                            value={eventDateFrom ? dayjs(eventDateFrom) : null}
+                                            onChange={(newValue) => setEventDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                            }}
+                                        />
+                                    </Grid>
+
+                                    {/* Event Date To */}
+                                    <Grid item xs={12} md={2}>
+                                        <DatePicker
+                                            label="Event Date To"
+                                            format="DD-MM-YYYY"
+                                            value={eventDateTo ? dayjs(eventDateTo) : null}
+                                            onChange={(newValue) => setEventDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            slotProps={{
+                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                            }}
+                                        />
+                                    </Grid>
+
+                                    {/* Choose Venues */}
+                                    <Grid item xs={12} md={4}>
+                                        <FormControl fullWidth size="small">
+                                            <Select
+                                                multiple
+                                                value={selectedVenue}
+                                                onChange={(e) => setSelectedVenue(e.target.value)}
+                                                displayEmpty
+                                                renderValue={(selected) => {
+                                                    if (selected.length === 0) {
+                                                        return <em style={{ color: '#999' }}>Choose Venues</em>;
+                                                    }
+                                                    return (
+                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                            {selected.map((value) => {
+                                                                const venueObj = venues.find((v) => v.value === value);
+                                                                return <Chip key={value} label={venueObj?.label || value} size="small" />;
+                                                            })}
+                                                        </Box>
+                                                    );
+                                                }}
+                                            >
+                                                {venues.map((venue) => (
+                                                    <MenuItem key={venue.value} value={venue.value}>
+                                                        {venue.label}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+
+                                    {/* Status Filter */}
+                                    <Grid item xs={12} md={4}>
+                                        <FormControl fullWidth size="small">
+                                            <Select
+                                                multiple
+                                                value={selectedStatus}
+                                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                                displayEmpty
+                                                renderValue={(selected) => {
+                                                    if (selected.length === 0) {
+                                                        return <em style={{ color: '#999' }}>Choose Status</em>;
+                                                    }
+                                                    const statusOptions = [
+                                                        { value: 'confirmed', label: 'Confirmed' },
+                                                        { value: 'completed', label: 'Completed' },
+                                                        { value: 'cancelled', label: 'Cancelled' },
+                                                        // { value: 'unpaid', label: 'Unpaid' },
+                                                        // { value: 'paid', label: 'Paid' }
+                                                    ];
+                                                    return (
+                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                            {selected.map((value) => {
+                                                                const statusObj = statusOptions.find((s) => s.value === value);
+                                                                return <Chip key={value} label={statusObj?.label || value} size="small" />;
+                                                            })}
+                                                        </Box>
+                                                    );
+                                                }}
+                                            >
+                                                <MenuItem value="confirmed">Confirmed</MenuItem>
+                                                <MenuItem value="completed">Completed</MenuItem>
+                                                <MenuItem value="cancelled">Cancelled</MenuItem>
+                                                {/* <MenuItem value="unpaid">Unpaid</MenuItem>
                                             <MenuItem value="paid">Paid</MenuItem> */}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
 
-                                {/* Action Buttons */}
-                                <Grid item xs={12} md={4} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleReset}
-                                        sx={{
-                                            borderColor: '#dc2626',
-                                            color: '#dc2626',
-                                            textTransform: 'none',
-                                            '&:hover': {
-                                                backgroundColor: '#fef2f2',
+                                    {/* Action Buttons */}
+                                    <Grid item xs={12} md={4} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                        <Button
+                                            variant="outlined"
+                                            onClick={handleReset}
+                                            sx={{
                                                 borderColor: '#dc2626',
-                                            },
-                                        }}
-                                    >
-                                        Reset
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={<Search />}
-                                        onClick={handleApply}
-                                        sx={{
-                                            backgroundColor: '#063455',
-                                            textTransform: 'none',
-                                            '&:hover': {
-                                                backgroundColor: '#047857',
-                                            },
-                                        }}
-                                    >
-                                        Sort
-                                    </Button>
+                                                color: '#dc2626',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    backgroundColor: '#fef2f2',
+                                                    borderColor: '#dc2626',
+                                                },
+                                            }}
+                                        >
+                                            Reset
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            startIcon={<Search />}
+                                            onClick={handleApply}
+                                            sx={{
+                                                backgroundColor: '#063455',
+                                                textTransform: 'none',
+                                                '&:hover': {
+                                                    backgroundColor: '#047857',
+                                                },
+                                            }}
+                                        >
+                                            Sort
+                                        </Button>
+                                    </Grid>
                                 </Grid>
-                            </Grid>
-                        </Paper>
+                            </Paper>
 
-                        {/* Bookings Table */}
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Booking No</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Guest Name</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Event</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Venue</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Booking Date</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Event Date</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredBookings.length > 0 ? (
-                                        filteredBookings.map((booking) => (
-                                            <TableRow key={booking.id} hover>
-                                                <TableCell>{booking.booking_no}</TableCell>
-                                                <TableCell>{booking.name || booking.customer?.name || booking.member?.full_name || 'N/A'}</TableCell>
-                                                <TableCell>{booking.nature_of_event}</TableCell>
-                                                <TableCell>{booking.event_venue?.name || 'N/A'}</TableCell>
-                                                <TableCell>{booking.created_at ? dayjs(booking.created_at).format('MMM DD, YYYY') : 'N/A'}</TableCell>
-                                                <TableCell>{booking.event_date ? dayjs(booking.event_date).format('MMM DD, YYYY') : 'N/A'}</TableCell>
-                                                <TableCell>{getStatusBadge(booking)}</TableCell>
-                                                <TableCell>
-                                                    <Box
-                                                        sx={{
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: 1, // adds space between buttons
-                                                            flexWrap: 'nowrap', // ensures they stay on the same line
-                                                        }}
-                                                    >
-                                                        <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px' }}>
-                                                            <Visibility fontSize="small" />
-                                                        </Button>
-                                                        <Button
-                                                            variant="outlined"
-                                                            size="small"
-                                                            onClick={() => handleShowInvoice(booking)}
+                            {/* Bookings Table */}
+                            <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Booking No</TableCell>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Guest Name</TableCell>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Event</TableCell>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Venue</TableCell>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Booking Date</TableCell>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Event Date</TableCell>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                            <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {filteredBookings.length > 0 ? (
+                                            filteredBookings.map((booking) => (
+                                                <TableRow key={booking.id} hover>
+                                                    <TableCell>{booking.booking_no}</TableCell>
+                                                    <TableCell>{booking.name || booking.customer?.name || booking.member?.full_name || 'N/A'}</TableCell>
+                                                    <TableCell>{booking.nature_of_event}</TableCell>
+                                                    <TableCell>{booking.event_venue?.name || 'N/A'}</TableCell>
+                                                    <TableCell>{booking.created_at ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                    <TableCell>{booking.event_date ? dayjs(booking.event_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                    <TableCell>{getStatusBadge(booking)}</TableCell>
+                                                    <TableCell>
+                                                        <Box
                                                             sx={{
-                                                                border: '1px solid #003366',
-                                                                color: '#003366',
-                                                                textTransform: 'none',
-                                                                width: 100,
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: 1, // adds space between buttons
+                                                                flexWrap: 'nowrap', // ensures they stay on the same line
                                                             }}
                                                         >
-                                                            View Details
-                                                        </Button>
+                                                            <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                                <Visibility fontSize="small" />
+                                                            </Button>
+                                                            <Button
+                                                                variant="outlined"
+                                                                size="small"
+                                                                onClick={() => handleShowInvoice(booking)}
+                                                                sx={{
+                                                                    border: '1px solid #003366',
+                                                                    color: '#003366',
+                                                                    textTransform: 'none',
+                                                                    width: 100,
+                                                                }}
+                                                            >
+                                                                View Details
+                                                            </Button>
 
-                                                        <Button
-                                                            variant="contained"
-                                                            size="small"
-                                                            onClick={() => router.visit(route('events.booking.edit', booking.id))}
-                                                            sx={{
-                                                                backgroundColor: '#003366',
-                                                                border: 'none',
-                                                                textTransform: 'none',
-                                                                '&:hover': { backgroundColor: '#002855' },
-                                                            }}
-                                                        >
-                                                            Edit
-                                                        </Button>
-                                                    </Box>
+                                                            <Button
+                                                                variant="contained"
+                                                                size="small"
+                                                                onClick={() => router.visit(route('events.booking.edit', booking.id))}
+                                                                sx={{
+                                                                    backgroundColor: '#003366',
+                                                                    border: 'none',
+                                                                    textTransform: 'none',
+                                                                    '&:hover': { backgroundColor: '#002855' },
+                                                                }}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow>
+                                                <TableCell colSpan={8} align="center">
+                                                    <Typography variant="body1" color="textSecondary">
+                                                        No event bookings found
+                                                    </Typography>
                                                 </TableCell>
                                             </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={8} align="center">
-                                                <Typography variant="body1" color="textSecondary">
-                                                    No event bookings found
-                                                </Typography>
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
 
-                        {/* Pagination */}
-                        {bookings.links && (
-                            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-                                {bookings.links.map((link, index) => (
-                                    <Button key={index} variant={link.active ? 'contained' : 'outlined'} size="small" onClick={() => link.url && router.visit(link.url)} disabled={!link.url} sx={{ mx: 0.5 }}>
-                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                    </Button>
-                                ))}
-                            </Box>
-                        )}
-                    </Container>
+                            {/* Pagination */}
+                            {bookings.links && (
+                                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                                    {bookings.links.map((link, index) => (
+                                        <Button key={index} variant={link.active ? 'contained' : 'outlined'} size="small" onClick={() => link.url && router.visit(link.url)} disabled={!link.url} sx={{ mx: 0.5 }}>
+                                            <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                        </Button>
+                                    ))}
+                                </Box>
+                            )}
+                        </Container>
 
-                    {/* Event Booking Invoice Modal */}
-                    <EventBookingInvoiceModal open={showInvoiceModal} onClose={handleCloseInvoice} bookingId={selectedBookingId} setBookings={handleBookingUpdate} />
+                        {/* Event Booking Invoice Modal */}
+                        <EventBookingInvoiceModal open={showInvoiceModal} onClose={handleCloseInvoice} bookingId={selectedBookingId} setBookings={handleBookingUpdate} />
 
-                    {/* View Documents Modal */}
-                    <EventViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+                        {/* View Documents Modal */}
+                        <EventViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+                    </LocalizationProvider>
                 </ThemeProvider>
             </div>
         </>

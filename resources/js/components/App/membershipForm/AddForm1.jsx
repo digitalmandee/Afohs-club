@@ -549,7 +549,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                 <Typography variant="body2" sx={{ mb: 0.5 }}>
                                     NTN (if any)
                                 </Typography>
-                                <TextField fullWidth variant="outlined" placeholder="Enter national NTN number" size="small" name="ntn" value={data.ntn} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                <TextField fullWidth variant="outlined" placeholder="Enter national NTN number" size="small" name="ntn" value={data.ntn} onChange={(e) => handleChange({ target: { name: 'ntn', value: e.target.value.replace(/[^0-9\-]/g, '') } })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Date of Birth */}

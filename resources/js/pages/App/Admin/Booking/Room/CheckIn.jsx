@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment } from '@mui/material';
 import { Search, Visibility } from '@mui/icons-material';
@@ -130,30 +134,43 @@ const RoomCheckIn = ({ bookings, filters }) => {
                             />
 
                             {/* Start Date */}
-                            <TextField
-                                label="Start Date"
-                                type="date"
-                                size="small"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                sx={{ minWidth: '180px', backgroundColor: 'white' }}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            />
+                            {/* Start Date */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="Start Date"
+                                    value={startDate ? dayjs(startDate) : null}
+                                    onChange={(newValue) => setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                    format="DD-MM-YYYY"
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: false,
+                                            sx: { minWidth: '180px', backgroundColor: 'white' },
+                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                        },
+                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    }}
+                                />
+                            </LocalizationProvider>
 
                             {/* End Date */}
-                            <TextField
-                                label="End Date"
-                                type="date"
-                                size="small"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                sx={{ minWidth: '180px', backgroundColor: 'white' }}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            />
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="End Date"
+                                    value={endDate ? dayjs(endDate) : null}
+                                    onChange={(newValue) => setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                    format="DD-MM-YYYY"
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: false,
+                                            sx: { minWidth: '180px', backgroundColor: 'white' },
+                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                        },
+                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    }}
+                                />
+                            </LocalizationProvider>
 
                             {/* Search Button */}
                             <Button
@@ -216,9 +233,9 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                     bookings.data.map((booking) => (
                                         <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell>{booking.id}</TableCell>
-                                            <TableCell>{booking.booking_date}</TableCell>
-                                            <TableCell>{booking.check_in_date}</TableCell>
-                                            <TableCell>{booking.check_out_date}</TableCell>
+                                            <TableCell>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                             <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
                                             <TableCell>{booking.room?.name}</TableCell>
                                             <TableCell>{booking.persons}</TableCell>

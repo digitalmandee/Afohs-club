@@ -73,7 +73,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (A)*
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="mobile_number_a" value={data.mobile_number_a} error={!!formErrors.mobile_number_a} helperText={formErrors.mobile_number_a} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="mobile_number_a" value={data.mobile_number_a} error={!!formErrors.mobile_number_a} helperText={formErrors.mobile_number_a} onChange={(e) => handleChange({ target: { name: 'mobile_number_a', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (B) */}
@@ -81,7 +81,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (B)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="mobile_number_b" value={data.mobile_number_b} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="mobile_number_b" value={data.mobile_number_b} onChange={(e) => handleChange({ target: { name: 'mobile_number_b', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Mobile Number (C) */}
@@ -89,7 +89,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Mobile Number (C)
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="03XXXXXXXX" size="small" name="mobile_number_c" value={data.mobile_number_c} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="mobile_number_c" value={data.mobile_number_c} onChange={(e) => handleChange({ target: { name: 'mobile_number_c', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Telephone Number */}
@@ -97,7 +97,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Telephone Number
                                     </Typography>
-                                    <TextField fullWidth variant="outlined" type="number" placeholder="Enter telephone number" size="small" name="telephone_number" value={data.telephone_number} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="Enter telephone number" size="small" name="telephone_number" value={data.telephone_number} onChange={(e) => handleChange({ target: { name: 'telephone_number', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
 
                                 {/* Personal Email */}
@@ -176,7 +176,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                                     <Typography variant="body2" sx={{ mb: 1 }}>
                                         Contact Number
                                     </Typography>
-                                    <TextField fullWidth type="number" variant="outlined" placeholder="03XXXXXXXX" size="small" name="emergency_contact" value={data.emergency_contact} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
+                                    <TextField fullWidth variant="outlined" placeholder="03XXXXXXXX" size="small" name="emergency_contact" value={data.emergency_contact} onChange={(e) => handleChange({ target: { name: 'emergency_contact', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                                 </Grid>
                             </Grid>
                         </Paper>

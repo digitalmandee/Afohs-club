@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import dayjs from 'dayjs';
 import { Row, Col, Badge } from 'react-bootstrap';
 import { Popover, Button, Box, Checkbox, Divider, FormControlLabel, FormGroup, Typography } from '@mui/material';
 import { router, usePage } from '@inertiajs/react';
@@ -132,7 +133,7 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
                                                         </div>
                                                         <div>
                                                             <HistoryIcon style={{ color: '#A5A5A5', width: '20px', height: '14px' }} />
-                                                            <small style={{ color: '#6c757d' }}>{item.date_time}</small>
+                                                            <small style={{ color: '#6c757d' }}>{item.date_time ? dayjs(item.date_time).format('DD-MM-YYYY') : ''}</small>
                                                         </div>
                                                     </div>
                                                 </>

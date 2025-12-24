@@ -3,6 +3,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Card, CardContent, Typography, Grid, Box, Button, Chip, Divider, Table, TableBody, TableCell, TableContainer, TableRow, Paper } from '@mui/material';
 import { ArrowBack, Receipt, Person, Payment, CalendarToday } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import dayjs from 'dayjs';
 
 export default function ShowTransaction({ transaction }) {
     const formatCurrency = (amount) => {
@@ -13,21 +14,13 @@ export default function ShowTransaction({ transaction }) {
     };
 
     const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-PK', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
+        if (!date) return '';
+        return dayjs(date).format('DD-MM-YYYY');
     };
 
     const formatDateTime = (date) => {
-        return new Date(date).toLocaleString('en-PK', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
+        if (!date) return '';
+        return dayjs(date).format('DD-MM-YYYY hh:mm A');
     };
 
     const getStatusColor = (status) => {
@@ -58,7 +51,7 @@ export default function ShowTransaction({ transaction }) {
         <>
             <Head title={`Transaction ${transaction.invoice_no}`} />
             {/* <SideNav /> */}
-            
+
             <Box sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                     <Button component={Link} href={route('membership.transactions.index')} startIcon={<ArrowBack />} sx={{ mr: 2 }}>

@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Grid, IconButton, Button, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
@@ -112,83 +116,86 @@ const RoomBookingRequestForm = ({ mode }) => {
                     </Typography>
                 </Box>
 
-                <Paper sx={{
-                    width: '70%',
-                    mx: 'auto',
-                    my: 4,
-                    p: 4,
-                    bgcolor: '#fff',
-                    borderRadius: 2,
-                    border: '1px solid #e0e0e0',
-                }}>
+                <Paper
+                    sx={{
+                        width: '70%',
+                        mx: 'auto',
+                        my: 4,
+                        p: 4,
+                        bgcolor: '#fff',
+                        borderRadius: 2,
+                        border: '1px solid #e0e0e0',
+                    }}
+                >
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
                             {/* Booking Date - Auto-selected, read-only */}
                             <Grid item xs={12} sm={4}>
-                                <TextField
-                                    label="Booking Date"
-                                    name="bookingDate"
-                                    type="date"
-                                    value={formData.bookingDate}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    InputLabelProps={{ shrink: true }}
-                                    InputProps={{ readOnly: true }}
-                                    disabled
-                                    error={!!errors.booking_date}
-                                    helperText={errors.booking_date || "Auto-selected to today's date"}
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Booking Date"
+                                        format="DD-MM-YYYY"
+                                        value={formData.bookingDate ? dayjs(formData.bookingDate) : null}
+                                        onChange={(newValue) => handleChange({ target: { name: 'bookingDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                                        disabled
+                                        slotProps={{
+                                            textField: { fullWidth: true, name: 'bookingDate', error: !!errors.booking_date, helperText: errors.booking_date || "Auto-selected to today's date" },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
 
                             {/* Check-In Date */}
                             <Grid item xs={12} sm={4}>
-                                <TextField
-                                    label="Check-In Date"
-                                    name="checkInDate"
-                                    type="date"
-                                    value={formData.checkInDate}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    InputLabelProps={{ shrink: true }}
-                                    error={!!errors.check_in_date}
-                                    helperText={errors.check_in_date}
-                                    inputProps={{ min: new Date().toISOString().split('T')[0] }}
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Check-In Date"
+                                        format="DD-MM-YYYY"
+                                        value={formData.checkInDate ? dayjs(formData.checkInDate) : null}
+                                        onChange={(newValue) => handleChange({ target: { name: 'checkInDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                                        minDate={dayjs()}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                name: 'checkInDate',
+                                                error: !!errors.check_in_date,
+                                                helperText: errors.check_in_date,
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
 
                             {/* Check-Out Date */}
                             <Grid item xs={12} sm={4}>
-                                <TextField
-                                    label="Check-Out Date"
-                                    name="checkOutDate"
-                                    type="date"
-                                    value={formData.checkOutDate}
-                                    onChange={handleChange}
-                                    fullWidth
-                                    InputLabelProps={{ shrink: true }}
-                                    error={!!errors.check_out_date}
-                                    helperText={errors.check_out_date}
-                                    inputProps={{ min: formData.checkInDate || new Date().toISOString().split('T')[0] }}
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Check-Out Date"
+                                        format="DD-MM-YYYY"
+                                        value={formData.checkOutDate ? dayjs(formData.checkOutDate) : null}
+                                        onChange={(newValue) => handleChange({ target: { name: 'checkOutDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                                        minDate={formData.checkInDate ? dayjs(formData.checkInDate) : dayjs()}
+                                        slotProps={{
+                                            textField: {
+                                                fullWidth: true,
+                                                name: 'checkOutDate',
+                                                error: !!errors.check_out_date,
+                                                helperText: errors.check_out_date,
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Grid>
 
                             {/* Booking Type */}
                             <Grid item xs={12}>
                                 <FormLabel>Booking Type</FormLabel>
                                 {mode === 'edit' ? (
-                                    <TextField
-                                        value={
-                                            formData.bookingType == 0 ? 'Member' :
-                                                formData.bookingType == 2 ? 'Corporate Member' :
-                                                    formData.bookingType == 'guest-1' ? 'Applied Member' :
-                                                        formData.bookingType == 'guest-2' ? 'Affiliated Member' :
-                                                            'VIP Guest'
-                                        }
-                                        fullWidth
-                                        InputProps={{ readOnly: true }}
-                                        disabled
-                                        sx={{ mt: 1 }}
-                                    />
+                                    <TextField value={formData.bookingType == 0 ? 'Member' : formData.bookingType == 2 ? 'Corporate Member' : formData.bookingType == 'guest-1' ? 'Applied Member' : formData.bookingType == 'guest-2' ? 'Affiliated Member' : 'VIP Guest'} fullWidth InputProps={{ readOnly: true }} disabled sx={{ mt: 1 }} />
                                 ) : (
                                     <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
                                         <FormControlLabel value="0" control={<Radio />} label="Member" />
@@ -203,31 +210,7 @@ const RoomBookingRequestForm = ({ mode }) => {
 
                             {/* Member / Guest Search */}
                             <Grid item xs={12}>
-                                {mode === 'edit' ? (
-                                    <TextField
-                                        label="Member / Guest Name"
-                                        value={
-                                            request?.member ?
-                                                `${request.member.full_name} (${request.member.membership_no})` :
-                                                request?.customer ?
-                                                    `${request.customer.name} (ID: ${request.customer.customer_no})` :
-                                                    'No member/guest selected'
-                                        }
-                                        fullWidth
-                                        InputProps={{ readOnly: true }}
-                                        disabled
-                                    />
-                                ) : (
-                                    <AsyncSearchTextField
-                                        label="Member / Guest Name"
-                                        name="guest"
-                                        value={formData.guest}
-                                        onChange={(guest) => handleGuestSelect(guest.target.value)}
-                                        params={{ type: formData.bookingType }}
-                                        endpoint="admin.api.search-users"
-                                        placeholder="Search members..."
-                                    />
-                                )}
+                                {mode === 'edit' ? <TextField label="Member / Guest Name" value={request?.member ? `${request.member.full_name} (${request.member.membership_no})` : request?.customer ? `${request.customer.name} (ID: ${request.customer.customer_no})` : 'No member/guest selected'} fullWidth InputProps={{ readOnly: true }} disabled /> : <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={(guest) => handleGuestSelect(guest.target.value)} params={{ type: formData.bookingType }} endpoint="admin.api.search-users" placeholder="Search members..." />}
                             </Grid>
 
                             {/* Select Room */}

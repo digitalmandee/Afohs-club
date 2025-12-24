@@ -1,32 +1,11 @@
-"use client"
-import { useState } from "react"
-import {
-    Box,
-    Typography,
-    IconButton,
-    Chip,
-    Button,
-    Dialog,
-    Collapse,
-    TextField,
-    InputAdornment
-} from "@mui/material"
-import {
-    CheckCircle as CheckCircleIcon,
-    Check as CheckIcon,
-    Circle as CircleIcon,
-    Close as CloseIcon,
-    TwoWheeler as DeliveryIcon,
-    Diamond as DiamondIcon,
-    LocalDining as DiningIcon,
-    FilterAlt as FilterIcon,
-    KeyboardArrowDown as KeyboardArrowDownIcon,
-    Receipt as ReceiptIcon,
-    EventSeat as ReservationIcon,
-    Restaurant as RestaurantIcon,
-    Search as SearchIcon,
-    TakeoutDining as TakeoutIcon,
-} from '@mui/icons-material';
+'use client';
+import { useState } from 'react';
+import { Box, Typography, IconButton, Chip, Button, Dialog, Collapse, TextField, InputAdornment } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import { CheckCircle as CheckCircleIcon, Check as CheckIcon, Circle as CircleIcon, Close as CloseIcon, TwoWheeler as DeliveryIcon, Diamond as DiamondIcon, LocalDining as DiningIcon, FilterAlt as FilterIcon, KeyboardArrowDown as KeyboardArrowDownIcon, Receipt as ReceiptIcon, EventSeat as ReservationIcon, Restaurant as RestaurantIcon, Search as SearchIcon, TakeoutDining as TakeoutIcon } from '@mui/icons-material';
 
 const styles = {
     root: {
@@ -52,7 +31,6 @@ const styles = {
         fontWeight: 'normal',
         padding: '6px 16px',
     },
-
 };
 
 const TransactionFilter = ({ open, onClose }) => {
@@ -112,15 +90,13 @@ const TransactionFilter = ({ open, onClose }) => {
                         m: 0,
                         width: '600px',
                         borderRadius: 2,
-                        p: 2
+                        p: 2,
                     },
                 }}
             >
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                        <Typography sx={{ color: '#121212', fontWeight: 500, fontSize: '32px' }}>
-                            Transaction Filter
-                        </Typography>
+                        <Typography sx={{ color: '#121212', fontWeight: 500, fontSize: '32px' }}>Transaction Filter</Typography>
                         <IconButton edge="end">
                             <CloseIcon />
                         </IconButton>
@@ -148,11 +124,15 @@ const TransactionFilter = ({ open, onClose }) => {
                                 cursor: 'pointer',
                             }}
                         >
-                            <Typography sx={{
-                                color: '#121212',
-                                fontWeight: 500,
-                                fontSize: '16px'
-                            }}>Sorting</Typography>
+                            <Typography
+                                sx={{
+                                    color: '#121212',
+                                    fontWeight: 500,
+                                    fontSize: '16px',
+                                }}
+                            >
+                                Sorting
+                            </Typography>
                             <KeyboardArrowDownIcon
                                 sx={{
                                     transform: expandedSections.sorting ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -170,9 +150,7 @@ const TransactionFilter = ({ open, onClose }) => {
                                     alignItems: 'baseline',
                                 }}
                             >
-                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>
-                                    By Invoice ID
-                                </Typography>
+                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>By Invoice ID</Typography>
                                 <Box display="flex" gap={2}>
                                     <Button
                                         variant="contained"
@@ -233,9 +211,7 @@ const TransactionFilter = ({ open, onClose }) => {
                                     alignItems: 'baseline',
                                 }}
                             >
-                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>
-                                    By Member Name
-                                </Typography>
+                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>By Member Name</Typography>
                                 <Box display="flex" gap={2}>
                                     <Button
                                         variant="contained"
@@ -371,7 +347,7 @@ const TransactionFilter = ({ open, onClose }) => {
                             </Box>
                         </Collapse>
                     </Box>
-                    
+
                     {/* Member Status Section */}
                     <Box
                         className={styles.filterSection}
@@ -413,22 +389,25 @@ const TransactionFilter = ({ open, onClose }) => {
                                     flexWrap: 'wrap',
                                     gap: 2,
                                     mt: 2,
-                                    px: 1
+                                    px: 1,
                                 }}
                             >
-                                <Typography sx={{ fontWeight: 400, fontSize:'14px' }}>
-                                    Select your target date
-                                </Typography>
+                                <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>Select your target date</Typography>
 
-                                <TextField
-                                    type="date"
-                                    value={filters.targetDate || ''}
-                                    onChange={(e) => handleFilterChange('targetDate', e.target.value)}
-                                    InputLabelProps={{
-                                        shrink: true,
-                                    }}
-                                    sx={{ width: 220 }}
-                                />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        value={filters.targetDate ? dayjs(filters.targetDate) : null}
+                                        onChange={(newValue) => handleFilterChange('targetDate', newValue ? dayjs(newValue).format('YYYY-MM-DD') : '')}
+                                        format="DD-MM-YYYY"
+                                        slotProps={{
+                                            textField: {
+                                                sx: { width: 220 },
+                                                InputLabelProps: { shrink: true },
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                             </Box>
                         </Collapse>
                     </Box>
@@ -464,7 +443,7 @@ const TransactionFilter = ({ open, onClose }) => {
                 </Box>
             </Dialog>
         </>
-    )
-}
+    );
+};
 
-export default TransactionFilter
+export default TransactionFilter;
