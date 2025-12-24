@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography, Button, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, InputAdornment, TextField } from '@mui/material';
-import { Search, FilterAlt } from '@mui/icons-material';
+import { Search, FilterAlt, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
 import AppliedMemberInvoice from './AppliedMemberInvoice';
@@ -56,11 +56,12 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                             <div className="d-flex align-items-center gap-2">
                                 <Button
                                     variant="outlined"
+                                    startIcon={<Delete />}
                                     onClick={() => router.get(route('applied-member.trashed'))}
                                     sx={{
                                         color: '#d32f2f',
                                         borderColor: '#d32f2f',
-                                        borderRadius:'16px',
+                                        borderRadius: '16px',
                                         '&:hover': {
                                             backgroundColor: '#ffebee',
                                             borderColor: '#d32f2f',
@@ -71,14 +72,14 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                 </Button>
                                 <Button
                                     variant="contained"
-                                    startIcon={<span style={{ fontSize: '1.5rem', marginBottom:5 }}>+</span>}
+                                    startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>}
                                     style={{
                                         backgroundColor: '#063455',
-                                        textTransform: 'none',
+                                        // textTransform: 'none',
                                         borderRadius: '4px',
                                         height: 40,
-                                        width: 200,
-                                        borderRadius:'16px',
+                                        // width: 240,
+                                        borderRadius: '16px',
                                     }}
                                     onClick={() => router.visit(route('applied-member.index'), { data: { mode: 'create' } })}
                                 >
@@ -86,12 +87,14 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                 </Button>
                             </div>
                         </div>
-
+                        <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                            View and process new membership applications
+                        </Typography>
                         <div className="mb-4 mt-5">
                             <AppliedMemberFilter open={true} />
 
                             <div style={{ overflowX: 'auto', width: '100%' }}>
-                                <TableContainer component={Paper} style={{ boxShadow: 'none', minWidth: '1000px', borderRadius:'16px' }}>
+                                <TableContainer component={Paper} style={{ boxShadow: 'none', minWidth: '1000px', borderRadius: '16px' }}>
                                     <Table>
                                         <TableHead>
                                             <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>

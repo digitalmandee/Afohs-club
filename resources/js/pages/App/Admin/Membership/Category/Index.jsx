@@ -58,23 +58,24 @@ const MemberCategories = ({ memberCategories }) => {
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                             Member Categories
                         </Typography>
                     </Box>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <Button
                             variant="outlined"
+                            startIcon={<DeleteIcon />}
                             onClick={() => router.get(route('member-categories.trashed'))}
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
-                                borderRadius:'16px',
+                                borderRadius: '16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -85,11 +86,11 @@ const MemberCategories = ({ memberCategories }) => {
                         </Button>
                         <Button
                             variant="contained"
-                            startIcon={<AddIcon sx={{fontSize:'1.5rem'}} />}
+                            startIcon={<AddIcon sx={{ fontSize: '1.5rem', marginBottom: 0.3 }} />}
                             onClick={() => router.visit(route('member-categories.create'))}
                             sx={{
                                 backgroundColor: '#063455',
-                                borderRadius:'16px',
+                                borderRadius: '16px',
                                 '&:hover': { backgroundColor: '#002244' },
                             }}
                         >
@@ -97,8 +98,11 @@ const MemberCategories = ({ memberCategories }) => {
                         </Button>
                     </div>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Helps in filtering, reporting, and targeted communication.
+                </Typography>
 
-                <Grid container spacing={3}>
+                <Grid container spacing={3} style={{ marginTop: 5 }}>
                     {categories.map((category) => (
                         <Grid item xs={12} sm={6} md={4} key={category.id}>
                             <Card>

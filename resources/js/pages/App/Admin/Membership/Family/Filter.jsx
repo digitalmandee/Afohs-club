@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Typography, Button, Box, Dialog, IconButton, TextField, MenuItem, FormControlLabel, Checkbox, Autocomplete, CircularProgress, Chip } from '@mui/material';
-import { Close as CloseIcon } from '@mui/icons-material';
+import { Close as CloseIcon, Search } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
 const FamilyFilter = () => {
@@ -329,7 +329,9 @@ const FamilyFilter = () => {
                     <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ width: '100%', borderRadius:'16px', color: '#333', borderColor: '#ddd', textTransform: 'none' }}>
                         Reset
                     </Button>
-                    <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ width: '100%', borderRadius:'16px', backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                    <Button variant="contained"
+                    startIcon={<Search />}
+                    size="small" onClick={handleApplyFilters} sx={{ width: '100%', borderRadius:'16px', backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
                         Search
                     </Button>
                 </Box>

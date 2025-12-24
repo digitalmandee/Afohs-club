@@ -607,7 +607,7 @@ export default function SideNav({ open, setOpen }) {
                             <Avatar
                                 // src="your-profile-image-url.jpg"
                                 src="#"
-                                alt="User Profile"
+                                alt="Sr Profile"
                                 sx={{
                                     width: 40,
                                     height: 40,
