@@ -39,7 +39,7 @@ const AllRooms = ({ rooms }) => {
                         <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
                             <ArrowBack />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             All Rooms ({rooms.length})
                         </Typography>
                     </Box>

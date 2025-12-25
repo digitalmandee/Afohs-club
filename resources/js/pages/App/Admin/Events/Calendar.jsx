@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DayPilot, DayPilotScheduler } from 'daypilot-pro-react';
 import axios from 'axios';
 import moment from 'moment';
-import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography } from '@mui/material';
 import { Modal } from 'react-bootstrap';
 import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
@@ -334,10 +334,10 @@ const EventCalendar = () => {
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ mr: 2 }}>
+                        <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color:'#063455' }}>
                             <ArrowBack />
                         </IconButton>
-                        <h2 style={{ margin: 0, color: '#003366' }}>EVENT CALENDAR</h2>
+                        <Typography style={{ fontWeight:'700', fontSize:'30px', color: '#063455' }}>Event Calender</Typography>
                     </Box>
 
                     {/* Month and Year Selectors */}

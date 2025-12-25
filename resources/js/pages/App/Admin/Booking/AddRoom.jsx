@@ -22,7 +22,7 @@ const AddRoom = () => {
                         <IconButton sx={{ color: '#063455' }} onClick={() => router.visit(route('rooms.manage'))}>
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5" component="h1" sx={{ ml: 1, fontWeight: 500, fontSize: '30px', color: '#063455' }}>
+                        <Typography sx={{ ml: 1, fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Add Room
                         </Typography>
                     </Box>

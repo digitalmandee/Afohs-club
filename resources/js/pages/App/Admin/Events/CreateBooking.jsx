@@ -326,13 +326,13 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 }}
             >
                 {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 5, pt:3 }}>
                     <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('events.dashboard'))}>
                         <ArrowBack />
                     </IconButton>
-                    <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '30px' }}>
+                    <Typography style={{ color: '#063455', fontSize: '30px', fontWeight:'700' }}>
                         Event Booking
-                    </h2>
+                    </Typography>
                 </Box>
 
                 <Box
