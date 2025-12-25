@@ -47,7 +47,7 @@ const TrashedPartners = ({ partners, filters: initialFilters }) => {
                         <IconButton onClick={() => router.get(route('admin.membership.partners-affiliates.index'))}>
                             <ArrowBack sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Deleted Partners & Affiliates</Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Deleted Partners & Affiliates</Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
@@ -63,23 +63,30 @@ const TrashedPartners = ({ partners, filters: initialFilters }) => {
                                     </InputAdornment>
                                 ),
                             }}
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                            }}
                         />
-                        <Button variant="contained" onClick={handleSearch} sx={{ backgroundColor: '#063455' }}>
+                        <Button variant="contained" 
+                        startIcon={<Search/>}
+                        onClick={handleSearch} sx={{ backgroundColor: '#063455', borderRadius: '16px' }}>
                             Search
                         </Button>
                     </Box>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Logo/Image</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Organization Name</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Focal Person</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Deleted At</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Logo/Image</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Organization Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Focal Person</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>

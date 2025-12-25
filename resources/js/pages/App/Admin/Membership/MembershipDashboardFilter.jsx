@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Typography, Button, Box, Dialog, Collapse, Chip, IconButton, TextField, MenuItem, Autocomplete, CircularProgress } from '@mui/material';
-import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
+import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon, Search } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
 const styles = {
@@ -133,7 +133,7 @@ const MembershipDashboardFilter = () => {
     };
 
     return (
-        <Box backgroundColor="transparent" mb={3}>
+        <Box backgroundColor="transparent" mb={3} mt={2}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(4, 1fr)' } }} gap={2} mb={2}>
                 <TextField label="Membership #" size="small" value={filters.membership_no} onChange={(e) => handleFilterChange('membership_no', e.target.value)} fullWidth sx={{
                     '& .MuiOutlinedInput-root': {
@@ -256,7 +256,9 @@ const MembershipDashboardFilter = () => {
                     <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none', width: '100%', borderRadius:'16px' }}>
                         Reset
                     </Button>
-                    <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ width: '100%', backgroundColor: '#0a3d62', borderRadius:'16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                    <Button variant="contained"
+                    startIcon={<Search />}
+                    size="small" onClick={handleApplyFilters} sx={{ width: '100%', backgroundColor: '#0a3d62', borderRadius:'16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
                         Search
                     </Button>
                 </Box>

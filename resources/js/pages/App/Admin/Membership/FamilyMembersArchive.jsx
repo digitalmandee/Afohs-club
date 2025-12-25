@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Box, Card, CardContent, Grid, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
-import { Search, FilterAlt, ExpandMore, ExpandLess, Warning, CheckCircle, Schedule, Extension, Group, PersonOff, AccessTime, SupervisorAccount } from '@mui/icons-material';
+import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Box, Card, CardContent, Grid, Tooltip, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Checkbox, FormControlLabel } from '@mui/material';
+import { Search, FilterAlt, ExpandMore, ExpandLess, Warning, CheckCircle, Schedule, Extension, Group, PersonOff, AccessTime, SupervisorAccount, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import FamilyFilter from './Family/Filter';
 import MembershipCardComponent from './UserCard';
@@ -287,6 +287,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                     <div className="d-flex gap-2">
                         <Button
                             variant="outlined"
+                            startIcon={<Delete />}
                             onClick={() => router.get(route('membership.family-members.trashed'))}
                             sx={{
                                 color: '#d32f2f',
@@ -334,7 +335,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                     backgroundColor: '#063455',
                                     height: 40,  // Reduced height
                                     '& .MuiTableCell-root': {
-                                        padding: '7px 10px',  // Reduced padding
+                                        padding: '8px 10px',  // Reduced padding
                                         height: 40,
                                         verticalAlign: 'middle'
                                     }
@@ -351,22 +352,31 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                         setSelectedMembers([]);
                                                     }
                                                 }}
+                                                sx={{
+                                                    color: '#fff', // unchecked color
+                                                    '&.Mui-checked': {
+                                                        color: '#fff', // checked color
+                                                    },
+                                                    '&.MuiCheckbox-indeterminate': {
+                                                        color: '#fff', // indeterminate color
+                                                    },
+                                                }}
                                             />
                                         </TableCell>
                                     )}
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card No</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member Name</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Age Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Gender</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Relationship</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card Expiry Date</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Card No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Name</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Member Name</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Age</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Gender</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Relation</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>CNIC</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Phone Number</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Expiry Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Card Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -383,23 +393,47 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                         <React.Fragment key={user.id}>
                                             <TableRow style={{ borderBottom: '1px solid #eee', backgroundColor: shouldExpire ? '#fff3e0' : 'transparent' }}>
                                                 {isSuperAdmin && (
-                                                    <TableCell>
+                                                    <TableCell sx={{
+                                                        whiteSpace: 'nowrap',
+                                                    }}>
                                                         <Checkbox checked={selectedMembers.includes(user.id)} onChange={() => handleSelectMember(user.id)} disabled={!shouldExpire} />
                                                     </TableCell>
                                                 )}
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_no}</TableCell>
+                                                <TableCell sx={{
+                                                    color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap', cursor: 'pointer',
+                                                    transition: 'color 0.2s ease',
+                                                    '&:hover': {
+                                                        color: '#7f7f7f',
+                                                    },
+                                                }}>{user.membership_no}</TableCell>
                                                 <TableCell>
                                                     <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.full_name}</Typography>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
+                                                    {/* <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography> */}
+                                                    <Tooltip title={user.personal_email} arrow>
+                                                        <Typography
+                                                            sx={{
+                                                                color: '#7F7F7F',
+                                                                fontWeight: 400,
+                                                                fontSize: '14px',
+                                                                maxWidth: '120px',     // controls visible length (~15 chars)
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                cursor: 'pointer',
+                                                            }}
+                                                        >
+                                                            {user.personal_email}
+                                                        </Typography>
+                                                    </Tooltip>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.parent?.full_name}</TableCell>
                                                 <TableCell>
-                                                    <Box display="flex" alignItems="center" gap={1}>
-                                                        <Box display="flex" alignItems="center" gap={1}>
-                                                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#333' }}>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Box display="flex" alignItems="center">
+                                                            <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#333', whiteSpace: 'nowrap', }}>
                                                                 {age || 'N/A'} years
                                                             </Typography>
-                                                            <Chip
+                                                            {/* <Chip
                                                                 icon={statusIcon}
                                                                 label={statusText}
                                                                 size="small"
@@ -409,16 +443,25 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                                     fontWeight: 'bold',
                                                                     fontSize: '11px',
                                                                 }}
-                                                            />
+                                                            /> */}
                                                         </Box>
                                                     </Box>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.gender ?? 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.relation}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_expiry_date ? dayjs(user.card_expiry_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap', }}>{user.cnic_no}</TableCell>
+                                                {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a}</TableCell> */}
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                    <Tooltip title={user.mobile_number_a || ''} arrow>
+                                                        <span style={{ cursor: 'pointer' }}>
+                                                            {user.mobile_number_a && user.mobile_number_a.length > 11
+                                                                ? `${user.mobile_number_a.slice(0, 11)}...`
+                                                                : user.mobile_number_a}
+                                                        </span>
+                                                    </Tooltip>
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap', }}>{user.card_expiry_date ? dayjs(user.card_expiry_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap', }}>{user.card_status || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <Chip
                                                         label={getMemberStatusConfig(user.status).label}
