@@ -6,7 +6,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddRoomCategoryModal from '@/components/App/Rooms/Categories/AddModal'; // <-- use appropriate modal path
-
+import { FaEdit } from 'react-icons/fa';
 
 const RoomCategories = ({ roomCategoriesData }) => {
     // const [open, setOpen] = useState(true);
@@ -78,25 +78,25 @@ const RoomCategories = ({ roomCategoriesData }) => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('rooms.manage'))}>
                         <IconButton>
-                            <ArrowBackIcon sx={{ color: '#555' }} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize:'30px', color: '#063455' }}>
                             Room Categories
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', height:35, borderRadius:'16px' }} onClick={handleAdd}>
                         Add Category
                     </Button>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius:'16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>#</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Category Name</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>#</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Category Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -109,10 +109,11 @@ const RoomCategories = ({ roomCategoriesData }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{category.status}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => handleEdit(category)} size="small" title="Edit">
-                                                <EditIcon fontSize="small" />
+                                                {/* <EditIcon fontSize="small" /> */}
+                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(category)} size="small" title="Delete">
-                                                <DeleteIcon fontSize="small" />
+                                                <DeleteIcon fontSize="small" color='error' />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>

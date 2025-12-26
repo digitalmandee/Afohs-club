@@ -5,6 +5,7 @@ import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Delete as DeleteIcon } fr
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import { FaEdit } from 'react-icons/fa';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -72,9 +73,9 @@ const ManageCustomer = ({ customerData }) => {
                     </Box>
                     <Button variant="contained"
                         startIcon={<span style={{
-                            fontSize:'1rem', marginBottom:5
+                            fontSize:'1rem', padding:0, marginBottom:5
                         }}>+</span>}
-                        sx={{ backgroundColor: '#063455' }} onClick={() => router.visit(route('guests.create'))}>
+                        sx={{ backgroundColor: '#063455', borderRadius:'16px' }} onClick={() => router.visit(route('guests.create'))}>
                         Add Customer
                     </Button>
                 </Box>
@@ -95,16 +96,16 @@ const ManageCustomer = ({ customerData }) => {
                             {customers.length > 0 ? (
                                 customers.map((customer, index) => (
                                     <TableRow key={customer.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{index + 1}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.customer_no}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.name}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.email}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{index + 1}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.customer_no}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.name}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.email}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => router.visit(route('guests.edit', customer.id))} size="small" title="Edit">
-                                                <EditIcon fontSize="small" />
+                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(customer)} size="small" title="Delete">
-                                                <DeleteIcon fontSize="small" />
+                                                <DeleteIcon fontSize="small" sx={{ color: '#d32f2f' }} />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>

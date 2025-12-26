@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { usePage, router } from '@inertiajs/react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, MenuItem, Select } from '@mui/material';
+import { Box, Typography, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, MenuItem, Select } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import { FaEdit } from 'react-icons/fa';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
@@ -39,7 +39,7 @@ const BookingRequests = () => {
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between">
                         <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Room Booking Requests</Typography>
+                            <Typography sx={{ marginLeft: '10px', fontWeight: 700, color: '#063455', fontSize: '30px' }}>Room Booking Requests</Typography>
                         </div>
                         <Button
                             variant="contained"
@@ -47,7 +47,7 @@ const BookingRequests = () => {
                             style={{
                                 backgroundColor: '#063455',
                                 textTransform: 'none',
-                                borderRadius: '4px',
+                                borderRadius: '16px',
                                 height: 40,
                             }}
                             onClick={() => router.visit(route('rooms.request.create'))}
@@ -56,36 +56,36 @@ const BookingRequests = () => {
                         </Button>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>ID</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Booking Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Check-In</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Check-Out</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Guest/Member</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Room</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Persons</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Per Day Charge</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>ID</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-In</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-Out</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Guest/Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Room</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Persons</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {requests.map((req) => (
                                     <TableRow key={req.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell>{req.id}</TableCell>
-                                        <TableCell>{req.booking_date ? dayjs(req.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                        <TableCell>{req.check_in_date ? dayjs(req.check_in_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
-                                        <TableCell>{req.check_out_date ? dayjs(req.check_out_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
-                                        <TableCell>{req.booking_type == 0 ? 'Member' : req.booking_type == 2 ? 'Corporate Member' : req.booking_type == 'guest-1' ? 'Applied Member' : req.booking_type == 'guest-2' ? 'Affiliated Member' : 'VIP Guest'}</TableCell>
-                                        <TableCell>{req.booking_type.startsWith('guest-') ? req.customer?.name : req.member?.full_name ? `${req.member.full_name} (${req.member.membership_no})` : 'N/A'}</TableCell>
-                                        <TableCell>{req.room?.name}</TableCell>
-                                        <TableCell>{req.persons}</TableCell>
-                                        <TableCell>{req.per_day_charge}</TableCell>
-                                        <TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.id}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.booking_date ? dayjs(req.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.check_in_date ? dayjs(req.check_in_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.check_out_date ? dayjs(req.check_out_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.booking_type == 0 ? 'Member' : req.booking_type == 2 ? 'Corporate Member' : req.booking_type == 'guest-1' ? 'Applied Member' : req.booking_type == 'guest-2' ? 'Affiliated Member' : 'VIP Guest'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.booking_type.startsWith('guest-') ? req.customer?.name : req.member?.full_name ? `${req.member.full_name} (${req.member.membership_no})` : 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.room?.name}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.persons}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.per_day_charge}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                             <Select value={req.status} onChange={(e) => handleStatusChange(req.id, e.target.value)} size="small">
                                                 <MenuItem value="pending">Pending</MenuItem>
                                                 <MenuItem value="approved">Approved</MenuItem>
@@ -93,9 +93,12 @@ const BookingRequests = () => {
                                             </Select>
                                         </TableCell>
                                         <TableCell>
-                                            <Button variant="contained" size="small" onClick={() => router.get(route('rooms.request.edit', req.id))}>
+                                            {/* <Button variant="contained" size="small" onClick={() => router.get(route('rooms.request.edit', req.id))}>
                                                 Edit
-                                            </Button>
+                                            </Button> */}
+                                            <IconButton onClick={() => router.get(route('rooms.request.edit', req.id))} size="small" title="Edit">
+                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
+                                            </IconButton>
                                         </TableCell>
                                     </TableRow>
                                 ))}
