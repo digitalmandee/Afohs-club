@@ -52,6 +52,8 @@ class MemberCategoryController extends Controller
             'fee' => 'required',
             'subscription_fee' => 'required',
             'status' => 'required',
+            'category_types' => 'required|array|min:1',
+            'category_types.*' => 'string',
         ]);
 
         MemberCategory::create($request->all());
@@ -85,6 +87,8 @@ class MemberCategoryController extends Controller
             'fee' => 'required',
             'subscription_fee' => 'required',
             'status' => 'required',
+            'category_types' => 'required|array|min:1',
+            'category_types.*' => 'string',
         ]);
 
         $memberCategory = MemberCategory::find($id);

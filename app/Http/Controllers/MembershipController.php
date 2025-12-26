@@ -32,17 +32,28 @@ class MembershipController extends Controller
                 'memberCategory:id,name,description',
                 'profilePhoto:id,mediable_id,mediable_type,file_path',
                 'documents:id,mediable_id,mediable_type,file_path',
-                'membershipInvoice:id,member_id,invoice_no,status,total_price'  // ✅ Include membership invoice
+                'membershipInvoice:id,member_id,invoice_no,status,total_price'
             ])
             ->withCount('familyMembers')
             ->latest()
             ->limit(6)
             ->get();
 
+        // Corporate Members for tab display
+        $corporateMembers = \App\Models\CorporateMember::whereNull('parent_id')
+            ->with([
+                'memberCategory:id,name,description',
+                'profilePhoto:id,mediable_id,mediable_type,file_path',
+            ])
+            ->latest()
+            ->limit(6)
+            ->get();
+
         $total_members = Member::whereNull('parent_id')->count();
         $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
+        $total_corporate_members = \App\Models\CorporateMember::whereNull('parent_id')->count();
 
-        return Inertia::render('App/Admin/Membership/Dashboard', compact('members', 'total_members', 'total_payment'));
+        return Inertia::render('App/Admin/Membership/Dashboard', compact('members', 'corporateMembers', 'total_members', 'total_payment', 'total_corporate_members'));
     }
 
     public function getAllMemberTypes()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\App;
 use App\Helpers\FileHelper;
 use App\Http\Controllers\Controller;
 use App\Models\AddressType;
+use App\Models\CorporateMember;
 use App\Models\Member;
 use App\Models\MemberType;
 use App\Models\User;
@@ -44,21 +45,31 @@ class MembersController extends Controller
     {
         $request->validate([
             'cnic_no' => 'required|string',
-            'member_id' => 'nullable|integer'
+            'member_id' => 'nullable|integer',
+            'is_corporate' => 'nullable|boolean'
         ]);
 
-        $query = Member::where('cnic_no', $request->cnic_no);
+        $isCorporate = $request->is_corporate ?? false;
 
-        // Exclude current member if editing
-        if ($request->member_id) {
-            $query->where('id', '!=', $request->member_id);
+        // Check in members table
+        $memberQuery = Member::where('cnic_no', $request->cnic_no);
+        if ($request->member_id && !$isCorporate) {
+            $memberQuery->where('id', '!=', $request->member_id);
         }
+        $existsInMembers = $memberQuery->exists();
 
-        $exists = $query->exists();
+        // Check in corporate_members table
+        $corporateQuery = CorporateMember::where('cnic_no', $request->cnic_no);
+        if ($request->member_id && $isCorporate) {
+            $corporateQuery->where('id', '!=', $request->member_id);
+        }
+        $existsInCorporate = $corporateQuery->exists();
+
+        $exists = $existsInMembers || $existsInCorporate;
 
         return response()->json([
             'exists' => $exists,
-            'message' => $exists ? 'CNIC already exists' : 'CNIC is available'
+            'message' => $exists ? 'CNIC already exists in ' . ($existsInMembers ? 'Primary Members' : 'Corporate Members') : 'CNIC is available'
         ]);
     }
 
@@ -86,8 +97,11 @@ class MembersController extends Controller
     {
         $request->validate([
             'membership_no' => 'required|string',
-            'member_id' => 'nullable|integer'
+            'member_id' => 'nullable|integer',
+            'is_corporate' => 'nullable|boolean'
         ]);
+
+        $isCorporate = $request->is_corporate ?? false;
 
         // Extract the number part from membership number (e.g., "123" from "OP 123" or "123-1" from "AR/S 123-1")
         $membershipNo = $request->membership_no;
@@ -101,27 +115,37 @@ class MembersController extends Controller
             $numberPart = $membershipNo;  // If no space, use the whole string
         }
 
-        // Search for any membership number that ends with this number part
-        $query = Member::where(function ($q) use ($numberPart) {
+        // Search in members table
+        $memberQuery = Member::where(function ($q) use ($numberPart) {
             $q
                 ->where('membership_no', 'LIKE', '% ' . $numberPart)
                 ->orWhere('membership_no', $numberPart);
         });
-
-        // Exclude current member if editing
-        if (!empty($request->member_id)) {
-            $query->where('id', '!=', $request->member_id);
+        if (!empty($request->member_id) && !$isCorporate) {
+            $memberQuery->where('id', '!=', $request->member_id);
         }
+        $existsInMembers = $memberQuery->exists();
 
-        $existingMembers = $query->get(['id', 'membership_no', 'first_name', 'last_name']);
+        // Search in corporate_members table
+        $corporateQuery = CorporateMember::where(function ($q) use ($numberPart) {
+            $q
+                ->where('membership_no', 'LIKE', '% ' . $numberPart)
+                ->orWhere('membership_no', $numberPart);
+        });
+        if (!empty($request->member_id) && $isCorporate) {
+            $corporateQuery->where('id', '!=', $request->member_id);
+        }
+        $existsInCorporate = $corporateQuery->exists();
 
-        $exists = $existingMembers->count() > 0;
+        $exists = $existsInMembers || $existsInCorporate;
 
         // Generate next available number suggestion
         $suggestion = null;
         if ($exists) {
-            // Find the highest number in use
-            $allNumbers = Member::select('membership_no')->get()->pluck('membership_no');
+            // Find the highest number in use from both tables
+            $allMemberNumbers = Member::select('membership_no')->get()->pluck('membership_no');
+            $allCorporateNumbers = CorporateMember::select('membership_no')->get()->pluck('membership_no');
+            $allNumbers = $allMemberNumbers->merge($allCorporateNumbers);
             $maxNumber = 0;
 
             foreach ($allNumbers as $membershipNumber) {
@@ -141,16 +165,19 @@ class MembersController extends Controller
         return response()->json([
             'exists' => $exists,
             'number_part' => $numberPart,
-            'existing_members' => $existingMembers,
+            'exists_in_members' => $existsInMembers,
+            'exists_in_corporate' => $existsInCorporate,
             'suggestion' => $suggestion,
-            'message' => $exists ? 'Membership number already exists' : 'Membership number is available'
+            'message' => $exists ? 'Membership number already exists in ' . ($existsInMembers ? 'Primary Members' : 'Corporate Members') : 'Membership number is available'
         ]);
     }
 
     public function getNextMembershipNumber()
     {
-        // Find the highest number in use
-        $allNumbers = Member::select('membership_no')->get()->pluck('membership_no');
+        // Find the highest number in use from both tables
+        $allMemberNumbers = Member::select('membership_no')->get()->pluck('membership_no');
+        $allCorporateNumbers = CorporateMember::select('membership_no')->get()->pluck('membership_no');
+        $allNumbers = $allMemberNumbers->merge($allCorporateNumbers);
         $maxNumber = 0;
 
         foreach ($allNumbers as $membershipNumber) {

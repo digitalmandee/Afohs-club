@@ -244,8 +244,38 @@ export default function SideNav({ open, setOpen }) {
                         path: route('membership.dashboard'),
                     },
                     {
-                        text: 'Memberships',
-                        path: route('membership.members'),
+                        text: 'Primary',
+                        children: [
+                            {
+                                text: 'Add Member',
+                                path: route('membership.add'),
+                            },
+                            {
+                                text: 'All Members',
+                                path: route('membership.members'),
+                            },
+                            {
+                                text: 'Family Members',
+                                path: route('membership.family-members'),
+                            },
+                        ],
+                    },
+                    {
+                        text: 'Corporate',
+                        children: [
+                            {
+                                text: 'Add Corporate',
+                                path: route('corporate-membership.add'),
+                            },
+                            {
+                                text: 'All Corporate',
+                                path: route('corporate-membership.members'),
+                            },
+                            {
+                                text: 'Family Members',
+                                path: route('corporate-membership.family-members'),
+                            },
+                        ],
                     },
                     {
                         text: 'Type',
@@ -254,10 +284,6 @@ export default function SideNav({ open, setOpen }) {
                     {
                         text: 'Category',
                         path: route('member-categories.index'),
-                    },
-                    {
-                        text: 'Family Members',
-                        path: route('membership.family-members'),
                     },
                     {
                         text: 'Applied Member',
