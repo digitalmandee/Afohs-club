@@ -63,13 +63,13 @@ const AddReimburesementEmployee = () => {
                         <ArrowBackIcon style={{
                             cursor: 'pointer',
                             marginRight: '10px',
-                            color: '#555',
+                            color: '#063455',
                             fontSize: '24px',
                         }}
                             onClick={() => window.history.back()}
                         />
-                        <Typography variant="h5" style={{
-                            fontWeight: 500,
+                        <Typography style={{
+                            fontWeight: 700,
                             color: '#063455',
                             fontSize: '30px'
                         }}>

@@ -125,20 +125,24 @@ const Management = () => {
                 <div style={{ padding: '2rem' }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                        <Typography variant="h5" style={{ fontWeight: '600', color: '#0A3D62' }}>
+                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                             Leave Categories
                         </Typography>
-                        <div style={{ maxWidth: '120px' }}>
-                            <Button
+                        <div>
+                            <Button startIcon={<span style={{
+                                fontSize: '1.5rem', marginBottom: 3
+                            }}>+</span>}
                                 onClick={() => router.visit(route('employees.leaves.category.create'))}
                                 variant="contained"
                                 fullWidth
                                 style={{
-                                    backgroundColor: '#0A3D62',
+                                    backgroundColor: '#063455',
                                     color: 'white',
-                                    textTransform: 'none',
+                                    // textTransform: 'none',
                                     // padding: '12px',
-                                    fontSize: '16px',
+                                    // fontSize: '16px',
+                                    height:35,
+                                    borderRadius:'16px'
                                 }}
                             >
                                 Add Leave

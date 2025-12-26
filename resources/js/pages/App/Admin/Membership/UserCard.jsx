@@ -84,7 +84,7 @@ export const handlePrintMembershipCard = (member) => {
                 /* LEFT COLUMN (Avatar + Name) */
                 .left {
                     padding-left: 20px;
-                    padding-top: 46px;
+                    padding-top: 26px;
                     align-items: flex-start;
                 }
 
@@ -93,7 +93,6 @@ export const handlePrintMembershipCard = (member) => {
     height: 90px;
     border: 1px solid #0a3d62;
     border-radius: 4px;
-    background-color: #BDBDBD;
 
     display: flex;
     align-items: center;
@@ -112,8 +111,9 @@ export const handlePrintMembershipCard = (member) => {
                 .name {
                     font-size: 14px;
                     font-weight: bold;
-                    color: #0a3d62;
-                    margin-top: 8px;
+                    color: #063455;
+                    margin-top: 18px;
+                    text-transform: uppercase;
                 }
 
                 /* CENTER COLUMN (Logo + Membership ID) */
@@ -127,7 +127,7 @@ export const handlePrintMembershipCard = (member) => {
                 }
 
                 .label {
-                    margin-top: 42px;
+                    margin-top: 32px;
                     font-size: 12px;
                     color: gray;
                 }
@@ -135,7 +135,7 @@ export const handlePrintMembershipCard = (member) => {
                 .value {
                     font-size: 16px;
                     font-weight: bold;
-                    color: #0a3d62;
+                    color: #063455;
                 }
 
                 /* RIGHT COLUMN (QR + Valid Until) */
@@ -146,8 +146,8 @@ export const handlePrintMembershipCard = (member) => {
 }
 
 .qr {
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 4px;
     border: 'none';
     object-fit: contain;
@@ -245,7 +245,7 @@ export const MembershipCardContent = ({ member, id }) => {
             <CardContent sx={{ py: 2 }}>
                 <Grid container spacing={0} sx={{ width: '100%', m: 0 }}>
                     <Grid item xs={12} sm={4}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 7, pl: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 4, pl: 1 }}>
                             {/* <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
                                 width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62', objectFit: 'cover', objectPosition: 'center', p: "4px", bgcolor:'#BDBDBD'
                             }} variant="square" /> */}
@@ -253,10 +253,10 @@ export const MembershipCardContent = ({ member, id }) => {
                                 sx={{
                                     width: 100,
                                     height: 100,
-                                    border: '1px solid #0a3d62',
+                                    border: '1px solid #063455',
                                     borderRadius: 1,
                                     p: '4px',
-                                    bgcolor: '#BDBDBD',
+                                    // bgcolor: '#BDBDBD',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -273,7 +273,7 @@ export const MembershipCardContent = ({ member, id }) => {
                                     }}
                                 />
                             </Box>
-                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold' }} color="#0a3d62">
+                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform:'uppercase', pt:2 }} color="#063455">
                                 {member?.full_name || 'N/A'}
                             </Typography>
                         </Box>
@@ -283,7 +283,7 @@ export const MembershipCardContent = ({ member, id }) => {
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
                                 <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 120 }} />
                             </Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ pt: 4 }}>
+                            <Typography variant="caption" color="text.secondary" sx={{ pt: 3.2 }}>
                                 Membership ID
                             </Typography>
                             <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
@@ -293,8 +293,8 @@ export const MembershipCardContent = ({ member, id }) => {
                     </Grid>
                     <Grid item xs={12} sm={4}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pr: 1, pt: 7 }}>
-                            <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: 80, height: 80, p: 1, borderRadius: 1 }} />
-                            <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
+                            <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: 50, height: 50, p: 1, borderRadius: 1 }} />
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 5 }}>
                                 Valid Until
                             </Typography>
                             <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">

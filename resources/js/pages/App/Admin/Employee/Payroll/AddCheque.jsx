@@ -63,7 +63,7 @@ const AddEmployeeCheque = () => {
                         <ArrowBackIcon style={{
                             cursor: 'pointer',
                             marginRight: '10px',
-                            color: '#555',
+                            color: '#063455',
                             fontSize: '24px',
                         }}
                             onClick={() => window.history.back()}

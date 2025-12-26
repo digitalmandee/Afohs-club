@@ -11,8 +11,10 @@ import EventSeatIcon from '@mui/icons-material/EventSeat';
 import PeopleIcon from '@mui/icons-material/People';
 import PrintIcon from '@mui/icons-material/Print';
 import EditIcon from '@mui/icons-material/Edit';
+import Add from '@mui/icons-material/Add';
+import Search from '@mui/icons-material/Search';
 import { router, usePage } from '@inertiajs/react';
-
+import { FaEdit } from 'react-icons/fa';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
@@ -96,10 +98,10 @@ const AttendanceDashboard = () => {
                 <div style={{ padding: '1rem' }}>
                     <div style={{ backgroundColor: 'transparent' }}>
                         <div style={{ display: 'flex', width: '98%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: '600', color: '#063455' }}>
+                            <Typography style={{ fontWeight: '700', color: '#063455', fontSize: '30px' }}>
                                 Application Dashboard
                             </Typography>
-                            <Button style={{ color: 'white', backgroundColor: '#063455' }} onClick={() => router.visit(route('employees.leaves.application.create'))}>
+                            <Button startIcon={<Add style={{ marginBottom: 3 }} />} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px' }} onClick={() => router.visit(route('employees.leaves.application.create'))}>
                                 New Application
                             </Button>
                         </div>
@@ -180,7 +182,7 @@ const AttendanceDashboard = () => {
                                         maxHeight: '160px',
                                         padding: '20px',
                                         backgroundColor: '#063455',
-                                        borderRadius: '12px',
+                                        borderRadius: '16px',
                                         border: `2px solid ${card.borderColor}`,
                                         cursor: 'pointer',
                                         display: 'flex',
@@ -211,12 +213,12 @@ const AttendanceDashboard = () => {
                         </div>
 
                         {/* Filter Section */}
-                        <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)', width: '98%' }}>
+                        <Box sx={{ mb: 3 }}>
                             <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
 
                             {/* Search Fields */}
                             <Grid container spacing={2} sx={{ mb: 3 }}>
-                                <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={3}>
                                     <TextField
                                         fullWidth
                                         size="small"
@@ -230,7 +232,7 @@ const AttendanceDashboard = () => {
                                         }}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
-                                                borderRadius: 2,
+                                                borderRadius: 16,
                                             },
                                         }}
                                     />
@@ -265,7 +267,7 @@ const AttendanceDashboard = () => {
                                                 </Box>
                                             )}
                                             sx={{
-                                                borderRadius: 2,
+                                                borderRadius: 16,
                                             }}
                                         >
                                             {departments?.map((dept) => (
@@ -276,9 +278,10 @@ const AttendanceDashboard = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} md={2}>
+                                <Grid item xs={12} md={1.5}>
                                     <Button
                                         fullWidth
+                                        startIcon={<Search/>}
                                         variant="contained"
                                         onClick={handleFilter}
                                         disabled={isLoading}
@@ -286,7 +289,7 @@ const AttendanceDashboard = () => {
                                             backgroundColor: '#063455',
                                             color: 'white',
                                             textTransform: 'none',
-                                            borderRadius: 2,
+                                            borderRadius: 16,
                                             height: '40px',
                                             '&:hover': {
                                                 backgroundColor: '#052d45',
@@ -303,37 +306,35 @@ const AttendanceDashboard = () => {
                                                 Loading...
                                             </>
                                         ) : (
-                                            'Filter'
+                                            'Search'
                                         )}
                                     </Button>
                                 </Grid>
+                                {(selectedDepartments.length > 0 || searchTerm) && (
+                                    // <Grid container spacing={2}>
+                                        <Grid item xs={12} md={1.5}>
+                                            <Button
+                                                fullWidth
+                                                variant="outlined"
+                                                onClick={handleClearFilters}
+                                                sx={{
+                                                    color: '#063455',
+                                                    borderColor: '#063455',
+                                                    textTransform: 'none',
+                                                    borderRadius: 16,
+                                                    height: '40px',
+                                                    '&:hover': {
+                                                        borderColor: '#052d45',
+                                                        backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                    },
+                                                }}
+                                            >
+                                                Reset
+                                            </Button>
+                                        </Grid>
+                                    // </Grid>
+                                )}
                             </Grid>
-
-                            {/* Clear Filter Button */}
-                            {(selectedDepartments.length > 0 || searchTerm) && (
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} md={2}>
-                                        <Button
-                                            fullWidth
-                                            variant="outlined"
-                                            onClick={handleClearFilters}
-                                            sx={{
-                                                color: '#063455',
-                                                borderColor: '#063455',
-                                                textTransform: 'none',
-                                                borderRadius: 2,
-                                                height: '40px',
-                                                '&:hover': {
-                                                    borderColor: '#052d45',
-                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
-                                                },
-                                            }}
-                                        >
-                                            Clear Filters
-                                        </Button>
-                                    </Grid>
-                                </Grid>
-                            )}
                         </Box>
 
                         {/* Employee List Section */}
@@ -342,18 +343,18 @@ const AttendanceDashboard = () => {
                                 <div style={{ fontSize: '18px', fontWeight: '500', padding: '0 1rem' }}>Employee List</div>
                             </div>
 
-                            <TableContainer component={Paper} style={{ borderRadius: '1rem', border: '1px solid #ccc' }}>
+                            <TableContainer component={Paper} style={{ borderRadius: '16px' }}>
                                 <Table>
-                                    <TableHead style={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableHead style={{ backgroundColor: '#063455', height:30 }}>
                                         <TableRow>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>EMP ID</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Name</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Department</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Designation</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Joining Date</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Email Address</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Employee Status</TableCell>
-                                            <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Actions</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>EMP ID</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Department</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Designation</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Joining Date</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Email Address</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Employee Status</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -365,17 +366,17 @@ const AttendanceDashboard = () => {
 
                                                 const rowStyle = hasDeletedRelation
                                                     ? {
-                                                          backgroundColor: '#ffebee', // Light red background
-                                                          color: '#d32f2f', // Red text
-                                                          opacity: 0.7,
-                                                      }
+                                                        backgroundColor: '#ffebee', // Light red background
+                                                        color: '#d32f2f', // Red text
+                                                        opacity: 0.7,
+                                                    }
                                                     : {};
 
                                                 return (
                                                     <TableRow key={emp.id} style={rowStyle}>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>#{emp.employee_id}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>{emp.name}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>#{emp.employee_id}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.name}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>
                                                             {emp.department?.name ? (
                                                                 <>
                                                                     {emp.department.name}
@@ -399,10 +400,10 @@ const AttendanceDashboard = () => {
                                                                 </Typography>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>{emp.designation}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>{emp.joining_date}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>{emp.email}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {}}>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.designation}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.joining_date}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.email}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>
                                                             {hasDeletedRelation ? (
                                                                 <Typography
                                                                     variant="caption"
@@ -424,15 +425,8 @@ const AttendanceDashboard = () => {
                                                         <TableCell>
                                                             <IconButton
                                                                 onClick={() => router.visit(route('employees.edit', emp.id))}
-                                                                size="small"
-                                                                sx={{
-                                                                    color: '#0a3d62',
-                                                                    '&:hover': {
-                                                                        backgroundColor: '#f5f5f5',
-                                                                    },
-                                                                }}
                                                             >
-                                                                <EditIcon fontSize="small" />
+                                                                 <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                                             </IconButton>
                                                         </TableCell>
                                                     </TableRow>

@@ -6,8 +6,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PrintIcon from '@mui/icons-material/Print';
 import EditIcon from '@mui/icons-material/Edit';
-import SearchIcon from '@mui/icons-material/Search';
-
+import Search from '@mui/icons-material/Search';
+import { FaEdit } from 'react-icons/fa';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
@@ -92,10 +92,13 @@ const EmployeeDashboard = () => {
                     <div style={{ paddingTop: '1rem' }}>
                         {/* Header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ color: '#0a3d62', fontWeight: '600' }}>
+                            <Typography style={{ color: '#063455', fontWeight: '700', fontSize: '30px' }}>
                                 Employee Management
                             </Typography>
-                            <Button style={{ color: 'white', backgroundColor: '#0a3d62' }} onClick={() => router.visit(route('employees.create'))}>
+                            <Button variant="contained"
+                                startIcon={<span style={{
+                                    fontSize: '1.5rem', marginBottom: 5
+                                }}>+</span>} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => router.visit(route('employees.create'))}>
                                 Add Employee
                             </Button>
                         </div>
@@ -108,13 +111,13 @@ const EmployeeDashboard = () => {
                                 { title: 'Total Absent', value: stats.total_absent, icon: AssignmentIcon },
                                 { title: 'Late Arrival', value: stats.total_late, icon: PrintIcon },
                             ].map((item, idx) => (
-                                <Card key={idx} style={{ flex: 1, backgroundColor:'#063455', borderRadius: '4px' }}>
+                                <Card key={idx} style={{ flex: 1, backgroundColor: '#063455', borderRadius: '16px' }}>
                                     <CardContent>
                                         <Typography variant="body2" color="#fff">
                                             {item.title}
                                         </Typography>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography variant="h5" style={{ fontWeight: 'bold', color:"#fff" }}>
+                                            <Typography variant="h5" style={{ fontWeight: 'bold', color: "#fff" }}>
                                                 {item.value}
                                             </Typography>
                                             <div style={{ borderRadius: '8px', padding: '0.5rem' }}>
@@ -127,12 +130,12 @@ const EmployeeDashboard = () => {
                         </div>
 
                         {/* Filter Section */}
-                        <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                        <Box sx={{ mb: 3 }}>
                             <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
 
                             {/* Search Fields */}
                             <Grid container spacing={2} sx={{ mb: 3 }}>
-                                <Grid item xs={12} md={4}>
+                                <Grid item xs={12} md={3}>
                                     <TextField
                                         fullWidth
                                         size="small"
@@ -146,13 +149,17 @@ const EmployeeDashboard = () => {
                                         }}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
-                                                borderRadius: 2,
+                                                borderRadius: '16px',
                                             },
                                         }}
                                     />
                                 </Grid>
                                 <Grid item xs={12} md={3}>
-                                    <FormControl fullWidth size="small">
+                                    <FormControl fullWidth size="small" sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}>
                                         <InputLabel>Departments</InputLabel>
                                         <Select
                                             multiple
@@ -192,8 +199,9 @@ const EmployeeDashboard = () => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} md={2}>
+                                <Grid item xs={12} md={1.5}>
                                     <Button
+                                        startIcon={<Search />}
                                         fullWidth
                                         variant="contained"
                                         onClick={handleFilter}
@@ -202,10 +210,10 @@ const EmployeeDashboard = () => {
                                             backgroundColor: '#063455',
                                             color: 'white',
                                             textTransform: 'none',
-                                            borderRadius: 2,
+                                            borderRadius: '16px',
                                             height: '40px',
                                             '&:hover': {
-                                                backgroundColor: '#052d45',
+                                                // backgroundColor: '#052d45',
                                             },
                                             '&:disabled': {
                                                 backgroundColor: '#ccc',
@@ -219,16 +227,13 @@ const EmployeeDashboard = () => {
                                                 Loading...
                                             </>
                                         ) : (
-                                            'Filter'
+                                            'Search'
                                         )}
                                     </Button>
                                 </Grid>
-                            </Grid>
-
-                            {/* Clear Filter Button */}
-                            {(selectedDepartments.length > 0 || searchTerm) && (
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} md={2}>
+                                {(selectedDepartments.length > 0 || searchTerm) && (
+                                    // <Grid container spacing={2}>
+                                    <Grid item xs={12} md={1.5}>
                                         <Button
                                             fullWidth
                                             variant="outlined"
@@ -237,34 +242,37 @@ const EmployeeDashboard = () => {
                                                 color: '#063455',
                                                 borderColor: '#063455',
                                                 textTransform: 'none',
-                                                borderRadius: 2,
+                                                borderRadius: '16px',
                                                 height: '40px',
                                                 '&:hover': {
                                                     borderColor: '#052d45',
-                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                    // backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                                 },
                                             }}
                                         >
-                                            Clear Filters
+                                            Reset
                                         </Button>
                                     </Grid>
-                                </Grid>
-                            )}
+                                    // </Grid>
+                                )}
+                            </Grid>
+
+                            {/* Clear Filter Button */}
                         </Box>
 
                         {/* Employees Table */}
-                        <TableContainer component={Paper} style={{ borderRadius: '1rem', border: '1px solid #ccc' }}>
+                        <TableContainer component={Paper} style={{ borderRadius: '16px', overflowX:'auto' }}>
                             <Table>
-                                <TableHead style={{ backgroundColor: '#E5E5EA' }}>
+                                <TableHead style={{ backgroundColor: '#063455', height:30 }}>
                                     <TableRow>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>EMP ID</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Name</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Department</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Designation</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Joining Date</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Email Address</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Employee Status</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '14px' }}>Actions</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>EMP ID</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Department</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Designation</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Joining Date</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Email Address</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Employee Status</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -275,17 +283,17 @@ const EmployeeDashboard = () => {
 
                                             const rowStyle = isDepartmentDeleted
                                                 ? {
-                                                      backgroundColor: '#ffebee', // Light red background
-                                                      color: '#d32f2f', // Red text
-                                                      opacity: 0.7,
-                                                  }
+                                                    backgroundColor: '#ffebee', // Light red background
+                                                    color: '#d32f2f', // Red text
+                                                    opacity: 0.7,
+                                                }
                                                 : {};
 
                                             return (
                                                 <TableRow key={emp.id} style={rowStyle}>
-                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>#{emp.employee_id}</TableCell>
-                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.name}</TableCell>
-                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {color: '#7F7F7F', fontWeight: 400, fontSize: '14px'}}>#{emp.employee_id}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {color: '#7F7F7F', fontWeight: 400, fontSize: '14px'}}>{emp.name}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {color: '#7F7F7F', fontWeight: 400, fontSize: '14px'}}>
                                                         {emp.department?.name ? (
                                                             <>
                                                                 {emp.department.name}
@@ -309,10 +317,10 @@ const EmployeeDashboard = () => {
                                                             </Typography>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.designation}</TableCell>
-                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.joining_date}</TableCell>
-                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>{emp.email}</TableCell>
-                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {}}>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{emp.designation}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {color: '#7F7F7F', fontWeight: 400, fontSize: '14px'}}>{emp.joining_date}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {color: '#7F7F7F', fontWeight: 400, fontSize: '14px'}}>{emp.email}</TableCell>
+                                                    <TableCell style={isDepartmentDeleted ? { color: '#d32f2f' } : {color: '#7F7F7F', fontWeight: 400, fontSize: '14px'}}>
                                                         {isDepartmentDeleted ? (
                                                             <Typography
                                                                 variant="caption"
@@ -341,7 +349,7 @@ const EmployeeDashboard = () => {
                                                                 },
                                                             }}
                                                         >
-                                                            <EditIcon fontSize="small" />
+                                                            <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                                         </IconButton>
                                                     </TableCell>
                                                 </TableRow>

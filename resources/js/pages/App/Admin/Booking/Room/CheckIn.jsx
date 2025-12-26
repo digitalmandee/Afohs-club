@@ -281,17 +281,17 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                         flexWrap: 'nowrap', // ensures they stay on the same line
                                                     }}
                                                 >
-                                                    <Button variant="outlined" size="small" color='#063455' style={{ marginRight: '8px', width: 100 }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                    <Button variant="outlined" size="small" color='#063455' style={{ marginRight: '8px', width: 100, textTransform:'none' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                         Check Out
                                                     </Button>
                                                     <Button size="small" color="#063455" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1 }}>
                                                         <Visibility fontSize="small" />
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)}>
+                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)} sx={{textTransform:'none'}}>
                                                         View
                                                     </Button>
                                                     <Button variant="outlined" size="small" color='#063455' onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
-                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600 }}>
+                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600, textTransform:'none' }}>
                                                             Orders
                                                         </Box>
                                                     </Button>

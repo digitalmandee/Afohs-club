@@ -101,11 +101,11 @@ const LeaveReport = () => {
             >
                 <div style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                        <Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
+                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                             Leave Report
                         </Typography>
                     </div>
-                    <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
+                    <Box sx={{ mb: 3 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <TextField
@@ -115,7 +115,7 @@ const LeaveReport = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyPress={handleKeyPress}
                                     size="small"
-                                    sx={{ width: 350 }}
+                                    // sx={{ width: 350 }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -123,14 +123,21 @@ const LeaveReport = () => {
                                             </InputAdornment>
                                         ),
                                     }}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
                                 />
                                 <Button
                                     variant="contained"
+                                    startIcon={<Search />}
                                     onClick={handleSearch}
                                     sx={{
                                         backgroundColor: '#063455',
                                         color: 'white',
                                         textTransform: 'none',
+                                        borderRadius: '16px',
                                         '&:hover': {
                                             backgroundColor: '#063455',
                                         },
@@ -146,17 +153,22 @@ const LeaveReport = () => {
                                             color: '#063455',
                                             borderColor: '#063455',
                                             textTransform: 'none',
+                                            borderRadius: '16px',
                                             '&:hover': {
                                                 borderColor: '#052d45',
-                                                backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                // backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                             },
                                         }}
                                     >
-                                        Clear
+                                        Reset
                                     </Button>
                                 )}
                             </Box>
-                            <FormControl size="small">
+                            <FormControl size="small" sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                            }}>
                                 <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 150 }}>
                                     {months.map((m) => (
                                         <MenuItem key={m.value} value={m.value}>
@@ -167,20 +179,20 @@ const LeaveReport = () => {
                             </FormControl>
                         </Box>
                     </Box>
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA' }}>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>#</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Employee Name</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>#</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Employee Name</TableCell>
                                     {leaveCategories.map((category) => (
-                                        <TableCell key={category.id} sx={{ fontWeight: '600', color: '#000' }}>
+                                        <TableCell key={category.id} sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>
                                             {category.name}
                                         </TableCell>
                                     ))}
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Total Attendance</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Total Absence</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Total Leave</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Total Attendance</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Total Absence</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Total Leave</TableCell>
                                 </TableRow>
                             </TableHead>
                             {isLoading ? (
@@ -192,8 +204,8 @@ const LeaveReport = () => {
                             ) : employees.length > 0 ? (
                                 employees.map((employee, index) => (
                                     <TableRow key={employee.employee_id}>
-                                        <TableCell>{employee.employee_id}</TableCell>
-                                        <TableCell>{employee.employee_name}</TableCell>
+                                        <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.employee_id}</TableCell>
+                                        <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.employee_name}</TableCell>
                                         {leaveCategories.map((category) => {
                                             const categoryKey = category.name.replace(/\s+/g, '_');
                                             return (
@@ -202,9 +214,9 @@ const LeaveReport = () => {
                                                 </TableCell>
                                             );
                                         })}
-                                        <TableCell>{employee.total_attendance}</TableCell>
-                                        <TableCell>{employee.total_absence}</TableCell>
-                                        <TableCell>{employee.total_leave}</TableCell>
+                                        <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.total_attendance}</TableCell>
+                                        <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.total_absence}</TableCell>
+                                        <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.total_leave}</TableCell>
                                     </TableRow>
                                 ))
                             ) : (

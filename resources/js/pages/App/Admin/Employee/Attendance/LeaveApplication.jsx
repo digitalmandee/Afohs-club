@@ -8,6 +8,8 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { styled } from '@mui/material/styles';
+import { FaEdit } from 'react-icons/fa';
 
 const LeaveApplication = () => {
     // const [open, setOpen] = useState(true);
@@ -100,6 +102,12 @@ const LeaveApplication = () => {
         }
     }, [date]);
 
+    const RoundedTextField = styled(TextField)({
+        '& .MuiOutlinedInput-root': {
+            borderRadius: '16px',
+        },
+    });
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -112,7 +120,7 @@ const LeaveApplication = () => {
                 <div style={{ padding: '2rem' }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                        <Typography variant="h5" style={{ fontWeight: '600', color: '#0A3D62' }}>
+                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                             Leave Applications
                         </Typography>
                         <Button
@@ -122,13 +130,14 @@ const LeaveApplication = () => {
                             style={{
                                 backgroundColor: '#063455',
                                 color: 'white',
-                                textTransform: 'none',
+                                // textTransform: 'none',
+                                borderRadius: '16px'
                             }}
                         >
                             New Application
                         </Button>
                     </div>
-                    <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
+                    <Box sx={{ mb: 2 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                 <TextField
@@ -138,7 +147,7 @@ const LeaveApplication = () => {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyPress={handleKeyPress}
                                     size="small"
-                                    sx={{ width: 350 }}
+                                    // sx={{ width: 350 }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -146,14 +155,58 @@ const LeaveApplication = () => {
                                             </InputAdornment>
                                         ),
                                     }}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
+                                />
+                                {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Select Date"
+                                        value={date}
+                                        onChange={(newValue) => setDate(newValue)}
+                                        renderInput={(params) => <TextField {...params} size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderRadius: '16px',
+                                                },
+                                            }} />}
+                                        slotProps={{
+                                            field: { clearable: true },
+                                        }}
+                                    />
+                                </LocalizationProvider> */}
+                                <TextField
+                                    label="Select Date"
+                                    type="date"
+                                    size="small"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
                                 />
                                 <Button
                                     variant="contained"
+                                    startIcon={<Search />}
                                     onClick={handleSearch}
                                     sx={{
                                         backgroundColor: '#063455',
                                         color: 'white',
                                         textTransform: 'none',
+                                        borderRadius: '16px',
                                         '&:hover': {
                                             backgroundColor: '#052d45',
                                         },
@@ -169,32 +222,19 @@ const LeaveApplication = () => {
                                             color: '#063455',
                                             borderColor: '#063455',
                                             textTransform: 'none',
+                                            borderRadius: '16px',
                                             '&:hover': {
                                                 borderColor: '#052d45',
-                                                backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                // backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                             },
                                         }}
                                     >
-                                        Clear
+                                        Reset
                                     </Button>
                                 )}
                             </Box>
 
-                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                {/* Date Picker */}
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DatePicker
-                                        label="Select Date"
-                                        value={date}
-                                        onChange={(newValue) => setDate(newValue)}
-                                        renderInput={(params) => <TextField {...params} size="small" />}
-                                        slotProps={{
-                                            field: { clearable: true },
-                                        }}
-                                    />
-                                </LocalizationProvider>
-
-                                {/* Clear All Filters Button */}
+                            {/* <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                 {(searchTerm || date) && (
                                     <Button
                                         variant="outlined"
@@ -212,23 +252,23 @@ const LeaveApplication = () => {
                                         Clear All Filters
                                     </Button>
                                 )}
-                            </Box>
+                            </Box> */}
                         </Box>
                     </Box>
 
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA' }}>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>#</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Employee Name</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Start Date</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>End Date</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Leave Days</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Leave Category</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Created At</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#000' }}>Action</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: 30 }}>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>#</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Employee Name</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Start Date</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>End Date</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Leave Days</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Leave Category</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Created At</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -241,13 +281,13 @@ const LeaveApplication = () => {
                                 ) : applications.length > 0 ? (
                                     applications.map((application) => (
                                         <TableRow key={application.id}>
-                                            <TableCell>{application.id}</TableCell>
-                                            <TableCell>{application.employee?.name}</TableCell>
-                                            <TableCell>{application.start_date}</TableCell>
-                                            <TableCell>{application.end_date}</TableCell>
-                                            <TableCell>{application.number_of_days}</TableCell>
-                                            <TableCell>{application.leave_category?.name}</TableCell>
-                                            <TableCell>{dayjs(application.created_at).format('YYYY-MM-DD')}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.id}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.employee?.name}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.start_date}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.end_date}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.number_of_days}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.leave_category?.name}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{dayjs(application.created_at).format('YYYY-MM-DD')}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
@@ -264,7 +304,7 @@ const LeaveApplication = () => {
                                             </TableCell>
                                             <TableCell>
                                                 <IconButton size="small" onClick={() => router.visit(route('employees.leaves.application.edit', application.id))}>
-                                                    <EditIcon fontSize="small" />
+                                                    <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>

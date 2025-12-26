@@ -3,10 +3,10 @@ import { router, usePage } from '@inertiajs/react';
 import { MdArrowBackIos } from 'react-icons/md';
 import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box, Autocomplete } from '@mui/material';
 import axios from 'axios';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
-
+import { FaEdit } from 'react-icons/fa';
 const Management = () => {
     const { props } = usePage();
     const { subdepartments } = props; // comes from Laravel
@@ -118,10 +118,9 @@ const Management = () => {
                                 </IconButton>
                             </div>
                             <Typography
-                                variant="h5"
-                                className="mb-0"
                                 style={{
-                                    fontWeight: '600',
+                                    fontWeight: '700',
+                                    fontSize: '30px',
                                     color: '#063455',
                                 }}
                             >
@@ -129,35 +128,36 @@ const Management = () => {
                             </Typography>
                         </div>
                         <div className="col-auto ms-auto">
-                            <Button variant="contained" sx={{ bgcolor: '#0a3d62', borderRadius: '4px', '&:hover': { bgcolor: '#0a3d62' } }} onClick={() => handleOpen()}>
+                            <Button variant="contained" startIcon={<span style={{
+                                fontSize: '1.5rem', marginBottom: 5
+                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height:35 }} onClick={() => handleOpen()}>
                                 New Subdepartment
                             </Button>
                         </div>
                     </div>
 
                     {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius: '16px', }}>
                         <Table>
-                            <TableHead sx={{ bgcolor: '#F8FAFC' }}>
+                            <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell>Subdepartment Name</TableCell>
-                                    <TableCell>Department</TableCell>
-                                    <TableCell>Action</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Subdepartment Name</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Department</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {subdepartments.data.length > 0 ? (
                                     subdepartments.data.map((subdepartment) => (
                                         <TableRow key={subdepartment.id}>
-                                            <TableCell>{subdepartment.name}</TableCell>
-                                            <TableCell>{subdepartment.department?.name || 'N/A'}</TableCell>
+                                            <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{subdepartment.name}</TableCell>
+                                            <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{subdepartment.department?.name || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <Button onClick={() => handleOpen(subdepartment)} color="primary">
-                                                    Edit
-                                                </Button>
-                                                <Button onClick={() => openDeleteDialog(subdepartment.id)} color="secondary">
-                                                    Delete
-                                                </Button>
+                                                <IconButton onClick={() => handleOpen(subdepartment)} color="primary">
+                                                     <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
+                                                </IconButton>
+                                                <Button startIcon={<Delete />} onClick={() => openDeleteDialog(subdepartment.id)} color="error"/>
+                                                {/* </Button> */}
                                             </TableCell>
                                         </TableRow>
                                     ))

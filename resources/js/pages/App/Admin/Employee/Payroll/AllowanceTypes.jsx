@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
+import { FaEdit } from 'react-icons/fa';
 import {
     Box,
     Card,
@@ -174,7 +175,7 @@ const AllowanceTypes = () => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{color: '#063455'}} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                             Allowance Types
                         </Typography>
                     </Box>
@@ -184,6 +185,7 @@ const AllowanceTypes = () => {
                         variant="contained"
                         sx={{
                             backgroundColor: '#063455',
+                            borderRadius:'16px',
                             '&:hover': { backgroundColor: '#052d45' }
                         }}
                     >
@@ -193,16 +195,16 @@ const AllowanceTypes = () => {
 
                 {/* Allowance Types Table */}
                 <Card>
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} sx={{borderRadius:'16px', overflowX:'auto'}}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Type</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Description</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Taxable</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Type</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Description</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Taxable</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -229,53 +231,54 @@ const AllowanceTypes = () => {
                                             key={allowanceType.id}
                                             sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
                                         >
-                                            <TableCell>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                            <TableCell sx={{fontWeight: 400, color: '#7f7f7f', fontSize:'14px'}}>
+                                                <Typography variant="subtitle2">
                                                     {allowanceType.name}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{fontWeight: 400, color: '#7f7f7f', fontSize:'14px'}}>
                                                 <Chip
                                                     label={allowanceType.type}
                                                     size="small"
                                                     color={getTypeColor(allowanceType.type)}
                                                 />
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{fontWeight: 400, color: '#7f7f7f', fontSize:'14px'}}>
                                                 <Typography variant="body2" color="textSecondary">
                                                     {allowanceType.description || 'No description'}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{fontWeight: 400, color: '#7f7f7f', fontSize:'14px'}}>
                                                 <Chip
                                                     label={allowanceType.is_taxable ? 'Yes' : 'No'}
                                                     size="small"
                                                     color={allowanceType.is_taxable ? 'warning' : 'success'}
                                                 />
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{fontWeight: 400, color: '#7f7f7f', fontSize:'14px'}}>
                                                 <Chip
                                                     label={allowanceType.is_active ? 'Active' : 'Inactive'}
                                                     size="small"
                                                     color={getStatusColor(allowanceType.is_active)}
                                                 />
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{fontWeight: 400, color: '#7f7f7f', fontSize:'14px'}}>
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                                     <Tooltip title="Edit">
                                                         <IconButton
-                                                            size="small"
+                                                            // size="small"
                                                             onClick={() => handleEdit(allowanceType)}
-                                                            sx={{ color: '#ed6c02' }}
+                                                            // sx={{ color: '#ed6c02' }}
                                                         >
-                                                            <EditIcon fontSize="small" />
+                                                           <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                                         </IconButton>
                                                     </Tooltip>
                                                     <Tooltip title="Delete">
                                                         <IconButton
                                                             size="small"
+                                                            color='error'
                                                             onClick={() => handleDelete(allowanceType)}
-                                                            sx={{ color: '#d32f2f' }}
+                                                            // sx={{ color: '#d32f2f' }}
                                                         >
                                                             <DeleteIcon fontSize="small" />
                                                         </IconButton>

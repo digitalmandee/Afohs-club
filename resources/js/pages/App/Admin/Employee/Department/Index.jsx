@@ -4,9 +4,10 @@ import { MdArrowBackIos } from 'react-icons/md';
 import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box } from '@mui/material';
 import axios from 'axios';
 import { ArrowBack } from "@mui/icons-material"
+import { Search, FilterAlt, Visibility, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
-
+import { FaEdit } from 'react-icons/fa';
 
 const Management = () => {
     const { props } = usePage();
@@ -104,45 +105,43 @@ const Management = () => {
                                 </IconButton>
                             </div>
                             <Typography
-                                variant="h5"
-                                className="mb-0"
                                 style={{
-                                    fontWeight:'600',
-                                    // fontSize: '30px',
-                                    color: '#0A3D63',
+                                    fontWeight: '700',
+                                    fontSize: '30px',
+                                    color: '#063455',
                                 }}
                             >
                                 Departments
                             </Typography>
                         </div>
                         <div className="col-auto ms-auto">
-                            <Button variant="contained" sx={{ bgcolor: '#0a3d62', borderRadius: '4px', '&:hover': { bgcolor: '#0a3d62' } }} onClick={() => handleOpen()}>
+                            <Button variant="contained" startIcon={<span style={{
+                                fontSize: '1.5rem', marginBottom: 5
+                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => handleOpen()}>
                                 New Department
                             </Button>
                         </div>
                     </div>
 
                     {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none' }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
-                            <TableHead sx={{ bgcolor: '#F8FAFC' }}>
+                            <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell>Name</TableCell>
-                                    <TableCell>Action</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {departments.data.length > 0 ? (
                                     departments.data.map((department) => (
                                         <TableRow key={department.id}>
-                                            <TableCell>{department.name}</TableCell>
+                                            <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{department.name}</TableCell>
                                             <TableCell>
-                                                <Button onClick={() => handleOpen(department)} color="primary">
-                                                    Edit
-                                                </Button>
-                                                <Button onClick={() => openDeleteDialog(department.id)} color="secondary">
-                                                    Delete
-                                                </Button>
+                                                <IconButton onClick={() => handleOpen(department)} color="primary">
+                                                    <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
+                                                </IconButton>
+                                                <Button startIcon={<Delete />} onClick={() => openDeleteDialog(department.id)} color="error"/>
                                             </TableCell>
                                         </TableRow>
                                     ))

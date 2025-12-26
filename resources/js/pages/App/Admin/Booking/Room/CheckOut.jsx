@@ -228,7 +228,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                         </Box>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'16px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
@@ -259,14 +259,14 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                    <Button size="small" color='#063455' onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                    <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color:'#063455' }}>
                                                         <Visibility fontSize="small" />
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)}>
+                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)} sx={{textTransform:'none'}}>
                                                         View
                                                     </Button>
                                                     <Button variant="outlined" size="small" color='#063455' onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
-                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600 }}>
+                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600, textTransform:'none' }}>
                                                             Orders
                                                         </Box>
                                                     </Button>

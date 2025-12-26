@@ -123,20 +123,27 @@ const AttendanceReport = () => {
 			{/* <SideNav open={open} setOpen={setOpen} /> */}
 			<div
 				style={{
-					minHeight:'100vh',
+					minHeight: '100vh',
 					backgroundColor: '#f5f5f5',
 				}}
 			>
-				<Box sx={{ px: 2, py: 2, overflowX:'hidden' }}>
+				<Box sx={{ px: 2, py: 2, overflowX: 'hidden' }}>
 					<div style={{ paddingTop: '1rem' }}>
 						<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-							<Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
+							<Typography style={{ fontWeight: '700', color: '#063455', fontSize: '30px' }}>
 								Attendance Report
 							</Typography>
 						</div>
 						<div style={{ display: "flex", justifyContent: "end", gap: "8px" }}>
 							{/* Month & Year Section */}
-							<TextField select label="Month" value={month} onChange={handleMonthChange} size="small" SelectProps={{ native: true }} style={{ backgroundColor: "white", minWidth: "120px" }}>
+							<TextField select label="Month" value={month} onChange={handleMonthChange} size="small" SelectProps={{ native: true }} style={{
+								backgroundColor: "transparent", minWidth: "120px", '& .MuiOutlinedInput-root': {
+									borderRadius: '16px',
+								},
+								'& .MuiOutlinedInput-notchedOutline': {
+									borderRadius: '16px',
+								},
+							}}>
 								{[...Array(12)].map((_, i) => (
 									<option key={i + 1} value={i + 1}>
 										{new Date(0, i).toLocaleString("default", { month: "long" })}
@@ -144,7 +151,7 @@ const AttendanceReport = () => {
 								))}
 							</TextField>
 
-							<TextField type="number" label="Year" value={year} onChange={handleYearChange} size="small" style={{ backgroundColor: "white", minWidth: "100px" }} />
+							<TextField type="number" label="Year" value={year} onChange={handleYearChange} size="small" style={{ backgroundColor: "transparent", width:'10%' }} />
 						</div>
 
 						{/* Legend */}
