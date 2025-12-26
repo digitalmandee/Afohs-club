@@ -47,11 +47,11 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                     backgroundColor: '#f5f5f5',
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('guests.index'))}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton>
-                        <ArrowBackIcon sx={{ color: '#555' }} />
+                        <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('guests.index'))} />
                     </IconButton>
-                    <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>
                         {isEdit ? 'Edit Customer' : 'Add Customer'}
                     </Typography>
                 </Box>

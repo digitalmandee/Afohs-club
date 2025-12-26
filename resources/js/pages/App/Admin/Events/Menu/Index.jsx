@@ -5,7 +5,7 @@ import { ArrowBack as ArrowBackIcon, Add as AddIcon, Edit as EditIcon, Delete as
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-
+import { FaEdit } from 'react-icons/fa';
 
 const EventMenuManage = ({ eventMenusData }) => {
     // const [open, setOpen] = useState(true);
@@ -75,29 +75,29 @@ const EventMenuManage = ({ eventMenusData }) => {
                 }}
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('events.dashboard'))}>
-                        <IconButton>
-                            <ArrowBackIcon sx={{ color: '#555' }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => router.visit(route('events.dashboard'))}>
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize:'30px', color: '#063455' }}>
                             Event Menus
                         </Typography>
                     </Box>
 
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={() => router.visit(route('event-menu.create'))}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none', height:35, borderRadius:'16px' }} onClick={() => router.visit(route('event-menu.create'))}>
                         Add Menu
                     </Button>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius:'16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>#</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Menu Name</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Amount</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>#</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Menu Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Amount</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -111,10 +111,10 @@ const EventMenuManage = ({ eventMenusData }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{menuCategory.status}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => router.visit(route('event-menu.edit', menuCategory.id))} size="small" title="Edit">
-                                                <EditIcon fontSize="small" />
+                                               <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(menuCategory)} size="small" title="Delete">
-                                                <DeleteIcon fontSize="small" />
+                                                <DeleteIcon fontSize="small" color='error' />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>

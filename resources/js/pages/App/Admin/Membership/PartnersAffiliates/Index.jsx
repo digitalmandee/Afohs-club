@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Tooltip, Autocomplete, CircularProgress, Chip } from '@mui/material';
 import { router, usePage } from '@inertiajs/react';
+import { Search, FilterAlt, Delete } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
-import { Delete } from '@mui/icons-material';
 import axios from 'axios';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -103,15 +103,17 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
     return (
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
             <div>
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                    <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Partners & Affiliates</Typography>
+                <div className="d-flex justify-content-between align-items-center">
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Partners & Affiliates</Typography>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <Button
                             variant="outlined"
+                            startIcon={<Delete />}
                             onClick={() => router.get(route('admin.membership.partners-affiliates.trashed'))}
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
+                                borderRadius: '16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -120,16 +122,38 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                         >
                             Deleted Partners
                         </Button>
-                        <Button variant="contained" style={{ backgroundColor: '#063455', color: '#fff' }} onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}>
+                        {/* <Button variant="contained" style={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px', color: '#fff' }} onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}>
+                            Add New
+                        </Button> */}
+                        <Button
+                            variant="contained"
+                            startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>}
+                            style={{
+                                backgroundColor: '#063455',
+                                textTransform: 'none',
+                                borderRadius: '4px',
+                                height: 40,
+                                width: 120,
+                                borderRadius: '16px',
+                            }}
+                            onClick={() => router.visit(route('admin.membership.partners-affiliates.create'))}
+                        >
                             Add New
                         </Button>
                     </div>
                 </div>
-
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Supports collaborations, discounts, and special access programs
+                </Typography>
                 {/* Filters */}
-                <Box component={Paper} elevation={0} sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Box component={Paper} elevation={0} sx={{ mb: 3, mt:5, bgcolor: 'transparent', display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Autocomplete
-                        sx={{ minWidth: 250 }}
+                        sx={{
+                            minWidth: 250,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '16px'
+                            }
+                        }}
                         open={open}
                         onOpen={() => setOpen(true)}
                         onClose={() => setOpen(false)}
@@ -187,63 +211,75 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                             </li>
                         )}
                     />
-                    <TextField select size="small" label="Type" value={filterValues.type} onChange={(e) => handleFilterChange('type', e.target.value)} sx={{ minWidth: 150 }} SelectProps={{ native: true }}>
+                    <TextField select size="small" label="Type" value={filterValues.type} onChange={(e) => handleFilterChange('type', e.target.value)} sx={{
+                        minWidth: 150,
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }} SelectProps={{ native: true }}>
                         <option value="all">All Types</option>
                         <option value="Club">Club</option>
                         <option value="Company">Company</option>
                         <option value="Other">Other</option>
                     </TextField>
-                    <TextField select size="small" label="Status" value={filterValues.status} onChange={(e) => handleFilterChange('status', e.target.value)} sx={{ minWidth: 150 }} SelectProps={{ native: true }}>
+                    <TextField select size="small" label="Status" value={filterValues.status} onChange={(e) => handleFilterChange('status', e.target.value)} sx={{
+                        minWidth: 150,
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }} SelectProps={{ native: true }}>
                         <option value="all">All Status</option>
                         <option value="Active">Active</option>
                         <option value="Inactive">Inactive</option>
                     </TextField>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none' }}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderRadius: '16px', borderColor: '#ddd', textTransform: 'none' }}>
                             Reset
                         </Button>
-                        <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                        <Button variant="contained"
+                            startIcon={<Search />}
+                            size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#063455', borderRadius: '16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
                             Search
                         </Button>
                     </div>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#000', height: '50px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>SR #</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>ID</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>PARTNER / AFFILIATE</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>ADDRESS</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>TELEPHONE</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>EMAIL</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>FOCAL PERSON</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>MOBILE</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>EMAIL</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>STATUS</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>EDIT</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>DELETE</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', height: '50px' }}>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>SR #</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>ID</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Partner / Affiliate</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Address</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Telephone</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Email</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Focal person</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Mobile</TableCell>
+                                {/* <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>Email</TableCell> */}
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Edit</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Delete</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {partners.data.length > 0 ? (
                                 partners.data.map((partner, index) => (
                                     <TableRow key={partner.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{index + 1}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{partner.id}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>
-                                            <Typography sx={{ fontSize: '12px', fontWeight: 600 }}>{partner.organization_name}</Typography>
-                                            <Typography sx={{ fontSize: '10px', color: '#666' }}>({partner.type})</Typography>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{index + 1}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.id}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.organization_name}</Typography>
+                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>({partner.type})</Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{partner.address}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{partner.telephone}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{partner.email}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{partner.focal_person_name}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{partner.focal_mobile_a}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>{partner.focal_email}</TableCell>
-                                        <TableCell sx={{ fontSize: '12px', padding: '6px' }}>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.address}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.telephone}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.email}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.focal_person_name}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.focal_mobile_a}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.focal_email}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                             <span
                                                 style={{
                                                     padding: '2px 6px',

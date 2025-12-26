@@ -10,7 +10,6 @@ import { DateObject } from 'react-multi-date-picker';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { DateRange, DateRangePicker } from 'react-date-range';
-
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { addDays, format } from 'date-fns';

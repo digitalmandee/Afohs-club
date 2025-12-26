@@ -7,7 +7,7 @@ import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment } from '@mui/material';
 import { Search, Visibility } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import { styled } from '@mui/material/styles';
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
@@ -87,6 +87,11 @@ const RoomCheckIn = ({ bookings, filters }) => {
         setEndDate('');
         router.get(route('rooms.checkin'), {}, { preserveState: true, preserveScroll: true });
     };
+    const RoundedTextField = styled(TextField)({
+        '& .MuiOutlinedInput-root': {
+            borderRadius: '16px',
+        },
+    });
 
     return (
         <>
@@ -100,11 +105,11 @@ const RoomCheckIn = ({ bookings, filters }) => {
                 }}
             >
                 <Box sx={{ p: 3 }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                         <Typography
                             sx={{
                                 marginLeft: '10px',
-                                fontWeight: 500,
+                                fontWeight: 700,
                                 color: '#063455',
                                 fontSize: '30px',
                             }}
@@ -114,8 +119,8 @@ const RoomCheckIn = ({ bookings, filters }) => {
                     </Box>
 
                     {/* Filter Section */}
-                    <Box sx={{ mb: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-                        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
+                    <Box sx={{ mb: 1, p: 2 }}>
+                        <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
                             {/* Search Input */}
                             <TextField
                                 placeholder="Search by ID, Member, Guest, Room..."
@@ -123,7 +128,13 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                 size="small"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                sx={{ minWidth: '300px', backgroundColor: 'white' }}
+                                sx={{
+                                    minWidth: '250px',
+                                    // backgroundColor: 'white',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -135,17 +146,26 @@ const RoomCheckIn = ({ bookings, filters }) => {
 
                             {/* Start Date */}
                             {/* Start Date */}
+
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                     label="Start Date"
                                     value={startDate ? dayjs(startDate) : null}
                                     onChange={(newValue) => setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
                                     format="DD-MM-YYYY"
+                                    enableAccessibleFieldDOMStructure={false}
+                                    slots={{ textField: RoundedTextField }}
                                     slotProps={{
                                         textField: {
                                             size: 'small',
                                             fullWidth: false,
-                                            sx: { minWidth: '180px', backgroundColor: 'white' },
+                                            sx: {
+                                                maxWidth: '180px',
+                                                // backgroundColor: 'white',
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                            },
                                             onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
                                         },
                                         actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
@@ -160,11 +180,19 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                     value={endDate ? dayjs(endDate) : null}
                                     onChange={(newValue) => setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
                                     format="DD-MM-YYYY"
+                                    enableAccessibleFieldDOMStructure={false}
+                                    slots={{ textField: RoundedTextField }}
                                     slotProps={{
                                         textField: {
                                             size: 'small',
                                             fullWidth: false,
-                                            sx: { minWidth: '180px', backgroundColor: 'white' },
+                                            sx: {
+                                                maxWidth: '180px',
+                                                '& .MuiInputBase-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                            },
+                                            // sx: { minWidth: '180px' },
                                             onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
                                         },
                                         actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
@@ -175,11 +203,13 @@ const RoomCheckIn = ({ bookings, filters }) => {
                             {/* Search Button */}
                             <Button
                                 variant="contained"
+                                startIcon={<Search />}
                                 onClick={handleSearch}
                                 sx={{
                                     backgroundColor: '#063455',
                                     color: 'white',
                                     textTransform: 'none',
+                                    borderRadius: '16px',
                                     '&:hover': {
                                         backgroundColor: '#052a44',
                                     },
@@ -196,6 +226,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                     borderColor: '#063455',
                                     color: '#063455',
                                     textTransform: 'none',
+                                    borderRadius: '16px',
                                     '&:hover': {
                                         borderColor: '#052a44',
                                         backgroundColor: '#f5f5f5',
@@ -206,41 +237,41 @@ const RoomCheckIn = ({ bookings, filters }) => {
                             </Button>
 
                             {/* Results Count */}
-                            <Typography sx={{ ml: 'auto', color: '#7F7F7F', fontSize: '14px' }}>
+                            {/* <Typography sx={{ ml: 'auto', color: '#7F7F7F', fontSize: '14px' }}>
                                 Showing {bookings.from || 0} to {bookings.to || 0} of {bookings.total || 0} results
-                            </Typography>
+                            </Typography> */}
                         </Box>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Booking Date</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Check-In</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Check-Out</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Per Day Charge</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>ID</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Persons</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {bookings.data && bookings.data.length > 0 ? (
                                     bookings.data.map((booking) => (
                                         <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell>{booking.id}</TableCell>
-                                            <TableCell>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                            <TableCell>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                            <TableCell>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                            <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
-                                            <TableCell>{booking.room?.name}</TableCell>
-                                            <TableCell>{booking.persons}</TableCell>
-                                            <TableCell>{booking.per_day_charge}</TableCell>
-                                            <TableCell>{booking.status.replace(/_/g, ' ')}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
                                             <TableCell>
                                                 <Box
                                                     sx={{
@@ -250,16 +281,16 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                         flexWrap: 'nowrap', // ensures they stay on the same line
                                                     }}
                                                 >
-                                                    <Button variant="outlined" size="small" style={{ marginRight: '8px', width: 100 }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                    <Button variant="outlined" size="small" color='#063455' style={{ marginRight: '8px', width: 100 }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                         Check Out
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1 }}>
+                                                    <Button size="small" color="#063455" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1 }}>
                                                         <Visibility fontSize="small" />
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color="secondary" onClick={() => handleOpenInvoice(booking)}>
+                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)}>
                                                         View
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color="primary" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
                                                         <Box component="span" sx={{ fontSize: '12px', fontWeight: 600 }}>
                                                             Orders
                                                         </Box>

@@ -150,7 +150,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                     <Container fluid className="p-4 bg-light">
                         <Row className="mb-4 align-items-center">
                             <Col>
-                                <Typography style={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>Event Booking Dashboard</Typography>
+                                <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Event Booking Dashboard</Typography>
                             </Col>
                             <Col xs="auto">
                                 <Button
@@ -158,16 +158,17 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                         backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
-                                        padding: '10px 20px',
-                                        borderRadius: '4px',
+                                        padding: '5px 10px',
+                                        borderRadius: '16px',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '8px',
+                                        gap: '4px',
+                                        textTransform:'uppercase'
                                     }}
                                     onClick={() => router.visit(route('events.booking.create'))}
                                 >
                                     <Add />
-                                    Add Event Booking
+                                    Event Booking
                                 </Button>
                             </Col>
                         </Row>
@@ -179,7 +180,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                         backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '4px',
+                                        borderRadius: '16px',
                                         height: '150px',
                                     }}
                                 >
@@ -194,7 +195,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                         <Box className="d-flex align-items-center gap-3">
                                             <Box
                                                 sx={{
-                                                    backgroundColor: '#202728',
+                                                    // backgroundColor: '#202728',
                                                     borderRadius: '50%',
                                                     width: 60,
                                                     height: 60,
@@ -229,7 +230,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                         backgroundColor: '#063455',
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '4px',
+                                        borderRadius: '16px',
                                         height: '150px',
                                     }}
                                 >
@@ -242,7 +243,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                         <Box className="d-flex align-items-center gap-3">
                                             <Box
                                                 sx={{
-                                                    backgroundColor: '#202728',
+                                                    // backgroundColor: '#202728',
                                                     borderRadius: '50%',
                                                     width: '45px',
                                                     height: '45px',
@@ -290,7 +291,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                 </Typography>
                             </Col>
                             <Col xs="auto" className="d-flex gap-3">
-                                <div style={{ position: 'relative', width: '400px', border: '1px solid #121212' }}>
+                                <div style={{ position: 'relative' }}>
                                     <Form.Control
                                         placeholder="Search"
                                         aria-label="Search"
@@ -302,6 +303,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                             borderRadius: '4px',
                                             height: '38px',
                                             fontSize: '0.9rem',
+                                            // width:'50%'
                                         }}
                                     />
                                     <Search

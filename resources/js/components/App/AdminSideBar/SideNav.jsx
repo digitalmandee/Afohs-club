@@ -287,7 +287,7 @@ export default function SideNav({ open, setOpen }) {
                         path: route('employees.departments'),
                     },
                     {
-                        text: 'Subdepartments',
+                        text: 'Sub Departments',
                         path: route('employees.subdepartments'),
                     },
                     {
@@ -575,7 +575,7 @@ export default function SideNav({ open, setOpen }) {
                             sx={{
                                 backgroundColor: '#F0F5FF',
                                 border: 'none',
-                                borderRadius: '2px',
+                                borderRadius: '4px',
                                 p: 1.3,
                             }}
                         >
@@ -607,11 +607,11 @@ export default function SideNav({ open, setOpen }) {
                             <Avatar
                                 // src="your-profile-image-url.jpg"
                                 src="#"
-                                alt="User Profile"
+                                alt="Sr Profile"
                                 sx={{
                                     width: 40,
                                     height: 40,
-                                    borderRadius: '0',
+                                    borderRadius: '4px',
                                 }}
                             />
                             <Box>
@@ -655,7 +655,7 @@ export default function SideNav({ open, setOpen }) {
                         src={open ? '/assets/Logo.png' : '/assets/slogo.png'}
                         alt="Sidebar Logo"
                         style={{
-                            width: open ? '100px' : '60px',
+                            width: open ? '80px' : '70px',
                             transition: 'width 0.3s ease-in-out',
                         }}
                     />

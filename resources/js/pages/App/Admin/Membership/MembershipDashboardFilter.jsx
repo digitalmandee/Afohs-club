@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Typography, Button, Box, Dialog, Collapse, Chip, IconButton, TextField, MenuItem, Autocomplete, CircularProgress } from '@mui/material';
-import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
+import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon, Search } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
 const styles = {
@@ -133,10 +133,13 @@ const MembershipDashboardFilter = () => {
     };
 
     return (
-        <Box backgroundColor="white" mb={3} p={2}>
+        <Box backgroundColor="transparent" mb={3} mt={2}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(4, 1fr)' } }} gap={2} mb={2}>
-                <TextField label="Membership #" size="small" value={filters.membership_no} onChange={(e) => handleFilterChange('membership_no', e.target.value)} fullWidth />
-
+                <TextField label="Membership #" size="small" value={filters.membership_no} onChange={(e) => handleFilterChange('membership_no', e.target.value)} fullWidth sx={{
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: '16px'
+                    }
+                }} />
                 <Autocomplete
                     open={open}
                     onOpen={() => setOpen(true)}
@@ -158,6 +161,11 @@ const MembershipDashboardFilter = () => {
                             label="Name"
                             size="small"
                             fullWidth
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px'
+                                }
+                            }}
                             InputProps={{
                                 ...params.InputProps,
                                 endAdornment: (
@@ -197,9 +205,21 @@ const MembershipDashboardFilter = () => {
                     )}
                 />
 
-                <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} fullWidth />
-                <TextField label="Contact" size="small" value={filters.contact} onChange={(e) => handleFilterChange('contact', e.target.value)} fullWidth />
-                <TextField select label="Card Status" size="small" value={filters.card_status} onChange={(e) => handleFilterChange('card_status', e.target.value)} fullWidth>
+                <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} fullWidth sx={{
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: '16px'
+                    }
+                }} />
+                <TextField label="Contact" size="small" value={filters.contact} onChange={(e) => handleFilterChange('contact', e.target.value)} fullWidth sx={{
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: '16px'
+                    }
+                }} />
+                <TextField select label="Card Status" size="small" value={filters.card_status} onChange={(e) => handleFilterChange('card_status', e.target.value)} fullWidth sx={{
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: '16px'
+                    }
+                }}>
                     <MenuItem value="all">All</MenuItem>
                     {['In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued'].map((status, idx) => (
                         <MenuItem key={idx} value={status}>
@@ -207,14 +227,22 @@ const MembershipDashboardFilter = () => {
                         </MenuItem>
                     ))}
                 </TextField>
-                <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} fullWidth>
+                <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} fullWidth sx={{
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: '16px'
+                    }
+                }}>
                     <MenuItem value="all">All</MenuItem>
                     <MenuItem value="active">Active</MenuItem>
                     <MenuItem value="suspended">Suspended</MenuItem>
                     <MenuItem value="cancelled">Cancelled</MenuItem>
                     <MenuItem value="pause">Pause</MenuItem>
                 </TextField>
-                <TextField select label="Member Type" size="small" value={filters.member_type} onChange={(e) => handleFilterChange('member_type', e.target.value)} fullWidth>
+                <TextField select label="Member Type" size="small" value={filters.member_type} onChange={(e) => handleFilterChange('member_type', e.target.value)} fullWidth sx={{
+                    '& .MuiOutlinedInput-root': {
+                        borderRadius: '16px'
+                    }
+                }}>
                     <MenuItem value="all">All</MenuItem>
                     {props.memberTypes.map((type, idx) => (
                         <MenuItem key={idx} value={type.name}>
@@ -225,10 +253,12 @@ const MembershipDashboardFilter = () => {
                 {/* Sorting and chip filter sections remain as they are... */}
 
                 <Box display="flex" justifyContent="flex-end" gap={1}>
-                    <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none', width: '100%' }}>
+                    <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none', width: '100%', borderRadius:'16px' }}>
                         Reset
                     </Button>
-                    <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ width: '100%', backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                    <Button variant="contained"
+                    startIcon={<Search />}
+                    size="small" onClick={handleApplyFilters} sx={{ width: '100%', backgroundColor: '#0a3d62', borderRadius:'16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
                         Search
                     </Button>
                 </Box>

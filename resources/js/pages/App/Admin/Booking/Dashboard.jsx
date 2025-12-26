@@ -323,7 +323,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                 <Container fluid className="p-4 bg-light">
                     <Row className="mb-4 align-items-center">
                         <Col>
-                            <Typography style={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>Dashboard</Typography>
+                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Dashboard</Typography>
                         </Col>
                     </Row>
 
@@ -334,7 +334,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                                     backgroundColor: '#063455',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '4px',
+                                    borderRadius: '16px',
                                     height: '150px',
                                 }}
                             >
@@ -349,7 +349,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                                     <Box className="d-flex align-items-center gap-3">
                                         <Box
                                             sx={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: 60,
                                                 height: 60,
@@ -384,7 +384,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                                     backgroundColor: '#063455',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '4px',
+                                    borderRadius: '16px',
                                     height: '150px',
                                 }}
                             >
@@ -397,7 +397,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                                     <Box className="d-flex align-items-center gap-3">
                                         <Box
                                             sx={{
-                                                backgroundColor: '#202728',
+                                                // backgroundColor: '#202728',
                                                 borderRadius: '50%',
                                                 width: '45px',
                                                 height: '45px',

@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DayPilot, DayPilotScheduler } from 'daypilot-pro-react';
 import axios from 'axios';
 import moment from 'moment';
-import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
+
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -105,8 +106,8 @@ const RoomCalendar = () => {
     // Calculate dynamic days based on month and next month
     const startDate = moment(`${year}-${month}-01`);
     const daysInMonth = startDate.daysInMonth(); // current month
-    const nextMonthDays = startDate.clone().add(1, 'month').daysInMonth(); // next month
-    const totalDays = daysInMonth + nextMonthDays; // show current + next month
+    // const nextMonthDays = startDate.clone().add(1, 'month').daysInMonth(); // next month
+    const totalDays = daysInMonth; // show current + next month
 
     const dpConfig = {
         startDate: startDate.format('YYYY-MM-DD'),
@@ -164,12 +165,12 @@ const RoomCalendar = () => {
                         <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                             <ArrowBack />
                         </IconButton>
-                        <h2 className="mb-0 fw-normal" style={{ color: '#063455', fontSize: '24px' }}>
+                        <Typography style={{ color: '#063455', fontSize: '30px', fontWeight:'700' }}>
                             Room Booking Calendar
-                        </h2>
+                        </Typography>
                     </Box>
 
-                    <Box display="flex" gap={2} mb={2}>
+                    <Box display="flex" gap={2} mb={2} mt={2}>
                         <FormControl variant="outlined" size="small">
                             <InputLabel id="month-label">Month</InputLabel>
                             <Select labelId="month-label" value={month} onChange={(e) => setMonth(e.target.value)} label="Month">

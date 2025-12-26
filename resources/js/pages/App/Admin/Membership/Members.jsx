@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import axios from 'axios';
 import { Search, FilterAlt, Visibility, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -26,6 +27,8 @@ const AllMembers = ({ members }) => {
 
     // Modal state
     // const [open, setOpen] = useState(true);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const open = Boolean(anchorEl);
     const [suspensionModalOpen, setSuspensionModalOpen] = useState(false);
     const [cancelModalOpen, setCancelModalOpen] = useState(false);
     const [activateModalOpen, setActivateModalOpen] = useState(false);
@@ -38,6 +41,44 @@ const AllMembers = ({ members }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [memberToDelete, setMemberToDelete] = useState(null);
     const [openDocumentModal, setOpenDocumentModal] = useState(false);
+    const [anchorE2, setAnchorE2] = useState(null);
+    const [menuMember, setMenuMember] = useState(null);
+
+    const handleOpenMenu = (event, user) => {
+        setAnchorE2(event.currentTarget);
+        setMenuMember(user);
+    };
+
+    const handleCloseMenu = () => {
+        setAnchorE2(null);
+        setMenuMember(null);
+    };
+
+    const handleOpenCard = () => {
+        setSelectMember(menuMember);
+        setOpenCardModal(true);
+        handleCloseMenu();
+    };
+
+    const handleOpenInvoice = () => {
+        if (
+            menuMember.card_status === 'Expired' ||
+            menuMember.card_status === 'Suspend'
+        ) {
+            // your “Send Remind” logic here if needed
+            handleCloseMenu();
+            return;
+        }
+        setSelectMember(menuMember);
+        setOpenInvoiceModal(true);
+        handleCloseMenu();
+    };
+
+    const handleOpenDocuments = () => {
+        setSelectMember(menuMember);
+        setOpenDocumentModal(true);
+        handleCloseMenu();
+    };
 
     // Sync filteredMembers with props.members.data when props change (e.g. pagination)
     useEffect(() => {
@@ -128,11 +169,11 @@ const AllMembers = ({ members }) => {
                     backgroundColor: '#F6F6F6',
                 }}
             > */}
-            <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
+            <div className="container-fluid p-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Recently Joined Section */}
                 <div className="mx-3">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                        <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>All Members</Typography>
+                    <div className="d-flex justify-content-between align-items-center">
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Members</Typography>
                         <Button
                             variant="outlined"
                             startIcon={<Delete />}
@@ -141,6 +182,7 @@ const AllMembers = ({ members }) => {
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
+                                borderRadius: '16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -150,30 +192,36 @@ const AllMembers = ({ members }) => {
                             Deleted Members
                         </Button>
                     </div>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        A quick overview of membership statistics, recent activities, and important alerts
+                    </Typography>
 
                     {/* Filter Modal */}
                     <MembershipDashboardFilter />
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership No</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Category</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Member Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Membership Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Family Members</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '20px' }}>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Category</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Family Members</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                    {/* <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell> */}
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>
+                                        Files
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -182,12 +230,12 @@ const AllMembers = ({ members }) => {
                                         <TableCell
                                             onClick={() => router.visit(route('membership.profile', user.id))}
                                             sx={{
-                                                color: '#7F7F7F',
-                                                fontWeight: 400,
+                                                color: '#000',
+                                                fontWeight: 600,
                                                 fontSize: '14px',
                                                 cursor: 'pointer',
                                                 '&:hover': {
-                                                    color: '#000', // dark text on hover
+                                                    color: '#7f7f7f', // dark text on hover
                                                     fontWeight: 600, // bold on hover
                                                 },
                                             }}
@@ -213,7 +261,7 @@ const AllMembers = ({ members }) => {
                                         </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.cnic_no || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.cnic_no || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell>
@@ -267,7 +315,7 @@ const AllMembers = ({ members }) => {
                                                 )}
                                             </PopupState>
                                         </TableCell>
-                                        <TableCell>
+                                        {/* <TableCell>
                                             <Button
                                                 style={{
                                                     color: '#0C67AA',
@@ -315,8 +363,44 @@ const AllMembers = ({ members }) => {
                                             >
                                                 View
                                             </Button>
-                                        </TableCell>
+                                        </TableCell> */}
                                         <TableCell>
+                                            <IconButton
+                                                size="small"
+                                                onClick={(e) => handleOpenMenu(e, user)}
+                                            >
+                                                <MoreVertIcon sx={{ color: '#063455' }} />
+                                            </IconButton>
+                                            <Menu
+                                                anchorE2={anchorE2}
+                                                open={Boolean(anchorE2)}
+                                                onClose={handleCloseMenu}
+                                                anchorOrigin={{
+                                                    vertical: 'bottom',
+                                                    horizontal: 'right',
+                                                }}
+                                                transformOrigin={{
+                                                    vertical: 'top',
+                                                    horizontal: 'right',
+                                                }}
+                                                slotProps={{
+                                                    paper: {
+                                                        sx: { mt: -10, ml: -10 }, // small vertical offset
+                                                    },
+                                                }}
+                                            >
+                                                <MenuItem onClick={handleOpenCard}>Card</MenuItem>
+                                                <MenuItem onClick={handleOpenInvoice}>
+                                                    {menuMember &&
+                                                        (menuMember.card_status === 'Expired' ||
+                                                            menuMember.card_status === 'Suspend')
+                                                        ? 'Send Remind'
+                                                        : 'Invoice'}
+                                                </MenuItem>
+                                                <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
+                                            </Menu>
+                                        </TableCell>
+                                        {/* <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Tooltip title="View Profile">
                                                     <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
@@ -334,6 +418,59 @@ const AllMembers = ({ members }) => {
                                                     </IconButton>
                                                 </Tooltip>
                                             </Box>
+                                        </TableCell> */}
+                                        <TableCell align="center">
+                                            <IconButton
+                                                onClick={(e) => setAnchorEl(e.currentTarget)}
+                                                sx={{ color: '#063455' }}
+                                            >
+                                                <MoreVertIcon />
+                                            </IconButton>
+
+                                            <Menu
+                                                anchorEl={anchorEl}
+                                                open={open}
+                                                onClose={() => setAnchorEl(null)}
+                                                anchorOrigin={{
+                                                    vertical: 'bottom',
+                                                    horizontal: 'right',
+                                                }}
+                                                transformOrigin={{
+                                                    vertical: 'top',
+                                                    horizontal: 'right',
+                                                }}
+                                            >
+                                                <MenuItem
+                                                    onClick={() => {
+                                                        router.visit(route('membership.profile', user.id));
+                                                        setAnchorEl(null);
+                                                    }}
+                                                >
+                                                    <Visibility size={18} style={{ marginRight: 10, color: '#063455' }} />
+                                                    View Profile
+                                                </MenuItem>
+
+                                                <MenuItem
+                                                    onClick={() => {
+                                                        router.visit(route('membership.edit', user.id));
+                                                        setAnchorEl(null);
+                                                    }}
+                                                >
+                                                    <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
+                                                    Edit Member
+                                                </MenuItem>
+
+                                                <MenuItem
+                                                    onClick={() => {
+                                                        handleDeleteClick(user);
+                                                        setAnchorEl(null);
+                                                    }}
+                                                    sx={{ color: '#d32f2f' }}
+                                                >
+                                                    <Delete size={18} style={{ marginRight: 10 }} />
+                                                    Delete Member
+                                                </MenuItem>
+                                            </Menu>
                                         </TableCell>
                                     </TableRow>
                                 ))}

@@ -111,7 +111,7 @@ const RoomBookingRequestForm = ({ mode }) => {
                     <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography variant="h5" sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                         {mode === 'create' ? 'Add Room Booking Request' : 'Edit Room Booking Request'}
                     </Typography>
                 </Box>

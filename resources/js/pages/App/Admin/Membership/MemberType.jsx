@@ -78,22 +78,24 @@ const MembersType = ({ memberTypesData }) => {
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Members Type
                         </Typography>
                     </Box>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <Button
                             variant="outlined"
+                            startIcon={<DeleteIcon />}
                             onClick={() => router.get(route('member-types.trashed'))}
                             sx={{
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
+                                borderRadius: '16px',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -102,13 +104,16 @@ const MembersType = ({ memberTypesData }) => {
                         >
                             Deleted Member Types
                         </Button>
-                        <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
+                        <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: '20px' }} />} sx={{ backgroundColor: '#063455', borderRadius: '16px' }} onClick={handleAdd}>
                             Add Type
                         </Button>
                     </div>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Define and manage different membership types offered by the club.
+                </Typography>
 
-                <Grid container spacing={3}>
+                <Grid container spacing={3} style={{ marginTop: 5 }}>
                     {memberTypes.map((type) => (
                         <Grid item xs={12} sm={6} md={4} key={type.id}>
                             <Card sx={{ p: 2, border: '1px solid #ddd' }}>

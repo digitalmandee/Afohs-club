@@ -177,12 +177,12 @@ const RoomScreen = ({ bookings }) => {
                     {/* Search and Filter */}
                     <Row className="align-items-center mt-2 mb-3">
                         <Col>
-                            <Typography variant="h4" component="h2" style={{ color: '#000000', fontWeight: 500, fontSize: '32px' }}>
+                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                                 Room Bookings
                             </Typography>
                         </Col>
-                        <Col xs="auto" className="d-flex gap-3">
-                            <div style={{ position: 'relative', width: '400px', border: '1px solid #121212' }}>
+                        <Col xs="auto" className="d-flex gap-2">
+                            <div style={{ position: 'relative' }}>
                                 <Form.Control
                                     placeholder="Search"
                                     aria-label="Search"
@@ -190,24 +190,33 @@ const RoomScreen = ({ bookings }) => {
                                     onChange={handleSearchChange}
                                     style={{
                                         paddingLeft: '2rem',
-                                        borderColor: '#ced4da',
-                                        borderRadius: '4px',
+                                        borderColor: '#063455',
+                                        borderRadius: '16px',
                                         height: '38px',
                                         fontSize: '0.9rem',
+                                        width: '100%',
+                                        backgroundColor: 'transparent'
                                     }}
+                                    // InputProps={{
+                                    //     startAdornment: (
+                                    //         <InputAdornment position="start">
+                                    //             <Search />
+                                    //         </InputAdornment>
+                                    //     ),
+                                    // }}
                                 />
 
-                                <Search
+                                {/* <Search
                                     style={{
                                         position: 'absolute',
                                         left: '8px',
                                         top: '53%',
                                         transform: 'translateY(-50%)',
-                                        color: '#adb5bd',
+                                        // color: '#adb5bd',
                                         fontSize: '1.5rem',
                                         pointerEvents: 'none',
                                     }}
-                                />
+                                /> */}
                             </div>
 
                             <Button
@@ -215,7 +224,7 @@ const RoomScreen = ({ bookings }) => {
                                 className="d-flex align-items-center gap-1"
                                 style={{
                                     border: '1px solid #063455',
-                                    borderRadius: '0px',
+                                    borderRadius: '16px',
                                     backgroundColor: 'transparent',
                                     color: '#495057',
                                 }}
@@ -231,19 +240,19 @@ const RoomScreen = ({ bookings }) => {
                     <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ fontWeight: 600 }}>Booking ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Booking Date</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Check-In</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Check-Out</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Duration</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Per Day Charge</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Total Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking ID</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Room</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Persons</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Duration</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Total Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -253,16 +262,16 @@ const RoomScreen = ({ bookings }) => {
 
                                         return (
                                             <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell>#{booking.booking_no}</TableCell>
-                                                <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
-                                                <TableCell>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell>{booking.room?.name}</TableCell>
-                                                <TableCell>{booking.persons}</TableCell>
-                                                <TableCell>{durationInDays}</TableCell>
-                                                <TableCell>{booking.per_day_charge}</TableCell>
-                                                <TableCell>{booking.grand_total}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>#{booking.booking_no}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.room?.name}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.persons}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{durationInDays}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.per_day_charge}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.grand_total}</TableCell>
                                                 <TableCell>
                                                     <Badge
                                                         bg=""
@@ -284,10 +293,10 @@ const RoomScreen = ({ bookings }) => {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                        <Button variant="outlined" size="small" color="info" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                        <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', color: '#063455' }}>
                                                             <Visibility fontSize="small" />
                                                         </Button>
-                                                        <Button variant="outlined" size="small" color="secondary" onClick={() => handleShowInvoice(booking)}>
+                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)}>
                                                             View
                                                         </Button>
                                                     </Box>

@@ -200,7 +200,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                     >
                                         <Box
                                             sx={{
-                                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                                // backgroundColor: 'rgba(255, 255, 255, 0.2)',
                                                 borderRadius: '50%',
                                                 width: '60px',
                                                 height: '60px',

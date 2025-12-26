@@ -5,6 +5,7 @@ import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Delete as DeleteIcon } fr
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import { FaEdit } from 'react-icons/fa';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -57,33 +58,37 @@ const ManageCustomer = ({ customerData }) => {
             <Box
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5',
+                    backgroundColor: '#f5f5f5',
                     padding: '20px',
                 }}
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('dashboard'))}>
-                        <IconButton onClick={()=>window.history.back()}>
-                            <ArrowBackIcon sx={{ color: '#555' }} />
+                        <IconButton onClick={() => window.history.back()}>
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Customers
                         </Typography>
                     </Box>
-                    <Button variant="contained" sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={() => router.visit(route('guests.create'))}>
+                    <Button variant="contained"
+                        startIcon={<span style={{
+                            fontSize:'1rem', padding:0, marginBottom:5
+                        }}>+</span>}
+                        sx={{ backgroundColor: '#063455', borderRadius:'16px' }} onClick={() => router.visit(route('guests.create'))}>
                         Add Customer
                     </Button>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>#</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Customer No</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Email</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>#</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Customer No</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Email</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -91,16 +96,16 @@ const ManageCustomer = ({ customerData }) => {
                             {customers.length > 0 ? (
                                 customers.map((customer, index) => (
                                     <TableRow key={customer.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{index + 1}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.customer_no}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.name}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.email}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{index + 1}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.customer_no}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.name}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.email}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => router.visit(route('guests.edit', customer.id))} size="small" title="Edit">
-                                                <EditIcon fontSize="small" />
+                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(customer)} size="small" title="Delete">
-                                                <DeleteIcon fontSize="small" />
+                                                <DeleteIcon fontSize="small" sx={{ color: '#d32f2f' }} />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>

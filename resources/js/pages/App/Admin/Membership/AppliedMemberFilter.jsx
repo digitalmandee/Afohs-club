@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button, Box, TextField, MenuItem, Collapse, Autocomplete, CircularProgress, Typography, Chip } from '@mui/material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
+import { Search, FilterAlt, Delete } from '@mui/icons-material';
 
 const AppliedMemberFilter = () => {
     const props = usePage().props;
@@ -74,7 +75,7 @@ const AppliedMemberFilter = () => {
 
     return (
         <Collapse in={true}>
-            <Box backgroundColor="white" mb={3} p={2} border="1px solid #eee" borderRadius="8px">
+            <Box backgroundColor="transparent" mb={3}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(1, 1fr)', sm: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' } }} gap={2} mb={2}>
                     <Autocomplete
                         open={open}
@@ -97,6 +98,11 @@ const AppliedMemberFilter = () => {
                                 label="Name"
                                 size="small"
                                 fullWidth
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px'
+                                    }
+                                }}
                                 InputProps={{
                                     ...params.InputProps,
                                     endAdornment: (
@@ -135,23 +141,40 @@ const AppliedMemberFilter = () => {
                             </li>
                         )}
                     />
-                    <TextField label="Email" size="small" value={filters.email} onChange={(e) => handleFilterChange('email', e.target.value)} fullWidth />
-                    <TextField label="Phone Number" size="small" value={filters.phone_number} onChange={(e) => handleFilterChange('phone_number', e.target.value)} fullWidth />
-                    <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} fullWidth />
-                    <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} fullWidth>
+                    <TextField label="Email" size="small" value={filters.email} onChange={(e) => handleFilterChange('email', e.target.value)} fullWidth sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }} />
+                    <TextField label="Phone Number" size="small" value={filters.phone_number} onChange={(e) => handleFilterChange('phone_number', e.target.value)} fullWidth sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }} />
+                    <TextField label="CNIC" size="small" value={filters.cnic} onChange={(e) => handleFilterChange('cnic', e.target.value)} fullWidth sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }} />
+                    <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} fullWidth sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px'
+                        }
+                    }}>
                         <MenuItem value="all">All</MenuItem>
                         <MenuItem value="permanent">Permanent Member</MenuItem>
                         <MenuItem value="not_permanent">Not Permanent</MenuItem>
                     </TextField>
-                </Box>
-
-                <Box display="flex" justifyContent="flex-end" gap={1}>
-                    <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none' }}>
-                        Reset
-                    </Button>
-                    <Button variant="contained" size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
-                        Search
-                    </Button>
+                    <Box display="flex" gap={1}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderRadius: '16px', borderColor: '#ddd', textTransform: 'none' }}>
+                            Reset
+                        </Button>
+                        <Button variant="contained"
+                            startIcon={<Search />}
+                            size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#063455', borderRadius: '16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                            Search
+                        </Button>
+                    </Box>
                 </Box>
             </Box>
         </Collapse>

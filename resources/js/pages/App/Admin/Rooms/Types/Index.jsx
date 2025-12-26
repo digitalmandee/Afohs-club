@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Typography, IconButton, Box, Grid, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Button, IconButton, Typography, Box, Grid, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddRoomModal from '@/components/App/Rooms/Types/AddModal';
-
+import { FaEdit } from 'react-icons/fa';
 
 const RoomTypes = ({ roomTypesData }) => {
     // const [open, setOpen] = useState(true);
@@ -71,32 +71,32 @@ const RoomTypes = ({ roomTypesData }) => {
             <Box
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5',
+                    backgroundColor: '#f5f5f5',
                     padding: '20px',
                 }}
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('rooms.manage'))}>
                         <IconButton>
-                            <ArrowBackIcon sx={{ color: '#555' }} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Room Types
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', height: 35, borderRadius:'16px' }} onClick={handleAdd}>
                         Add Type
                     </Button>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>#</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Room Type</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>#</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Room Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -109,10 +109,11 @@ const RoomTypes = ({ roomTypesData }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{type.status}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => handleEdit(type)} size="small" title="Edit">
-                                                <EditIcon fontSize="small" />
+                                                {/* <EditIcon fontSize="small" /> */}
+                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(type)} size="small" title="Delete">
-                                                <DeleteIcon fontSize="small" />
+                                                <DeleteIcon fontSize="small" color='error' />
                                             </IconButton>
                                         </TableCell>
                                     </TableRow>

@@ -108,16 +108,16 @@ const EmployeeDashboard = () => {
                                 { title: 'Total Absent', value: stats.total_absent, icon: AssignmentIcon },
                                 { title: 'Late Arrival', value: stats.total_late, icon: PrintIcon },
                             ].map((item, idx) => (
-                                <Card key={idx} style={{ flex: 1, border: '1px solid #ccc', borderRadius: '8px' }}>
+                                <Card key={idx} style={{ flex: 1, backgroundColor:'#063455', borderRadius: '4px' }}>
                                     <CardContent>
-                                        <Typography variant="body2" color="text.secondary">
+                                        <Typography variant="body2" color="#fff">
                                             {item.title}
                                         </Typography>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography variant="h5" style={{ fontWeight: 'bold' }}>
+                                            <Typography variant="h5" style={{ fontWeight: 'bold', color:"#fff" }}>
                                                 {item.value}
                                             </Typography>
-                                            <div style={{ backgroundColor: '#0a3d62', borderRadius: '8px', padding: '0.5rem' }}>
+                                            <div style={{ borderRadius: '8px', padding: '0.5rem' }}>
                                                 <item.icon style={{ color: '#fff', width: '40px', height: '40px' }} />
                                             </div>
                                         </div>
