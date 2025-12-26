@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment, Pagination, MenuItem, Select, FormControl, InputLabel, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Grid, Box, Chip } from '@mui/material';
-import { Search, FilterAlt, People, CreditCard, Payment } from '@mui/icons-material';
+import { Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment, Pagination, MenuItem, Select, FormControl } from '@mui/material';
+import { Search, FilterAlt, Payment } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
-import { usePage } from '@inertiajs/react';
 import TransactionFilter from './Filter';
 import InvoiceSlip from '../Subscription/Invoice';
 import MembershipInvoiceSlip from '../Membership/Invoice';
@@ -143,15 +142,6 @@ const Transaction = ({ transactions, filters }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
-            <div
-                style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
-                }}
-            > */}
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Recently Joined Section */}
                 <div className="mx-0">
