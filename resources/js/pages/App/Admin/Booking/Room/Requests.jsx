@@ -39,7 +39,7 @@ const BookingRequests = () => {
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between">
                         <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 700, color: '#063455', fontSize: '30px' }}>Room Booking Requests</Typography>
+                            <Typography sx={{ marginLeft: '10px', fontWeight: 700, color: '#063455', fontSize: '30px' }}>Room Request</Typography>
                         </div>
                         <Button
                             variant="contained"
@@ -55,8 +55,10 @@ const BookingRequests = () => {
                             Add Room Request
                         </Button>
                     </Box>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
+                        View and approve special room requests from members or guests</Typography>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px', marginTop:'2rem' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
@@ -86,7 +88,7 @@ const BookingRequests = () => {
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.persons}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.per_day_charge}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                            <Select value={req.status} onChange={(e) => handleStatusChange(req.id, e.target.value)} size="small">
+                                            <Select value={req.status} onChange={(e) => handleStatusChange(req.id, e.target.value)} size="small" sx={{ borderRadius: '16px' }}>
                                                 <MenuItem value="pending">Pending</MenuItem>
                                                 <MenuItem value="approved">Approved</MenuItem>
                                                 <MenuItem value="rejected">Rejected</MenuItem>

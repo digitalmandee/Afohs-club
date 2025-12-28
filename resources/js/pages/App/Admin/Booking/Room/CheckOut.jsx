@@ -104,7 +104,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                 }}
             >
                 <Box sx={{ p: 3 }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography
                             sx={{
                                 marginLeft: '10px',
@@ -116,10 +116,11 @@ const RoomCheckOut = ({ bookings, filters }) => {
                             Room CheckOut
                         </Typography>
                     </Box>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Finalize bills, log checkout times, and free up room availability</Typography>
 
                     {/* Filter Section */}
-                    <Box sx={{ mb: 1, p: 2 }}>
-                        <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+                    <Box sx={{ mb: 1, mt: 4 }}>
+                        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
                             {/* Search Input */}
                             <TextField
                                 placeholder="Search by ID, Member, Guest, Room..."
@@ -156,7 +157,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         textField: {
                                             size: 'small',
                                             fullWidth: false,
-                                            sx: { maxWidth: '180px', backgroundColor: 'transparent' },
+                                            sx: { maxWidth: '250px', backgroundColor: 'transparent' },
                                             onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
                                         },
                                         actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
@@ -177,7 +178,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         textField: {
                                             size: 'small',
                                             fullWidth: false,
-                                            sx: { maxWidth: '180px', backgroundColor: 'transparent' },
+                                            sx: { maxWidth: '250px', backgroundColor: 'transparent' },
                                             onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
                                         },
                                         actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
@@ -188,13 +189,13 @@ const RoomCheckOut = ({ bookings, filters }) => {
                             {/* Search Button */}
                             <Button
                                 variant="contained"
-                                startIcon={<Search/>}
+                                startIcon={<Search />}
                                 onClick={handleSearch}
                                 sx={{
                                     backgroundColor: '#063455',
                                     color: 'white',
                                     textTransform: 'none',
-                                    borderRadius:'16px',
+                                    borderRadius: '16px',
                                     '&:hover': {
                                         backgroundColor: '#052a44',
                                     },
@@ -211,7 +212,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                     borderColor: '#063455',
                                     color: '#063455',
                                     textTransform: 'none',
-                                    borderRadius:'16px',
+                                    borderRadius: '16px',
                                     '&:hover': {
                                         borderColor: '#052a44',
                                         backgroundColor: '#f5f5f5',
@@ -228,7 +229,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                         </Box>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'16px' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
@@ -259,14 +260,14 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                    <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color:'#063455' }}>
+                                                    <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color: '#063455' }}>
                                                         <Visibility fontSize="small" />
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)} sx={{textTransform:'none'}}>
+                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
                                                         View
                                                     </Button>
                                                     <Button variant="outlined" size="small" color='#063455' onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
-                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600, textTransform:'none' }}>
+                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600, textTransform: 'none', color: '#063455' }}>
                                                             Orders
                                                         </Box>
                                                     </Button>

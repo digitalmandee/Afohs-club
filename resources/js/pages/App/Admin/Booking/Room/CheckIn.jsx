@@ -105,7 +105,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                 }}
             >
                 <Box sx={{ p: 3 }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography
                             sx={{
                                 marginLeft: '10px',
@@ -117,10 +117,11 @@ const RoomCheckIn = ({ bookings, filters }) => {
                             Room CheckIn
                         </Typography>
                     </Box>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft:5 }}>Register an arriving guest into an allocated room</Typography>
 
                     {/* Filter Section */}
-                    <Box sx={{ mb: 1, p: 2 }}>
-                        <Box display="flex" gap={1} alignItems="center" flexWrap="wrap">
+                    <Box sx={{ mb: 1, mt:4 }}>
+                        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
                             {/* Search Input */}
                             <TextField
                                 placeholder="Search by ID, Member, Guest, Room..."
@@ -160,7 +161,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                             size: 'small',
                                             fullWidth: false,
                                             sx: {
-                                                maxWidth: '180px',
+                                                maxWidth: '250px',
                                                 // backgroundColor: 'white',
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: '16px',
@@ -187,7 +188,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                             size: 'small',
                                             fullWidth: false,
                                             sx: {
-                                                maxWidth: '180px',
+                                                maxWidth: '250px',
                                                 '& .MuiInputBase-root': {
                                                     borderRadius: '16px',
                                                 },
@@ -243,7 +244,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                         </Box>
                     </Box>
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'16px' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
@@ -281,17 +282,17 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                         flexWrap: 'nowrap', // ensures they stay on the same line
                                                     }}
                                                 >
-                                                    <Button variant="outlined" size="small" color='#063455' style={{ marginRight: '8px', width: 100, textTransform:'none' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                    <Button variant="outlined" size="small" color='#063455' style={{ marginRight: '8px', width: 100, textTransform: 'none', color: '#063455' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                         Check Out
                                                     </Button>
-                                                    <Button size="small" color="#063455" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1 }}>
+                                                    <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1, color: '#063455' }}>
                                                         <Visibility fontSize="small" />
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)} sx={{textTransform:'none'}}>
+                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
                                                         View
                                                     </Button>
                                                     <Button variant="outlined" size="small" color='#063455' onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
-                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600, textTransform:'none' }}>
+                                                        <Box component="span" sx={{ fontSize: '12px', fontWeight: 600, textTransform: 'none', color: '#063455' }}>
                                                             Orders
                                                         </Box>
                                                     </Button>

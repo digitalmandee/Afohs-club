@@ -75,7 +75,7 @@ const RoomChargesType = ({ roomChargesData }) => {
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('rooms.manage'))}>
                         <IconButton>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
@@ -84,12 +84,14 @@ const RoomChargesType = ({ roomChargesData }) => {
                             Room Charges
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
                         Add Charge
                     </Button>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
+                    Configure different types of room-related charges applied to guests</Typography>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>

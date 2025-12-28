@@ -161,17 +161,19 @@ const EventsCompleted = ({ bookings, filters = {} }) => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <Container fluid className="p-4 bg-light">
                             {/* Header */}
-                            <Box className="mb-4 d-flex justify-content-between align-items-center">
+                            <Box className="d-flex justify-content-between align-items-center">
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color: '#063455' }}>
                                         <ArrowBack />
                                     </IconButton>
-                                    <Typography style={{ color: '#003366', fontWeight: 700, fontSize: '30px' }}>Completed Event Bookings</Typography>
+                                    <Typography style={{ color: '#003366', fontWeight: 700, fontSize: '30px' }}>Completed Events</Typography>
                                 </Box>
                             </Box>
+                            <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                                Useful for reporting, billing review, and historical reference</Typography>
 
                             {/* Filter Section */}
-                            <Box sx={{ mb: 3 }}>
+                            <Box sx={{ mb: 3, mt:3 }}>
                                 <Grid container spacing={2} alignItems="center">
                                     {/* Search by Name */}
                                     <Grid item xs={12} md={2.5}>

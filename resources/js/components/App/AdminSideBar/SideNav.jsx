@@ -573,10 +573,17 @@ export default function SideNav({ open, setOpen }) {
                         <IconButton
                             onClick={() => setShowNotification(true)}
                             sx={{
-                                backgroundColor: '#F0F5FF',
+                                backgroundColor: '#063455',
                                 border: 'none',
-                                borderRadius: '4px',
+                                borderRadius: '50px',
                                 p: 1.3,
+                                '& img': {
+                                    filter: 'brightness(0) invert(1)',  // makes PNG white
+                                },
+                                '&:hover': {
+                                    backgroundColor: '#063455',  // same as normal state
+                                    color: '#fff',              // same as normal state
+                                },
                             }}
                         >
                             <img src="/assets/bell-notification.png" alt="" style={{ width: 17, height: 19 }} />
@@ -611,7 +618,7 @@ export default function SideNav({ open, setOpen }) {
                                 sx={{
                                     width: 40,
                                     height: 40,
-                                    borderRadius: '4px',
+                                    borderRadius: '50px',
                                 }}
                             />
                             <Box>

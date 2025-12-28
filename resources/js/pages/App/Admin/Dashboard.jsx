@@ -136,7 +136,7 @@ const Dashboard = () => {
             > */}
             <Box sx={{ p: 2, bgcolor: '#f5f5f5' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography sx={{ fontSize: '30px', fontWeight: 500, color: '#063455' }}>Dashboard</Typography>
+                    <Typography sx={{ fontSize: '30px', fontWeight: 700, color: '#063455' }}>Dashboard</Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
                             select
@@ -144,15 +144,19 @@ const Dashboard = () => {
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
                             sx={{
-                                width: '255px',
+                                width: '200px',
                                 bgcolor: 'white',
                                 '& .MuiOutlinedInput-root': {
-                                    borderRadius: '4px',
-                                    '& .MuiSelect-select': {
-                                        color: '#7F7F7F',
+                                    borderRadius: '16px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '4px',
+                                        '& .MuiSelect-select': {
+                                            color: '#7F7F7F',
+                                        }
                                     },
                                 },
-                            }}
+                            }
+                            }
                             SelectProps={{
                                 IconComponent: () => null,
                             }}
@@ -177,9 +181,9 @@ const Dashboard = () => {
                             onClick={handlePrint}
                             sx={{
                                 bgcolor: '#063455',
-                                '&:hover': { bgcolor: '#052d45' },
+                                '&:hover': { bgcolor: '#063455' },
                                 textTransform: 'none',
-                                borderRadius: '4px',
+                                borderRadius: '16px',
                             }}
                         >
                             Print
@@ -198,7 +202,7 @@ const Dashboard = () => {
                                         sx={{
                                             bgcolor: '#063455',
                                             color: 'white',
-                                            borderRadius: '4px',
+                                            borderRadius: '16px',
                                             // height: '166px',
                                             height: { xs: 'auto', md: '166px' },
                                         }}
@@ -248,7 +252,7 @@ const Dashboard = () => {
                                         sx={{
                                             bgcolor: '#063455',
                                             color: 'white',
-                                            borderRadius: '4px',
+                                            borderRadius: '16px',
                                             height: '166px',
                                         }}
                                     >
@@ -303,7 +307,7 @@ const Dashboard = () => {
                                             bgcolor: '#063455',
                                             color: 'white',
                                             height: '100%',
-                                            borderRadius: '4px',
+                                            borderRadius: '16px',
                                             height: '166px',
                                         }}
                                     >
@@ -349,7 +353,7 @@ const Dashboard = () => {
                                         sx={{
                                             bgcolor: '#063455',
                                             color: 'white',
-                                            borderRadius: '4px',
+                                            borderRadius: '16px',
                                             height: '166px',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -394,7 +398,7 @@ const Dashboard = () => {
                                         sx={{
                                             bgcolor: '#063455',
                                             color: 'white',
-                                            borderRadius: '4px',
+                                            borderRadius: '16px',
                                             height: '166px',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -429,7 +433,7 @@ const Dashboard = () => {
 
                                 {/* Chart */}
                                 <Grid item xs={12}>
-                                    <Card sx={{ borderRadius: '4px' }}>
+                                    <Card sx={{ borderRadius: '16px' }}>
                                         <CardContent sx={{ p: 3 }}>
                                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                                 <Box>
@@ -522,7 +526,7 @@ const Dashboard = () => {
 
                     {/* Right side - Recent Activity - 4/12 width */}
                     <Grid item xs={12} md={hasPermission('dashboard.stats.view') ? 3 : 12}>
-                        <Card sx={{ borderRadius: '4px', height: '100%' }}>
+                        <Card sx={{ borderRadius: '16px', height: '100%' }}>
                             <CardContent sx={{ p: 0 }}>
                                 <Typography variant="h6" sx={{ p: 2, fontWeight: 'bold', borderBottom: '1px solid #eee' }}>
                                     Recent Activity

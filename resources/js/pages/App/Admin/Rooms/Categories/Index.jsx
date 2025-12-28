@@ -71,25 +71,27 @@ const RoomCategories = ({ roomCategoriesData }) => {
             <Box
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5',
+                    backgroundColor: '#f5f5f5',
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('rooms.manage'))}>
                         <IconButton>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ fontWeight: 700, fontSize:'30px', color: '#063455' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Room Categories
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', height:35, borderRadius:'16px' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
                         Add Category
                     </Button>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
+                    Define and manage room classifications based on comfort level and facilities</Typography>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius:'16px' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>

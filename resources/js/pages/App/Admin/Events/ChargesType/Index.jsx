@@ -75,7 +75,7 @@ const EventChargesType = ({ eventChargesData }) => {
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => router.visit(route('rooms.manage'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
@@ -88,8 +88,11 @@ const EventChargesType = ({ eventChargesData }) => {
                         Add Charge
                     </Button>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Includes venue charges, menu pricing, service fees, and extras
+                </Typography>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>

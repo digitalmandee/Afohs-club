@@ -6,7 +6,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
-
+import Tooltip from '@mui/material/Tooltip';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
@@ -62,7 +62,7 @@ const ManageCustomer = ({ customerData }) => {
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('dashboard'))}>
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
@@ -71,24 +71,29 @@ const ManageCustomer = ({ customerData }) => {
                             Customers
                         </Typography>
                     </Box>
+
                     <Button variant="contained"
                         startIcon={<span style={{
-                            fontSize:'1rem', padding:0, marginBottom:5
+                            fontSize: '1.5rem', padding: 0, marginBottom: 5
                         }}>+</span>}
-                        sx={{ backgroundColor: '#063455', borderRadius:'16px' }} onClick={() => router.visit(route('guests.create'))}>
+                        sx={{ backgroundColor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => router.visit(route('guests.create'))}>
                         Add Customer
                     </Button>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    View and manage registered guests currently staying or scheduled to arrive
+                </Typography>
+
+                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px', marginTop:'2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>#</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Customer No</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Email</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                                {/* <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>#</TableCell> */}
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Customer No</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Email</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -96,10 +101,23 @@ const ManageCustomer = ({ customerData }) => {
                             {customers.length > 0 ? (
                                 customers.map((customer, index) => (
                                     <TableRow key={customer.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{index + 1}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.customer_no}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.name}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.email}</TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight: '400' }}>{index + 1}</TableCell> */}
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight: '400' }}>{customer.customer_no}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight: '400' }}>{customer.name}</TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.email}</TableCell> */}
+                                        <TableCell sx={{
+                                            color: '#7F7F7F',
+                                            fontSize: '14px',
+                                            fontWeight: '400',
+                                            maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            <Tooltip title={customer.email} placement="top">
+                                                <span>{customer.email}</span>
+                                            </Tooltip>
+                                        </TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => router.visit(route('guests.edit', customer.id))} size="small" title="Edit">
                                                 <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />

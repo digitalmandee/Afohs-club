@@ -75,7 +75,7 @@ const RoomMiniBar = ({ roomMiniBarData }) => {
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('rooms.manage'))}>
                         <IconButton>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
@@ -84,12 +84,14 @@ const RoomMiniBar = ({ roomMiniBarData }) => {
                             Room Mini Bar
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', borderRadius: '16px', height: 35 }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', borderRadius: '16px', height: 35 }} onClick={handleAdd}>
                         Add Item
                     </Button>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
+                    Track item pricing, consumption, and billing during check-out</Typography>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>

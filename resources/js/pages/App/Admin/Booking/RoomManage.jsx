@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { FilterAlt, Search, Visibility } from '@mui/icons-material';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
+import { Box, Button, Paper, InputAdornment, Table, TableBody, TextField, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Col, Container, Form, Modal, Row } from 'react-bootstrap';
@@ -183,27 +183,30 @@ const RoomScreen = ({ bookings }) => {
                         </Col>
                         <Col xs="auto" className="d-flex gap-2">
                             <div style={{ position: 'relative' }}>
-                                <Form.Control
+                                <TextField
                                     placeholder="Search"
-                                    aria-label="Search"
                                     value={searchTerm}
                                     onChange={handleSearchChange}
-                                    style={{
-                                        paddingLeft: '2rem',
-                                        borderColor: '#063455',
-                                        borderRadius: '16px',
-                                        height: '38px',
-                                        fontSize: '0.9rem',
+                                    size="small"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                            height: '38px',
+                                            fontSize: '0.9rem',
+                                            // '& fieldset': {
+                                            //     borderColor: '#063455',
+                                            // },
+                                        },
                                         width: '100%',
-                                        backgroundColor: 'transparent'
+                                        backgroundColor: 'transparent',
                                     }}
-                                    // InputProps={{
-                                    //     startAdornment: (
-                                    //         <InputAdornment position="start">
-                                    //             <Search />
-                                    //         </InputAdornment>
-                                    //     ),
-                                    // }}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start" sx={{ ml: 1 }}>
+                                                <Search />
+                                            </InputAdornment>
+                                        ),
+                                    }}
                                 />
 
                                 {/* <Search
@@ -225,19 +228,20 @@ const RoomScreen = ({ bookings }) => {
                                 style={{
                                     border: '1px solid #063455',
                                     borderRadius: '16px',
-                                    backgroundColor: 'transparent',
-                                    color: '#495057',
+                                    backgroundColor: '#063455',
+                                    color: '#fff',
                                 }}
                                 onClick={handleFilterShow}
                             >
-                                <FilterAlt fontSize="small" /> Filter
+                                <FilterAlt fontSize="small" style={{ color: '#fff' }} /> Filter
                             </Button>
                         </Col>
+                        <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>List and edit details of all rooms in the system</Typography>
                     </Row>
 
                     {/* TODO: Updated to use filteredBookings from data.bookings */}
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>

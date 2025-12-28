@@ -70,26 +70,29 @@ const EventMenuManage = ({ eventMenusData }) => {
             <Box
                 sx={{
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5',
+                    backgroundColor: '#f5f5f5',
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => router.visit(route('events.dashboard'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ fontWeight: 700, fontSize:'30px', color: '#063455' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Event Menus
                         </Typography>
                     </Box>
 
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none', height:35, borderRadius:'16px' }} onClick={() => router.visit(route('event-menu.create'))}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', textTransform: 'none', height: 35, borderRadius: '16px' }} onClick={() => router.visit(route('event-menu.create'))}>
                         Add Menu
                     </Button>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Assign menu options to events based on package or preference
+                </Typography>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius:'16px' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
@@ -111,7 +114,7 @@ const EventMenuManage = ({ eventMenusData }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{menuCategory.status}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => router.visit(route('event-menu.edit', menuCategory.id))} size="small" title="Edit">
-                                               <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
+                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(menuCategory)} size="small" title="Delete">
                                                 <DeleteIcon fontSize="small" color='error' />
