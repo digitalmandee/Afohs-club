@@ -10,6 +10,7 @@ use App\Http\Controllers\AppliedMemberController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
+use App\Http\Controllers\CorporateMembershipController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
@@ -553,6 +554,26 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('bulk-expire', [FamilyMembersArchiveConroller::class, 'bulkExpire'])->name('membership.family-expiry.bulk-expire');
         });
     });
+
+    // Corporate Membership Routes
+    Route::group(['prefix' => 'admin/corporate-membership'], function () {
+        Route::get('dashboard', [CorporateMembershipController::class, 'index'])->name('corporate-membership.dashboard')->middleware('permission:members.view');
+        Route::get('all', [CorporateMembershipController::class, 'allMembers'])->name('corporate-membership.members')->middleware('permission:members.view');
+        Route::get('create', [CorporateMembershipController::class, 'create'])->name('corporate-membership.add')->middleware('permission:members.create');
+        Route::get('edit/{id}', [CorporateMembershipController::class, 'edit'])->name('corporate-membership.edit')->middleware('permission:members.edit');
+        Route::get('profile/{id}', [CorporateMembershipController::class, 'showMemberProfile'])->name('corporate-membership.profile')->middleware('permission:members.view');
+        Route::get('profile/{id}/family-members', [CorporateMembershipController::class, 'getFamilyMembers'])->name('corporate-membership.profile.family-members')->middleware('permission:members.view');
+        Route::get('family-members', [CorporateMembershipController::class, 'familyMembersIndex'])->name('corporate-membership.family-members')->middleware('permission:members.view');
+        Route::post('store', [CorporateMembershipController::class, 'store'])->name('corporate-membership.store')->middleware('permission:members.create');
+        Route::post('update/{id}', [CorporateMembershipController::class, 'update'])->name('corporate-membership.update')->middleware('permission:members.edit');
+        Route::delete('/{id}', [CorporateMembershipController::class, 'destroy'])->name('corporate-membership.destroy')->middleware('permission:members.delete');
+        Route::get('trashed', [CorporateMembershipController::class, 'trashed'])->name('corporate-membership.trashed')->middleware('permission:members.delete');
+        Route::post('restore/{id}', [CorporateMembershipController::class, 'restore'])->name('corporate-membership.restore')->middleware('permission:members.delete');
+        Route::get('api/search', [CorporateMembershipController::class, 'search'])->name('api.corporate-members.search');
+    });
+
+    // Corporate Member Profile route
+    Route::get('/corporate-members/{id}', [CorporateMembershipController::class, 'showMemberProfile'])->name('corporate-member.profile');
 
     // get member invoice
     Route::get('financial-invoice/{id}', [FinancialController::class, 'getFinancialInvoices'])->name('financial-invoice');

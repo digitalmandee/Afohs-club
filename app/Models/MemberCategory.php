@@ -16,6 +16,11 @@ class MemberCategory extends Model
         'fee',
         'subscription_fee',
         'status',
+        'category_types',  // JSON array: ["primary", "corporate"]
+    ];
+
+    protected $casts = [
+        'category_types' => 'array',
     ];
 
     public function members()

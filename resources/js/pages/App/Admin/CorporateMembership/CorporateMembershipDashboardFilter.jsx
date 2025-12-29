@@ -4,63 +4,19 @@ import { Typography, Button, Box, Dialog, Collapse, Chip, IconButton, TextField,
 import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon, Search } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 
-const styles = {
-    root: {
-        backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
-        fontFamily: 'Arial, sans-serif',
-    },
-    tabButton: {
-        borderRadius: '20px',
-        margin: '0 5px',
-        textTransform: 'none',
-        fontWeight: 'normal',
-        padding: '6px 16px',
-        border: '1px solid #00274D',
-        color: '#00274D',
-    },
-    activeTabButton: {
-        backgroundColor: '#0a3d62',
-        color: 'white',
-        borderRadius: '20px',
-        margin: '0 5px',
-        textTransform: 'none',
-        fontWeight: 'normal',
-        padding: '6px 16px',
-    },
-    filterSection: {
-        mb: 3,
-        border: '1px solid #eee',
-        borderRadius: '8px',
-        p: 2,
-        backgroundColor: '#fff',
-        boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
-    },
-    filterHeader: {
-        p: 0,
-        mb: 1,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-};
-
-const MembershipDashboardFilter = () => {
+const CorporateMembershipDashboardFilter = () => {
     const props = usePage().props;
 
     const [filters, setFilters] = useState({
         sort: props.filters?.sort || 'asc',
         sortBy: props.filters?.sortBy || 'id',
-        orderType: props.filters?.orderType || 'all',
-        memberStatus: props.filters?.memberStatus || 'all',
-        orderStatus: props.filters?.orderStatus || 'all',
-        targetDate: props.filters?.targetDate || '',
         membership_no: props.filters?.membership_no || '',
         name: props.filters?.name || '',
         cnic: props.filters?.cnic || '',
         contact: props.filters?.contact || '',
         card_status: props.filters?.card_status || 'all',
         status: props.filters?.status || 'all',
+        member_category: props.filters?.member_category || 'all', // Changed from member_type
     });
 
     const handleFilterChange = (key, value) => {
@@ -74,23 +30,21 @@ const MembershipDashboardFilter = () => {
         const reset = {
             sort: 'asc',
             sortBy: 'id',
-            orderType: 'all',
-            memberStatus: 'all',
-            orderStatus: 'all',
-            targetDate: '',
             membership_no: '',
             name: '',
             cnic: '',
             contact: '',
+            card_status: 'all',
             status: 'all',
+            member_category: 'all',
         };
         setFilters(reset);
 
-        router.get(route('membership.members'));
+        router.get(route('corporate-membership.members'));
     };
 
     const handleApplyFilters = () => {
-        router.get(route('membership.members'), filters, {
+        router.get(route('corporate-membership.members'), filters, {
             preserveState: true,
             preserveScroll: true,
         });
@@ -104,9 +58,6 @@ const MembershipDashboardFilter = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             if (open) {
-                // If the user has typed something that isn't already in the filter, use that
-                // But typically for autocomplete, we want to search based on input
-                // Here we will use the name filter as the query if it exists
                 if (filters.name) {
                     fetchMembers(filters.name);
                 }
@@ -136,7 +87,7 @@ const MembershipDashboardFilter = () => {
     const fetchMembersByMembershipNo = async (query) => {
         setMembershipNoLoading(true);
         try {
-            const response = await axios.get(route('api.members.search'), {
+            const response = await axios.get(route('api.corporate-members.search'), {
                 params: { query },
             });
             setMembershipNoOptions(response.data.members || []);
@@ -150,7 +101,7 @@ const MembershipDashboardFilter = () => {
     const fetchMembers = async (query) => {
         setLoading(true);
         try {
-            const response = await axios.get(route('api.members.search'), {
+            const response = await axios.get(route('api.corporate-members.search'), {
                 params: { query },
             });
             setOptions(response.data.members || []);
@@ -356,7 +307,27 @@ const MembershipDashboardFilter = () => {
                     <MenuItem value="cancelled">Cancelled</MenuItem>
                     <MenuItem value="pause">Pause</MenuItem>
                 </TextField>
-                {/* Sorting and chip filter sections remain as they are... */}
+                <TextField
+                    select
+                    label="Member Category"
+                    size="small"
+                    value={filters.member_category}
+                    onChange={(e) => handleFilterChange('member_category', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                >
+                    <MenuItem value="all">All</MenuItem>
+                    {props.memberCategories &&
+                        props.memberCategories.map((cat, idx) => (
+                            <MenuItem key={idx} value={cat.id}>
+                                {cat.name}
+                            </MenuItem>
+                        ))}
+                </TextField>
 
                 <Box display="flex" justifyContent="flex-end" gap={1}>
                     <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none', width: '100%', borderRadius: '16px' }}>
@@ -371,4 +342,4 @@ const MembershipDashboardFilter = () => {
     );
 };
 
-export default MembershipDashboardFilter;
+export default CorporateMembershipDashboardFilter;

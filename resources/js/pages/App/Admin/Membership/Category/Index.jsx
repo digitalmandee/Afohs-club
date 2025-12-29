@@ -63,9 +63,7 @@ const MemberCategories = ({ memberCategories }) => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
-                            Member Categories
-                        </Typography>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Member Categories</Typography>
                     </Box>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         <Button
@@ -98,9 +96,7 @@ const MemberCategories = ({ memberCategories }) => {
                         </Button>
                     </div>
                 </Box>
-                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                    Helps in filtering, reporting, and targeted communication.
-                </Typography>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Helps in filtering, reporting, and targeted communication.</Typography>
 
                 <Grid container spacing={3} style={{ marginTop: 5 }}>
                     {categories.map((category) => (
@@ -132,6 +128,9 @@ const MemberCategories = ({ memberCategories }) => {
                                             <strong>Maintenance Fee:</strong> {category.subscription_fee.toLocaleString()} Rs
                                         </Typography>
                                     </Box>
+                                    <Typography variant="body2" color="text.secondary" mb={1}>
+                                        <strong>Category Type:</strong> {category.category_types?.map((t) => t.charAt(0).toUpperCase() + t.slice(1)).join(', ') || 'None'}
+                                    </Typography>
                                     <Typography variant="body2" color="text.secondary">
                                         <strong>Status:</strong> {category.status}
                                     </Typography>

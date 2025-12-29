@@ -850,12 +850,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
 
     const handleSubmit = async () => {
         const errors = {};
-        const allowedMemberTypes = memberTypesData.map((type) => type.id);
-
-        // Member Type validation
-        if (!data.member_type_id || !allowedMemberTypes.includes(Number(data.member_type_id))) {
-            errors.member_type_id = `Member Type is required.`;
-        }
 
         // Category example (add your real logic here)
         if (!data.membership_category) {
@@ -977,35 +971,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                             </Box>
                             {/* Membership Details */}
                             <Grid container spacing={3}>
-                                <Grid item xs={12}>
-                                    <Box>
-                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Member Type *</Typography>
-                                        <Grid container spacing={2}>
-                                            {memberTypesData.map((type) => (
-                                                <Grid item xs={6} sm={4} md={3} key={type.id}>
-                                                    <Box
-                                                        sx={{
-                                                            border: '1px solid #ccc',
-                                                            borderRadius: 1,
-                                                            // p: 1,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            bgcolor: data.member_type_id == type.id ? '#fff' : 'transparent',
-                                                        }}
-                                                    >
-                                                        <Radio checked={data.member_type_id == type.id} onChange={handleChange} value={type.id} name="member_type_id" sx={{ color: '#1976d2' }} />
-                                                        <Typography>{type.name}</Typography>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
-                                        </Grid>
-                                        {fieldErrors.member_type_id && (
-                                            <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                {fieldErrors.member_type_id}
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                </Grid>
                                 <Grid item xs={4}>
                                     <Box>
                                         <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category *</Typography>

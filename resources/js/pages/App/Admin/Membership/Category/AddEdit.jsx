@@ -1,12 +1,17 @@
 import { useEffect, useState } from 'react';
-import { TextField, Button, Paper, Typography, Box, IconButton, MenuItem } from '@mui/material';
+import { TextField, Button, Paper, Typography, Box, IconButton, MenuItem, FormControlLabel, Checkbox, FormControl, FormLabel, FormGroup } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
+// Available category types - add new types here in the future
+const AVAILABLE_TYPES = [
+    { value: 'primary', label: 'Primary' },
+    { value: 'corporate', label: 'Corporate' },
+];
+
 const AddEditMembershipCategory = ({ onBack }) => {
-    // const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
     const { props } = usePage();
     const csrfToken = props._token;
@@ -20,6 +25,7 @@ const AddEditMembershipCategory = ({ onBack }) => {
         fee: '',
         subscription_fee: '',
         status: 'active',
+        category_types: ['primary'], // Default selection
     });
 
     useEffect(() => {
@@ -30,6 +36,7 @@ const AddEditMembershipCategory = ({ onBack }) => {
                 fee: memberCategory.fee ?? '',
                 subscription_fee: memberCategory.subscription_fee ?? '',
                 status: memberCategory.status || 'active',
+                category_types: memberCategory.category_types || ['primary'],
             });
         }
     }, [memberCategory]);
@@ -39,8 +46,27 @@ const AddEditMembershipCategory = ({ onBack }) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
+    const handleCheckboxChange = (typeValue) => {
+        setFormData((prev) => {
+            const currentTypes = prev.category_types || [];
+            if (currentTypes.includes(typeValue)) {
+                // Remove type
+                return { ...prev, category_types: currentTypes.filter((t) => t !== typeValue) };
+            } else {
+                // Add type
+                return { ...prev, category_types: [...currentTypes, typeValue] };
+            }
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate at least one type is selected
+        if (!formData.category_types || formData.category_types.length === 0) {
+            enqueueSnackbar('Please select at least one category type.', { variant: 'warning' });
+            return;
+        }
 
         const dataToSubmit = {
             name: formData.name,
@@ -48,14 +74,13 @@ const AddEditMembershipCategory = ({ onBack }) => {
             fee: formData.fee ? parseInt(formData.fee, 10) : 0,
             subscription_fee: formData.subscription_fee ? parseInt(formData.subscription_fee, 10) : 0,
             status: formData.status,
+            category_types: formData.category_types,
         };
 
         try {
             setLoading(true);
 
             if (isEditMode) {
-                console.log(route('member-categories.update', memberCategory.id));
-
                 await axios.put(route('member-categories.update', memberCategory.id), dataToSubmit, {
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,
@@ -82,15 +107,6 @@ const AddEditMembershipCategory = ({ onBack }) => {
 
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} />
-            <div
-                style={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
-
-                }}
-            > */}
             <div
                 style={{
                     minHeight: '100vh',
@@ -106,7 +122,6 @@ const AddEditMembershipCategory = ({ onBack }) => {
                         display: 'flex',
                         alignItems: 'center',
                         width: '100%',
-                        // maxWidth: '600px',
                         justifyContent: 'flex-start',
                         ml: 4,
                         mb: 2,
@@ -141,6 +156,18 @@ const AddEditMembershipCategory = ({ onBack }) => {
                                 <MenuItem value="active">Active</MenuItem>
                                 <MenuItem value="inactive">Inactive</MenuItem>
                             </TextField>
+                        </Box>
+                        <Box sx={{ mb: 2 }}>
+                            <FormControl component="fieldset">
+                                <FormLabel component="legend" sx={{ color: '#000', fontWeight: 500, mb: 1 }}>
+                                    Category Type (select at least one)
+                                </FormLabel>
+                                <FormGroup row>
+                                    {AVAILABLE_TYPES.map((type) => (
+                                        <FormControlLabel key={type.value} control={<Checkbox checked={formData.category_types?.includes(type.value) || false} onChange={() => handleCheckboxChange(type.value)} />} label={type.label} />
+                                    ))}
+                                </FormGroup>
+                            </FormControl>
                         </Box>
                         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                             <Button variant="outlined" onClick={onBack}>

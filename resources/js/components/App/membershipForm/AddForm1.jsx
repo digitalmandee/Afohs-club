@@ -322,6 +322,9 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         }}
                                         IconComponent={() => <KeyboardArrowDown sx={{ position: 'absolute', right: 8, pointerEvents: 'none' }} />}
                                     >
+                                        <MenuItem value="">
+                                            <em>None (Clear)</em>
+                                        </MenuItem>
                                         {['Dr.', 'Major', 'Gp Capt', 'Air Cdre', 'Lt Col', 'Col', 'Capt', 'Brig', 'Sq Ldr', 'Prof.', 'Flt. Lt', 'AVM', 'AM', 'Wg Cdr', 'Lt', 'AMC', '2/Lt', 'Capt. Dr.', 'Flg Off', 'Sub. Lt', 'Comd (PN)', 'Cdr (PN)', 'Lt (PN)', 'Cdr', 'Lt. Cdr', 'Cdre', 'Rear Admiral', 'Air Marshal', 'Mr'].map((item, index) => (
                                             <MenuItem key={index} value={item}>
                                                 {item}
@@ -529,8 +532,8 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                                         inputProps={{ 'aria-label': 'Without label' }}
                                         IconComponent={() => <KeyboardArrowDown sx={{ position: 'absolute', right: 8, pointerEvents: 'none' }} />}
                                     >
-                                        <MenuItem value="" disabled>
-                                            Choose Gender
+                                        <MenuItem value="">
+                                            <em>None (Clear)</em>
                                         </MenuItem>
                                         <MenuItem value="Male">Male</MenuItem>
                                         <MenuItem value="Female">Female</MenuItem>
