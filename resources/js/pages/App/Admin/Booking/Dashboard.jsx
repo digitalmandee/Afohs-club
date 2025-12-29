@@ -321,13 +321,16 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
             <ThemeProvider theme={theme}>
                 <style>{dialogStyles}</style>
                 <Container fluid className="p-4 bg-light">
-                    <Row className="mb-4 align-items-center">
+                    <Row className="align-items-center">
                         <Col>
                             <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Dashboard</Typography>
                         </Col>
                     </Row>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        Shows key statistics on room occupancy, upcoming check-ins, and recent bookings
+                    </Typography>
 
-                    <Row className="mb-4">
+                    <Row className="mb-4 mt-4">
                         <Col md={6}>
                             <Card
                                 style={{

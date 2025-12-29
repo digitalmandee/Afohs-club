@@ -80,7 +80,7 @@ const SalaryComponent = () => {
                             <IconButton style={{ color: "#063455" }} onClick={() => window.history.back()}>
                                 <ArrowBack />
                             </IconButton>
-                            <Typography sx={{ color: '#063455', fontWeight: 500, fontSize: '30px' }}>
+                            <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                                 Salary Component
                             </Typography>
                         </Box>
@@ -133,20 +133,20 @@ const SalaryComponent = () => {
                             component={Paper}
                             style={{
                                 width: '100%',
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: '1rem',
-                                boxShadow: 'none',
-                                border: '1px solid #ccc',
-                                marginBottom: '24px',
+                                // backgroundColor: '#FFFFFF',
+                                borderRadius: '16px',
+                                // boxShadow: 'none',
+                                // border: '1px solid #ccc',
+                                // marginBottom: '24px',
                             }}
                         >
                             <Table>
-                                <TableHead style={{ backgroundColor: '#E5E5EA' }}>
+                                <TableHead style={{ backgroundColor: '#063455' }}>
                                     <TableRow>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Component Name</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Unit Type</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Deduction</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Status</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Component Name</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Unit Type</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Deduction</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -159,10 +159,10 @@ const SalaryComponent = () => {
                                     ) : (
                                         employeeData.map((employee, index) => (
                                             <TableRow key={index}>
-                                                <TableCell style={{ cursor: 'pointer', fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
+                                                <TableCell style={{ cursor: 'pointer', fontWeight: 400, fontSize: '14px', color: '#7f7f7f' }}>
                                                     {employee.component}
                                                 </TableCell>
-                                                <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
+                                                <TableCell style={{ fontWeight: 400, fontSize: '14px', color: '#7f7f7f' }}>
                                                     {employee.unit}
                                                 </TableCell>
 
@@ -172,7 +172,7 @@ const SalaryComponent = () => {
                                                         style={{
                                                             backgroundColor: '#F14C35',
                                                             color: '#fff',
-                                                            borderRadius: '12px',
+                                                            borderRadius: '16px',
                                                             padding: '2px 12px',
                                                             fontSize: '12px',
                                                             fontWeight: '500',
@@ -191,7 +191,7 @@ const SalaryComponent = () => {
                                                                 employee.status === 'Active' ? '#063455' : '#B0DEFF',
                                                             color:
                                                                 employee.status === 'Active' ? '#fff' : 'black',
-                                                            borderRadius: '12px',
+                                                            borderRadius: '16px',
                                                             padding: '2px 12px',
                                                             fontSize: '12px',
                                                             fontWeight: '500',

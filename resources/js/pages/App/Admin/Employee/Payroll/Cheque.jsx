@@ -96,7 +96,7 @@ const ChequeList = () => {
                             <IconButton style={{ color: "#063455", height: 24, width: 24 }} onClick={() => window.history.back()}>
                                 <ArrowBack />
                             </IconButton>
-                            <Typography sx={{ color: '#063455', fontWeight: 500, fontSize: '30px', marginLeft: 2 }}>
+                            <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px', marginLeft: 2 }}>
                                 Cheque List
                             </Typography>
                         </Box>
@@ -180,19 +180,19 @@ const ChequeList = () => {
                             component={Paper}
                             style={{
                                 width: '100%',
-                                backgroundColor: '#FFFFFF',
-                                borderRadius: '1rem',
-                                boxShadow: 'none',
-                                border: '1px solid #ccc',
+                                // backgroundColor: '#FFFFFF',
+                                borderRadius: '16px',
+                                // boxShadow: 'none',
+                                // border: '1px solid #ccc',
                                 marginBottom: '24px',
                             }}
                         >
                             <Table>
-                                <TableHead style={{ backgroundColor: '#E5E5EA' }}>
+                                <TableHead style={{ backgroundColor: '#063455' }}>
                                     <TableRow>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Name</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Amount</TableCell>
-                                        <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '16px' }}>Status</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Amount</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Status</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -205,18 +205,18 @@ const ChequeList = () => {
                                     ) : (
                                         employeeData.map((employee, index) => (
                                             <TableRow key={index}>
-                                                <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C', }}>
+                                                <TableCell style={{ fontWeight: 400, fontSize: '14px', color: '#7f7f7f' }}>
                                                     {employee.name}
                                                 </TableCell>
-                                                <TableCell style={{ fontWeight: 500, fontSize: '16px', color: '#6C6C6C' }}>
+                                                <TableCell style={{ fontWeight: 400, fontSize: '14px', color: '#7f7f7f' }}>
                                                     {employee.Amount}
                                                 </TableCell>
                                                 <TableCell>
                                                     <span
                                                         style={{
-                                                            fontWeight: 500,
-                                                            fontSize: '16px',
-                                                            color: '#6C6C6C',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            color: '#7f7f7f',
                                                             backgroundColor: employee.status === 'Paid' ? "#B0DEFF" : "#063455",
                                                             color: employee.status === 'Paid' ? "black" : "#FFFFFF",
                                                             borderRadius: '12px',

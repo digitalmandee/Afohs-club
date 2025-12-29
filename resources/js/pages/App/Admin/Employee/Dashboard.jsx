@@ -68,7 +68,7 @@ const EmployeeDashboard = () => {
                         <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                             <Typography
                                 sx={{
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                     fontSize: '30px',
                                     color: '#063455',
                                 }}

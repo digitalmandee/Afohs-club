@@ -73,7 +73,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                         >
                             <Typography
                                 sx={{
-                                    fontWeight: 500,
+                                    fontWeight: 700,
                                     fontSize: '30px',
                                     color: '#063455',
                                 }}
@@ -88,7 +88,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                     sx={{
                                         color: '#063455',
                                         border: '1px solid #063455',
-                                        borderRadius: '8px',
+                                        borderRadius: '16px',
                                     }}
                                     disabled={loading}
                                 >
@@ -98,11 +98,12 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                     startIcon={<Settings />}
                                     style={{
                                         color: '#063455',
-                                        backgroundColor: '#FFFFFF',
+                                        // backgroundColor: '#FFFFFF',
                                         textTransform: 'none',
                                         border: '1px solid #7F7F7F',
                                         fontWeight: 500,
                                         fontSize: '14px',
+                                        borderRadius:'16px'
                                     }}
                                     onClick={() => router.visit(route('employees.payroll.settings'))}
                                 >
@@ -112,11 +113,12 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                     startIcon={<Assessment />}
                                     style={{
                                         color: '#063455',
-                                        backgroundColor: '#FFFFFF',
+                                        // backgroundColor: '#FFFFFF',
                                         textTransform: 'none',
                                         border: '1px solid #7F7F7F',
                                         fontWeight: 500,
                                         fontSize: '14px',
+                                        borderRadius:'16px'
                                     }}
                                     onClick={() => router.visit(route('employees.payroll.salaries'))}
                                 >
@@ -130,6 +132,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                         textTransform: 'none',
                                         fontWeight: 500,
                                         fontSize: '14px',
+                                        borderRadius:'16px'
                                     }}
                                     onClick={() => router.visit(route('employees.payroll.process'))}
                                 >
@@ -185,7 +188,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                         sx={{
                                             background: item.color,
                                             color: 'white',
-                                            borderRadius: '4px',
+                                            borderRadius: '16px',
                                             height: '140px',
                                             display: 'flex',
                                             alignItems: 'center',
@@ -239,9 +242,10 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                             color: '#063455',
                                             borderColor: '#063455',
                                             textTransform: 'none',
+                                            borderRadius:'16px',
                                             '&:hover': {
                                                 borderColor: '#052d45',
-                                                backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                // backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                             },
                                         }}
                                     >
@@ -254,6 +258,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                             color: '#063455',
                                             borderColor: '#063455',
                                             textTransform: 'none',
+                                            borderRadius:'16px',
                                             '&:hover': {
                                                 borderColor: '#052d45',
                                                 backgroundColor: 'rgba(6, 52, 85, 0.04)',
@@ -267,20 +272,20 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                             <TableContainer
                                 component={Paper}
                                 sx={{
-                                    borderRadius: '12px',
-                                    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                                    border: '1px solid #e0e0e0',
+                                    borderRadius: '16px',
+                                    // boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+                                    // border: '1px solid #e0e0e0',
                                 }}
                             >
                                 <Table>
                                     <TableHead>
-                                        <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                            <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Period Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Date Range</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employees</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Net Amount</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                        <TableRow sx={{ backgroundColor: '#063455' }}>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Period Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Date Range</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Employees</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Net Amount</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -306,15 +311,15 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                                     }}
                                                     onClick={() => router.visit(route('employees.payroll.payslips.period', period.id))}
                                                 >
-                                                    <TableCell sx={{ fontWeight: 500 }}>{period.period_name}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{period.period_name}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                         {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                         <Chip label={period.status} size="small" color={period.status === 'completed' ? 'success' : period.status === 'processing' ? 'warning' : period.status === 'paid' ? 'primary' : 'default'} />
                                                     </TableCell>
-                                                    <TableCell>{period.total_employees || 0}</TableCell>
-                                                    <TableCell>{formatCurrency(period.total_net_amount || 0)}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{period.total_employees || 0}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{formatCurrency(period.total_net_amount || 0)}</TableCell>
                                                     <TableCell>
                                                         <Button
                                                             size="small"

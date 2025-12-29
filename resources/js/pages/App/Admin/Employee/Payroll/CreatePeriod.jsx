@@ -152,7 +152,7 @@ const CreatePeriod = () => {
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Box>
-                            <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize:'30px', color: '#063455' }}>
                                 Create Payroll Period
                             </Typography>
                             {/* <Typography variant="body2" color="textSecondary">

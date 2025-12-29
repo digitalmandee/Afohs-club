@@ -161,7 +161,7 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <Container fluid className="p-4 bg-light">
                             {/* Header */}
-                            <Box className="mb-4 d-flex justify-content-between align-items-center">
+                            <Box className="d-flex justify-content-between align-items-center">
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color: '#063455' }}>
                                         <ArrowBack />
@@ -169,9 +169,12 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                                     <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Cancelled Event Bookings</Typography>
                                 </Box>
                             </Box>
+                            <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                                Maintains transparency and record-keeping for administrative purposes
+                            </Typography>
 
                             {/* Filter Section */}
-                            <Box sx={{ mb: 3 }}>
+                            <Box sx={{ mb: 3, mt: 3 }}>
                                 <Grid container spacing={2} alignItems="center">
                                     {/* Search by Name */}
                                     <Grid item xs={12} md={2.5}>
@@ -416,17 +419,17 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                             </Box>
 
                             {/* Bookings Table */}
-                            <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius:'16px' }}>
+                            <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
                                 <Table>
                                     <TableHead>
                                         <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
-                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace:'nowrap' }}>Booking No</TableCell>
-                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace:'nowrap' }}>Guest Name</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking No</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Guest Name</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Event</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Venue</TableCell>
-                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace:'nowrap' }}>Booking Date</TableCell>
-                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace:'nowrap' }}>Event Date</TableCell>
-                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace:'nowrap' }}>Cancelled Date</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Event Date</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Cancelled Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
@@ -443,7 +446,7 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.updated_at ? dayjs(booking.updated_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                            <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color:'#063455' }}>
+                                                            <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color: '#063455' }}>
                                                                 <Visibility fontSize="small" />
                                                             </Button>
                                                             <Button

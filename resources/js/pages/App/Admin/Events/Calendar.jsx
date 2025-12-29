@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DayPilot, DayPilotScheduler } from 'daypilot-pro-react';
 import axios from 'axios';
 import moment from 'moment';
-import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Autocomplete } from '@mui/material';
 import { Modal } from 'react-bootstrap';
 import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
@@ -46,11 +46,11 @@ const EventCalendar = () => {
                 // Determine booking type and display info
                 const isCustomerBooking = booking.customer && !booking.member;
                 const isMemberBooking = booking.member && !booking.customer;
-                
+
                 let displayText = booking.booked_by || 'N/A';
                 let bookingTypeInfo = '';
                 let contactInfo = booking.mobile || 'N/A';
-                
+
                 if (isCustomerBooking) {
                     bookingTypeInfo = `Customer: ${booking.customer.name}`;
                 } else if (isMemberBooking) {
@@ -58,7 +58,7 @@ const EventCalendar = () => {
                 } else {
                     bookingTypeInfo = 'General Booking';
                 }
-                
+
                 // Handle overnight events (when end time is earlier than start time)
                 let endDateTime = `${booking.event_date}T${booking.event_time_to}`;
                 if (booking.event_time_to < booking.event_time_from) {
@@ -89,14 +89,13 @@ const EventCalendar = () => {
                             <div style="margin: 8px 0; padding: 6px; background: #f0f8ff; border-radius: 4px;">
                                 <a href="#" onclick="window.updateEventBooking('${booking.id}'); return false;" 
                                    style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Update booking</a>
-                                ${
-                                    booking.status === 'confirmed'
-                                        ? `
+                                ${booking.status === 'confirmed'
+                            ? `
                                 <a href="#" onclick="window.completeEventBooking('${booking.id}'); return false;" 
                                    style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Complete Booking</a>
                                 `
-                                        : ''
-                                }
+                            : ''
+                        }
                             </div>
                             
                             <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
@@ -187,7 +186,7 @@ const EventCalendar = () => {
 
     const startDate = moment(`${year}-${month}-01`, 'YYYY-MM-DD').format('YYYY-MM-DD');
     const days = moment(`${year}-${month}`, 'YYYY-MM').daysInMonth();
-    
+
     const config = {
         locale: 'en-us',
         timeHeaders: [{ groupBy: 'Month' }, { groupBy: 'Day', format: 'd' }],
@@ -321,28 +320,43 @@ const EventCalendar = () => {
             // alert('Error cancelling booking. Please try again.');
         }
     };
+    const monthNames = moment.months().map((monthName, index) => ({
+        value: String(index + 1).padStart(2, '0'),
+        label: monthName
+    }));
+
+    const yearOptions = Array.from({ length: 10 }, (_, i) => {
+        const yearNum = moment().year() - 5 + i;
+        return {
+            value: String(yearNum),
+            label: yearNum
+        };
+    });
 
     return (
         <>
             {/* <SideNav open={open} toggleDrawer={toggleDrawer} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
-                    backgroundColor:'#f5f5f5'
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5'
                 }}
             >
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color:'#063455' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color: '#063455' }}>
                             <ArrowBack />
                         </IconButton>
-                        <Typography style={{ fontWeight:'700', fontSize:'30px', color: '#063455' }}>Event Calender</Typography>
+                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Event Calender</Typography>
                     </Box>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        Helps avoid clashes and manage venue availability efficiently
+                    </Typography>
 
                     {/* Month and Year Selectors */}
-                    <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-                        <FormControl sx={{ minWidth: 150 }}>
+                    <Box sx={{ display: 'flex', gap: 2, mb: 3, mt: 3 }}>
+                        {/* <FormControl sx={{ minWidth: 150 }}>
                             <InputLabel>Select Month</InputLabel>
                             <Select value={month} onChange={handleMonthChange} label="Select Month">
                                 {moment.months().map((monthName, index) => (
@@ -351,9 +365,29 @@ const EventCalendar = () => {
                                     </MenuItem>
                                 ))}
                             </Select>
-                        </FormControl>
+                        </FormControl> */}
+                        <Autocomplete
+                            value={monthNames.find(m => m.value === month) || null}
+                            onChange={(e, newValue) => handleMonthChange({ target: { value: newValue?.value || '' } })}
+                            options={monthNames}
+                            getOptionLabel={(option) => option.label}
+                            isOptionEqualToValue={(option, value) => option.value === value?.value}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Select Month"
+                                    size="small"
+                                    sx={{
+                                        minWidth: 200,
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
 
-                        <FormControl sx={{ minWidth: 150 }}>
+                        {/* <FormControl sx={{ minWidth: 150 }}>
                             <InputLabel>Select Year</InputLabel>
                             <Select value={year} onChange={handleYearChange} label="Select Year">
                                 {Array.from({ length: 10 }, (_, i) => moment().year() - 5 + i).map((yearOption) => (
@@ -362,7 +396,27 @@ const EventCalendar = () => {
                                     </MenuItem>
                                 ))}
                             </Select>
-                        </FormControl>
+                        </FormControl> */}
+                        <Autocomplete
+                            value={yearOptions.find(y => y.value === year) || null}
+                            onChange={(e, newValue) => handleYearChange({ target: { value: newValue?.value || '' } })}
+                            options={yearOptions}
+                            getOptionLabel={(option) => option.label}
+                            isOptionEqualToValue={(option, value) => option.value === value?.value}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Select Year"
+                                    size="small"
+                                    sx={{
+                                        minWidth: 150,
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
                     </Box>
 
                     {/* Legend */}

@@ -175,7 +175,7 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                             <IconButton onClick={() => window.history.back()}>
                                 <ArrowBackIcon sx={{color: '#063455'}} />
                             </IconButton>
-                            <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+                            <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                                 Create Salary Structure
                             </Typography>
                         </Box>

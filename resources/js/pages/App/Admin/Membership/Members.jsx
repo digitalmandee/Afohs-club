@@ -371,34 +371,6 @@ const AllMembers = ({ members }) => {
                                             >
                                                 <MoreVertIcon sx={{ color: '#063455' }} />
                                             </IconButton>
-                                            <Menu
-                                                anchorE2={anchorE2}
-                                                open={Boolean(anchorE2)}
-                                                onClose={handleCloseMenu}
-                                                anchorOrigin={{
-                                                    vertical: 'bottom',
-                                                    horizontal: 'right',
-                                                }}
-                                                transformOrigin={{
-                                                    vertical: 'top',
-                                                    horizontal: 'right',
-                                                }}
-                                                slotProps={{
-                                                    paper: {
-                                                        sx: { mt: -10, ml: -10 }, // small vertical offset
-                                                    },
-                                                }}
-                                            >
-                                                <MenuItem onClick={handleOpenCard}>Card</MenuItem>
-                                                <MenuItem onClick={handleOpenInvoice}>
-                                                    {menuMember &&
-                                                        (menuMember.card_status === 'Expired' ||
-                                                            menuMember.card_status === 'Suspend')
-                                                        ? 'Send Remind'
-                                                        : 'Invoice'}
-                                                </MenuItem>
-                                                <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
-                                            </Menu>
                                         </TableCell>
                                         {/* <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -476,6 +448,34 @@ const AllMembers = ({ members }) => {
                                 ))}
                             </TableBody>
                         </Table>
+                        <Menu
+                            anchorE2={anchorE2}
+                            open={Boolean(anchorE2)}
+                            onClose={handleCloseMenu}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                        slotProps={{
+                            paper: {
+                                sx: { mt: -10, ml: -10 }, // small vertical offset
+                            },
+                        }}
+                        >
+                            <MenuItem onClick={handleOpenCard}>Card</MenuItem>
+                            <MenuItem onClick={handleOpenInvoice}>
+                                {menuMember &&
+                                    (menuMember.card_status === 'Expired' ||
+                                        menuMember.card_status === 'Suspend')
+                                    ? 'Send Remind'
+                                    : 'Invoice'}
+                            </MenuItem>
+                            <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
+                        </Menu>
                         <Box display="flex" justifyContent="center" mt={2}>
                             {members.links?.map((link, index) => (
                                 <Button

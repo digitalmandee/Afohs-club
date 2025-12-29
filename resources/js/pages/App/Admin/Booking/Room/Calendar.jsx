@@ -94,7 +94,7 @@ const RoomCalendar = () => {
     const getStatusColor = (status) => {
         const colors = {
             'booked': '#007bff',
-            'confirmed': '#6f42c1', 
+            'confirmed': '#6f42c1',
             'checked_in': '#ffc107',
             'checked_out': '#28a745',
             'cancelled': '#dc3545',
@@ -156,8 +156,8 @@ const RoomCalendar = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
-                    backgroundColor:'#f5f5f5'
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5'
                 }}
             >
                 <Box px={2}>
@@ -165,12 +165,14 @@ const RoomCalendar = () => {
                         <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                             <ArrowBack />
                         </IconButton>
-                        <Typography style={{ color: '#063455', fontSize: '30px', fontWeight:'700' }}>
+                        <Typography style={{ color: '#063455', fontSize: '30px', fontWeight: '700' }}>
                             Room Booking Calendar
                         </Typography>
                     </Box>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
+                        Helps avoid double-booking and see occupancy trends at a glance</Typography>
 
-                    <Box display="flex" gap={2} mb={2} mt={2}>
+                    <Box display="flex" gap={2} mb={2} mt={3}>
                         <FormControl variant="outlined" size="small">
                             <InputLabel id="month-label">Month</InputLabel>
                             <Select labelId="month-label" value={month} onChange={(e) => setMonth(e.target.value)} label="Month">

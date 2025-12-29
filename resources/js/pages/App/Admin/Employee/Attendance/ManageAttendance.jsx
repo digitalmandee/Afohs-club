@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
-import { ArrowBack } from '@mui/icons-material';
+import { ArrowBack, Search } from '@mui/icons-material';
 import { Button, TextField, Checkbox, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Select, MenuItem, Snackbar, Alert, Box, Typography } from '@mui/material';
 import axios from 'axios';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { FaEdit } from 'react-icons/fa';
 // import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 // import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 // import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -128,38 +129,66 @@ const ManageAttendance = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
+                    minHeight: '100vh',
                     backgroundColor: '#F6F6F6',
                 }}
             >
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
+                            <Typography style={{ fontWeight: '700', color: '#063455', fontSize: '30px' }}>
                                 Manage Attendance
                             </Typography>
                         </div>
 
-                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2, mb: 2 }}>
+                        <Box sx={{ mb: 3 }}>
                             {/* Search Input */}
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 {/* Search Field */}
                                 <Box sx={{ display: 'flex', gap: 2 }}>
-                                    <TextField 
-                                        size="small" 
-                                        placeholder="Search by name or employee ID..." 
-                                        value={searchQuery} 
+                                    <TextField
+                                        size="small"
+                                        placeholder="Search by name or employee ID..."
+                                        value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         onKeyPress={handleKeyPress}
-                                        sx={{ width: 350 }} 
+                                        sx={{
+                                            width: 300,
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+                                            },
+                                        }}
                                     />
-                                    <Button 
-                                        variant="contained" 
-                                        onClick={handleSearch} 
-                                        sx={{ 
-                                            backgroundColor: '#063455', 
-                                            color: 'white', 
+                                    {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker label="Select Date" value={date} onChange={(newValue) => setDate(newValue)} renderInput={(params) => <TextField {...params} size="small" />} />
+                                    </LocalizationProvider> */}
+                                    <TextField
+                                        label="Select Date"
+                                        type="date"
+                                        size="small"
+                                        value={date}
+                                        onChange={(e) => setDate(e.target.value)}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderRadius: '16px',
+                                            },
+                                        }}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<Search/>}
+                                        onClick={handleSearch}
+                                        sx={{
+                                            backgroundColor: '#063455',
+                                            color: 'white',
                                             textTransform: 'none',
+                                            borderRadius: '16px',
                                             '&:hover': {
                                                 backgroundColor: '#063455',
                                             },
@@ -175,38 +204,34 @@ const ManageAttendance = () => {
                                                 color: '#063455',
                                                 borderColor: '#063455',
                                                 textTransform: 'none',
+                                                borderRadius: '16px',
                                                 '&:hover': {
                                                     borderColor: '#052d45',
-                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                    // backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                                 },
                                             }}
                                         >
-                                            Clear
+                                            Reset
                                         </Button>
                                     )}
                                 </Box>
-
-                                {/* Date Picker on the Right */}
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DatePicker label="Select Date" value={date} onChange={(newValue) => setDate(newValue)} renderInput={(params) => <TextField {...params} size="small" />} />
-                                </LocalizationProvider>
                             </Box>
                         </Box>
 
-                        <Box sx={{ backgroundColor: '#FFFFFF', padding: 2, borderRadius: 2 }}>
+                        <Box>
 
-                            <TableContainer component={Paper}>
+                            <TableContainer component={Paper} sx={{borderRadius:'16px', overflowX:'auto'}}>
                                 <Table>
-                                    <TableHead style={{ backgroundColor: '#E5E5EA' }}>
+                                    <TableHead style={{ backgroundColor: '#063455' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>#</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Employee Name</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Designation</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Attendance</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Leave Category</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Check-In</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Check-Out</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#000' }}>Action</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>#</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Employee Name</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Designation</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Attendance</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Leave Category</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Check-In</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Check-Out</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Action</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -219,9 +244,9 @@ const ManageAttendance = () => {
                                         ) : attendances.length > 0 ? (
                                             attendances.map((row, index) => (
                                                 <TableRow key={row.id}>
-                                                    <TableCell>{index + 1}</TableCell>
-                                                    <TableCell>{row.employee.name}</TableCell>
-                                                    <TableCell>{row.employee.designation}</TableCell>
+                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>{index + 1}</TableCell>
+                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>{row.employee.name}</TableCell>
+                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>{row.employee.designation}</TableCell>
                                                     <TableCell>
                                                         <Checkbox
                                                             checked={['present', 'late'].includes(row.status)} // If present or late, show checked
@@ -242,10 +267,10 @@ const ManageAttendance = () => {
                                                         </Select>
                                                     </TableCell>
 
-                                                    <TableCell>
+                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>
                                                         <TextField size="small" type="time" value={row.check_in || ''} onChange={(e) => handleInputChange(row.id, 'check_in', e.target.value)} style={{ width: '100px' }} />
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>
                                                         <TextField size="small" type="time" value={row.check_out || ''} onChange={(e) => handleInputChange(row.id, 'check_out', e.target.value)} style={{ width: '100px' }} />
                                                     </TableCell>
                                                     <TableCell>
@@ -262,8 +287,8 @@ const ManageAttendance = () => {
                                                             size="small"
                                                             disabled={loadingRows[row.id] || false} // Disable only if that row is loading
                                                             style={{
-                                                                backgroundColor: row.check_in && row.check_out ? '#e3f2fd' : '#0a3d62',
-                                                                color: row.check_in && row.check_out ? '#0a3d62' : 'white',
+                                                                backgroundColor: row.check_in && row.check_out ? '#e3f2fd' : '#063455',
+                                                                color: row.check_in && row.check_out ? '#063455' : 'white',
                                                                 textTransform: 'none',
                                                             }}
                                                         >

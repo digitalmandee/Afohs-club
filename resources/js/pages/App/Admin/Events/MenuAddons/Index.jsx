@@ -75,21 +75,24 @@ const EventMenuAddons = ({ eventMenuAddOnsData }) => {
                     padding: '20px',
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => router.visit(route('events.dashboard'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                            Event Menu Addons
+                            Menu Addons
                         </Typography>
                     </Box>
                     <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
                         Add Addon
                     </Button>
                 </Box>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Includes extra dishes, décor items, or special service requests
+                </Typography>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
+                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
