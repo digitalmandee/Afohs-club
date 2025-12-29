@@ -216,7 +216,7 @@ const ProcessPayroll = () => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{color:'#063455'}} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                             Process Payroll
                         </Typography>
                     </Box>

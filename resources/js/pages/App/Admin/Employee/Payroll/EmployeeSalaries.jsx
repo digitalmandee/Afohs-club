@@ -92,7 +92,7 @@ const EmployeeSalaries = () => {
                             <IconButton onClick={() => window.history.back()}>
                                 <ArrowBackIcon sx={{color: '#063455'}} />
                             </IconButton>
-                            <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                            <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                                 Employee Salaries
                             </Typography>
                         </Box>
@@ -103,6 +103,7 @@ const EmployeeSalaries = () => {
                                 onClick={() => router.visit(route('employees.payroll.allowance-types'))}
                                 sx={{
                                     backgroundColor: '#063455',
+                                    borderRadius:'16px',
                                     '&:hover': { backgroundColor: '#052d45' },
                                 }}
                             >
@@ -115,6 +116,7 @@ const EmployeeSalaries = () => {
                                 sx={{
                                     color: '#063455',
                                     borderColor: '#063455',
+                                    borderRadius:'16px',
                                     '&:hover': { borderColor: '#052d45' },
                                 }}
                             >
@@ -124,7 +126,7 @@ const EmployeeSalaries = () => {
                     </Box>
 
                     {/* Search and Actions */}
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, mt:2 }}>
                         <TextField
                             placeholder="Search employees..."
                             value={searchTerm}
@@ -132,14 +134,14 @@ const EmployeeSalaries = () => {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <SearchIcon sx={{ m: 0, p: 0 }} />
+                                        <SearchIcon />
                                     </InputAdornment>
                                 ),
                             }}
                             sx={{
                                 '& .MuiInputBase-root': {
                                     height: 40, // 🔥 Controls total height
-                                    borderRadius: 1,
+                                    borderRadius: '16px',
                                     width: 215,
                                 },
                                 '& .MuiInputBase-input': {
@@ -150,17 +152,17 @@ const EmployeeSalaries = () => {
                     </Box>
 
                     {/* Employees Table */}
-                    <Card>
-                        <TableContainer component={Paper}>
+                    {/* <Card> */}
+                        <TableContainer component={Paper} sx={{borderRadius:'16px'}}>
                             <Table>
                                 <TableHead>
-                                    <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Employee</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Department</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Basic Salary</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Effective From</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#063455' }}>Actions</TableCell>
+                                    <TableRow sx={{ backgroundColor: '#063455' }}>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Employee</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Department</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Basic Salary</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Effective From</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -254,7 +256,7 @@ const EmployeeSalaries = () => {
                                 />
                             </Box>
                         )}
-                    </Card>
+                    {/* </Card> */}
 
                     {/* Snackbar for notifications */}
                     <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>

@@ -143,7 +143,7 @@ const PayrollPeriods = () => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{color:'#063455'}} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                             Payroll Periods
                         </Typography>
                     </Box>
@@ -161,18 +161,18 @@ const PayrollPeriods = () => {
                 </Box>
 
                 {/* Periods Table */}
-                <Card>
-                    <TableContainer component={Paper}>
+                {/* <Card> */}
+                    <TableContainer component={Paper} sx={{borderRadius:'16px', overflowX:'auto'}}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Period Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Date Range</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Pay Date</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employees</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Period Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Date Range</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Pay Date</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Employees</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Net Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -191,19 +191,19 @@ const PayrollPeriods = () => {
                                 ) : (
                                     periods.map((period) => (
                                         <TableRow key={period.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                     {period.period_name}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                 {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
                                             </TableCell>
-                                            <TableCell>{period.pay_date ? new Date(period.pay_date).toLocaleDateString() : 'Not Set'}</TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{period.pay_date ? new Date(period.pay_date).toLocaleDateString() : 'Not Set'}</TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                 <Chip label={period.status} size="small" color={getStatusColor(period.status)} />
                                             </TableCell>
-                                            <TableCell>{period.total_employees || 0}</TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{period.total_employees || 0}</TableCell>
                                             <TableCell>{formatCurrency(period.total_net_amount || 0)}</TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -215,15 +215,15 @@ const PayrollPeriods = () => {
 
                                                     {period.status === 'draft' && (
                                                         <Tooltip title="Process Payroll">
-                                                            <IconButton size="small" onClick={() => router.visit(route('employees.payroll.process'))} sx={{ color: '#2e7d32' }}>
+                                                            <IconButton size="small" onClick={() => router.visit(route('employees.payroll.process'))} sx={{ color: '#063455' }}>
                                                                 <PlayArrowIcon fontSize="small" />
                                                             </IconButton>
                                                         </Tooltip>
                                                     )}
 
                                                     <Tooltip title="More Actions">
-                                                        <IconButton size="small" onClick={(e) => handleMenuClick(e, period)} sx={{ color: '#666' }}>
-                                                            <MoreVertIcon fontSize="small" />
+                                                        <IconButton size="small" onClick={(e) => handleMenuClick(e, period)} sx={{ color: '#063455' }}>
+                                                            <MoreVertIcon fontSize="small" sx={{color:'#063455'}} />
                                                         </IconButton>
                                                     </Tooltip>
                                                 </Box>
@@ -255,7 +255,7 @@ const PayrollPeriods = () => {
                             />
                         </Box>
                     )}
-                </Card>
+                {/* </Card> */}
 
                 {/* Context Menu */}
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleCloseMenu}>

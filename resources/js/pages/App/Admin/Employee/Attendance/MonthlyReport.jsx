@@ -49,18 +49,21 @@ const MonthlyReport = () => {
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
-                    minHeight:'100vh',
+                    minHeight: '100vh',
                     backgroundColor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-                            <Typography variant="h5" style={{ fontWeight: '600', color:'#063455' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="h5" style={{ fontWeight: '600', color: '#063455' }}>
                                 Monthly Attendance Report
                             </Typography>
                         </div>
-                        <Box sx={{ padding: 3, borderRadius: 2 }}>
+                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                           Supports planning, payroll preparation, and management review
+                        </Typography>
+                        <Box sx={{ padding: 3, borderRadius: 2, marginTop:'0.1rem' }}>
                             {/* Header Section */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                                 <Box sx={{ display: 'flex', gap: 2 }}>{/* Search Input - can be implemented later */}</Box>
@@ -245,7 +248,7 @@ const MonthlyReport = () => {
                             </div>
 
                             {/* Pagination */}
-                            <div className="d-flex justify-content-end mt-4" style={{marginTop: '4rem'}}>
+                            <div className="d-flex justify-content-end mt-4" style={{ marginTop: '4rem' }}>
                                 <Pagination count={totalPages} page={currentPage} onChange={(e, page) => setCurrentPage(page)} shape="rounded" style={{ color: '#E0E8F0' }} />
                             </div>
                         </Box>

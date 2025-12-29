@@ -7,7 +7,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddMemberModal from '@/components/App/MemberTypes/AddModal';
-
+import { FaEdit } from 'react-icons/fa';
 const MembersType = ({ memberTypesData }) => {
     // const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -96,6 +96,7 @@ const MembersType = ({ memberTypesData }) => {
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
                                 borderRadius: '16px',
+                                textTransform:'none',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -104,7 +105,7 @@ const MembersType = ({ memberTypesData }) => {
                         >
                             Deleted Member Types
                         </Button>
-                        <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: '20px' }} />} sx={{ backgroundColor: '#063455', borderRadius: '16px' }} onClick={handleAdd}>
+                        <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: '20px' }} />} sx={{ backgroundColor: '#063455', borderRadius: '16px', textTransform:'none' }} onClick={handleAdd}>
                             Add Type
                         </Button>
                     </div>
@@ -130,10 +131,10 @@ const MembersType = ({ memberTypesData }) => {
 
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={handleEdit}>
-                        <EditIcon sx={{ mr: 1 }} /> Edit
+                        <FaEdit size={16} style={{ marginRight: 15, color:'#f57c00' }} /> Edit
                     </MenuItem>
                     <MenuItem onClick={handleDelete}>
-                        <DeleteIcon sx={{ mr: 1 }} /> Delete
+                        <DeleteIcon color='error' sx={{ mr: 1 }} /> Delete
                     </MenuItem>
                 </Menu>
             </Box>

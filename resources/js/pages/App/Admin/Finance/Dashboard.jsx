@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
 import { People, CheckCircle, Timer, Cancel, BarChart, EventNote, CardMembership, Fastfood, Print, Payment } from '@mui/icons-material';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { Table, Typography, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField } from '@mui/material';
 import { router } from '@inertiajs/react';
 import InvoiceSlip from '../Subscription/Invoice';
 import MembershipInvoiceSlip from '../Membership/Invoice';
@@ -95,27 +95,15 @@ const Dashboard = ({ statistics, recent_transactions }) => {
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                 <Container fluid>
                     {/* Header */}
-                    <Row className="align-items-center mb-4">
+                    <Row className="align-items-center">
                         <Col xs="auto">
                             <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <h2 style={{ margin: 0, fontWeight: '600', color: '#063455' }}>Finance Dashboard</h2>
+                                <Typography style={{ margin: 0, fontWeight: '700', fontSize: '30px', color: '#063455' }}>Finance Dashboard</Typography>
                                 {/* <pre>{JSON.stringify(FinancialInvoice, null, 2)}</pre> */}
                             </div>
                         </Col>
                         <Col className="d-flex justify-content-end align-items-center">
-                            <div
-                                style={{
-                                    border: '1px solid #ddd',
-                                    borderRadius: '4px',
-                                    padding: '3px 10px',
-                                    marginRight: '15px',
-                                    backgroundColor: 'white',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    width: '250px',
-                                }}
-                            >
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DemoContainer components={['DatePicker']}>
                                         <DatePicker
                                             views={['month']}
@@ -137,8 +125,26 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                             }}
                                         />
                                     </DemoContainer>
-                                </LocalizationProvider>
-                            </div>
+                                </LocalizationProvider> */}
+                            <TextField
+                                label="Select Month"
+                                type="month"
+                                size="small"
+                                fullWidth
+                                value={date ? dayjs(date).format('YYYY-MM') : ''}
+                                onChange={(e) => setDate(dayjs(e.target.value + '-01'))}
+                                sx={{
+                                    width: '200px',
+                                    marginRight: 2,
+                                    '& .MuiOutlinedInput-root': {
+                                        height: 40,
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
 
                             <Button
                                 style={{
@@ -147,21 +153,27 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    padding: '5px',
-                                    width: '200px',
+                                    // padding: '5px',
+                                    // width: '200px',
                                     color: 'white',
+                                    textTransform: 'none',
+                                    borderRadius: '16px',
+                                    height: 40
                                 }}
                                 onClick={() => router.visit(route('finance.transaction.create'))}
                             >
-                                <span style={{ marginRight: '5px', fontSize: '20px' }}>+</span> Add Transaction
+                                <span style={{ marginRight: '5px', marginBottom: '5px', fontSize: '20px' }}>+</span> Add Transaction
                             </Button>
                         </Col>
                     </Row>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        Overview of recent transactions, balances, and financial summaries
+                    </Typography>
 
                     {/* Metrics Cards - First Row */}
-                    <Row className="mb-3 gx-2">
+                    <Row className="mb-3 gx-2 mt-4">
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
                                 <Card.Body className="text-center" style={{ height: '150px' }}>
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
@@ -184,7 +196,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                             </Card>
                         </Col>
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
                                 <Card.Body className="text-center" style={{ height: '150px' }}>
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
@@ -207,7 +219,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                             </Card>
                         </Col>
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
                                 <Card.Body className="text-center" style={{ height: '150px' }}>
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
@@ -230,7 +242,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                             </Card>
                         </Col>
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
                                 <Card.Body className="text-center" style={{ height: '150px' }}>
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
@@ -257,8 +269,8 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                     {/* Metrics Cards - Second Row */}
                     <Row className="mb-4 gx-2">
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
-                                <Card.Body style={{ height: '150px', padding:5 }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
+                                <Card.Body style={{ height: '150px', padding: 5 }}>
                                     <div className="d-flex gap-3">
                                         <div
                                             style={{
@@ -288,7 +300,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                         </Col>
 
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
                                 <Card.Body style={{ height: '150px', padding: 5 }}>
                                     <div className="d-flex gap-3">
                                         <div
@@ -327,8 +339,8 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                         </Col>
 
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
-                                <Card.Body style={{ height: '150px' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
+                                <Card.Body style={{ height: '150px', padding: 5 }}>
                                     <div className="d-flex gap-3">
                                         <div
                                             style={{
@@ -345,20 +357,20 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                             <CardMembership />
                                         </div>
                                         <div>
-                                            <div style={{ fontSize: '16px', color: '#C6C6C6', fontWeight: 400 }}>Membership Revenue</div>
-                                            <div style={{ fontSize: '20px', fontWeight: 500, marginBottom: '10px' }}>Rs {total_membership_revenue?.toLocaleString() || 0}</div>
+                                            <div style={{ fontSize: '14px', color: '#C6C6C6', fontWeight: 400 }}>Membership Revenue</div>
+                                            <div style={{ fontSize: '16px', fontWeight: 500, marginBottom: '10px' }}>Rs {total_membership_revenue?.toLocaleString() || 0}</div>
                                         </div>
                                     </div>
-                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '10px' }}>
-                                        <div style={{ fontSize: '12px', fontWeight: 400, color: '#C6C6C6' }}>Subscription Revenue</div>
-                                        <div style={{ fontSize: '18px', fontWeight: 500, color: '#FFFFFF' }}>Rs {subscription_fee_revenue?.toLocaleString() || 0}</div>
+                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                                        <div style={{ fontSize: '12px', fontWeight: 400, color: '#C6C6C6', marginTop: '10px' }}>Subscription Revenue</div>
+                                        <div style={{ fontSize: '16px', fontWeight: 500, color: '#FFFFFF' }}>Rs {subscription_fee_revenue?.toLocaleString() || 0}</div>
                                     </div>
                                 </Card.Body>
                             </Card>
                         </Col>
 
                         <Col md={3}>
-                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none' }}>
+                            <Card style={{ backgroundColor: '#063455', color: 'white', border: 'none', borderRadius: '16px' }}>
                                 <Card.Body className="d-flex flex-column justify-content-center align-items-center" style={{ height: '150px' }}>
                                     <div className="d-flex justify-content-center mb-2">
                                         <div
@@ -392,7 +404,8 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                 style={{
                                     backgroundColor: '#063455',
                                     border: 'none',
-                                    padding: '8px 15px',
+                                    borderRadius:'16px'
+                                    // padding: '8px 15px',
                                 }}
                             >
                                 <Print style={{ marginRight: '5px', fontSize: '18px' }} /> Print
@@ -403,21 +416,21 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                     {/* Transactions Table */}
                     <Row>
                         <Col>
-                            <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                            <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                                 <Table>
                                     <TableHead>
-                                        <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice No</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Fee Type</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Amount</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Payment Method</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Date</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>From</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>To</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Days</TableCell>
-                                            <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
+                                        <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice No</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Fee Type</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Amount</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Status</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Method</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Date</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>From</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>To</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Days</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Invoice</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -472,13 +485,13 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                 return (
                                                     <TableRow key={transaction.id} style={{ borderBottom: '1px solid #eee' }}>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                             <div>
-                                                                <div style={{ fontWeight: 500, color: '#000000' }}>{transaction.member?.full_name || transaction.customer?.name || 'N/A'}</div>
+                                                                <div style={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>{transaction.member?.full_name || transaction.customer?.name || 'N/A'}</div>
                                                                 {transaction.member?.membership_no && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member.membership_no}</div>}
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                             <span
                                                                 style={{
                                                                     backgroundColor: '#e3f2fd',
@@ -508,8 +521,8 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                             </span>
                                                         </TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.payment_date || transaction.created_at)}</TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(transaction.payment_date || transaction.created_at)}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                             {transaction.valid_from ? (
                                                                 <span
                                                                     style={{
@@ -523,7 +536,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                                 <span style={{ color: '#7F7F7F' }}>-</span>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                             {transaction.valid_to ? (
                                                                 <span
                                                                     style={{
@@ -537,14 +550,16 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                                 <span style={{ color: '#7F7F7F' }}>-</span>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.valid_from && transaction.valid_to ? <span>{dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1}</span> : <span style={{ color: '#7F7F7F' }}>-</span>}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{transaction.valid_from && transaction.valid_to ? <span>{dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1}</span> : <span style={{ color: '#7F7F7F' }}>-</span>}</TableCell>
                                                         <TableCell sx={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                                             <span
                                                                 style={{
-                                                                    color: '#0C67AA',
-                                                                    textDecoration: 'underline',
+                                                                    color: '#063455',
+                                                                    // textDecoration: 'border',
                                                                     cursor: 'pointer',
                                                                     fontWeight: 500,
+                                                                    border: '1px solid #063455',
+                                                                    padding: 5
                                                                 }}
                                                                 onClick={() => {
                                                                     // Check invoice type and open appropriate modal

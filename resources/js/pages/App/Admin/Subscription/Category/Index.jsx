@@ -4,7 +4,7 @@ import { ArrowBack as ArrowBackIcon, Add as AddIcon, MoreVert as MoreVertIcon, E
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-
+import { FaEdit } from 'react-icons/fa';
 
 const SubscriptionCategories = ({ subscriptionCategories }) => {
     // const [open, setOpen] = useState(true);
@@ -53,33 +53,38 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
                 sx={{
                     minHeight: '100vh',
                     padding: '20px',
-                    backgroundColor:'#f5f5f5'
+                    backgroundColor: '#f5f5f5'
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={()=>window.history.back()}>
+                        {/* <IconButton onClick={()=>window.history.back()}>
                             <ArrowBackIcon sx={{color:'#063455'}} />
-                        </IconButton>
-                        <Typography variant="h5" sx={{color:'#063455', fontWeight:'600'}}>Subscription Categories</Typography>
+                        </IconButton> */}
+                        <Typography sx={{ color: '#063455', fontWeight: '700', fontSize: '30px' }}>Subscription Categories</Typography>
                     </Box>
                     <Button
                         variant="contained"
-                        startIcon={<AddIcon />}
+                        startIcon={<AddIcon sx={{ mb: 0.5 }} />}
                         onClick={() => router.visit(route('subscription-categories.create'))}
                         sx={{
-                            backgroundColor: '#003366',
-                            '&:hover': { backgroundColor: '#002244' },
+                            backgroundColor: '#063455',
+                            borderRadius: '16px',
+                            textTransform: 'none',
+                            '&:hover': { backgroundColor: '#063455' },
                         }}
                     >
                         Add Category
                     </Button>
                 </Box>
+                <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Helps in reporting and structured subscription management
+                </Typography>
 
-                <Grid container spacing={3}>
+                <Grid container spacing={3} sx={{mt:2}}>
                     {categories.map((category) => (
                         <Grid item xs={12} sm={6} md={4} key={category.id}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px' }}>
                                 <Box
                                     sx={{
                                         display: 'flex',
@@ -101,7 +106,7 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
                                         <strong>Description:</strong> {category.description || 'N/A'}
                                     </Typography>
                                     <Typography variant="body2" color="text.secondary" mb={1}>
-                                        <strong>Payment Type:</strong> 
+                                        <strong>Payment Type:</strong>
                                         <span style={{
                                             backgroundColor: '#f3e5f5',
                                             color: '#7b1fa2',
@@ -132,11 +137,11 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
 
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
                     <MenuItem onClick={handleEdit}>
-                        <EditIcon sx={{ mr: 1 }} />
+                        <FaEdit size={16} style={{ marginRight: 20, color: '#f57c00' }} />
                         Edit
                     </MenuItem>
                     <MenuItem onClick={handleDelete}>
-                        <DeleteIcon sx={{ mr: 1 }} />
+                        <DeleteIcon color='error' sx={{ mr: 1.5 }} />
                         Delete
                     </MenuItem>
                 </Menu>

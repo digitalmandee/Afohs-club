@@ -119,7 +119,7 @@ const LeaveApplication = () => {
             >
                 <div style={{ padding: '2rem' }}>
                     {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                             Leave Applications
                         </Typography>
@@ -137,7 +137,10 @@ const LeaveApplication = () => {
                             New Application
                         </Button>
                     </div>
-                    <Box sx={{ mb: 2 }}>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        Approve, reject, or hold applications with proper tracking
+                    </Typography>
+                    <Box sx={{ mb: 2, mt:'2rem' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                 <TextField

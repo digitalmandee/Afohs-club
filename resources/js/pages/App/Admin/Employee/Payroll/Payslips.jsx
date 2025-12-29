@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, InputAdornment, IconButton, Pagination, CircularProgress, Alert, Snackbar, Tooltip, Avatar, FormControl, InputLabel, Select, MenuItem, Grid, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Search as SearchIcon, Visibility as VisibilityIcon, GetApp as GetAppIcon, CheckCircle as CheckCircleIcon, ArrowBack as ArrowBackIcon, Person as PersonIcon, FilterList as FilterListIcon, Print as PrintIcon } from '@mui/icons-material';
+import { Box, Card, Typography, Autocomplete, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, InputAdornment, IconButton, Pagination, CircularProgress, Alert, Snackbar, Tooltip, Avatar, FormControl, InputLabel, Select, MenuItem, Grid, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Search as SearchIcon, Visibility as VisibilityIcon, GetApp as GetAppIcon, CheckCircle as CheckCircleIcon, ArrowBack as ArrowBackIcon, Person as PersonIcon, FilterList as FilterListIcon, Print as PrintIcon, FilterAlt } from '@mui/icons-material';
 import axios from 'axios';
 
 const Payslips = () => {
@@ -154,6 +154,13 @@ const Payslips = () => {
         }
     };
 
+    const statusOptions = [
+        { value: '', label: 'All Status' },
+        { value: 'draft', label: 'Draft' },
+        { value: 'approved', label: 'Approved' },
+        { value: 'paid', label: 'Paid' }
+    ];
+
     return (
         <AdminLayout>
             <Box sx={{ bgcolor: '#f5f5f5', p: 2 }}>
@@ -161,19 +168,19 @@ const Payslips = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                            <ArrowBackIcon sx={{color:'#063455'}} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                             Payslips
                         </Typography>
                     </Box>
                 </Box>
 
                 {/* Filters */}
-                <Card sx={{ mb: 3, p: 3 }}>
+                <Box sx={{ mb: 3, bgcolor: 'transparent', border: 'none' }}>
                     <Grid container spacing={3} alignItems="center">
                         <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
+                            {/* <FormControl fullWidth>
                                 <InputLabel>Payroll Period</InputLabel>
                                 <Select
                                     value={selectedPeriod}
@@ -205,11 +212,44 @@ const Payslips = () => {
                                         </MenuItem>
                                     ))}
                                 </Select>
-                            </FormControl>
+                            </FormControl> */}
+                            <Autocomplete
+                                value={periods.find(p => p.id === selectedPeriod) || null}
+                                onChange={(e, newValue) => {
+                                    setSelectedPeriod(newValue?.id || '');
+                                    setCurrentPage(1);
+                                }}
+                                options={periods}
+                                getOptionLabel={(option) => option.period_name}
+                                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Payroll Period"
+                                        size="small"
+                                        fullWidth
+                                        sx={{
+                                            height: 40,
+                                            '& .MuiOutlinedInput-root': {
+                                                height: 40,
+                                                borderRadius: '16px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                            },
+                                            '& .MuiInputBase-input': {
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                paddingY: 0,
+                                                paddingTop: '2px',
+                                            },
+                                        }}
+                                    />
+                                )}
+                            />
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={3}>
-                            <FormControl fullWidth>
+                            {/* <FormControl fullWidth>
                                 <InputLabel>Status</InputLabel>
                                 <Select
                                     value={statusFilter}
@@ -240,7 +280,38 @@ const Payslips = () => {
                                     <MenuItem value="approved">Approved</MenuItem>
                                     <MenuItem value="paid">Paid</MenuItem>
                                 </Select>
-                            </FormControl>
+                            </FormControl> */}
+                            <Autocomplete
+                                value={statusOptions.find(s => s.value === statusFilter) || null}
+                                onChange={(e, newValue) => {
+                                    setStatusFilter(newValue?.value || '');
+                                    setCurrentPage(1);
+                                }}
+                                options={statusOptions}
+                                getOptionLabel={(option) => option.label}
+                                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Status"
+                                        size="small"
+                                        fullWidth
+                                        sx={{
+                                            height: 40,
+                                            '& .MuiOutlinedInput-root': {
+                                                height: 40,
+                                                borderRadius: '16px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                            },
+                                            '& .MuiInputBase-input': {
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                            },
+                                        }}
+                                    />
+                                )}
+                            />
                         </Grid>
 
                         <Grid item xs={12} sm={6} md={4}>
@@ -252,7 +323,7 @@ const Payslips = () => {
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
-                                            <SearchIcon sx={{ color: '#063455' }} />
+                                            <SearchIcon />
                                         </InputAdornment>
                                     ),
                                 }}
@@ -264,6 +335,7 @@ const Payslips = () => {
                                         height: 40,
                                         display: 'flex',
                                         alignItems: 'center',
+                                        borderRadius:'16px',
                                     },
                                     "& .MuiInputBase-input": {
                                         display: 'flex',
@@ -282,30 +354,34 @@ const Payslips = () => {
                                 // startIcon={<FilterListIcon />}
                                 onClick={fetchPayslips}
                                 sx={{
-                                    color: '#063455',
+                                    bgcolor: '#063455',
                                     borderColor: '#063455',
+                                    color: '#fff',
+                                    borderRadius: '16px',
+                                    gap: 2,
                                     '&:hover': { borderColor: '#052d45' },
                                 }}
                             >
-                                Apply Filters
+                                <FilterAlt fontSize="small" style={{ color: '#fff' }} />
+                                Apply Filter
                             </Button>
                         </Grid>
                     </Grid>
-                </Card>
+                </Box>
 
                 {/* Payslips Table */}
                 <Card>
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Department</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Basic Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Gross Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Employee</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Department</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Basic Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Gross Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Net Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -324,7 +400,7 @@ const Payslips = () => {
                                 ) : (
                                     payslips.map((payslip) => (
                                         <TableRow key={payslip.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                                     <Avatar sx={{ bgcolor: '#063455', width: 40, height: 40 }}>
                                                         <PersonIcon />
@@ -339,23 +415,23 @@ const Payslips = () => {
                                                     </Box>
                                                 </Box>
                                             </TableCell>
-                                            <TableCell>{payslip.employee?.department?.name || 'N/A'}</TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>{payslip.employee?.department?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                     {formatCurrency(payslip.basic_salary)}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                                                     {formatCurrency(payslip.gross_salary)}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>
                                                 <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#2e7d32' }}>
                                                     {formatCurrency(payslip.net_salary)}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>
                                                 <Chip label={getStatusText(payslip.status)} size="small" color={getStatusColor(payslip.status)} />
                                             </TableCell>
                                             <TableCell>
@@ -373,20 +449,20 @@ const Payslips = () => {
                                                                 setOrdersForDialog(payslip.order_deductions || []);
                                                                 setShowOrdersDialog(true);
                                                             }}
-                                                            sx={{ color: '#6a1b9a' }}
+                                                            sx={{ color: '#063455' }}
                                                         >
                                                             <GetAppIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
                                                     <Tooltip title="Print Payslip">
-                                                        <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#1976d2' }}>
+                                                        <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#063455' }}>
                                                             <PrintIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
 
                                                     {payslip.status === 'draft' && (
                                                         <Tooltip title="Approve Payslip">
-                                                            <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#2e7d32' }}>
+                                                            <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#063455' }}>
                                                                 <CheckCircleIcon fontSize="small" />
                                                             </IconButton>
                                                         </Tooltip>
