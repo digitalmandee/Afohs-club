@@ -12,6 +12,7 @@ class RoomBooking extends BaseModel
         'booking_no',
         'customer_id',
         'member_id',
+        'corporate_member_id',
         'booking_date',
         'check_in_date',
         'check_in_time',
@@ -101,5 +102,10 @@ class RoomBooking extends BaseModel
     public function orders()
     {
         return $this->hasMany(Order::class, 'room_booking_id', 'id');
+    }
+
+    public function corporateMember()
+    {
+        return $this->belongsTo(CorporateMember::class, 'corporate_member_id', 'id');
     }
 }

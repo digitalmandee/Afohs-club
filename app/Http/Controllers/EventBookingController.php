@@ -37,6 +37,7 @@ class EventBookingController extends Controller
         $bookings = EventBooking::with([
             'customer',
             'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])
             ->orderBy('created_at', 'desc')
@@ -151,7 +152,10 @@ class EventBookingController extends Controller
             ];
 
             // ✅ Assign IDs based on booking_type (same as RoomBookingController)
-            if (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
+            if (!empty($request->guest['is_corporate']) || ($request->guest['booking_type'] ?? '') == '2') {
+                $bookingData['corporate_member_id'] = (int) $request->guest['id'];
+                $bookingData['booking_type'] = '2';  // Corporate Member
+            } elseif (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
                 $bookingData['member_id'] = (int) $request->guest['id'];
                 $bookingData['booking_type'] = '0';  // Member
             } else {
@@ -227,7 +231,9 @@ class EventBookingController extends Controller
             ];
 
             // ✅ Assign member/customer ID based on guest type
-            if (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
+            if (!empty($request->guest['is_corporate']) || ($request->guest['booking_type'] ?? '') == '2') {
+                $invoiceData['corporate_member_id'] = (int) $request->guest['id'];
+            } elseif (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
                 $invoiceData['member_id'] = (int) $request->guest['id'];
             } else {
                 $invoiceData['customer_id'] = (int) $request->guest['id'];
@@ -304,6 +310,7 @@ class EventBookingController extends Controller
         $booking = EventBooking::with([
             'customer',
             'member',
+            'corporateMember',
             'eventVenue',
             'menu',
             'menuAddOns',
@@ -344,6 +351,7 @@ class EventBookingController extends Controller
                 'otherCharges' => $booking->otherCharges->toArray(),
                 'menu' => $booking->menu ? $booking->menu->toArray() : null,
                 'member' => $booking->member ? $booking->member->toArray() : null,
+                'corporateMember' => $booking->corporateMember ? $booking->corporateMember->toArray() : null,
                 'customer' => $booking->customer ? $booking->customer->toArray() : null,
                 'eventVenue' => $booking->eventVenue ? $booking->eventVenue->toArray() : null,
             ]
@@ -480,12 +488,34 @@ class EventBookingController extends Controller
                 $originalAmount = round($this->calculateOriginalAmount($request));
                 $finalAmount = round(floatval($request->grandTotal));
 
-                $invoice->update([
+                $invoiceData = [
                     'discount_type' => $request->discountType ?? null,
                     'discount_value' => $request->discount ?? 0,
                     'amount' => $originalAmount,  // Original amount before discount
                     'total_price' => $finalAmount,  // Final amount after discount
-                ]);
+                ];
+
+                // Update member/customer/corporate ID if guest type changes
+                // Note: The frontend might not be sending the full guest object in 'update' if it wasn't changed.
+                // However, based on the request logic, likely the whole form is submitted.
+                // We should check if guest info is present in request.
+
+                // Based on store logic:
+                if (!empty($request->guest['is_corporate']) || ($request->guest['booking_type'] ?? '') == '2') {
+                    $invoiceData['corporate_member_id'] = (int) $request->guest['id'];
+                    $invoiceData['member_id'] = null;
+                    $invoiceData['customer_id'] = null;
+                } elseif (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
+                    $invoiceData['member_id'] = (int) $request->guest['id'];
+                    $invoiceData['corporate_member_id'] = null;
+                    $invoiceData['customer_id'] = null;
+                } elseif (!empty($request->guest['id'])) {
+                    $invoiceData['customer_id'] = (int) $request->guest['id'];
+                    $invoiceData['member_id'] = null;
+                    $invoiceData['corporate_member_id'] = null;
+                }
+
+                $invoice->update($invoiceData);
             }
 
             DB::commit();
@@ -510,6 +540,7 @@ class EventBookingController extends Controller
         $booking = EventBooking::with([
             'customer',
             'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
             'familyMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name',
             'menu',
@@ -576,6 +607,7 @@ class EventBookingController extends Controller
         $bookings = EventBooking::with([
             'customer:id,name,email',
             'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])
             ->whereBetween('event_date', [$startDate, $endDate])
@@ -594,7 +626,7 @@ class EventBookingController extends Controller
                     'booked_by' => $booking->booked_by,
                     'name' => $booking->name,
                     'mobile' => $booking->mobile,
-                    'membership_no' => $booking->member ? $booking->member->membership_no : ($booking->customer ? $booking->customer->customer_no : null),
+                    'membership_no' => $booking->member ? $booking->member->membership_no : ($booking->corporateMember ? $booking->corporateMember->membership_no : ($booking->customer ? $booking->customer->customer_no : null)),
                     'no_of_guests' => $booking->no_of_guests,
                     'status' => $booking->status,
                     'total_price' => $booking->total_price,
@@ -602,6 +634,7 @@ class EventBookingController extends Controller
                     'event_venue' => $booking->eventVenue,
                     'customer' => $booking->customer,
                     'member' => $booking->member,
+                    'corporateMember' => $booking->corporateMember,
                 ];
             });
 
@@ -619,6 +652,7 @@ class EventBookingController extends Controller
         $query = EventBooking::with([
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ]);
 
@@ -632,6 +666,9 @@ class EventBookingController extends Controller
                         $subQ->where('name', 'like', "%{$searchName}%");
                     })
                     ->orWhereHas('member', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
                         $subQ->where('full_name', 'like', "%{$searchName}%");
                     });
             });
@@ -728,6 +765,7 @@ class EventBookingController extends Controller
         $query = EventBooking::with([
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])->where('status', 'completed');
 
@@ -741,6 +779,9 @@ class EventBookingController extends Controller
                         $subQ->where('name', 'like', "%{$searchName}%");
                     })
                     ->orWhereHas('member', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
                         $subQ->where('full_name', 'like', "%{$searchName}%");
                     });
             });
@@ -786,6 +827,7 @@ class EventBookingController extends Controller
         $query = EventBooking::with([
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
             'eventVenue:id,name'
         ])->where('status', 'cancelled');
 
@@ -799,6 +841,9 @@ class EventBookingController extends Controller
                         $subQ->where('name', 'like', "%{$searchName}%");
                     })
                     ->orWhereHas('member', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
                         $subQ->where('full_name', 'like', "%{$searchName}%");
                     });
             });

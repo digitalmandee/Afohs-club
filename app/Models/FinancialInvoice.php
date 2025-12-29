@@ -78,7 +78,7 @@ class FinancialInvoice extends BaseModel
         'ledger_amount',
         'is_auto_generated',
         'coa_code',
-        'corporate_id'
+        'corporate_member_id',
     ];
 
     protected $casts = [
@@ -98,6 +98,11 @@ class FinancialInvoice extends BaseModel
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id', 'id');
+    }
+
+    public function corporateMember()
+    {
+        return $this->belongsTo(CorporateMember::class, 'corporate_member_id', 'id');
     }
 
     public function employee()

@@ -889,7 +889,7 @@ class DataMigrationController extends Controller
             // Metadata
             'is_auto_generated' => $old->is_auto_generated,
             'coa_code' => $old->coa_code,
-            'corporate_id' => $old->corporate_id,
+            'corporate_member_id' => $old->corporate_id,
             'created_at' => $this->validateDate($old->created_at),
             'updated_at' => $this->validateDate($old->updated_at),
             'deleted_at' => $this->validateDate($old->deleted_at),

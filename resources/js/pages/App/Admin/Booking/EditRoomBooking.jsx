@@ -4,11 +4,11 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { Button } from 'react-bootstrap';
-import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton, Select, MenuItem, FormControl } from '@mui/material';
+import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, IconButton, Select, MenuItem, FormControl, Autocomplete, Chip, CircularProgress } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
-import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+// import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { differenceInCalendarDays } from 'date-fns';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
@@ -277,15 +277,45 @@ export default EditRoomBooking;
 
 const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
+    // Autocomplete states
+    const [open, setOpen] = useState(false);
+    const [options, setOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
         if (formData.guest) {
-            console.log(formData.guest);
-
-            axios.get(route('admin.family-members', { id: formData.guest?.id })).then((res) => {
-                setFamilyMembers(res.data.results);
-            });
+            axios
+                .get(route('admin.family-members', { id: formData.guest?.id }), {
+                    params: { type: formData.bookingType },
+                })
+                .then((res) => {
+                    setFamilyMembers(res.data.results);
+                });
         }
-    }, [formData.guest]);
+    }, [formData.guest, formData.bookingType]);
+
+    // Handle search input change
+    const handleSearch = async (event, query) => {
+        if (!query) {
+            setOptions([]);
+            return;
+        }
+        setLoading(true);
+        try {
+            const response = await axios.get(route('admin.api.search-users'), {
+                params: {
+                    q: query,
+                    type: formData.bookingType,
+                },
+            });
+            setOptions(response.data.results || []);
+        } catch (error) {
+            console.error('Error fetching members:', error);
+            setOptions([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <>
@@ -293,7 +323,6 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                 <Grid item xs={12} sm={3}>
                     <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
                 </Grid>
-                {JSON.stringify()}
                 <Grid item xs={12} sm={3}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
@@ -358,16 +387,81 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                 <Grid item xs={12}>
                     <FormLabel>Booking Type</FormLabel>
                     <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
-                        <FormControlLabel value="Member" control={<Radio />} label="Member" disabled />
-                        <FormControlLabel value="Corporate Member" control={<Radio />} label="Corporate Member" disabled />
-                        <FormControlLabel value="Applied Member" control={<Radio />} label="Applied Member" disabled />
-                        <FormControlLabel value="Affiliated Member" control={<Radio />} label="Affiliated Member" disabled />
-                        <FormControlLabel value="VIP Guest" control={<Radio />} label="VIP Guest" disabled />
+                        <FormControlLabel value="0" control={<Radio />} label="Member" disabled />
+                        <FormControlLabel value="2" control={<Radio />} label="Corporate Member" disabled />
+                        <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" disabled />
+                        <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" disabled />
+                        <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" disabled />
                     </RadioGroup>
                 </Grid>
 
                 <Grid item xs={12}>
-                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" placeholder="Search members..." disabled={true} />
+                    <Autocomplete
+                        open={open}
+                        onOpen={() => setOpen(true)}
+                        onClose={() => setOpen(false)}
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
+                        getOptionLabel={(option) => option.label || option.name || ''}
+                        options={options}
+                        loading={loading}
+                        value={formData.guest || null}
+                        onInputChange={(event, newInputValue, reason) => {
+                            if (reason === 'input') {
+                                handleSearch(event, newInputValue);
+                            }
+                        }}
+                        onChange={(event, newValue) => {
+                            handleChange({ target: { name: 'guest', value: newValue } });
+                        }}
+                        disabled={true} // Keep disabled for Edit mode as per original logic? Or align with RoomBooking.jsx which disables it if editMode is true? Original code had disabled={true}.
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Member / Guest Name"
+                                placeholder="Search members..."
+                                error={!!errors.guest}
+                                helperText={errors.guest}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <React.Fragment>
+                                            {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </React.Fragment>
+                                    ),
+                                }}
+                            />
+                        )}
+                        renderOption={(props, option) => (
+                            <li {...props} key={option.id}>
+                                <Box sx={{ width: '100%' }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="body2" fontWeight="bold">
+                                            {option.membership_no || option.customer_no || option.employee_id}
+                                        </Typography>
+                                        {option.status && (
+                                            <Chip
+                                                label={option.status}
+                                                size="small"
+                                                sx={{
+                                                    height: '20px',
+                                                    fontSize: '10px',
+                                                    backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                    color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                    textTransform: 'capitalize',
+                                                    ml: 1,
+                                                }}
+                                            />
+                                        )}
+                                    </Box>
+                                    <Typography variant="body2">{option.full_name || option.name}</Typography>
+                                    <Typography variant="caption" color="textSecondary">
+                                        {option.cnic_no || option.cnic} | {option.mobile_number_a || option.contact}
+                                    </Typography>
+                                </Box>
+                            </li>
+                        )}
+                    />
                     {errors.guest && (
                         <Typography variant="body2" color="error">
                             {errors.guest}
@@ -379,13 +473,15 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                             <Typography variant="h5" sx={{ mb: 1 }}>
                                 Member Information
                             </Typography>
-                            <Typography variant="body1">Member #: {formData.guest?.membership_no}</Typography>
+                            <Typography variant="body1">
+                                {formData.bookingType == '2' ? 'Corporate #' : 'Member #'}: {formData.guest?.membership_no || formData.guest?.customer_no}
+                            </Typography>
                             <Typography variant="body1">Email: {formData.guest?.email}</Typography>
                             <Typography variant="body1">Phone: {formData.guest?.phone}</Typography>
                             <Typography variant="body1">Address: {formData.guest?.address}</Typography>
                             <FormControl fullWidth sx={{ mt: 2 }}>
                                 <InputLabel>Select Family Member</InputLabel>
-                                <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member" disabled>
+                                <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member" disabled={isCheckout}>
                                     <MenuItem value="">Select Family Member</MenuItem>
                                     {familyMembers?.map((member) => (
                                         <MenuItem key={member.id} value={member.id}>

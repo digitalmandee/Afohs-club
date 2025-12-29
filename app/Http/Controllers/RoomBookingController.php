@@ -34,9 +34,9 @@ class RoomBookingController extends Controller
 
     public function editbooking(Request $request, $id)
     {
-        $booking = RoomBooking::with(['customer', 'member', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
-        $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : null));
-        $booking = [
+        $booking = RoomBooking::with(['customer', 'member', 'corporateMember', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
+        $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : ($booking->corporateMember ? $booking->corporateMember->full_name : null)));
+        $bookingData = [
             'id' => $booking->id,
             'bookingNo' => $booking->booking_no,
             'bookingDate' => $booking->booking_date,
@@ -46,16 +46,7 @@ class RoomBookingController extends Controller
             'checkOutTime' => $booking->check_out_time ?? now()->format('H:i'),
             'arrivalDetails' => $booking->arrival_details,
             'departureDetails' => $booking->departure_details,
-            'bookingType' => $booking->booking_type,
-            'guest' => [
-                'id' => $booking->customer ? $booking->customer->id : ($booking->member ? $booking->member->id : null),
-                'booking_type' => $booking->customer ? 'customer' : ($booking->member ? 'member' : null),
-                'name' => $fullName,
-                'label' => $fullName,
-                'email' => $booking->customer ? $booking->customer->email : ($booking->member ? $booking->member->personal_email : null),
-                'phone' => $booking->customer ? $booking->customer->contact : ($booking->member ? $booking->member->mobile_number_a : null),
-                'membership_no' => $booking->customer ? $booking->customer->customer_no : ($booking->member ? $booking->member->membership_no : null),
-            ],
+            'bookingType' => (string) $booking->booking_type,
             'guestFirstName' => $booking->guest_first_name,
             'guestLastName' => $booking->guest_last_name,
             'company' => $booking->guest_company,
@@ -84,7 +75,43 @@ class RoomBookingController extends Controller
             'documents' => json_decode($booking->booking_docs, true),
             'mini_bar_items' => $booking->miniBarItems,
             'other_charges' => $booking->otherCharges,
+            'guest' => null,
         ];
+
+        if ($booking->customer) {
+            $bookingData['guest'] = [
+                'id' => $booking->customer->id,
+                'booking_type' => 'customer',
+                'name' => $fullName,
+                'label' => $fullName,
+                'email' => $booking->customer->email,
+                'phone' => $booking->customer->contact,
+                'membership_no' => $booking->customer->customer_no,
+            ];
+        } elseif ($booking->member) {
+            $bookingData['guest'] = [
+                'id' => $booking->member->id,
+                'booking_type' => 'member',
+                'name' => $fullName,
+                'label' => $fullName,
+                'email' => $booking->member->personal_email,
+                'phone' => $booking->member->mobile_number_a,
+                'membership_no' => $booking->member->membership_no,
+            ];
+        } elseif ($booking->corporateMember) {
+            $bookingData['guest'] = [
+                'id' => $booking->corporateMember->id,
+                'booking_type' => '2',
+                'name' => $fullName,
+                'label' => $fullName,
+                'email' => $booking->corporateMember->personal_email,
+                'phone' => $booking->corporateMember->mobile_number_a,
+                'membership_no' => $booking->corporateMember->membership_no,
+            ];
+        }
+
+        // Reassign back to $booking variable to match view expectations or use $bookingData directly
+        $booking = $bookingData;
 
         $roomCategories = RoomCategory::where('status', 'active')->select('id', 'name')->get();
         $chargesTypeItems = RoomChargesType::where('status', 'active')->select('id', 'name', 'amount')->get();
@@ -179,7 +206,9 @@ class RoomBookingController extends Controller
             ];
 
             // ✅ Assign IDs based on booking_type
-            if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
+            if ($data['bookingType'] == '2') {
+                $bookingData['corporate_member_id'] = (int) $data['guest']['id'];
+            } elseif (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
                 $bookingData['member_id'] = (int) $data['guest']['id'];
             } else {
                 $bookingData['customer_id'] = (int) $data['guest']['id'];
@@ -219,7 +248,9 @@ class RoomBookingController extends Controller
             ];
 
             // ✅ Assign member/customer ID based on guest type
-            if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
+            if ($data['bookingType'] == '2') {
+                $invoiceData['corporate_member_id'] = (int) $data['guest']['id'];
+            } elseif (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
                 $invoiceData['member_id'] = (int) $data['guest']['id'];
             } else {
                 $invoiceData['customer_id'] = (int) $data['guest']['id'];
@@ -350,12 +381,18 @@ class RoomBookingController extends Controller
                 ];
 
                 // Update member/customer ID if guest changed
-                if (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
+                if ($data['bookingType'] == '2') {
+                    $updateData['corporate_member_id'] = (int) $data['guest']['id'];
+                    $updateData['member_id'] = null;
+                    $updateData['customer_id'] = null;
+                } elseif (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
                     $updateData['member_id'] = (int) $data['guest']['id'];
                     $updateData['customer_id'] = null;
+                    $updateData['corporate_member_id'] = null;
                 } else {
                     $updateData['customer_id'] = (int) $data['guest']['id'];
                     $updateData['member_id'] = null;
+                    $updateData['corporate_member_id'] = null;
                 }
 
                 $invoice->update($updateData);
@@ -393,12 +430,12 @@ class RoomBookingController extends Controller
                         ->where('check_out_date', '>', $monthEnd);
                 });
         })
-            ->with('room', 'customer', 'member:id,membership_no,full_name,personal_email')
+            ->with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email')
             ->get()
             ->map(fn($b) => [
                 'id' => $b->id,
                 'booking_no' => $b->booking_no,
-                'guest_name' => $b->customer ? $b->customer->name : ($b->member ? $b->member->full_name : ''),
+                'guest_name' => $b->customer ? $b->customer->name : ($b->member ? $b->member->full_name : ($b->corporateMember ? $b->corporateMember->full_name : '')),
                 'room_number' => $b->room->name,
                 'check_in_date' => $b->check_in_date,
                 'check_out_date' => $b->check_out_date,
@@ -413,7 +450,7 @@ class RoomBookingController extends Controller
     // Show Room Booking
     public function showRoomBooking($id)
     {
-        $booking = RoomBooking::with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'room', 'room.roomType')->findOrFail($id);
+        $booking = RoomBooking::with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email', 'room', 'room.roomType')->findOrFail($id);
         $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
             ->select('id', 'customer_id', 'data', 'status')
             ->where('customer_id', $booking->customer_id)
