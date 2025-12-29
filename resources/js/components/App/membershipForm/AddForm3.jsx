@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember }) => {
+const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember, isMembershipNoEditable = false }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
     const [openFamilyMember, setOpenFamilyMember] = useState(false);
     const [openDocumentsDialog, setOpenDocumentsDialog] = useState(false);
@@ -991,7 +991,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                     });
 
                                                     // Generate unique membership number when category changes
-                                                    if (categoryName) {
+                                                    // Generate unique membership number when category changes - ONLY if not manually editable
+                                                    if (categoryName && !isMembershipNoEditable) {
                                                         const isKinship = !!selectedKinshipUser;
 
                                                         // If there's an existing membership number, preserve the number part
