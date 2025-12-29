@@ -124,7 +124,7 @@ class BookingController extends Controller
     {
         $invoice_no = $request->query('invoice_no');
 
-        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,membership_no,full_name,personal_email', 'member.memberType', 'invoiceable:id,booking_no')->first();
+        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email', 'member.memberType', 'invoiceable:id,booking_no')->first();
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);

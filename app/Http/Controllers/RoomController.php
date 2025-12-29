@@ -27,7 +27,8 @@ class RoomController extends Controller
         $query = RoomBooking::with([
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
-            'member:id,membership_no,full_name'
+            'member:id,membership_no,full_name',
+            'corporateMember:id,membership_no,full_name'
         ])->latest();
 
         // ✅ Apply Room Type filter
@@ -66,6 +67,11 @@ class RoomController extends Controller
                         $sub
                             ->where('full_name', 'like', "%{$search}%")
                             ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($sub) use ($search) {
+                        $sub
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
                     });
             });
         }
@@ -100,6 +106,7 @@ class RoomController extends Controller
             'room',
             'customer',
             'member',
+            'corporateMember',
             'invoice:id,invoiceable_id,invoiceable_type,status'
         ])->findOrFail($id);
 
@@ -312,7 +319,8 @@ class RoomController extends Controller
         $query = RoomBooking::with([
             'room:id,name',
             'customer:id,customer_no,email,name',
-            'member:id,membership_no,full_name'
+            'member:id,membership_no,full_name',
+            'corporateMember:id,membership_no,full_name'
         ])
             ->where('status', 'checked_in');
 
@@ -322,6 +330,11 @@ class RoomController extends Controller
                 $q
                     ->where('id', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($q) use ($search) {
+                        $q
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($q) use ($search) {
                         $q
                             ->where('full_name', 'like', "%{$search}%")
                             ->orWhere('membership_no', 'like', "%{$search}%");
@@ -382,7 +395,8 @@ class RoomController extends Controller
         $query = RoomBooking::with([
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
-            'member:id,membership_no,full_name'
+            'member:id,membership_no,full_name',
+            'corporateMember:id,membership_no,full_name'
         ])
             ->where('status', 'checked_out');
 
@@ -392,6 +406,11 @@ class RoomController extends Controller
                 $q
                     ->where('id', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($q) use ($search) {
+                        $q
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($q) use ($search) {
                         $q
                             ->where('full_name', 'like', "%{$search}%")
                             ->orWhere('membership_no', 'like', "%{$search}%");

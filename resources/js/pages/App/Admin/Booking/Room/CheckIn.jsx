@@ -117,10 +117,10 @@ const RoomCheckIn = ({ bookings, filters }) => {
                             Room CheckIn
                         </Typography>
                     </Box>
-                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft:5 }}>Register an arriving guest into an allocated room</Typography>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Register an arriving guest into an allocated room</Typography>
 
                     {/* Filter Section */}
-                    <Box sx={{ mb: 1, mt:4 }}>
+                    <Box sx={{ mb: 1, mt: 4 }}>
                         <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
                             {/* Search Input */}
                             <TextField
@@ -254,9 +254,9 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Persons</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Persons</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -268,7 +268,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
@@ -282,16 +282,16 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                         flexWrap: 'nowrap', // ensures they stay on the same line
                                                     }}
                                                 >
-                                                    <Button variant="outlined" size="small" color='#063455' style={{ marginRight: '8px', width: 100, textTransform: 'none', color: '#063455' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                    <Button variant="outlined" size="small" color="#063455" style={{ marginRight: '8px', width: 100, textTransform: 'none', color: '#063455' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                         Check Out
                                                     </Button>
                                                     <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1, color: '#063455' }}>
                                                         <Visibility fontSize="small" />
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
+                                                    <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
                                                         View
                                                     </Button>
-                                                    <Button variant="outlined" size="small" color='#063455' onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
+                                                    <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ minWidth: 'auto', p: '4px' }}>
                                                         <Box component="span" sx={{ fontSize: '12px', fontWeight: 600, textTransform: 'none', color: '#063455' }}>
                                                             Orders
                                                         </Box>

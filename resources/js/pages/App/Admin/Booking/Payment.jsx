@@ -39,7 +39,7 @@ const BookingPayment = ({ invoice, roomOrders }) => {
     }, [remainingAmount]);
 
     const [invoiceForm, setInvoiceForm] = useState({
-        user_id: invoice.customer ? invoice.customer.id : invoice.member ? invoice.member.id : '',
+        user_id: invoice.customer ? invoice.customer.id : invoice.member ? invoice.member.id : invoice.corporateMember || invoice.corporate_member ? (invoice.corporateMember || invoice.corporate_member).id : '',
         inputAmount: remainingAmount.toString() || '0',
         customerCharges: '0.00',
         paymentMethod: 'cash',
@@ -226,14 +226,14 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
                                     <p className="mb-1">
-                                        <strong>{invoice.customer ? 'Customer' : 'Member'}: </strong>
-                                        {invoice.customer ? invoice.customer?.customer_no : invoice.member?.membership_no}
+                                        <strong>{invoice.customer ? 'Customer' : invoice.member ? 'Member' : 'Corporate Member'}: </strong>
+                                        {invoice.customer ? invoice.customer?.customer_no : invoice.member ? invoice.member.membership_no : invoice.corporateMember || invoice.corporate_member ? (invoice.corporateMember || invoice.corporate_member).membership_no : 'N/A'}
                                     </p>
                                     <p className="mb-1">
-                                        <strong>Name:</strong> {invoice.customer ? invoice.customer.name : invoice.member ? invoice.member.full_name : 'N/A'}
+                                        <strong>Name:</strong> {invoice.customer ? invoice.customer.name : invoice.member ? invoice.member.full_name : invoice.corporateMember || invoice.corporate_member ? (invoice.corporateMember || invoice.corporate_member).full_name : 'N/A'}
                                     </p>
                                     <p className="mb-1">
-                                        <strong>Email:</strong> {invoice.customer ? invoice.customer.email : invoice.member ? invoice.member.personal_email : 'N/A'}
+                                        <strong>Email:</strong> {invoice.customer ? invoice.customer.email : invoice.member ? invoice.member.personal_email : invoice.corporateMember || invoice.corporate_member ? (invoice.corporateMember || invoice.corporate_member).personal_email : 'N/A'}
                                     </p>
                                 </Grid>
                                 <Grid item xs={12} sm={6}>

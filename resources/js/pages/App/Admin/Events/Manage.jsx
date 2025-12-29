@@ -190,28 +190,43 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                     <Typography style={{ color: '#003366', fontWeight: 700, fontSize: '30px' }}>Event Bookings</Typography>
                                 </Box>
                             </Box>
-                            <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                                Create, edit, and monitor all event bookings</Typography>
+                            <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Create, edit, and monitor all event bookings</Typography>
 
                             {/* Filter Section */}
                             <Box sx={{ mb: 3, mt: 3, boxShadow: 'none' }}>
                                 <Grid container spacing={2} alignItems="center">
                                     {/* Search by Name */}
                                     <Grid item xs={12} md={2.5}>
-                                        <TextField fullWidth size="small" label="Search by Name" placeholder="Enter guest name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '16px',
-                                            },
-                                        }} />
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            label="Search by Name"
+                                            placeholder="Enter guest name..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                            }}
+                                        />
                                     </Grid>
 
                                     {/* Search by ID */}
                                     <Grid item xs={12} md={2.5}>
-                                        <TextField fullWidth size="small" label="Search by ID" placeholder="Enter booking ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '16px',
-                                            },
-                                        }} />
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            label="Search by ID"
+                                            placeholder="Enter booking ID..."
+                                            value={searchId}
+                                            onChange={(e) => setSearchId(e.target.value)}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                            }}
+                                        />
                                     </Grid>
 
                                     {/* Booking Date From */}
@@ -230,10 +245,8 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                             label="Booking Date From"
                                             format="DD-MM-YYYY"
                                             value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
-                                            onChange={(newValue) =>
-                                                setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')
-                                            }
-                                            enableAccessibleFieldDOMStructure={false}   // important with custom textField
+                                            onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                            enableAccessibleFieldDOMStructure={false} // important with custom textField
                                             slots={{ textField: RoundedTextField }}
                                             slotProps={{
                                                 textField: {
@@ -241,11 +254,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                     fullWidth: true,
                                                     placeholder: 'Select date',
                                                     sx: { minWidth: '180px' },
-                                                    onClick: (e) =>
-                                                        e.target
-                                                            .closest('.MuiFormControl-root')
-                                                            ?.querySelector('button')
-                                                            ?.click(),
+                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
                                                 },
                                                 actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                             }}
@@ -270,22 +279,16 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                             label="Booking Date To"
                                             format="DD-MM-YYYY"
                                             value={bookingDateTo ? dayjs(bookingDateTo) : null}
-                                            onChange={(newValue) =>
-                                                setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')
-                                            }
+                                            onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
                                             enableAccessibleFieldDOMStructure={false}
                                             slots={{ textField: RoundedTextField }}
                                             slotProps={{
                                                 textField: {
                                                     size: 'small',
                                                     fullWidth: true,
-                                                    placeholder: 'Select date',       // instead of InputLabelProps.shrink
+                                                    placeholder: 'Select date', // instead of InputLabelProps.shrink
                                                     sx: { minWidth: '180px' },
-                                                    onClick: (e) =>
-                                                        e.target
-                                                            .closest('.MuiFormControl-root')
-                                                            ?.querySelector('button')
-                                                            ?.click(),
+                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
                                                 },
                                                 actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                             }}
@@ -308,22 +311,16 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                             label="Event Date From"
                                             format="DD-MM-YYYY"
                                             value={eventDateFrom ? dayjs(eventDateFrom) : null}
-                                            onChange={(newValue) =>
-                                                setEventDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')
-                                            }
+                                            onChange={(newValue) => setEventDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
                                             enableAccessibleFieldDOMStructure={false}
                                             slots={{ textField: RoundedTextField }}
                                             slotProps={{
                                                 textField: {
                                                     size: 'small',
                                                     fullWidth: true,
-                                                    placeholder: 'Select date',   // instead of InputLabelProps: { shrink: true }
+                                                    placeholder: 'Select date', // instead of InputLabelProps: { shrink: true }
                                                     sx: { minWidth: '180px' },
-                                                    onClick: (e) =>
-                                                        e.target
-                                                            .closest('.MuiFormControl-root')
-                                                            ?.querySelector('button')
-                                                            ?.click(),
+                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
                                                 },
                                                 actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                             }}
@@ -346,22 +343,16 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                             label="Event Date To"
                                             format="DD-MM-YYYY"
                                             value={eventDateTo ? dayjs(eventDateTo) : null}
-                                            onChange={(newValue) =>
-                                                setEventDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')
-                                            }
+                                            onChange={(newValue) => setEventDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
                                             enableAccessibleFieldDOMStructure={false}
                                             slots={{ textField: RoundedTextField }}
                                             slotProps={{
                                                 textField: {
                                                     size: 'small',
                                                     fullWidth: true,
-                                                    placeholder: 'Select date',   // instead of InputLabelProps: { shrink: true }
+                                                    placeholder: 'Select date', // instead of InputLabelProps: { shrink: true }
                                                     sx: { minWidth: '180px' },
-                                                    onClick: (e) =>
-                                                        e.target
-                                                            .closest('.MuiFormControl-root')
-                                                            ?.querySelector('button')
-                                                            ?.click(),
+                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
                                                 },
                                                 actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                             }}
@@ -370,11 +361,15 @@ const EventsManage = ({ bookings, filters = {} }) => {
 
                                     {/* Choose Venues */}
                                     <Grid item xs={12} md={2.5}>
-                                        <FormControl fullWidth size="small" sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '16px',
-                                            },
-                                        }}>
+                                        <FormControl
+                                            fullWidth
+                                            size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                            }}
+                                        >
                                             <Select
                                                 multiple
                                                 value={selectedVenue}
@@ -405,11 +400,15 @@ const EventsManage = ({ bookings, filters = {} }) => {
 
                                     {/* Status Filter */}
                                     <Grid item xs={12} md={2.5}>
-                                        <FormControl fullWidth size="small" sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: '16px',
-                                            },
-                                        }}>
+                                        <FormControl
+                                            fullWidth
+                                            size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                            }}
+                                        >
                                             <Select
                                                 multiple
                                                 value={selectedStatus}
@@ -502,7 +501,7 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                             filteredBookings.map((booking) => (
                                                 <TableRow key={booking.id}>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_no}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.name || booking.customer?.name || booking.member?.full_name || 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.nature_of_event}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.event_venue?.name || 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.created_at ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
