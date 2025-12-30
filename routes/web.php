@@ -614,6 +614,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-members', [DataMigrationController::class, 'migrateMembers'])->name('data-migration.migrate-members');
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
         Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoices'])->name('data-migration.migrate-invoices');
+        Route::post('/migrate-corporate-members', [DataMigrationController::class, 'migrateCorporateMembers'])->name('data-migration.migrate-corporate-members');
+        Route::post('/migrate-corporate-families', [DataMigrationController::class, 'migrateCorporateFamilies'])->name('data-migration.migrate-corporate-families');
         Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
         Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');

@@ -21,7 +21,6 @@ return new class extends Migration {
             // Identification
             $table->string('barcode_no')->nullable();
             $table->string('membership_no')->nullable()->unique();
-            $table->string('application_number')->nullable();
 
             // Foreign Keys
             $table->foreignId('member_category_id')->nullable()->constrained('member_categories')->onDelete('set null');

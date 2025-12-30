@@ -53,7 +53,7 @@ class DataMigrationController extends Controller
 
             // Check migration status
             $migratedMembersCount = Member::whereNull('parent_id')
-                ->whereNotNull('application_no')
+                ->where('status', '!=', 'deleted')  // using status or just count all specific
                 ->count();
 
             $migratedFamiliesCount = Member::whereNotNull('parent_id')
@@ -86,6 +86,17 @@ class DataMigrationController extends Controller
                 'migrated_invoices_count' => FinancialInvoice::whereIn('invoice_type', ['membership', 'maintenance'])->count(),
                 'invoices_migration_percentage' => DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count() > 0
                     ? round((FinancialInvoice::whereIn('invoice_type', ['membership', 'maintenance'])->count() / DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count()) * 100, 2)
+                    : 0,
+                // Corporate Stats
+                'old_corporate_members_count' => DB::table('corporate_memberships')->count(),
+                'old_corporate_families_count' => DB::table('corporate_mem_families')->count(),
+                'corporate_members_count' => \App\Models\CorporateMember::whereNull('parent_id')->count(),
+                'corporate_families_count' => \App\Models\CorporateMember::whereNotNull('parent_id')->count(),
+                'corporate_members_migration_percentage' => DB::table('corporate_memberships')->count() > 0
+                    ? round((\App\Models\CorporateMember::whereNull('parent_id')->count() / DB::table('corporate_memberships')->count()) * 100, 2)
+                    : 0,
+                'corporate_families_migration_percentage' => DB::table('corporate_mem_families')->count() > 0
+                    ? round((\App\Models\CorporateMember::whereNotNull('parent_id')->count() / DB::table('corporate_mem_families')->count()) * 100, 2)
                     : 0,
             ];
         } catch (\Exception $e) {
@@ -184,25 +195,20 @@ class DataMigrationController extends Controller
         if (!$existingMember) {
             $query = Member::whereNull('parent_id');
 
-            // Primary check: application_no if it exists
-            if (!empty($oldMember->application_no)) {
-                $query->where('application_no', $oldMember->application_no);
-            } else {
-                // Fallback: check by membership_no and name if application_no is empty
-                $query
-                    ->where('membership_no', $oldMember->mem_no)
-                    ->where('full_name', $oldMember->applicant_name);
-            }
+            // Fallback: check by membership_no and name if application_no is empty
+            $query
+                ->where('membership_no', $oldMember->mem_no)
+                ->where('full_name', $oldMember->applicant_name);
 
             $existingMember = $query->first();
         }
 
         if ($existingMember) {
-            Log::info("Skipping member {$oldMember->id} - already exists (App No: {$oldMember->application_no})");
+            Log::info("Skipping member {$oldMember->id} - already exists");
             return;  // Skip if already migrated
         }
 
-        Log::info("Migrating member {$oldMember->id} (App No: {$oldMember->application_no})");
+        Log::info("Migrating member {$oldMember->id}");
 
         // Get member category ID
         $memberCategoryId = $this->getMemberCategoryId($oldMember->mem_category_id);
@@ -210,7 +216,6 @@ class DataMigrationController extends Controller
         // Prepare member data
         $memberData = [
             'old_member_id' => $oldMember->id,
-            'application_no' => $oldMember->application_no,
             'membership_no' => $oldMember->mem_no,
             'membership_date' => $this->validateDate($oldMember->membership_date),
             'full_name' => trim(preg_replace('/\s+/', ' ', $oldMember->title . ' ' . $oldMember->first_name . ' ' . $oldMember->middle_name)),
@@ -798,9 +803,253 @@ class DataMigrationController extends Controller
                 'total_processed' => $offset + $migrated
             ]);
         } catch (\Exception $e) {
-            Log::error('Invoice migration error: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            Log::error('Invoice migration batch error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
+
+    public function migrateCorporateMembers(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 100);
+        $offset = $request->get('offset', 0);
+
+        try {
+            DB::beginTransaction();
+
+            // Sourcing from legacy memberships table, assuming filtered by category
+            // or if there is a specific table for corporate, use that.
+            // Since user said "same logic... only extra field is corporate company",
+            // I will assume source is same memberships table but we might need to look for company info.
+            // However, typical setup might have them in same table.
+            // CAUTION: If "corporate company" field is in legacy table, we map it.
+            // If not, we might need to defaults or lookups.
+            // Assuming 'company_id' exists in source table 'memberships' or similar.
+            // If not found, it will be null.
+
+            $oldMembers = DB::table('corporate_memberships')
+                // ->where('mem_category_id', 'some_corporate_id') // Optional: Filter if needed
+                ->offset($offset)
+                ->limit($batchSize)
+                ->get();
+
+            $migrated = 0;
+            $errors = [];
+
+            foreach ($oldMembers as $oldMember) {
+                try {
+                    $this->migrateSingleCorporateMember($oldMember);
+                    $migrated++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'member_id' => $oldMember->id,
+                        'application_no' => $oldMember->application_no ?? 'N/A',
+                        'membership_no' => $oldMember->mem_no ?? 'N/A',
+                        'name' => $oldMember->applicant_name ?? 'N/A',
+                        'error' => $e->getMessage()
+                    ];
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $migrated,
+                'errors' => $errors,
+                'has_more' => count($oldMembers) == $batchSize
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Corporate Migration batch error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function migrateSingleCorporateMember($oldMember)
+    {
+        // Check if member already exists
+        $existingMember = \App\Models\CorporateMember::where('old_member_id', $oldMember->id)
+            ->whereNull('parent_id')
+            ->first();
+
+        if ($existingMember) {
+            return;
+        }
+
+        // Get member category ID
+        $memberCategoryId = $this->getMemberCategoryId($oldMember->mem_category_id);
+
+        // Map Corporate Company
+        // Adjust column name 'company_id' based on actual legacy table structure
+        $corporateCompanyId = isset($oldMember->company_id) ? $oldMember->company_id : null;
+
+        // Prepare member data
+        $memberData = [
+            'old_id' => $oldMember->id,
+            'old_member_id' => $oldMember->id,
+            'application_number' => $oldMember->application_no,
+            'membership_no' => $oldMember->mem_no,
+            'membership_date' => $this->validateDate($oldMember->membership_date),
+            'full_name' => trim(preg_replace('/\s+/', ' ', $oldMember->title . ' ' . $oldMember->first_name . ' ' . $oldMember->middle_name)),
+            'member_category_id' => $memberCategoryId,
+            'corporate_company_id' => $corporateCompanyId,  // Mapped field
+            'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
+            'guardian_name' => $oldMember->father_name ?? null,
+            'guardian_membership' => $oldMember->father_mem_no ?? null,
+            'cnic_no' => $oldMember->cnic ?? null,
+            'date_of_birth' => $this->validateDate($oldMember->date_of_birth),
+            'gender' => $oldMember->gender ?? null,
+            'education' => $oldMember->education ?? null,
+            'ntn' => $oldMember->ntn ?? null,
+            'reason' => $oldMember->reason ?? null,
+            'blood_group' => $oldMember->blood_group ?? null,
+            'mobile_number_a' => $oldMember->mob_a ?? null,
+            'mobile_number_b' => $oldMember->mob_b ?? null,
+            'tel_number_a' => $oldMember->tel_a ?? null,
+            'tel_number_b' => $oldMember->tel_b ?? null,
+            'personal_email' => $oldMember->personal_email ?? null,
+            'critical_email' => $oldMember->official_email ?? null,
+            'card_issue_date' => $this->validateDate($oldMember->card_issue_date),
+            'barcode_no' => $oldMember->mem_barcode ?? null,
+            'profile_photo' => $this->migrateProfilePhoto($oldMember->mem_picture ?? null),
+            'status' => $this->mapMemberStatus($oldMember->active),
+            'permanent_address' => $oldMember->per_address ?? null,
+            'permanent_city' => $oldMember->per_city ?? null,
+            'permanent_country' => $oldMember->per_country ?? null,
+            'current_address' => $oldMember->cur_address ?? null,
+            'current_city' => $oldMember->cur_city ?? null,
+            'current_country' => $oldMember->cur_country ?? null,
+            'card_expiry_date' => $this->validateDate($oldMember->card_exp),
+            'active_remarks' => $oldMember->active_remarks ?? null,
+            'from_date' => $this->validateDate($oldMember->from),
+            'to_date' => $this->validateDate($oldMember->to),
+            'emergency_name' => $oldMember->emergency_name ?? null,
+            'emergency_relation' => $oldMember->emergency_relation ?? null,
+            'emergency_contact' => $oldMember->emergency_contact ?? null,
+            'passport_no' => $oldMember->passport_no ?? null,
+            'title' => $oldMember->title ?? null,
+            'first_name' => $oldMember->first_name ?? null,
+            'middle_name' => $oldMember->middle_name ?? null,
+            'name_comments' => $oldMember->name_comment ?? null,
+            'kinship' => $oldMember->kinship ?? null,
+            'created_at' => $this->validateDate($oldMember->created_at),
+            'updated_at' => $this->validateDate($oldMember->updated_at),
+            'deleted_at' => $this->validateDate($oldMember->deleted_at),
+            'created_by' => $oldMember->created_by ?? null,
+            'updated_by' => $oldMember->updated_by ?? null,
+            'deleted_by' => $oldMember->deleted_by ?? null,
+        ];
+
+        // Create new corporate member
+        \App\Models\CorporateMember::create($memberData);
+    }
+
+    public function migrateCorporateFamilies(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 100);
+        $offset = $request->get('offset', 0);
+
+        try {
+            DB::beginTransaction();
+
+            $oldFamilies = DB::table('mem_families')
+                ->offset($offset)
+                ->limit($batchSize)
+                ->get();
+
+            $migrated = 0;
+            $errors = [];
+
+            foreach ($oldFamilies as $oldFamily) {
+                try {
+                    $this->migrateSingleCorporateFamily($oldFamily);
+                    $migrated++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'family_id' => $oldFamily->id,
+                        'name' => ($oldFamily->title ?? '') . ' ' . ($oldFamily->first_name ?? ''),
+                        'error' => $e->getMessage()
+                    ];
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $migrated,
+                'errors' => $errors,
+                'has_more' => count($oldFamilies) == $batchSize
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Corporate Family migration batch error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function migrateSingleCorporateFamily($oldFamily)
+    {
+        // Find parent member
+        $parentMember = \App\Models\CorporateMember::where('old_member_id', $oldFamily->member_id)
+            ->whereNull('parent_id')
+            ->first();
+
+        if (!$parentMember) {
+            // Parent not found (maybe not migrated yet or not a corporate member)
+            return;
+            // Alternatively throw exception if strict
+        }
+
+        // Check if family member already exists
+        $existingFamily = \App\Models\CorporateMember::where('old_family_id', $oldFamily->id)
+            ->first();
+
+        if ($existingFamily) {
+            return;
+        }
+
+        $familyMembershipNo = $oldFamily->sup_card_no;
+
+        $familyData = [
+            'old_family_id' => $oldFamily->id,
+            'parent_id' => $parentMember->id,
+            'full_name' => trim(preg_replace('/\s+/', ' ', $oldFamily->title . ' ' . $oldFamily->first_name . ' ' . $oldFamily->middle_name)),
+            'first_name' => $oldFamily->first_name,
+            'middle_name' => $oldFamily->middle_name,
+            'date_of_birth' => $this->validateDate($oldFamily->date_of_birth),
+            'relation' => $this->mapFamilyRelation($oldFamily->fam_relationship),
+            'nationality' => $oldFamily->nationality,
+            'cnic_no' => $oldFamily->cnic,
+            'mobile_number_a' => $oldFamily->contact,
+            'martial_status' => $oldFamily->maritial_status,
+            'gender' => $oldFamily->gender ?? null,
+            'membership_no' => $familyMembershipNo,
+            'card_status' => $this->mapCardStatus($oldFamily->card_status),
+            'card_issue_date' => $this->validateDate($oldFamily->sup_card_issue),
+            'card_expiry_date' => $this->validateDate($oldFamily->sup_card_exp),
+            'barcode_no' => $oldFamily->sup_barcode,
+            'status' => $this->mapMemberStatus($oldFamily->status),
+            'created_at' => $this->validateDate($oldFamily->created_at),
+            'updated_at' => $this->validateDate($oldFamily->updated_at),
+            'deleted_at' => $this->validateDate($oldFamily->deleted_at),
+            'created_by' => $oldFamily->created_by,
+            'updated_by' => $oldFamily->updated_by,
+            'deleted_by' => $oldFamily->deleted_by,
+        ];
+
+        \App\Models\CorporateMember::create($familyData);
     }
 
     private function migrateSingleInvoice($old)
