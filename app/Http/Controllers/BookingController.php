@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
+use App\Models\CorporateMember;
 use App\Models\EventBooking;
 use App\Models\FinancialInvoice;
 use App\Models\Member;
@@ -123,7 +124,7 @@ class BookingController extends Controller
     {
         $invoice_no = $request->query('invoice_no');
 
-        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,membership_no,full_name,personal_email', 'member.memberType', 'invoiceable:id,booking_no')->first();
+        $invoice = FinancialInvoice::where('id', $invoice_no)->with('customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email', 'member.memberType', 'invoiceable:id,booking_no')->first();
 
         if (!$invoice) {
             return response()->json(['message' => 'Invoice not found'], 404);
@@ -150,8 +151,44 @@ class BookingController extends Controller
 
     // Search family Members
 
-    public function familyMembers($id)
+    public function familyMembers(Request $request, $id)
     {
+        $type = $request->query('type', 'member');  // default to member
+
+        if ($type == '2' || $type == 'corporate') {
+            // Get corporate family members
+            $familyMembers = CorporateMember::select(
+                'id',
+                'full_name',
+                'membership_no',
+                'personal_email',
+                'mobile_number_a',
+                'family_suffix',
+                'cnic_no',
+                'current_address'
+            )
+                ->where('parent_id', $id)
+                ->limit(10)
+                ->get();
+
+            // Format for frontend
+            $results = $familyMembers->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'label' => "{$member->full_name} ({$member->membership_no})",
+                    'membership_no' => $member->membership_no,
+                    'email' => $member->personal_email,
+                    'cnic' => $member->cnic_no,
+                    'phone' => $member->mobile_number_a,
+                    'address' => $member->current_address,
+                    'family_suffix' => $member->family_suffix,
+                ];
+            });
+
+            return response()->json(['success' => true, 'results' => $results], 200);
+        }
+
+        // Standard Members (existing logic)
         // Get family members (members with parent_id = main member id)
         $familyMembers = Member::select(
             'id',

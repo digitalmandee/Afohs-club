@@ -13,6 +13,7 @@ class EventBooking extends BaseModel
         'booking_no',
         'customer_id',
         'member_id',
+        'corporate_member_id',
         'event_venue_id',
         'family_id',
         'booking_date',
@@ -96,12 +97,17 @@ class EventBooking extends BaseModel
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'id');
     }
-    
+
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id', 'id');
     }
-    
+
+    public function corporateMember()
+    {
+        return $this->belongsTo(CorporateMember::class, 'corporate_member_id', 'id');
+    }
+
     /**
      * Get the family member.
      */

@@ -177,9 +177,7 @@ const RoomScreen = ({ bookings }) => {
                     {/* Search and Filter */}
                     <Row className="align-items-center mt-2 mb-3">
                         <Col>
-                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
-                                Room Bookings
-                            </Typography>
+                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Room Bookings</Typography>
                         </Col>
                         <Col xs="auto" className="d-flex gap-2">
                             <div style={{ position: 'relative' }}>
@@ -267,7 +265,7 @@ const RoomScreen = ({ bookings }) => {
                                         return (
                                             <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>#{booking.booking_no}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>

@@ -11,6 +11,7 @@ class MaintenanceFee extends Model
 
     protected $fillable = [
         'member_id',
+        'corporate_member_id',
         'year',
         'month',
         'amount',
@@ -21,6 +22,11 @@ class MaintenanceFee extends Model
     public function member()
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function corporateMember()
+    {
+        return $this->belongsTo(CorporateMember::class);
     }
 
     public function invoice()

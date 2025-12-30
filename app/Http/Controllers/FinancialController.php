@@ -214,6 +214,8 @@ class FinancialController extends Controller
         $relations = [
             'member',
             'member.memberType',
+            'corporateMember',
+            'customer',
             'subscriptionType',
             'subscriptionCategory'
         ];
@@ -237,6 +239,8 @@ class FinancialController extends Controller
         // Load family members count if member exists
         if ($invoice->member) {
             $invoice->member->loadCount('familyMembers');
+        } elseif ($invoice->corporateMember) {
+            $invoice->corporateMember->loadCount('familyMembers');
         }
 
         return response()->json(['invoice' => $invoice]);

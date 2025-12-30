@@ -183,7 +183,7 @@ class UserController extends Controller
                     'designation' => $employee->designation,
                 ];
             });
-        } elseif ($bookingType === '0' || $bookingType === '2') {
+        } elseif ($bookingType === '0') {
             $members = Member::select(
                 'members.id',
                 'members.full_name',
@@ -192,6 +192,7 @@ class UserController extends Controller
                 'members.current_address',
                 'members.personal_email',
                 'members.mobile_number_a',
+                'members.status',
                 'member_categories.name as category_name',
                 DB::raw('(SELECT COUNT(*) FROM members AS fm WHERE fm.kinship = members.id) as total_kinships')
             )
@@ -217,6 +218,46 @@ class UserController extends Controller
                     'cnic' => $user->cnic_no,
                     'phone' => $user->mobile_number_a,
                     'address' => $user->current_address,
+                    'status' => $user->status ?? 'active',
+                ];
+            });
+        } elseif ($bookingType === '2') {
+            $members = \App\Models\CorporateMember::select(
+                'corporate_members.id',
+                'corporate_members.full_name',
+                'corporate_members.membership_no',
+                'corporate_members.cnic_no',
+                'corporate_members.current_address',
+                'corporate_members.personal_email',
+                'corporate_members.mobile_number_a',
+                'corporate_members.status',
+                'member_categories.name as category_name',
+                DB::raw('(SELECT COUNT(*) FROM corporate_members AS fm WHERE fm.kinship = corporate_members.id) as total_kinships')
+            )
+                ->leftJoin('member_categories', 'corporate_members.member_category_id', '=', 'member_categories.id')
+                ->whereNull('corporate_members.parent_id')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('corporate_members.full_name', 'like', "%{$query}%")
+                        ->orWhere('corporate_members.membership_no', 'like', "%{$query}%");
+                });
+
+            $members = $members->limit(10)->get();
+
+            $results = $members->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'booking_type' => 'member',  // Use 'member' to keep frontend logic consistent if it relies on this
+                    'is_corporate' => true,
+                    'name' => $user->full_name,
+                    'total_kinships' => $user->total_kinships,
+                    'label' => "{$user->full_name} ({$user->membership_no})",
+                    'membership_no' => $user->membership_no,
+                    'email' => $user->personal_email,
+                    'cnic' => $user->cnic_no,
+                    'phone' => $user->mobile_number_a,
+                    'address' => $user->current_address,
+                    'status' => $user->status ?? 'active',
                 ];
             });
 

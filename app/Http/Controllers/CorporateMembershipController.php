@@ -31,7 +31,7 @@ class CorporateMembershipController extends Controller
      */
     public function create()
     {
-        $membershipNo = CorporateMember::generateNextMembershipNumber();
+        $membershipNo = '';
 
         // Filter categories that have 'corporate' in their category_types JSON array
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')
@@ -68,7 +68,7 @@ class CorporateMembershipController extends Controller
             DB::beginTransaction();
 
             $fullName = trim(preg_replace('/\s+/', ' ', $request->title . ' ' . $request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name));
-            $membershipNo = CorporateMember::generateNextMembershipNumber();
+            // $membershipNo = CorporateMember::generateNextMembershipNumber();
 
             $mainMember = CorporateMember::create([
                 'first_name' => $request->first_name,
@@ -77,7 +77,7 @@ class CorporateMembershipController extends Controller
                 'last_name' => $request->last_name,
                 'full_name' => $fullName,
                 'martial_status' => $request->martial_status,
-                'membership_no' => $request->membership_no ?? $membershipNo,
+                'membership_no' => $request->membership_no,
                 'member_category_id' => $request->membership_category,
                 'membership_date' => $this->formatDateForDatabase($request->membership_date),
                 'card_status' => $request->card_status,

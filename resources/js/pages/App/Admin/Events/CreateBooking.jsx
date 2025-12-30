@@ -3,11 +3,11 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, Button, IconButton, Select, MenuItem, FormControl } from '@mui/material';
+import { Stepper, Step, StepLabel, Box, Typography, Grid, TextField, Radio, RadioGroup, FormControlLabel, FormLabel, Checkbox, InputLabel, Button, IconButton, Select, MenuItem, FormControl, Autocomplete, Chip, CircularProgress } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
-import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+// import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 import { differenceInCalendarDays } from 'date-fns';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
@@ -89,6 +89,17 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                     address: bookingData.address,
                     phone: bookingData.mobile,
                     booking_type: 'member',
+                };
+            } else if (bookingData.corporateMember) {
+                guestObject = {
+                    id: bookingData.corporateMember.id,
+                    membership_no: bookingData.corporateMember.membership_no,
+                    name: bookingData.name,
+                    email: bookingData.email,
+                    cnic: bookingData.cnic,
+                    address: bookingData.address,
+                    phone: bookingData.mobile,
+                    booking_type: '2', // Corporate
                 };
             } else if (bookingData.customer) {
                 guestObject = {
@@ -326,13 +337,11 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 }}
             >
                 {/* Header */}
-                <Box sx={{ display: 'flex', alignItems: 'center', ml: 5, pt:3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', ml: 5, pt: 3 }}>
                     <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('events.dashboard'))}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography style={{ color: '#063455', fontSize: '30px', fontWeight:'700' }}>
-                        Event Booking
-                    </Typography>
+                    <Typography style={{ color: '#063455', fontSize: '30px', fontWeight: '700' }}>Event Booking</Typography>
                 </Box>
 
                 <Box
@@ -398,6 +407,11 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
     const { props } = usePage();
 
     const [familyMembers, setFamilyMembers] = useState([]);
+    // Autocomplete states
+    const [open, setOpen] = useState(false);
+    const [options, setOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
     useEffect(() => {
         if (formData.guest) {
             if (formData.guest.booking_type == 'guest') {
@@ -406,7 +420,9 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
             }
 
             axios
-                .get(route('admin.family-members', { id: formData.guest?.id }))
+                .get(route('admin.family-members', { id: formData.guest?.id }), {
+                    params: { type: formData.bookingType },
+                })
                 .then((res) => {
                     setFamilyMembers(res.data.results);
                 })
@@ -414,7 +430,30 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                     setFamilyMembers([]);
                 });
         }
-    }, [formData.guest]);
+    }, [formData.guest, formData.bookingType]);
+
+    // Handle search input change
+    const handleSearch = async (event, query) => {
+        if (!query) {
+            setOptions([]);
+            return;
+        }
+        setLoading(true);
+        try {
+            const response = await axios.get(route('admin.api.search-users'), {
+                params: {
+                    q: query,
+                    type: formData.bookingType,
+                },
+            });
+            setOptions(response.data.results || []);
+        } catch (error) {
+            console.error('Error fetching members:', error);
+            setOptions([]);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <>
@@ -422,7 +461,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                 <Grid item xs={12} sm={3}>
                     <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
                 </Grid>
-                {JSON.stringify()}
+                {/* {JSON.stringify(formData.guest)} */}
                 <Grid item xs={12} sm={3}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
@@ -443,20 +482,92 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                 </Grid>
                 <Grid item xs={6}>
                     <FormLabel>Booking Type</FormLabel>
-                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
+                    <RadioGroup
+                        row
+                        name="bookingType"
+                        value={formData.bookingType}
+                        onChange={(e) => {
+                            handleChange(e);
+                            handleChange({ target: { name: 'guest', value: null } });
+                            handleChange({ target: { name: 'familyMember', value: '' } });
+                            setOptions([]);
+                        }}
+                    >
                         <FormControlLabel value="0" control={<Radio disabled={editMode} />} label="Member" />
+                        <FormControlLabel value="2" control={<Radio disabled={editMode} />} label="Corporate Member" />
                         <FormControlLabel value="1" control={<Radio disabled={editMode} />} label="Guest / Non-Member" />
                     </RadioGroup>
                 </Grid>
 
-                <Grid item xs={6}>
-                    <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: formData.bookingType }} placeholder="Search members..." disabled={editMode} />
-
-                    {errors.guest && (
-                        <Typography variant="body2" color="error">
-                            {errors.guest}
-                        </Typography>
-                    )}
+                <Grid item xs={12} sm={12}>
+                    <Autocomplete
+                        open={open}
+                        onOpen={() => setOpen(true)}
+                        onClose={() => setOpen(false)}
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
+                        getOptionLabel={(option) => option.label || ''}
+                        options={options}
+                        loading={loading}
+                        value={formData.guest || null}
+                        disabled={editMode}
+                        onInputChange={(event, newInputValue, reason) => {
+                            if (reason === 'input') {
+                                handleSearch(event, newInputValue);
+                            }
+                        }}
+                        onChange={(event, newValue) => {
+                            handleChange({ target: { name: 'guest', value: newValue } });
+                        }}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Member / Guest Name"
+                                placeholder="Search members..."
+                                error={!!errors.guest}
+                                helperText={errors.guest}
+                                InputProps={{
+                                    ...params.InputProps,
+                                    endAdornment: (
+                                        <React.Fragment>
+                                            {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                            {params.InputProps.endAdornment}
+                                        </React.Fragment>
+                                    ),
+                                }}
+                            />
+                        )}
+                        renderOption={(props, option) => (
+                            <li {...props} key={option.id}>
+                                <Box sx={{ width: '100%' }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="body2" fontWeight="bold">
+                                            {option.membership_no || option.customer_no || option.employee_id}
+                                        </Typography>
+                                        {option.status && (
+                                            <Chip
+                                                label={option.status}
+                                                size="small"
+                                                sx={{
+                                                    height: '20px',
+                                                    fontSize: '10px',
+                                                    backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                    color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                    textTransform: 'capitalize',
+                                                    ml: 1,
+                                                }}
+                                            />
+                                        )}
+                                    </Box>
+                                    <Box display="flex" justifyContent="space-between">
+                                        <Typography variant="caption">{option.full_name || option.name}</Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {option.cnic_no || option.cnic || option.mobile_number_a || option.contact}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                            </li>
+                        )}
+                    />
 
                     {formData.guest && (
                         <Box sx={{ mt: 1, p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
@@ -464,12 +575,13 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                                 Member Information
                             </Typography>
                             {formData.guest?.name}
-                            <Typography variant="body1">{formData.guest?.booking_type == 'member' ? `Member # ${formData.guest?.membership_no}` : `Guest # ${formData.guest?.customer_no}`}</Typography>
-                            <Typography variant="body1">Email: {formData.guest?.email}</Typography>
-                            <Typography variant="body1">Phone: {formData.guest?.phone}</Typography>
-                            <Typography variant="body1">Cnic / Passport: {formData.guest?.cnic}</Typography>
-                            <Typography variant="body1">Address: {formData.guest?.address}</Typography>
-                            {formData.guest?.booking_type == 'member' ? (
+                            <Typography variant="body1">{formData.guest?.booking_type == 'member' ? `Member # ${formData.guest?.membership_no}` : formData.guest?.booking_type == '2' || formData.bookingType == 2 ? `Corporate # ${formData.guest?.membership_no}` : `Guest # ${formData.guest?.customer_no}`}</Typography>
+                            <Typography variant="body1">Email: {formData.guest?.email || formData.guest?.personal_email}</Typography>
+                            <Typography variant="body1">Phone: {formData.guest?.phone || formData.guest?.mobile_number_a}</Typography>
+                            <Typography variant="body1">Usage: {formData.guest?.usage_type || 'N/A'}</Typography>
+                            <Typography variant="body1">Cnic / Passport: {formData.guest?.cnic || formData.guest?.cnic_no}</Typography>
+                            <Typography variant="body1">Address: {formData.guest?.address || formData.guest?.current_address}</Typography>
+                            {formData.guest?.booking_type == 'member' || formData.guest?.booking_type == '2' || formData.bookingType == '2' ? (
                                 <FormControl fullWidth sx={{ mt: 2 }}>
                                     <InputLabel>Select Family Member</InputLabel>
                                     <Select value={formData.familyMember} onChange={handleChange} name="familyMember" label="Select Family Member">

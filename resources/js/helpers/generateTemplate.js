@@ -216,18 +216,18 @@ export const generateInvoiceContent = (booking) => {
                 <div style="margin-bottom: 20px">
                     <div class="subtitle1">Bill To - #${booking.booking_no || 'N/A'}</div>
                     <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : ''}</div>
+                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).full_name : ''}</div>
                         <div class="typography-body2">
                           <span style="font-weight: bold">Membership ID: </span>
-                          ${booking.customer ? booking.customer.customer_no : booking.member ? booking.member.membership_no : 'N/A'}
+                          ${booking.customer ? booking.customer.customer_no : booking.member ? booking.member.membership_no : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).membership_no : 'N/A'}
                         </div>
                         <div class="typography-body2">
                           <span style="font-weight: bold">Phone Number: </span>
-                          ${booking.customer ? booking.customer.contact : booking.member ? booking.member.mobile_number_a : 'N/A'}
+                          ${booking.customer ? booking.customer.contact : booking.member ? booking.member.mobile_number_a : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).mobile_number_a : 'N/A'}
                         </div>
                         <div class="typography-body2">
                           <span style="font-weight: bold">Email: </span>
-                          ${booking.customer ? booking.customer.email : booking.member ? booking.member.personal_email : 'N/A'}
+                          ${booking.customer ? booking.customer.email : booking.member ? booking.member.personal_email : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).personal_email : 'N/A'}
                         </div>
                     </div>
                 </div>

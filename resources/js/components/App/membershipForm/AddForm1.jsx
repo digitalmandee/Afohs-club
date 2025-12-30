@@ -298,7 +298,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
                             {/* COA Account */}
                             <Grid item xs={6}>
                                 <Typography variant="body2" sx={{ mb: 1 }}>
-                                    COA Account*
+                                    COA Account
                                 </Typography>
                                 <TextField fullWidth variant="outlined" placeholder="Enter to search" size="small" name="coa_category_id" value={data.coa_category_id} error={!!formErrors.coa_category_id} helperText={formErrors.coa_category_id} onChange={handleChange} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>

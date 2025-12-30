@@ -10,7 +10,6 @@ import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoic
 import EventCompletionModal from '@/components/App/Events/EventCompletionModal';
 import { enqueueSnackbar } from 'notistack';
 
-
 const EventCalendar = () => {
     const schedulerRef = useRef();
     // const [open, setOpen] = useState(true);
@@ -46,6 +45,7 @@ const EventCalendar = () => {
                 // Determine booking type and display info
                 const isCustomerBooking = booking.customer && !booking.member;
                 const isMemberBooking = booking.member && !booking.customer;
+                const isCorporateBooking = booking.corporate_member || booking.corporateMember;
 
                 let displayText = booking.booked_by || 'N/A';
                 let bookingTypeInfo = '';
@@ -55,6 +55,9 @@ const EventCalendar = () => {
                     bookingTypeInfo = `Customer: ${booking.customer.name}`;
                 } else if (isMemberBooking) {
                     bookingTypeInfo = `Member: ${booking.member.full_name} (${booking.membership_no})`;
+                } else if (isCorporateBooking) {
+                    const corp = booking.corporate_member || booking.corporateMember;
+                    bookingTypeInfo = `Corporate: ${corp.full_name} (${corp.membership_no})`;
                 } else {
                     bookingTypeInfo = 'General Booking';
                 }
@@ -85,19 +88,20 @@ const EventCalendar = () => {
                             <span style="color: #666;">Guests: ${booking.no_of_guests || 0}</span><br/>
                             <span style="color: #666;">Status: <span style="color: ${getStatusColor(booking.status)}; font-weight: bold;">${booking.status?.charAt(0).toUpperCase() + booking.status?.slice(1)}</span></span><br/>
                             ${booking.nature_of_event ? `<span style="color: #666;">Event: ${booking.nature_of_event}</span><br/>` : ''}
-                            
+
                             <div style="margin: 8px 0; padding: 6px; background: #f0f8ff; border-radius: 4px;">
-                                <a href="#" onclick="window.updateEventBooking('${booking.id}'); return false;" 
+                                <a href="#" onclick="window.updateEventBooking('${booking.id}'); return false;"
                                    style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Update booking</a>
-                                ${booking.status === 'confirmed'
-                            ? `
-                                <a href="#" onclick="window.completeEventBooking('${booking.id}'); return false;" 
+                                ${
+                                    booking.status === 'confirmed'
+                                        ? `
+                                <a href="#" onclick="window.completeEventBooking('${booking.id}'); return false;"
                                    style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Complete Booking</a>
                                 `
-                            : ''
-                        }
+                                        : ''
+                                }
                             </div>
-                            
+
                             <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
                                 <strong style="color: #1976d2; font-style: italic; font-size: 12px;">Timings</strong><br/>
                                 <span style="font-size: 11px;">From: ${booking.event_time_from}</span><br/>
@@ -155,7 +159,7 @@ const EventCalendar = () => {
         if (schedulerRef.current && events.length > 0) {
             schedulerRef.current.control.update({
                 resources: resources,
-                events: events
+                events: events,
             });
         }
     }, [events, resources]);
@@ -322,14 +326,14 @@ const EventCalendar = () => {
     };
     const monthNames = moment.months().map((monthName, index) => ({
         value: String(index + 1).padStart(2, '0'),
-        label: monthName
+        label: monthName,
     }));
 
     const yearOptions = Array.from({ length: 10 }, (_, i) => {
         const yearNum = moment().year() - 5 + i;
         return {
             value: String(yearNum),
-            label: yearNum
+            label: yearNum,
         };
     });
 
@@ -339,7 +343,7 @@ const EventCalendar = () => {
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor: '#f5f5f5'
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ p: 2 }}>
@@ -350,9 +354,7 @@ const EventCalendar = () => {
                         </IconButton>
                         <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Event Calender</Typography>
                     </Box>
-                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        Helps avoid clashes and manage venue availability efficiently
-                    </Typography>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Helps avoid clashes and manage venue availability efficiently</Typography>
 
                     {/* Month and Year Selectors */}
                     <Box sx={{ display: 'flex', gap: 2, mb: 3, mt: 3 }}>
@@ -367,7 +369,7 @@ const EventCalendar = () => {
                             </Select>
                         </FormControl> */}
                         <Autocomplete
-                            value={monthNames.find(m => m.value === month) || null}
+                            value={monthNames.find((m) => m.value === month) || null}
                             onChange={(e, newValue) => handleMonthChange({ target: { value: newValue?.value || '' } })}
                             options={monthNames}
                             getOptionLabel={(option) => option.label}
@@ -398,7 +400,7 @@ const EventCalendar = () => {
                             </Select>
                         </FormControl> */}
                         <Autocomplete
-                            value={yearOptions.find(y => y.value === year) || null}
+                            value={yearOptions.find((y) => y.value === year) || null}
                             onChange={(e, newValue) => handleYearChange({ target: { value: newValue?.value || '' } })}
                             options={yearOptions}
                             getOptionLabel={(option) => option.label}

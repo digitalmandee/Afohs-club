@@ -16,6 +16,8 @@ export function getEventBookingTypeLabel(type) {
             return 'Member';
         case '1':
             return 'Guest / Non-Member';
+        case '2':
+            return 'Corporate Member';
         default:
             return 'Event Booking';
     }
@@ -66,11 +68,11 @@ export const generateEventInvoiceContent = (booking) => {
     console.log('Menu Add-Ons:', booking.menuAddOns || booking.menu_add_ons);
     console.log('Other Charges:', booking.otherCharges || booking.other_charges);
 
-    const customerName = booking.customer?.name || booking.member?.full_name || booking.name || 'N/A';
-    const customerEmail = booking.customer?.email || booking.member?.personal_email || booking.email || 'N/A';
-    const customerPhone = booking.customer?.contact || booking.member?.mobile_number_a || booking.mobile || 'N/A';
-    const membershipNo = booking.customer?.customer_no || booking.member?.membership_no || 'N/A';
-    
+    const customerName = booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || booking.name || 'N/A';
+    const customerEmail = booking.customer?.email || booking.member?.personal_email || booking.corporateMember?.personal_email || booking.corporate_member?.personal_email || booking.email || 'N/A';
+    const customerPhone = booking.customer?.contact || booking.member?.mobile_number_a || booking.corporateMember?.mobile_number_a || booking.corporate_member?.mobile_number_a || booking.mobile || 'N/A';
+    const membershipNo = booking.customer?.customer_no || booking.member?.membership_no || booking.corporateMember?.membership_no || booking.corporate_member?.membership_no || 'N/A';
+
     // Parse menu add-ons and other charges - try both camelCase and snake_case
     const menuAddOns = booking.menuAddOns || booking.menu_add_ons || [];
     const otherCharges = booking.otherCharges || booking.other_charges || [];
