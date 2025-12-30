@@ -328,19 +328,11 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                     <FamilyFilter />
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                         <Table>
-                            <TableHead>
-                                <TableRow sx={{
-                                    backgroundColor: '#063455',
-                                    height: 40,  // Reduced height
-                                    '& .MuiTableCell-root': {
-                                        padding: '8px 10px',  // Reduced padding
-                                        height: 40,
-                                        verticalAlign: 'middle'
-                                    }
-                                }}>
-                                    {isSuperAdmin && (
+                            <TableHead style={{ backgroundColor: '#063455', height: '30px' }}>
+                                <TableRow>
+                                    {/* {isSuperAdmin && (
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, width: '50px' }}>
                                             <Checkbox
                                                 checked={selectedMembers.length === familyGroups.data.length && familyGroups.data.length > 0}
@@ -363,7 +355,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                 }}
                                             />
                                         </TableCell>
-                                    )}
+                                    )} */}
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Card No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Name</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Member Name</TableCell>
@@ -374,9 +366,9 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Phone Number</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Expiry Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap', }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Card</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Actions</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -392,13 +384,13 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                     return (
                                         <React.Fragment key={user.id}>
                                             <TableRow style={{ borderBottom: '1px solid #eee', backgroundColor: shouldExpire ? '#fff3e0' : 'transparent' }}>
-                                                {isSuperAdmin && (
+                                                {/* {isSuperAdmin && (
                                                     <TableCell sx={{
                                                         whiteSpace: 'nowrap',
                                                     }}>
                                                         <Checkbox checked={selectedMembers.includes(user.id)} onChange={() => handleSelectMember(user.id)} disabled={!shouldExpire} />
                                                     </TableCell>
-                                                )}
+                                                )} */}
                                                 <TableCell sx={{
                                                     color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap', cursor: 'pointer',
                                                     transition: 'color 0.2s ease',
@@ -426,7 +418,25 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                         </Typography>
                                                     </Tooltip>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.parent?.full_name}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                    
+                                                    <Tooltip title={user.parent?.full_name} arrow>
+                                                        <Typography
+                                                            sx={{
+                                                                color: '#7F7F7F',
+                                                                fontWeight: 400,
+                                                                fontSize: '14px',
+                                                                maxWidth: '120px',     // controls visible length (~15 chars)
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                cursor: 'pointer',
+                                                            }}
+                                                        >
+                                                            {user.parent?.full_name}
+                                                        </Typography>
+                                                    </Tooltip>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Box display="flex" alignItems="center">
                                                         <Box display="flex" alignItems="center">
@@ -478,10 +488,14 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                 <TableCell>
                                                     <Button
                                                         size="small"
+                                                        variant='contained'
                                                         style={{
-                                                            color: '#0C67AA',
-                                                            textDecoration: 'underline',
+                                                            color: '#063455',
+                                                            border:'1px solid #063455',
+                                                            backgroundColor:'transparent',
+                                                            // textDecoration: 'underline',
                                                             textTransform: 'none',
+                                                            boxShadow:'none'
                                                         }}
                                                         onClick={() => {
                                                             setSelectMember(user);
