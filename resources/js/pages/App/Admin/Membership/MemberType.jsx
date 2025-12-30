@@ -80,9 +80,9 @@ const MembersType = ({ memberTypesData }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => window.history.back()}>
+                        {/* <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography variant="h5" sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Members Type
                         </Typography>
@@ -117,7 +117,7 @@ const MembersType = ({ memberTypesData }) => {
                 <Grid container spacing={3} style={{ marginTop: 5 }}>
                     {memberTypes.map((type) => (
                         <Grid item xs={12} sm={6} md={4} key={type.id}>
-                            <Card sx={{ p: 2, border: '1px solid #ddd' }}>
+                            <Card sx={{ p: 2, border: '1px solid #ddd', borderRadius:'16px' }}>
                                 <Box display="flex" justifyContent="space-between" alignItems="center">
                                     <Typography fontWeight={500}>{type.name}</Typography>
                                     <IconButton onClick={(e) => handleMenuOpen(e, type)}>

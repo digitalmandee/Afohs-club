@@ -267,20 +267,10 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                     <CorporateFamilyFilter />
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                         <Table>
-                            <TableHead>
-                                <TableRow
-                                    sx={{
-                                        backgroundColor: '#063455',
-                                        height: 40, // Reduced height
-                                        '& .MuiTableCell-root': {
-                                            padding: '8px 10px', // Reduced padding
-                                            height: 40,
-                                            verticalAlign: 'middle',
-                                        },
-                                    }}
-                                >
+                            <TableHead style={{ backgroundColor: '#063455', height: '30px' }}>
+                                <TableRow>
                                     {/* {isSuperAdmin && (
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, width: '50px' }}>
                                             <Checkbox
@@ -315,9 +305,9 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Phone Number</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Expiry Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Card</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: 5 }}>Actions</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Card</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

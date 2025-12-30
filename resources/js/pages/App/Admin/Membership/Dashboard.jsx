@@ -57,6 +57,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
     const handleOpenMenu = (e, user) => {
         setMenuAnchor(e.currentTarget);
         setSelectedUserId(user.id);  // Track which user
+        setMenuMember(user);
     };
 
     // const handleOpenMenu = (event, user) => {
@@ -274,12 +275,12 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                     </div>
                     {/* Primary Members Table */}
                     {memberTab === 0 && (
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                             <Table
                             // sx={{ border: '2px solid #063455' }}
                             >
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Category</TableCell>
@@ -352,7 +353,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                             <Tooltip title={user.personal_email || 'N/A'} arrow>
                                                                 <span>{user.personal_email || 'N/A'}</span>
                                                             </Tooltip>
-                                                            
+
                                                         </Typography>
                                                     </div>
                                                 </div>
@@ -424,24 +425,6 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                 </PopupState>
                                             </TableCell>
                                             {/* <TableCell>
-                                            <Button
-                                                style={{
-                                                    color: '#0C67AA',
-                                                    textDecoration: 'underline',
-                                                    textTransform: 'none',
-                                                }}
-                                                onClick={() => {
-                                                    setSelectMember(user);
-                                                    setOpenCardModal(true);
-                                                }}
-                                            >
-                                                View
-                                            </Button>
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
-                                                <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
-                                            ) : (
                                                 <Button
                                                     style={{
                                                         color: '#0C67AA',
@@ -450,13 +433,33 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     }}
                                                     onClick={() => {
                                                         setSelectMember(user);
-                                                        setOpenInvoiceModal(true);
+                                                        setOpenCardModal(true);
                                                     }}
                                                 >
                                                     View
                                                 </Button>
-                                            )}
-                                        </TableCell>
+                                            </TableCell> */}
+
+                                            {/* <TableCell>
+                                                {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
+                                                    <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
+                                                ) : (
+                                                    <Button
+                                                        style={{
+                                                            color: '#0C67AA',
+                                                            textDecoration: 'underline',
+                                                            textTransform: 'none',
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectMember(user);
+                                                            setOpenInvoiceModal(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                )}
+                                            </TableCell> */}
+                                            {/*
                                         <TableCell>
                                             <Button
                                                 style={{
@@ -507,7 +510,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
                                                 </Menu>
                                             </TableCell>
-                                            {/* <TableCell>
+                                            <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Tooltip title="View Profile">
                                                     <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
@@ -525,8 +528,8 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     </IconButton>
                                                 </Tooltip>
                                             </Box>
-                                        </TableCell> */}
-                                            <TableCell align="center">
+                                        </TableCell>
+                                            {/* <TableCell align="center">
                                                 <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: '#063455' }}>
                                                     <MoreVertIcon />
                                                 </IconButton>
@@ -575,7 +578,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                         Delete Member
                                                     </MenuItem>
                                                 </Menu>
-                                            </TableCell>
+                                            </TableCell> */}
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -585,10 +588,10 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
 
                     {/* Corporate Members Table */}
                     {memberTab === 1 && (
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Category</TableCell>
@@ -698,7 +701,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                 <Box sx={{ p: 2 }}>
                     {/* ✅ Documents Preview */}
                     <h5 style={{ marginBottom: '10px', fontWeight: 700 }}>Attached Documents</h5>
-                    {selectMember && selectMember?.documents && selectMember?.documents.length > 0 && (
+                    {selectMember && selectMember?.documents && selectMember?.documents.length > 0 ? (
                         <div style={{ marginTop: '20px' }}>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                 {selectMember?.documents.map((doc, index) => {
@@ -748,6 +751,10 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                 })}
                             </div>
                         </div>
+                    ) : (
+                    <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>
+                        No attached documents
+                    </div>
                     )}
                 </Box>
                 <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

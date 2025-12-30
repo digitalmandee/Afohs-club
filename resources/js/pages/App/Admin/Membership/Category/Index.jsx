@@ -61,9 +61,9 @@ const MemberCategories = ({ memberCategories }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => window.history.back()}>
+                        {/* <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Member Categories</Typography>
                     </Box>
                     <div style={{ display: 'flex', gap: '10px' }}>
