@@ -79,10 +79,10 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
             <div className="container-fluid px-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
                 {/* Header */}
                 <div className="d-flex justify-content-between align-items-center pt-3">
-                    <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography
                             sx={{
-                                fontWeight: 500,
+                                fontWeight: 700,
                                 fontSize: '30px',
                                 color: '#063455',
                             }}
@@ -91,6 +91,9 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                         </Typography>
                     </div>
                 </div>
+                <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Create, update, and manage subscriber records
+                </Typography>
 
                 {/* Stats Cards */}
                 <div
@@ -100,6 +103,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                         justifyContent: 'space-between',
                         gap: '1rem',
                         marginBottom: '24px',
+                        marginTop:'24px'
                     }}
                 >
                     {[
@@ -113,7 +117,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                 style={{
                                     backgroundColor: '#063455',
                                     color: '#fff',
-                                    borderRadius: '2px',
+                                    borderRadius: '16px',
                                     height: '150px',
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -127,7 +131,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                             >
                                 <div
                                     style={{
-                                        backgroundColor: '#1E2C2F',
+                                        // backgroundColor: '#1E2C2F',
                                         borderRadius: '50%',
                                         width: '50px',
                                         height: '50px',
@@ -162,7 +166,16 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                     size="small"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    style={{ width: '350px', marginRight: '10px' }}
+                                    sx={{
+                                        width: '300px',
+                                        mr: '10px',
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
                                     InputProps={{
                                         startAdornment: (
                                             <InputAdornment position="start">
@@ -174,12 +187,13 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                             </form>
                             <Button
                                 variant="outlined"
-                                startIcon={<FilterAlt />}
+                                startIcon={<FilterAlt sx={{ color: '#fff' }} />}
                                 style={{
-                                    borderColor: '#ccc',
-                                    color: '#333',
+                                    borderColor: '#063455',
+                                    color: '#fff',
                                     textTransform: 'none',
-                                    backgroundColor: 'transparent',
+                                    backgroundColor: '#063455',
+                                    borderRadius: '16px',
                                     marginRight: 10,
                                 }}
                                 onClick={() => {
@@ -193,9 +207,11 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                 variant="contained"
                                 startIcon={<PrintIcon />}
                                 sx={{
-                                    backgroundColor: '#003366',
+                                    backgroundColor: '#063455',
                                     textTransform: 'none',
                                     color: 'white',
+                                    borderRadius: '16px'
+
                                 }}
                             >
                                 Print
@@ -204,20 +220,20 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                     </div>
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '70px' }}>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Invoice No</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Member</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Subscription Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Category</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Amount</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Valid From</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Valid To</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Payment Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontWeight: 500, fontSize: '18px' }}>Invoice</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Subscription Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Category</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Amount</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Valid From</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Valid To</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -225,8 +241,8 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                     subscriptions.data.length > 0 &&
                                     subscriptions.data.map((subscription) => (
                                         <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                            <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{subscription.invoice_no}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                 <div>
                                                     <div style={{ fontWeight: 500 }}>{subscription.member?.full_name}</div>
                                                     <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{subscription.member?.membership_no}</div>
@@ -263,12 +279,14 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                             <TableCell>
                                                 <Button
                                                     size="small"
-                                                    startIcon={<ReceiptIcon />}
+                                                    variant='contained'
+                                                    // startIcon={<ReceiptIcon />}
                                                     sx={{
                                                         color: '#063455',
                                                         textTransform: 'none',
+                                                        border: '1px solid #063455',
                                                         '&:hover': {
-                                                            backgroundColor: '#f0f0f0',
+                                                            backgroundColor: 'transparent',
                                                         },
                                                     }}
                                                     onClick={() => {

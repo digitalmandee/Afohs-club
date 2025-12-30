@@ -1366,10 +1366,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             <Box sx={{ p: 4 }}>
                 {/* Header */}
                 <Box sx={{ mb: 4 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455', mb: 1 }}>
+                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize:'30px' }}>
                         Invoice Generation
                     </Typography>
-                    <Typography variant="body1" color="text.secondary">
+                    <Typography sx={{color:'#063455', fontWeight:'600', fontSize:'15px'}}>
                         Search for a member and create a new transaction
                     </Typography>
                 </Box>
@@ -1969,23 +1969,23 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                             {/* Added Subscriptions List */}
                                                             {subscriptionItems.length > 0 && (
-                                                                <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                                                                <TableContainer component={Paper} sx={{ mb: 3, borderRadius:'16px' }}>
                                                                     <Table size="small">
-                                                                        <TableHead sx={{ bgcolor: 'grey.100' }}>
+                                                                        <TableHead sx={{ bgcolor: '#063455' }}>
                                                                             <TableRow>
-                                                                                <TableCell>
+                                                                                <TableCell sx={{color:'#fff', fontWeight:'600'}}>
                                                                                     <strong>Type</strong>
                                                                                 </TableCell>
-                                                                                <TableCell>
+                                                                                <TableCell sx={{color:'#fff', fontWeight:'600'}}>
                                                                                     <strong>Member</strong>
                                                                                 </TableCell>
-                                                                                <TableCell>
+                                                                                <TableCell sx={{color:'#fff', fontWeight:'600'}}>
                                                                                     <strong>Period</strong>
                                                                                 </TableCell>
-                                                                                <TableCell align="right">
+                                                                                <TableCell align="right" sx={{color:'#fff', fontWeight:'600'}}>
                                                                                     <strong>Amount</strong>
                                                                                 </TableCell>
-                                                                                <TableCell align="right">
+                                                                                <TableCell align="right" sx={{color:'#fff', fontWeight:'600'}}>
                                                                                     <strong>Action</strong>
                                                                                 </TableCell>
                                                                             </TableRow>
@@ -1993,22 +1993,22 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         <TableBody>
                                                                             {subscriptionItems.map((item, index) => (
                                                                                 <TableRow key={index}>
-                                                                                    <TableCell>
+                                                                                    <TableCell sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>
                                                                                         {item.type_name}
-                                                                                        <Typography variant="caption" display="block" color="text.secondary">
+                                                                                        <Typography>
                                                                                             {item.category_name}
                                                                                         </Typography>
                                                                                     </TableCell>
-                                                                                    <TableCell>
+                                                                                    <TableCell sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>
                                                                                         {item.family_member_name}
                                                                                         <Typography variant="caption" display="block" color="text.secondary">
                                                                                             {item.family_member_relation}
                                                                                         </Typography>
                                                                                     </TableCell>
-                                                                                    <TableCell>
+                                                                                    <TableCell sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>
                                                                                         {formatDate(item.valid_from)} - {formatDate(item.valid_to)}
                                                                                     </TableCell>
-                                                                                    <TableCell align="right">
+                                                                                    <TableCell align="right" sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>
                                                                                         {formatCurrency(item.amount)}
                                                                                         {item.discount_type && (
                                                                                             <Typography variant="caption" display="block" color="error">
@@ -2022,7 +2022,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                         )}
                                                                                     </TableCell>
                                                                                     <TableCell align="right">
-                                                                                        <Button size="small" color="error" onClick={() => handleRemoveSubscription(index)}>
+                                                                                        <Button size="small" color="error" onClick={() => handleRemoveSubscription(index)} sx={{textTransform:'none'}}>
                                                                                             Remove
                                                                                         </Button>
                                                                                     </TableCell>
@@ -2616,7 +2616,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         >
                                             3
                                         </Box>
-                                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                        <Typography sx={{ fontWeight: 600, color: '#063455' }}>
                                             Transaction History - {selectedMember.full_name}
                                         </Typography>
                                     </Box>
@@ -2637,9 +2637,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 ),
                                             }}
                                             sx={{
+                                                width:'200px',
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 2,
-                                                    bgcolor: 'grey.50',
+                                                    bgcolor: 'transparent',
                                                 },
                                             }}
                                         />
@@ -2651,31 +2652,31 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         </Box>
                                     ) : (
                                         <>
-                                            <TableContainer component={Paper} elevation={0}>
+                                            <TableContainer component={Paper} elevation={0} sx={{borderRadius:'16px'}}>
                                                 <Table>
-                                                    <TableHead>
+                                                    <TableHead sx={{bgcolor:'#063455'}}>
                                                         <TableRow>
-                                                            <TableCell>Invoice No</TableCell>
-                                                            <TableCell>Fee Type</TableCell>
-                                                            <TableCell>Details</TableCell>
-                                                            <TableCell>Amount</TableCell>
-                                                            <TableCell>Payment Method</TableCell>
-                                                            <TableCell>Invoice</TableCell>
-                                                            <TableCell>Action</TableCell>
-                                                            <TableCell>Status</TableCell>
-                                                            <TableCell>Payment Date</TableCell>
-                                                            <TableCell>Period</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Invoice No</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Fee Type</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Details</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Amount</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Payment Method</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Invoice</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Action</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Status</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Payment Date</TableCell>
+                                                            <TableCell sx={{color:'#fff', fontWeight:'600', whiteSpace:'nowrap'}}>Period</TableCell>
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
                                                         {currentTransactions.length > 0 ? (
                                                             currentTransactions.map((transaction) => (
                                                                 <TableRow key={transaction.id}>
-                                                                    <TableCell>{transaction.invoice_no}</TableCell>
+                                                                    <TableCell sx={{color:'#000', fontWeight:'600', whiteSpace:'nowrap'}} >{transaction.invoice_no}</TableCell>
                                                                     <TableCell>
-                                                                        <Chip label={transaction.fee_type?.replace('_', ' ').toUpperCase()} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" />
+                                                                        <Chip label={transaction.fee_type?.replace('_', ' ')} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" sx={{bgcolor:'#063455', textTransform:'capitalize'}} />
                                                                     </TableCell>
-                                                                    <TableCell>
+                                                                    <TableCell sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>
                                                                         {transaction.fee_type === 'subscription_fee' ? (
                                                                             <Box>
                                                                                 <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
@@ -2700,7 +2701,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                             </Typography>
                                                                         )}
                                                                     </TableCell>
-                                                                    <TableCell>{formatCurrency(transaction.total_price)}</TableCell>
+                                                                    <TableCell sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>{formatCurrency(transaction.total_price)}</TableCell>
                                                                     <TableCell>
                                                                         <Chip label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} size="small" />
                                                                     </TableCell>
@@ -2708,20 +2709,20 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         <Button
                                                                             size="small"
                                                                             variant="outlined"
-                                                                            startIcon={<Visibility />}
+                                                                            // startIcon={<Visibility />}
                                                                             onClick={() => {
                                                                                 setCreatedInvoiceId(transaction.id);
                                                                                 setCreatedMemberId(transaction.invoice_no);
                                                                                 setShowInvoiceModal(true);
                                                                             }}
-                                                                            sx={{ fontSize: '11px', py: 0.5, px: 1 }}
+                                                                            sx={{ py: 0.5, px: 1, color:'#063455', bgcolor:'transparent', border:'1px solid #063455' }}
                                                                         >
                                                                             View
                                                                         </Button>
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         {transaction.status === 'unpaid' && (
-                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
+                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
                                                                                 Pay Now
                                                                             </Button>
                                                                         )}
@@ -2729,8 +2730,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     <TableCell>
                                                                         <Chip label={transaction.status?.toUpperCase()} color={getStatusColor(transaction.status)} size="small" />
                                                                     </TableCell>
-                                                                    <TableCell>{transaction.payment_date ? formatDate(transaction.payment_date) : '-'}</TableCell>
-                                                                    <TableCell>{transaction.valid_from && transaction.valid_to ? `${formatDate(transaction.valid_from)} - ${formatDate(transaction.valid_to)}` : '-'}</TableCell>
+                                                                    <TableCell sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>{transaction.payment_date ? formatDate(transaction.payment_date) : '-'}</TableCell>
+                                                                    <TableCell sx={{color:'#7f7f7f', fontWeight:'400', whiteSpace:'nowrap'}}>{transaction.valid_from && transaction.valid_to ? `${formatDate(transaction.valid_from)} - ${formatDate(transaction.valid_to)}` : '-'}</TableCell>
                                                                 </TableRow>
                                                             ))
                                                         ) : (

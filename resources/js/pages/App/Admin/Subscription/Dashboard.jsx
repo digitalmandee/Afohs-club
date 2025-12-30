@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, InputAdornment } from '@mui/material';
-import { Search, FilterAlt, People, CreditCard } from '@mui/icons-material';
+import { Search, FilterAlt, People, CreditCard, Add } from '@mui/icons-material';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
@@ -36,20 +36,23 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                         {/* <IconButton>
                                 <ArrowBack />
                             </IconButton> */}
-                        <Typography sx={{ marginLeft: '10px', fontWeight: 500, color: '#063455', fontSize: '30px' }}>Subscription Dashboard</Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Subscription Dashboard</Typography>
                     </div>
-                    <Button variant="contained" sx={{ backgroundColor: '#063455', color: 'white' }} onClick={() => router.visit(route('finance.transaction.create'))}>
+                    <Button startIcon={<Add />} sx={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', borderRadius: '16px' }} onClick={() => router.visit(route('finance.transaction.create'))}>
                         Add Subscription
                     </Button>
                 </div>
+                <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Snapshot of active, expired, and upcoming subscriptions
+                </Typography>
 
                 {/* Stats Cards */}
                 <div className="row mb-4 mt-4">
                     <div className="col-md-4 mb-3">
-                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px', borderRadius: '16px' }}>
                             <CardContent className="text-center py-4">
                                 <div className="mb-2">
-                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
+                                    <Avatar style={{ backgroundColor: 'transparent', margin: '0 auto' }}>
                                         <People />
                                     </Avatar>
                                 </div>
@@ -59,10 +62,10 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                         </Card>
                     </div>
                     <div className="col-md-4 mb-3">
-                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px', borderRadius: '16px' }}>
                             <CardContent className="text-center py-4">
                                 <div className="mb-2">
-                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
+                                    <Avatar style={{ backgroundColor: 'transparent', margin: '0 auto' }}>
                                         <CreditCard />
                                     </Avatar>
                                 </div>
@@ -72,10 +75,10 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                         </Card>
                     </div>
                     <div className="col-md-4 mb-3">
-                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px' }}>
+                        <Card style={{ backgroundColor: '#063455', color: 'white', height: '150px', borderRadius: '16px' }}>
                             <CardContent className="text-center py-4">
                                 <div className="mb-2">
-                                    <Avatar style={{ backgroundColor: '#202728', margin: '0 auto' }}>
+                                    <Avatar style={{ backgroundColor: 'transparent', margin: '0 auto' }}>
                                         <CreditCard />
                                     </Avatar>
                                 </div>
@@ -89,14 +92,22 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                 {/* Recently Joined Section */}
                 <div className="mx-0">
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recent Subscription Transactions</Typography>
+                        <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>Recent Transactions</Typography>
 
                         <div className="d-flex">
                             <TextField
                                 placeholder="Search by name, member type etc"
                                 variant="outlined"
                                 size="small"
-                                style={{ width: '350px', marginRight: '10px' }}
+                                sx={{
+                                    width: '300px', marginRight: '10px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -106,13 +117,14 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                                 }}
                             />
                             <Button
-                                variant="outlined"
-                                startIcon={<FilterAlt />}
+                                // variant="outlined"
+                                startIcon={<FilterAlt sx={{ color: '#fff' }} />}
                                 style={{
                                     border: '1px solid #063455',
-                                    color: '#333',
+                                    color: '#fff',
                                     textTransform: 'none',
-                                    backgroundColor: 'transparent',
+                                    backgroundColor: '#063455',
+                                    borderRadius: '16px'
                                 }}
                                 onClick={() => {
                                     setOpenFilterModal(true); // open the modal
@@ -124,20 +136,20 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                     </div>
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice No</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Subscription Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Category</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Amount</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Valid From</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Valid To</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Payment Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Subscription Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Category</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Amount</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Valid From</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Valid To</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -145,25 +157,25 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                                     recent_subscriptions.length > 0 &&
                                     recent_subscriptions.map((subscription) => (
                                         <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                            <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{subscription.invoice_no}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                 <div>
-                                                    <div style={{ fontWeight: 500 }}>{subscription.member?.full_name}</div>
-                                                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{subscription.member?.membership_no}</div>
+                                                    <div>{subscription.member?.full_name}</div>
+                                                    <div>{subscription.member?.membership_no}</div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.subscription_type?.name || '-'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{subscription.subscription_type?.name || '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                 <div>
-                                                    <div style={{ fontWeight: 500 }}>{subscription.subscription_category?.name}</div>
-                                                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>Rs. {subscription.subscription_category?.fee}</div>
+                                                    <div>{subscription.subscription_category?.name}</div>
+                                                    <div>Rs. {subscription.subscription_category?.fee}</div>
                                                 </div>
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                 <span style={{ fontWeight: 600, color: '#059669' }}>Rs. {subscription.total_price?.toLocaleString()}</span>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.valid_from ? new Date(subscription.valid_from).toLocaleDateString() : '-'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.valid_to ? new Date(subscription.valid_to).toLocaleDateString() : 'Unlimited'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{subscription.valid_from ? new Date(subscription.valid_from).toLocaleDateString() : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{subscription.valid_to ? new Date(subscription.valid_to).toLocaleDateString() : 'Unlimited'}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{
@@ -183,12 +195,15 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                                             <TableCell>
                                                 <Button
                                                     size="small"
-                                                    startIcon={<ReceiptIcon />}
+                                                    variant='contained'
+                                                    // startIcon={<ReceiptIcon />}
                                                     sx={{
+                                                        bgcolor: 'transparent',
                                                         color: '#063455',
+                                                        border: '1px solid #063455',
                                                         textTransform: 'none',
                                                         '&:hover': {
-                                                            backgroundColor: '#f0f0f0',
+                                                            backgroundColor: 'transparent',
                                                         },
                                                     }}
                                                     onClick={() => {

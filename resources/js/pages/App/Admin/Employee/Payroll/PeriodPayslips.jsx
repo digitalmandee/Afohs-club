@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Pagination, CircularProgress, Alert, Snackbar, TextField, InputAdornment, Tooltip, FormControl, InputLabel, Select, MenuItem, Checkbox, Avatar } from '@mui/material';
+import { Box, Card, CardContent, Autocomplete, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Grid, Pagination, CircularProgress, Alert, Snackbar, TextField, InputAdornment, Tooltip, FormControl, InputLabel, Select, MenuItem, Checkbox, Avatar } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Visibility as VisibilityIcon, Print as PrintIcon, Download as DownloadIcon, Search as SearchIcon, CheckCircle as CheckCircleIcon, Cancel as CancelIcon, Assignment as AssignmentIcon, FilterList as FilterListIcon, Person as PersonIcon, GetApp as GetAppIcon } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -195,6 +195,14 @@ const PeriodPayslips = ({ period }) => {
             .replace('PKR', 'Rs');
     };
 
+    const statusOptions = [
+        { value: '', label: 'All Status' },
+        { value: 'draft', label: 'Draft' },
+        { value: 'approved', label: 'Approved' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'rejected', label: 'Rejected' }
+    ];
+
     return (
         <AdminLayout>
             <div style={{
@@ -210,11 +218,11 @@ const PeriodPayslips = ({ period }) => {
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Box>
-                            <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                            <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                                 Period Payslips
                             </Typography>
                         </Box>
-                        <Typography variant="body2" color="textSecondary">
+                        <Typography sx={{ ml: 5, color: '#063455', fontSize: '15px', fontWeight: '600' }}>
                             {period?.period_name} - {period ? new Date(period.start_date).toLocaleDateString() : ''} to {period ? new Date(period.end_date).toLocaleDateString() : ''}
                         </Typography>
                     </Box>
@@ -244,6 +252,7 @@ const PeriodPayslips = ({ period }) => {
                                     height: 40,
                                     display: 'flex',
                                     alignItems: 'center',
+                                    borderRadius: '16px'
                                 },
                                 "& .MuiInputBase-input": {
                                     display: 'flex',
@@ -255,7 +264,7 @@ const PeriodPayslips = ({ period }) => {
                         />
                     </Grid>
                     <Grid item xs={12} md={3}>
-                        <FormControl fullWidth>
+                        {/* <FormControl fullWidth>
                             <InputLabel>Status Filter</InputLabel>
                             <Select value={statusFilter} label="Status Filter" onChange={(e) => setStatusFilter(e.target.value)}
                                 sx={{
@@ -280,7 +289,37 @@ const PeriodPayslips = ({ period }) => {
                                 <MenuItem value="paid">Paid</MenuItem>
                                 <MenuItem value="rejected">Rejected</MenuItem>
                             </Select>
-                        </FormControl>
+                        </FormControl> */}
+                        <Autocomplete
+                            value={statusOptions.find(s => s.value === statusFilter) || null}
+                            onChange={(e, newValue) => setStatusFilter(newValue?.value || '')}
+                            options={statusOptions}
+                            getOptionLabel={(option) => option.label}
+                            isOptionEqualToValue={(option, value) => option.value === value?.value}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Status Filter"
+                                    size="small"
+                                    fullWidth
+                                    sx={{
+                                        height: 40,
+                                        '& .MuiOutlinedInput-root': {
+                                            height: 40,
+                                            borderRadius: '16px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        },
+                                        '& .MuiInputBase-input': {
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            paddingY: 0,
+                                            paddingTop: '2px',
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
                     </Grid>
                     <Grid item xs={12} md={3}>
                         <Box sx={{ display: 'flex', gap: 1, height: '100%', alignItems: 'center' }}>
@@ -300,7 +339,7 @@ const PeriodPayslips = ({ period }) => {
                         </Box>
                     </Grid>
                     <Grid item xs={12} md={3}>
-                        <Card sx={{ backgroundColor: '#063455', color: 'white', display:'flex', height:40 }}>
+                        <Card sx={{ backgroundColor: '#063455', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between', px:2, height: 40 }}>
                             <Typography variant="h6" sx={{ fontWeight: 600 }}>
                                 {payslips.length}
                             </Typography>
@@ -310,22 +349,22 @@ const PeriodPayslips = ({ period }) => {
                 </Grid>
 
                 {/* Payslips Table */}
-                <Card>
-                    <TableContainer component={Paper}>
+                {/* <Card> */}
+                    <TableContainer component={Paper} sx={{borderRadius:'16px', overflowX:'auto'}}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>
+                                <TableRow sx={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>
                                         <Checkbox checked={selectedPayslips.length === payslips.length && payslips.length > 0} indeterminate={selectedPayslips.length > 0 && selectedPayslips.length < payslips.length} onChange={handleSelectAll} sx={{ color: '#063455' }} />
                                     </TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Employee ID</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Department</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Gross Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Deductions</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Net Salary</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Employee</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Employee ID</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Department</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Gross Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Deductions</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Net Salary</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -350,10 +389,10 @@ const PeriodPayslips = ({ period }) => {
                                                 backgroundColor: selectedPayslips.includes(payslip.id) ? '#e3f2fd' : 'inherit',
                                             }}
                                         >
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                 <Checkbox checked={selectedPayslips.includes(payslip.id)} onChange={() => handleSelectPayslip(payslip.id)} sx={{ color: '#063455' }} />
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                     <Avatar sx={{ width: 32, height: 32, backgroundColor: '#063455' }}>
                                                         <PersonIcon fontSize="small" />
@@ -363,10 +402,10 @@ const PeriodPayslips = ({ period }) => {
                                                     </Typography>
                                                 </Box>
                                             </TableCell>
-                                            <TableCell>{payslip.employee?.employee_id || 'N/A'}</TableCell>
-                                            <TableCell>{payslip.employee?.department?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{payslip.employee?.employee_id || 'N/A'}</TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{payslip.employee?.department?.name || 'N/A'}</TableCell>
                                             <TableCell>
-                                                <Typography sx={{ fontWeight: 600, color: '#2e7d32', borderRadius: '4px' }}>{formatCurrency(payslip.gross_salary)}</Typography>
+                                                <Typography sx={{ fontWeight: 400, color: '#2e7d32', borderRadius: '4px' }}>{formatCurrency(payslip.gross_salary)}</Typography>
                                             </TableCell>
                                             <TableCell>
                                                 <Typography sx={{ fontWeight: 600, color: '#d32f2f', borderRadius: '4px' }}>{formatCurrency(payslip.total_deductions)}</Typography>
@@ -374,7 +413,7 @@ const PeriodPayslips = ({ period }) => {
                                             <TableCell>
                                                 <Typography sx={{ fontWeight: 600, color: '#063455', borderRadius: '4px' }}>{formatCurrency(payslip.net_salary)}</Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
                                                 <Chip label={getStatusText(payslip.status)} size="small" color={getStatusColor(payslip.status)} sx={{ fontWeight: 600 }} />
                                             </TableCell>
                                             <TableCell>
@@ -387,7 +426,7 @@ const PeriodPayslips = ({ period }) => {
                                                     {payslip.status === 'draft' && (
                                                         <>
                                                             <Tooltip title="Approve Payslip">
-                                                                <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#2e7d32' }}>
+                                                                <IconButton size="small" onClick={() => handleApprovePayslip(payslip.id)} sx={{ color: '#063455' }}>
                                                                     <CheckCircleIcon fontSize="small" />
                                                                 </IconButton>
                                                             </Tooltip>
@@ -412,13 +451,13 @@ const PeriodPayslips = ({ period }) => {
                                                                 setOrdersForDialog(payslip.order_deductions || []);
                                                                 setShowOrdersDialog(true);
                                                             }}
-                                                            sx={{ color: '#6a1b9a' }}
+                                                            sx={{ color: '#063455' }}
                                                         >
                                                             <GetAppIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
                                                     <Tooltip title="Print Payslip">
-                                                        <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#1976d2' }}>
+                                                        <IconButton size="small" onClick={() => window.open(`/admin/employees/payroll/payslips/${payslip.id}/print`, '_blank')} sx={{ color: '#063455' }}>
                                                             <PrintIcon fontSize="small" />
                                                         </IconButton>
                                                     </Tooltip>
@@ -451,7 +490,7 @@ const PeriodPayslips = ({ period }) => {
                             />
                         </Box>
                     )}
-                </Card>
+                {/* </Card> */}
 
                 {/* Payslip Details Dialog */}
                 <Dialog open={showPayslipDialog} onClose={() => setShowPayslipDialog(false)} maxWidth="md" fullWidth>

@@ -91,7 +91,7 @@ const EmployeeDashboard = () => {
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
                         {/* Header */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography style={{ color: '#063455', fontWeight: '700', fontSize: '30px' }}>
                                 Employee Management
                             </Typography>
@@ -102,9 +102,12 @@ const EmployeeDashboard = () => {
                                 Add Employee
                             </Button>
                         </div>
+                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                            Overview of staff strength, attendance status, and pending HR actions
+                        </Typography>
 
                         {/* Stats Cards */}
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '24px', marginTop:'24px' }}>
                             {[
                                 { title: 'Total Employees', value: stats.total_employees, icon: EventSeatIcon },
                                 { title: 'Total Present', value: stats.total_present, icon: PeopleIcon },

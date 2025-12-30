@@ -359,7 +359,7 @@ const MembershipDashboardFilter = () => {
                 {/* Sorting and chip filter sections remain as they are... */}
 
                 <Box display="flex" justifyContent="flex-end" gap={1}>
-                    <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderColor: '#ddd', textTransform: 'none', width: '100%', borderRadius: '16px' }}>
+                    <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#063455', borderColor: '#063455', textTransform: 'none', width: '100%', borderRadius: '16px' }}>
                         Reset
                     </Button>
                     <Button variant="contained" startIcon={<Search />} size="small" onClick={handleApplyFilters} sx={{ width: '100%', backgroundColor: '#0a3d62', borderRadius: '16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>

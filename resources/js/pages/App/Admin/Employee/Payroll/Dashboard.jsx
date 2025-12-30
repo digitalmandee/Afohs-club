@@ -68,7 +68,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                 justifyContent: 'space-between',
                                 alignItems: 'center',
                                 width: '100%',
-                                marginBottom: '24px',
+                                // marginBottom: '24px',
                             }}
                         >
                             <Typography
@@ -103,7 +103,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                         border: '1px solid #7F7F7F',
                                         fontWeight: 500,
                                         fontSize: '14px',
-                                        borderRadius:'16px'
+                                        borderRadius: '16px'
                                     }}
                                     onClick={() => router.visit(route('employees.payroll.settings'))}
                                 >
@@ -118,7 +118,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                         border: '1px solid #7F7F7F',
                                         fontWeight: 500,
                                         fontSize: '14px',
-                                        borderRadius:'16px'
+                                        borderRadius: '16px'
                                     }}
                                     onClick={() => router.visit(route('employees.payroll.salaries'))}
                                 >
@@ -132,7 +132,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                         textTransform: 'none',
                                         fontWeight: 500,
                                         fontSize: '14px',
-                                        borderRadius:'16px'
+                                        borderRadius: '16px'
                                     }}
                                     onClick={() => router.visit(route('employees.payroll.process'))}
                                 >
@@ -140,9 +140,12 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                 </Button>
                             </div>
                         </div>
+                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                            Manage allowances, overtime, taxes, and salary disbursement records
+                        </Typography>
 
                         {/* Metric Cards */}
-                        <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid container spacing={3} sx={{ mb: 4, mt:'1rem' }}>
                             {[
                                 {
                                     title: 'Total Employees',
@@ -242,7 +245,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                             color: '#063455',
                                             borderColor: '#063455',
                                             textTransform: 'none',
-                                            borderRadius:'16px',
+                                            borderRadius: '16px',
                                             '&:hover': {
                                                 borderColor: '#052d45',
                                                 // backgroundColor: 'rgba(6, 52, 85, 0.04)',
@@ -258,7 +261,7 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                             color: '#063455',
                                             borderColor: '#063455',
                                             textTransform: 'none',
-                                            borderRadius:'16px',
+                                            borderRadius: '16px',
                                             '&:hover': {
                                                 borderColor: '#052d45',
                                                 backgroundColor: 'rgba(6, 52, 85, 0.04)',
@@ -280,12 +283,12 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                 <Table>
                                     <TableHead>
                                         <TableRow sx={{ backgroundColor: '#063455' }}>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Period Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Date Range</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Employees</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Net Amount</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize:'16px' }}>Actions</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Period Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Date Range</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Employees</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Net Amount</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -311,15 +314,15 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                                     }}
                                                     onClick={() => router.visit(route('employees.payroll.payslips.period', period.id))}
                                                 >
-                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{period.period_name}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>{period.period_name}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>
                                                         {new Date(period.start_date).toLocaleDateString()} - {new Date(period.end_date).toLocaleDateString()}
                                                     </TableCell>
-                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>
                                                         <Chip label={period.status} size="small" color={period.status === 'completed' ? 'success' : period.status === 'processing' ? 'warning' : period.status === 'paid' ? 'primary' : 'default'} />
                                                     </TableCell>
-                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{period.total_employees || 0}</TableCell>
-                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize:'14px' }}>{formatCurrency(period.total_net_amount || 0)}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>{period.total_employees || 0}</TableCell>
+                                                    <TableCell sx={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>{formatCurrency(period.total_net_amount || 0)}</TableCell>
                                                     <TableCell>
                                                         <Button
                                                             size="small"

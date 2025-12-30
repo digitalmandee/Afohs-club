@@ -135,13 +135,16 @@ const ManageAttendance = () => {
             >
                 <Box sx={{ px: 2, py: 2 }}>
                     <div style={{ paddingTop: '1rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography style={{ fontWeight: '700', color: '#063455', fontSize: '30px' }}>
                                 Manage Attendance
                             </Typography>
                         </div>
+                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                            Manage employee profiles, roles, and employment status
+                        </Typography>
 
-                        <Box sx={{ mb: 3 }}>
+                        <Box sx={{ mb: 3, mt:'2rem' }}>
                             {/* Search Input */}
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 {/* Search Field */}
@@ -182,7 +185,7 @@ const ManageAttendance = () => {
                                     />
                                     <Button
                                         variant="contained"
-                                        startIcon={<Search/>}
+                                        startIcon={<Search />}
                                         onClick={handleSearch}
                                         sx={{
                                             backgroundColor: '#063455',
@@ -220,18 +223,18 @@ const ManageAttendance = () => {
 
                         <Box>
 
-                            <TableContainer component={Paper} sx={{borderRadius:'16px', overflowX:'auto'}}>
+                            <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                                 <Table>
                                     <TableHead style={{ backgroundColor: '#063455' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>#</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Employee Name</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Designation</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Attendance</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Leave Category</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Check-In</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Check-Out</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize:'16px' }}>Action</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>#</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Employee Name</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Designation</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Attendance</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Leave Category</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Check-In</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Check-Out</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Action</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -244,9 +247,9 @@ const ManageAttendance = () => {
                                         ) : attendances.length > 0 ? (
                                             attendances.map((row, index) => (
                                                 <TableRow key={row.id}>
-                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>{index + 1}</TableCell>
-                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>{row.employee.name}</TableCell>
-                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>{row.employee.designation}</TableCell>
+                                                    <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{index + 1}</TableCell>
+                                                    <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{row.employee.name}</TableCell>
+                                                    <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{row.employee.designation}</TableCell>
                                                     <TableCell>
                                                         <Checkbox
                                                             checked={['present', 'late'].includes(row.status)} // If present or late, show checked
@@ -267,10 +270,10 @@ const ManageAttendance = () => {
                                                         </Select>
                                                     </TableCell>
 
-                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>
+                                                    <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>
                                                         <TextField size="small" type="time" value={row.check_in || ''} onChange={(e) => handleInputChange(row.id, 'check_in', e.target.value)} style={{ width: '100px' }} />
                                                     </TableCell>
-                                                    <TableCell sx={{fontWeight: '400', color: '#7f7f7f', fontSize:'14px'}}>
+                                                    <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>
                                                         <TextField size="small" type="time" value={row.check_out || ''} onChange={(e) => handleInputChange(row.id, 'check_out', e.target.value)} style={{ width: '100px' }} />
                                                     </TableCell>
                                                     <TableCell>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Button, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, InputAdornment, TextField } from '@mui/material';
+import { Typography, Button, IconButton, Table, Tooltip, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, InputAdornment, TextField } from '@mui/material';
 import { Search, FilterAlt, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
@@ -7,6 +7,7 @@ import AppliedMemberInvoice from './AppliedMemberInvoice';
 import AppliedMemberForm from './AppliedMemberForm';
 import AppliedMemberFilter from './AppliedMemberFilter';
 import dayjs from 'dayjs';
+import { FaEdit } from 'react-icons/fa';
 
 const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) => {
     const [open, setOpen] = useState(true);
@@ -62,6 +63,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                         color: '#d32f2f',
                                         borderColor: '#d32f2f',
                                         borderRadius: '16px',
+                                        textTransform: 'none',
                                         '&:hover': {
                                             backgroundColor: '#ffebee',
                                             borderColor: '#d32f2f',
@@ -75,7 +77,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                     startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>}
                                     style={{
                                         backgroundColor: '#063455',
-                                        // textTransform: 'none',
+                                        textTransform: 'none',
                                         borderRadius: '4px',
                                         height: 40,
                                         // width: 240,
@@ -94,19 +96,19 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                             <AppliedMemberFilter open={true} />
 
                             <div style={{ overflowX: 'auto', width: '100%' }}>
-                                <TableContainer component={Paper} style={{ boxShadow: 'none', minWidth: '1000px', borderRadius: '16px' }}>
+                                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
                                     <Table>
                                         <TableHead>
                                             <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>ID</TableCell>
+                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>ID</TableCell>
                                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
                                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Email</TableCell>
-                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Phone Number</TableCell>
+                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Phone Number</TableCell>
                                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Address</TableCell>
                                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Amount Paid</TableCell>
-                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Start Date</TableCell>
-                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>End Date</TableCell>
+                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Amount Paid</TableCell>
+                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Start Date</TableCell>
+                                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>End Date</TableCell>
                                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
                                                 <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                             </TableRow>
@@ -115,16 +117,81 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                             {familyGroups.map((member, index) => (
                                                 <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.id}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.email}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.phone_number || 'N/A'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.address || 'N/A'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.cnic}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount_paid}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.start_date ? dayjs(member.start_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.end_date ? dayjs(member.end_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                    {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell> */}
+                                                    <TableCell sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '150px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        <Tooltip title={member.name} placement="top">
+                                                            <span>{member.name}</span>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.email}</TableCell> */}
+                                                    <TableCell sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '150px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        <Tooltip title={member.email} placement="top">
+                                                            <span>{member.email}</span>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.phone_number || 'N/A'}</TableCell> */}
+                                                    <TableCell sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '150px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        <Tooltip title={member.phone_number || 'N/A'} placement="top">
+                                                            <span>{member.phone_number || 'N/A'}</span>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.address || 'N/A'}</TableCell> */}
+                                                    <TableCell sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '150px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        <Tooltip title={member.address || 'N/A'} placement="top">
+                                                            <span>{member.address || 'N/A'}</span>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{member.cnic}</TableCell>
+                                                    {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.amount_paid}</TableCell> */}
+                                                    <TableCell sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '150px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        <Tooltip title={member.amount_paid} placement="top">
+                                                            <span>{member.amount_paid}</span>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{member.start_date ? dayjs(member.start_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{member.end_date ? dayjs(member.end_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell>
-                                                        <Button variant="text" onClick={() => handleViewInvoice(member)}>
+                                                        <Button variant="outlined" onClick={() => handleViewInvoice(member)} sx={{color:'#063455', border:'1px solid #063455', textTransform:'none'}}>
                                                             View
                                                         </Button>
                                                     </TableCell>
@@ -133,7 +200,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                                     ) : (
                                                         <TableCell>
                                                             <div style={{ display: 'flex', gap: '8px' }}>
-                                                                <Button
+                                                                {/* <Button
                                                                     variant="text"
                                                                     disabled={member.is_permanent_member}
                                                                     onClick={() =>
@@ -143,7 +210,23 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                                                     }
                                                                 >
                                                                     Edit
-                                                                </Button>
+                                                                </Button> */}
+                                                                <Tooltip title="Edit">
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        disabled={member.is_permanent_member}
+                                                                        onClick={() =>
+                                                                            router.visit(route('applied-member.index'), {
+                                                                                data: { mode: 'edit', id: member.id },
+                                                                            })
+                                                                        }
+                                                                        sx={{
+                                                                            color: member.is_permanent_member ? '#7f7f7f' : '#f57c00'
+                                                                        }}
+                                                                    >
+                                                                        <FaEdit />
+                                                                    </IconButton>
+                                                                </Tooltip>
                                                             </div>
                                                         </TableCell>
                                                     )}

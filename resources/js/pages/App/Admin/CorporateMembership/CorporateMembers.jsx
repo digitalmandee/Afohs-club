@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Chip } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import axios from 'axios';
-import { Search, Delete, Visibility } from '@mui/icons-material';
+import { Search, Delete, Visibility, Add } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import { useSnackbar } from 'notistack';
@@ -71,17 +71,6 @@ const CorporateMembers = ({ members }) => {
                         <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Corporate Members</Typography>
                         <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button
-                                variant="contained"
-                                onClick={() => router.get(route('corporate-membership.add'))}
-                                sx={{
-                                    backgroundColor: '#063455',
-                                    borderRadius: '16px',
-                                    '&:hover': { backgroundColor: '#052a42' },
-                                }}
-                            >
-                                Add Corporate Member
-                            </Button>
-                            <Button
                                 variant="outlined"
                                 startIcon={<Delete />}
                                 onClick={() => router.get(route('corporate-membership.trashed'))}
@@ -89,10 +78,24 @@ const CorporateMembers = ({ members }) => {
                                     color: '#d32f2f',
                                     borderColor: '#d32f2f',
                                     borderRadius: '16px',
+                                    textTransform: 'none',
                                     '&:hover': { backgroundColor: '#ffebee', borderColor: '#d32f2f' },
                                 }}
                             >
                                 Deleted Members
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={<Add/>}
+                                onClick={() => router.get(route('corporate-membership.add'))}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': { backgroundColor: '#052a42' },
+                                }}
+                            >
+                                Add Corporate Member
                             </Button>
                         </Box>
                     </div>

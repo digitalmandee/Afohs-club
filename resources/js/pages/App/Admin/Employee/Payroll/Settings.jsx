@@ -134,7 +134,7 @@ const PayrollSettings = () => {
                         <IconButton edge="start" onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                             Payroll Settings
                         </Typography>
                     </Box>
@@ -154,6 +154,7 @@ const PayrollSettings = () => {
                             variant="contained"
                             sx={{
                                 backgroundColor: '#063455',
+                                borderRadius:'16px',
                                 '&:hover': { backgroundColor: '#052d45' },
                             }}
                             disabled={saving}
