@@ -49,7 +49,6 @@ class CorporateMember extends BaseModel
         'coa_category_id',
         'title',
         'state',
-        'application_number',
         'name_comments',
         'guardian_name',
         'guardian_membership',
