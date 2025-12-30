@@ -65,11 +65,11 @@ const handlePrintReceipt = (invoice) => {
     // Map data to invoiceData for consistency with JSX
     const invoiceData = {
         billTo: {
-            name: invoice.member?.full_name || 'N/A',
+            name: invoice.member?.full_name || invoice.member?.name || invoice.corporate_member?.full_name || invoice.customer?.name || 'N/A',
             category: invoice.member?.member_type?.name || 'Member',
-            membershipId: invoice.member?.membership_no || 'N/A',
-            contactNumber: invoice.member?.mobile_number_a || 'N/A',
-            city: invoice.member?.current_city || 'N/A',
+            membershipId: invoice.member?.membership_no || invoice.corporate_member?.membership_no || invoice.customer?.customer_no || 'N/A',
+            contactNumber: invoice.member?.mobile_number_a || invoice.corporate_member?.mobile_number_a || invoice.customer?.contact || 'N/A',
+            city: invoice.member?.current_city || invoice.corporate_member?.current_city || invoice.customer?.address || 'N/A',
             familyMember: 'Non',
         },
         details: {
@@ -539,24 +539,24 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                             <Grid container spacing={2} sx={{ mb: 4 }}>
                                 <Grid item xs={6}>
                                     <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
-                                        Bill To {invoice.member.membership_no}
+                                        Bill To {invoice.member?.membership_no || invoice.corporate_member?.membership_no || invoice.customer?.customer_no}
                                     </Typography>
                                     <Box sx={{ ml: 0 }}>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Name: </span>
-                                            {invoice.member.full_name}
+                                            {invoice.member?.full_name || invoice.corporate_member?.full_name || invoice.customer?.name}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Membership #: </span>
-                                            {invoice.member.membership_no}
+                                            {invoice.member?.membership_no || invoice.corporate_member?.membership_no || invoice.customer?.customer_no}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Contact #: </span>
-                                            {invoice.member.mobile_number_a}
+                                            {invoice.member?.mobile_number_a || invoice.corporate_member?.mobile_number_a || invoice.customer?.contact}
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>City: </span>
-                                            {invoice.member?.current_city}
+                                            {invoice.member?.current_city || invoice.corporate_member?.current_city || invoice.customer?.address}
                                         </Typography>
                                     </Box>
                                 </Grid>

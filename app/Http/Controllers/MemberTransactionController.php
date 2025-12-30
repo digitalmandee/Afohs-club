@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
 use App\Models\MaintenanceFee;
 use App\Models\Member;
@@ -88,40 +89,79 @@ class MemberTransactionController extends Controller
     public function searchMembers(Request $request)
     {
         $query = $request->input('query');
+        $type = $request->input('type', 'member');
 
-        $members = Member::whereNull('parent_id')
-            ->where(function ($q) use ($query) {
-                $q
-                    ->where('full_name', 'like', "%{$query}%")
-                    ->orWhere('membership_no', 'like', "%{$query}%")
-                    ->orWhere('cnic_no', 'like', "%{$query}%")
-                    ->orWhere('mobile_number_a', 'like', "%{$query}%");
-            })
-            ->with(['memberCategory:id,name,fee,subscription_fee'])
-            ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id', 'status')
-            ->limit(10)
-            ->get();
+        if ($type === 'corporate') {
+            $members = CorporateMember::where('full_name', 'like', "%{$query}%")
+                ->orWhere('membership_no', 'like', "%{$query}%")
+                ->orWhere('cnic_no', 'like', "%{$query}%")
+                ->orWhere('mobile_number_a', 'like', "%{$query}%")
+                ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'current_address as address')
+                ->limit(10)
+                ->get();
+        } elseif ($type === 'guest') {
+            $members = \App\Models\Customer::where('name', 'like', "%{$query}%")
+                ->orWhere('customer_no', 'like', "%{$query}%")
+                ->orWhere('cnic', 'like', "%{$query}%")
+                ->orWhere('contact', 'like', "%{$query}%")
+                ->select('id', 'name as full_name', 'customer_no as membership_no', 'cnic as cnic_no', 'contact as mobile_number_a', 'address')
+                ->limit(10)
+                ->get();
+        } else {
+            $members = Member::whereNull('parent_id')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%")
+                        ->orWhere('cnic_no', 'like', "%{$query}%")
+                        ->orWhere('mobile_number_a', 'like', "%{$query}%");
+                })
+                ->with(['memberCategory:id,name,fee,subscription_fee'])
+                ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id', 'status')
+                ->limit(10)
+                ->get();
+        }
 
         return response()->json(['members' => $members]);
     }
 
-    public function getMemberTransactions($memberId)
+    public function getMemberTransactions(Request $request, $memberId)
     {
-        $member = Member::where('id', $memberId)
-            ->with([
-                'memberCategory:id,name,fee,subscription_fee',
-                'familyMembers:id,parent_id,full_name,relation,membership_no,status'
-            ])
-            ->first();
+        $type = $request->input('type', '0');  // '0' for member, '2' for corporate
 
-        if (!$member) {
-            return response()->json(['error' => 'Member not found'], 404);
+        if ($type === '2') {
+            $member = CorporateMember::where('id', $memberId)
+                ->with([
+                    'memberCategory:id,name,fee,subscription_fee',
+                    'familyMembers:id,parent_id,full_name,relation,membership_no,status'
+                ])
+                ->first();
+
+            if (!$member) {
+                return response()->json(['error' => 'Corporate Member not found'], 404);
+            }
+
+            $transactions = FinancialInvoice::where('corporate_member_id', $memberId)
+                ->whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        } else {
+            $member = Member::where('id', $memberId)
+                ->with([
+                    'memberCategory:id,name,fee,subscription_fee',
+                    'familyMembers:id,parent_id,full_name,relation,membership_no,status'
+                ])
+                ->first();
+
+            if (!$member) {
+                return response()->json(['error' => 'Member not found'], 404);
+            }
+
+            $transactions = FinancialInvoice::where('member_id', $memberId)
+                ->whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee'])
+                ->orderBy('created_at', 'desc')
+                ->get();
         }
-
-        $transactions = FinancialInvoice::where('member_id', $memberId)
-            ->whereIn('fee_type', ['membership_fee', 'maintenance_fee', 'subscription_fee'])
-            ->orderBy('created_at', 'desc')
-            ->get();
 
         $membershipFeePaid = $transactions
             ->where('fee_type', 'membership_fee')
@@ -143,7 +183,6 @@ class MemberTransactionController extends Controller
 
             // Conditional Validation
             $rules = [
-                'member_id' => 'required|exists:members,id',
                 'fee_type' => 'required|in:membership_fee,maintenance_fee,subscription_fee,reinstating_fee',
                 'payment_frequency' => 'required_if:fee_type,maintenance_fee|in:monthly,quarterly,half_yearly,three_quarters,annually',
                 'amount' => 'required|numeric|min:0',  // This is total amount
@@ -160,6 +199,14 @@ class MemberTransactionController extends Controller
                 'receipt_file' => 'required_if:payment_method,credit_card|file|mimes:jpeg,png,jpg,gif,pdf|max:2048',
                 'status' => 'nullable|in:paid,unpaid',
             ];
+
+            if ($request->booking_type === 'corporate') {
+                $rules['corporate_member_id'] = 'required|exists:corporate_members,id';
+            } elseif ($request->booking_type === 'guest') {
+                $rules['customer_id'] = 'required|exists:customers,id';
+            } else {
+                $rules['member_id'] = 'required|exists:members,id';
+            }
 
             if (!$isMultiSubscription) {
                 // Standard validation for single item
@@ -183,7 +230,13 @@ class MemberTransactionController extends Controller
 
             DB::beginTransaction();
 
-            $member = Member::where('id', $request->member_id)->first();
+            if ($request->booking_type === 'corporate') {
+                $member = CorporateMember::find($request->corporate_member_id);
+            } elseif (str_starts_with($request->booking_type, 'guest')) {
+                $member = \App\Models\Customer::find($request->customer_id);
+            } else {
+                $member = Member::where('id', $request->member_id)->first();
+            }
 
             // Handling Receipts: Upload once if present
             $receiptPath = null;
@@ -287,12 +340,17 @@ class MemberTransactionController extends Controller
                 $invoiceData['receipt_path'] = $receiptPath;
             }
 
-            // Pre-Validation: Check for existing maintenance fee BEFORE creating the new invoice to avoid self-collision
+            // Pre-Validation: Check for existing fees BEFORE creating the new invoice
             foreach ($itemsToProcess as $item) {
                 if ($item['type'] === 'maintenance_fee') {
                     if ($this->checkMaintenanceExists($request->member_id, $item['data']['valid_from'], $item['data']['valid_to'])) {
                         DB::rollBack();
                         return response()->json(['errors' => ['fee_type' => ['Maintenance fee for this period already exists.']]], 422);
+                    }
+                } elseif ($item['type'] === 'membership_fee') {
+                    if ($this->checkMembershipFeeExists($request->member_id)) {
+                        DB::rollBack();
+                        return response()->json(['errors' => ['fee_type' => ['Membership fee already exists for this member.']]], 422);
                     }
                 }
             }
@@ -306,8 +364,7 @@ class MemberTransactionController extends Controller
                 if ($item['type'] === 'subscription_fee') {
                     $subData = $item['data'];
 
-                    $subscription = Subscription::create([
-                        'member_id' => $request->member_id,
+                    $subscriptionData = [
                         'family_member_id' => $subData['family_member_id'] ?? null,
                         'subscription_category_id' => $subData['subscription_category_id'],
                         'subscription_type_id' => $subData['subscription_type_id'],
@@ -316,7 +373,15 @@ class MemberTransactionController extends Controller
                         'status' => 'active',
                         'invoice_id' => $invoice->id,
                         'qr_code' => null,
-                    ]);
+                    ];
+
+                    if ($request->booking_type === 'corporate') {
+                        $subscriptionData['corporate_member_id'] = $request->corporate_member_id;
+                    } else {
+                        $subscriptionData['member_id'] = $request->member_id;
+                    }
+
+                    $subscription = Subscription::create($subscriptionData);
 
                     // Generate QR
                     $qrCodeData = route('subscription.details', ['id' => $subscription->id]);
@@ -332,8 +397,8 @@ class MemberTransactionController extends Controller
                         $invoice->save();
                     }
                 } elseif ($item['type'] === 'membership_fee') {
-                    $invoice->invoiceable_id = $request->member_id;
-                    $invoice->invoiceable_type = Member::class;
+                    $invoice->invoiceable_id = $member->id;
+                    $invoice->invoiceable_type = get_class($member);
                     $invoice->save();
                 } elseif ($item['type'] === 'maintenance_fee') {
                     // Check handled before invoice creation
@@ -341,20 +406,27 @@ class MemberTransactionController extends Controller
                     $currentYear = date('Y', strtotime($item['data']['valid_from']));
                     $currentMonth = date('n', strtotime($item['data']['valid_from']));
 
-                    $maintenanceFee = \App\Models\MaintenanceFee::create([
-                        'member_id' => $request->member_id,
+                    $maintenanceFeeData = [
                         'year' => $currentYear,
                         'month' => $currentMonth,
                         'amount' => $item['amount'],
                         'status' => 'paid',
-                    ]);
+                    ];
+
+                    if ($request->booking_type === 'corporate') {
+                        $maintenanceFeeData['corporate_member_id'] = $request->corporate_member_id;
+                    } else {
+                        $maintenanceFeeData['member_id'] = $request->member_id;
+                    }
+
+                    $maintenanceFee = MaintenanceFee::create($maintenanceFeeData);
 
                     $invoice->invoiceable_id = $maintenanceFee->id;
-                    $invoice->invoiceable_type = \App\Models\MaintenanceFee::class;
+                    $invoice->invoiceable_type = MaintenanceFee::class;
                     $invoice->save();
                 } elseif ($item['type'] === 'reinstating_fee') {
-                    $invoice->invoiceable_id = $request->member_id;
-                    $invoice->invoiceable_type = Member::class;
+                    $invoice->invoiceable_id = $member->id;
+                    $invoice->invoiceable_type = get_class($member);
                     $invoice->save();
 
                     if ($request->fee_type === 'reinstating_fee') {
@@ -410,6 +482,14 @@ class MemberTransactionController extends Controller
             ->exists();
     }
 
+    private function checkMembershipFeeExists($memberId)
+    {
+        return FinancialInvoice::where('member_id', $memberId)
+            ->where('fee_type', 'membership_fee')
+            ->where('status', '!=', 'cancelled')
+            ->exists();
+    }
+
     private function prepareInvoiceData($request, $member)
     {
         $amount = round($request->amount);
@@ -445,14 +525,24 @@ class MemberTransactionController extends Controller
 
         $totalPrice = round($baseAmount + $taxAmount + $overdueAmount + $additionalCharges);
         $data = [
-            'member_id' => $request->member_id,
-            'member_name' => $member->full_name,
-            'membership_no' => $member->membership_no,
+            'booking_type' => $request->booking_type ?? 'member',
             'fee_type' => $request->fee_type,
             'payment_frequency' => $request->payment_frequency,
             'starting_quarter' => $request->starting_quarter,
-            'remarks' => $request->remarks
+            'remarks' => $request->remarks,
+            'member_name' => $member->full_name ?? $member->name,
+            'membership_no' => $member->membership_no ?? $member->customer_no,
         ];
+
+        if ($request->booking_type === 'corporate') {
+            $data['corporate_member_id'] = $member->id;
+            $data['member_id'] = null;
+        } elseif (str_starts_with($request->booking_type, 'guest')) {
+            $data['customer_id'] = $member->id;
+            $data['member_id'] = null;
+        } else {
+            $data['member_id'] = $member->id;
+        }
 
         // Add subscription specific data
         if ($request->fee_type === 'subscription_fee') {
@@ -466,7 +556,12 @@ class MemberTransactionController extends Controller
 
             // Handle family member selection
             if ($request->family_member_id) {
-                $familyMember = Member::find($request->family_member_id);
+                if ($request->booking_type === 'corporate') {
+                    $familyMember = CorporateMember::find($request->family_member_id);
+                } else {
+                    $familyMember = Member::find($request->family_member_id);
+                }
+
                 $data['family_member_id'] = $request->family_member_id;
                 $data['family_member_name'] = $familyMember ? $familyMember->full_name : null;
                 $data['family_member_relation'] = $familyMember ? $familyMember->relation : null;
@@ -490,14 +585,12 @@ class MemberTransactionController extends Controller
 
         $invoiceData = [
             'invoice_no' => $this->generateInvoiceNumber(),
-            'member_id' => $request->member_id,
             'fee_type' => $request->fee_type,
             'invoice_type' => $request->fee_type === 'membership_fee' ? 'membership' : ($request->fee_type === 'subscription_fee' ? 'subscription' : ($request->fee_type === 'reinstating_fee' ? 'reinstating' : 'maintenance')),
             'amount' => $amount,
             'discount_type' => $request->discount_type,
             'discount_value' => $request->discount_value,
             'tax_percentage' => $request->tax_percentage,
-            'tax_amount' => $taxAmount,
             'tax_amount' => $taxAmount,
             'overdue_percentage' => $request->overdue_percentage,
             'overdue_amount' => $overdueAmount,
@@ -509,11 +602,20 @@ class MemberTransactionController extends Controller
             'payment_date' => now(),
             'issue_date' => now(),
             'due_date' => now()->addDays(30),
-            'due_date' => now()->addDays(30),
             'status' => $request->status ?? 'paid',
             'data' => $data,
             'created_by' => Auth::id(),
         ];
+
+        if ($request->booking_type === 'corporate') {
+            $invoiceData['corporate_member_id'] = $member->id;
+            $invoiceData['member_id'] = null;
+        } elseif (str_starts_with($request->booking_type, 'guest')) {
+            $invoiceData['customer_id'] = $member->id;
+            $invoiceData['member_id'] = null;
+        } else {
+            $invoiceData['member_id'] = $member->id;
+        }
 
         // Add subscription foreign keys if subscription fee
         if ($request->fee_type === 'subscription_fee') {
@@ -851,7 +953,7 @@ class MemberTransactionController extends Controller
                     "Transaction Status Updated: {$request->status}",
                     "Invoice #{$transaction->invoice_no} status changed to {$request->status}",
                     route('member.profile', $member->id),
-                    auth()->user(),
+                    \Illuminate\Support\Facades\Auth::user(),
                     'Finance'
                 ));
             }

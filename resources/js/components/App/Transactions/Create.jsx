@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -33,6 +33,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [currentPage, setCurrentPage] = useState(1);
     const [transactionsPerPage] = useState(5);
     const [filteredTransactions, setFilteredTransactions] = useState([]);
+    const [bookingType, setBookingType] = useState('0'); // 0: member, 2: corporate, guest-*: guest
+
     const [quarterStatus, setQuarterStatus] = useState({
         paidQuarters: [],
         nextAvailableQuarter: 1,
@@ -42,7 +44,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [subscriptionItems, setSubscriptionItems] = useState([]); // Array to store multiple subscriptions
 
     const { data, setData, post, processing, errors, reset } = useForm({
+        booking_type: 'member',
         member_id: '',
+        corporate_member_id: '',
+        customer_id: '',
         fee_type: '',
         payment_frequency: 'monthly',
         discount_type: '',
@@ -66,9 +71,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         item_discount_type: '',
         item_discount_value: '',
         subscriptions: [], // Array to send to backend
-        item_amount: '',
-        item_discount_type: '',
-        item_discount_value: '',
     });
 
     // Auto-update payment suggestions when member changes
@@ -88,6 +90,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     // Auto-set fee type based on member status
     useEffect(() => {
+        // Only apply auto-logic for regular (0) and corporate (2) members
+        if (bookingType !== '0' && bookingType !== '2') return;
+
         if (selectedMember) {
             const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
 
@@ -111,10 +116,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 }
             }
         }
-    }, [selectedMember?.status, membershipFeePaid, allowedFeeTypes]); // Trigger when member status or payment status changes
+    }, [selectedMember?.status, membershipFeePaid, allowedFeeTypes, bookingType]); // Trigger when member status or payment status changes
 
     const analyzeQuarterStatus = (transactions, membershipDate) => {
-        if (!membershipDate) {
+        // If corporate or guest, we don't track quarterly status the same way
+        if ((bookingType !== '0' && bookingType !== '2') || !membershipDate) {
             return {
                 paidQuarters: [],
                 nextAvailableQuarter: 1,
@@ -421,10 +427,23 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             return;
         }
 
+        if (query.length < 3) {
+            setSearchResults([]);
+            return;
+        }
         setSearchLoading(true);
+
+        // Determine search type based on bookingType state
+        let searchType = 'member';
+        if (bookingType === '2') {
+            searchType = 'corporate';
+        } else if (bookingType.startsWith('guest')) {
+            searchType = 'guest';
+        }
+
         try {
             const response = await axios.get(route('finance.transaction.search'), {
-                params: { query },
+                params: { query, type: searchType },
             });
             setSearchResults(response.data.members || []);
         } catch (error) {
@@ -437,7 +456,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const fetchMemberTransactions = async (memberId) => {
         setLoadingTransactions(true);
         try {
-            const response = await axios.get(route('finance.transaction.member', memberId));
+            const response = await axios.get(route('finance.transaction.member', memberId), {
+                params: { type: bookingType },
+            });
             // Only update member details if we are fetching for the currently selected member
             // This prevents overwriting if the user switched members quickly (though unlikely here)
             setSelectedMember(response.data.member);
@@ -460,10 +481,24 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     const handleMemberSelect = async (member) => {
         setSelectedMember(member);
-        setData('member_id', member.id);
 
-        await fetchMemberTransactions(member.id);
-        enqueueSnackbar(`Selected member: ${member.full_name}`, { variant: 'info' });
+        if (bookingType === '2') {
+            setData('corporate_member_id', member.id);
+        } else if (bookingType.startsWith('guest')) {
+            setData('customer_id', member.id);
+        } else {
+            setData('member_id', member.id);
+        }
+
+        // Fetch transactions for Regular (0) and Corporate (2) members
+        if (bookingType === '0' || bookingType === '2') {
+            await fetchMemberTransactions(member.id);
+        } else {
+            // Reset transactions for non-members as we might not need to show history or logic differs
+            setMemberTransactions([]);
+            setQuarterStatus({ paidQuarters: [], nextAvailableQuarter: 1, currentYear: new Date().getFullYear() });
+        }
+        enqueueSnackbar(`Selected: ${member.full_name || member.name}`, { variant: 'info' });
     };
 
     // Search function for invoice numbers
@@ -565,6 +600,34 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             }
             return newData;
         });
+    };
+
+    const handleBookingTypeChange = (e) => {
+        const type = e.target.value;
+        setBookingType(type);
+        setSelectedMember(null);
+        setSearchResults([]);
+        setMemberTransactions([]);
+
+        // Map UI values to Backend types
+        // 0 -> member
+        // 2 -> corporate
+        // guest-1, guest-2, guest-3 -> guest
+        let backendType = 'member';
+        if (type === '2') {
+            backendType = 'corporate';
+        } else if (type.startsWith('guest')) {
+            backendType = 'guest';
+        }
+
+        setData((prev) => ({
+            ...prev,
+            booking_type: backendType,
+            member_id: '',
+            corporate_member_id: '',
+            customer_id: '',
+            fee_type: '', // Reset fee type
+        }));
     };
 
     const handleAddSubscription = () => {
@@ -1136,7 +1199,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 // Reset form but keep member if pre-selected
                 setSubscriptionItems([]); // Clear subscription items
                 setData({
-                    member_id: preSelectedMember ? preSelectedMember.id : selectedMember ? selectedMember.id : '',
+                    booking_type: data.booking_type, // Preserve booking type
+                    member_id: data.booking_type === 'member' ? (selectedMember ? selectedMember.id : '') : '',
+                    corporate_member_id: data.booking_type === 'corporate' ? (selectedMember ? selectedMember.id : '') : '',
+                    customer_id: data.booking_type === 'guest' ? (selectedMember ? selectedMember.id : '') : '',
                     fee_type: 'maintenance_fee',
                     payment_frequency: 'monthly',
                     amount: '',
@@ -1158,15 +1224,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 });
 
                 if (!preSelectedMember) {
-                    // Don't clear member immediately so we can show the invoice
-                    // setSelectedMember(null);
-                    // setMemberTransactions([]);
-                    // setMembershipFeePaid(false);
-                    // setQuarterStatus({
-                    //     paidQuarters: [],
-                    //     nextAvailableQuarter: 1,
-                    //     currentYear: new Date().getFullYear(),
-                    // });
+                    // Reset member selection
+                    setSelectedMember(null);
+                    setMemberTransactions([]);
+                    setMembershipFeePaid(false);
+                    setQuarterStatus({
+                        paidQuarters: [],
+                        nextAvailableQuarter: 1,
+                        currentYear: new Date().getFullYear(),
+                    });
                 } else {
                     // Refresh transactions for the pre-selected member
                     handleMemberSelect(preSelectedMember);
@@ -1333,12 +1399,27 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             1
                                         </Box>
                                         <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                                            Select Member
+                                            Booking Type
                                         </Typography>
                                     </Box>
+                                    <Grid item xs={12} mb={3}>
+                                        <FormLabel component="legend" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
+                                            Booking Type
+                                        </FormLabel>
+                                        <RadioGroup row name="bookingType" value={bookingType} onChange={handleBookingTypeChange}>
+                                            <FormControlLabel value="0" control={<Radio />} label="Member" />
+                                            <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
+                                            <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
+                                            <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
+                                            <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
+                                        </RadioGroup>
+                                    </Grid>
 
                                     <Autocomplete
+                                        key={bookingType}
                                         size="small"
+                                        value={selectedMember}
+                                        isOptionEqualToValue={(option, value) => option.id === value.id}
                                         options={searchResults}
                                         getOptionLabel={(option) => `${option.full_name} (${option.membership_no})`}
                                         loading={searchLoading}
@@ -1369,17 +1450,20 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             />
                                         )}
                                         renderOption={(props, option) => (
-                                            <Box component="li" {...props} sx={{ p: 2 }}>
-                                                <Person sx={{ mr: 2, color: 'text.secondary' }} />
-                                                <Box>
-                                                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                        {option.full_name}
-                                                    </Typography>
+                                            <li {...props} key={option.id}>
+                                                <Box sx={{ width: '100%' }}>
+                                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                        <Typography variant="body2" fontWeight="bold">
+                                                            {option.membership_no || option.customer_no || option.employee_id}
+                                                        </Typography>
+                                                        {option.status && <Chip label={option.status} size="small" color={option.status === 'active' ? 'success' : option.status === 'expired' ? 'warning' : 'error'} sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                                    </Box>
+                                                    <Typography variant="body2">{option.full_name || option.name}</Typography>
                                                     <Typography variant="caption" color="text.secondary">
-                                                        {option.membership_no} • {option.cnic_no} • {option.phone_no}
+                                                        {option.cnic_no || option.cnic} • {option.mobile_number_a || option.contact}
                                                     </Typography>
                                                 </Box>
-                                            </Box>
+                                            </li>
                                         )}
                                     />
                                 </CardContent>
@@ -1426,56 +1510,26 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Typography>
                                                         <FormControl fullWidth>
                                                             <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                                {/* {(() => {
-                                                                    const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
-                                                                    const options = [];
-
-                                                                    if (selectedMember?.status === 'cancelled' || selectedMember.status === 'expired') {
-                                                                        options.push(
-                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                Reinstating Fee
-                                                                            </MenuItem>,
-                                                                        );
-                                                                    } else if (!membershipFeePaid) {
-                                                                        options.push(
-                                                                            <MenuItem key="membership_fee" value="membership_fee">
-                                                                                Membership Fee
-                                                                            </MenuItem>,
-                                                                        );
-                                                                        // Strict: No other options if membership fee is unpaid.
-                                                                    } else {
-                                                                        options.push(
-                                                                            <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                                Maintenance Fee
-                                                                            </MenuItem>,
-                                                                        );
-                                                                        options.push(
-                                                                            <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                                Subscription Fee
-                                                                            </MenuItem>,
-                                                                        );
-                                                                        options.push(
-                                                                            <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                                Reinstating Fee
-                                                                            </MenuItem>,
-                                                                        );
-                                                                    }
-                                                                    return options;
-                                                                })()} */}
-                                                                {!membershipFeePaid && (
-                                                                    <MenuItem key="membership_fee" value="membership_fee">
-                                                                        Membership Fee
+                                                                {bookingType === '0' || bookingType === '2' ? (
+                                                                    [
+                                                                        <MenuItem key="membership_fee" value="membership_fee">
+                                                                            Membership Fee
+                                                                        </MenuItem>,
+                                                                        <MenuItem key="maintenance_fee" value="maintenance_fee">
+                                                                            Maintenance Fee
+                                                                        </MenuItem>,
+                                                                        <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                            Subscription Fee
+                                                                        </MenuItem>,
+                                                                        <MenuItem key="reinstating_fee" value="reinstating_fee">
+                                                                            Reinstating Fee
+                                                                        </MenuItem>,
+                                                                    ]
+                                                                ) : (
+                                                                    <MenuItem key="subscription_fee" value="subscription_fee">
+                                                                        Subscription Fee
                                                                     </MenuItem>
                                                                 )}
-                                                                <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                    Maintenance Fee
-                                                                </MenuItem>
-                                                                <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                    Subscription Fee
-                                                                </MenuItem>
-                                                                <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                    Reinstating Fee
-                                                                </MenuItem>
                                                             </Select>
                                                             {errors.fee_type && (
                                                                 <Typography variant="caption" color="error" sx={{ mt: 1 }}>
@@ -1783,7 +1837,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     <Grid item xs={6}>
                                                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                                             <DatePicker
-                                                                                label="Valid From"
+                                                                                label="From"
                                                                                 value={data.valid_from ? dayjs(data.valid_from) : null}
                                                                                 onChange={(newValue) => handleDateChange('valid_from', newValue)}
                                                                                 format="DD-MM-YYYY"
@@ -1801,7 +1855,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     <Grid item xs={6}>
                                                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
                                                                             <DatePicker
-                                                                                label="Valid To"
+                                                                                label="To"
                                                                                 value={data.valid_to ? dayjs(data.valid_to) : null}
                                                                                 onChange={(newValue) => handleDateChange('valid_to', newValue)}
                                                                                 format="DD-MM-YYYY"

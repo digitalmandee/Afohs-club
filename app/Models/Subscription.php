@@ -11,6 +11,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'member_id',
+        'corporate_member_id',
         'family_member_id',
         'subscription_category_id',
         'subscription_type_id',
@@ -20,6 +21,11 @@ class Subscription extends Model
         'invoice_id',
         'qr_code'
     ];
+
+    public function corporateMember()
+    {
+        return $this->belongsTo(CorporateMember::class);
+    }
 
     protected $casts = [
         'valid_from' => 'date',
