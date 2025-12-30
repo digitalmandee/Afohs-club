@@ -100,12 +100,15 @@ const LeaveReport = () => {
                 }}
             >
                 <div style={{ padding: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                             Leave Report
                         </Typography>
                     </div>
-                    <Box sx={{ mb: 3 }}>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        View detailed reports of employee leave history
+                    </Typography>
+                    <Box sx={{ mb: 3, mt:'2rem' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <TextField

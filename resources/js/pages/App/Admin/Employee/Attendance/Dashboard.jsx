@@ -97,7 +97,7 @@ const AttendanceDashboard = () => {
             >
                 <div style={{ padding: '1rem' }}>
                     <div style={{ backgroundColor: 'transparent' }}>
-                        <div style={{ display: 'flex', width: '98%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', width: '98%', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography style={{ fontWeight: '700', color: '#063455', fontSize: '30px' }}>
                                 Application Dashboard
                             </Typography>
@@ -105,6 +105,9 @@ const AttendanceDashboard = () => {
                                 New Application
                             </Button>
                         </div>
+                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                            Tracks presence, absence, late entries, and overtime
+                        </Typography>
 
                         <div
                             style={{
@@ -114,6 +117,7 @@ const AttendanceDashboard = () => {
                                 gap: '50px',
                                 width: '98%',
                                 marginBottom: '24px',
+                                marginTop:'2rem'
                             }}
                         >
                             {[
@@ -281,7 +285,7 @@ const AttendanceDashboard = () => {
                                 <Grid item xs={12} md={1.5}>
                                     <Button
                                         fullWidth
-                                        startIcon={<Search/>}
+                                        startIcon={<Search />}
                                         variant="contained"
                                         onClick={handleFilter}
                                         disabled={isLoading}
@@ -312,26 +316,26 @@ const AttendanceDashboard = () => {
                                 </Grid>
                                 {(selectedDepartments.length > 0 || searchTerm) && (
                                     // <Grid container spacing={2}>
-                                        <Grid item xs={12} md={1.5}>
-                                            <Button
-                                                fullWidth
-                                                variant="outlined"
-                                                onClick={handleClearFilters}
-                                                sx={{
-                                                    color: '#063455',
-                                                    borderColor: '#063455',
-                                                    textTransform: 'none',
-                                                    borderRadius: 16,
-                                                    height: '40px',
-                                                    '&:hover': {
-                                                        borderColor: '#052d45',
-                                                        backgroundColor: 'rgba(6, 52, 85, 0.04)',
-                                                    },
-                                                }}
-                                            >
-                                                Reset
-                                            </Button>
-                                        </Grid>
+                                    <Grid item xs={12} md={1.5}>
+                                        <Button
+                                            fullWidth
+                                            variant="outlined"
+                                            onClick={handleClearFilters}
+                                            sx={{
+                                                color: '#063455',
+                                                borderColor: '#063455',
+                                                textTransform: 'none',
+                                                borderRadius: 16,
+                                                height: '40px',
+                                                '&:hover': {
+                                                    borderColor: '#052d45',
+                                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                                },
+                                            }}
+                                        >
+                                            Reset
+                                        </Button>
+                                    </Grid>
                                     // </Grid>
                                 )}
                             </Grid>
@@ -345,7 +349,7 @@ const AttendanceDashboard = () => {
 
                             <TableContainer component={Paper} style={{ borderRadius: '16px' }}>
                                 <Table>
-                                    <TableHead style={{ backgroundColor: '#063455', height:30 }}>
+                                    <TableHead style={{ backgroundColor: '#063455', height: 30 }}>
                                         <TableRow>
                                             <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>EMP ID</TableCell>
                                             <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
@@ -374,9 +378,9 @@ const AttendanceDashboard = () => {
 
                                                 return (
                                                     <TableRow key={emp.id} style={rowStyle}>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>#{emp.employee_id}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.name}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>#{emp.employee_id}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.name}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>
                                                             {emp.department?.name ? (
                                                                 <>
                                                                     {emp.department.name}
@@ -400,10 +404,10 @@ const AttendanceDashboard = () => {
                                                                 </Typography>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.designation}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.joining_date}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>{emp.email}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {color: '#7f7f7f', fontWeight: '400', fontSize: '14px'}}>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.designation}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.joining_date}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.email}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>
                                                             {hasDeletedRelation ? (
                                                                 <Typography
                                                                     variant="caption"
@@ -426,7 +430,7 @@ const AttendanceDashboard = () => {
                                                             <IconButton
                                                                 onClick={() => router.visit(route('employees.edit', emp.id))}
                                                             >
-                                                                 <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
+                                                                <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                                             </IconButton>
                                                         </TableCell>
                                                     </TableRow>

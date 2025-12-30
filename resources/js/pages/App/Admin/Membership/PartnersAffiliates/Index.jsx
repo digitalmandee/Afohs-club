@@ -114,6 +114,7 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
                                 borderRadius: '16px',
+                                textTransform:'none',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -146,7 +147,7 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                     Supports collaborations, discounts, and special access programs
                 </Typography>
                 {/* Filters */}
-                <Box component={Paper} elevation={0} sx={{ mb: 3, mt:5, bgcolor: 'transparent', display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Box component={Paper} elevation={0} sx={{ mb: 3, mt: 5, bgcolor: 'transparent', display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Autocomplete
                         sx={{
                             minWidth: 250,
@@ -234,7 +235,7 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                     </TextField>
 
                     <div style={{ display: 'flex', gap: '8px' }}>
-                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderRadius: '16px', borderColor: '#ddd', textTransform: 'none' }}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#063455', borderRadius: '16px', borderColor: '#063455', textTransform: 'none', height:35, paddingLeft:2, paddingRight:2 }}>
                             Reset
                         </Button>
                         <Button variant="contained"
@@ -245,46 +246,116 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                     </div>
                 </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                <TableContainer style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#063455', height: '50px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>SR #</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>ID</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Partner / Affiliate</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Address</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Telephone</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Email</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Focal person</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Mobile</TableCell>
-                                {/* <TableCell sx={{ color: '#fff', fontSize: '12px', fontWeight: 700, padding: '6px' }}>Email</TableCell> */}
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Status</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Edit</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>Delete</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>SR #</TableCell>
+                                {/* <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, padding: '6px' }}>ID</TableCell> */}
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Partner / Affiliate</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Address</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Telephone</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Email</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Focal person</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Focal person Mobile</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}> Focal Person Email</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Action</TableCell>
+                                {/* <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Delete</TableCell> */}
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {partners.data.length > 0 ? (
                                 partners.data.map((partner, index) => (
                                     <TableRow key={partner.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{index + 1}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.id}</TableCell>
+                                        <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{index + 1}</TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.id}</TableCell> */}
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                             <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.organization_name}</Typography>
                                             <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>({partner.type})</Typography>
                                         </TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.address}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.telephone}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.email}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.focal_person_name}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.focal_mobile_a}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.focal_email}</TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{partner.address}</TableCell> */}
+                                        <TableCell sx={{
+                                            color: '#7F7F7F',
+                                            fontWeight: 400,
+                                            fontSize: '14px',
+                                            maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            <Tooltip title={partner.address} placement="top">
+                                                <span>{partner.address}</span>
+                                            </Tooltip>
+                                        </TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.telephone}</TableCell> */}
+                                        <TableCell sx={{
+                                            color: '#7F7F7F',
+                                            fontWeight: 400,
+                                            fontSize: '14px',
+                                            maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            <Tooltip title={partner.telephone} placement="top">
+                                                <span>{partner.telephone}</span>
+                                            </Tooltip>
+                                        </TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.email}</TableCell> */}
+                                        <TableCell sx={{
+                                            color: '#7F7F7F',
+                                            fontWeight: 400,
+                                            fontSize: '14px',
+                                            maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            <Tooltip title={partner.email} placement="top">
+                                                <span>{partner.email}</span>
+                                            </Tooltip>
+                                        </TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{partner.focal_person_name}</TableCell> */}
+                                        <TableCell sx={{
+                                            color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            <Tooltip title={partner.focal_person_name} placement="top">
+                                                <span>{partner.focal_person_name}</span>
+                                            </Tooltip>
+                                        </TableCell>
+                                        <TableCell sx={{
+                                            color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            <Tooltip title={partner.focal_mobile_a} placement="top">
+                                                <span>{partner.focal_mobile_a}</span>
+                                            </Tooltip>
+                                        </TableCell>
+                                        <TableCell sx={{
+                                            color: '#7F7F7F',
+                                            fontWeight: 400,
+                                            fontSize: '14px',
+                                            maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            <Tooltip title={partner.focal_email} placement="top">
+                                                <span>{partner.focal_email}</span>
+                                            </Tooltip>
+                                        </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                             <span
                                                 style={{
                                                     padding: '2px 6px',
                                                     borderRadius: '4px',
-                                                    fontSize: '10px',
+                                                    fontSize: '14px',
                                                     fontWeight: 600,
                                                     backgroundColor: partner.status === 'Active' ? '#e8f5e9' : '#ffebee',
                                                     color: partner.status === 'Active' ? '#2e7d32' : '#c62828',
@@ -296,14 +367,12 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                                         <TableCell sx={{ padding: '6px' }}>
                                             <Tooltip title="Edit">
                                                 <IconButton size="small" onClick={() => router.visit(route('admin.membership.partners-affiliates.edit', partner.id))} sx={{ color: '#f57c00' }}>
-                                                    <FaEdit size={14} />
+                                                    <FaEdit />
                                                 </IconButton>
                                             </Tooltip>
-                                        </TableCell>
-                                        <TableCell sx={{ padding: '6px' }}>
                                             <Tooltip title="Delete">
                                                 <IconButton size="small" onClick={() => handleDeleteClick(partner)} sx={{ color: '#d32f2f' }}>
-                                                    <Delete size={14} />
+                                                    <Delete />
                                                 </IconButton>
                                             </Tooltip>
                                         </TableCell>

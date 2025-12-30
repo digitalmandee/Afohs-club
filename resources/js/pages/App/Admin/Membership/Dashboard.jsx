@@ -49,17 +49,25 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
     const { enqueueSnackbar } = useSnackbar();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [memberToDelete, setMemberToDelete] = useState(null);
-    const [anchorE2, setAnchorE2] = useState(null);
+    // const [anchorE2, setAnchorE2] = useState(null);
+    // const [menuMember, setMenuMember] = useState(null);
+    const [menuAnchor, setMenuAnchor] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
     const [menuMember, setMenuMember] = useState(null);
-
-    const handleOpenMenu = (event, user) => {
-        setAnchorE2(event.currentTarget);
+    const handleOpenMenu = (e, user) => {
+        setMenuAnchor(e.currentTarget);
+        setSelectedUserId(user.id);  // Track which user
         setMenuMember(user);
     };
 
+    // const handleOpenMenu = (event, user) => {
+    //     setAnchorE2(event.currentTarget);
+    //     setMenuMember(user);
+    // };
+
     const handleCloseMenu = () => {
-        setAnchorE2(null);
-        setMenuMember(null);
+        setMenuAnchor(null);
+        setSelectedUserId(null);
     };
 
     const handleOpenCard = () => {
@@ -160,9 +168,10 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                 backgroundColor: '#063455',
                                 borderRadius: '16px',
                                 height: 40,
-                                width: 170,
+                                // width: 170,
                                 display: 'flex',
                                 alignItems: 'center',
+                                textTransform: 'none'
                             }}
                             onClick={() => router.visit(route('membership.add'))}
                         >
@@ -184,9 +193,10 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                 backgroundColor: '#063455',
                                 borderRadius: '16px',
                                 height: 40,
-                                width: 220,
+                                // width: 220,
                                 display: 'flex',
                                 alignItems: 'center',
+                                textTransform: 'none'
                             }}
                             onClick={() => router.visit(route('corporate-membership.add'))}
                         >
@@ -265,12 +275,12 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                     </div>
                     {/* Primary Members Table */}
                     {memberTab === 0 && (
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                             <Table
                             // sx={{ border: '2px solid #063455' }}
                             >
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Category</TableCell>
@@ -312,8 +322,16 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
-                                                            {user.full_name}
-
+                                                            <Typography sx={{
+                                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',  // ~20 chars width
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis'
+                                                            }}>
+                                                                <Tooltip title={user.full_name || 'N/A'} arrow>
+                                                                    <span>{user.full_name || 'N/A'}</span>
+                                                                </Tooltip>
+                                                            </Typography>
                                                             {user.is_document_enabled && (
                                                                 <Tooltip title="Documents missing" arrow>
                                                                     <WarningAmberIcon color="warning" fontSize="small" />
@@ -332,7 +350,10 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                                 cursor: 'pointer',
                                                             }}
                                                         >
-                                                            {user.personal_email}
+                                                            <Tooltip title={user.personal_email || 'N/A'} arrow>
+                                                                <span>{user.personal_email || 'N/A'}</span>
+                                                            </Tooltip>
+
                                                         </Typography>
                                                     </div>
                                                 </div>
@@ -340,7 +361,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    <Chip label="Primary" size="small" sx={{ backgroundColor: '#063455', color: 'white', fontWeight: 600, fontSize: '11px' }} />
+                                                    {/* <Chip size="small" /> */}
                                                     {user.member_type?.name || ''}
                                                 </Box>
                                             </TableCell>
@@ -404,24 +425,6 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                 </PopupState>
                                             </TableCell>
                                             {/* <TableCell>
-                                            <Button
-                                                style={{
-                                                    color: '#0C67AA',
-                                                    textDecoration: 'underline',
-                                                    textTransform: 'none',
-                                                }}
-                                                onClick={() => {
-                                                    setSelectMember(user);
-                                                    setOpenCardModal(true);
-                                                }}
-                                            >
-                                                View
-                                            </Button>
-                                        </TableCell>
-                                        <TableCell>
-                                            {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
-                                                <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
-                                            ) : (
                                                 <Button
                                                     style={{
                                                         color: '#0C67AA',
@@ -430,13 +433,33 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     }}
                                                     onClick={() => {
                                                         setSelectMember(user);
-                                                        setOpenInvoiceModal(true);
+                                                        setOpenCardModal(true);
                                                     }}
                                                 >
                                                     View
                                                 </Button>
-                                            )}
-                                        </TableCell>
+                                            </TableCell> */}
+
+                                            {/* <TableCell>
+                                                {user.card_status === 'Expired' || user.card_status === 'Suspend' ? (
+                                                    <Button style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}>Send Remind</Button>
+                                                ) : (
+                                                    <Button
+                                                        style={{
+                                                            color: '#0C67AA',
+                                                            textDecoration: 'underline',
+                                                            textTransform: 'none',
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectMember(user);
+                                                            setOpenInvoiceModal(true);
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                )}
+                                            </TableCell> */}
+                                            {/*
                                         <TableCell>
                                             <Button
                                                 style={{
@@ -453,12 +476,15 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                             </Button>
                                         </TableCell> */}
                                             <TableCell>
-                                                <IconButton size="small" onClick={(e) => handleOpenMenu(e, user)}>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => handleOpenMenu(e, user)}
+                                                >
                                                     <MoreVertIcon sx={{ color: '#063455' }} />
                                                 </IconButton>
                                                 <Menu
-                                                    anchorE2={anchorE2}
-                                                    open={Boolean(anchorE2)}
+                                                    anchorEl={menuAnchor}  // Fixed: anchorEl (not anchorE2)
+                                                    open={Boolean(menuAnchor && selectedUserId === user.id)}
                                                     onClose={handleCloseMenu}
                                                     anchorOrigin={{
                                                         vertical: 'bottom',
@@ -468,18 +494,23 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                         vertical: 'top',
                                                         horizontal: 'right',
                                                     }}
-                                                    slotProps={{
-                                                        paper: {
-                                                            sx: { mt: 2, ml: -15 }, // small vertical offset
-                                                        },
-                                                    }}
+                                                // slotProps={{
+                                                //     paper: {
+                                                //         sx: { mt: -5 },
+                                                //     },
+                                                // }}
                                                 >
                                                     <MenuItem onClick={handleOpenCard}>Card</MenuItem>
-                                                    <MenuItem onClick={handleOpenInvoice}>{menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend') ? 'Send Remind' : 'Invoice'}</MenuItem>
+                                                    <MenuItem onClick={handleOpenInvoice}>
+                                                        {menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend')
+                                                            ? 'Send Remind'
+                                                            : 'Invoice'
+                                                        }
+                                                    </MenuItem>
                                                     <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
                                                 </Menu>
                                             </TableCell>
-                                            {/* <TableCell>
+                                            <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Tooltip title="View Profile">
                                                     <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
@@ -497,8 +528,8 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     </IconButton>
                                                 </Tooltip>
                                             </Box>
-                                        </TableCell> */}
-                                            <TableCell align="center">
+                                        </TableCell>
+                                            {/* <TableCell align="center">
                                                 <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: '#063455' }}>
                                                     <MoreVertIcon />
                                                 </IconButton>
@@ -547,7 +578,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                         Delete Member
                                                     </MenuItem>
                                                 </Menu>
-                                            </TableCell>
+                                            </TableCell> */}
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -557,10 +588,10 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
 
                     {/* Corporate Members Table */}
                     {memberTab === 1 && (
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Category</TableCell>
@@ -670,7 +701,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                 <Box sx={{ p: 2 }}>
                     {/* ✅ Documents Preview */}
                     <h5 style={{ marginBottom: '10px', fontWeight: 700 }}>Attached Documents</h5>
-                    {selectMember && selectMember?.documents && selectMember?.documents.length > 0 && (
+                    {selectMember && selectMember?.documents && selectMember?.documents.length > 0 ? (
                         <div style={{ marginTop: '20px' }}>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                 {selectMember?.documents.map((doc, index) => {
@@ -720,6 +751,10 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                 })}
                             </div>
                         </div>
+                    ) : (
+                    <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>
+                        No attached documents
+                    </div>
                     )}
                 </Box>
                 <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

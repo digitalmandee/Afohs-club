@@ -6,7 +6,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddSubscriptionTypeModal from '@/components/App/SubscriptionTypes/AddModal';
-
+import { FaEdit } from 'react-icons/fa';
 
 const SubscriptionType = ({ subscriptionTypesData }) => {
     // const [open, setOpen] = useState(true);
@@ -72,27 +72,30 @@ const SubscriptionType = ({ subscriptionTypesData }) => {
                 sx={{
                     minHeight: '100vh',
                     padding: '20px',
-                    backgroundColor:'#f5f5f5'
+                    backgroundColor: '#f5f5f5'
                 }}
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={()=> window.history.back()}>
+                        {/* <IconButton onClick={()=> window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                        </IconButton> */}
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Subscription Type
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', textTransform: 'none', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
                         Add Type
                     </Button>
                 </Box>
+                <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                    Define different subscription types or plans
+                </Typography>
 
-                <Grid container spacing={3}>
+                <Grid container spacing={3} sx={{mt:2}}>
                     {subscriptionTypes.map((type) => (
                         <Grid item xs={12} sm={6} md={4} key={type.id}>
-                            <Card sx={{ p: 2, border: '1px solid #ddd' }}>
+                            <Card sx={{ p: 2, border: '1px solid #ddd', borderRadius: '16px' }}>
                                 <Box display="flex" justifyContent="space-between" alignItems="center">
                                     <Typography fontWeight={500}>{type.name}</Typography>
                                     <IconButton onClick={(e) => handleMenuOpen(e, type)}>
@@ -106,10 +109,10 @@ const SubscriptionType = ({ subscriptionTypesData }) => {
 
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={handleEdit}>
-                        <EditIcon sx={{ mr: 1 }} /> Edit
+                        <FaEdit size={16} style={{ marginRight: 20, color: '#f57c00' }} /> Edit
                     </MenuItem>
                     <MenuItem onClick={handleDelete}>
-                        <DeleteIcon sx={{ mr: 1 }} /> Delete
+                        <DeleteIcon color='error' sx={{ mr: 1 }} /> Delete
                     </MenuItem>
                 </Menu>
             </Box>

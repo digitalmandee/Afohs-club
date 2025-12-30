@@ -145,12 +145,12 @@ const Transaction = ({ transactions, filters }) => {
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Recently Joined Section */}
                 <div className="mx-0">
-                    <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="d-flex justify-content-between align-items-center">
                         <div>
-                            <Typography style={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Transactions</Typography>
-                            <Typography style={{ fontSize: '14px', color: '#7F7F7F', marginTop: '5px' }}>
+                            <Typography style={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Transactions</Typography>
+                            {/* <Typography style={{ fontSize: '14px', color: '#7F7F7F', marginTop: '5px' }}>
                                 Showing {transactions.from || 0} to {transactions.to || 0} of {transactions.total || 0} transactions
-                            </Typography>
+                            </Typography> */}
                         </div>
                         <div className="d-flex align-items-center">
                             <TextField
@@ -159,7 +159,15 @@ const Transaction = ({ transactions, filters }) => {
                                 size="small"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                style={{ width: '350px', marginRight: '10px' }}
+                                sx={{
+                                    width: '300px', marginRight: '10px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
                                 InputProps={{
                                     startAdornment: (
                                         <InputAdornment position="start">
@@ -168,7 +176,15 @@ const Transaction = ({ transactions, filters }) => {
                                     ),
                                 }}
                             />
-                            <FormControl size="small" style={{ width: '100px', marginRight: '10px' }}>
+                            <FormControl size="small" sx={{
+                                width: '80px', marginRight: '10px',
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                                '& .MuiOutlinedInput-notchedOutline': {
+                                    borderRadius: '16px',
+                                },
+                            }}>
                                 <Select value={perPage} onChange={handlePerPageChange} displayEmpty>
                                     <MenuItem value={10}>10</MenuItem>
                                     <MenuItem value={25}>25</MenuItem>
@@ -178,13 +194,14 @@ const Transaction = ({ transactions, filters }) => {
                             </FormControl>
                             <Button
                                 variant="outlined"
-                                startIcon={<FilterAlt />}
+                                startIcon={<FilterAlt sx={{ color: '#fff' }} />}
                                 style={{
                                     border: '1px solid #063455',
-                                    color: '#333',
+                                    color: '#fff',
                                     textTransform: 'none',
-                                    backgroundColor: 'transparent',
+                                    backgroundColor: '#063455',
                                     marginRight: 10,
+                                    borderRadius: '16px'
                                 }}
                                 onClick={() => {
                                     setOpenFilterModal(true); // open the modal
@@ -197,32 +214,36 @@ const Transaction = ({ transactions, filters }) => {
                                 variant="contained"
                                 startIcon={<PrintIcon />}
                                 sx={{
-                                    backgroundColor: '#003366',
+                                    backgroundColor: '#063455',
                                     textTransform: 'none',
                                     color: 'white',
+                                    borderRadius: '16px'
                                 }}
                             >
                                 Print
                             </Button>
                         </div>
                     </div>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        View and manage all recorded financial transactions
+                    </Typography>
 
                     {/* Transactions Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop:'2rem', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice No</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Member</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Type</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Amount</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Payment Method</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Date</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>From</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>To</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Days</TableCell>
-                                    <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Invoice</TableCell>
+                                <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Amount</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Method</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>From</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>To</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Days</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -286,11 +307,11 @@ const Transaction = ({ transactions, filters }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     <div>
-                                                        <div style={{ fontWeight: 500, color: '#000000' }}>{transaction.member?.full_name || transaction.customer?.name || 'N/A'}</div>
+                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{transaction.member?.full_name || transaction.customer?.name || 'N/A'}</div>
                                                         {transaction.member?.membership_no && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member.membership_no}</div>}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                     <span
                                                         style={{
                                                             backgroundColor: '#e3f2fd',
@@ -320,8 +341,8 @@ const Transaction = ({ transactions, filters }) => {
                                                     </span>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.payment_date || transaction.created_at)}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(transaction.payment_date || transaction.created_at)}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                     {transaction.valid_from ? (
                                                         <span
                                                             style={{
@@ -335,7 +356,7 @@ const Transaction = ({ transactions, filters }) => {
                                                         <span style={{ color: '#7F7F7F' }}>-</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                     {transaction.valid_to ? (
                                                         <span
                                                             style={{
@@ -349,15 +370,16 @@ const Transaction = ({ transactions, filters }) => {
                                                         <span style={{ color: '#7F7F7F' }}>-</span>
                                                     )}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.valid_from && transaction.valid_to ? <span>{dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1}</span> : <span style={{ color: '#7F7F7F' }}>-</span>}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{transaction.valid_from && transaction.valid_to ? <span>{dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1}</span> : <span style={{ color: '#7F7F7F' }}>-</span>}</TableCell>
                                                 <TableCell sx={{ display: 'flex', gap: '4px' }}>
                                                     <Button
                                                         variant="contained"
                                                         size="small"
                                                         style={{
-                                                            backgroundColor: '#003366',
+                                                            border: '1px solid #063455',
+                                                            backgroundColor: 'transparent',
                                                             textTransform: 'none',
-                                                            color: 'white',
+                                                            color: '#063455',
                                                         }}
                                                         onClick={() => {
                                                             // Check invoice type and open appropriate modal

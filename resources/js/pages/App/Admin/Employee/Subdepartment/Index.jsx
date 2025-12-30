@@ -110,7 +110,7 @@ const Management = () => {
             >
                 <div className="container-fluid p-4">
                     {/* Header */}
-                    <div className="row mb-4 align-items-center">
+                    <div className="row align-items-center">
                         <div className="col-auto d-flex align-items-center">
                             <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <IconButton>
@@ -130,14 +130,17 @@ const Management = () => {
                         <div className="col-auto ms-auto">
                             <Button variant="contained" startIcon={<span style={{
                                 fontSize: '1.5rem', marginBottom: 5
-                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height:35 }} onClick={() => handleOpen()}>
+                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => handleOpen()}>
                                 New Subdepartment
                             </Button>
                         </div>
                     </div>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        Define and manage sub-units under main departments
+                    </Typography>
 
                     {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none', borderRadius: '16px', }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop:'2rem', borderRadius: '16px', }}>
                         <Table>
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
@@ -154,9 +157,9 @@ const Management = () => {
                                             <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{subdepartment.department?.name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <IconButton onClick={() => handleOpen(subdepartment)} color="primary">
-                                                     <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
+                                                    <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                                 </IconButton>
-                                                <Button startIcon={<Delete />} onClick={() => openDeleteDialog(subdepartment.id)} color="error"/>
+                                                <Button startIcon={<Delete />} onClick={() => openDeleteDialog(subdepartment.id)} color="error" />
                                                 {/* </Button> */}
                                             </TableCell>
                                         </TableRow>

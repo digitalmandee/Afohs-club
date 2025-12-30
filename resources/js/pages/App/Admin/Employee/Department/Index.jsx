@@ -97,7 +97,7 @@ const Management = () => {
             >
                 <div className="container-fluid p-4">
                     {/* Header */}
-                    <div className="row mb-4 align-items-center">
+                    <div className="row align-items-center">
                         <div className="col-auto d-flex align-items-center">
                             <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <IconButton>
@@ -122,9 +122,12 @@ const Management = () => {
                             </Button>
                         </div>
                     </div>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        Manage all primary departments within the club
+                    </Typography>
 
                     {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop:'2rem', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
@@ -141,7 +144,7 @@ const Management = () => {
                                                 <IconButton onClick={() => handleOpen(department)} color="primary">
                                                     <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                                 </IconButton>
-                                                <Button startIcon={<Delete />} onClick={() => openDeleteDialog(department.id)} color="error"/>
+                                                <Button startIcon={<Delete />} onClick={() => openDeleteDialog(department.id)} color="error" />
                                             </TableCell>
                                         </TableRow>
                                     ))

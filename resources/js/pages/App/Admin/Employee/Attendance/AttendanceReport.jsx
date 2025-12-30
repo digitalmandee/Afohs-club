@@ -129,12 +129,15 @@ const AttendanceReport = () => {
 			>
 				<Box sx={{ px: 2, py: 2, overflowX: 'hidden' }}>
 					<div style={{ paddingTop: '1rem' }}>
-						<div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+						<div style={{ display: 'flex', justifyContent: 'space-between' }}>
 							<Typography style={{ fontWeight: '700', color: '#063455', fontSize: '30px' }}>
 								Attendance Report
 							</Typography>
 						</div>
-						<div style={{ display: "flex", justifyContent: "end", gap: "8px" }}>
+						<Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+							Includes staff performance, attendance, and leave summaries
+						</Typography>
+						<div style={{ display: "flex", justifyContent: "end", gap: "8px", marginTop:'1rem' }}>
 							{/* Month & Year Section */}
 							<TextField select label="Month" value={month} onChange={handleMonthChange} size="small" SelectProps={{ native: true }} style={{
 								backgroundColor: "transparent", minWidth: "120px", '& .MuiOutlinedInput-root': {
@@ -151,7 +154,7 @@ const AttendanceReport = () => {
 								))}
 							</TextField>
 
-							<TextField type="number" label="Year" value={year} onChange={handleYearChange} size="small" style={{ backgroundColor: "transparent", width:'10%' }} />
+							<TextField type="number" label="Year" value={year} onChange={handleYearChange} size="small" style={{ backgroundColor: "transparent", width: '10%' }} />
 						</div>
 
 						{/* Legend */}

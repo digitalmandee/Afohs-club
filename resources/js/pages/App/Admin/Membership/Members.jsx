@@ -41,17 +41,20 @@ const AllMembers = ({ members }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [memberToDelete, setMemberToDelete] = useState(null);
     const [openDocumentModal, setOpenDocumentModal] = useState(false);
-    const [anchorE2, setAnchorE2] = useState(null);
+    // const [anchorE2, setAnchorE2] = useState(null);
+    // const [menuMember, setMenuMember] = useState(null);
+    const [menuAnchor, setMenuAnchor] = useState(null);
+    const [selectedUserId, setSelectedUserId] = useState(null);
     const [menuMember, setMenuMember] = useState(null);
-
-    const handleOpenMenu = (event, user) => {
-        setAnchorE2(event.currentTarget);
+    const handleOpenMenu = (e, user) => {
+        setMenuAnchor(e.currentTarget);
+        setSelectedUserId(user.id);  // Track which user
         setMenuMember(user);
     };
 
     const handleCloseMenu = () => {
-        setAnchorE2(null);
-        setMenuMember(null);
+        setMenuAnchor(null);
+        setSelectedUserId(null);
     };
 
     const handleOpenCard = () => {
@@ -183,6 +186,7 @@ const AllMembers = ({ members }) => {
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
                                 borderRadius: '16px',
+                                textTransform: 'none',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -200,10 +204,10 @@ const AllMembers = ({ members }) => {
                     <MembershipDashboardFilter />
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                         <Table>
                             <TableHead>
-                                <TableRow style={{ backgroundColor: '#063455', height: '20px' }}>
+                                <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Category</TableCell>
@@ -246,25 +250,66 @@ const AllMembers = ({ members }) => {
                                             <div className="d-flex align-items-center">
                                                 <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                 <div>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
-                                                        {user.full_name}
+                                                    <Typography sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        maxWidth: '150px',  // Container for name + icon
+                                                    }}>
+                                                        {/* ✅ Name truncates independently */}
+                                                        <div style={{
+                                                            maxWidth: '110px',  // Exactly 15 chars
+                                                            whiteSpace: 'nowrap',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis'
+                                                        }}>
+                                                            <Tooltip title={user.full_name || 'N/A'} arrow>
+                                                                <span>{user.full_name}</span>
+                                                            </Tooltip>
+                                                        </div>
 
+                                                        {/* ✅ Icon stays separate */}
                                                         {user.is_document_enabled && (
                                                             <Tooltip title="Documents missing" arrow>
                                                                 <WarningAmberIcon color="warning" fontSize="small" />
                                                             </Tooltip>
                                                         )}
                                                     </Typography>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
                                                 </div>
                                             </div>
                                         </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.cnic_no || 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell> */}
+                                        <TableCell>
+                                            <Typography sx={{
+                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',  // ~20 chars width
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
+                                            }}>
+                                                <Tooltip title={user.mobile_number_a || 'N/A'} arrow>
+                                                    <span>{user.mobile_number_a || 'N/A'}</span>
+                                                </Tooltip>
+                                            </Typography>
+                                        </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell> */}
+                                        <TableCell>
+                                            <Typography sx={{
+                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',  // ~20 chars width
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
+                                            }}>
+                                                <Tooltip title={user.membership_duration || 'N/A'} arrow>
+                                                    <span>{user.membership_duration || 'N/A'}</span>
+                                                </Tooltip>
+                                            </Typography>
+                                        </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                         <TableCell>
@@ -364,6 +409,42 @@ const AllMembers = ({ members }) => {
                                                 View
                                             </Button>
                                         </TableCell> */}
+                                        {/* <TableCell>
+                                            <IconButton
+                                                size="small"
+                                                onClick={(e) => handleOpenMenu(e, user)}
+                                            >
+                                                <MoreVertIcon sx={{ color: '#063455' }} />
+                                            </IconButton>
+                                            <Menu
+                                                anchorE2={anchorE2}
+                                                open={Boolean(anchorE2)}
+                                                onClose={handleCloseMenu}
+                                                anchorOrigin={{
+                                                    vertical: 'bottom',
+                                                    horizontal: 'right',
+                                                }}
+                                                transformOrigin={{
+                                                    vertical: 'top',
+                                                    horizontal: 'right',
+                                                }}
+                                                slotProps={{
+                                                    paper: {
+                                                        sx: { mt: -10, ml: -10 }, // small vertical offset
+                                                    },
+                                                }}
+                                            >
+                                                <MenuItem onClick={handleOpenCard}>Card</MenuItem>
+                                                <MenuItem onClick={handleOpenInvoice}>
+                                                    {menuMember &&
+                                                        (menuMember.card_status === 'Expired' ||
+                                                            menuMember.card_status === 'Suspend')
+                                                        ? 'Send Remind'
+                                                        : 'Invoice'}
+                                                </MenuItem>
+                                                <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
+                                            </Menu>
+                                        </TableCell> */}
                                         <TableCell>
                                             <IconButton
                                                 size="small"
@@ -371,8 +452,35 @@ const AllMembers = ({ members }) => {
                                             >
                                                 <MoreVertIcon sx={{ color: '#063455' }} />
                                             </IconButton>
+                                            <Menu
+                                                anchorEl={menuAnchor}  // Fixed: anchorEl (not anchorE2)
+                                                open={Boolean(menuAnchor && selectedUserId === user.id)}
+                                                onClose={handleCloseMenu}
+                                                anchorOrigin={{
+                                                    vertical: 'bottom',
+                                                    horizontal: 'right',
+                                                }}
+                                                transformOrigin={{
+                                                    vertical: 'top',
+                                                    horizontal: 'right',
+                                                }}
+                                            // slotProps={{
+                                            //     paper: {
+                                            //         sx: { mt: -5 },
+                                            //     },
+                                            // }}
+                                            >
+                                                <MenuItem onClick={handleOpenCard}>Card</MenuItem>
+                                                <MenuItem onClick={handleOpenInvoice}>
+                                                    {menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend')
+                                                        ? 'Send Remind'
+                                                        : 'Invoice'
+                                                    }
+                                                </MenuItem>
+                                                <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
+                                            </Menu>
                                         </TableCell>
-                                        {/* <TableCell>
+                                        <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Tooltip title="View Profile">
                                                     <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
@@ -390,8 +498,8 @@ const AllMembers = ({ members }) => {
                                                     </IconButton>
                                                 </Tooltip>
                                             </Box>
-                                        </TableCell> */}
-                                        <TableCell align="center">
+                                        </TableCell>
+                                        {/* <TableCell align="center">
                                             <IconButton
                                                 onClick={(e) => setAnchorEl(e.currentTarget)}
                                                 sx={{ color: '#063455' }}
@@ -443,39 +551,11 @@ const AllMembers = ({ members }) => {
                                                     Delete Member
                                                 </MenuItem>
                                             </Menu>
-                                        </TableCell>
+                                        </TableCell> */}
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
-                        <Menu
-                            anchorE2={anchorE2}
-                            open={Boolean(anchorE2)}
-                            onClose={handleCloseMenu}
-                            anchorOrigin={{
-                                vertical: 'bottom',
-                                horizontal: 'right',
-                            }}
-                            transformOrigin={{
-                                vertical: 'top',
-                                horizontal: 'right',
-                            }}
-                        slotProps={{
-                            paper: {
-                                sx: { mt: -10, ml: -10 }, // small vertical offset
-                            },
-                        }}
-                        >
-                            <MenuItem onClick={handleOpenCard}>Card</MenuItem>
-                            <MenuItem onClick={handleOpenInvoice}>
-                                {menuMember &&
-                                    (menuMember.card_status === 'Expired' ||
-                                        menuMember.card_status === 'Suspend')
-                                    ? 'Send Remind'
-                                    : 'Invoice'}
-                            </MenuItem>
-                            <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
-                        </Menu>
                         <Box display="flex" justifyContent="center" mt={2}>
                             {members.links?.map((link, index) => (
                                 <Button
@@ -533,7 +613,7 @@ const AllMembers = ({ members }) => {
                     <Box sx={{ p: 2 }}>
                         {/* ✅ Documents Preview */}
                         <h5 style={{ marginBottom: '10px', fontWeight: 700 }}>Attached Documents</h5>
-                        {selectMember && selectMember?.documents && selectMember?.documents.length > 0 && (
+                        {selectMember && selectMember?.documents && selectMember?.documents.length > 0 ? (
                             <div style={{ marginTop: '20px' }}>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                                     {selectMember?.documents.map((doc, index) => {
@@ -582,6 +662,10 @@ const AllMembers = ({ members }) => {
                                         return null; // For unknown file types
                                     })}
                                 </div>
+                            </div>
+                        ) : (
+                            <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>
+                                No attached documents
                             </div>
                         )}
                     </Box>

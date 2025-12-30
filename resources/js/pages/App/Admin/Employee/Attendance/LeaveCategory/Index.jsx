@@ -124,7 +124,7 @@ const Management = () => {
             >
                 <div style={{ padding: '2rem' }}>
                     {/* Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                             Leave Categories
                         </Typography>
@@ -141,16 +141,19 @@ const Management = () => {
                                     // textTransform: 'none',
                                     // padding: '12px',
                                     // fontSize: '16px',
-                                    height:35,
-                                    borderRadius:'16px'
+                                    height: 35,
+                                    borderRadius: '16px'
                                 }}
                             >
                                 Add Leave
                             </Button>
                         </div>
                     </div>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                        Includes casual, sick, annual, and special leave types
+                    </Typography>
                     {/* Cards Section */}
-                    <div style={{ display: 'flex', width: '90%', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start' }}>{categories.length > 0 && categories.map((category, index) => <LeaveCard key={index} data={category} />)}</div>
+                    <div style={{ display: 'flex', width: '90%', flexWrap: 'wrap', gap: '16px', justifyContent: 'flex-start', marginTop:'2rem' }}>{categories.length > 0 && categories.map((category, index) => <LeaveCard key={index} data={category} />)}</div>
                 </div>
             </div>
             <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar}>

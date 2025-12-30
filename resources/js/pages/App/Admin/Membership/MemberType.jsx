@@ -7,7 +7,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddMemberModal from '@/components/App/MemberTypes/AddModal';
-
+import { FaEdit } from 'react-icons/fa';
 const MembersType = ({ memberTypesData }) => {
     // const [open, setOpen] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -80,9 +80,9 @@ const MembersType = ({ memberTypesData }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => window.history.back()}>
+                        {/* <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography variant="h5" sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Members Type
                         </Typography>
@@ -96,6 +96,7 @@ const MembersType = ({ memberTypesData }) => {
                                 color: '#d32f2f',
                                 borderColor: '#d32f2f',
                                 borderRadius: '16px',
+                                textTransform:'none',
                                 '&:hover': {
                                     backgroundColor: '#ffebee',
                                     borderColor: '#d32f2f',
@@ -104,7 +105,7 @@ const MembersType = ({ memberTypesData }) => {
                         >
                             Deleted Member Types
                         </Button>
-                        <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: '20px' }} />} sx={{ backgroundColor: '#063455', borderRadius: '16px' }} onClick={handleAdd}>
+                        <Button variant="contained" startIcon={<AddIcon sx={{ fontSize: '20px' }} />} sx={{ backgroundColor: '#063455', borderRadius: '16px', textTransform:'none' }} onClick={handleAdd}>
                             Add Type
                         </Button>
                     </div>
@@ -116,7 +117,7 @@ const MembersType = ({ memberTypesData }) => {
                 <Grid container spacing={3} style={{ marginTop: 5 }}>
                     {memberTypes.map((type) => (
                         <Grid item xs={12} sm={6} md={4} key={type.id}>
-                            <Card sx={{ p: 2, border: '1px solid #ddd' }}>
+                            <Card sx={{ p: 2, border: '1px solid #ddd', borderRadius:'16px' }}>
                                 <Box display="flex" justifyContent="space-between" alignItems="center">
                                     <Typography fontWeight={500}>{type.name}</Typography>
                                     <IconButton onClick={(e) => handleMenuOpen(e, type)}>
@@ -130,10 +131,10 @@ const MembersType = ({ memberTypesData }) => {
 
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={handleEdit}>
-                        <EditIcon sx={{ mr: 1 }} /> Edit
+                        <FaEdit size={16} style={{ marginRight: 15, color:'#f57c00' }} /> Edit
                     </MenuItem>
                     <MenuItem onClick={handleDelete}>
-                        <DeleteIcon sx={{ mr: 1 }} /> Delete
+                        <DeleteIcon color='error' sx={{ mr: 1 }} /> Delete
                     </MenuItem>
                 </Menu>
             </Box>

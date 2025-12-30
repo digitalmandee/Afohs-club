@@ -166,7 +166,7 @@ const AppliedMemberFilter = () => {
                         <MenuItem value="not_permanent">Not Permanent</MenuItem>
                     </TextField>
                     <Box display="flex" gap={1}>
-                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#333', borderRadius: '16px', borderColor: '#ddd', textTransform: 'none' }}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#063455', borderRadius: '16px', borderColor: '#063455', textTransform: 'none', paddingLeft:3, paddingRight:3 }}>
                             Reset
                         </Button>
                         <Button variant="contained"
