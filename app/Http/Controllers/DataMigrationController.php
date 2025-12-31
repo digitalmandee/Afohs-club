@@ -3,19 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
+use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
 use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
-use App\Models\MemberClassification;
-use App\Models\SubscriptionCategory;
-use App\Models\SubscriptionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -90,15 +86,15 @@ class DataMigrationController extends Controller
                 // Corporate Stats
                 'old_corporate_members_count' => DB::table('corporate_memberships')->count(),
                 'old_corporate_families_count' => DB::table('corporate_mem_families')->count(),
-                'corporate_members_count' => \App\Models\CorporateMember::whereNull('parent_id')->count(),
-                'corporate_families_count' => \App\Models\CorporateMember::whereNotNull('parent_id')->count(),
+                'corporate_members_count' => CorporateMember::whereNull('parent_id')->count(),
+                'corporate_families_count' => CorporateMember::whereNotNull('parent_id')->count(),
                 'corporate_members_migration_percentage' => DB::table('corporate_memberships')->count() > 0
-                    ? round((\App\Models\CorporateMember::whereNull('parent_id')->count() / DB::table('corporate_memberships')->count()) * 100, 2)
+                    ? round((CorporateMember::whereNull('parent_id')->count() / DB::table('corporate_memberships')->count()) * 100, 2)
                     : 0,
                 'corporate_families_migration_percentage' => DB::table('corporate_mem_families')->count() > 0
-                    ? round((\App\Models\CorporateMember::whereNotNull('parent_id')->count() / DB::table('corporate_mem_families')->count()) * 100, 2)
+                    ? round((CorporateMember::whereNotNull('parent_id')->count() / DB::table('corporate_mem_families')->count()) * 100, 2)
                     : 0,
-                'pending_corporate_qr_codes_count' => \App\Models\CorporateMember::whereNull('qr_code')->orWhere('qr_code', '')->count(),
+                'pending_corporate_qr_codes_count' => CorporateMember::whereNull('qr_code')->orWhere('qr_code', '')->count(),
             ];
         } catch (\Exception $e) {
             Log::error('Error getting migration stats: ' . $e->getMessage());
@@ -876,7 +872,7 @@ class DataMigrationController extends Controller
     private function migrateSingleCorporateMember($oldMember)
     {
         // Check if member already exists
-        $existingMember = \App\Models\CorporateMember::where('old_member_id', $oldMember->id)
+        $existingMember = CorporateMember::where('old_member_id', $oldMember->id)
             ->whereNull('parent_id')
             ->first();
 
@@ -948,7 +944,7 @@ class DataMigrationController extends Controller
         ];
 
         // Create new corporate member
-        \App\Models\CorporateMember::create($memberData);
+        CorporateMember::create($memberData);
     }
 
     public function migrateCorporateFamilies(Request $request)
@@ -1002,7 +998,7 @@ class DataMigrationController extends Controller
     private function migrateSingleCorporateFamily($oldFamily)
     {
         // Find parent member
-        $parentMember = \App\Models\CorporateMember::where('old_member_id', $oldFamily->member_id)
+        $parentMember = CorporateMember::where('old_member_id', $oldFamily->member_id)
             ->whereNull('parent_id')
             ->first();
 
@@ -1011,7 +1007,7 @@ class DataMigrationController extends Controller
         }
 
         // Check if family member already exists
-        $existingFamily = \App\Models\CorporateMember::where('old_family_id', $oldFamily->id)
+        $existingFamily = CorporateMember::where('old_family_id', $oldFamily->id)
             ->first();
 
         if ($existingFamily) {
@@ -1047,7 +1043,7 @@ class DataMigrationController extends Controller
             'deleted_by' => $oldFamily->deleted_by,
         ];
 
-        \App\Models\CorporateMember::create($familyData);
+        CorporateMember::create($familyData);
     }
 
     private function migrateSingleInvoice($old)
@@ -1470,7 +1466,7 @@ class DataMigrationController extends Controller
         $batchSize = $request->get('batch_size', 50);
 
         try {
-            $members = \App\Models\CorporateMember::where(function ($query) {
+            $members = CorporateMember::where(function ($query) {
                 $query
                     ->whereNull('qr_code')
                     ->orWhere('qr_code', '');

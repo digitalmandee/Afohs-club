@@ -16,7 +16,14 @@ Schedule::command('members:expire-by-age')
     ->appendOutputTo(storage_path('logs/family-member-expiry.log'));
 
 Schedule::command('sync:attendance')
-    ->cron('*/5 * * * *') // every 5 minutes, all 24 hours
+    ->cron('*/5 * * * *')  // every 5 minutes, all 24 hours
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/attendance-sync.log'));
+
+// Schedule for checking membership status expiry
+Schedule::command('members:check-status-expiry')
+    ->daily()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/membership-status-expiry.log'));
