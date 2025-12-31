@@ -297,10 +297,10 @@ export default function SideNav({ open, setOpen }) {
                         text: 'Partners / Affiliates',
                         path: route('admin.membership.partners-affiliates.index'),
                     },
-                    {
-                        text: 'Finance',
-                        path: route('membership.finance'),
-                    },
+                    // {
+                    //     text: 'Finance',
+                    //     path: route('membership.finance'),
+                    // },
                 ],
             },
 
