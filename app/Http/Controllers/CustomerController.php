@@ -15,14 +15,14 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customerData = Customer::orderBy('created_at', 'desc')->get();
+        $customerData = Customer::orderBy('created_at', 'desc')->paginate(10);
 
         return Inertia::render('App/Admin/Customers/Index', compact('customerData'));
     }
 
     public function create()
     {
-        $guestTypes = GuestType::all();
+        $guestTypes = GuestType::where('status', 1)->get();
         $customerNo = $this->getCustomerNo();
         return Inertia::render('App/Admin/Customers/CustomerForm', compact('guestTypes', 'customerNo'));
     }
@@ -32,7 +32,7 @@ class CustomerController extends Controller
         $customer = Customer::find($id);
         return Inertia::render('App/Admin/Customers/CustomerForm', [
             'customer' => $customer,
-            'guestTypes' => GuestType::all(),
+            'guestTypes' => GuestType::where('status', 1)->get(),
             'isEdit' => true,
         ]);
     }
@@ -52,7 +52,6 @@ class CustomerController extends Controller
         return redirect()->route('guests.index')->with('success', 'Customer updated successfully.');
     }
 
-
     public function destroy($id)
     {
         $eventVenue = Customer::findOrFail($id);
@@ -62,9 +61,22 @@ class CustomerController extends Controller
     }
 
     // Delete an Customer
+    public function trashed()
+    {
+        $customerData = Customer::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(10);
+        return Inertia::render('App/Admin/Customers/Trashed', compact('customerData'));
+    }
+
+    public function restore($id)
+    {
+        $customer = Customer::onlyTrashed()->findOrFail($id);
+        $customer->restore();
+        return redirect()->route('guests.trashed')->with('success', 'Customer restored successfully.');
+    }
+
     private function getCustomerNo()
     {
-        $customer_no =  (int) Customer::max('customer_no');
+        $customer_no = (int) Customer::withTrashed()->max('customer_no');
         return $customer_no + 1;
     }
 }

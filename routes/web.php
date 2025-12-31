@@ -26,6 +26,7 @@ use App\Http\Controllers\EventMenuTypeController;
 use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FamilyMembersArchiveConroller;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\GuestTypeController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCategoryController;
 use App\Http\Controllers\MemberCategoryController;
@@ -143,6 +144,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
+        Route::resource('guest-types', GuestTypeController::class)->except(['show']);
+
+        Route::get('guests/trashed', [CustomerController::class, 'trashed'])->name('guests.trashed');
+        Route::post('guests/restore/{id}', [CustomerController::class, 'restore'])->name('guests.restore');
         Route::resource('guests', CustomerController::class)->except(['show']);
 
         Route::group(['prefix' => 'rooms'], function () {
