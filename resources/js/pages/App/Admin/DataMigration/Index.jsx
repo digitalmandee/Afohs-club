@@ -12,6 +12,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         media: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         invoices: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        invoices: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        corporate_members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        corporate_families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
     });
     const [validationDialog, setValidationDialog] = useState(false);
@@ -19,7 +22,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, qr_codes: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, corporate_members: false, corporate_families: false, qr_codes: false });
 
     useEffect(() => {
         refreshStats();
@@ -109,6 +112,36 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('invoices', 0);
     };
 
+    const startCorporateMembersMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current.corporate_members = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            corporate_members: { ...prev.corporate_members, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('corporate_members', 0);
+    };
+
+    const startCorporateFamiliesMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current.corporate_families = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            corporate_families: { ...prev.corporate_families, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('corporate_families', 0);
+    };
+
     const processMigrationBatch = async (type, offset) => {
         try {
             const endpointMap = {
@@ -116,6 +149,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 families: '/admin/data-migration/migrate-families',
                 media: '/admin/data-migration/migrate-media',
                 invoices: '/admin/data-migration/migrate-invoices',
+                invoices: '/admin/data-migration/migrate-invoices',
+                corporate_members: '/admin/data-migration/migrate-corporate-members',
+                corporate_families: '/admin/data-migration/migrate-corporate-families',
                 qr_codes: '/admin/data-migration/generate-qr-codes',
             };
             const endpoint = endpointMap[type];
@@ -133,6 +169,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 families: stats.old_families_count,
                 media: stats.old_media_count,
                 invoices: stats.old_invoices_count,
+                invoices: stats.old_invoices_count,
+                corporate_members: stats.old_corporate_members_count,
+                corporate_families: stats.old_corporate_families_count,
                 qr_codes: stats.pending_qr_codes_count,
             };
 
@@ -414,6 +453,43 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                     </Grid>
                 </Grid>
 
+                {/* Corporate Stats Cards */}
+                <Grid container spacing={3} sx={{ mb: 4 }}>
+                    <Grid item xs={12} md={3}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <People sx={{ mr: 1, color: 'primary.dark' }} />
+                                    <Typography variant="h6">Corp Members</Typography>
+                                </Box>
+                                <Typography variant="h4" color="primary.dark">
+                                    {stats.corporate_members_count?.toLocaleString() || 0}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Migrated / {stats.old_corporate_members_count?.toLocaleString() || 0}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <FamilyRestroom sx={{ mr: 1, color: 'secondary.dark' }} />
+                                    <Typography variant="h6">Corp Families</Typography>
+                                </Box>
+                                <Typography variant="h4" color="secondary.dark">
+                                    {stats.corporate_families_count?.toLocaleString() || 0}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Migrated / {stats.old_corporate_families_count?.toLocaleString() || 0}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                </Grid>
+
                 {/* Migration Controls */}
                 <Grid container spacing={3}>
                     {/* Members Migration */}
@@ -636,6 +712,108 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                     <Typography variant="caption" component="div">
                                                         <strong>Invoice No:</strong> {error.invoice_no}
                                                         <br />
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Corporate Members Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Corporate Members Migration
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {stats.corporate_members_migration_percentage || 0}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.corporate_members.running ? migrationStatus.corporate_members.progress : stats.corporate_members_migration_percentage || 0} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {migrationStatus.corporate_members.migrated || stats.corporate_members_count || 0} / {stats.old_corporate_members_count || 0}
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.corporate_members.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startCorporateMembersMigration} disabled={migrationStatus.corporate_members.running}>
+                                        {migrationStatus.corporate_members.running ? 'Migrating...' : 'Start Migration'}
+                                    </Button>
+
+                                    {migrationStatus.corporate_members.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('corporate_members')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.corporate_members.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.corporate_members.errors.length} errors occurred during migration
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.corporate_members.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Corporate Families Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Corporate Families Migration
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {stats.corporate_families_migration_percentage || 0}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.corporate_families.running ? migrationStatus.corporate_families.progress : stats.corporate_families_migration_percentage || 0} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {migrationStatus.corporate_families.migrated || stats.corporate_families_count || 0} / {stats.old_corporate_families_count || 0}
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.corporate_families.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startCorporateFamiliesMigration} disabled={migrationStatus.corporate_families.running}>
+                                        {migrationStatus.corporate_families.running ? 'Migrating...' : 'Start Migration'}
+                                    </Button>
+
+                                    {migrationStatus.corporate_families.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('corporate_families')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.corporate_families.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.corporate_families.errors.length} errors occurred during migration
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.corporate_families.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
                                                         <strong>Error:</strong> {error.error}
                                                     </Typography>
                                                 </Alert>

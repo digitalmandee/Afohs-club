@@ -10,6 +10,7 @@ use App\Http\Controllers\AppliedMemberController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\CardController;
+use App\Http\Controllers\CorporateCompanyController;
 use App\Http\Controllers\CorporateMembershipController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
@@ -530,6 +531,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('member-categories/restore/{id}', [MemberCategoryController::class, 'restore'])->name('member-categories.restore');
         Route::resource('member-categories', MemberCategoryController::class)->except('show');
 
+        // Corporate Company Management Routes
+        Route::get('corporate-companies/trashed', [CorporateCompanyController::class, 'trashed'])->name('corporate-companies.trashed');
+        Route::post('corporate-companies/restore/{id}', [CorporateCompanyController::class, 'restore'])->name('corporate-companies.restore');
+        Route::resource('corporate-companies', CorporateCompanyController::class)->except('show');
+
         // Members types
         Route::get('member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
         Route::get('member-types/trashed', [MemberTypeController::class, 'trashed'])->name('member-types.trashed');
@@ -608,6 +614,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-members', [DataMigrationController::class, 'migrateMembers'])->name('data-migration.migrate-members');
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
         Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoices'])->name('data-migration.migrate-invoices');
+        Route::post('/migrate-corporate-members', [DataMigrationController::class, 'migrateCorporateMembers'])->name('data-migration.migrate-corporate-members');
+        Route::post('/migrate-corporate-families', [DataMigrationController::class, 'migrateCorporateFamilies'])->name('data-migration.migrate-corporate-families');
         Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
         Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');
@@ -742,3 +750,15 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 // Central guest-only auth routes
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+use App\Http\Controllers\Api\CorporateCompanyController as ApiCorporateCompanyController;
+
+// Corporate Company API Routes
+Route::prefix('api')->group(function () {
+    Route::controller(ApiCorporateCompanyController::class)->group(function () {
+        Route::get('/corporate-companies', 'index');
+        Route::post('/corporate-companies', 'store');
+        Route::put('/corporate-companies/{id}', 'update');
+        Route::delete('/corporate-companies/{id}', 'destroy');
+    });
+});

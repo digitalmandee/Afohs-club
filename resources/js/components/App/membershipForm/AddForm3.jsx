@@ -19,7 +19,7 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 dayjs.extend(customParseFormat);
 
-const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember, isMembershipNoEditable = false }) => {
+const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memberTypesData, loading, membercategories, setCurrentFamilyMember, currentFamilyMember, isMembershipNoEditable = false, isCorporate = false }) => {
     const [showFamilyMember, setShowFamilyMember] = useState(false);
     const [openFamilyMember, setOpenFamilyMember] = useState(false);
     const [openDocumentsDialog, setOpenDocumentsDialog] = useState(false);
@@ -36,6 +36,68 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [membershipNoSuggestion, setMembershipNoSuggestion] = useState(null);
     const fileInputRef = useRef(null);
     const prevCategoryRef = useRef(data.membership_category);
+
+    // Corporate Company State
+    const [corporateCompanies, setCorporateCompanies] = useState([]);
+    const [corporateCompanySearch, setCorporateCompanySearch] = useState('');
+    const [corporateCompanyLoading, setCorporateCompanyLoading] = useState(false);
+    const [selectedCorporateCompany, setSelectedCorporateCompany] = useState(null);
+
+    // Fetch Corporate Companies
+    useEffect(() => {
+        if (!isCorporate) return;
+
+        const fetchCorporateCompanies = async () => {
+            setCorporateCompanyLoading(true);
+            try {
+                const response = await axios.get('/api/corporate-companies', {
+                    params: { search: corporateCompanySearch },
+                });
+                setCorporateCompanies(response.data);
+            } catch (error) {
+                console.error('Error fetching corporate companies:', error);
+            } finally {
+                setCorporateCompanyLoading(false);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            fetchCorporateCompanies();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [corporateCompanySearch, isCorporate]);
+
+    // Auto-select Corporate Category
+    useEffect(() => {
+        if (isCorporate && membercategories?.length > 0) {
+            // Try to find "Corporate" or "CE"
+            const corporateCategory = membercategories.find((c) => c.name.toLowerCase().includes('corporate') || c.name.toLowerCase().includes('ce'));
+
+            if (corporateCategory && data.membership_category !== corporateCategory.id) {
+                handleChange({
+                    target: {
+                        name: 'membership_category',
+                        value: corporateCategory.id,
+                    },
+                });
+
+                // Auto-prefix membership number with category name if empty or just prefix
+                const prefix = corporateCategory.name + ' ';
+                if (!data.membership_no || !data.membership_no.startsWith(prefix)) {
+                    // Only set if not already set or different
+                    if (!data.membership_no) {
+                        handleChange({
+                            target: {
+                                name: 'membership_no',
+                                value: prefix,
+                            },
+                        });
+                    }
+                }
+            }
+        }
+    }, [isCorporate, membercategories]);
 
     // Business Developer State
     const [bdSearch, setBdSearch] = useState('');
@@ -971,101 +1033,148 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                             </Box>
                             {/* Membership Details */}
                             <Grid container spacing={3}>
-                                <Grid item xs={4}>
-                                    <Box>
-                                        <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category *</Typography>
-                                        <FormControl fullWidth variant="outlined">
-                                            <Select
-                                                name="membership_category"
-                                                value={data.membership_category}
-                                                onChange={async (e) => {
-                                                    const selectedCategoryId = e.target.value;
-                                                    const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
-                                                    const categoryName = selectedCategory?.name || '';
+                                {!isCorporate && (
+                                    <Grid item xs={4}>
+                                        <Box>
+                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Membership Category *</Typography>
+                                            {isCorporate ? (
+                                                <TextField fullWidth variant="outlined" value={membercategories?.find((c) => c.id == data.membership_category)?.name || 'Corporate'} InputProps={{ readOnly: true }} size="small" sx={{ bgcolor: '#f5f5f5' }} />
+                                            ) : (
+                                                <FormControl fullWidth variant="outlined">
+                                                    <Select
+                                                        name="membership_category"
+                                                        value={data.membership_category}
+                                                        onChange={async (e) => {
+                                                            const selectedCategoryId = e.target.value;
+                                                            const selectedCategory = membercategories.find((item) => item.id === Number(selectedCategoryId));
+                                                            const categoryName = selectedCategory?.name || '';
 
-                                                    handleChange({
-                                                        target: {
-                                                            name: 'membership_category',
-                                                            value: selectedCategoryId,
-                                                        },
-                                                    });
+                                                            handleChange({
+                                                                target: {
+                                                                    name: 'membership_category',
+                                                                    value: selectedCategoryId,
+                                                                },
+                                                            });
 
-                                                    // Generate unique membership number when category changes
-                                                    // Generate unique membership number when category changes - ONLY if not manually editable
-                                                    if (categoryName && !isMembershipNoEditable) {
-                                                        const isKinship = !!selectedKinshipUser;
+                                                            // Generate unique membership number when category changes
+                                                            // Generate unique membership number when category changes - ONLY if not manually editable
+                                                            if (categoryName && !isMembershipNoEditable) {
+                                                                const isKinship = !!selectedKinshipUser;
 
-                                                        // If there's an existing membership number, preserve the number part
-                                                        let existingNumber = null;
-                                                        if (data.membership_no) {
-                                                            const parts = data.membership_no.split(' ');
-                                                            if (parts.length >= 2) {
-                                                                existingNumber = parts[parts.length - 1]; // Get the number part
+                                                                // If there's an existing membership number, preserve the number part
+                                                                let existingNumber = null;
+                                                                if (data.membership_no) {
+                                                                    const parts = data.membership_no.split(' ');
+                                                                    if (parts.length >= 2) {
+                                                                        existingNumber = parts[parts.length - 1]; // Get the number part
+                                                                    }
+                                                                }
+
+                                                                let newMembershipNo;
+                                                                if (existingNumber) {
+                                                                    // Keep existing number, just change category
+                                                                    newMembershipNo = `${categoryName} ${existingNumber}`;
+                                                                } else {
+                                                                    // Generate new unique number
+                                                                    newMembershipNo = await generateUniqueMembershipNumber(categoryName, isKinship);
+                                                                }
+
+                                                                handleChange({
+                                                                    target: {
+                                                                        name: 'membership_no',
+                                                                        value: newMembershipNo,
+                                                                    },
+                                                                });
+
+                                                                // Validate the new membership number
+                                                                setTimeout(() => validateMembershipNumber(newMembershipNo), 500);
                                                             }
-                                                        }
-
-                                                        let newMembershipNo;
-                                                        if (existingNumber) {
-                                                            // Keep existing number, just change category
-                                                            newMembershipNo = `${categoryName} ${existingNumber}`;
-                                                        } else {
-                                                            // Generate new unique number
-                                                            newMembershipNo = await generateUniqueMembershipNumber(categoryName, isKinship);
-                                                        }
-
-                                                        handleChange({
-                                                            target: {
-                                                                name: 'membership_no',
-                                                                value: newMembershipNo,
+                                                        }}
+                                                        displayEmpty
+                                                        renderValue={(selected) => {
+                                                            if (!selected) {
+                                                                return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
+                                                            }
+                                                            const item = membercategories.find((item) => item.id == Number(selected));
+                                                            return item ? item.description + ' (' + item.name + ')' : '';
+                                                        }}
+                                                        SelectProps={{
+                                                            displayEmpty: true,
+                                                        }}
+                                                        sx={{
+                                                            height: 40,
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            '& .MuiSelect-select': {
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                paddingY: 0,
                                                             },
-                                                        });
-
-                                                        // Validate the new membership number
-                                                        setTimeout(() => validateMembershipNumber(newMembershipNo), 500);
-                                                    }
-                                                }}
-                                                displayEmpty
-                                                renderValue={(selected) => {
-                                                    if (!selected) {
-                                                        return <span style={{ color: '#757575', fontSize: '14px' }}>Choose Category</span>;
-                                                    }
-                                                    const item = membercategories.find((item) => item.id == Number(selected));
-                                                    return item ? item.description + ' (' + item.name + ')' : '';
-                                                }}
-                                                SelectProps={{
-                                                    displayEmpty: true,
-                                                }}
-                                                sx={{
-                                                    height: 40,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    '& .MuiSelect-select': {
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        paddingY: 0,
-                                                    },
-                                                    '& .MuiOutlinedInput-notchedOutline': {
-                                                        borderColor: '#ccc',
-                                                    },
-                                                }}
-                                            >
-                                                <MenuItem value="">
-                                                    <em>None</em>
-                                                </MenuItem>
-                                                {membercategories?.map((item) => (
-                                                    <MenuItem value={item.id} key={item.id}>
-                                                        {item.description} ({item.name})
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                            {fieldErrors.membership_category && (
-                                                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                    {fieldErrors.membership_category}
-                                                </Typography>
+                                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                                borderColor: '#ccc',
+                                                            },
+                                                        }}
+                                                    >
+                                                        <MenuItem value="">
+                                                            <em>None</em>
+                                                        </MenuItem>
+                                                        {membercategories?.map((item) => (
+                                                            <MenuItem value={item.id} key={item.id}>
+                                                                {item.description} ({item.name})
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                    {fieldErrors.membership_category && (
+                                                        <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                                            {fieldErrors.membership_category}
+                                                        </Typography>
+                                                    )}
+                                                </FormControl>
                                             )}
-                                        </FormControl>
-                                    </Box>
-                                </Grid>
+                                        </Box>
+                                    </Grid>
+                                )}
+
+                                {isCorporate && (
+                                    <Grid item xs={4}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Corporate Company</Typography>
+                                            <Autocomplete
+                                                options={corporateCompanies}
+                                                getOptionLabel={(option) => option.name}
+                                                value={corporateCompanies.find((c) => c.id === data.corporate_company_id) || null}
+                                                onChange={(event, newValue) => {
+                                                    if (newValue) {
+                                                        handleChange({ target: { name: 'corporate_company_id', value: newValue.id } });
+                                                    } else {
+                                                        handleChange({ target: { name: 'corporate_company_id', value: '' } });
+                                                    }
+                                                }}
+                                                onInputChange={(event, newInputValue) => {
+                                                    setCorporateCompanySearch(newInputValue);
+                                                }}
+                                                loading={corporateCompanyLoading}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        placeholder="Search Corporate Company"
+                                                        variant="outlined"
+                                                        size="small"
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            endAdornment: (
+                                                                <>
+                                                                    {corporateCompanyLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                                    {params.InputProps.endAdornment}
+                                                                </>
+                                                            ),
+                                                        }}
+                                                    />
+                                                )}
+                                            />
+                                        </Box>
+                                    </Grid>
+                                )}
 
                                 <Grid item xs={4}>
                                     <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
@@ -1122,7 +1231,22 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                             name="membership_no"
                                             value={data.membership_no}
                                             onChange={(e) => {
-                                                handleChange(e);
+                                                const selectedCategory = membercategories.find((c) => c.id === data.membership_category);
+                                                const prefix = selectedCategory ? selectedCategory.name + ' ' : '';
+
+                                                // If trying to delete prefix, strictly enforce it
+                                                if (isCorporate && selectedCategory && !e.target.value.startsWith(prefix)) {
+                                                    // Only allow adding to it, or if completely cleared, reset to prefix
+                                                    if (e.target.value.length < prefix.length) {
+                                                        handleChange({ target: { name: 'membership_no', value: prefix } });
+                                                    } else {
+                                                        // If user types somewhere else or pastes without prefix, prepend it (best effort)
+                                                        handleChange({ target: { name: 'membership_no', value: prefix + e.target.value.replace(prefix.trim(), '').trim() } });
+                                                    }
+                                                } else {
+                                                    handleChange(e);
+                                                }
+
                                                 // Validate membership number after a short delay
                                                 setTimeout(() => validateMembershipNumber(e.target.value), 500);
                                             }}

@@ -13,11 +13,14 @@ class CorporateMember extends BaseModel
     protected $table = 'corporate_members';
 
     protected $fillable = [
+        'old_id',
         'old_family_id',
         'old_member_id',
         'barcode_no',
         'membership_no',
+        'application_number',
         'member_category_id',
+        'corporate_company_id',
         'kinship',
         'parent_id',
         'family_suffix',
@@ -46,7 +49,6 @@ class CorporateMember extends BaseModel
         'coa_category_id',
         'title',
         'state',
-        'application_number',
         'name_comments',
         'guardian_name',
         'guardian_membership',

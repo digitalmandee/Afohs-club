@@ -275,6 +275,10 @@ export default function SideNav({ open, setOpen }) {
                                 text: 'Family Members',
                                 path: route('corporate-membership.family-members'),
                             },
+                            {
+                                text: 'Manage Companies',
+                                path: route('corporate-companies.index'),
+                            },
                         ],
                     },
                     {
@@ -604,11 +608,11 @@ export default function SideNav({ open, setOpen }) {
                                 borderRadius: '50px',
                                 p: 1.3,
                                 '& img': {
-                                    filter: 'brightness(0) invert(1)',  // makes PNG white
+                                    filter: 'brightness(0) invert(1)', // makes PNG white
                                 },
                                 '&:hover': {
-                                    backgroundColor: '#063455',  // same as normal state
-                                    color: '#fff',              // same as normal state
+                                    backgroundColor: '#063455', // same as normal state
+                                    color: '#fff', // same as normal state
                                 },
                             }}
                         >
