@@ -16,13 +16,14 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         corporate_members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         corporate_families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        corporate_qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
     });
     const [validationDialog, setValidationDialog] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, corporate_members: false, corporate_families: false, qr_codes: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false });
 
     useEffect(() => {
         refreshStats();
@@ -97,6 +98,21 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('qr_codes', 0);
     };
 
+    const startCorporateQrCodeGeneration = async () => {
+        if (stats.pending_corporate_qr_codes_count === 0) {
+            alert('No pending Corporate QR codes to generate');
+            return;
+        }
+
+        migrationRunning.current.corporate_qr_codes = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            corporate_qr_codes: { ...prev.corporate_qr_codes, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('corporate_qr_codes', 0);
+    };
+
     const startInvoicesMigration = async () => {
         if (!stats.old_tables_exist) {
             alert('Old tables not found in database');
@@ -153,9 +169,10 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 corporate_members: '/admin/data-migration/migrate-corporate-members',
                 corporate_families: '/admin/data-migration/migrate-corporate-families',
                 qr_codes: '/admin/data-migration/generate-qr-codes',
+                corporate_qr_codes: '/admin/data-migration/generate-corporate-qr-codes',
             };
             const endpoint = endpointMap[type];
-            const batchSize = type === 'qr_codes' ? 20 : 100;
+            const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : 100;
             const response = await axios.post(endpoint, {
                 batch_size: batchSize,
                 offset: offset,
@@ -173,6 +190,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 corporate_members: stats.old_corporate_members_count,
                 corporate_families: stats.old_corporate_families_count,
                 qr_codes: stats.pending_qr_codes_count,
+                corporate_qr_codes: stats.pending_corporate_qr_codes_count,
             };
 
             setMigrationStatus((prev) => ({
@@ -447,6 +465,23 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
                                     Members without QR codes
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Box sx={{ mr: 1, color: 'info.main', fontWeight: 'bold', fontSize: '1.5rem' }}>QR</Box>
+                                    <Typography variant="h6">Pending Corp QR</Typography>
+                                </Box>
+                                <Typography variant="h4" color="info.main">
+                                    {stats.pending_corporate_qr_codes_count?.toLocaleString() || 0}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Corp Members without QR codes
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -863,6 +898,61 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                         </Alert>
                                         <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
                                             {migrationStatus.qr_codes.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
+                                                        <strong>Member ID:</strong> {error.member_id}
+                                                        <br />
+                                                        <strong>Name:</strong> {error.name}
+                                                        <br />
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Corporate QR Code Generation */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Corporate QR Codes
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {migrationStatus.corporate_qr_codes.progress.toFixed(2)}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.corporate_qr_codes.running ? migrationStatus.corporate_qr_codes.progress : stats.pending_corporate_qr_codes_count > 0 ? (migrationStatus.corporate_qr_codes.migrated / stats.pending_corporate_qr_codes_count) * 100 : 0} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Generated: {migrationStatus.corporate_qr_codes.migrated} / {stats.pending_corporate_qr_codes_count || 0}
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.corporate_qr_codes.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startCorporateQrCodeGeneration} disabled={migrationStatus.corporate_qr_codes.running}>
+                                        {migrationStatus.corporate_qr_codes.running ? 'Generating...' : 'Start Generation'}
+                                    </Button>
+
+                                    {migrationStatus.corporate_qr_codes.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('corporate_qr_codes')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.corporate_qr_codes.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.corporate_qr_codes.errors.length} errors occurred
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.corporate_qr_codes.errors.map((error, index) => (
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
                                                         <strong>Member ID:</strong> {error.member_id}

@@ -14,20 +14,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const CardsDashboard = ({
-    members,
-    subscriptions,
-    total_active_members,
-    total_active_family_members,
-    total_active_subscriptions,
-    total_expired_subscriptions,
-    total_pending_subscriptions,
-    filters,
-    memberCategories,
-    subscriptionCategories,
-    subscriptionTypes,
-    cardType = 'members'
-}) => {
+const CardsDashboard = ({ members, subscriptions, total_active_members, total_active_family_members, total_active_subscriptions, total_expired_subscriptions, total_pending_subscriptions, filters, memberCategories, subscriptionCategories, subscriptionTypes, cardType = 'members' }) => {
     // Modal state
     const [openCardModal, setOpenCardModal] = useState(false);
     const [selectMember, setSelectMember] = useState(null);
@@ -38,6 +25,8 @@ const CardsDashboard = ({
     // Determine active tab based on cardType
     const getActiveTab = () => {
         if (cardType === 'subscriptions') return 2;
+        if (cardType === 'corporate') return 3;
+        if (cardType === 'corporate_family') return 4;
         if (cardType === 'family') return 1;
         return 0;
     };
@@ -55,7 +44,6 @@ const CardsDashboard = ({
     });
 
     // Extract unique status and member type values from members
-
 
     return (
         <>
@@ -140,6 +128,12 @@ const CardsDashboard = ({
                                 } else if (newValue === 2) {
                                     params.set('card_type', 'subscriptions');
                                     params.delete('member_type_filter');
+                                } else if (newValue === 3) {
+                                    params.set('card_type', 'corporate');
+                                    params.delete('member_type_filter');
+                                } else if (newValue === 4) {
+                                    params.set('card_type', 'corporate_family');
+                                    params.delete('member_type_filter');
                                 }
 
                                 router.visit(`${window.location.pathname}?${params.toString()}`, {
@@ -166,13 +160,13 @@ const CardsDashboard = ({
                             <Tab label="Member Cards" />
                             <Tab label="Family Member Cards" />
                             <Tab label="Subscription Cards" />
+                            <Tab label="Corporate Cards" />
+                            <Tab label="Corporate Family Cards" />
                         </Tabs>
                     </Box>
 
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>
-                            {activeTab === 0 ? 'Member Cards' : activeTab === 1 ? 'Family Member Cards' : 'Subscription Cards'}
-                        </Typography>
+                        <Typography style={{ fontWeight: 500, fontSize: '24px', color: '#000000' }}>{activeTab === 0 ? 'Member Cards' : activeTab === 1 ? 'Family Member Cards' : activeTab === 2 ? 'Subscription Cards' : activeTab === 3 ? 'Corporate Cards' : 'Corporate Family Cards'}</Typography>
                         <Button
                             variant="contained"
                             startIcon={<PrintIcon />}
@@ -180,7 +174,7 @@ const CardsDashboard = ({
                                 backgroundColor: '#063455',
                                 textTransform: 'none',
                                 color: '#fff',
-                                borderRadius: '16px'
+                                borderRadius: '16px',
                             }}
                         >
                             Print
@@ -221,8 +215,8 @@ const CardsDashboard = ({
                                         }}
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
-                                                borderRadius: '16px'
-                                            }
+                                                borderRadius: '16px',
+                                            },
                                         }}
                                     />
                                     {/* <TextField
@@ -244,20 +238,10 @@ const CardsDashboard = ({
                                         options={['all', 'active', 'expired', 'suspended', 'cancelled']}
                                         value={filterValues.card_status || 'all'}
                                         onChange={(e, newValue) => setFilterValues({ ...filterValues, card_status: newValue })}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label="Card Status"
-                                                fullWidth
-                                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                                            />
-                                        )}
+                                        renderInput={(params) => <TextField {...params} label="Card Status" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                                         renderOption={(props, option) => (
                                             <MenuItem {...props} value={option}>
-                                                {option === 'all' ? 'All Status' :
-                                                    option === 'active' ? 'Active' :
-                                                        option === 'expired' ? 'Expired' :
-                                                            option === 'suspended' ? 'Suspended' : 'Cancelled'}
+                                                {option === 'all' ? 'All Status' : option === 'active' ? 'Active' : option === 'expired' ? 'Expired' : option === 'suspended' ? 'Suspended' : 'Cancelled'}
                                             </MenuItem>
                                         )}
                                         fullWidth
@@ -281,23 +265,14 @@ const CardsDashboard = ({
                                         size="small"
                                         options={[{ id: 'all', name: 'All Categories' }, ...(subscriptionCategories || [])]}
                                         getOptionLabel={(option) => option.name || ''}
-                                        value={
-                                            filterValues.subscription_category === 'all'
-                                                ? { id: 'all', name: 'All Categories' }
-                                                : subscriptionCategories?.find(cat => cat.id === filterValues.subscription_category) || null
+                                        value={filterValues.subscription_category === 'all' ? { id: 'all', name: 'All Categories' } : subscriptionCategories?.find((cat) => cat.id === filterValues.subscription_category) || null}
+                                        onChange={(e, newValue) =>
+                                            setFilterValues({
+                                                ...filterValues,
+                                                subscription_category: newValue?.id || 'all',
+                                            })
                                         }
-                                        onChange={(e, newValue) => setFilterValues({
-                                            ...filterValues,
-                                            subscription_category: newValue?.id || 'all'
-                                        })}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label="Subscription Category"
-                                                fullWidth
-                                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                                            />
-                                        )}
+                                        renderInput={(params) => <TextField {...params} label="Subscription Category" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                                         fullWidth
                                     />
                                     {/* <TextField
@@ -319,23 +294,14 @@ const CardsDashboard = ({
                                         size="small"
                                         options={[{ id: 'all', name: 'All Types' }, ...(subscriptionTypes || [])]}
                                         getOptionLabel={(option) => option.name || ''}
-                                        value={
-                                            filterValues.subscription_type === 'all'
-                                                ? { id: 'all', name: 'All Types' }
-                                                : subscriptionTypes?.find(type => type.id === filterValues.subscription_type) || null
+                                        value={filterValues.subscription_type === 'all' ? { id: 'all', name: 'All Types' } : subscriptionTypes?.find((type) => type.id === filterValues.subscription_type) || null}
+                                        onChange={(e, newValue) =>
+                                            setFilterValues({
+                                                ...filterValues,
+                                                subscription_type: newValue?.id || 'all',
+                                            })
                                         }
-                                        onChange={(e, newValue) => setFilterValues({
-                                            ...filterValues,
-                                            subscription_type: newValue?.id || 'all'
-                                        })}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label="Subscription Type"
-                                                fullWidth
-                                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                                            />
-                                        )}
+                                        renderInput={(params) => <TextField {...params} label="Subscription Type" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                                         fullWidth
                                     />
                                 </Box>
@@ -371,8 +337,8 @@ const CardsDashboard = ({
                                     }}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: '16px'
-                                        }
+                                            borderRadius: '16px',
+                                        },
                                     }}
                                 />
                                 {/* <TextField
@@ -390,21 +356,7 @@ const CardsDashboard = ({
                                         </MenuItem>
                                     ))}
                                 </TextField> */}
-                                <Autocomplete
-                                    size="small"
-                                    options={['All', 'In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued']}
-                                    value={filterValues.card_status || 'All'}
-                                    onChange={(e, newValue) => setFilterValues({ ...filterValues, card_status: newValue || 'All' })}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Card Status"
-                                            fullWidth
-                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                                        />
-                                    )}
-                                    fullWidth
-                                />
+                                <Autocomplete size="small" options={['All', 'In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued']} value={filterValues.card_status || 'All'} onChange={(e, newValue) => setFilterValues({ ...filterValues, card_status: newValue || 'All' })} renderInput={(params) => <TextField {...params} label="Card Status" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />} fullWidth />
                                 {/* <TextField
                                     select
                                     label="Member Status"
@@ -419,21 +371,7 @@ const CardsDashboard = ({
                                     <MenuItem value="cancelled">Cancelled</MenuItem>
                                     <MenuItem value="pause">Pause</MenuItem>
                                 </TextField> */}
-                                <Autocomplete
-                                    size="small"
-                                    options={['All', 'active', 'suspended', 'cancelled', 'pause']}
-                                    value={filterValues.status || 'All'}
-                                    onChange={(e, newValue) => setFilterValues({ ...filterValues, status: newValue || 'All' })}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Member Status"
-                                            fullWidth
-                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                                        />
-                                    )}
-                                    fullWidth
-                                />
+                                <Autocomplete size="small" options={['All', 'active', 'suspended', 'cancelled', 'pause']} value={filterValues.status || 'All'} onChange={(e, newValue) => setFilterValues({ ...filterValues, status: newValue || 'All' })} renderInput={(params) => <TextField {...params} label="Member Status" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />} fullWidth />
                                 {/* <TextField
                                     select
                                     label="Member Category"
@@ -453,23 +391,14 @@ const CardsDashboard = ({
                                     size="small"
                                     options={[{ id: 'All', description: 'All Member Categories' }, ...(memberCategories || [])]}
                                     getOptionLabel={(option) => option.description || ''}
-                                    value={
-                                        filterValues.member_category === 'All'
-                                            ? { id: 'All', description: 'All Member Categories' }
-                                            : memberCategories?.find(cat => cat.id === filterValues.member_category) || null
+                                    value={filterValues.member_category === 'All' ? { id: 'All', description: 'All Member Categories' } : memberCategories?.find((cat) => cat.id === filterValues.member_category) || null}
+                                    onChange={(e, newValue) =>
+                                        setFilterValues({
+                                            ...filterValues,
+                                            member_category: newValue?.id || 'All',
+                                        })
                                     }
-                                    onChange={(e, newValue) => setFilterValues({
-                                        ...filterValues,
-                                        member_category: newValue?.id || 'All'
-                                    })}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Member Category"
-                                            fullWidth
-                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
-                                        />
-                                    )}
+                                    renderInput={(params) => <TextField {...params} label="Member Category" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                                     fullWidth
                                 />
                             </Box>
@@ -480,9 +409,9 @@ const CardsDashboard = ({
                                 variant="outlined"
                                 size="small"
                                 style={{
-                                    color:'#063455',
-                                    border:'1px solid #063455',
-                                    borderRadius:'16px'
+                                    color: '#063455',
+                                    border: '1px solid #063455',
+                                    borderRadius: '16px',
                                 }}
                                 onClick={() => {
                                     setFilterValues({
@@ -502,14 +431,14 @@ const CardsDashboard = ({
                             </Button>
                             <Button
                                 variant="contained"
-                                startIcon={<Search/>}
+                                startIcon={<Search />}
                                 size="small"
-                                style={{borderRadius:'16px'}}
+                                style={{ borderRadius: '16px' }}
                                 onClick={() => {
                                     const params = new URLSearchParams(window.location.search);
 
                                     // Add filters to URL
-                                    Object.keys(filterValues).forEach(key => {
+                                    Object.keys(filterValues).forEach((key) => {
                                         if (filterValues[key] && filterValues[key] !== 'all') {
                                             params.set(key, filterValues[key]);
                                         } else {
@@ -525,7 +454,7 @@ const CardsDashboard = ({
                                 sx={{
                                     backgroundColor: '#063455',
                                     textTransform: 'none',
-                                    '&:hover': { backgroundColor: '#052d45' }
+                                    '&:hover': { backgroundColor: '#052d45' },
                                 }}
                             >
                                 Search
@@ -536,28 +465,30 @@ const CardsDashboard = ({
                     {/* Loading Indicator */}
                     {isLoading && (
                         <Box sx={{ width: '100%', mb: 2 }}>
-                            <LinearProgress sx={{
-                                backgroundColor: '#e0e0e0',
-                                '& .MuiLinearProgress-bar': {
-                                    backgroundColor: '#063455'
-                                }
-                            }} />
+                            <LinearProgress
+                                sx={{
+                                    backgroundColor: '#e0e0e0',
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: '#063455',
+                                    },
+                                }}
+                            />
                         </Box>
                     )}
 
                     {/* Conditional Table Rendering */}
                     {activeTab === 2 ? (
                         /* Subscription Cards Table */
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius:'12px' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Subscription</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Amount</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Card Status</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Valid From</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Valid To</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Valid From</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Valid To</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -579,19 +510,26 @@ const CardsDashboard = ({
 
                                         const getCardStatusColor = (status) => {
                                             switch (status) {
-                                                case 'active': return '#4caf50';
-                                                case 'expired': return '#f44336';
-                                                case 'suspended': return '#ff9800';
-                                                case 'cancelled': return '#9e9e9e';
-                                                default: return '#757575';
+                                                case 'active':
+                                                    return '#4caf50';
+                                                case 'expired':
+                                                    return '#f44336';
+                                                case 'suspended':
+                                                    return '#ff9800';
+                                                case 'cancelled':
+                                                    return '#9e9e9e';
+                                                default:
+                                                    return '#757575';
                                             }
                                         };
 
                                         const formatCurrency = (amount) => {
                                             return new Intl.NumberFormat('en-PK', {
                                                 style: 'currency',
-                                                currency: 'PKR'
-                                            }).format(amount).replace('PKR', 'Rs');
+                                                currency: 'PKR',
+                                            })
+                                                .format(amount)
+                                                .replace('PKR', 'Rs');
                                         };
 
                                         const formatDate = (dateString) => {
@@ -603,37 +541,22 @@ const CardsDashboard = ({
                                             <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell>
                                                     <div className="d-flex align-items-center">
-                                                        <Avatar
-                                                            src={subscription.member?.profile_photo?.file_path ?
-                                                                `/storage/${subscription.member.profile_photo.file_path}` : null}
-                                                            alt={subscription.member?.full_name}
-                                                            style={{ marginRight: '10px', width: 40, height: 40 }}
-                                                        >
+                                                        <Avatar src={subscription.member?.profile_photo?.file_path ? `/storage/${subscription.member.profile_photo.file_path}` : null} alt={subscription.member?.full_name} style={{ marginRight: '10px', width: 40, height: 40 }}>
                                                             {subscription.member?.full_name?.charAt(0)}
                                                         </Avatar>
                                                         <div>
-                                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                                {subscription.member?.full_name}
-                                                            </Typography>
-                                                            <Typography sx={{ color: '#999', fontSize: '12px' }}>
-                                                                {subscription.member?.membership_no}
-                                                            </Typography>
+                                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.member?.full_name}</Typography>
+                                                            <Typography sx={{ color: '#999', fontSize: '12px' }}>{subscription.member?.membership_no}</Typography>
                                                         </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                            {subscription.subscription_category?.name}
-                                                        </Typography>
-                                                        <Typography sx={{ color: '#999', fontSize: '12px' }}>
-                                                            {subscription.subscription_type?.name}
-                                                        </Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.subscription_category?.name}</Typography>
+                                                        <Typography sx={{ color: '#999', fontSize: '12px' }}>{subscription.subscription_type?.name}</Typography>
                                                     </div>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>
-                                                    {formatCurrency(subscription.total_price)}
-                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>{formatCurrency(subscription.total_price)}</TableCell>
                                                 <TableCell>
                                                     <Chip
                                                         label={getCardStatus(subscription)}
@@ -643,16 +566,12 @@ const CardsDashboard = ({
                                                             color: '#fff',
                                                             fontWeight: 500,
                                                             fontSize: '12px',
-                                                            textTransform: 'capitalize'
+                                                            textTransform: 'capitalize',
                                                         }}
                                                     />
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    {formatDate(subscription.valid_from)}
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    {formatDate(subscription.valid_to)}
-                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatDate(subscription.valid_from)}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatDate(subscription.valid_to)}</TableCell>
                                                 <TableCell>
                                                     <Button
                                                         variant="contained"
@@ -662,7 +581,7 @@ const CardsDashboard = ({
                                                             color: 'white',
                                                             textTransform: 'none',
                                                             fontWeight: 500,
-                                                            '&:hover': { backgroundColor: '#0a4d73' }
+                                                            '&:hover': { backgroundColor: '#0a4d73' },
                                                         }}
                                                         onClick={() => {
                                                             setSelectMember(subscription);
@@ -678,9 +597,7 @@ const CardsDashboard = ({
                                     {!isLoading && (!subscriptions?.data || subscriptions.data.length === 0) && (
                                         <TableRow>
                                             <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4 }}>
-                                                <Typography sx={{ color: '#999', fontSize: '14px' }}>
-                                                    No subscription cards found
-                                                </Typography>
+                                                <Typography sx={{ color: '#999', fontSize: '14px' }}>No subscription cards found</Typography>
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -688,9 +605,7 @@ const CardsDashboard = ({
                                         <TableRow>
                                             <TableCell colSpan={8} sx={{ textAlign: 'center', py: 8 }}>
                                                 <CircularProgress sx={{ color: '#063455' }} />
-                                                <Typography sx={{ color: '#999', fontSize: '14px', mt: 2 }}>
-                                                    Loading subscription cards...
-                                                </Typography>
+                                                <Typography sx={{ color: '#999', fontSize: '14px', mt: 2 }}>Loading subscription cards...</Typography>
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -739,11 +654,7 @@ const CardsDashboard = ({
                                         <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
                                                 {member.membership_no || 'N/A'}
-                                                {member.parent_id && member.parent && (
-                                                    <Typography sx={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>
-                                                        (Parent: {member.parent.membership_no})
-                                                    </Typography>
-                                                )}
+                                                {member.parent_id && member.parent && <Typography sx={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>(Parent: {member.parent.membership_no})</Typography>}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
@@ -762,11 +673,7 @@ const CardsDashboard = ({
 
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                             {member.mobile_number_a || 'N/A'}
-                                                            {member.parent_id && member.parent && (
-                                                                <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>
-                                                                    • Parent: {member.parent.full_name}
-                                                                </span>
-                                                            )}
+                                                            {member.parent_id && member.parent && <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>• Parent: {member.parent.full_name}</span>}
                                                         </Typography>
                                                     </div>
                                                 </div>
@@ -779,24 +686,15 @@ const CardsDashboard = ({
                                                         label={member.card_status}
                                                         size="small"
                                                         sx={{
-                                                            backgroundColor:
-                                                                member.card_status === 'Issued' ? '#4caf50' :
-                                                                    member.card_status === 'E-Card Issued' ? '#2196f3' :
-                                                                        member.card_status === 'Printed' ? '#9c27b0' :
-                                                                            member.card_status === 'Received' ? '#ff9800' :
-                                                                                member.card_status === 'In-Process' ? '#ffc107' :
-                                                                                    member.card_status === 'Applied' ? '#00bcd4' :
-                                                                                        member.card_status === 'Re-Printed' ? '#673ab7' :
-                                                                                            member.card_status === 'Expired' ? '#f44336' :
-                                                                                                member.card_status === 'Not Applied' ? '#9e9e9e' :
-                                                                                                    member.card_status === 'Not Applicable' ? '#607d8b' :
-                                                                                                        '#757575',
+                                                            backgroundColor: member.card_status === 'Issued' ? '#4caf50' : member.card_status === 'E-Card Issued' ? '#2196f3' : member.card_status === 'Printed' ? '#9c27b0' : member.card_status === 'Received' ? '#ff9800' : member.card_status === 'In-Process' ? '#ffc107' : member.card_status === 'Applied' ? '#00bcd4' : member.card_status === 'Re-Printed' ? '#673ab7' : member.card_status === 'Expired' ? '#f44336' : member.card_status === 'Not Applied' ? '#9e9e9e' : member.card_status === 'Not Applicable' ? '#607d8b' : '#757575',
                                                             color: '#fff',
                                                             fontWeight: 500,
-                                                            fontSize: '12px'
+                                                            fontSize: '12px',
                                                         }}
                                                     />
-                                                ) : 'N/A'}
+                                                ) : (
+                                                    'N/A'
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 {member.status ? (
@@ -804,18 +702,15 @@ const CardsDashboard = ({
                                                         label={member.status.charAt(0).toUpperCase() + member.status.slice(1)}
                                                         size="small"
                                                         sx={{
-                                                            backgroundColor:
-                                                                member.status === 'active' ? '#4caf50' :
-                                                                    member.status === 'suspended' ? '#ff9800' :
-                                                                        member.status === 'cancelled' ? '#f44336' :
-                                                                            member.status === 'pause' ? '#2196f3' :
-                                                                                '#757575',
+                                                            backgroundColor: member.status === 'active' ? '#4caf50' : member.status === 'suspended' ? '#ff9800' : member.status === 'cancelled' ? '#f44336' : member.status === 'pause' ? '#2196f3' : '#757575',
                                                             color: '#fff',
                                                             fontWeight: 500,
-                                                            fontSize: '12px'
+                                                            fontSize: '12px',
                                                         }}
                                                     />
-                                                ) : 'N/A'}
+                                                ) : (
+                                                    'N/A'
+                                                )}
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.card_issue_date || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.card_expiry_date || 'N/A'}</TableCell>
@@ -835,9 +730,7 @@ const CardsDashboard = ({
                                     {!isLoading && (!members?.data || members.data.length === 0) && (
                                         <TableRow>
                                             <TableCell colSpan={9} sx={{ textAlign: 'center', py: 4 }}>
-                                                <Typography sx={{ color: '#999', fontSize: '14px' }}>
-                                                    No {activeTab === 0 ? 'primary members' : 'family members'} found
-                                                </Typography>
+                                                <Typography sx={{ color: '#999', fontSize: '14px' }}>No {activeTab === 0 || activeTab === 3 ? 'primary/corporate members' : 'family members'} found</Typography>
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -845,9 +738,7 @@ const CardsDashboard = ({
                                         <TableRow>
                                             <TableCell colSpan={9} sx={{ textAlign: 'center', py: 8 }}>
                                                 <CircularProgress sx={{ color: '#063455' }} />
-                                                <Typography sx={{ color: '#999', fontSize: '14px', mt: 2 }}>
-                                                    Loading {activeTab === 0 ? 'member' : 'family member'} cards...
-                                                </Typography>
+                                                <Typography sx={{ color: '#999', fontSize: '14px', mt: 2 }}>Loading {activeTab === 0 || activeTab === 3 ? 'member' : 'family member'} cards...</Typography>
                                             </TableCell>
                                         </TableRow>
                                     )}
@@ -875,7 +766,6 @@ const CardsDashboard = ({
                             </Box>
                         </TableContainer>
                     )}
-
                 </div>
 
                 {activeTab === 2 ? (

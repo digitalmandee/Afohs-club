@@ -26,6 +26,7 @@ use App\Http\Controllers\EventMenuTypeController;
 use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FamilyMembersArchiveConroller;
 use App\Http\Controllers\FinancialController;
+use App\Http\Controllers\GuestTypeController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCategoryController;
 use App\Http\Controllers\MemberCategoryController;
@@ -143,6 +144,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
+        Route::resource('guest-types', GuestTypeController::class)->except(['show']);
+
+        Route::get('guests/trashed', [CustomerController::class, 'trashed'])->name('guests.trashed');
+        Route::post('guests/restore/{id}', [CustomerController::class, 'restore'])->name('guests.restore');
         Route::resource('guests', CustomerController::class)->except(['show']);
 
         Route::group(['prefix' => 'rooms'], function () {
@@ -517,7 +522,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('family-members-archive/restore/{id}', [FamilyMembersArchiveConroller::class, 'restore'])->name('membership.family-members.restore');
         Route::get('family-members-archive/search', [FamilyMembersArchiveConroller::class, 'search'])->name('membership.family-members.search');
 
-        // Family Applied Member
+        // Applied Member
         Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
         Route::get('applied-member/trashed', [AppliedMemberController::class, 'trashed'])->name('applied-member.trashed');
         Route::post('applied-member/restore/{id}', [AppliedMemberController::class, 'restore'])->name('applied-member.restore');
@@ -621,6 +626,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');
         Route::post('/delete-profile-photos', [DataMigrationController::class, 'deleteProfilePhotos'])->name('data-migration.delete-profile-photos');
         Route::post('/generate-qr-codes', [DataMigrationController::class, 'generateQrCodes'])->name('data-migration.generate-qr-codes');
+        Route::post('/generate-corporate-qr-codes', [DataMigrationController::class, 'generateCorporateQrCodes'])->name('data-migration.generate-corporate-qr-codes');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
     });
 

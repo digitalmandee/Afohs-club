@@ -143,7 +143,7 @@ export default function MemberProfile({ member }) {
                     </CardContent>
                     <MembershipFooter>
                         <Typography variant="h6" fontWeight="medium" sx={{ fontSize: '1.1rem' }}>
-                            {member.is_family_member ? 'Supplementary Member' : 'Primary Member'}
+                            {member.is_family_member ? 'Supplementary Member' : member.is_corporate ? 'Corporate Member' : 'Primary Member'}
                         </Typography>
                     </MembershipFooter>
                 </MembershipCard>

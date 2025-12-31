@@ -34,7 +34,7 @@ const formatExpiryDate = (date) => {
     const formats = ['DD-MM-YYYY', 'YYYY-MM-DD'];
     let d = dayjs(date, formats, true);
     if (!d.isValid()) d = dayjs(date); // Fallback
-    return d.isValid() ? d.format('MM/YYYY') : 'N/A';
+    return d.isValid() ? d.format('MM/YY') : 'N/A';
 };
 
 export const handlePrintMembershipCard = (member) => {
@@ -223,7 +223,7 @@ export const handlePrintMembershipCard = (member) => {
                 </div>
 
                 <div class="footer">
-                    ${member?.parent_id ? 'Supplementary Member' : 'Primary Member'}
+                    ${member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
                 </div>
             </div>
         </body>
@@ -273,7 +273,7 @@ export const MembershipCardContent = ({ member, id }) => {
                                     }}
                                 />
                             </Box>
-                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform:'uppercase', pt:1 }} color="#063455">
+                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', pt: 2 }} color="#063455">
                                 {member?.full_name || 'N/A'}
                             </Typography>
                         </Box>
@@ -306,7 +306,7 @@ export const MembershipCardContent = ({ member, id }) => {
             </CardContent>
             <MembershipFooter>
                 <Typography variant="h6" fontWeight="medium">
-                    {member?.parent_id ? 'Supplementary Member' : 'Primary Member'}
+                    {member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
                 </Typography>
             </MembershipFooter>
         </MembershipCard>

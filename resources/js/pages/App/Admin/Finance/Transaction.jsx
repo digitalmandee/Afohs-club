@@ -160,7 +160,8 @@ const Transaction = ({ transactions, filters }) => {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 sx={{
-                                    width: '300px', marginRight: '10px',
+                                    width: '300px',
+                                    marginRight: '10px',
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: '16px',
                                     },
@@ -176,15 +177,19 @@ const Transaction = ({ transactions, filters }) => {
                                     ),
                                 }}
                             />
-                            <FormControl size="small" sx={{
-                                width: '80px', marginRight: '10px',
-                                '& .MuiOutlinedInput-root': {
-                                    borderRadius: '16px',
-                                },
-                                '& .MuiOutlinedInput-notchedOutline': {
-                                    borderRadius: '16px',
-                                },
-                            }}>
+                            <FormControl
+                                size="small"
+                                sx={{
+                                    width: '80px',
+                                    marginRight: '10px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                            >
                                 <Select value={perPage} onChange={handlePerPageChange} displayEmpty>
                                     <MenuItem value={10}>10</MenuItem>
                                     <MenuItem value={25}>25</MenuItem>
@@ -201,7 +206,7 @@ const Transaction = ({ transactions, filters }) => {
                                     textTransform: 'none',
                                     backgroundColor: '#063455',
                                     marginRight: 10,
-                                    borderRadius: '16px'
+                                    borderRadius: '16px',
                                 }}
                                 onClick={() => {
                                     setOpenFilterModal(true); // open the modal
@@ -217,19 +222,17 @@ const Transaction = ({ transactions, filters }) => {
                                     backgroundColor: '#063455',
                                     textTransform: 'none',
                                     color: 'white',
-                                    borderRadius: '16px'
+                                    borderRadius: '16px',
                                 }}
                             >
                                 Print
                             </Button>
                         </div>
                     </div>
-                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        View and manage all recorded financial transactions
-                    </Typography>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage all recorded financial transactions</Typography>
 
                     {/* Transactions Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop:'2rem', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
@@ -307,7 +310,7 @@ const Transaction = ({ transactions, filters }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     <div>
-                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{transaction.member?.full_name || transaction.customer?.name || 'N/A'}</div>
+                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{transaction.member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</div>
                                                         {transaction.member?.membership_no && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member.membership_no}</div>}
                                                     </div>
                                                 </TableCell>

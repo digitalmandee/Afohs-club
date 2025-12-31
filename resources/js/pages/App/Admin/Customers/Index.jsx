@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Typography, IconButton, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Delete as DeleteIcon, Add } from '@mui/icons-material';
@@ -7,22 +7,18 @@ import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
 import Tooltip from '@mui/material/Tooltip';
-// const drawerWidthOpen = 240;
-// const drawerWidthClosed = 110;
 
 const ManageCustomer = ({ customerData }) => {
-    // const [open, setOpen] = useState(true);
     const [editingCustomer, setEditingCustomer] = useState(null);
-    const [customers, setCustomers] = useState(customerData || []);
+    const [customers, setCustomers] = useState(customerData.data || []);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [customerToDelete, setCustomerToDelete] = useState(null);
     const { props } = usePage();
     const csrfToken = props._token;
 
-    const handleEdit = (customer) => {
-        // Open your own modal or navigate to edit page if needed
-        // enqueueSnackbar('Edit customer logic to be implemented.', { variant: 'info' });
-    };
+    useEffect(() => {
+        setCustomers(customerData.data || []);
+    }, [customerData]);
 
     const confirmDelete = (customer) => {
         setCustomerToDelete(customer);
@@ -41,7 +37,11 @@ const ManageCustomer = ({ customerData }) => {
             await axios.delete(route('guests.destroy', customerToDelete.id), {
                 headers: { 'X-CSRF-TOKEN': csrfToken },
             });
-            setCustomers((prev) => prev.filter((c) => c.id !== customerToDelete.id));
+            // Reload page to reflect changes in pagination if needed, or just filter locally.
+            // With pagination, it's often better to reload or refetch, but filtering locally works for current page.
+            // However, to keep pagination consistent, let's reload or just filter.
+            // setCustomers((prev) => prev.filter((c) => c.id !== customerToDelete.id));
+            router.reload({ only: ['customerData'] });
             enqueueSnackbar('Customer deleted successfully.', { variant: 'success' });
         } catch (error) {
             enqueueSnackbar('Failed to delete: ' + (error.response?.data?.message || error.message), {
@@ -52,9 +52,19 @@ const ManageCustomer = ({ customerData }) => {
         }
     };
 
+    const handlePageChange = (event, value) => {
+        router.get(
+            route('guests.index'),
+            { page: value },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    };
+
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
                     minHeight: '100vh',
@@ -79,15 +89,12 @@ const ManageCustomer = ({ customerData }) => {
                     </Button>
                 </Box>
 
-                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                    View and manage registered guests currently staying or scheduled to arrive
-                </Typography>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage registered guests currently staying or scheduled to arrive</Typography>
 
                 <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px', marginTop: '2rem' }}>
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                {/* <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>#</TableCell> */}
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Customer No</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Name</TableCell>
                                 <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Email</TableCell>
@@ -149,6 +156,10 @@ const ManageCustomer = ({ customerData }) => {
                         </TableBody>
                     </Table>
                 </TableContainer>
+
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 3 }}>
+                    <Pagination count={customerData.last_page} page={customerData.current_page} onChange={handlePageChange} color="primary" />
+                </Box>
             </Box>
 
             {/* Delete Confirmation Dialog */}

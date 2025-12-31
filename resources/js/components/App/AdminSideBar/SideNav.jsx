@@ -128,6 +128,10 @@ export default function SideNav({ open, setOpen }) {
                         path: route('guests.index'),
                     },
                     {
+                        text: 'Guest Types',
+                        path: route('guest-types.index'),
+                    },
+                    {
                         text: 'Rooms',
                         children: [
                             {

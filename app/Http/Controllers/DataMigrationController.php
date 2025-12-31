@@ -98,6 +98,7 @@ class DataMigrationController extends Controller
                 'corporate_families_migration_percentage' => DB::table('corporate_mem_families')->count() > 0
                     ? round((\App\Models\CorporateMember::whereNotNull('parent_id')->count() / DB::table('corporate_mem_families')->count()) * 100, 2)
                     : 0,
+                'pending_corporate_qr_codes_count' => \App\Models\CorporateMember::whereNull('qr_code')->orWhere('qr_code', '')->count(),
             ];
         } catch (\Exception $e) {
             Log::error('Error getting migration stats: ' . $e->getMessage());
@@ -888,11 +889,10 @@ class DataMigrationController extends Controller
 
         // Map Corporate Company
         // Adjust column name 'company_id' based on actual legacy table structure
-        $corporateCompanyId = isset($oldMember->company_id) ? $oldMember->company_id : null;
+        $corporateCompanyId = isset($oldMember->corporate_company) ? $oldMember->corporate_company : null;
 
         // Prepare member data
         $memberData = [
-            'old_id' => $oldMember->id,
             'old_member_id' => $oldMember->id,
             'application_number' => $oldMember->application_no,
             'membership_no' => $oldMember->mem_no,
@@ -959,7 +959,7 @@ class DataMigrationController extends Controller
         try {
             DB::beginTransaction();
 
-            $oldFamilies = DB::table('mem_families')
+            $oldFamilies = DB::table('corporate_mem_families')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -1007,9 +1007,7 @@ class DataMigrationController extends Controller
             ->first();
 
         if (!$parentMember) {
-            // Parent not found (maybe not migrated yet or not a corporate member)
-            return;
-            // Alternatively throw exception if strict
+            throw new \Exception("Parent corporate member not found (old_member_id: {$oldFamily->member_id})");
         }
 
         // Check if family member already exists
@@ -1460,6 +1458,73 @@ class DataMigrationController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('QR Code generation batch error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function generateCorporateQrCodes(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 50);
+
+        try {
+            $members = \App\Models\CorporateMember::where(function ($query) {
+                $query
+                    ->whereNull('qr_code')
+                    ->orWhere('qr_code', '');
+            })
+                ->limit($batchSize)
+                ->get();
+
+            Log::info('Processing Corporate QR code batch: found ' . count($members) . ' records');
+
+            if ($members->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'processed' => 0,
+                    'message' => 'No more corporate members pending QR codes',
+                    'has_more' => false
+                ]);
+            }
+
+            $processed = 0;
+            $errors = [];
+
+            foreach ($members as $member) {
+                try {
+                    $qrCodeData = route('member.profile', ['id' => $member->id, 'type' => 'corporate']);
+
+                    // Create QR code image
+                    $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
+
+                    // Save it
+                    $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
+
+                    // Update member
+                    $member->qr_code = $qrImagePath;
+                    $member->save();
+
+                    $processed++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'member_id' => $member->id,
+                        'name' => $member->full_name,
+                        'error' => $e->getMessage()
+                    ];
+                    Log::error("Error generating Corporate QR for member {$member->id}: " . $e->getMessage());
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'errors' => $errors,
+                'has_more' => count($members) == $batchSize
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Corporate QR Code generation batch error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
