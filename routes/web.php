@@ -626,6 +626,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');
         Route::post('/delete-profile-photos', [DataMigrationController::class, 'deleteProfilePhotos'])->name('data-migration.delete-profile-photos');
         Route::post('/generate-qr-codes', [DataMigrationController::class, 'generateQrCodes'])->name('data-migration.generate-qr-codes');
+        Route::post('/generate-corporate-qr-codes', [DataMigrationController::class, 'generateCorporateQrCodes'])->name('data-migration.generate-corporate-qr-codes');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
     });
 

@@ -285,7 +285,7 @@ class CorporateMembershipController extends Controller
     public function edit(Request $request)
     {
         $user = CorporateMember::where('id', $request->id)
-            ->with(['documents', 'profilePhoto', 'memberCategory'])
+            ->with(['documents', 'profilePhoto', 'memberCategory', 'familyMembers.profilePhoto'])
             ->first();
 
         if (!$user) {
@@ -560,7 +560,7 @@ class CorporateMembershipController extends Controller
     public function familyMembersIndex(Request $request)
     {
         // Query Corporate Members where parent_id is not null
-        $query = CorporateMember::whereNotNull('parent_id')->with(['parent:id,membership_no,first_name,last_name', 'profilePhoto']);
+        $query = CorporateMember::whereNotNull('parent_id')->with(['parent:id,membership_no,first_name,last_name,full_name', 'profilePhoto']);
 
         // Membership No
         if ($request->filled('membership_no')) {
