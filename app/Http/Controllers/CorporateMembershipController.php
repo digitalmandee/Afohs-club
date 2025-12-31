@@ -168,7 +168,7 @@ class CorporateMembershipController extends Controller
             }
 
             // Create QR code
-            $qrCodeData = route('corporate-member.profile', ['id' => $mainMember->id]);
+            $qrCodeData = route('member.profile', ['id' => $mainMember->id, 'type' => 'corporate']);
             $qrBinary = QrCode::format('png')->size(300)->generate($qrCodeData);
             $qrImagePath = FileHelper::saveBinaryImage($qrBinary, 'qr_codes');
             $mainMember->qr_code = $qrImagePath;

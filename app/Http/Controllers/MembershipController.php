@@ -925,14 +925,22 @@ class MembershipController extends Controller
     }
 
     // Show Public Profile
-    public function viewProfile($id)
+    public function viewProfile(Request $request, $id)
     {
-        $member = Member::with([
-            'memberType',
-            'profilePhoto',
-            'parent.profilePhoto',  // Fetch parent's photo
-            'parent.memberType'  // Fetch parent's member type
-        ])->findOrFail($id);
+        if ($request->query('type') === 'corporate') {
+            $member = \App\Models\CorporateMember::with([
+                'memberCategory',
+                'profilePhoto',
+                'parent.profilePhoto',
+            ])->findOrFail($id);
+        } else {
+            $member = Member::with([
+                'memberType',
+                'profilePhoto',
+                'parent.profilePhoto',
+                'parent.memberType'
+            ])->findOrFail($id);
+        }
 
         // Prepare data for the view
         $memberData = [
@@ -948,6 +956,7 @@ class MembershipController extends Controller
                 'full_name' => $member->parent->full_name,
                 'membership_no' => $member->parent->membership_no,
             ] : null,
+            'is_corporate' => $request->query('type') === 'corporate' || is_a($member, \App\Models\CorporateMember::class),
         ];
 
         return Inertia::render('App/Membership/Show', ['member' => $memberData]);
