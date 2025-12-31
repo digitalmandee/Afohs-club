@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Typography, IconButton, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Button, Typography, IconButton, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Pagination } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Delete as DeleteIcon, Add } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
@@ -77,14 +77,10 @@ const ManageCustomer = ({ customerData }) => {
                         {/* <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton> */}
-                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                            Customers
-                        </Typography>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Customers</Typography>
                     </Box>
 
-                    <Button variant="contained"
-                        startIcon={<Add />}
-                        sx={{ backgroundColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={() => router.visit(route('guests.create'))}>
+                    <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={() => router.visit(route('guests.create'))}>
                         Add Customer
                     </Button>
                 </Box>
@@ -109,29 +105,33 @@ const ManageCustomer = ({ customerData }) => {
                                         {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight: '400' }}>{index + 1}</TableCell> */}
                                         <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight: '600' }}>{customer.customer_no}</TableCell>
                                         {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight: '400' }}>{customer.name}</TableCell> */}
-                                        <TableCell sx={{
-                                            color: '#7F7F7F',
-                                            fontSize: '14px',
-                                            fontWeight: '400',
-                                            maxWidth: '70px',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
-                                        }}>
+                                        <TableCell
+                                            sx={{
+                                                color: '#7F7F7F',
+                                                fontSize: '14px',
+                                                fontWeight: '400',
+                                                maxWidth: '70px',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                            }}
+                                        >
                                             <Tooltip title={customer.name} placement="top">
                                                 <span>{customer.name}</span>
                                             </Tooltip>
                                         </TableCell>
                                         {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', fontWeight:'400' }}>{customer.email}</TableCell> */}
-                                        <TableCell sx={{
-                                            color: '#7F7F7F',
-                                            fontSize: '14px',
-                                            fontWeight: '400',
-                                            maxWidth: '100px',
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
-                                        }}>
+                                        <TableCell
+                                            sx={{
+                                                color: '#7F7F7F',
+                                                fontSize: '14px',
+                                                fontWeight: '400',
+                                                maxWidth: '100px',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                            }}
+                                        >
                                             <Tooltip title={customer.email} placement="top">
                                                 <span>{customer.email}</span>
                                             </Tooltip>
