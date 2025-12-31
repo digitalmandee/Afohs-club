@@ -13,7 +13,6 @@ class CorporateMember extends BaseModel
     protected $table = 'corporate_members';
 
     protected $fillable = [
-        'old_id',
         'old_family_id',
         'old_member_id',
         'barcode_no',

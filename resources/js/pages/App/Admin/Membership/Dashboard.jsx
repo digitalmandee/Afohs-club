@@ -56,7 +56,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
     const [menuMember, setMenuMember] = useState(null);
     const handleOpenMenu = (e, user) => {
         setMenuAnchor(e.currentTarget);
-        setSelectedUserId(user.id);  // Track which user
+        setSelectedUserId(user.id); // Track which user
         setMenuMember(user);
     };
 
@@ -171,7 +171,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                 // width: 170,
                                 display: 'flex',
                                 alignItems: 'center',
-                                textTransform: 'none'
+                                textTransform: 'none',
                             }}
                             onClick={() => router.visit(route('membership.add'))}
                         >
@@ -196,7 +196,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                 // width: 220,
                                 display: 'flex',
                                 alignItems: 'center',
-                                textTransform: 'none'
+                                textTransform: 'none',
                             }}
                             onClick={() => router.visit(route('corporate-membership.add'))}
                         >
@@ -322,12 +322,17 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
                                                     <div>
                                                         <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
-                                                            <Typography sx={{
-                                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',  // ~20 chars width
-                                                                whiteSpace: 'nowrap',
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis'
-                                                            }}>
+                                                            <Typography
+                                                                sx={{
+                                                                    color: '#7F7F7F',
+                                                                    fontWeight: 400,
+                                                                    fontSize: '14px',
+                                                                    maxWidth: '120px', // ~20 chars width
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                }}
+                                                            >
                                                                 <Tooltip title={user.full_name || 'N/A'} arrow>
                                                                     <span>{user.full_name || 'N/A'}</span>
                                                                 </Tooltip>
@@ -353,7 +358,6 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                             <Tooltip title={user.personal_email || 'N/A'} arrow>
                                                                 <span>{user.personal_email || 'N/A'}</span>
                                                             </Tooltip>
-
                                                         </Typography>
                                                     </div>
                                                 </div>
@@ -476,14 +480,11 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                             </Button>
                                         </TableCell> */}
                                             <TableCell>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={(e) => handleOpenMenu(e, user)}
-                                                >
+                                                <IconButton size="small" onClick={(e) => handleOpenMenu(e, user)}>
                                                     <MoreVertIcon sx={{ color: '#063455' }} />
                                                 </IconButton>
                                                 <Menu
-                                                    anchorEl={menuAnchor}  // Fixed: anchorEl (not anchorE2)
+                                                    anchorEl={menuAnchor} // Fixed: anchorEl (not anchorE2)
                                                     open={Boolean(menuAnchor && selectedUserId === user.id)}
                                                     onClose={handleCloseMenu}
                                                     anchorOrigin={{
@@ -494,41 +495,36 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                         vertical: 'top',
                                                         horizontal: 'right',
                                                     }}
-                                                // slotProps={{
-                                                //     paper: {
-                                                //         sx: { mt: -5 },
-                                                //     },
-                                                // }}
+                                                    // slotProps={{
+                                                    //     paper: {
+                                                    //         sx: { mt: -5 },
+                                                    //     },
+                                                    // }}
                                                 >
                                                     <MenuItem onClick={handleOpenCard}>Card</MenuItem>
-                                                    <MenuItem onClick={handleOpenInvoice}>
-                                                        {menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend')
-                                                            ? 'Send Remind'
-                                                            : 'Invoice'
-                                                        }
-                                                    </MenuItem>
+                                                    <MenuItem onClick={handleOpenInvoice}>{menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend') ? 'Send Remind' : 'Invoice'}</MenuItem>
                                                     <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
                                                 </Menu>
                                             </TableCell>
                                             <TableCell>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Tooltip title="View Profile">
-                                                    <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
-                                                        <Visibility size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Edit Member">
-                                                    <IconButton onClick={() => router.visit(route('membership.edit', user.id))} sx={{ color: '#f57c00' }}>
-                                                        <FaEdit size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Delete Member">
-                                                    <IconButton onClick={() => handleDeleteClick(user)} sx={{ color: '#d32f2f' }}>
-                                                        <Delete size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="View Profile">
+                                                        <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
+                                                            <Visibility size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Edit Member">
+                                                        <IconButton onClick={() => router.visit(route('membership.edit', user.id))} sx={{ color: '#f57c00' }}>
+                                                            <FaEdit size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Delete Member">
+                                                        <IconButton onClick={() => handleDeleteClick(user)} sx={{ color: '#d32f2f' }}>
+                                                            <Delete size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
                                             {/* <TableCell align="center">
                                                 <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: '#063455' }}>
                                                     <MoreVertIcon />
@@ -601,6 +597,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
                                         <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -642,6 +639,22 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <span style={{ color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f', fontWeight: 'medium' }}>{user.status || 'N/A'}</span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    size="small"
+                                                    style={{
+                                                        color: '#0C67AA',
+                                                        textDecoration: 'underline',
+                                                        textTransform: 'none',
+                                                    }}
+                                                    onClick={() => {
+                                                        setSelectMember({ ...user, is_corporate: true });
+                                                        setOpenCardModal(true);
+                                                    }}
+                                                >
+                                                    View
+                                                </Button>
                                             </TableCell>
                                             <TableCell align="center">
                                                 <IconButton onClick={() => router.visit(route('corporate-membership.edit', user.id))} sx={{ color: '#f57c00' }}>
@@ -752,9 +765,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                             </div>
                         </div>
                     ) : (
-                    <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>
-                        No attached documents
-                    </div>
+                        <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>No attached documents</div>
                     )}
                 </Box>
                 <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>

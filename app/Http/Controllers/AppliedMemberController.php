@@ -17,7 +17,7 @@ class AppliedMemberController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AppliedMember::query()->with('financialInvoice');
+        $query = AppliedMember::query()->with('financialInvoice')->orderBy('created_at', 'desc');
 
         // Apply Filters
         if ($request->has('name') && $request->name) {
@@ -104,22 +104,20 @@ class AppliedMemberController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:applied_member,email|max:255',
                 'phone_number' => 'required|string|regex:/^[0-9]{11}$/',
+                'email' => 'nullable|email|unique:applied_member,email|max:255',
                 'address' => 'nullable|string|max:500',
-                'cnic' => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic',
-                'amount_paid' => 'required|numeric|min:0',
-                'start_date' => 'required|date_format:d-m-Y',
-                'end_date' => 'required|date_format:d-m-Y|after_or_equal:start_date',
-                'is_permanent_member' => 'required|boolean',
+                'cnic' => 'nullable|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic',
+                'amount_paid' => 'nullable|numeric|min:0',
+                'start_date' => 'nullable|date_format:d-m-Y',
+                'end_date' => 'nullable|date_format:d-m-Y|after_or_equal:start_date',
+                'is_permanent_member' => 'boolean',
             ], [
                 'email.unique' => 'The email address is already in use.',
                 'phone_number.regex' => 'The phone number must be exactly 11 digits.',
-                'cnic.required' => 'The CNIC is required.',
                 'cnic.regex' => 'The CNIC must be in the format XXXXX-XXXXXXX-X.',
                 'cnic.unique' => 'The CNIC is already in use.',
                 'end_date.after_or_equal' => 'The end date must be on or after the start date.',
-                'is_permanent_member.required' => 'The permanent member status is required.',
             ]);
 
             if ($validator->fails()) {
@@ -127,16 +125,20 @@ class AppliedMemberController extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
+            $amountPaid = $request->input('amount_paid') !== null ? (float) $request->amount_paid : 0.0;
+            $startDate = $request->start_date ? $this->formatDateForDatabase($request->start_date) : now()->format('Y-m-d');
+            $endDate = $request->end_date ? $this->formatDateForDatabase($request->end_date) : null;
+
             $appliedMember = AppliedMember::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'address' => $request->address ?: null,
                 'cnic' => $request->cnic,  // Use raw CNIC with hyphens
-                'amount_paid' => (float) $request->amount_paid,
-                'start_date' => $this->formatDateForDatabase($request->start_date),
-                'end_date' => $this->formatDateForDatabase($request->end_date),
-                'is_permanent_member' => $request->is_permanent_member,
+                'amount_paid' => $amountPaid,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'is_permanent_member' => $request->is_permanent_member ?? false,
             ]);
 
             // Generate Invoice
@@ -172,22 +174,20 @@ class AppliedMemberController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:applied_member,email,' . $id . '|max:255',
                 'phone_number' => 'required|string|regex:/^[0-9]{11}$/',
+                'email' => 'nullable|email|unique:applied_member,email,' . $id . '|max:255',
                 'address' => 'nullable|string|max:500',
-                'cnic' => 'required|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic,' . $id,
-                'amount_paid' => 'required|numeric|min:0',
-                'start_date' => 'required|date_format:d-m-Y',
-                'end_date' => 'required|date_format:d-m-Y|after_or_equal:start_date',
-                'is_permanent_member' => 'required|boolean',
+                'cnic' => 'nullable|string|regex:/^[0-9]{5}-[0-9]{7}-[0-9]{1}$/|unique:applied_member,cnic,' . $id,
+                'amount_paid' => 'nullable|numeric|min:0',
+                'start_date' => 'nullable|date_format:d-m-Y',
+                'end_date' => 'nullable|date_format:d-m-Y|after_or_equal:start_date',
+                'is_permanent_member' => 'boolean',
             ], [
                 'email.unique' => 'The email address is already in use.',
                 'phone_number.regex' => 'The phone number must be exactly 11 digits.',
-                'cnic.required' => 'The CNIC is required.',
                 'cnic.regex' => 'The CNIC must be in the format XXXXX-XXXXXXX-X.',
                 'cnic.unique' => 'The CNIC is already in use.',
                 'end_date.after_or_equal' => 'The end date must be on or after the start date.',
-                'is_permanent_member.required' => 'The permanent member status is required.',
             ]);
 
             if ($validator->fails()) {
@@ -197,6 +197,13 @@ class AppliedMemberController extends Controller
 
             $member = AppliedMember::findOrFail($id);
 
+            $amountPaid = $request->input('amount_paid') !== null ? (float) $request->amount_paid : 0.0;
+            $startDate = $request->start_date ? $this->formatDateForDatabase($request->start_date) : now()->format('Y-m-d');
+            $endDate = $request->end_date ? $this->formatDateForDatabase($request->end_date) : null;
+
+            // Check if amount_paid changed from 0 to > 0
+            $shouldGenerateInvoice = $member->amount_paid == 0 && $amountPaid > 0;
+
             // Update the applied_member table
             $member->update([
                 'name' => $request->name,
@@ -204,11 +211,45 @@ class AppliedMemberController extends Controller
                 'phone_number' => $request->phone_number,
                 'address' => $request->address ?: null,
                 'cnic' => $request->cnic,  // Use raw CNIC with hyphens
-                'amount_paid' => (float) $request->amount_paid,
-                'start_date' => $this->formatDateForDatabase($request->start_date),
-                'end_date' => $this->formatDateForDatabase($request->end_date),
-                'is_permanent_member' => $request->is_permanent_member,
+                'amount_paid' => $amountPaid,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'is_permanent_member' => $request->is_permanent_member ?? false,
             ]);
+
+            if ($shouldGenerateInvoice || ($member->amount_paid > 0 && $amountPaid != $member->amount_paid)) {
+                // Check if invoice exists
+                $invoice = $member->financialInvoice;
+
+                if ($invoice) {
+                    // Update existing invoice
+                    $invoice->update([
+                        'amount' => $amountPaid,
+                        'total_price' => $amountPaid,
+                        'paid_amount' => $amountPaid,
+                    ]);
+                } else {
+                    // Generate Invoice
+                    $invoiceNo = $this->generateInvoiceNumber();
+
+                    FinancialInvoice::create([
+                        'invoice_no' => $invoiceNo,
+                        'invoice_type' => 'applied_member',  // Custom type
+                        'invoiceable_id' => $member->id,
+                        'invoiceable_type' => AppliedMember::class,
+                        'amount' => $amountPaid,
+                        'total_price' => $amountPaid,
+                        'paid_amount' => $amountPaid,
+                        'status' => 'paid',
+                        'payment_method' => 'cash',
+                        'issue_date' => now(),
+                        'due_date' => now(),
+                        'payment_date' => now(),
+                        'remarks' => 'Applied Member Registration Fee',
+                    ]);
+                }
+            }
+
             $newMemberId = null;
             // If is_permanent_member is true, distribute data to other tables and assign role
             if ($request->is_permanent_member) {
@@ -244,6 +285,27 @@ class AppliedMemberController extends Controller
             Log::error('Unexpected error updating applied member: ' . $th->getMessage(), ['id' => $id, 'request' => $request->all()]);
             return response()->json(['error' => 'Failed to update applied member: ' . $th->getMessage()], 500);
         }
+    }
+
+    private function generateInvoiceNumber()
+    {
+        // Get the highest invoice_no from all financial_invoices (not just transaction types)
+        $lastInvoice = FinancialInvoice::withTrashed()
+            ->orderBy('invoice_no', 'desc')
+            ->whereNotNull('invoice_no')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastInvoice && $lastInvoice->invoice_no) {
+            $nextNumber = $lastInvoice->invoice_no + 1;
+        }
+
+        // Double-check that this number doesn't exist (safety check)
+        while (FinancialInvoice::withTrashed()->where('invoice_no', $nextNumber)->exists()) {
+            $nextNumber++;
+        }
+
+        return $nextNumber;
     }
 
     public function search(Request $request)

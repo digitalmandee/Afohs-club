@@ -80,12 +80,13 @@ class FinancialController extends Controller
         $recentTransactions = FinancialInvoice::with([
             'member:id,full_name,membership_no,mobile_number_a',
             'customer:id,name,email',
-            'createdBy:id,name'
+            'createdBy:id,name',
+            'invoiceable'
         ])
             ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type',
                 'member_id', 'customer_id', 'fee_type', 'amount', 'total_price',
                 'paid_amount', 'status', 'payment_method', 'payment_date',
-                'valid_to', 'created_at', 'created_by',
+                'valid_to', 'created_at', 'created_by', 'issue_date',
                 'valid_from', 'tax_amount', 'tax_percentage', 'overdue_amount', 'overdue_percentage', 'remarks')
             ->orderBy('created_at', 'desc')
             ->limit(10)
@@ -169,12 +170,13 @@ class FinancialController extends Controller
         $query = FinancialInvoice::with([
             'member:id,full_name,membership_no,mobile_number_a',
             'customer:id,name,email',
-            'createdBy:id,name'
+            'createdBy:id,name',
+            'invoiceable'  // Load polymorphic relation to get AppliedMember details
         ])
             ->select('id', 'invoice_no', 'invoice_type', 'invoiceable_id', 'invoiceable_type',
                 'member_id', 'customer_id', 'fee_type', 'amount', 'total_price',
                 'paid_amount', 'status', 'payment_method', 'payment_date',
-                'valid_to', 'valid_from', 'created_at', 'created_by',
+                'valid_to', 'valid_from', 'created_at', 'created_by', 'issue_date',
                 'tax_amount', 'tax_percentage', 'overdue_amount', 'overdue_percentage', 'remarks');
 
         // Apply search filter
@@ -217,7 +219,8 @@ class FinancialController extends Controller
             'corporateMember',
             'customer',
             'subscriptionType',
-            'subscriptionCategory'
+            'subscriptionCategory',
+            'invoiceable'
         ];
 
         // 1. Try to find by invoice ID directly

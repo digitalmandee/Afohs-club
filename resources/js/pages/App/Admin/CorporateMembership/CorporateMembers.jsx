@@ -8,6 +8,7 @@ import { router, usePage } from '@inertiajs/react';
 import { useSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
 import dayjs from 'dayjs';
+import MembershipCardComponent from '../Membership/UserCard';
 
 import CorporateMembershipDashboardFilter from './CorporateMembershipDashboardFilter';
 const CorporateMembers = ({ members }) => {
@@ -20,6 +21,8 @@ const CorporateMembers = ({ members }) => {
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [memberToDelete, setMemberToDelete] = useState(null);
     const [selectedMember, setSelectedMember] = useState(null);
+    const [openCardModal, setOpenCardModal] = useState(false);
+    const [cardMember, setCardMember] = useState(null);
 
     // Sync filteredMembers with props.members.data when props change (e.g. pagination)
     useEffect(() => {
@@ -86,7 +89,7 @@ const CorporateMembers = ({ members }) => {
                             </Button>
                             <Button
                                 variant="contained"
-                                startIcon={<Add/>}
+                                startIcon={<Add />}
                                 onClick={() => router.get(route('corporate-membership.add'))}
                                 sx={{
                                     backgroundColor: '#063455',
@@ -118,6 +121,7 @@ const CorporateMembers = ({ members }) => {
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -155,6 +159,22 @@ const CorporateMembers = ({ members }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                         <TableCell>
                                             <span style={{ color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f', fontWeight: 'medium' }}>{user.status || 'N/A'}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                size="small"
+                                                style={{
+                                                    color: '#0C67AA',
+                                                    textDecoration: 'underline',
+                                                    textTransform: 'none',
+                                                }}
+                                                onClick={() => {
+                                                    setCardMember({ ...user, is_corporate: true });
+                                                    setOpenCardModal(true);
+                                                }}
+                                            >
+                                                View
+                                            </Button>
                                         </TableCell>
                                         <TableCell align="center">
                                             <IconButton
@@ -247,6 +267,8 @@ const CorporateMembers = ({ members }) => {
                     </DialogActions>
                 </Dialog>
             </div>
+
+            <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={cardMember} memberData={members} />
         </>
     );
 };

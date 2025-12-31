@@ -12,6 +12,7 @@ class GuestType extends BaseModel
 
     protected $fillable = [
         'name',
+        'status',
         'created_by',
         'updated_by',
         'deleted_by',

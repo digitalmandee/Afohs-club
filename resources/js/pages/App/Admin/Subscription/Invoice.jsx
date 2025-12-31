@@ -10,17 +10,17 @@ const handlePrintReceipt = (data) => {
     const invoiceData = data
         ? {
               billTo: {
-                  name: `${data.user?.first_name || ''} ${data.user?.last_name || ''}`.trim() || 'N/A',
-                  category: data.subscription_type || 'Member',
-                  membershipId: data.member_id || 'N/A',
-                  contactNumber: data.user?.phone_number || 'N/A',
-                  city: data.userDetail?.currentCity || 'N/A',
+                  name: data.invoiceable?.name || data.member?.full_name || data.customer?.name || `${data.user?.first_name || ''} ${data.user?.last_name || ''}`.trim() || 'N/A',
+                  category: data.invoice_type === 'applied_member' ? 'Applied Member' : data.subscription_type || 'Member',
+                  membershipId: data.member_id || data.invoiceable_id || 'N/A',
+                  contactNumber: data.invoiceable?.phone_number || data.member?.mobile_number_a || data.user?.phone_number || 'N/A',
+                  city: data.invoiceable?.address || data.userDetail?.currentCity || 'N/A',
                   familyMember: data.userDetail?.family_member || 'Non',
               },
               details: {
-                  invoiceNumber: data.invoice_id || 'N/A',
-                  issueDate: data.start_date ? new Date(data.start_date).toLocaleDateString() : 'N/A',
-                  paymentMethod: data.payment_method || 'N/A',
+                  invoiceNumber: data.invoice_no || data.invoice_id || 'N/A',
+                  issueDate: data.issue_date ? new Date(data.issue_date).toLocaleDateString() : data.start_date ? new Date(data.start_date).toLocaleDateString() : 'N/A',
+                  paymentMethod: (data.payment_method || 'N/A').replace(/_/g, ' '),
               },
               items: [
                   {
@@ -303,17 +303,17 @@ const InvoiceSlip = ({ open, onClose, data }) => {
     const invoiceData = data
         ? {
               billTo: {
-                  name: `${data.user?.first_name || ''} ${data.user?.last_name || ''}`.trim() || 'N/A',
-                  category: data.subscription_type || 'Member',
-                  membershipId: data.member_id || 'N/A',
-                  contactNumber: data.user?.phone_number || 'N/A',
-                  city: data.userDetail?.currentCity || 'N/A',
+                  name: data.invoiceable?.name || data.member?.full_name || data.customer?.name || `${data.user?.first_name || ''} ${data.user?.last_name || ''}`.trim() || 'N/A',
+                  category: data.invoice_type === 'applied_member' ? 'Applied Member' : data.subscription_type || 'Member',
+                  membershipId: data.member_id || data.invoiceable_id || 'N/A',
+                  contactNumber: data.invoiceable?.phone_number || data.member?.mobile_number_a || data.user?.phone_number || 'N/A',
+                  city: data.invoiceable?.address || data.userDetail?.currentCity || 'N/A',
                   familyMember: data.userDetail?.family_member || 'Non',
               },
               details: {
-                  invoiceNumber: data.invoice_id || 'N/A',
-                  issueDate: data.start_date ? new Date(data.start_date).toLocaleDateString() : 'N/A',
-                  paymentMethod: data.payment_method || 'N/A',
+                  invoiceNumber: data.invoice_no || data.invoice_id || 'N/A',
+                  issueDate: data.issue_date ? new Date(data.issue_date).toLocaleDateString() : data.start_date ? new Date(data.start_date).toLocaleDateString() : 'N/A',
+                  paymentMethod: (data.payment_method || 'N/A').replace(/_/g, ' '),
               },
               items: [
                   {
