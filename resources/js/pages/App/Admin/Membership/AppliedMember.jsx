@@ -51,11 +51,11 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                     <>
                         <div className="d-flex justify-content-between align-items-center">
                             <div className="d-flex align-items-center">
-                                <Typography sx={{ marginLeft: '10px', fontWeight: 700, color: '#063455', fontSize: '30px' }}>Applied Member</Typography>
+                                <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Applied Member</Typography>
                                 {/* <pre>{JSON.stringify(familyGroups, null, 2)}</pre> */}
                             </div>
                             <div className="d-flex align-items-center gap-2">
-                                <Button
+                                {/* <Button
                                     variant="outlined"
                                     startIcon={<Delete />}
                                     onClick={() => router.get(route('applied-member.trashed'))}
@@ -71,7 +71,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                     }}
                                 >
                                     Deleted Applied Members
-                                </Button>
+                                </Button> */}
                                 <Button
                                     variant="contained"
                                     startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>}
@@ -116,7 +116,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                         <TableBody>
                                             {familyGroups.map((member, index) => (
                                                 <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.id}</TableCell>
+                                                    <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{member.id}</TableCell>
                                                     {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.name}</TableCell> */}
                                                     <TableCell sx={{
                                                         color: '#7F7F7F',
@@ -191,11 +191,11 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{member.start_date ? dayjs(member.start_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{member.end_date ? dayjs(member.end_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell>
-                                                        <Button variant="outlined" onClick={() => handleViewInvoice(member)} sx={{color:'#063455', border:'1px solid #063455', textTransform:'none'}}>
+                                                        <Button variant="outlined" onClick={() => handleViewInvoice(member)} sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
                                                             View
                                                         </Button>
                                                     </TableCell>
-                                                    {member.is_permanent_member ? (
+                                                    {/* {member.is_permanent_member ? (
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>Permanent Member</TableCell>
                                                     ) : (
                                                         <TableCell>
@@ -210,7 +210,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                                                     }
                                                                 >
                                                                     Edit
-                                                                </Button> */}
+                                                                </Button>
                                                                 <Tooltip title="Edit">
                                                                     <IconButton
                                                                         size="small"
@@ -229,7 +229,26 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                                                                 </Tooltip>
                                                             </div>
                                                         </TableCell>
-                                                    )}
+                                                    )} */}
+                                                    <TableCell>
+                                                        <Tooltip title={member.is_permanent_member ? "Permanent Member" : "Edit"}>
+                                                            <IconButton
+                                                                size="small"
+                                                                disabled={member.is_permanent_member}
+                                                                onClick={() =>
+                                                                    !member.is_permanent_member &&
+                                                                    router.visit(route('applied-member.index'), {
+                                                                        data: { mode: 'edit', id: member.id },
+                                                                    })
+                                                                }
+                                                                sx={{
+                                                                    color: member.is_permanent_member ? '#7f7f7f' : '#f57c00'
+                                                                }}
+                                                            >
+                                                                <FaEdit />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>

@@ -276,15 +276,15 @@ export default function SideNav({ open, setOpen }) {
                                 path: route('corporate-membership.family-members'),
                             },
                             {
-                                text: 'Manage Companies',
+                                text: 'Companies',
                                 path: route('corporate-companies.index'),
                             },
                         ],
                     },
-                    {
-                        text: 'Type',
-                        path: route('member-types.index'),
-                    },
+                    // {
+                    //     text: 'Type',
+                    //     path: route('member-types.index'),
+                    // },
                     {
                         text: 'Category',
                         path: route('member-categories.index'),
