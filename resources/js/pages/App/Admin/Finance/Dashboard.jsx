@@ -158,7 +158,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                     color: 'white',
                                     textTransform: 'none',
                                     borderRadius: '16px',
-                                    height: 40
+                                    height: 40,
                                 }}
                                 onClick={() => router.visit(route('finance.transaction.create'))}
                             >
@@ -166,9 +166,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                             </Button>
                         </Col>
                     </Row>
-                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        Overview of recent transactions, balances, and financial summaries
-                    </Typography>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Overview of recent transactions, balances, and financial summaries</Typography>
 
                     {/* Metrics Cards - First Row */}
                     <Row className="mb-3 gx-2 mt-4">
@@ -404,7 +402,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                 style={{
                                     backgroundColor: '#063455',
                                     border: 'none',
-                                    borderRadius:'16px'
+                                    borderRadius: '16px',
                                     // padding: '8px 15px',
                                 }}
                             >
@@ -487,7 +485,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                             <div>
-                                                                <div style={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>{transaction.member?.full_name || transaction.customer?.name || 'N/A'}</div>
+                                                                <div style={{ fontWeight: 400, color: '#7f7f7f', fontSize: '14px' }}>{transaction.member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</div>
                                                                 {transaction.member?.membership_no && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member.membership_no}</div>}
                                                             </div>
                                                         </TableCell>
@@ -559,7 +557,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                                     cursor: 'pointer',
                                                                     fontWeight: 500,
                                                                     border: '1px solid #063455',
-                                                                    padding: 5
+                                                                    padding: 5,
                                                                 }}
                                                                 onClick={() => {
                                                                     // Check invoice type and open appropriate modal
