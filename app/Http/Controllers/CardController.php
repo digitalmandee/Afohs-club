@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FinancialInvoice;
 use App\Models\Member;
 use App\Models\MemberCategory;
-use App\Models\FinancialInvoice;
 use App\Models\SubscriptionCategory;
 use App\Models\SubscriptionType;
 use Illuminate\Http\Request;
@@ -14,7 +14,7 @@ class CardController extends Controller
 {
     public function index(Request $request)
     {
-        $cardType = $request->input('card_type', 'members'); // members, family, subscriptions
+        $cardType = $request->input('card_type', 'members');  // members, family, subscriptions
 
         if ($cardType === 'subscriptions') {
             // Fetch subscription cards from FinancialInvoice where fee_type is subscription_fee
@@ -31,7 +31,8 @@ class CardController extends Controller
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->whereHas('member', function ($q) use ($search) {
-                    $q->where('full_name', 'like', "%{$search}%")
+                    $q
+                        ->where('full_name', 'like', "%{$search}%")
                         ->orWhere('membership_no', 'like', "%{$search}%")
                         ->orWhere('mobile_number_a', 'like', "%{$search}%");
                 });
@@ -55,14 +56,17 @@ class CardController extends Controller
             // Filter: Card Status (for subscriptions)
             if ($request->filled('card_status') && $request->card_status !== 'all') {
                 if ($request->card_status === 'active') {
-                    $query->where('status', 'paid')
-                          ->where(function($q) {
-                              $q->whereNull('valid_to')
+                    $query
+                        ->where('status', 'paid')
+                        ->where(function ($q) {
+                            $q
+                                ->whereNull('valid_to')
                                 ->orWhere('valid_to', '>=', now());
-                          });
+                        });
                 } elseif ($request->card_status === 'expired') {
-                    $query->where('status', 'paid')
-                          ->where('valid_to', '<', now());
+                    $query
+                        ->where('status', 'paid')
+                        ->where('valid_to', '<', now());
                 } elseif ($request->card_status === 'suspended') {
                     $query->where('status', 'partial');
                 } elseif ($request->card_status === 'cancelled') {
@@ -91,9 +95,10 @@ class CardController extends Controller
             $sortDirection = $request->input('sort', 'desc');
 
             if ($sortBy === 'member_name') {
-                $query->join('members', 'financial_invoices.member_id', '=', 'members.id')
-                      ->orderBy('members.full_name', $sortDirection)
-                      ->select('financial_invoices.*');
+                $query
+                    ->join('members', 'financial_invoices.member_id', '=', 'members.id')
+                    ->orderBy('members.full_name', $sortDirection)
+                    ->select('financial_invoices.*');
             } elseif ($sortBy === 'created_at') {
                 $query->orderBy('created_at', $sortDirection);
             } else {
@@ -105,12 +110,13 @@ class CardController extends Controller
             // Statistics for subscriptions
             $total_active_subscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')
                 ->where('status', 'paid')
-                ->where(function($query) {
-                    $query->whereNull('valid_to')
-                          ->orWhere('valid_to', '>=', now());
+                ->where(function ($query) {
+                    $query
+                        ->whereNull('valid_to')
+                        ->orWhere('valid_to', '>=', now());
                 })
                 ->count();
-            
+
             $total_expired_subscriptions = FinancialInvoice::where('fee_type', 'subscription_fee')
                 ->where('status', 'paid')
                 ->where('valid_to', '<', now())
@@ -130,22 +136,105 @@ class CardController extends Controller
                 'cardType' => $cardType,
                 'filters' => $request->only(['search', 'payment_status', 'subscription_category', 'subscription_type', 'card_status', 'valid_from_start', 'valid_from_end', 'valid_to_start', 'valid_to_end', 'sort', 'sortBy', 'card_type'])
             ]);
-        } else {
-            // Existing member/family logic
-            $query = Member::with([
-                    'memberType:id,name',
-                    'memberCategory:id,name,description',
-                    'membershipInvoice:id,member_id,invoice_no,status,total_price',
-                    'profilePhoto:id,mediable_id,mediable_type,file_path',
-                    'parent:id,full_name,membership_no' // For family members to show parent info
-                ])
+        } elseif ($cardType === 'corporate' || $cardType === 'corporate_family') {
+            // Corporate Member Logic
+            $query = \App\Models\CorporateMember::with([
+                'memberCategory:id,name,description',
+                'membershipInvoice:id,member_id,invoice_no,status,total_price',
+                'profilePhoto:id,mediable_id,mediable_type,file_path',
+                'parent:id,full_name,membership_no'  // For family members
+            ])
                 ->withCount('familyMembers');
 
             // Filter: Search
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function ($q) use ($search) {
-                    $q->where('full_name', 'like', "%{$search}%")
+                    $q
+                        ->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%")
+                        ->orWhere('mobile_number_a', 'like', "%{$search}%");
+                });
+            }
+
+            // Filter: Card Status
+            if ($request->filled('card_status') && $request->card_status !== 'all') {
+                $query->where('card_status', $request->card_status);
+            }
+
+            // Filter: Status
+            if ($request->filled('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            // Filter: Member Category
+            if ($request->filled('member_category') && $request->member_category !== 'all') {
+                $query->where('member_category_id', $request->member_category);
+            }
+
+            // Type Filter
+            if ($cardType === 'corporate') {
+                $query->whereNull('parent_id');
+            } else {
+                // corporate_family
+                $query->whereNotNull('parent_id');
+            }
+
+            // Sorting
+            $sortBy = $request->input('sortBy', 'id');
+            $sortDirection = $request->input('sort', 'desc');
+
+            if ($sortBy === 'name') {
+                $query->orderBy('full_name', $sortDirection);
+            } elseif ($sortBy === 'membership_no') {
+                $query->orderBy('membership_no', $sortDirection);
+            } else {
+                $query->orderBy('id', $sortDirection);
+            }
+
+            $members = $query->paginate(10)->withQueryString();
+
+            // Transform members to include is_corporate flag for frontend consistency
+            $members->getCollection()->transform(function ($member) {
+                $member->is_corporate = true;
+                $member->member_type = (object) ['name' => 'Corporate'];
+                return $member;
+            });
+
+            // Statistics (Corporate)
+            $total_active_members = \App\Models\CorporateMember::whereNull('parent_id')
+                ->where('status', 'active')
+                ->count();
+
+            $total_active_family_members = \App\Models\CorporateMember::whereNotNull('parent_id')
+                ->where('status', 'active')
+                ->count();
+
+            return Inertia::render('App/Admin/Card/Dashboard', [
+                'members' => $members,
+                'total_active_members' => $total_active_members,
+                'total_active_family_members' => $total_active_family_members,
+                'memberCategories' => \App\Models\MemberCategory::select('id', 'name', 'description')->where('status', 'active')->whereJsonContains('category_types', 'corporate')->get(),
+                'cardType' => $cardType,
+                'filters' => $request->only(['search', 'card_status', 'status', 'member_category', 'sort', 'sortBy', 'card_type'])
+            ]);
+        } else {
+            // Existing member/family logic
+            $query = Member::with([
+                'memberType:id,name',
+                'memberCategory:id,name,description',
+                'membershipInvoice:id,member_id,invoice_no,status,total_price',
+                'profilePhoto:id,mediable_id,mediable_type,file_path',
+                'parent:id,full_name,membership_no'  // For family members to show parent info
+            ])
+                ->withCount('familyMembers');
+
+            // Filter: Search
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('full_name', 'like', "%{$search}%")
                         ->orWhere('membership_no', 'like', "%{$search}%")
                         ->orWhere('mobile_number_a', 'like', "%{$search}%");
                 });
@@ -200,7 +289,7 @@ class CardController extends Controller
             $total_active_members = Member::whereNull('parent_id')
                 ->where('status', 'active')
                 ->count();
-            
+
             $total_active_family_members = Member::whereNotNull('parent_id')
                 ->where('status', 'active')
                 ->count();
