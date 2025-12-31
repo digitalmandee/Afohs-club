@@ -56,6 +56,6 @@ class AppliedMember extends Model
 
     public function financialInvoice()
     {
-        return $this->morphOne(FinancialInvoice::class, 'invoiceable');
+        return $this->morphOne(FinancialInvoice::class, 'invoiceable')->latestOfMany();
     }
 }

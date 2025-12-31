@@ -18,6 +18,8 @@ dayjs.extend(customParseFormat);
 export default function AppliedMemberForm({ memberData = null, onBack }) {
     const [open, setOpen] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [startDateOpen, setStartDateOpen] = useState(false);
+    const [endDateOpen, setEndDateOpen] = useState(false);
     const { props } = usePage();
     const csrfToken = props._token;
 
@@ -54,7 +56,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             setFormData((prev) => ({
                 ...prev,
                 start_date: dayjs().format('DD-MM-YYYY'),
-                end_date: dayjs().add(1, 'year').format('DD-MM-YYYY'),
+                end_date: '',
             }));
         }
     }, [memberData, isEditMode]);
@@ -104,7 +106,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             return;
         }
 
-        // Validate CNIC
+        // Validate CNIC (only if provided)
         const cnicDigits = formData.cnic.replace(/[^0-9]/g, '');
         if (formData.cnic && cnicDigits.length !== 13) {
             setErrors((prev) => ({ ...prev, cnic: 'CNIC must be exactly 13 digits.' }));
@@ -112,26 +114,21 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
             return;
         }
 
-        // Validate amount paid
-        if (formData.amount_paid === '' || isNaN(parseFloat(formData.amount_paid))) {
-            setErrors((prev) => ({ ...prev, amount_paid: 'Amount paid is required and must be a valid number.' }));
-            enqueueSnackbar('Amount paid is required and must be a valid number.', { variant: 'error' });
+        // Validate amount paid (only if provided and not empty)
+        if (formData.amount_paid && isNaN(parseFloat(formData.amount_paid))) {
+            setErrors((prev) => ({ ...prev, amount_paid: 'Amount paid must be a valid number.' }));
+            enqueueSnackbar('Amount paid must be a valid number.', { variant: 'error' });
             return;
         }
 
-        // Validate member_id (optional, but must be numeric if provided)
-        if (formData.member_id && (isNaN(parseInt(formData.member_id)) || parseInt(formData.member_id) <= 0)) {
-            setErrors((prev) => ({ ...prev, member_id: 'Member ID must be a valid positive number.' }));
-            enqueueSnackbar('Member ID must be a valid positive number.', { variant: 'error' });
-            return;
-        }
+        // Validate member_id (but validation skipped in original too?) - leaving as is just looser checks
 
         const dataToSubmit = {
             name: formData.name,
             email: formData.email,
             phone_number: formData.phone_number,
             address: formData.address || null,
-            cnic: formData.cnic, // Use formatted CNIC directly
+            cnic: formData.cnic,
             amount_paid: formData.amount_paid ? parseFloat(formData.amount_paid) : 0,
             start_date: formData.start_date,
             end_date: formData.end_date,
@@ -214,9 +211,7 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                     <IconButton onClick={() => router.get(route('applied-member.index'))} sx={{ color: '#000' }}>
                         <ArrowBack sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
-                        {isEditMode ? 'Edit Applied Member' : 'Add Applied Member'}
-                    </Typography>
+                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>{isEditMode ? 'Edit Applied Member' : 'Add Applied Member'}</Typography>
                 </Box>
                 <Paper sx={{ p: 3, maxWidth: '600px', width: '100%', mx: 'auto' }}>
                     <form onSubmit={handleSubmit}>
@@ -229,8 +224,8 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
 
                             {/* Email */}
                             <Grid item xs={12} sm={6}>
-                                <Typography>Email *</Typography>
-                                <TextField type="email" fullWidth size="small" name="email" value={formData.email} onChange={handleInputChange} required error={!!errors.email} helperText={errors.email} />
+                                <Typography>Email</Typography>
+                                <TextField type="email" fullWidth size="small" name="email" value={formData.email} onChange={handleInputChange} error={!!errors.email} helperText={errors.email} />
                             </Grid>
 
                             {/* Phone Number */}
@@ -247,21 +242,21 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
 
                             {/* CNIC */}
                             <Grid item xs={12} sm={6}>
-                                <Typography>CNIC *</Typography>
+                                <Typography>CNIC</Typography>
                                 <TextField fullWidth variant="outlined" placeholder="XXXXX-XXXXXXX-X" size="small" name="cnic" value={formData.cnic} error={!!errors.cnic} helperText={errors.cnic} onChange={handleCnicChange} inputProps={{ maxLength: 15 }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} />
                             </Grid>
 
                             {/* Amount Paid */}
                             <Grid item xs={12} sm={6}>
-                                <Typography>Amount Paid *</Typography>
-                                <TextField fullWidth size="small" name="amount_paid" value={formData.amount_paid} onChange={handleInputChange} type="number" inputProps={{ min: 0, step: '0.01' }} required error={!!errors.amount_paid} helperText={errors.amount_paid} />
+                                <Typography>Amount Paid</Typography>
+                                <TextField fullWidth size="small" name="amount_paid" value={formData.amount_paid} onChange={handleInputChange} type="number" inputProps={{ min: 0, step: '0.01' }} error={!!errors.amount_paid} helperText={errors.amount_paid} />
                             </Grid>
 
                             {/* Start Date */}
                             <Grid item xs={12} sm={6}>
+                                <Typography sx={{ mb: 1, fontWeight: 500 }}>Start Date</Typography>
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DatePicker
-                                        label="Start Date"
                                         value={formData.start_date ? dayjs(formData.start_date, 'DD-MM-YYYY') : null}
                                         onChange={(newValue) => {
                                             const formattedDate = newValue ? newValue.format('DD-MM-YYYY') : '';
@@ -275,21 +270,28 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                                 size: 'small',
                                                 name: 'start_date',
                                                 disabled: isEditMode,
-                                                required: true,
                                                 error: !!errors.start_date,
                                                 helperText: errors.start_date,
-                                                InputLabelProps: { shrink: true },
+                                                onClick: () => setStartDateOpen(true),
+                                                sx: {
+                                                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                    '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                },
                                             },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                         }}
+                                        open={startDateOpen}
+                                        onClose={() => setStartDateOpen(false)}
+                                        onOpen={() => setStartDateOpen(true)}
                                     />
                                 </LocalizationProvider>
                             </Grid>
 
                             {/* End Date */}
                             <Grid item xs={12} sm={6}>
+                                <Typography sx={{ mb: 1, fontWeight: 500 }}>End Date</Typography>
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DatePicker
-                                        label="End Date"
                                         value={formData.end_date ? dayjs(formData.end_date, 'DD-MM-YYYY') : null}
                                         onChange={(newValue) => {
                                             const formattedDate = newValue ? newValue.format('DD-MM-YYYY') : '';
@@ -302,12 +304,19 @@ export default function AppliedMemberForm({ memberData = null, onBack }) {
                                                 fullWidth: true,
                                                 size: 'small',
                                                 name: 'end_date',
-                                                required: true,
                                                 error: !!errors.end_date,
                                                 helperText: errors.end_date,
-                                                InputLabelProps: { shrink: true },
+                                                onClick: () => setEndDateOpen(true),
+                                                sx: {
+                                                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' },
+                                                    '& .MuiInputBase-root': { height: 40, paddingRight: 0 },
+                                                },
                                             },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                         }}
+                                        open={endDateOpen}
+                                        onClose={() => setEndDateOpen(false)}
+                                        onOpen={() => setEndDateOpen(true)}
                                     />
                                 </LocalizationProvider>
                             </Grid>

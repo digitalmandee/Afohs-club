@@ -522,7 +522,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('family-members-archive/restore/{id}', [FamilyMembersArchiveConroller::class, 'restore'])->name('membership.family-members.restore');
         Route::get('family-members-archive/search', [FamilyMembersArchiveConroller::class, 'search'])->name('membership.family-members.search');
 
-        // Family Applied Member
+        // Applied Member
         Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
         Route::get('applied-member/trashed', [AppliedMemberController::class, 'trashed'])->name('applied-member.trashed');
         Route::post('applied-member/restore/{id}', [AppliedMemberController::class, 'restore'])->name('applied-member.restore');
