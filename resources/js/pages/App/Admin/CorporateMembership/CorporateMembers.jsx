@@ -176,7 +176,7 @@ const CorporateMembers = ({ members }) => {
                                                 View
                                             </Button>
                                         </TableCell>
-                                        <TableCell align="center">
+                                        {/*<TableCell align="center">
                                             <IconButton
                                                 onClick={(e) => {
                                                     setAnchorEl(e.currentTarget);
@@ -216,6 +216,42 @@ const CorporateMembers = ({ members }) => {
                                                     Delete Member
                                                 </MenuItem>
                                             </Menu>
+                                        </TableCell> */}
+                                        <TableCell align="center">
+                                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                                                {/* View Profile */}
+                                                <Tooltip title="View Profile">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => router.visit(route('corporate-membership.profile', user.id))}
+                                                        sx={{ color: '#063455' }}
+                                                    >
+                                                        <Visibility size={18} />
+                                                    </IconButton>
+                                                </Tooltip>
+
+                                                {/* Edit */}
+                                                <Tooltip title="Edit Member">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => router.visit(route('corporate-membership.edit', user.id))}
+                                                        sx={{ color: '#f57c00' }}
+                                                    >
+                                                        <FaEdit size={18} />
+                                                    </IconButton>
+                                                </Tooltip>
+
+                                                {/* Delete */}
+                                                <Tooltip title="Delete Member">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => handleDeleteClick(user)}
+                                                        sx={{ color: '#d32f2f' }}
+                                                    >
+                                                        <Delete size={18} />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -255,13 +291,13 @@ const CorporateMembers = ({ members }) => {
                 <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
                     <DialogTitle>Confirm Deletion</DialogTitle>
                     <DialogContent>
-                        <DialogContentText>Are you sure you want to delete this corporate member? This action cannot be undone.</DialogContentText>
+                        <DialogContentText style={{ color: '#D32F2F' }}>Are you sure you want to delete this corporate member? </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+                        <Button onClick={() => setDeleteDialogOpen(false)} style={{ color: '#063455', border: '1px solid #063455' }}>
                             Cancel
                         </Button>
-                        <Button onClick={confirmDelete} color="error" autoFocus>
+                        <Button onClick={confirmDelete} autoFocus style={{ color: '#D32F2F', border: '1px solid #D32F2F' }}>
                             Delete
                         </Button>
                     </DialogActions>

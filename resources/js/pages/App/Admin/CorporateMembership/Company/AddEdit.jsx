@@ -49,9 +49,9 @@ const AddEditCompany = ({ company }) => {
         <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <IconButton onClick={() => window.history.back()} sx={{ mr: 1 }}>
-                    <ArrowBack />
+                    <ArrowBack style={{color:'#063455'}} />
                 </IconButton>
-                <Typography variant="h5" fontWeight={600} color="#063455">
+                <Typography style={{fontWeight:'700', fontSize:'30px', color:'#063455'}}>
                     {isEditMode ? 'Edit Corporate Company' : 'Add Corporate Company'}
                 </Typography>
             </Box>

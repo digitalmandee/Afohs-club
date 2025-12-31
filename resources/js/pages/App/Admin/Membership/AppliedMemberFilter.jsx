@@ -165,13 +165,13 @@ const AppliedMemberFilter = () => {
                         <MenuItem value="permanent">Permanent Member</MenuItem>
                         <MenuItem value="not_permanent">Not Permanent</MenuItem>
                     </TextField>
-                    <Box display="flex" gap={1}>
-                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#063455', borderRadius: '16px', borderColor: '#063455', textTransform: 'none', paddingLeft:3, paddingRight:3 }}>
+                    <Box display="flex" gap={2}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#063455', borderRadius: '16px', borderColor: '#063455', textTransform: 'none', paddingLeft:5, paddingRight:5 }}>
                             Reset
                         </Button>
                         <Button variant="contained"
                             startIcon={<Search />}
-                            size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#063455', borderRadius: '16px', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>
+                            size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#063455', borderRadius: '16px', color: 'white', textTransform: 'none',  paddingLeft:5, paddingRight:5, '&:hover': { backgroundColor: '#083352' } }}>
                             Search
                         </Button>
                     </Box>

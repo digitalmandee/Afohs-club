@@ -4,6 +4,7 @@ import { ArrowBack as ArrowBackIcon, Add as AddIcon, MoreVert as MoreVertIcon, E
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import { FaEdit } from 'react-icons/fa';
 
 const CorporateCompanies = ({ companies }) => {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -58,9 +59,9 @@ const CorporateCompanies = ({ companies }) => {
         >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton onClick={() => window.history.back()}>
+                    {/* <IconButton onClick={() => window.history.back()}>
                         <ArrowBackIcon sx={{ color: '#063455' }} />
-                    </IconButton>
+                    </IconButton> */}
                     <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Corporate Companies</Typography>
                 </Box>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -72,6 +73,7 @@ const CorporateCompanies = ({ companies }) => {
                             color: '#d32f2f',
                             borderColor: '#d32f2f',
                             borderRadius: '16px',
+                            textTransform:'none',
                             '&:hover': {
                                 backgroundColor: '#ffebee',
                                 borderColor: '#d32f2f',
@@ -87,6 +89,7 @@ const CorporateCompanies = ({ companies }) => {
                         sx={{
                             backgroundColor: '#063455',
                             borderRadius: '16px',
+                            textTransform:'none',
                             '&:hover': { backgroundColor: '#002244' },
                         }}
                     >
@@ -133,11 +136,11 @@ const CorporateCompanies = ({ companies }) => {
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
                 <MenuItem onClick={handleEdit}>
-                    <EditIcon sx={{ mr: 1 }} />
+                    <FaEdit size={18} style={{color: '#f57c00', marginRight:15}} />
                     Edit
                 </MenuItem>
                 <MenuItem onClick={handleDelete}>
-                    <DeleteIcon sx={{ mr: 1 }} />
+                    <DeleteIcon color='error' style={{marginRight:5}} />
                     Delete
                 </MenuItem>
             </Menu>

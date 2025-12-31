@@ -680,13 +680,13 @@ const AllMembers = ({ members }) => {
                 <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
                     <DialogTitle id="alert-dialog-title">{'Confirm Deletion'}</DialogTitle>
                     <DialogContent>
-                        <DialogContentText id="alert-dialog-description">Are you sure you want to delete this member? This action cannot be undone.</DialogContentText>
+                        <DialogContentText id="alert-dialog-description" style={{color:'#D32F2F'}}>Are you sure you want to delete this member? </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+                        <Button onClick={() => setDeleteDialogOpen(false)} style={{color:'#063455', border:'1px solid #063455'}}>
                             Cancel
                         </Button>
-                        <Button onClick={confirmDelete} color="error" autoFocus>
+                        <Button onClick={confirmDelete} autoFocus style={{color:'#D32F2F', border:'1px solid #D32F2F'}}>
                             Delete
                         </Button>
                     </DialogActions>

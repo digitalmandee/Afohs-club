@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Button, Card, CardContent, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Tabs, Tab, Chip } from '@mui/material';
-import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon, Visibility, Delete } from '@mui/icons-material';
+import { Search, FilterAlt, People, CreditCard, LocalDining as DiningIcon, TakeoutDining as TakeoutIcon, TwoWheeler as DeliveryIcon, Visibility, Delete, Add } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
@@ -155,14 +155,15 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                         <Button
                             variant="contained"
                             startIcon={
-                                <span
-                                    style={{
-                                        fontSize: '1.75rem',
-                                        marginBottom: 5,
-                                    }}
-                                >
-                                    +
-                                </span>
+                                // <span
+                                //     style={{
+                                //         fontSize: '1.75rem',
+                                //         marginBottom: 5,
+                                //     }}
+                                // >
+                                //     +
+                                // </span>
+                                <Add />
                             }
                             style={{
                                 backgroundColor: '#063455',
@@ -179,16 +180,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                         </Button>
                         <Button
                             variant="contained"
-                            startIcon={
-                                <span
-                                    style={{
-                                        fontSize: '1.75rem',
-                                        marginBottom: 5,
-                                    }}
-                                >
-                                    +
-                                </span>
-                            }
+                            startIcon={<Add />}
                             style={{
                                 backgroundColor: '#063455',
                                 borderRadius: '16px',
@@ -276,6 +268,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                     {/* Primary Members Table */}
                     {memberTab === 0 && (
                         <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
+                            {/* <div style={{ direction: 'ltr' }}> */}
                             <Table
                             // sx={{ border: '2px solid #063455' }}
                             >
@@ -377,7 +370,15 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                 </Tooltip>
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell>
+                                            <TableCell sx={{
+                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap', maxWidth: '100px', overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                            }}>
+                                                {/* {user.membership_duration || 'N/A'} */}
+                                                <Tooltip title={user.membership_duration || 'N/A'} arrow>
+                                                    <span>{user.membership_duration || 'N/A'}</span>
+                                                </Tooltip>
+                                            </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                             <TableCell>
@@ -495,11 +496,11 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                         vertical: 'top',
                                                         horizontal: 'right',
                                                     }}
-                                                    // slotProps={{
-                                                    //     paper: {
-                                                    //         sx: { mt: -5 },
-                                                    //     },
-                                                    // }}
+                                                // slotProps={{
+                                                //     paper: {
+                                                //         sx: { mt: -5 },
+                                                //     },
+                                                // }}
                                                 >
                                                     <MenuItem onClick={handleOpenCard}>Card</MenuItem>
                                                     <MenuItem onClick={handleOpenInvoice}>{menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend') ? 'Send Remind' : 'Invoice'}</MenuItem>
@@ -525,6 +526,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     </Tooltip>
                                                 </Box>
                                             </TableCell>
+                                        
                                             {/* <TableCell align="center">
                                                 <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: '#063455' }}>
                                                     <MoreVertIcon />
@@ -579,6 +581,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                     ))}
                                 </TableBody>
                             </Table>
+                            {/* </div> */}
                         </TableContainer>
                     )}
 
@@ -766,6 +769,9 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                         </div>
                     ) : (
                         <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>No attached documents</div>
+                        // <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>
+                            // No attached documents
+                        // </div>
                     )}
                 </Box>
                 <Box sx={{ p: 2, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
@@ -779,13 +785,13 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
                 <DialogTitle id="alert-dialog-title">{'Confirm Deletion'}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText id="alert-dialog-description">Are you sure you want to delete this member? This action cannot be undone.</DialogContentText>
+                    <DialogContentText id="alert-dialog-description" style={{ color: '#D32F2F' }}>Are you sure you want to delete this member? </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
+                    <Button onClick={() => setDeleteDialogOpen(false)} style={{ color: '#063455', border: '1px solid #063455' }}>
                         Cancel
                     </Button>
-                    <Button onClick={confirmDelete} color="error" autoFocus>
+                    <Button onClick={confirmDelete} color="error" autoFocus style={{ color: '#D32F2F', border: '1px solid #D32F2F' }}>
                         Delete
                     </Button>
                 </DialogActions>
