@@ -51,17 +51,27 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
         setActionModalOpen(true);
     };
 
-    const handleConfirmAction = (id) => {
-        // Only undo supported here
-        router.put(
-            route('rooms.booking.undo-cancel', id),
-            {},
-            {
+    const handleConfirmAction = (bookingId, reason, refundData) => {
+        if (actionType === 'cancel') {
+            const data = { cancellation_reason: reason };
+            if (refundData && refundData.amount) {
+                data.refund_amount = refundData.amount;
+                data.refund_mode = refundData.mode;
+                data.refund_account = refundData.account;
+            }
+            router.put(route('rooms.booking.cancel', bookingId), data, {
                 onSuccess: () => setActionModalOpen(false),
-            },
-        );
+            });
+        } else {
+            router.put(
+                route('rooms.booking.undo-cancel', bookingId),
+                {},
+                {
+                    onSuccess: () => setActionModalOpen(false),
+                },
+            );
+        }
     };
-
     // const debouncedSearch = useMemo(
     //     () =>
     //         debounce((value) => {

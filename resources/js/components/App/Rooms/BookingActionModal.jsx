@@ -1,10 +1,26 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, TextField, Grid, Divider, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, TextField, Grid, Divider, IconButton, FormControl, InputLabel, Select, MenuItem, InputAdornment } from '@mui/material';
 import { Close } from '@mui/icons-material';
 import dayjs from 'dayjs';
 
 const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
     const [reason, setReason] = useState('');
+    const [refundData, setRefundData] = useState({ amount: '', mode: 'Cash', account: '' });
+
+    // Helper to get nested guest name
+    const getGuestName = (b) => {
+        if (!b) return 'N/A';
+        // Check direct relationships first (from room booking model)
+        if (b.customer) return b.customer.name;
+        if (b.member) return b.member.full_name;
+        if (b.corporateMember) return b.corporateMember.full_name;
+        if (b.corporate_member) return b.corporate_member.full_name; // Check snake_case
+
+        // Fallback for older structures or when 'guest' object is passed directly
+        if (b.guest_name) return b.guest_name;
+
+        return 'N/A';
+    };
 
     if (!booking) return null;
 
@@ -14,12 +30,18 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
     const confirmColor = isCancel ? 'error' : 'primary';
 
     const handleConfirm = () => {
-        onConfirm(booking.id, reason);
+        onConfirm(booking.id, reason, refundData);
         setReason('');
+        setRefundData({ amount: '', mode: 'Cash', account: '' });
         onClose();
     };
 
-    const guestName = booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember ? booking.corporateMember.full_name : 'N/A';
+    const guestName = getGuestName(booking);
+
+    // Check if refund is applicable (Advance/Security Deposit was taken)
+    // We check invoice.paid_amount. If > 0, we show refund form.
+    const paidAmount = booking.invoice?.paid_amount || 0;
+    const showRefundForm = isCancel && paidAmount > 0;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
@@ -78,7 +100,55 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
                     {isCancel ? 'Are you sure you want to cancel this booking? This action can be undone later.' : 'Are you sure you want to undo the cancellation and restore this booking?'}
                 </Typography>
 
-                {isCancel && <TextField fullWidth label="Cancellation Reason" multiline rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter reason for cancellation..." variant="outlined" sx={{ mt: 1 }} />}
+                {isCancel && (
+                    <>
+                        <TextField fullWidth label="Cancellation Reason" multiline rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter reason for cancellation..." variant="outlined" sx={{ mt: 1 }} />
+
+                        {showRefundForm && (
+                            <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+                                <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary">
+                                    Return Payment Details (Paid: {paidAmount})
+                                </Typography>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Refund Amount"
+                                            type="number"
+                                            size="small"
+                                            value={refundData.amount}
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value);
+                                                if (val > paidAmount) return; // Prevent exceeding
+                                                setRefundData({ ...refundData, amount: e.target.value });
+                                            }}
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                            }}
+                                            helperText={`Max returnable: ${paidAmount}`}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth size="small">
+                                            <InputLabel>Mode of Return</InputLabel>
+                                            <Select value={refundData.mode} label="Mode of Return" onChange={(e) => setRefundData({ ...refundData, mode: e.target.value })}>
+                                                <MenuItem value="Cash">Cash</MenuItem>
+                                                <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                                <MenuItem value="Cheque">Cheque</MenuItem>
+                                                <MenuItem value="Other">Other</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    {refundData.mode !== 'Cash' && (
+                                        <Grid item xs={12}>
+                                            <TextField fullWidth label="Account / Cheque Details" size="small" value={refundData.account} onChange={(e) => setRefundData({ ...refundData, account: e.target.value })} placeholder="Enter account no or cheque details" />
+                                        </Grid>
+                                    )}
+                                </Grid>
+                            </Box>
+                        )}
+                    </>
+                )}
             </DialogContent>
             <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
                 <Button onClick={onClose} variant="outlined" color="inherit" sx={{ borderRadius: '8px', textTransform: 'none' }}>

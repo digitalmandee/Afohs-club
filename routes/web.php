@@ -228,7 +228,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
 
-    //
+    // Admin Booking Routes
     Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
 
     // Search

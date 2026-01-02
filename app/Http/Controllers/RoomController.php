@@ -37,7 +37,7 @@ class RoomController extends Controller
         // ✅ Apply search filter
 
         // ✅ Eager load invoice with polymorphic relationship
-        $query->with('invoice:id,invoiceable_id,invoiceable_type,status');
+        $query->with('invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment');
 
         // ✅ Paginate results and keep query string
         $bookings = $query->paginate(10)->withQueryString();
@@ -47,6 +47,9 @@ class RoomController extends Controller
             $booking->invoice = $booking->invoice ? [
                 'id' => $booking->invoice->id,
                 'status' => $booking->invoice->status,
+                'paid_amount' => $booking->invoice->paid_amount,
+                'total_price' => $booking->invoice->total_price,
+                'advance_payment' => $booking->invoice->advance_payment,
             ] : null;
             return $booking;
         });
@@ -68,7 +71,7 @@ class RoomController extends Controller
             'customer',
             'member',
             'corporateMember',
-            'invoice:id,invoiceable_id,invoiceable_type,status'
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment'
         ])->findOrFail($id);
 
         // ✅ Get invoice using polymorphic relationship
@@ -77,6 +80,9 @@ class RoomController extends Controller
         $booking->invoice = $invoice ? [
             'id' => $invoice->id,
             'status' => $invoice->status,
+            'paid_amount' => $invoice->paid_amount,
+            'total_price' => $invoice->total_price,
+            'advance_payment' => $invoice->advance_payment,
         ] : null;
 
         return response()->json(['success' => true, 'booking' => $booking]);

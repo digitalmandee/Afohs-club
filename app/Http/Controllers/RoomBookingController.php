@@ -555,7 +555,8 @@ class RoomBookingController extends Controller
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
-            'room:id,name,room_type_id'
+            'room:id,name,room_type_id',
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment'
         ])->where('status', 'cancelled');
 
         // Apply shared filters
@@ -675,15 +676,51 @@ class RoomBookingController extends Controller
 
     public function cancelBooking(Request $request, $id)
     {
-        $booking = RoomBooking::findOrFail($id);
+        $request->validate([
+            'cancellation_reason' => 'nullable|string|max:500',
+            'refund_amount' => 'nullable|numeric|min:0',
+            'refund_mode' => 'nullable|string|required_with:refund_amount',
+            'refund_account' => 'nullable|string',
+        ]);
+
+        $booking = RoomBooking::with('invoice')->findOrFail($id);
         $booking->status = 'cancelled';
 
-        // Append cancellation reason to additional notes if provided
+        $notes = "\n[Cancelled: " . now()->toDateTimeString() . ']';
         if ($request->filled('cancellation_reason')) {
-            $booking->additional_notes .= "\n[Cancelled: " . now()->toDateTimeString() . '] Reason: ' . $request->cancellation_reason;
+            $notes .= ' Reason: ' . $request->cancellation_reason;
         }
 
+        // Handle Refund
+        if ($request->filled('refund_amount') && $request->refund_amount > 0) {
+            $invoice = $booking->invoice;
+            if ($invoice) {
+                if ($request->refund_amount > $invoice->paid_amount) {
+                    return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than paid amount.']);
+                }
+
+                // Update Invoice Paid Amount
+                $invoice->paid_amount -= $request->refund_amount;
+                // Optionally update status if balance becomes due? But for cancellation, usually irrelevant.
+
+                // However, logic says if cancelled, maybe we shouldn't care about balance?
+                // But we want to reflect "money returned".
+
+                $invoice->save();
+
+                $notes .= "\n[Refund Processed: " . $request->refund_amount . ' via ' . $request->refund_mode . ']';
+                if ($request->filled('refund_account')) {
+                    $notes .= ' Account: ' . $request->refund_account;
+                }
+            }
+        }
+
+        $booking->additional_notes .= $notes;
         $booking->save();
+
+        if ($booking->invoice) {
+            $booking->invoice->update(['status' => 'cancelled']);
+        }
 
         return redirect()->back()->with('success', 'Booking cancelled successfully');
     }
