@@ -12,7 +12,7 @@ import axios from 'axios';
 
 const RoomBookingRequestForm = ({ mode }) => {
     const { props } = usePage();
-    const { rooms, roomCategories, errors, request } = props;
+    const { roomTypes, errors, request } = props;
 
     // Use axios to fetch guest types
     const [guestTypes, setGuestTypes] = useState([]);
@@ -38,11 +38,8 @@ const RoomBookingRequestForm = ({ mode }) => {
         checkOutDate: request?.check_out_date || '',
         bookingType: request?.booking_type || '',
         guest: request?.member || request?.customer || request?.corporate_member || '',
-        roomId: request?.room_id || '',
-        bookingCategory: request?.booking_category || '',
-        persons: request?.persons || '',
-        securityDeposit: request?.security_deposit || '',
-        perDayCharge: request?.per_day_charge || 0,
+        roomTypeId: request?.room_type_id || '',
+        additionalNotes: request?.additional_notes || '',
     });
 
     const handleChange = (e) => {
@@ -63,19 +60,7 @@ const RoomBookingRequestForm = ({ mode }) => {
         }
     };
 
-    // Auto update per day charge based on room & category
-    useEffect(() => {
-        if (formData.roomId && formData.bookingCategory) {
-            const selectedRoom = rooms.find((r) => r.id == formData.roomId);
-            if (selectedRoom) {
-                const matchedCharge = selectedRoom.category_charges.find((charge) => charge.room_category_id == formData.bookingCategory);
-                setFormData((prev) => ({
-                    ...prev,
-                    perDayCharge: matchedCharge ? matchedCharge.amount : 0,
-                }));
-            }
-        }
-    }, [formData.roomId, formData.bookingCategory]);
+    // Auto update per day charge removed as room specific selection is gone
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -85,11 +70,8 @@ const RoomBookingRequestForm = ({ mode }) => {
             check_in_date: formData.checkInDate,
             check_out_date: formData.checkOutDate,
             booking_type: formData.bookingType,
-            room_id: formData.roomId,
-            booking_category: formData.bookingCategory,
-            persons: formData.persons,
-            security_deposit: formData.securityDeposit,
-            per_day_charge: formData.perDayCharge,
+            room_type_id: formData.roomTypeId,
+            additional_notes: formData.additionalNotes,
         };
         console.log(formData.guest);
 
@@ -103,7 +85,18 @@ const RoomBookingRequestForm = ({ mode }) => {
 
         if (mode === 'create') {
             router.post(route('rooms.request.store'), payload, {
-                onSuccess: () => enqueueSnackbar('Booking Request Created!', { variant: 'success' }),
+                onSuccess: () => {
+                    enqueueSnackbar('Booking Request Created!', { variant: 'success' });
+                    setFormData({
+                        bookingDate: new Date().toISOString().split('T')[0],
+                        checkInDate: '',
+                        checkOutDate: '',
+                        bookingType: '',
+                        guest: '',
+                        roomTypeId: '',
+                        additionalNotes: '',
+                    });
+                },
                 onError: () => enqueueSnackbar('Please check the errors', { variant: 'error' }),
             });
         } else {
@@ -149,7 +142,7 @@ const RoomBookingRequestForm = ({ mode }) => {
                             <Grid item xs={12} sm={4}>
                                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                                     <DatePicker
-                                        label="Booking Date"
+                                        label="Date"
                                         format="DD-MM-YYYY"
                                         value={formData.bookingDate ? dayjs(formData.bookingDate) : null}
                                         onChange={(newValue) => handleChange({ target: { name: 'bookingDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
@@ -277,48 +270,25 @@ const RoomBookingRequestForm = ({ mode }) => {
                             </Grid>
 
                             {/* Select Room */}
-                            <Grid item xs={4}>
-                                <FormControl fullWidth error={!!errors.room_id}>
-                                    <InputLabel>Select Room</InputLabel>
-                                    <Select name="roomId" value={formData.roomId} onChange={handleChange}>
-                                        <MenuItem value="">Select Room</MenuItem>
-                                        {rooms.map((room) => (
-                                            <MenuItem key={room.id} value={room.id}>
-                                                {room.name} (Max: {room.max_capacity})
-                                            </MenuItem>
-                                        ))}
+                            {/* Room Type */}
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth error={!!errors.room_type_id}>
+                                    <InputLabel>Room Type</InputLabel>
+                                    <Select name="roomTypeId" value={formData.roomTypeId} onChange={handleChange}>
+                                        <MenuItem value="">Select Room Type</MenuItem>
+                                        {roomTypes &&
+                                            roomTypes.map((type) => (
+                                                <MenuItem key={type.id} value={type.id}>
+                                                    {type.name}
+                                                </MenuItem>
+                                            ))}
                                     </Select>
                                 </FormControl>
                             </Grid>
 
-                            {/* Room Category */}
-                            <Grid item xs={4}>
-                                <FormControl fullWidth error={!!errors.booking_category}>
-                                    <InputLabel>Booking Category</InputLabel>
-                                    <Select name="bookingCategory" value={formData.bookingCategory} onChange={handleChange}>
-                                        <MenuItem value="">Select Category</MenuItem>
-                                        {roomCategories.map((cat) => (
-                                            <MenuItem key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Persons */}
-                            <Grid item xs={4}>
-                                <TextField type="number" label="Number of Persons" name="persons" value={formData.persons} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
-                            </Grid>
-
-                            {/* Per Day Charge */}
-                            <Grid item xs={4}>
-                                <TextField label="Per Day Room Charges" name="perDayCharge" value={formData.perDayCharge} fullWidth InputProps={{ readOnly: true }} disabled />
-                            </Grid>
-
-                            {/* Security Deposit */}
-                            <Grid item xs={4}>
-                                <TextField type="number" label="Security Deposit" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
+                            {/* Additional Notes */}
+                            <Grid item xs={12}>
+                                <TextField label="Additional Notes" name="additionalNotes" value={formData.additionalNotes} onChange={handleChange} fullWidth multiline rows={4} />
                             </Grid>
 
                             {/* Submit */}

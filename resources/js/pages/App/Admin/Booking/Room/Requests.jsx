@@ -62,14 +62,13 @@ const BookingRequests = () => {
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>ID</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Date</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Check In</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Check Out</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Guest/Member</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Room</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Persons</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Room Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, maxWidth: '200px' }}>Notes</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                 </TableRow>
@@ -83,9 +82,10 @@ const BookingRequests = () => {
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.check_out_date ? dayjs(req.check_out_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.booking_type == 0 ? 'Member' : req.booking_type == 2 ? 'Corporate Member' : req.booking_type == 'guest-1' ? 'Applied Member' : req.booking_type == 'guest-2' ? 'Affiliated Member' : 'VIP Guest'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.booking_type.startsWith('guest-') ? req.customer?.name : req.member?.full_name ? `${req.member.full_name} (${req.member.membership_no})` : req.corporate_member ? `${req.corporate_member.full_name} (${req.corporate_member.membership_no})` : 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.room?.name}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.persons}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.per_day_charge}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.room_type?.name}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={req.additional_notes || ''}>
+                                            {req.additional_notes || '-'}
+                                        </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                             <Select value={req.status} onChange={(e) => handleStatusChange(req.id, e.target.value)} size="small" sx={{ borderRadius: '16px' }}>
                                                 <MenuItem value="pending">Pending</MenuItem>
