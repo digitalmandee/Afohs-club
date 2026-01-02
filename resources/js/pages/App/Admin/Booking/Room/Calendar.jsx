@@ -6,6 +6,7 @@ import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, Dia
 import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
+import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -19,6 +20,10 @@ const RoomCalendar = () => {
     const [events, setEvents] = useState([]);
     const [checkInDialogOpen, setCheckInDialogOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
+
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [selectedActionBooking, setSelectedActionBooking] = useState(null);
 
     const fetchData = async () => {
         try {
@@ -88,15 +93,10 @@ const RoomCalendar = () => {
         };
 
         window.cancelBooking = (bookingId) => {
-            const reason = prompt('Enter cancellation reason:');
-            if (reason !== null) {
-                if (confirm('Are you sure you want to cancel this booking?')) {
-                    router.visit(route('rooms.booking.cancel', bookingId), {
-                        method: 'put',
-                        data: { cancellation_reason: reason },
-                        onSuccess: () => fetchData(), // Refresh calendar
-                    });
-                }
+            const booking = events.find((e) => e.id === bookingId)?.booking;
+            if (booking) {
+                setSelectedActionBooking(booking);
+                setActionModalOpen(true);
             }
         };
 
@@ -220,6 +220,27 @@ const RoomCalendar = () => {
 
             {/* Check-in Modal */}
             <RoomCheckInModal open={checkInDialogOpen} onClose={handleCloseCheckIn} bookingId={selectedBooking?.id} />
+
+            <BookingActionModal
+                open={actionModalOpen}
+                onClose={() => setActionModalOpen(false)}
+                booking={selectedActionBooking}
+                action="cancel"
+                onConfirm={(bookingId, reason, refundData) => {
+                    const data = { cancellation_reason: reason };
+                    if (refundData && refundData.amount) {
+                        data.refund_amount = refundData.amount;
+                        data.refund_mode = refundData.mode;
+                        data.refund_account = refundData.account;
+                    }
+                    router.put(route('rooms.booking.cancel', bookingId), data, {
+                        onSuccess: () => {
+                            setActionModalOpen(false);
+                            fetchData();
+                        },
+                    });
+                }}
+            />
         </>
     );
 };

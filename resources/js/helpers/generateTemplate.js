@@ -187,27 +187,33 @@ export const generateInvoiceContent = (booking) => {
                             margin-top: 4px;
                             font-size: 14px;
                             font-weight: bold;
-                            color: ${booking.status === 'paid' ? '#155724' :
-            booking.status === 'checked_in' ? '#004085' :
-                booking.status === 'checked_out' ? '#0c5460' :
-                    '#721c24'
+                            display: ${booking.invoice?.status === 'cancelled' ? 'none' : 'block'};
+                            color: ${booking.invoice?.status === 'paid' ? '#155724' :
+            booking.invoice?.status === 'refunded' ? '#004085' :
+                booking.invoice?.status === 'unpaid' ? '#721c24' :
+                    '#333'
         };
-                            background-color: ${booking.status === 'paid' ? '#d4edda' :
-            booking.status === 'checked_in' ? '#cce5ff' :
-                booking.status === 'checked_out' ? '#d1ecf1' :
-                    '#f8d7da'
+                            background-color: ${booking.invoice?.status === 'paid' ? '#d4edda' :
+            booking.invoice?.status === 'refunded' ? '#cce5ff' :
+                booking.invoice?.status === 'unpaid' ? '#f8d7da' :
+                    '#e2e3e5'
         };
                             text-transform: uppercase;
-                            border: 1px solid ${booking.status === 'paid' ? '#c3e6cb' :
-            booking.status === 'checked_in' ? '#b8daff' :
-                booking.status === 'checked_out' ? '#bee5eb' :
-                    '#f5c6cb'
+                            border: 1px solid ${booking.invoice?.status === 'paid' ? '#c3e6cb' :
+            booking.invoice?.status === 'refunded' ? '#b8daff' :
+                booking.invoice?.status === 'unpaid' ? '#f5c6cb' :
+                    '#d6d8db'
         };
                             padding: 2px 8px;
                             display: inline-block;
                             border-radius: 4px;
                         ">
-                            ${(booking.status || 'Unpaid').replace(/_/g, ' ')}
+                            ${(booking.invoice?.status || 'Unpaid').replace(/_/g, ' ')}
+                            ${booking.invoice?.status === 'refunded' ? (() => {
+            const notes = booking.additional_notes || booking.notes;
+            const match = notes && notes.match(/Refund Processed: (\d+)/);
+            return match ? ` (Rs ${match[1]})` : '';
+        })() : ''}
                         </div>
                     </div>
                 </div>
@@ -247,6 +253,7 @@ export const generateInvoiceContent = (booking) => {
                         <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
                         <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
+                         <div class="typography-body2"><span style="font-weight: bold">Booking Status: </span>${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
                         ${booking.cancellation_reason ? `<div class="typography-body2"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>` : ''}
                     </div>
                 </div>
@@ -264,7 +271,17 @@ export const generateInvoiceContent = (booking) => {
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Amount Paid</span>
-                    <span class="typography-body2">Rs ${booking.paid_amount || booking.security_deposit || '0'}</span>
+                    <span class="typography-body2">Rs ${(() => {
+            let paid = (booking.invoice?.paid_amount || 0) + (booking.invoice?.advance_payment || booking.security_deposit || 0);
+            if (booking.invoice?.status === 'refunded') {
+                const notes = booking.additional_notes || booking.notes;
+                const match = notes && notes.match(/Refund Processed: (\d+)/);
+                if (match) {
+                    paid += parseInt(match[1]);
+                }
+            }
+            return paid;
+        })()}</span>
                 </div>
             </div>
         </div>

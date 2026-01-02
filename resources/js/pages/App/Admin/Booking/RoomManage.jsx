@@ -178,6 +178,16 @@ const RoomScreen = ({ bookings }) => {
                     // maybe show toast
                 },
             });
+        } else if (actionType === 'refund') {
+            const data = {
+                refund_amount: refundData.amount,
+                refund_mode: refundData.mode,
+                refund_account: refundData.account,
+                notes: reason, // Optional note from modal
+            };
+            router.put(route('rooms.booking.refund', bookingId), data, {
+                onSuccess: () => setActionModalOpen(false),
+            });
         } else {
             router.put(
                 route('rooms.booking.undo-cancel', bookingId),
@@ -288,7 +298,7 @@ const RoomScreen = ({ bookings }) => {
                                                         <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)}>
                                                             View
                                                         </Button>
-                                                        {booking.status !== 'cancelled' && (
+                                                        {!['cancelled', 'refunded'].includes(booking.status) && (
                                                             <Button
                                                                 size="small"
                                                                 variant="outlined"
@@ -298,6 +308,11 @@ const RoomScreen = ({ bookings }) => {
                                                                 sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}
                                                             >
                                                                 <Cancel fontSize="small" />
+                                                            </Button>
+                                                        )}
+                                                        {booking.status === 'cancelled' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
+                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}>
+                                                                <span style={{ fontSize: '10px' }}>Refund</span>
                                                             </Button>
                                                         )}
                                                     </Box>

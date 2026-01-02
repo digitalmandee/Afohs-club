@@ -77,7 +77,14 @@ class RoomBookingController extends Controller
             'documents' => json_decode($booking->booking_docs, true),
             'mini_bar_items' => $booking->miniBarItems,
             'other_charges' => $booking->otherCharges,
+            'other_charges' => $booking->otherCharges,
             'guest' => null,
+            'invoice' => $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+                'paid_amount' => $booking->invoice->paid_amount,
+                'total_price' => $booking->invoice->total_price,
+            ] : null,
         ];
 
         if ($booking->customer) {
@@ -433,7 +440,8 @@ class RoomBookingController extends Controller
                 });
         })
             ->where('status', '!=', 'cancelled')
-            ->with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email')
+            ->where('status', '!=', 'cancelled')
+            ->with(['room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email', 'invoice'])
             ->get()
             ->map(fn($b) => [
                 'id' => $b->id,
@@ -443,6 +451,9 @@ class RoomBookingController extends Controller
                 'check_in_date' => $b->check_in_date,
                 'check_out_date' => $b->check_out_date,
                 'status' => $b->status,
+                'invoice' => $b->invoice ? [
+                    'paid_amount' => $b->invoice->paid_amount,
+                ] : null,
             ]);
 
         $rooms = Room::select('id', 'name')->get()->map(fn($r) => ['id' => $r->id, 'room_number' => $r->name]);
@@ -557,7 +568,7 @@ class RoomBookingController extends Controller
             'corporateMember:id,membership_no,full_name,personal_email',
             'room:id,name,room_type_id',
             'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment'
-        ])->where('status', 'cancelled');
+        ])->whereIn('status', ['cancelled', 'refunded']);
 
         // Apply shared filters
         $this->applyFilters($query, $filters);
@@ -672,6 +683,11 @@ class RoomBookingController extends Controller
         if (!empty($filters['check_out_to'])) {
             $query->whereDate('check_out_date', '<=', $filters['check_out_to']);
         }
+
+        // Booking Status
+        if (!empty($filters['booking_status'])) {
+            $query->where('status', $filters['booking_status']);
+        }
     }
 
     public function cancelBooking(Request $request, $id)
@@ -695,12 +711,20 @@ class RoomBookingController extends Controller
         if ($request->filled('refund_amount') && $request->refund_amount > 0) {
             $invoice = $booking->invoice;
             if ($invoice) {
-                if ($request->refund_amount > $invoice->paid_amount) {
-                    return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than paid amount.']);
+                $maxRefundable = max($invoice->paid_amount, $invoice->advance_payment);
+
+                if ($request->refund_amount > $maxRefundable) {
+                    return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than refundable amount (' . $maxRefundable . ').']);
                 }
 
                 // Update Invoice Paid Amount
-                $invoice->paid_amount -= $request->refund_amount;
+                if ($invoice->paid_amount > 0) {
+                    $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
+                }
+                // Also deduct from advance_payment if available
+                if ($invoice->advance_payment > 0) {
+                    $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
+                }
                 // Optionally update status if balance becomes due? But for cancellation, usually irrelevant.
 
                 // However, logic says if cancelled, maybe we shouldn't care about balance?
@@ -719,10 +743,81 @@ class RoomBookingController extends Controller
         $booking->save();
 
         if ($booking->invoice) {
-            $booking->invoice->update(['status' => 'cancelled']);
+            $invoice = $booking->invoice->refresh();  // Refresh to get updated amounts
+            if ($invoice->paid_amount == 0 && $invoice->advance_payment == 0) {
+                // If balance is clear, status should be 'refunded' (if we refunded) or 'cancelled' (if it was unpaid)
+                // Since we are checking post-logic, if we processed a refund, it might be 'refunded'.
+                // Let's use 'refunded' if it was previously paid check, or 'cancelled' broadly.
+                // Actually, if we just cancelled and it had 0 paid, it is 'cancelled'.
+                // If we had paid > 0 and refunded it to 0, it is 'refunded'.
+                // Simple logic: If balance is 0, match booking status (cancelled) or better 'refunded' if there was a transaction?
+                // Let's check if we did a refund.
+                if ($request->filled('refund_amount') && $request->refund_amount > 0) {
+                    $invoice->update(['status' => 'refunded']);
+                    $booking->status = 'refunded';  // Also update booking to refunded for consistency? Or keep cancelled? User wants 'refunded' if money returned.
+                    $booking->save();
+                } else {
+                    // Just cancelled without refund (presumably unpaid or holding money).
+                    // User requested NOT to change invoice status to 'cancelled'.
+                    // So we keep it as 'paid' or 'unpaid'.
+                }
+            }
         }
 
         return redirect()->back()->with('success', 'Booking cancelled successfully');
+    }
+
+    public function processRefund(Request $request, $id)
+    {
+        $request->validate([
+            'refund_amount' => 'required|numeric|min:1',
+            'refund_mode' => 'required|string',
+            'refund_account' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $booking = RoomBooking::with('invoice')->findOrFail($id);
+        $invoice = $booking->invoice;
+
+        $maxRefundable = max($invoice->paid_amount, $invoice->advance_payment);
+
+        if (!$invoice || $request->refund_amount > $maxRefundable) {
+            return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than remaining refundable amount (' . $maxRefundable . ').']);
+        }
+
+        // Deduct logic: Prefer deducting from paid_amount first (if > 0), else from advance
+        if ($invoice->paid_amount > 0) {
+            $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
+        }
+        // Also deduct from advance_payment if available, to reflect the 'advance returned' request
+        if ($invoice->advance_payment > 0) {
+            $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
+        }
+        $invoice->save();
+
+        // FINAL SETTLEMENT LOGIC:
+        // We do NOT zero out the balance, so we keep record of what was retained (e.g. 100 tax).
+        // But we mark status as 'refunded' so the UI hides the refund button (no more refunds allowed).
+
+        $invoice->status = 'refunded';  // Mark as fully refunded/settled
+        $invoice->save();
+
+        // Update Booking Status
+        $booking->status = 'refunded';
+
+        $notes = "\n[Refund Processed (Post-Cancel): " . now()->toDateTimeString() . ']';
+        $notes .= ' Amount: ' . $request->refund_amount . ' via ' . $request->refund_mode;
+        if ($request->filled('refund_account')) {
+            $notes .= ' Account: ' . $request->refund_account;
+        }
+        if ($request->filled('notes')) {
+            $notes .= ' Note: ' . $request->notes;
+        }
+
+        $booking->additional_notes .= $notes;
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Refund processed successfully');
     }
 
     public function undoBooking($id)
@@ -732,7 +827,26 @@ class RoomBookingController extends Controller
         // Logic to restrict undo time if needed (e.g. check updated_at)
         // For now, allow undo.
         // Revert to 'booked' or 'confirmed'? Usually 'booked' is the initial confirmed state in this system.
-        $booking->status = 'booked';
+        $previousStatus = $booking->status;
+
+        // Revert to 'confirmed'
+        $booking->status = 'confirmed';
+
+        // If it was refunded (money gone), we must reset financial records to reflect 'unpaid' state
+        if ($previousStatus === 'refunded' || ($booking->invoice && $booking->invoice->status === 'refunded')) {
+            if ($booking->invoice) {
+                $booking->invoice->status = 'unpaid';
+                $booking->invoice->advance_payment = 0;  // Clear advance since it was returned
+                $booking->invoice->save();
+            }
+            $booking->security_deposit = 0;  // Clear security deposit since it was returned
+        } elseif ($booking->invoice && $booking->invoice->status === 'cancelled') {
+            // If just cancelled (money held), revert invoice to paid/unpaid based on balance
+            $total = $booking->invoice->total_price;
+            $paid = $booking->invoice->paid_amount + $booking->invoice->advance_payment;
+            $booking->invoice->status = ($paid >= $total && $total > 0) ? 'paid' : 'unpaid';
+            $booking->invoice->save();
+        }
 
         // Optionally note the undo
         $booking->additional_notes .= "\n[Undo Cancel: " . now()->toDateTimeString() . ']';

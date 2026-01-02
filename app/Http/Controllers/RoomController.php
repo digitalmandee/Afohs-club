@@ -79,7 +79,8 @@ class RoomController extends Controller
 
         $booking->invoice = $invoice ? [
             'id' => $invoice->id,
-            'status' => $invoice->status,
+            // Override status for display: If cancelled but has money, show as 'paid' (or whatever logic fits 'held money')
+            'status' => ($invoice->status === 'cancelled' && ($invoice->paid_amount > 0 || $invoice->advance_payment > 0)) ? 'paid' : $invoice->status,
             'paid_amount' => $invoice->paid_amount,
             'total_price' => $invoice->total_price,
             'advance_payment' => $invoice->advance_payment,

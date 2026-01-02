@@ -25,9 +25,10 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
     if (!booking) return null;
 
     const isCancel = action === 'cancel';
-    const title = isCancel ? 'Cancel Booking' : 'Undo Cancellation';
-    const confirmText = isCancel ? 'Confirm Cancel' : 'Confirm Undo';
-    const confirmColor = isCancel ? 'error' : 'primary';
+    const isRefund = action === 'refund';
+    const title = isCancel ? 'Cancel Booking' : isRefund ? 'Process Refund' : 'Undo Cancellation';
+    const confirmText = isCancel ? 'Confirm Cancel' : isRefund ? 'Confirm Refund' : 'Confirm Undo';
+    const confirmColor = isCancel || isRefund ? 'error' : 'primary';
 
     const handleConfirm = () => {
         onConfirm(booking.id, reason, refundData);
@@ -41,7 +42,9 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
     // Check if refund is applicable (Advance/Security Deposit was taken)
     // We check invoice.paid_amount. If > 0, we show refund form.
     const paidAmount = booking.invoice?.paid_amount || 0;
-    const showRefundForm = isCancel && paidAmount > 0;
+    const advanceAmount = booking.invoice?.advance_payment || booking.security_deposit || 0;
+    const maxRefundable = Math.max(paidAmount, advanceAmount);
+    const showRefundForm = (isCancel || isRefund) && maxRefundable > 0;
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
@@ -96,59 +99,57 @@ const BookingActionModal = ({ open, onClose, booking, action, onConfirm }) => {
 
                 <Divider sx={{ my: 2 }} />
 
+                {showRefundForm && (
+                    <Box sx={{ mb: 2, p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
+                        <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary">
+                            Return Payment Details (Max Refundable: {maxRefundable})
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Refund Amount"
+                                    type="number"
+                                    size="small"
+                                    value={refundData.amount}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value);
+                                        if (val > maxRefundable) return; // Prevent exceeding
+                                        setRefundData({ ...refundData, amount: e.target.value });
+                                    }}
+                                    InputProps={{
+                                        startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                    }}
+                                    helperText={`Max returnable: ${maxRefundable}`}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth size="small">
+                                    <InputLabel>Mode of Return</InputLabel>
+                                    <Select value={refundData.mode} label="Mode of Return" onChange={(e) => setRefundData({ ...refundData, mode: e.target.value })}>
+                                        <MenuItem value="Cash">Cash</MenuItem>
+                                        <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                        <MenuItem value="Cheque">Cheque</MenuItem>
+                                        <MenuItem value="Other">Other</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            {refundData.mode !== 'Cash' && (
+                                <Grid item xs={12}>
+                                    <TextField fullWidth label="Account / Cheque Details" size="small" value={refundData.account} onChange={(e) => setRefundData({ ...refundData, account: e.target.value })} placeholder="Enter account no or cheque details" />
+                                </Grid>
+                            )}
+                        </Grid>
+                    </Box>
+                )}
+
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                    {isCancel ? 'Are you sure you want to cancel this booking? This action can be undone later.' : 'Are you sure you want to undo the cancellation and restore this booking?'}
+                    {isCancel ? 'Are you sure you want to cancel this booking? This action can be undone later.' : isRefund ? 'Process a refund for this booking.' : 'Are you sure you want to undo the cancellation and restore this booking?'}
                 </Typography>
 
-                {isCancel && (
-                    <>
-                        <TextField fullWidth label="Cancellation Reason" multiline rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter reason for cancellation..." variant="outlined" sx={{ mt: 1 }} />
+                {isCancel && <TextField fullWidth label="Cancellation Reason" multiline rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter reason for cancellation..." variant="outlined" sx={{ mt: 1 }} />}
 
-                        {showRefundForm && (
-                            <Box sx={{ mt: 3, p: 2, backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-                                <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary">
-                                    Return Payment Details (Paid: {paidAmount})
-                                </Typography>
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} sm={6}>
-                                        <TextField
-                                            fullWidth
-                                            label="Refund Amount"
-                                            type="number"
-                                            size="small"
-                                            value={refundData.amount}
-                                            onChange={(e) => {
-                                                const val = parseFloat(e.target.value);
-                                                if (val > paidAmount) return; // Prevent exceeding
-                                                setRefundData({ ...refundData, amount: e.target.value });
-                                            }}
-                                            InputProps={{
-                                                startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
-                                            }}
-                                            helperText={`Max returnable: ${paidAmount}`}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} sm={6}>
-                                        <FormControl fullWidth size="small">
-                                            <InputLabel>Mode of Return</InputLabel>
-                                            <Select value={refundData.mode} label="Mode of Return" onChange={(e) => setRefundData({ ...refundData, mode: e.target.value })}>
-                                                <MenuItem value="Cash">Cash</MenuItem>
-                                                <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                                                <MenuItem value="Cheque">Cheque</MenuItem>
-                                                <MenuItem value="Other">Other</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    {refundData.mode !== 'Cash' && (
-                                        <Grid item xs={12}>
-                                            <TextField fullWidth label="Account / Cheque Details" size="small" value={refundData.account} onChange={(e) => setRefundData({ ...refundData, account: e.target.value })} placeholder="Enter account no or cheque details" />
-                                        </Grid>
-                                    )}
-                                </Grid>
-                            </Box>
-                        )}
-                    </>
-                )}
+                {isRefund && <TextField fullWidth label="Refund Note" multiline rows={2} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Enter note for refund..." variant="outlined" sx={{ mt: 1 }} />}
             </DialogContent>
             <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa' }}>
                 <Button onClick={onClose} variant="outlined" color="inherit" sx={{ borderRadius: '8px', textTransform: 'none' }}>

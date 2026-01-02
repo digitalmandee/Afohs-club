@@ -62,6 +62,16 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
             router.put(route('rooms.booking.cancel', bookingId), data, {
                 onSuccess: () => setActionModalOpen(false),
             });
+        } else if (actionType === 'refund') {
+            const data = {
+                refund_amount: refundData.amount,
+                refund_mode: refundData.mode,
+                refund_account: refundData.account,
+                notes: reason, // Optional note from modal
+            };
+            router.put(route('rooms.booking.refund', bookingId), data, {
+                onSuccess: () => setActionModalOpen(false),
+            });
         } else {
             router.put(
                 route('rooms.booking.undo-cancel', bookingId),
@@ -127,7 +137,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                             <IconButton onClick={() => router.visit(route('rooms.dashboard'))} sx={{ color: '#063455' }}>
                                 <ArrowBack />
                             </IconButton>
-                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Cancelled Room Bookings</Typography>
+                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Cancelled & Refunded Room Bookings</Typography>
                         </Box>
 
                         {/* Filters */}
@@ -162,11 +172,23 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                    {booking.status.replace(/_/g, ' ')}
+                                                    {booking.status === 'refunded' &&
+                                                        (() => {
+                                                            const match = booking.notes && booking.notes.match(/Refund Processed: (\d+)/);
+                                                            return match ? <div style={{ fontSize: '11px', color: '#063455', fontWeight: 'bold' }}>Refunded: Rs {match[1]}</div> : null;
+                                                        })()}
+                                                </TableCell>
                                                 <TableCell>
                                                     <Button size="small" variant="outlined" color="primary" startIcon={<Restore />} onClick={() => handleOpenActionModal(booking, 'undo')} sx={{ textTransform: 'none', borderRadius: '8px' }}>
                                                         Undo
                                                     </Button>
+                                                    {booking.status !== 'refunded' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
+                                                        <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} sx={{ textTransform: 'none', borderRadius: '8px', ml: 1, borderColor: '#d32f2f', color: '#d32f2f' }}>
+                                                            Refund
+                                                        </Button>
+                                                    )}
                                                     <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455', ml: 1, borderRadius: '8px' }}>
                                                         View
                                                     </Button>

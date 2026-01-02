@@ -15,6 +15,7 @@ import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
 import RoomOrderHistoryModal from '@/components/App/Rooms/RoomOrderHistoryModal';
+import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -29,6 +30,9 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
 
     // Order History Modal
     const [showHistoryModal, setShowHistoryModal] = useState(false);
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+
     // Main state for booking type
     // const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
@@ -103,16 +107,23 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     };
 
     const handleCancelBooking = () => {
-        const reason = prompt('Enter cancellation reason:');
-        if (reason !== null) {
-            if (confirm('Are you sure you want to cancel this booking?')) {
-                router.visit(route('rooms.booking.cancel', booking.id), {
-                    method: 'put',
-                    data: { cancellation_reason: reason },
-                    onSuccess: () => router.visit(route('rooms.dashboard')),
-                });
-            }
+        setActionModalOpen(true);
+    };
+
+    const handleConfirmAction = (bookingId, reason, refundData) => {
+        const data = { cancellation_reason: reason };
+        if (refundData && refundData.amount) {
+            data.refund_amount = refundData.amount;
+            data.refund_mode = refundData.mode;
+            data.refund_account = refundData.account;
         }
+
+        router.put(route('rooms.booking.cancel', bookingId), data, {
+            onSuccess: () => {
+                setActionModalOpen(false);
+                router.visit(route('rooms.dashboard'));
+            },
+        });
     };
 
     const handleBack = () => setActiveStep((prev) => prev - 1);
@@ -288,6 +299,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             </div>
 
             <RoomOrderHistoryModal open={showHistoryModal} onClose={() => setShowHistoryModal(false)} bookingId={booking.id} />
+            <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={booking} action="cancel" onConfirm={handleConfirmAction} />
         </>
     );
 };
