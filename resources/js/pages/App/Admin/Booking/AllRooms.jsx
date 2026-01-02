@@ -36,9 +36,9 @@ const AllRooms = ({ rooms }) => {
             > */}
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
+                    {/* <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
                         <ArrowBack />
-                    </IconButton>
+                    </IconButton> */}
                     <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                         All Rooms ({rooms.length})
                     </Typography>

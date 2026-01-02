@@ -19,9 +19,9 @@ const AddRoom = () => {
             > */}
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <IconButton sx={{ color: '#063455' }} onClick={() => router.visit(route('rooms.manage'))}>
+                    {/* <IconButton sx={{ color: '#063455' }} onClick={() => router.visit(route('rooms.manage'))}>
                         <ArrowBackIcon />
-                    </IconButton>
+                    </IconButton> */}
                     <Typography sx={{ ml: 1, fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                         Add Room
                     </Typography>

@@ -349,9 +349,9 @@ const EventCalendar = () => {
                 <Box sx={{ p: 2 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color: '#063455' }}>
+                        {/* <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color: '#063455' }}>
                             <ArrowBack />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Event Calender</Typography>
                     </Box>
                     <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Helps avoid clashes and manage venue availability efficiently</Typography>
