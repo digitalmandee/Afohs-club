@@ -32,7 +32,6 @@ const RoomCalendar = () => {
             });
 
             setResources(data.rooms);
-
             const evs = data.bookings.map((b) => ({
                 id: b.id,
                 booking: b,
@@ -183,9 +182,9 @@ const RoomCalendar = () => {
             >
                 <Box px={2}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
+                        {/* <IconButton style={{ color: '#063455' }} onClick={() => router.visit(route('rooms.dashboard'))}>
                             <ArrowBack />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography style={{ color: '#063455', fontSize: '30px', fontWeight: '700' }}>Room Booking Calendar</Typography>
                     </Box>
                     <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Helps avoid double-booking and see occupancy trends at a glance</Typography>

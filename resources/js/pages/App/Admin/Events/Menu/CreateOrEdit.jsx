@@ -49,14 +49,14 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                 sx={{
                     minHeight: '100vh',
                     padding: '20px',
-                    backgroundColor:'#f5f5f5',
+                    backgroundColor: '#f5f5f5',
                 }}
             >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }} onClick={() => router.visit(route('events.dashboard'))}>
-                    <IconButton>
-                        <ArrowBackIcon sx={{ color: '#555' }} />
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <IconButton onClick={() => window.history.back()}>
+                        <ArrowBackIcon sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                         {eventMenu ? 'Edit Event Menu' : 'Create Event Menu'}
                     </Typography>
                 </Box>
@@ -64,10 +64,36 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={4}>
-                                <TextField label="Menu Name" fullWidth value={data.name} onChange={(e) => setData('name', e.target.value)} error={!!errors.name} helperText={errors.name} />
+                                <TextField label="Menu Name" fullWidth value={data.name} onChange={(e) => setData('name', e.target.value)} error={!!errors.name} helperText={errors.name}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                            // height: '35px',
+                                            // border:'1px solid #063455'
+                                            // '& fieldset': {
+                                            //     border: 'none'  // Optional: cleaner look
+                                            // }
+                                        },
+                                        '& .MuiInputLabel-root': {
+                                            fontSize: '14px'
+                                        }
+                                    }} />
                             </Grid>
                             <Grid item xs={12} sm={4}>
-                                <TextField label="Amount" type="number" fullWidth value={data.amount} onChange={(e) => setData('amount', e.target.value)} error={!!errors.amount} helperText={errors.amount} />
+                                <TextField label="Amount" type="number" fullWidth value={data.amount} onChange={(e) => setData('amount', e.target.value)} error={!!errors.amount} helperText={errors.amount}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                            // height: '35px',
+                                            // border:'1px solid #063455'
+                                            // '& fieldset': {
+                                            //     border: 'none'  // Optional: cleaner look
+                                            // }
+                                        },
+                                        '& .MuiInputLabel-root': {
+                                            fontSize: '14px'
+                                        }
+                                    }} />
                             </Grid>
                             <Grid item xs={12} sm={4}>
                                 <FormControl fullWidth>

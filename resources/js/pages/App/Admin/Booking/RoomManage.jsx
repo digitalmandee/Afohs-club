@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
-import { Visibility, Cancel } from '@mui/icons-material';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
+import { FilterAlt, Search, Visibility,Cancel } from '@mui/icons-material';
+import { Box, Button, Paper, InputAdornment, Table, TableBody, TextField, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, Tooltip } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Col, Container, Form, Modal, Row } from 'react-bootstrap';
@@ -203,6 +203,14 @@ const RoomScreen = ({ bookings }) => {
         setFilteredBookings(bookings.data || []);
     }, [bookings]);
 
+    const statusColors = {
+        'checkedout': '#008000',    // Green
+        'checkedin': '#FFFF00',     // Yellow
+        'confirmed': '#800080',   // Purple
+        'cancelled': '#FF0000',   // Red
+        // fallback for others
+    };
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} />
@@ -236,7 +244,7 @@ const RoomScreen = ({ bookings }) => {
 
                     {/* TODO: Updated to use filteredBookings from data.bookings */}
 
-                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
@@ -264,8 +272,32 @@ const RoomScreen = ({ bookings }) => {
 
                                         return (
                                             <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>#{booking.booking_no}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell>
+                                                <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{booking.booking_no}</TableCell>
+                                                {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell> */}
+                                                <TableCell sx={{
+                                                    color: '#7F7F7F',
+                                                    fontWeight: 400,
+                                                    fontSize: '14px',
+                                                    maxWidth: '120px',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                    <Tooltip
+                                                        title={
+                                                            booking.customer ? booking.customer.name :
+                                                                booking.member ? booking.member.full_name :
+                                                                    booking.corporateMember || booking.corporate_member ?
+                                                                        (booking.corporateMember || booking.corporate_member).full_name :
+                                                                        ''
+                                                        }
+                                                        arrow
+                                                    >
+                                                        <span>
+                                                            {booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}
+                                                        </span>
+                                                    </Tooltip>
+                                                </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
@@ -277,19 +309,36 @@ const RoomScreen = ({ bookings }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.grand_total}</TableCell>
-                                                <TableCell>
+                                                {/* <TableCell>
                                                     <Badge
                                                         bg=""
                                                         style={{
                                                             backgroundColor: booking.status.replace(/_/g, '').toLowerCase() === 'confirmed' ? '#0e5f3c' : '#842029',
                                                             color: 'white',
-                                                            padding: '5px 10px',
-                                                            borderRadius: '6px',
+                                                            // padding: '5px 10px',
+                                                            // borderRadius: '2px',
                                                             fontSize: '0.8rem',
                                                             fontWeight: 500,
                                                             minWidth: '100px',
                                                             textAlign: 'center',
-                                                            borderRadius: '10px',
+                                                            borderRadius: '4px',
+                                                            textTransform: 'capitalize',
+                                                        }}
+                                                    >
+                                                        {booking.status.replace(/_/g, ' ')}
+                                                    </Badge>
+                                                </TableCell> */}
+                                                <TableCell>
+                                                    <Badge
+                                                        bg=""
+                                                        style={{
+                                                            backgroundColor: statusColors[booking.status.replace(/_/g, '').toLowerCase()] || '#842029',
+                                                            color: 'white',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: 500,
+                                                            minWidth: '100px',
+                                                            textAlign: 'center',
+                                                            borderRadius: '4px',
                                                             textTransform: 'capitalize',
                                                         }}
                                                     >

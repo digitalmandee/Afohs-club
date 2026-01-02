@@ -77,14 +77,14 @@ const EventMenuTypes = ({ eventMenuTypesData }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => router.visit(route('events.dashboard'))}>
+                        {/* <IconButton onClick={() => router.visit(route('events.dashboard'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>
                             Menu Types
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px', textTransform:'none' }} onClick={handleAdd}>
                         Add Menu Type
                     </Button>
                 </Box>
@@ -96,10 +96,10 @@ const EventMenuTypes = ({ eventMenuTypesData }) => {
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>#</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Menu Type</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Action</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>#</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Menu Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -107,7 +107,7 @@ const EventMenuTypes = ({ eventMenuTypesData }) => {
                             {eventMenuTypes.length > 0 ? (
                                 eventMenuTypes.map((menuType, index) => (
                                     <TableRow key={menuType.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{index + 1}</TableCell>
+                                        <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight:600 }}>{index + 1}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{menuType.name}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{menuType.status}</TableCell>
                                         <TableCell>

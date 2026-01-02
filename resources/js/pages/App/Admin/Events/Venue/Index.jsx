@@ -77,9 +77,9 @@ const EventVenues = ({ eventVenuesData }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => router.visit(route('events.dashboard'))}>
+                        {/* <IconButton onClick={() => router.visit(route('events.dashboard'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography variant="h5" sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Event Venues
                         </Typography>
@@ -96,10 +96,10 @@ const EventVenues = ({ eventVenuesData }) => {
                     <Table>
                         <TableHead>
                             <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>#</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Venue</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '16px', fontWeight: 600 }}>Action</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>#</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Venue</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -107,7 +107,7 @@ const EventVenues = ({ eventVenuesData }) => {
                             {eventVenues.length > 0 ? (
                                 eventVenues.map((venue, index) => (
                                     <TableRow key={venue.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{index + 1}</TableCell>
+                                        <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight:600 }}>{index + 1}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{venue.name}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{venue.status}</TableCell>
                                         <TableCell>

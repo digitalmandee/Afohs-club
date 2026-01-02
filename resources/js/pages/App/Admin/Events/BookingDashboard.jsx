@@ -154,17 +154,18 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                         </Col>
                         <Col xs="auto">
                             <Button
+                            // variant='contain'
                                 style={{
                                     backgroundColor: '#063455',
                                     color: 'white',
                                     border: 'none',
                                     // padding: '5px 10px',
                                     borderRadius: '16px',
-                                    height:35,
+                                    height: 35,
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '1px',
-                                    textTransform: 'uppercase'
+                                    textTransform: 'none'
                                 }}
                                 onClick={() => router.visit(route('events.booking.create'))}
                             >
@@ -296,14 +297,14 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                         <Col xs="auto" className="d-flex gap-3">
                             <div style={{ position: 'relative' }}>
                                 <Form.Control
-                                    placeholder="Search"
+                                    placeholder="Search for event bookings"
                                     aria-label="Search"
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     style={{
                                         paddingLeft: '2rem',
-                                        borderColor: '#ced4da',
-                                        borderRadius: '4px',
+                                        // borderColor: '#ced4da',
+                                        borderRadius: '16px',
                                         height: '38px',
                                         fontSize: '0.9rem',
                                         // width:'50%'
@@ -347,14 +348,14 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                                         style={{
                                                             backgroundColor: getStatusColor(booking.status),
                                                             color: 'white',
-                                                            padding: '6px 14px',
-                                                            borderRadius: '6px',
+                                                            // padding: '6px 14px',
                                                             fontSize: '0.85rem',
                                                             fontWeight: 500,
                                                             minWidth: '100px',
                                                             textAlign: 'center',
                                                             cursor: 'pointer',
-                                                            borderRadius: '0px',
+                                                            borderRadius: '12px',
+                                                            textTransform:'capitalize'
                                                         }}
                                                     >
                                                         {booking.status}
@@ -362,50 +363,50 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                                 </div>
                                                 <Row className="text-start mt-2">
                                                     <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px' }}>
                                                             Booking ID
                                                         </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '14px' }}>
                                                             # {booking.booking_no}
                                                         </Typography>
                                                     </Col>
                                                     <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px' }}>
                                                             Event Date
                                                         </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '14px' }}>
                                                             {booking.event_date}
                                                         </Typography>
                                                     </Col>
                                                     <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px' }}>
                                                             Event Time
                                                         </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '14px' }}>
                                                             {booking.event_time_from} - {booking.event_time_to}
                                                         </Typography>
                                                     </Col>
                                                     <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px' }}>
                                                             Venue
                                                         </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '14px' }}>
                                                             {booking.event_venue?.name || 'N/A'}
                                                         </Typography>
                                                     </Col>
                                                     <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px' }}>
                                                             Guests
                                                         </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '14px' }}>
                                                             {booking.no_of_guests}
                                                         </Typography>
                                                     </Col>
                                                     <Col md={2} sm={6} className="mb-2">
-                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '12px' }}>
+                                                        <Typography variant="body2" style={{ color: '#7F7F7F', fontSize: '14px' }}>
                                                             Total Payment
                                                         </Typography>
-                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '12px' }}>
+                                                        <Typography variant="body1" style={{ fontWeight: 400, color: '#121212', fontSize: '14px' }}>
                                                             Rs. {booking.total_price}
                                                         </Typography>
                                                     </Col>

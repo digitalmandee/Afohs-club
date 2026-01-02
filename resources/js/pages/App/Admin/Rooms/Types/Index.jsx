@@ -77,18 +77,18 @@ const RoomTypes = ({ roomTypesData }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('rooms.manage'))}>
-                        <IconButton>
+                        {/* <IconButton>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
+                        </IconButton> */}
                         <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Room Types
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#003366', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
                         Add Type
                     </Button>
                 </Box>
-                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
                     Manage and define room categories (e.g., Deluxe, Suite, Guest Room)</Typography>
 
                 <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
@@ -106,7 +106,7 @@ const RoomTypes = ({ roomTypesData }) => {
                             {roomTypes.length > 0 ? (
                                 roomTypes.map((type, index) => (
                                     <TableRow key={type.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{index + 1}</TableCell>
+                                        <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight:600 }}>{index + 1}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{type.name}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{type.status}</TableCell>
                                         <TableCell>
