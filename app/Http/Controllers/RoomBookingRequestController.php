@@ -12,7 +12,7 @@ class RoomBookingRequestController extends Controller
 {
     public function index()
     {
-        $requests = RoomBookingRequest::with(['room', 'member', 'customer'])->latest()->get();
+        $requests = RoomBookingRequest::with(['room', 'member', 'customer', 'corporateMember'])->latest()->get();
 
         return Inertia::render('App/Admin/Booking/Room/Requests', [
             'requests' => $requests
@@ -51,32 +51,18 @@ class RoomBookingRequestController extends Controller
             'per_day_charge' => 'required|numeric|min:0',
         ]);
 
-        // Prevent duplicate booking request for overlapping dates and same room
-        $exists = RoomBookingRequest::where('room_id', $validated['room_id'])
-            ->where(function($query) use ($validated) {
-                $query->whereBetween('check_in_date', [$validated['check_in_date'], $validated['check_out_date']])
-                      ->orWhereBetween('check_out_date', [$validated['check_in_date'], $validated['check_out_date']])
-                      ->orWhere(function($q) use ($validated) {
-                          $q->where('check_in_date', '<=', $validated['check_in_date'])
-                            ->where('check_out_date', '>=', $validated['check_out_date']);
-                      });
-            })
-            ->whereIn('status', ['pending', 'approved'])
-            ->exists();
-
-        if ($exists) {
-            return back()->withErrors(['check_in_date' => 'A booking request for these dates and room already exists or overlaps with existing booking.'])->withInput();
-        }
-
         // Add logic for member or customer
         if (str_starts_with($validated['booking_type'], 'guest-')) {
             $request->validate(['customer_id' => 'required|exists:customers,id']);
+        } elseif ($validated['booking_type'] == '2') {
+            $request->validate(['corporate_member_id' => 'required|exists:corporate_members,id']);
         } else {
             $request->validate(['member_id' => 'required|exists:members,id']);
         }
 
         $validated['member_id'] = $request->member_id ?? null;
         $validated['customer_id'] = $request->customer_id ?? null;
+        $validated['corporate_member_id'] = $request->corporate_member_id ?? null;
         $validated['status'] = 'pending';
 
         RoomBookingRequest::create($validated);
@@ -86,7 +72,7 @@ class RoomBookingRequestController extends Controller
 
     public function show($id)
     {
-        $request = RoomBookingRequest::with(['room', 'member', 'customer'])->findOrFail($id);
+        $request = RoomBookingRequest::with(['room', 'member', 'customer', 'corporateMember'])->findOrFail($id);
         return Inertia::render('Admin/Rooms/ViewBookingRequest', [
             'request' => $request
         ]);
@@ -102,7 +88,7 @@ class RoomBookingRequestController extends Controller
             ->select('id', 'name', 'max_capacity')
             ->get();
 
-        $request = RoomBookingRequest::with(['member', 'customer'])->findOrFail($id);
+        $request = RoomBookingRequest::with(['member', 'customer', 'corporateMember'])->findOrFail($id);
 
         return Inertia::render('App/Admin/Booking/Request', [
             'rooms' => $rooms,
@@ -124,6 +110,12 @@ class RoomBookingRequestController extends Controller
         ]);
 
         $roomRequest = RoomBookingRequest::findOrFail($id);
+        // Handle guest change logic here if needed, or assume guest cannot be changed in simple update
+        if (isset($validated['booking_type'])) {
+            // If booking type logic needs to be updated, it should mirror store()
+            // For now, assuming only details are updated, not the guest itself unless explicitly handled
+        }
+
         $roomRequest->update($validated);
 
         return redirect()->route('rooms.request')->with('success', 'Booking Request updated successfully.');
