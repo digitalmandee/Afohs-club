@@ -430,6 +430,7 @@ class RoomBookingController extends Controller
                         ->where('check_out_date', '>', $monthEnd);
                 });
         })
+            ->where('status', '!=', 'cancelled')
             ->with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email')
             ->get()
             ->map(fn($b) => [

@@ -4,7 +4,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { usePage, router } from '@inertiajs/react';
-import { Box, Typography, Paper, Grid, IconButton, Button, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
+import { Box, Typography, Paper, Grid, IconButton, Button, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, MenuItem, Select, InputLabel, FormControl, Chip } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { enqueueSnackbar } from 'notistack';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
@@ -21,7 +21,7 @@ const RoomBookingRequestForm = ({ mode }) => {
         checkInDate: request?.check_in_date || '',
         checkOutDate: request?.check_out_date || '',
         bookingType: request?.booking_type || '',
-        guest: request?.member || request?.customer || '',
+        guest: request?.member || request?.customer || request?.corporate_member || '',
         roomId: request?.room_id || '',
         bookingCategory: request?.booking_category || '',
         persons: request?.persons || '',
@@ -79,6 +79,8 @@ const RoomBookingRequestForm = ({ mode }) => {
 
         if (formData.bookingType.startsWith('guest-')) {
             payload.customer_id = formData.guest?.id || null;
+        } else if (formData.bookingType == '2') {
+            payload.corporate_member_id = formData.guest?.id || null;
         } else {
             payload.member_id = formData.guest?.id || null;
         }
@@ -111,9 +113,7 @@ const RoomBookingRequestForm = ({ mode }) => {
                     <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
                         <ArrowBack />
                     </IconButton>
-                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                        {mode === 'create' ? 'Add Room Booking Request' : 'Edit Room Booking Request'}
-                    </Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>{mode === 'create' ? 'Add Room Booking Request' : 'Edit Room Booking Request'}</Typography>
                 </Box>
 
                 <Paper
@@ -197,7 +197,16 @@ const RoomBookingRequestForm = ({ mode }) => {
                                 {mode === 'edit' ? (
                                     <TextField value={formData.bookingType == 0 ? 'Member' : formData.bookingType == 2 ? 'Corporate Member' : formData.bookingType == 'guest-1' ? 'Applied Member' : formData.bookingType == 'guest-2' ? 'Affiliated Member' : 'VIP Guest'} fullWidth InputProps={{ readOnly: true }} disabled sx={{ mt: 1 }} />
                                 ) : (
-                                    <RadioGroup row name="bookingType" value={formData.bookingType} onChange={handleChange}>
+                                    <RadioGroup
+                                        row
+                                        name="bookingType"
+                                        value={formData.bookingType}
+                                        onChange={(e) => {
+                                            handleChange(e);
+                                            setFormData((prev) => ({ ...prev, bookingType: e.target.value, guest: '' }));
+                                            setFamilyMembers([]);
+                                        }}
+                                    >
                                         <FormControlLabel value="0" control={<Radio />} label="Member" />
                                         <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
                                         <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
@@ -210,7 +219,45 @@ const RoomBookingRequestForm = ({ mode }) => {
 
                             {/* Member / Guest Search */}
                             <Grid item xs={12}>
-                                {mode === 'edit' ? <TextField label="Member / Guest Name" value={request?.member ? `${request.member.full_name} (${request.member.membership_no})` : request?.customer ? `${request.customer.name} (ID: ${request.customer.customer_no})` : 'No member/guest selected'} fullWidth InputProps={{ readOnly: true }} disabled /> : <AsyncSearchTextField label="Member / Guest Name" name="guest" value={formData.guest} onChange={(guest) => handleGuestSelect(guest.target.value)} params={{ type: formData.bookingType }} endpoint="admin.api.search-users" placeholder="Search members..." />}
+                                {mode === 'edit' ? (
+                                    <TextField label="Member / Guest Name" value={request?.member ? `${request.member.full_name} (${request.member.membership_no})` : request?.customer ? `${request.customer.name} (ID: ${request.customer.customer_no})` : request?.corporate_member ? `${request.corporate_member.full_name} (${request.corporate_member.membership_no})` : 'No member/guest selected'} fullWidth InputProps={{ readOnly: true }} disabled />
+                                ) : (
+                                    <AsyncSearchTextField
+                                        label="Member / Guest Name"
+                                        name="guest"
+                                        value={formData.guest}
+                                        onChange={(guest) => handleGuestSelect(guest.target.value)}
+                                        params={{ type: formData.bookingType }}
+                                        endpoint="admin.api.search-users"
+                                        placeholder="Search members..."
+                                        resultFormat={(option) => (
+                                            <Box sx={{ width: '100%' }}>
+                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {option.membership_no || option.customer_no || option.employee_id}
+                                                    </Typography>
+                                                    {option.status && (
+                                                        <Chip
+                                                            label={option.status}
+                                                            size="small"
+                                                            sx={{
+                                                                height: '20px',
+                                                                fontSize: '10px',
+                                                                backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                                color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                                textTransform: 'capitalize',
+                                                                ml: 1,
+                                                            }}
+                                                        />
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {option.name}
+                                                </Typography>
+                                            </Box>
+                                        )}
+                                    />
+                                )}
                             </Grid>
 
                             {/* Select Room */}

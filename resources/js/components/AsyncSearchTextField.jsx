@@ -38,6 +38,8 @@ const AsyncSearchTextField = ({
     useEffect(() => {
         if (value && value.label !== inputValue) {
             setInputValue(value.label || '');
+        } else if (!value) {
+            setInputValue('');
         }
     }, [value]);
 
