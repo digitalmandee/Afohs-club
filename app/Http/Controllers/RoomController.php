@@ -29,7 +29,9 @@ class RoomController extends Controller
             'customer:id,customer_no,email,name',
             'member:id,membership_no,full_name',
             'corporateMember:id,membership_no,full_name'
-        ])->latest();
+        ])
+            ->latest()
+            ->whereNotIn('status', ['checked_in', 'checked_out']);
 
         // ✅ Apply Date Range filter via helper
         $this->applyFilters($query, $filters);

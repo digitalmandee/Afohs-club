@@ -296,7 +296,8 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                         );
                                     }}
                                 >
-                                    {['confirmed', 'checked_in', 'checked_out', 'cancelled', 'refunded'].map((status) => (
+                                    {/* 'checked_in', 'checked_out',  */}
+                                    {['confirmed', 'cancelled', 'refunded'].map((status) => (
                                         <MenuItem key={status} value={status}>
                                             {status.replace('_', ' ').toUpperCase()}
                                         </MenuItem>

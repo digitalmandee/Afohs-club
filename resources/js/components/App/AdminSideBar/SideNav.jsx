@@ -139,7 +139,7 @@ export default function SideNav({ open, setOpen }) {
                                 path: route('rooms.dashboard'),
                             },
                             {
-                                text: 'Manage',
+                                text: 'Room Bookings',
                                 path: route('rooms.manage'),
                             },
                             {
