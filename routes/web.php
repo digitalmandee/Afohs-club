@@ -222,6 +222,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Admin Booking Routes
     Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
+    Route::get('/api/room-bookings/search-customers', [RoomBookingController::class, 'searchCustomers'])->name('api.bookings.search-customers');
     Route::get('/api/events/calendar', [EventBookingController::class, 'calendarData'])->name('api.events.calendar');
     Route::get('/api/events/venues', [EventBookingController::class, 'getVenues'])->name('api.events.venues');
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');

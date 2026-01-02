@@ -9,6 +9,7 @@ use App\Models\RoomBooking;
 use App\Models\RoomCategory;
 use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
+use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -548,46 +549,128 @@ class RoomBookingController extends Controller
 
     public function cancelled(Request $request)
     {
+        $filters = $request->only(['search', 'room_type', 'booking_date_from', 'booking_date_to', 'check_in_from', 'check_in_to', 'check_out_from', 'check_out_to', 'customer_type', 'room_ids']);
+
         $query = RoomBooking::with([
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
-            'room:id,name'
+            'room:id,name,room_type_id'
         ])->where('status', 'cancelled');
 
-        if ($request->filled('search_name')) {
-            $searchName = $request->search_name;
-            $query->where(function ($q) use ($searchName) {
-                $q
-                    ->whereHas('customer', function ($subQ) use ($searchName) {
-                        $subQ->where('name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('member', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    });
-            });
-        }
+        // Apply shared filters
+        $this->applyFilters($query, $filters);
 
-        if ($request->filled('search_id')) {
-            $query->where('booking_no', 'like', "%{$request->search_id}%");
-        }
-
-        if ($request->filled('booking_date_from')) {
-            $query->whereDate('check_in_date', '>=', $request->booking_date_from);
-        }
-        if ($request->filled('booking_date_to')) {
-            $query->whereDate('check_in_date', '<=', $request->booking_date_to);
-        }
-
-        $bookings = $query->orderBy('updated_at', 'desc')->paginate(20);
+        $bookings = $query->orderBy('updated_at', 'desc')->paginate(20)->withQueryString();
 
         return Inertia::render('App/Admin/Booking/Room/Cancelled', [
             'bookings' => $bookings,
-            'filters' => $request->only(['search_name', 'search_id', 'booking_date_from', 'booking_date_to'])
+            'filters' => $filters,
+            'roomTypes' => RoomType::select('id', 'name')->get(),
+            'rooms' => Room::select('id', 'name')->get(),
         ]);
+    }
+
+    private function applyFilters($query, $filters)
+    {
+        // Search
+        // Customer Type & Search Logic
+        $customerType = $filters['customer_type'] ?? 'all';
+        $search = $filters['search'] ?? null;
+
+        if ($customerType === 'member') {
+            $query->whereHas('member');
+            if ($search) {
+                $query->whereHas('member', function ($q) use ($search) {
+                    $q
+                        ->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%");
+                });
+            }
+        } elseif ($customerType === 'corporate') {
+            $query->whereHas('corporateMember');
+            if ($search) {
+                $query->whereHas('corporateMember', function ($q) use ($search) {
+                    $q
+                        ->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%");
+                });
+            }
+        } elseif ($customerType === 'guest') {
+            $query->whereHas('customer');
+            if ($search) {
+                $query->whereHas('customer', function ($q) use ($search) {
+                    $q
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('customer_no', 'like', "%{$search}%");
+                });
+            }
+        } else {
+            // ALL types
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('id', 'like', "%{$search}%")
+                        ->orWhere('booking_no', 'like', "%{$search}%")
+                        ->orWhereHas('member', function ($sub) use ($search) {
+                            $sub
+                                ->where('full_name', 'like', "%{$search}%")
+                                ->orWhere('membership_no', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($sub) use ($search) {
+                            $sub
+                                ->where('full_name', 'like', "%{$search}%")
+                                ->orWhere('membership_no', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('customer', function ($sub) use ($search) {
+                            $sub
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('customer_no', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('room', function ($sub) use ($search) {
+                            $sub->where('name', 'like', "%{$search}%");
+                        });
+                });
+            }
+        }
+
+        // Room Type
+        if (!empty($filters['room_type'])) {
+            $roomTypes = explode(',', $filters['room_type']);
+            $query->whereHas('room', function ($q) use ($roomTypes) {
+                $q->whereIn('room_type_id', $roomTypes);
+            });
+        }
+
+        // Room IDs
+        if (!empty($filters['room_ids'])) {
+            $roomIds = explode(',', $filters['room_ids']);
+            $query->whereIn('room_id', $roomIds);
+        }
+
+        // Booking Date
+        if (!empty($filters['booking_date_from'])) {
+            $query->whereDate('booking_date', '>=', $filters['booking_date_from']);
+        }
+        if (!empty($filters['booking_date_to'])) {
+            $query->whereDate('booking_date', '<=', $filters['booking_date_to']);
+        }
+
+        // Check In Date
+        if (!empty($filters['check_in_from'])) {
+            $query->whereDate('check_in_date', '>=', $filters['check_in_from']);
+        }
+        if (!empty($filters['check_in_to'])) {
+            $query->whereDate('check_in_date', '<=', $filters['check_in_to']);
+        }
+
+        // Check Out Date
+        if (!empty($filters['check_out_from'])) {
+            $query->whereDate('check_out_date', '>=', $filters['check_out_from']);
+        }
+        if (!empty($filters['check_out_to'])) {
+            $query->whereDate('check_out_date', '<=', $filters['check_out_to']);
+        }
     }
 
     public function cancelBooking(Request $request, $id)
@@ -620,5 +703,88 @@ class RoomBookingController extends Controller
         $booking->save();
 
         return redirect()->back()->with('success', 'Booking cancellation undone successfully');
+    }
+
+    public function searchCustomers(Request $request)
+    {
+        $query = $request->input('query');
+        $type = $request->input('type', 'all');  // all, member, corporate, guest
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $results = collect();
+
+        // 1. Members
+        if ($type === 'all' || $type === 'member') {
+            $members = \App\Models\Member::where('status', 'active')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Member - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Member',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                    ];
+                });
+            $results = $results->merge($members);
+        }
+
+        // 2. Corporate Members
+        if ($type === 'all' || $type === 'corporate') {
+            $corporate = \App\Models\CorporateMember::where('status', 'active')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Corporate - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Corporate',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                    ];
+                });
+            $results = $results->merge($corporate);
+        }
+
+        // 3. Guests (Customers)
+        if ($type === 'all' || $type === 'guest') {
+            $guests = \App\Models\Customer::query()
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($c) {
+                    return [
+                        'label' => "{$c->name} (Guest - {$c->customer_no})",
+                        'value' => $c->name,
+                        'type' => 'Guest',
+                        'name' => $c->name,
+                        'customer_no' => $c->customer_no,
+                        'status' => null,  // Guests don't have a status column
+                    ];
+                });
+            $results = $results->merge($guests);
+        }
+
+        return response()->json($results);
     }
 }

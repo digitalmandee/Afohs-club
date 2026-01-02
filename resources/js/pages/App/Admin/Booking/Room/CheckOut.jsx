@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import RoomBookingFilter from '../BookingFilter';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -24,9 +25,9 @@ const RoomCheckOut = ({ bookings, filters }) => {
     const [selectedBooking, setSelectedBooking] = useState(null);
 
     // ✅ Filter States
-    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
-    const [startDate, setStartDate] = useState(filters?.start_date || '');
-    const [endDate, setEndDate] = useState(filters?.end_date || '');
+    // const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    // const [startDate, setStartDate] = useState(filters?.start_date || '');
+    // const [endDate, setEndDate] = useState(filters?.end_date || '');
 
     // View Documents Modal state
     const [showDocsModal, setShowDocsModal] = useState(false);
@@ -65,33 +66,33 @@ const RoomCheckOut = ({ bookings, filters }) => {
     };
 
     // ✅ Handle Filter/Search - Send to backend
-    const handleSearch = () => {
-        router.get(
-            route('rooms.checkout'),
-            {
-                search: searchQuery,
-                start_date: startDate,
-                end_date: endDate,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
-    };
+    // const handleSearch = () => {
+    //     router.get(
+    //         route('rooms.checkout'),
+    //         {
+    //             search: searchQuery,
+    //             start_date: startDate,
+    //             end_date: endDate,
+    //         },
+    //         {
+    //             preserveState: true,
+    //             preserveScroll: true,
+    //         },
+    //     );
+    // };
 
     // ✅ Reset Filters
-    const handleReset = () => {
-        setSearchQuery('');
-        setStartDate('');
-        setEndDate('');
-        router.get(route('rooms.checkout'), {}, { preserveState: true, preserveScroll: true });
-    };
-    const RoundedTextField = styled(TextField)({
-        '& .MuiOutlinedInput-root': {
-            borderRadius: '16px',
-        },
-    });
+    // const handleReset = () => {
+    //     setSearchQuery('');
+    //     setStartDate('');
+    //     setEndDate('');
+    //     router.get(route('rooms.checkout'), {}, { preserveState: true, preserveScroll: true });
+    // };
+    // const RoundedTextField = styled(TextField)({
+    //     '& .MuiOutlinedInput-root': {
+    //         borderRadius: '16px',
+    //     },
+    // });
 
     return (
         <>
@@ -119,116 +120,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                     <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Finalize bills, log checkout times, and free up room availability</Typography>
 
                     {/* Filter Section */}
-                    <Box sx={{ mb: 1, mt: 4 }}>
-                        <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
-                            {/* Search Input */}
-                            <TextField
-                                placeholder="Search by ID, Member, Guest, Room..."
-                                variant="outlined"
-                                size="small"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                sx={{
-                                    minWidth: '250px',
-                                    backgroundColor: 'transparent',
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '16px',
-                                    },
-                                }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Search />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
-
-                            {/* Start Date */}
-                            {/* Start Date */}
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    label="Start Date"
-                                    value={startDate ? dayjs(startDate) : null}
-                                    onChange={(newValue) => setStartDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    format="DD-MM-YYYY"
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: {
-                                            size: 'small',
-                                            fullWidth: false,
-                                            sx: { maxWidth: '250px', backgroundColor: 'transparent' },
-                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                        },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                    }}
-                                />
-                            </LocalizationProvider>
-
-                            {/* End Date */}
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    label="End Date"
-                                    value={endDate ? dayjs(endDate) : null}
-                                    onChange={(newValue) => setEndDate(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    format="DD-MM-YYYY"
-                                    enableAccessibleFieldDOMStructure={false}
-                                    slots={{ textField: RoundedTextField }}
-                                    slotProps={{
-                                        textField: {
-                                            size: 'small',
-                                            fullWidth: false,
-                                            sx: { maxWidth: '250px', backgroundColor: 'transparent' },
-                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                        },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                    }}
-                                />
-                            </LocalizationProvider>
-
-                            {/* Search Button */}
-                            <Button
-                                variant="contained"
-                                startIcon={<Search />}
-                                onClick={handleSearch}
-                                sx={{
-                                    backgroundColor: '#063455',
-                                    color: 'white',
-                                    textTransform: 'none',
-                                    borderRadius: '16px',
-                                    '&:hover': {
-                                        backgroundColor: '#052a44',
-                                    },
-                                }}
-                            >
-                                Search
-                            </Button>
-
-                            {/* Reset Button */}
-                            <Button
-                                variant="outlined"
-                                onClick={handleReset}
-                                sx={{
-                                    borderColor: '#063455',
-                                    color: '#063455',
-                                    textTransform: 'none',
-                                    borderRadius: '16px',
-                                    '&:hover': {
-                                        borderColor: '#052a44',
-                                        backgroundColor: '#f5f5f5',
-                                    },
-                                }}
-                            >
-                                Reset
-                            </Button>
-
-                            {/* Results Count */}
-                            {/* <Typography sx={{ ml: 'auto', color: '#7F7F7F', fontSize: '14px' }}>
-                                Showing {bookings.from || 0} to {bookings.to || 0} of {bookings.total || 0} results
-                            </Typography> */}
-                        </Box>
-                    </Box>
+                    {/* Filter Section */}
+                    <RoomBookingFilter routeName="rooms.checkout" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} />
 
                     <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>

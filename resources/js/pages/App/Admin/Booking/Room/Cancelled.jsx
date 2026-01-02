@@ -10,6 +10,8 @@ import dayjs from 'dayjs';
 import { styled } from '@mui/material/styles';
 import debounce from 'lodash.debounce';
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
+import RoomBookingFilter from '../BookingFilter';
+import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 
 const theme = createTheme({
     palette: {
@@ -23,10 +25,10 @@ const RoundedTextField = styled(TextField)({
 });
 
 const RoomCancelled = ({ bookings, filters = {} }) => {
-    const [searchTerm, setSearchTerm] = useState(filters.search_name || '');
-    const [searchId, setSearchId] = useState(filters.search_id || '');
-    const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from || '');
-    const [bookingDateTo, setBookingDateTo] = useState(filters.booking_date_to || '');
+    // const [searchTerm, setSearchTerm] = useState(filters.search_name || '');
+    // const [searchId, setSearchId] = useState(filters.search_id || '');
+    // const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from || '');
+    // const [bookingDateTo, setBookingDateTo] = useState(filters.booking_date_to || '');
     const [filteredBookings, setFilteredBookings] = useState(bookings.data || []);
 
     // Invoice Modal
@@ -38,43 +40,65 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
         setShowInvoiceModal(true);
     };
 
-    const debouncedSearch = useMemo(
-        () =>
-            debounce((value) => {
-                router.get(route('rooms.booking.cancelled'), { search_name: value }, { preserveState: true });
-            }, 500),
-        [],
-    );
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [selectedActionBooking, setSelectedActionBooking] = useState(null);
 
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        debouncedSearch(e.target.value);
+    const handleOpenActionModal = (booking, type) => {
+        setSelectedActionBooking(booking);
+        setActionType(type); // 'undo'
+        setActionModalOpen(true);
     };
 
-    const handleReset = () => {
-        setSearchTerm('');
-        setSearchId('');
-        setBookingDateFrom('');
-        setBookingDateTo('');
-
-        router.get(route('rooms.booking.cancelled'), {}, { preserveState: true, preserveScroll: true });
+    const handleConfirmAction = (id) => {
+        // Only undo supported here
+        router.put(
+            route('rooms.booking.undo-cancel', id),
+            {},
+            {
+                onSuccess: () => setActionModalOpen(false),
+            },
+        );
     };
 
-    const handleApply = () => {
-        const filterParams = {};
-        if (searchTerm) filterParams.search_name = searchTerm;
-        if (searchId) filterParams.search_id = searchId;
-        if (bookingDateFrom) filterParams.booking_date_from = bookingDateFrom;
-        if (bookingDateTo) filterParams.booking_date_to = bookingDateTo;
+    // const debouncedSearch = useMemo(
+    //     () =>
+    //         debounce((value) => {
+    //             router.get(route('rooms.booking.cancelled'), { search_name: value }, { preserveState: true });
+    //         }, 500),
+    //     [],
+    // );
 
-        router.get(route('rooms.booking.cancelled'), filterParams, { preserveState: true, preserveScroll: true });
-    };
+    // const handleSearchChange = (e) => {
+    //     setSearchTerm(e.target.value);
+    //     debouncedSearch(e.target.value);
+    // };
 
-    const handleUndo = (id) => {
-        if (confirm('Are you sure you want to undo this cancellation?')) {
-            router.put(route('rooms.booking.undo-cancel', id));
-        }
-    };
+    // const handleReset = () => {
+    //     setSearchTerm('');
+    //     setSearchId('');
+    //     setBookingDateFrom('');
+    //     setBookingDateTo('');
+
+    //     router.get(route('rooms.booking.cancelled'), {}, { preserveState: true, preserveScroll: true });
+    // };
+
+    // const handleApply = () => {
+    //     const filterParams = {};
+    //     if (searchTerm) filterParams.search_name = searchTerm;
+    //     if (searchId) filterParams.search_id = searchId;
+    //     if (bookingDateFrom) filterParams.booking_date_from = bookingDateFrom;
+    //     if (bookingDateTo) filterParams.booking_date_to = bookingDateTo;
+
+    //     router.get(route('rooms.booking.cancelled'), filterParams, { preserveState: true, preserveScroll: true });
+    // };
+
+    // const handleUndo = (id) => {
+    //     if (confirm('Are you sure you want to undo this cancellation?')) {
+    //         router.put(route('rooms.booking.undo-cancel', id));
+    //     }
+    // };
 
     useEffect(() => {
         setFilteredBookings(bookings.data || []);
@@ -97,30 +121,8 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                         </Box>
 
                         {/* Filters */}
-                        <Box sx={{ mb: 3 }}>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12} md={3}>
-                                    <TextField fullWidth size="small" label="Search by Name" placeholder="Guest name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <TextField fullWidth size="small" label="Booking ID" placeholder="Booking ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
-                                </Grid>
-                                <Grid item xs={12} md={2.5}>
-                                    <DatePicker label="Check-In From" format="DD-MM-YYYY" value={bookingDateFrom ? dayjs(bookingDateFrom) : null} onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true } }} enableAccessibleFieldDOMStructure={false} />
-                                </Grid>
-                                <Grid item xs={12} md={2.5}>
-                                    <DatePicker label="Check-In To" format="DD-MM-YYYY" value={bookingDateTo ? dayjs(bookingDateTo) : null} onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true } }} enableAccessibleFieldDOMStructure={false} />
-                                </Grid>
-                                <Grid item xs={12} md={2} sx={{ display: 'flex', gap: 1 }}>
-                                    <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', color: '#063455', borderColor: '#063455', textTransform: 'none' }}>
-                                        Reset
-                                    </Button>
-                                    <Button variant="contained" onClick={handleApply} startIcon={<Search />} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none' }}>
-                                        Search
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </Box>
+                        {/* Filters */}
+                        <RoomBookingFilter routeName="rooms.booking.cancelled" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} />
 
                         <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
                             <Table>
@@ -152,7 +154,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
                                                 <TableCell>
-                                                    <Button size="small" variant="outlined" color="primary" startIcon={<Restore />} onClick={() => handleUndo(booking.id)} sx={{ textTransform: 'none', borderRadius: '8px' }}>
+                                                    <Button size="small" variant="outlined" color="primary" startIcon={<Restore />} onClick={() => handleOpenActionModal(booking, 'undo')} sx={{ textTransform: 'none', borderRadius: '8px' }}>
                                                         Undo
                                                     </Button>
                                                     <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455', ml: 1, borderRadius: '8px' }}>
@@ -187,6 +189,8 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
             </ThemeProvider>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
+
+            <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
-import { FilterAlt, Search, Visibility } from '@mui/icons-material';
-import { Box, Button, Paper, InputAdornment, Table, TableBody, TextField, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
+import { Visibility, Cancel } from '@mui/icons-material';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
 import { Badge, Col, Container, Form, Modal, Row } from 'react-bootstrap';
@@ -8,6 +8,7 @@ import RoomBookingFilter from './BookingFilter';
 import dayjs from 'dayjs'; // Added for duration calculation
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
+import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 import debounce from 'lodash.debounce';
 
 // const drawerWidthOpen = 240;
@@ -97,8 +98,8 @@ const dialogStyles = `
 
 const RoomScreen = ({ bookings }) => {
     // const [open, setOpen] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showFilter, setShowFilter] = useState(false);
+    // const [searchTerm, setSearchTerm] = useState('');
+    // const [showFilter, setShowFilter] = useState(false);
 
     const [filteredBookings, setFilteredBookings] = useState(bookings.data || []); // Initialize with all bookings
 
@@ -114,16 +115,18 @@ const RoomScreen = ({ bookings }) => {
     const debouncedSearch = useMemo(
         () =>
             debounce((value) => {
-                router.get(route('rooms.manage'), { search: value }, { preserveState: true });
+                const currentFilters = { ...(bookings.filters || {}) }; // Ensure we get filters from props if available
+                delete currentFilters.search;
+                router.get(route('rooms.manage'), { ...currentFilters, search: value }, { preserveState: true });
             }, 500), // 500ms delay
-        [],
+        [bookings.filters],
     );
 
     // ✅ Handle input change
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        debouncedSearch(e.target.value);
-    };
+    // const handleSearchChange = (e) => {
+    //     setSearchTerm(e.target.value);
+    //     debouncedSearch(e.target.value);
+    // };
 
     // TODO: Remove invoice modal handler when reverting to original print functionality
     const handleShowInvoice = (booking) => {
@@ -137,9 +140,6 @@ const RoomScreen = ({ bookings }) => {
         setSelectedBooking(null);
     };
 
-    const handleFilterClose = () => setShowFilter(false);
-    const handleFilterShow = () => setShowFilter(true);
-
     // View Documents handlers
     const handleShowDocs = (booking) => {
         setSelectedBookingForDocs(booking);
@@ -149,6 +149,30 @@ const RoomScreen = ({ bookings }) => {
     const handleCloseDocs = () => {
         setShowDocsModal(false);
         setSelectedBookingForDocs(null);
+    };
+
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [selectedActionBooking, setSelectedActionBooking] = useState(null);
+
+    const handleOpenActionModal = (booking, type) => {
+        setSelectedActionBooking(booking);
+        setActionType(type); // 'cancel'
+        setActionModalOpen(true);
+    };
+
+    const handleConfirmAction = (id, reason) => {
+        // Only cancel supported here
+        if (actionType === 'cancel') {
+            router.put(
+                route('rooms.booking.cancel', id),
+                { cancellation_reason: reason },
+                {
+                    onSuccess: () => setActionModalOpen(false),
+                },
+            );
+        }
     };
 
     useEffect(() => {
@@ -166,7 +190,7 @@ const RoomScreen = ({ bookings }) => {
                 }}
             > */}
             <ThemeProvider theme={theme}>
-                <style>{dialogStyles}</style>
+                {/* <style>{dialogStyles}</style> */}
                 <Container
                     fluid
                     className="p-4"
@@ -179,63 +203,12 @@ const RoomScreen = ({ bookings }) => {
                         <Col>
                             <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Room Bookings</Typography>
                         </Col>
-                        <Col xs="auto" className="d-flex gap-2">
-                            <div style={{ position: 'relative' }}>
-                                <TextField
-                                    placeholder="Search"
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                    size="small"
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '16px',
-                                            height: '38px',
-                                            fontSize: '0.9rem',
-                                            // '& fieldset': {
-                                            //     borderColor: '#063455',
-                                            // },
-                                        },
-                                        width: '100%',
-                                        backgroundColor: 'transparent',
-                                    }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start" sx={{ ml: 1 }}>
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-
-                                {/* <Search
-                                    style={{
-                                        position: 'absolute',
-                                        left: '8px',
-                                        top: '53%',
-                                        transform: 'translateY(-50%)',
-                                        // color: '#adb5bd',
-                                        fontSize: '1.5rem',
-                                        pointerEvents: 'none',
-                                    }}
-                                /> */}
-                            </div>
-
-                            <Button
-                                variant="outline-secondary"
-                                className="d-flex align-items-center gap-1"
-                                style={{
-                                    border: '1px solid #063455',
-                                    borderRadius: '16px',
-                                    backgroundColor: '#063455',
-                                    color: '#fff',
-                                }}
-                                onClick={handleFilterShow}
-                            >
-                                <FilterAlt fontSize="small" style={{ color: '#fff' }} /> Filter
-                            </Button>
-                        </Col>
+                        <Col xs="auto">{/* Space for future actions if needed */}</Col>
                         <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>List and edit details of all rooms in the system</Typography>
                     </Row>
+
+                    {/* Inline Filter */}
+                    <RoomBookingFilter />
 
                     {/* TODO: Updated to use filteredBookings from data.bookings */}
 
@@ -301,6 +274,18 @@ const RoomScreen = ({ bookings }) => {
                                                         <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)}>
                                                             View
                                                         </Button>
+                                                        {booking.status !== 'cancelled' && (
+                                                            <Button
+                                                                size="small"
+                                                                variant="outlined"
+                                                                color="error" // Use predefined error color
+                                                                onClick={() => handleOpenActionModal(booking, 'cancel')}
+                                                                title="Cancel Booking"
+                                                                sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}
+                                                            >
+                                                                <Cancel fontSize="small" />
+                                                            </Button>
+                                                        )}
                                                     </Box>
                                                 </TableCell>
                                             </TableRow>
@@ -344,11 +329,7 @@ const RoomScreen = ({ bookings }) => {
                     {/* View Documents Modal */}
                     <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
 
-                    <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
-                        <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                            <RoomBookingFilter onClose={handleFilterClose} />
-                        </Modal.Body>
-                    </Modal>
+                    <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
                 </Container>
             </ThemeProvider>
             {/* </div> */}
