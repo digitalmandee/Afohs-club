@@ -292,7 +292,7 @@ const RoomBookingRequestForm = ({ mode }) => {
 
                             {/* Persons */}
                             <Grid item xs={4}>
-                                <TextField type="number" label="Number of Persons" name="persons" value={formData.persons} onChange={handleChange} fullWidth />
+                                <TextField type="number" label="Number of Persons" name="persons" value={formData.persons} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
                             </Grid>
 
                             {/* Per Day Charge */}
@@ -302,7 +302,7 @@ const RoomBookingRequestForm = ({ mode }) => {
 
                             {/* Security Deposit */}
                             <Grid item xs={4}>
-                                <TextField type="number" label="Security Deposit" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
+                                <TextField type="number" label="Security Deposit" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
                             </Grid>
 
                             {/* Submit */}

@@ -34,7 +34,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        isEdit ? put(route('customers.update', customer.id)) : post(route('guests.store'));
+        isEdit ? put(route('guests.update', customer.id)) : post(route('guests.store'));
     };
 
     return (
@@ -51,9 +51,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                     <IconButton>
                         <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('guests.index'))} />
                     </IconButton>
-                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>
-                        {isEdit ? 'Edit Customer' : 'Add Customer'}
-                    </Typography>
+                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>{isEdit ? 'Edit Customer' : 'Add Customer'}</Typography>
                 </Box>
 
                 <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 600, mx: 'auto', mt: 3, bgcolor: '#fff', p: 3 }}>

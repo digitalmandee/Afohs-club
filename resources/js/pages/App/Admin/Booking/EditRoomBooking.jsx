@@ -550,7 +550,7 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                     <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} fullWidth disabled={isCheckout} />
+                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/\D/g, '') } })} inputProps={{ maxLength: 11 }} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={5}>
                     <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth disabled={isCheckout} />
@@ -640,7 +640,7 @@ const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
             <Grid item xs={4}>
-                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth disabled={isCheckout} />
+                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth disabled={isCheckout} />
             </Grid>
         </Grid>
     );

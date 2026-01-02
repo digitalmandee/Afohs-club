@@ -177,6 +177,29 @@ class RoomBookingController extends Controller
                 }
             }
 
+            // check duplicate booking
+            if (!empty($data['checkInDate']) && !empty($data['checkOutDate']) && !empty($data['room']['id'])) {
+                $checkIn = $data['checkInDate'];
+                $checkOut = $data['checkOutDate'];
+                $roomId = $data['room']['id'];
+
+                $exists = RoomBooking::where('room_id', $roomId)
+                    ->whereNotIn('status', ['cancelled', 'refunded'])
+                    ->where(function ($query) use ($checkIn, $checkOut) {
+                        $query
+                            ->where('check_in_date', '<', $checkOut)
+                            ->where('check_out_date', '>', $checkIn);
+                    })
+                    ->exists();
+
+                if ($exists) {
+                    // Check if we are inside a transaction? Yes, DB::beginTransaction() called above.
+                    // But we can just direct return with error
+                    DB::rollBack();
+                    return response()->json(['error' => 'Room is already booked for these dates.'], 422);  // 422 Unprocessable Entity
+                }
+            }
+
             $bookingData = [
                 'booking_no' => $this->getBookingId(),
                 'booking_date' => $data['bookingDate'] ?? null,
@@ -316,6 +339,28 @@ class RoomBookingController extends Controller
         try {
             $booking = RoomBooking::findOrFail($id);
             $data = $req->all();
+
+            // check duplicate booking
+            if (!empty($data['checkInDate']) && !empty($data['checkOutDate']) && !empty($data['room']['id'])) {
+                $checkIn = $data['checkInDate'];
+                $checkOut = $data['checkOutDate'];
+                $roomId = $data['room']['id'];
+
+                $exists = RoomBooking::where('room_id', $roomId)
+                    ->where('id', '!=', $id)  // Exclude current booking
+                    ->whereNotIn('status', ['cancelled', 'refunded'])
+                    ->where(function ($query) use ($checkIn, $checkOut) {
+                        $query
+                            ->where('check_in_date', '<', $checkOut)
+                            ->where('check_out_date', '>', $checkIn);
+                    })
+                    ->exists();
+
+                if ($exists) {
+                    DB::rollBack();
+                    return response()->json(['error' => 'Room is already booked for these dates.'], 422);
+                }
+            }
 
             // Handle documents
             $documentPaths = $booking->booking_docs ? json_decode($booking->booking_docs, true) : [];
