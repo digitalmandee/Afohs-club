@@ -1,11 +1,39 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { IconButton, Button, Grid, Typography, Box, TextField, MenuItem } from '@mui/material';
+import { IconButton, Button, Grid, Typography, Box, TextField, MenuItem, Chip } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { router, usePage, useForm } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
 const genderOptions = ['male', 'female', 'other'];
+
+// Helper function to render member with status
+const renderMemberWithStatus = (option) => (
+    <Box sx={{ width: '100%' }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="body2" fontWeight="bold">
+                {option.membership_no || option.customer_no || option.employee_id}
+            </Typography>
+            {option.status && (
+                <Chip
+                    label={option.status}
+                    size="small"
+                    sx={{
+                        height: '20px',
+                        fontSize: '10px',
+                        backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                        color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                        textTransform: 'capitalize',
+                        ml: 1,
+                    }}
+                />
+            )}
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+            {option.name}
+        </Typography>
+    </Box>
+);
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -347,7 +375,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                                     },
                                 }}
                             >
-                                <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: '0' }} placeholder="Search members..." fullWidth />
+                                <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: '0' }} placeholder="Search members..." fullWidth renderItem={renderMemberWithStatus} />
                             </Box>
                         </Grid>
 

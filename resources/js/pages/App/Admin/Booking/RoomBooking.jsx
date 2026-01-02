@@ -13,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
+import GuestCreateModal from '@/components/GuestCreateModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -85,6 +86,25 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         };
         fetchGuestTypes();
     }, []);
+
+    const [showGuestModal, setShowGuestModal] = useState(false);
+
+    const handleGuestCreated = (newGuest) => {
+        // Format the guest object to match Autocomplete option structure if needed
+        // The search API returns {label, value, ...} but Autocomplete mainly needs id and label for display
+        const formattedGuest = {
+            ...newGuest,
+            label: `${newGuest.name} (Guest - ${newGuest.customer_no})`,
+            booking_type: `guest-${newGuest.guest_type_id}`,
+        };
+
+        setFormData((prev) => ({
+            ...prev,
+            guest: formattedGuest,
+            bookingType: `guest-${newGuest.guest_type_id}`,
+        }));
+        setShowGuestModal(false);
+    };
 
     const handleNext = () => {
         const newErrors = {};
@@ -194,7 +214,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
     const renderStepContent = (step) => {
         switch (step) {
             case 0:
-                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} guestTypes={guestTypes} />;
+                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} guestTypes={guestTypes} onAddGuest={() => setShowGuestModal(true)} />;
             case 1:
                 return <RoomSelection formData={formData} handleChange={handleChange} errors={errors} />;
             case 2:
@@ -278,12 +298,13 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                     </Box>
                 </Box>
             </div>
+            <GuestCreateModal open={showGuestModal} onClose={() => setShowGuestModal(false)} onSuccess={handleGuestCreated} guestTypes={guestTypes} />
         </>
     );
 };
 export default RoomBooking;
 
-const BookingDetails = ({ formData, handleChange, errors, guestTypes }) => {
+const BookingDetails = ({ formData, handleChange, errors, guestTypes, onAddGuest }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
     // Autocomplete states
     const [open, setOpen] = useState(false);
@@ -331,7 +352,6 @@ const BookingDetails = ({ formData, handleChange, errors, guestTypes }) => {
                 <Grid item xs={12} sm={4}>
                     <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
                 </Grid>
-                {JSON.stringify()}
                 <Grid item xs={12} sm={4}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
@@ -401,72 +421,78 @@ const BookingDetails = ({ formData, handleChange, errors, guestTypes }) => {
                     </RadioGroup>
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
-                    <Autocomplete
-                        open={open}
-                        onOpen={() => setOpen(true)}
-                        onClose={() => setOpen(false)}
-                        isOptionEqualToValue={(option, value) => option.id === value?.id}
-                        getOptionLabel={(option) => option.label || ''}
-                        options={options}
-                        loading={loading}
-                        value={formData.guest || null}
-                        onInputChange={(event, newInputValue, reason) => {
-                            if (reason === 'input') {
-                                handleSearch(event, newInputValue);
-                            }
-                        }}
-                        onChange={(event, newValue) => {
-                            handleChange({ target: { name: 'guest', value: newValue } });
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Member / Guest Name"
-                                placeholder="Search members..."
-                                error={!!errors.guest}
-                                helperText={errors.guest}
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <React.Fragment>
-                                            {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </React.Fragment>
-                                    ),
-                                }}
-                            />
-                        )}
-                        renderOption={(props, option) => (
-                            <li {...props} key={option.id}>
-                                <Box sx={{ width: '100%' }}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                        <Typography variant="body2" fontWeight="bold">
-                                            {option.membership_no || option.customer_no || option.employee_id}
+                <Grid item xs={12} sm={12} display="flex" alignItems="center" gap={1}>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Autocomplete
+                            open={open}
+                            onOpen={() => setOpen(true)}
+                            onClose={() => setOpen(false)}
+                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                            getOptionLabel={(option) => option.label || ''}
+                            options={options}
+                            loading={loading}
+                            value={formData.guest || null}
+                            onInputChange={(event, newInputValue, reason) => {
+                                if (reason === 'input') {
+                                    handleSearch(event, newInputValue);
+                                }
+                            }}
+                            onChange={(event, newValue) => {
+                                handleChange({ target: { name: 'guest', value: newValue } });
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Member / Guest Name"
+                                    placeholder="Search members..."
+                                    error={!!errors.guest}
+                                    helperText={errors.guest}
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <React.Fragment>
+                                                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                            </React.Fragment>
+                                        ),
+                                    }}
+                                />
+                            )}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id}>
+                                    <Box sx={{ width: '100%' }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {option.membership_no || option.customer_no || option.employee_id}
+                                            </Typography>
+                                            {option.status && (
+                                                <Chip // Chip for status
+                                                    label={option.status}
+                                                    size="small"
+                                                    sx={{
+                                                        height: '20px',
+                                                        fontSize: '10px',
+                                                        backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                        color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                        textTransform: 'capitalize',
+                                                        ml: 1,
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {option.name}
                                         </Typography>
-                                        {option.status && (
-                                            <Chip // Chip for status
-                                                label={option.status}
-                                                size="small"
-                                                sx={{
-                                                    height: '20px',
-                                                    fontSize: '10px',
-                                                    backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
-                                                    color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
-                                                    textTransform: 'capitalize',
-                                                    ml: 1,
-                                                }}
-                                            />
-                                        )}
                                     </Box>
-                                    <Typography variant="caption" color="text.secondary">
-                                        {option.name}
-                                    </Typography>
-                                </Box>
-                            </li>
-                        )}
-                    />
-
+                                </li>
+                            )}
+                        />
+                    </Box>
+                    <Button variant="contained" onClick={onAddGuest} sx={{ backgroundColor: '#063455', color: '#fff', height: '56px' }}>
+                        + Add
+                    </Button>
+                </Grid>
+                <Grid item xs={12} sm={12} gap={1}>
                     {formData.guest && (
                         <Box sx={{ mt: 1, p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
                             <Typography variant="h5" sx={{ mb: 1 }}>

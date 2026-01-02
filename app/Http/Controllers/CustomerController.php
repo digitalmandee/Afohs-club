@@ -41,7 +41,12 @@ class CustomerController extends Controller
     {
         $data = $request->validated();
         $data['customer_no'] = $this->getCustomerNo();
-        Customer::create($data);
+        $customer = Customer::create($data);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'customer' => $customer, 'message' => 'Customer created successfully.']);
+        }
+
         return redirect()->route('guests.index')->with('success', 'Customer created successfully.');
     }
 
