@@ -151,6 +151,10 @@ export default function SideNav({ open, setOpen }) {
                                 path: route('rooms.checkout'),
                             },
                             {
+                                text: 'Cancelled',
+                                path: route('rooms.booking.cancelled'),
+                            },
+                            {
                                 text: 'Request',
                                 path: route('rooms.request'),
                             },

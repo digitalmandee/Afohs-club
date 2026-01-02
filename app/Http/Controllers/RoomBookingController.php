@@ -38,6 +38,7 @@ class RoomBookingController extends Controller
         $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : ($booking->corporateMember ? $booking->corporateMember->full_name : null)));
         $bookingData = [
             'id' => $booking->id,
+            'status' => $booking->status,
             'bookingNo' => $booking->booking_no,
             'bookingDate' => $booking->booking_date,
             'checkInDate' => $booking->check_in_date,
@@ -543,5 +544,81 @@ class RoomBookingController extends Controller
             'success' => true,
             'orders' => $orders
         ]);
+    }
+
+    public function cancelled(Request $request)
+    {
+        $query = RoomBooking::with([
+            'customer:id,name,email,contact',
+            'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
+            'room:id,name'
+        ])->where('status', 'cancelled');
+
+        if ($request->filled('search_name')) {
+            $searchName = $request->search_name;
+            $query->where(function ($q) use ($searchName) {
+                $q
+                    ->whereHas('customer', function ($subQ) use ($searchName) {
+                        $subQ->where('name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('member', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
+                        $subQ->where('full_name', 'like', "%{$searchName}%");
+                    });
+            });
+        }
+
+        if ($request->filled('search_id')) {
+            $query->where('booking_no', 'like', "%{$request->search_id}%");
+        }
+
+        if ($request->filled('booking_date_from')) {
+            $query->whereDate('check_in_date', '>=', $request->booking_date_from);
+        }
+        if ($request->filled('booking_date_to')) {
+            $query->whereDate('check_in_date', '<=', $request->booking_date_to);
+        }
+
+        $bookings = $query->orderBy('updated_at', 'desc')->paginate(20);
+
+        return Inertia::render('App/Admin/Booking/Room/Cancelled', [
+            'bookings' => $bookings,
+            'filters' => $request->only(['search_name', 'search_id', 'booking_date_from', 'booking_date_to'])
+        ]);
+    }
+
+    public function cancelBooking(Request $request, $id)
+    {
+        $booking = RoomBooking::findOrFail($id);
+        $booking->status = 'cancelled';
+
+        // Append cancellation reason to additional notes if provided
+        if ($request->filled('cancellation_reason')) {
+            $booking->additional_notes .= "\n[Cancelled: " . now()->toDateTimeString() . '] Reason: ' . $request->cancellation_reason;
+        }
+
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Booking cancelled successfully');
+    }
+
+    public function undoBooking($id)
+    {
+        $booking = RoomBooking::findOrFail($id);
+
+        // Logic to restrict undo time if needed (e.g. check updated_at)
+        // For now, allow undo.
+        // Revert to 'booked' or 'confirmed'? Usually 'booked' is the initial confirmed state in this system.
+        $booking->status = 'booked';
+
+        // Optionally note the undo
+        $booking->additional_notes .= "\n[Undo Cancel: " . now()->toDateTimeString() . ']';
+
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Booking cancellation undone successfully');
     }
 }

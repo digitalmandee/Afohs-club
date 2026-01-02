@@ -47,7 +47,15 @@ const RoomCalendar = () => {
                             <a href="#" onclick="window.checkIn(${b.id}); return false;"
                                style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-in</a>
                             <a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank"
-                               style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Check-out</a>
+                               style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-out</a>
+                            ${
+                                b.status !== 'cancelled' && b.status !== 'checked_out'
+                                    ? `
+                            <a href="#" onclick="window.cancelBooking(${b.id}); return false;"
+                               style="display: inline-block; background: #dc3545; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Cancel</a>
+                            `
+                                    : ''
+                            }
                         </div>
 
                         <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
@@ -79,8 +87,22 @@ const RoomCalendar = () => {
             }
         };
 
+        window.cancelBooking = (bookingId) => {
+            const reason = prompt('Enter cancellation reason:');
+            if (reason !== null) {
+                if (confirm('Are you sure you want to cancel this booking?')) {
+                    router.visit(route('rooms.booking.cancel', bookingId), {
+                        method: 'put',
+                        data: { cancellation_reason: reason },
+                        onSuccess: () => fetchData(), // Refresh calendar
+                    });
+                }
+            }
+        };
+
         return () => {
             delete window.checkIn;
+            delete window.cancelBooking;
         };
     }, [events]);
 

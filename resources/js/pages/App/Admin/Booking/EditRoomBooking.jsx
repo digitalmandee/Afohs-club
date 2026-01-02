@@ -102,6 +102,19 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
         setActiveStep((prev) => prev + 1);
     };
 
+    const handleCancelBooking = () => {
+        const reason = prompt('Enter cancellation reason:');
+        if (reason !== null) {
+            if (confirm('Are you sure you want to cancel this booking?')) {
+                router.visit(route('rooms.booking.cancel', booking.id), {
+                    method: 'put',
+                    data: { cancellation_reason: reason },
+                    onSuccess: () => router.visit(route('rooms.dashboard')),
+                });
+            }
+        }
+    };
+
     const handleBack = () => setActiveStep((prev) => prev - 1);
 
     const handleChange = (e) => {
@@ -260,6 +273,11 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                                 <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
                                     Back
                                 </Button>
+                                {booking.status !== 'cancelled' && (
+                                    <Button variant="outlined" color="error" onClick={handleCancelBooking} sx={{ mr: 'auto', ml: 2, borderColor: '#d32f2f', color: '#d32f2f' }}>
+                                        Cancel Booking
+                                    </Button>
+                                )}
                                 <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition="start">
                                     {activeStep === steps.length - 1 ? (isCheckout ? 'Checkout' : 'Finish') : 'Next'}
                                 </Button>
