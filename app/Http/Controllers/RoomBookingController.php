@@ -997,7 +997,36 @@ class RoomBookingController extends Controller
                         'type' => 'Guest',
                         'name' => $c->name,
                         'customer_no' => $c->customer_no,
+                        'id' => $c->id,
                         'status' => null,  // Guests don't have a status column
+                        'guest_type_id' => $c->guest_type_id,
+                    ];
+                });
+            $results = $results->merge($guests);
+        }
+
+        // 4. Dynamic Guest Types
+        if (str_starts_with($type, 'guest-')) {
+            $guestTypeId = str_replace('guest-', '', $type);
+            $guests = \App\Models\Customer::query()
+                ->where('guest_type_id', $guestTypeId)
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($c) {
+                    return [
+                        'label' => "{$c->name} (Guest - {$c->customer_no})",
+                        'value' => $c->name,
+                        'type' => 'Guest',
+                        'name' => $c->name,
+                        'customer_no' => $c->customer_no,
+                        'id' => $c->id,
+                        'status' => null,
+                        'booking_type' => 'guest',  // Important for store method logic
                     ];
                 });
             $results = $results->merge($guests);

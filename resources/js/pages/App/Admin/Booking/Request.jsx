@@ -8,10 +8,26 @@ import { Box, Typography, Paper, Grid, IconButton, Button, TextField, FormLabel,
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import { enqueueSnackbar } from 'notistack';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import axios from 'axios';
 
 const RoomBookingRequestForm = ({ mode }) => {
     const { props } = usePage();
     const { rooms, roomCategories, errors, request } = props;
+
+    // Use axios to fetch guest types
+    const [guestTypes, setGuestTypes] = useState([]);
+
+    useEffect(() => {
+        const fetchGuestTypes = async () => {
+            try {
+                const response = await axios.get(route('api.guest-types.active'));
+                setGuestTypes(response.data);
+            } catch (error) {
+                console.error('Error fetching guest types:', error);
+            }
+        };
+        fetchGuestTypes();
+    }, []);
 
     // const [open, setOpen] = useState(true);
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -209,9 +225,9 @@ const RoomBookingRequestForm = ({ mode }) => {
                                     >
                                         <FormControlLabel value="0" control={<Radio />} label="Member" />
                                         <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
-                                        <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
-                                        <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
-                                        <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
+                                        {guestTypes.map((type) => (
+                                            <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
+                                        ))}
                                     </RadioGroup>
                                 )}
                                 {errors.booking_type && <Typography color="error">{errors.booking_type}</Typography>}

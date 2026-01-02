@@ -102,6 +102,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                     booking_type: '2', // Corporate
                 };
             } else if (bookingData.customer) {
+                const guestTypeId = bookingData.customer.guest_type_id;
                 guestObject = {
                     id: bookingData.customer.id,
                     customer_no: bookingData.customer.customer_no,
@@ -110,14 +111,21 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                     cnic: bookingData.cnic,
                     address: bookingData.address,
                     phone: bookingData.mobile,
-                    booking_type: 'customer',
+                    booking_type: guestTypeId ? `guest` : 'customer', // Mark as generic guest if type exists
+                    guest_type_id: guestTypeId,
                 };
+            }
+
+            // Determine booking type logic
+            let resolvedBookingType = bookingData.booking_type || 0;
+            if (bookingData.customer?.guest_type_id) {
+                resolvedBookingType = `guest-${bookingData.customer.guest_type_id}`;
             }
 
             setFormData({
                 bookingNo: bookingData.booking_no || '',
                 bookingDate: bookingData.booking_date || new Date().toISOString().split('T')[0],
-                bookingType: bookingData.booking_type || 0,
+                bookingType: resolvedBookingType,
                 guest: guestObject,
                 familyMember: bookingData.family_id || '',
                 bookedBy: bookingData.booked_by || '',
@@ -432,7 +440,20 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
         }
     }, [formData.guest, formData.bookingType]);
 
-    // Handle search input change
+    const [guestTypes, setGuestTypes] = useState([]);
+
+    useEffect(() => {
+        const fetchGuestTypes = async () => {
+            try {
+                const response = await axios.get(route('api.guest-types.active'));
+                setGuestTypes(response.data);
+            } catch (error) {
+                console.error('Error fetching guest types:', error);
+            }
+        };
+        fetchGuestTypes();
+    }, []);
+
     const handleSearch = async (event, query) => {
         if (!query) {
             setOptions([]);
@@ -495,7 +516,9 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                     >
                         <FormControlLabel value="0" control={<Radio disabled={editMode} />} label="Member" />
                         <FormControlLabel value="2" control={<Radio disabled={editMode} />} label="Corporate Member" />
-                        <FormControlLabel value="1" control={<Radio disabled={editMode} />} label="Guest / Non-Member" />
+                        {guestTypes.map((type) => (
+                            <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
+                        ))}
                     </RadioGroup>
                 </Grid>
 

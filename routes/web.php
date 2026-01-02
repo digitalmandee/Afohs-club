@@ -145,6 +145,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
         Route::resource('guest-types', GuestTypeController::class)->except(['show']);
+        Route::get('/api/guest-types/active', [GuestTypeController::class, 'getActiveList'])->name('api.guest-types.active');
 
         Route::get('guests/trashed', [CustomerController::class, 'trashed'])->name('guests.trashed');
         Route::post('guests/restore/{id}', [CustomerController::class, 'restore'])->name('guests.restore');

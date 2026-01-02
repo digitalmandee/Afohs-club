@@ -72,6 +72,20 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         notes: '',
     });
 
+    const [guestTypes, setGuestTypes] = useState([]);
+
+    useEffect(() => {
+        const fetchGuestTypes = async () => {
+            try {
+                const response = await axios.get(route('api.guest-types.active'));
+                setGuestTypes(response.data);
+            } catch (error) {
+                console.error('Error fetching guest types:', error);
+            }
+        };
+        fetchGuestTypes();
+    }, []);
+
     const handleNext = () => {
         const newErrors = {};
 
@@ -180,7 +194,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
     const renderStepContent = (step) => {
         switch (step) {
             case 0:
-                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} />;
+                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} guestTypes={guestTypes} />;
             case 1:
                 return <RoomSelection formData={formData} handleChange={handleChange} errors={errors} />;
             case 2:
@@ -269,7 +283,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
 };
 export default RoomBooking;
 
-const BookingDetails = ({ formData, handleChange, errors }) => {
+const BookingDetails = ({ formData, handleChange, errors, guestTypes }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
     // Autocomplete states
     const [open, setOpen] = useState(false);
@@ -381,9 +395,9 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                     >
                         <FormControlLabel value="0" control={<Radio />} label="Member" />
                         <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
-                        <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
-                        <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
-                        <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
+                        {guestTypes.map((type) => (
+                            <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
+                        ))}
                     </RadioGroup>
                 </Grid>
 

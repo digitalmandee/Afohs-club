@@ -60,4 +60,9 @@ class GuestTypeController extends Controller
 
         return redirect()->route('guest-types.index')->with('success', 'Guest Type deleted successfully.');
     }
+
+    public function getActiveList()
+    {
+        return response()->json(GuestType::where('status', 1)->select('id', 'name')->get());
+    }
 }
