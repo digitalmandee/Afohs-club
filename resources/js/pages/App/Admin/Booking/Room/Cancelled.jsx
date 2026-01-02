@@ -156,6 +156,9 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                         <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Room</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600 }}>Persons</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Account</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600 }}>Status</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600 }}>Actions</TableCell>
                                     </TableRow>
@@ -172,6 +175,9 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.advance_payment : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                     {booking.status.replace(/_/g, ' ')}
                                                     {booking.status === 'refunded' &&

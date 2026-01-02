@@ -183,20 +183,20 @@ class RoomBookingController extends Controller
                 $checkOut = $data['checkOutDate'];
                 $roomId = $data['room']['id'];
 
-                $exists = RoomBooking::where('room_id', $roomId)
-                    ->whereNotIn('status', ['cancelled', 'refunded'])
+                $conflictingBooking = RoomBooking::where('room_id', $roomId)
+                    ->whereNotIn('status', ['cancelled', 'refunded', 'checked_out'])
                     ->where(function ($query) use ($checkIn, $checkOut) {
                         $query
                             ->where('check_in_date', '<', $checkOut)
                             ->where('check_out_date', '>', $checkIn);
                     })
-                    ->exists();
+                    ->first();
 
-                if ($exists) {
-                    // Check if we are inside a transaction? Yes, DB::beginTransaction() called above.
-                    // But we can just direct return with error
+                if ($conflictingBooking) {
                     DB::rollBack();
-                    return response()->json(['error' => 'Room is already booked for these dates.'], 422);  // 422 Unprocessable Entity
+                    return response()->json([
+                        'error' => "Room is already booked. Conflict with Booking #{$conflictingBooking->booking_no} ({$conflictingBooking->check_in_date} to {$conflictingBooking->check_out_date})"
+                    ], 422);
                 }
             }
 
@@ -272,10 +272,18 @@ class RoomBookingController extends Controller
                 'advance_payment' => $data['securityDeposit'] ?? 0,
                 'paid_amount' => 0,
                 'status' => 'unpaid',
-                // Keep data for backward compatibility
+                'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
+                    'Bank Transfer' => 'bank',
+                    'Credit Card' => 'credit_card',
+                    'Online' => 'bank',
+                    default => 'cash',
+                },
+                // Keep data for backward compatibility and store extra payment details
                 'data' => [
                     'booking_no' => $booking->booking_no,
-                    'amount' => $booking->grand_total
+                    'amount' => $booking->grand_total,
+                    'payment_account' => $data['paymentAccount'] ?? null,  // Save Account/Ref
+                    'security_deposit_mode' => $data['paymentMode'] ?? null,
                 ],
             ];
 
@@ -612,13 +620,27 @@ class RoomBookingController extends Controller
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
             'room:id,name,room_type_id',
-            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment'
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
         ])->whereIn('status', ['cancelled', 'refunded']);
 
         // Apply shared filters
         $this->applyFilters($query, $filters);
 
         $bookings = $query->orderBy('updated_at', 'desc')->paginate(20)->withQueryString();
+
+        // Transform collection to include full invoice details
+        $bookings->getCollection()->transform(function ($booking) {
+            $booking->invoice = $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+                'paid_amount' => $booking->invoice->paid_amount,
+                'total_price' => $booking->invoice->total_price,
+                'advance_payment' => $booking->invoice->advance_payment,
+                'payment_method' => $booking->invoice->payment_method,
+                'data' => $booking->invoice->data,
+            ] : null;
+            return $booking;
+        });
 
         return Inertia::render('App/Admin/Booking/Room/Cancelled', [
             'bookings' => $bookings,

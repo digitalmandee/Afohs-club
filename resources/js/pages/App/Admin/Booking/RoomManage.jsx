@@ -249,6 +249,9 @@ const RoomScreen = ({ bookings }) => {
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Persons</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Duration</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Account</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Total Amount</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
@@ -270,6 +273,9 @@ const RoomScreen = ({ bookings }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.persons}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{durationInDays}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.per_day_charge}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.advance_payment : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.grand_total}</TableCell>
                                                 <TableCell>
                                                     <Badge

@@ -146,11 +146,20 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         }
 
         // Proceed with actual submission
-        const payload = objectToFormData(formData);
+        const sanitizedFormData = { ...formData };
+        ['securityDeposit', 'roomCharge', 'discount', 'perDayCharge', 'nights', 'persons', 'totalOtherCharges', 'totalMiniBar', 'grandTotal', 'bookingDate', 'checkInDate', 'checkOutDate'].forEach((field) => {
+            if (sanitizedFormData[field] === '') {
+                sanitizedFormData[field] = null;
+            }
+        });
+
+        const payload = objectToFormData(sanitizedFormData);
 
         setIsSubmitting(true);
         axios
-            .post(route('rooms.store.booking'), payload)
+            .post(route('rooms.store.booking'), payload, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            })
             .then((res) => {
                 enqueueSnackbar('Booking submitted successfully', { variant: 'success' });
                 // Redirect or show success
@@ -158,6 +167,9 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
             })
             .catch((err) => {
                 console.error('Submit error:', err);
+                if (err.response && err.response.data) {
+                    console.error('Validation errors:', err.response.data);
+                }
                 // Optionally show backend validation errors
             })
             .finally(() => {
@@ -584,8 +596,31 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
             <Grid item xs={3}>
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={4}>
-                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
+            <Grid container spacing={2} item xs={12}>
+                <Grid item xs={4}>
+                    <TextField type="number" label="Security Deposit" placeholder="Amount" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
+                </Grid>
+                {Number(formData.securityDeposit) > 0 && (
+                    <>
+                        <Grid item xs={4}>
+                            <FormControl fullWidth>
+                                <InputLabel>Payment Mode</InputLabel>
+                                <Select name="paymentMode" value={formData.paymentMode || 'Cash'} label="Payment Mode" onChange={handleChange}>
+                                    <MenuItem value="Cash">Cash</MenuItem>
+                                    <MenuItem value="Credit Card">Credit Card</MenuItem>
+                                    <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                    <MenuItem value="Cheque">Cheque</MenuItem>
+                                    <MenuItem value="Online">Online</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        {formData.paymentMode !== 'Cash' && (
+                            <Grid item xs={4}>
+                                <TextField label="Payment Account / Reference" name="paymentAccount" placeholder="Bank Name - Account No / Trx ID" value={formData.paymentAccount || ''} onChange={handleChange} fullWidth />
+                            </Grid>
+                        )}
+                    </>
+                )}
             </Grid>
         </Grid>
     );

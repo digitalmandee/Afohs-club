@@ -184,10 +184,10 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {showDates.booking && (
                         <>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Booking From" format="DD-MM-YYYY" value={bookingDateFrom ? dayjs(bookingDateFrom) : null} onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' } } }} />
+                                <DatePicker label="Booking From" format="DD-MM-YYYY" value={bookingDateFrom ? dayjs(bookingDateFrom) : null} onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Booking To" format="DD-MM-YYYY" value={bookingDateTo ? dayjs(bookingDateTo) : null} onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' } } }} />
+                                <DatePicker label="Booking To" format="DD-MM-YYYY" value={bookingDateTo ? dayjs(bookingDateTo) : null} onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
                             </Grid>
                         </>
                     )}
@@ -196,10 +196,10 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {showDates.checkIn && (
                         <>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-In From" format="DD-MM-YYYY" value={checkInFrom ? dayjs(checkInFrom) : null} onChange={(newValue) => setCheckInFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' } } }} />
+                                <DatePicker label="Check-In From" format="DD-MM-YYYY" value={checkInFrom ? dayjs(checkInFrom) : null} onChange={(newValue) => setCheckInFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-In To" format="DD-MM-YYYY" value={checkInTo ? dayjs(checkInTo) : null} onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' } } }} />
+                                <DatePicker label="Check-In To" format="DD-MM-YYYY" value={checkInTo ? dayjs(checkInTo) : null} onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
                             </Grid>
                         </>
                     )}
@@ -208,10 +208,10 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {showDates.checkOut && (
                         <>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-Out From" format="DD-MM-YYYY" value={checkOutFrom ? dayjs(checkOutFrom) : null} onChange={(newValue) => setCheckOutFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' } } }} />
+                                <DatePicker label="Check-Out From" format="DD-MM-YYYY" value={checkOutFrom ? dayjs(checkOutFrom) : null} onChange={(newValue) => setCheckOutFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-Out To" format="DD-MM-YYYY" value={checkOutTo ? dayjs(checkOutTo) : null} onChange={(newValue) => setCheckOutTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' } } }} />
+                                <DatePicker label="Check-Out To" format="DD-MM-YYYY" value={checkOutTo ? dayjs(checkOutTo) : null} onChange={(newValue) => setCheckOutTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
                             </Grid>
                         </>
                     )}

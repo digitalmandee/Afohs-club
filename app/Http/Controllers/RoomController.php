@@ -37,7 +37,7 @@ class RoomController extends Controller
         // ✅ Apply search filter
 
         // ✅ Eager load invoice with polymorphic relationship
-        $query->with('invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment');
+        $query->with('invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data');
 
         // ✅ Paginate results and keep query string
         $bookings = $query->paginate(10)->withQueryString();
@@ -50,6 +50,8 @@ class RoomController extends Controller
                 'paid_amount' => $booking->invoice->paid_amount,
                 'total_price' => $booking->invoice->total_price,
                 'advance_payment' => $booking->invoice->advance_payment,
+                'payment_method' => $booking->invoice->payment_method,
+                'data' => $booking->invoice->data,
             ] : null;
             return $booking;
         });
@@ -286,7 +288,8 @@ class RoomController extends Controller
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
             'member:id,membership_no,full_name',
-            'corporateMember:id,membership_no,full_name'
+            'corporateMember:id,membership_no,full_name',
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
         ])
             ->where('status', 'checked_in');
 
@@ -297,6 +300,19 @@ class RoomController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString();
+
+        $bookings->getCollection()->transform(function ($booking) {
+            $booking->invoice = $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+                'paid_amount' => $booking->invoice->paid_amount,
+                'total_price' => $booking->invoice->total_price,
+                'advance_payment' => $booking->invoice->advance_payment,
+                'payment_method' => $booking->invoice->payment_method,
+                'data' => $booking->invoice->data,
+            ] : null;
+            return $booking;
+        });
 
         return Inertia::render('App/Admin/Booking/Room/CheckIn', [
             'bookings' => $bookings,
@@ -315,7 +331,8 @@ class RoomController extends Controller
             'room:id,name,room_type_id',
             'customer:id,customer_no,email,name',
             'member:id,membership_no,full_name',
-            'corporateMember:id,membership_no,full_name'
+            'corporateMember:id,membership_no,full_name',
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
         ])
             ->where('status', 'checked_out');
 
@@ -326,6 +343,19 @@ class RoomController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString();
+
+        $bookings->getCollection()->transform(function ($booking) {
+            $booking->invoice = $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+                'paid_amount' => $booking->invoice->paid_amount,
+                'total_price' => $booking->invoice->total_price,
+                'advance_payment' => $booking->invoice->advance_payment,
+                'payment_method' => $booking->invoice->payment_method,
+                'data' => $booking->invoice->data,
+            ] : null;
+            return $booking;
+        });
 
         return Inertia::render('App/Admin/Booking/Room/CheckOut', [
             'bookings' => $bookings,
