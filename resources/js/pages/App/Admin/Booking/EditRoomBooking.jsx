@@ -15,6 +15,7 @@ import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
 import RoomOrderHistoryModal from '@/components/App/Rooms/RoomOrderHistoryModal';
+import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -29,6 +30,9 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
 
     // Order History Modal
     const [showHistoryModal, setShowHistoryModal] = useState(false);
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+
     // Main state for booking type
     // const [open, setOpen] = useState(true);
     const [activeStep, setActiveStep] = useState(0);
@@ -100,6 +104,26 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
 
         setErrors({});
         setActiveStep((prev) => prev + 1);
+    };
+
+    const handleCancelBooking = () => {
+        setActionModalOpen(true);
+    };
+
+    const handleConfirmAction = (bookingId, reason, refundData) => {
+        const data = { cancellation_reason: reason };
+        if (refundData && refundData.amount) {
+            data.refund_amount = refundData.amount;
+            data.refund_mode = refundData.mode;
+            data.refund_account = refundData.account;
+        }
+
+        router.put(route('rooms.booking.cancel', bookingId), data, {
+            onSuccess: () => {
+                setActionModalOpen(false);
+                router.visit(route('rooms.dashboard'));
+            },
+        });
     };
 
     const handleBack = () => setActiveStep((prev) => prev - 1);
@@ -260,6 +284,11 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
                                 <Button variant="outlined" disabled={activeStep === 0} onClick={handleBack}>
                                     Back
                                 </Button>
+                                {booking.status !== 'cancelled' && (
+                                    <Button variant="outlined" color="error" onClick={handleCancelBooking} sx={{ mr: 'auto', ml: 2, borderColor: '#d32f2f', color: '#d32f2f' }}>
+                                        Cancel Booking
+                                    </Button>
+                                )}
                                 <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition="start">
                                     {activeStep === steps.length - 1 ? (isCheckout ? 'Checkout' : 'Finish') : 'Next'}
                                 </Button>
@@ -270,6 +299,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             </div>
 
             <RoomOrderHistoryModal open={showHistoryModal} onClose={() => setShowHistoryModal(false)} bookingId={booking.id} />
+            <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={booking} action="cancel" onConfirm={handleConfirmAction} />
         </>
     );
 };
@@ -520,7 +550,7 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
                     <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} fullWidth disabled={isCheckout} />
+                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/\D/g, '') } })} inputProps={{ maxLength: 11 }} fullWidth disabled={isCheckout} />
                 </Grid>
                 <Grid item xs={6} sm={5}>
                     <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth disabled={isCheckout} />
@@ -610,7 +640,7 @@ const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
             <Grid item xs={4}>
-                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth disabled={isCheckout} />
+                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth disabled={isCheckout} />
             </Grid>
         </Grid>
     );

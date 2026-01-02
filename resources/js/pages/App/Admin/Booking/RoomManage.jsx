@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { FilterAlt, Search, Visibility } from '@mui/icons-material';
+import { FilterAlt, Search, Visibility,Cancel } from '@mui/icons-material';
 import { Box, Button, Paper, InputAdornment, Table, TableBody, TextField, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, Tooltip } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
@@ -8,6 +8,7 @@ import RoomBookingFilter from './BookingFilter';
 import dayjs from 'dayjs'; // Added for duration calculation
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
+import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 import debounce from 'lodash.debounce';
 
 // const drawerWidthOpen = 240;
@@ -97,8 +98,8 @@ const dialogStyles = `
 
 const RoomScreen = ({ bookings }) => {
     // const [open, setOpen] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showFilter, setShowFilter] = useState(false);
+    // const [searchTerm, setSearchTerm] = useState('');
+    // const [showFilter, setShowFilter] = useState(false);
 
     const [filteredBookings, setFilteredBookings] = useState(bookings.data || []); // Initialize with all bookings
 
@@ -114,16 +115,18 @@ const RoomScreen = ({ bookings }) => {
     const debouncedSearch = useMemo(
         () =>
             debounce((value) => {
-                router.get(route('rooms.manage'), { search: value }, { preserveState: true });
+                const currentFilters = { ...(bookings.filters || {}) }; // Ensure we get filters from props if available
+                delete currentFilters.search;
+                router.get(route('rooms.manage'), { ...currentFilters, search: value }, { preserveState: true });
             }, 500), // 500ms delay
-        [],
+        [bookings.filters],
     );
 
     // ✅ Handle input change
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        debouncedSearch(e.target.value);
-    };
+    // const handleSearchChange = (e) => {
+    //     setSearchTerm(e.target.value);
+    //     debouncedSearch(e.target.value);
+    // };
 
     // TODO: Remove invoice modal handler when reverting to original print functionality
     const handleShowInvoice = (booking) => {
@@ -137,9 +140,6 @@ const RoomScreen = ({ bookings }) => {
         setSelectedBooking(null);
     };
 
-    const handleFilterClose = () => setShowFilter(false);
-    const handleFilterShow = () => setShowFilter(true);
-
     // View Documents handlers
     const handleShowDocs = (booking) => {
         setSelectedBookingForDocs(booking);
@@ -149,6 +149,54 @@ const RoomScreen = ({ bookings }) => {
     const handleCloseDocs = () => {
         setShowDocsModal(false);
         setSelectedBookingForDocs(null);
+    };
+
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [selectedActionBooking, setSelectedActionBooking] = useState(null);
+
+    const handleOpenActionModal = (booking, type) => {
+        setSelectedActionBooking(booking);
+        setActionType(type); // 'cancel'
+        setActionModalOpen(true);
+    };
+
+    const handleConfirmAction = (bookingId, reason, refundData) => {
+        if (actionType === 'cancel') {
+            const data = { cancellation_reason: reason };
+            // Append refund data if present
+            if (refundData && refundData.amount) {
+                data.refund_amount = refundData.amount;
+                data.refund_mode = refundData.mode;
+                data.refund_account = refundData.account;
+            }
+
+            router.put(route('rooms.booking.cancel', bookingId), data, {
+                onSuccess: () => {
+                    setActionModalOpen(false);
+                    // maybe show toast
+                },
+            });
+        } else if (actionType === 'refund') {
+            const data = {
+                refund_amount: refundData.amount,
+                refund_mode: refundData.mode,
+                refund_account: refundData.account,
+                notes: reason, // Optional note from modal
+            };
+            router.put(route('rooms.booking.refund', bookingId), data, {
+                onSuccess: () => setActionModalOpen(false),
+            });
+        } else {
+            router.put(
+                route('rooms.booking.undo-cancel', bookingId),
+                {},
+                {
+                    onSuccess: () => setActionModalOpen(false),
+                },
+            );
+        }
     };
 
     useEffect(() => {
@@ -174,7 +222,7 @@ const RoomScreen = ({ bookings }) => {
                 }}
             > */}
             <ThemeProvider theme={theme}>
-                <style>{dialogStyles}</style>
+                {/* <style>{dialogStyles}</style> */}
                 <Container
                     fluid
                     className="p-4"
@@ -187,64 +235,12 @@ const RoomScreen = ({ bookings }) => {
                         <Col>
                             <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Room Bookings</Typography>
                         </Col>
-                        <Col xs="auto" className="d-flex gap-2">
-                            <div style={{ position: 'relative' }}>
-                                <TextField
-                                    placeholder="Search for rooms"
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                    size="small"
-                                    sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '16px',
-                                            height: '38px',
-                                            fontSize: '0.9rem',
-                                            // '& fieldset': {
-                                            //     borderColor: '#063455',
-                                            // },
-                                        },
-                                        width: '100%',
-                                        backgroundColor: 'transparent',
-                                    }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start" sx={{ ml: 1 }}>
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-
-                                {/* <Search
-                                    style={{
-                                        position: 'absolute',
-                                        left: '8px',
-                                        top: '53%',
-                                        transform: 'translateY(-50%)',
-                                        // color: '#adb5bd',
-                                        fontSize: '1.5rem',
-                                        pointerEvents: 'none',
-                                    }}
-                                /> */}
-                            </div>
-
-                            <Button
-                                variant="outline-secondary"
-                                className="d-flex align-items-center gap-1"
-                                style={{
-                                    border: '1px solid #063455',
-                                    borderRadius: '16px',
-                                    backgroundColor: '#063455',
-                                    color: '#fff',
-                                    textTransform: 'none'
-                                }}
-                                onClick={handleFilterShow}
-                            >
-                                <FilterAlt fontSize="small" style={{ color: '#fff' }} /> Filter
-                            </Button>
-                        </Col>
+                        <Col xs="auto">{/* Space for future actions if needed */}</Col>
                         <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>List and edit details of all rooms in the system</Typography>
                     </Row>
+
+                    {/* Inline Filter */}
+                    <RoomBookingFilter />
 
                     {/* TODO: Updated to use filteredBookings from data.bookings */}
 
@@ -261,6 +257,9 @@ const RoomScreen = ({ bookings }) => {
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Persons</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Duration</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Account</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Total Amount</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
@@ -306,6 +305,9 @@ const RoomScreen = ({ bookings }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.persons}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{durationInDays}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.per_day_charge}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.advance_payment : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.grand_total}</TableCell>
                                                 {/* <TableCell>
                                                     <Badge
@@ -351,6 +353,23 @@ const RoomScreen = ({ bookings }) => {
                                                         <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)}>
                                                             View
                                                         </Button>
+                                                        {!['cancelled', 'refunded'].includes(booking.status) && (
+                                                            <Button
+                                                                size="small"
+                                                                variant="outlined"
+                                                                color="error" // Use predefined error color
+                                                                onClick={() => handleOpenActionModal(booking, 'cancel')}
+                                                                title="Cancel Booking"
+                                                                sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}
+                                                            >
+                                                                <Cancel fontSize="small" />
+                                                            </Button>
+                                                        )}
+                                                        {booking.status === 'cancelled' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
+                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}>
+                                                                <span style={{ fontSize: '10px' }}>Refund</span>
+                                                            </Button>
+                                                        )}
                                                     </Box>
                                                 </TableCell>
                                             </TableRow>
@@ -394,11 +413,7 @@ const RoomScreen = ({ bookings }) => {
                     {/* View Documents Modal */}
                     <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
 
-                    <Modal show={showFilter} onHide={handleFilterClose} dialogClassName="custom-dialog-right" backdrop={true} keyboard={true}>
-                        <Modal.Body style={{ padding: 0, height: '100vh', overflowY: 'auto' }}>
-                            <RoomBookingFilter onClose={handleFilterClose} />
-                        </Modal.Body>
-                    </Modal>
+                    <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
                 </Container>
             </ThemeProvider>
             {/* </div> */}

@@ -107,6 +107,19 @@ class MemberTransactionController extends Controller
                 ->select('id', 'name as full_name', 'customer_no as membership_no', 'cnic as cnic_no', 'contact as mobile_number_a', 'address')
                 ->limit(10)
                 ->get();
+        } elseif (str_starts_with($type, 'guest-')) {
+            $guestTypeId = str_replace('guest-', '', $type);
+            $members = \App\Models\Customer::where('guest_type_id', $guestTypeId)
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%")
+                        ->orWhere('cnic', 'like', "%{$query}%")
+                        ->orWhere('contact', 'like', "%{$query}%");
+                })
+                ->select('id', 'name as full_name', 'customer_no as membership_no', 'cnic as cnic_no', 'contact as mobile_number_a', 'address')
+                ->limit(10)
+                ->get();
         } else {
             $members = Member::whereNull('parent_id')
                 ->where(function ($q) use ($query) {

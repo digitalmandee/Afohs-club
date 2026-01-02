@@ -13,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
+import GuestCreateModal from '@/components/GuestCreateModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -71,6 +72,39 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         previewFiles: [],
         notes: '',
     });
+
+    const [guestTypes, setGuestTypes] = useState([]);
+
+    useEffect(() => {
+        const fetchGuestTypes = async () => {
+            try {
+                const response = await axios.get(route('api.guest-types.active'));
+                setGuestTypes(response.data);
+            } catch (error) {
+                console.error('Error fetching guest types:', error);
+            }
+        };
+        fetchGuestTypes();
+    }, []);
+
+    const [showGuestModal, setShowGuestModal] = useState(false);
+
+    const handleGuestCreated = (newGuest) => {
+        // Format the guest object to match Autocomplete option structure if needed
+        // The search API returns {label, value, ...} but Autocomplete mainly needs id and label for display
+        const formattedGuest = {
+            ...newGuest,
+            label: `${newGuest.name} (Guest - ${newGuest.customer_no})`,
+            booking_type: `guest-${newGuest.guest_type_id}`,
+        };
+
+        setFormData((prev) => ({
+            ...prev,
+            guest: formattedGuest,
+            bookingType: `guest-${newGuest.guest_type_id}`,
+        }));
+        setShowGuestModal(false);
+    };
 
     const handleNext = () => {
         const newErrors = {};
@@ -146,11 +180,20 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
         }
 
         // Proceed with actual submission
-        const payload = objectToFormData(formData);
+        const sanitizedFormData = { ...formData };
+        ['securityDeposit', 'roomCharge', 'discount', 'perDayCharge', 'nights', 'persons', 'totalOtherCharges', 'totalMiniBar', 'grandTotal', 'bookingDate', 'checkInDate', 'checkOutDate'].forEach((field) => {
+            if (sanitizedFormData[field] === '') {
+                sanitizedFormData[field] = null;
+            }
+        });
+
+        const payload = objectToFormData(sanitizedFormData);
 
         setIsSubmitting(true);
         axios
-            .post(route('rooms.store.booking'), payload)
+            .post(route('rooms.store.booking'), payload, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            })
             .then((res) => {
                 enqueueSnackbar('Booking submitted successfully', { variant: 'success' });
                 // Redirect or show success
@@ -158,6 +201,9 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
             })
             .catch((err) => {
                 console.error('Submit error:', err);
+                if (err.response && err.response.data) {
+                    console.error('Validation errors:', err.response.data);
+                }
                 // Optionally show backend validation errors
             })
             .finally(() => {
@@ -168,7 +214,7 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
     const renderStepContent = (step) => {
         switch (step) {
             case 0:
-                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} />;
+                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} guestTypes={guestTypes} onAddGuest={() => setShowGuestModal(true)} />;
             case 1:
                 return <RoomSelection formData={formData} handleChange={handleChange} errors={errors} />;
             case 2:
@@ -252,12 +298,13 @@ const RoomBooking = ({ room, bookingNo, roomCategories }) => {
                     </Box>
                 </Box>
             </div>
+            <GuestCreateModal open={showGuestModal} onClose={() => setShowGuestModal(false)} onSuccess={handleGuestCreated} guestTypes={guestTypes} />
         </>
     );
 };
 export default RoomBooking;
 
-const BookingDetails = ({ formData, handleChange, errors }) => {
+const BookingDetails = ({ formData, handleChange, errors, guestTypes, onAddGuest }) => {
     const [familyMembers, setFamilyMembers] = useState([]);
     // Autocomplete states
     const [open, setOpen] = useState(false);
@@ -305,7 +352,6 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                 <Grid item xs={12} sm={4}>
                     <TextField label="Booking No." name="bookingNo" value={formData.bookingNo} inputProps={{ readOnly: true }} fullWidth />
                 </Grid>
-                {JSON.stringify()}
                 <Grid item xs={12} sm={4}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
@@ -369,78 +415,84 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                     >
                         <FormControlLabel value="0" control={<Radio />} label="Member" />
                         <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
-                        <FormControlLabel value="guest-1" control={<Radio />} label="Applied Member" />
-                        <FormControlLabel value="guest-2" control={<Radio />} label="Affiliated Member" />
-                        <FormControlLabel value="guest-3" control={<Radio />} label="VIP Guest" />
+                        {guestTypes.map((type) => (
+                            <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
+                        ))}
                     </RadioGroup>
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
-                    <Autocomplete
-                        open={open}
-                        onOpen={() => setOpen(true)}
-                        onClose={() => setOpen(false)}
-                        isOptionEqualToValue={(option, value) => option.id === value?.id}
-                        getOptionLabel={(option) => option.label || ''}
-                        options={options}
-                        loading={loading}
-                        value={formData.guest || null}
-                        onInputChange={(event, newInputValue, reason) => {
-                            if (reason === 'input') {
-                                handleSearch(event, newInputValue);
-                            }
-                        }}
-                        onChange={(event, newValue) => {
-                            handleChange({ target: { name: 'guest', value: newValue } });
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Member / Guest Name"
-                                placeholder="Search members..."
-                                error={!!errors.guest}
-                                helperText={errors.guest}
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <React.Fragment>
-                                            {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </React.Fragment>
-                                    ),
-                                }}
-                            />
-                        )}
-                        renderOption={(props, option) => (
-                            <li {...props} key={option.id}>
-                                <Box sx={{ width: '100%' }}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                        <Typography variant="body2" fontWeight="bold">
-                                            {option.membership_no || option.customer_no || option.employee_id}
+                <Grid item xs={12} sm={12} display="flex" alignItems="center" gap={1}>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Autocomplete
+                            open={open}
+                            onOpen={() => setOpen(true)}
+                            onClose={() => setOpen(false)}
+                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                            getOptionLabel={(option) => option.label || ''}
+                            options={options}
+                            loading={loading}
+                            value={formData.guest || null}
+                            onInputChange={(event, newInputValue, reason) => {
+                                if (reason === 'input') {
+                                    handleSearch(event, newInputValue);
+                                }
+                            }}
+                            onChange={(event, newValue) => {
+                                handleChange({ target: { name: 'guest', value: newValue } });
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Member / Guest Name"
+                                    placeholder="Search members..."
+                                    error={!!errors.guest}
+                                    helperText={errors.guest}
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <React.Fragment>
+                                                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                            </React.Fragment>
+                                        ),
+                                    }}
+                                />
+                            )}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id}>
+                                    <Box sx={{ width: '100%' }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {option.membership_no || option.customer_no || option.employee_id}
+                                            </Typography>
+                                            {option.status && (
+                                                <Chip // Chip for status
+                                                    label={option.status}
+                                                    size="small"
+                                                    sx={{
+                                                        height: '20px',
+                                                        fontSize: '10px',
+                                                        backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                        color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                        textTransform: 'capitalize',
+                                                        ml: 1,
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {option.name}
                                         </Typography>
-                                        {option.status && (
-                                            <Chip // Chip for status
-                                                label={option.status}
-                                                size="small"
-                                                sx={{
-                                                    height: '20px',
-                                                    fontSize: '10px',
-                                                    backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
-                                                    color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
-                                                    textTransform: 'capitalize',
-                                                    ml: 1,
-                                                }}
-                                            />
-                                        )}
                                     </Box>
-                                    <Typography variant="caption" color="text.secondary">
-                                        {option.name}
-                                    </Typography>
-                                </Box>
-                            </li>
-                        )}
-                    />
-
+                                </li>
+                            )}
+                        />
+                    </Box>
+                    <Button variant="contained" onClick={onAddGuest} sx={{ backgroundColor: '#063455', color: '#fff', height: '56px' }}>
+                        + Add
+                    </Button>
+                </Grid>
+                <Grid item xs={12} sm={12} gap={1}>
                     {formData.guest && (
                         <Box sx={{ mt: 1, p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
                             <Typography variant="h5" sx={{ mb: 1 }}>
@@ -496,7 +548,7 @@ const BookingDetails = ({ formData, handleChange, errors }) => {
                     <TextField label="City" name="city" value={formData.city} onChange={handleChange} fullWidth />
                 </Grid>
                 <Grid item xs={4}>
-                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/[^0-9+\-]/g, '') } })} fullWidth />
+                    <TextField label="Mobile" name="mobile" value={formData.mobile} onChange={(e) => handleChange({ target: { name: 'mobile', value: e.target.value.replace(/\D/g, '') } })} inputProps={{ maxLength: 11 }} fullWidth />
                 </Grid>
                 <Grid item xs={6} sm={4}>
                     <TextField label="Email" name="email" value={formData.email} onChange={handleChange} fullWidth />
@@ -584,8 +636,31 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
             <Grid item xs={3}>
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={4}>
-                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
+            <Grid container spacing={2} item xs={12}>
+                <Grid item xs={4}>
+                    <TextField type="number" label="Security Deposit" placeholder="Amount" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
+                </Grid>
+                {Number(formData.securityDeposit) > 0 && (
+                    <>
+                        <Grid item xs={4}>
+                            <FormControl fullWidth>
+                                <InputLabel>Payment Mode</InputLabel>
+                                <Select name="paymentMode" value={formData.paymentMode || 'Cash'} label="Payment Mode" onChange={handleChange}>
+                                    <MenuItem value="Cash">Cash</MenuItem>
+                                    <MenuItem value="Credit Card">Credit Card</MenuItem>
+                                    <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                    <MenuItem value="Cheque">Cheque</MenuItem>
+                                    <MenuItem value="Online">Online</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        {formData.paymentMode !== 'Cash' && (
+                            <Grid item xs={4}>
+                                <TextField label="Payment Account / Reference" name="paymentAccount" placeholder="Bank Name - Account No / Trx ID" value={formData.paymentAccount || ''} onChange={handleChange} fullWidth />
+                            </Grid>
+                        )}
+                    </>
+                )}
             </Grid>
         </Grid>
     );

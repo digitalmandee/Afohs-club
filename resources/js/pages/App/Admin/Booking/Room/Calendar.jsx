@@ -6,6 +6,7 @@ import { FormControl, InputLabel, MenuItem, Select, Box, IconButton, Dialog, Dia
 import { ArrowBack } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
+import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -19,6 +20,10 @@ const RoomCalendar = () => {
     const [events, setEvents] = useState([]);
     const [checkInDialogOpen, setCheckInDialogOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
+
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [selectedActionBooking, setSelectedActionBooking] = useState(null);
 
     const fetchData = async () => {
         try {
@@ -46,7 +51,15 @@ const RoomCalendar = () => {
                             <a href="#" onclick="window.checkIn(${b.id}); return false;"
                                style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-in</a>
                             <a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank"
-                               style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Check-out</a>
+                               style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-out</a>
+                            ${
+                                b.status !== 'cancelled' && b.status !== 'checked_out'
+                                    ? `
+                            <a href="#" onclick="window.cancelBooking(${b.id}); return false;"
+                               style="display: inline-block; background: #dc3545; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Cancel</a>
+                            `
+                                    : ''
+                            }
                         </div>
 
                         <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
@@ -78,8 +91,17 @@ const RoomCalendar = () => {
             }
         };
 
+        window.cancelBooking = (bookingId) => {
+            const booking = events.find((e) => e.id === bookingId)?.booking;
+            if (booking) {
+                setSelectedActionBooking(booking);
+                setActionModalOpen(true);
+            }
+        };
+
         return () => {
             delete window.checkIn;
+            delete window.cancelBooking;
         };
     }, [events]);
 
@@ -197,6 +219,27 @@ const RoomCalendar = () => {
 
             {/* Check-in Modal */}
             <RoomCheckInModal open={checkInDialogOpen} onClose={handleCloseCheckIn} bookingId={selectedBooking?.id} />
+
+            <BookingActionModal
+                open={actionModalOpen}
+                onClose={() => setActionModalOpen(false)}
+                booking={selectedActionBooking}
+                action="cancel"
+                onConfirm={(bookingId, reason, refundData) => {
+                    const data = { cancellation_reason: reason };
+                    if (refundData && refundData.amount) {
+                        data.refund_amount = refundData.amount;
+                        data.refund_mode = refundData.mode;
+                        data.refund_account = refundData.account;
+                    }
+                    router.put(route('rooms.booking.cancel', bookingId), data, {
+                        onSuccess: () => {
+                            setActionModalOpen(false);
+                            fetchData();
+                        },
+                    });
+                }}
+            />
         </>
     );
 };

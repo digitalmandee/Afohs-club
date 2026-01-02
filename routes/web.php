@@ -145,6 +145,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
         Route::resource('guest-types', GuestTypeController::class)->except(['show']);
+        Route::get('/api/guest-types/active', [GuestTypeController::class, 'getActiveList'])->name('api.guest-types.active');
 
         Route::get('guests/trashed', [CustomerController::class, 'trashed'])->name('guests.trashed');
         Route::post('guests/restore/{id}', [CustomerController::class, 'restore'])->name('guests.restore');
@@ -171,6 +172,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:rooms.delete');
             // Room Calendar
             Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
+            // Cancelled Bookings
+            Route::get('booking/cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');  // Add middleware permission later if needed
+            Route::put('booking/refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund');
+            Route::put('booking/cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel');
+            Route::put('booking/undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel');
 
             // get room booking data
             Route::get('api/bookings/{id}', [RoomBookingController::class, 'showRoomBooking'])->name('api.room.booking.show')->middleware('permission:rooms.bookings.view');
@@ -218,12 +224,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Admin Booking Routes
     Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
+    Route::get('/api/room-bookings/search-customers', [RoomBookingController::class, 'searchCustomers'])->name('api.bookings.search-customers');
     Route::get('/api/events/calendar', [EventBookingController::class, 'calendarData'])->name('api.events.calendar');
     Route::get('/api/events/venues', [EventBookingController::class, 'getVenues'])->name('api.events.venues');
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
 
-    //
+    // Admin Booking Routes
     Route::get('/admin/family-members/{id}', [BookingController::class, 'familyMembers'])->name('admin.family-members');
 
     // Search

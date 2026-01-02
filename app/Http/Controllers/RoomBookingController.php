@@ -9,6 +9,7 @@ use App\Models\RoomBooking;
 use App\Models\RoomCategory;
 use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
+use App\Models\RoomType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,7 @@ class RoomBookingController extends Controller
         $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : ($booking->corporateMember ? $booking->corporateMember->full_name : null)));
         $bookingData = [
             'id' => $booking->id,
+            'status' => $booking->status,
             'bookingNo' => $booking->booking_no,
             'bookingDate' => $booking->booking_date,
             'checkInDate' => $booking->check_in_date,
@@ -75,7 +77,14 @@ class RoomBookingController extends Controller
             'documents' => json_decode($booking->booking_docs, true),
             'mini_bar_items' => $booking->miniBarItems,
             'other_charges' => $booking->otherCharges,
+            'other_charges' => $booking->otherCharges,
             'guest' => null,
+            'invoice' => $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+                'paid_amount' => $booking->invoice->paid_amount,
+                'total_price' => $booking->invoice->total_price,
+            ] : null,
         ];
 
         if ($booking->customer) {
@@ -168,6 +177,29 @@ class RoomBookingController extends Controller
                 }
             }
 
+            // check duplicate booking
+            if (!empty($data['checkInDate']) && !empty($data['checkOutDate']) && !empty($data['room']['id'])) {
+                $checkIn = $data['checkInDate'];
+                $checkOut = $data['checkOutDate'];
+                $roomId = $data['room']['id'];
+
+                $conflictingBooking = RoomBooking::where('room_id', $roomId)
+                    ->whereNotIn('status', ['cancelled', 'refunded', 'checked_out'])
+                    ->where(function ($query) use ($checkIn, $checkOut) {
+                        $query
+                            ->where('check_in_date', '<', $checkOut)
+                            ->where('check_out_date', '>', $checkIn);
+                    })
+                    ->first();
+
+                if ($conflictingBooking) {
+                    DB::rollBack();
+                    return response()->json([
+                        'error' => "Room is already booked. Conflict with Booking #{$conflictingBooking->booking_no} ({$conflictingBooking->check_in_date} to {$conflictingBooking->check_out_date})"
+                    ], 422);
+                }
+            }
+
             $bookingData = [
                 'booking_no' => $this->getBookingId(),
                 'booking_date' => $data['bookingDate'] ?? null,
@@ -240,10 +272,18 @@ class RoomBookingController extends Controller
                 'advance_payment' => $data['securityDeposit'] ?? 0,
                 'paid_amount' => 0,
                 'status' => 'unpaid',
-                // Keep data for backward compatibility
+                'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
+                    'Bank Transfer' => 'bank',
+                    'Credit Card' => 'credit_card',
+                    'Online' => 'bank',
+                    default => 'cash',
+                },
+                // Keep data for backward compatibility and store extra payment details
                 'data' => [
                     'booking_no' => $booking->booking_no,
-                    'amount' => $booking->grand_total
+                    'amount' => $booking->grand_total,
+                    'payment_account' => $data['paymentAccount'] ?? null,  // Save Account/Ref
+                    'security_deposit_mode' => $data['paymentMode'] ?? null,
                 ],
             ];
 
@@ -307,6 +347,28 @@ class RoomBookingController extends Controller
         try {
             $booking = RoomBooking::findOrFail($id);
             $data = $req->all();
+
+            // check duplicate booking
+            if (!empty($data['checkInDate']) && !empty($data['checkOutDate']) && !empty($data['room']['id'])) {
+                $checkIn = $data['checkInDate'];
+                $checkOut = $data['checkOutDate'];
+                $roomId = $data['room']['id'];
+
+                $exists = RoomBooking::where('room_id', $roomId)
+                    ->where('id', '!=', $id)  // Exclude current booking
+                    ->whereNotIn('status', ['cancelled', 'refunded'])
+                    ->where(function ($query) use ($checkIn, $checkOut) {
+                        $query
+                            ->where('check_in_date', '<', $checkOut)
+                            ->where('check_out_date', '>', $checkIn);
+                    })
+                    ->exists();
+
+                if ($exists) {
+                    DB::rollBack();
+                    return response()->json(['error' => 'Room is already booked for these dates.'], 422);
+                }
+            }
 
             // Handle documents
             $documentPaths = $booking->booking_docs ? json_decode($booking->booking_docs, true) : [];
@@ -431,7 +493,8 @@ class RoomBookingController extends Controller
                 });
         })
             ->where('status', '!=', 'cancelled')
-            ->with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email')
+            ->where('status', '!=', 'cancelled')
+            ->with(['room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email', 'invoice'])
             ->get()
             ->map(fn($b) => [
                 'id' => $b->id,
@@ -441,6 +504,9 @@ class RoomBookingController extends Controller
                 'check_in_date' => $b->check_in_date,
                 'check_out_date' => $b->check_out_date,
                 'status' => $b->status,
+                'invoice' => $b->invoice ? [
+                    'paid_amount' => $b->invoice->paid_amount,
+                ] : null,
             ]);
 
         $rooms = Room::select('id', 'name')->get()->map(fn($r) => ['id' => $r->id, 'room_number' => $r->name]);
@@ -543,5 +609,429 @@ class RoomBookingController extends Controller
             'success' => true,
             'orders' => $orders
         ]);
+    }
+
+    public function cancelled(Request $request)
+    {
+        $filters = $request->only(['search', 'room_type', 'booking_date_from', 'booking_date_to', 'check_in_from', 'check_in_to', 'check_out_from', 'check_out_to', 'customer_type', 'room_ids']);
+
+        $query = RoomBooking::with([
+            'customer:id,name,email,contact',
+            'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
+            'room:id,name,room_type_id',
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
+        ])->whereIn('status', ['cancelled', 'refunded']);
+
+        // Apply shared filters
+        $this->applyFilters($query, $filters);
+
+        $bookings = $query->orderBy('updated_at', 'desc')->paginate(20)->withQueryString();
+
+        // Transform collection to include full invoice details
+        $bookings->getCollection()->transform(function ($booking) {
+            $booking->invoice = $booking->invoice ? [
+                'id' => $booking->invoice->id,
+                'status' => $booking->invoice->status,
+                'paid_amount' => $booking->invoice->paid_amount,
+                'total_price' => $booking->invoice->total_price,
+                'advance_payment' => $booking->invoice->advance_payment,
+                'payment_method' => $booking->invoice->payment_method,
+                'data' => $booking->invoice->data,
+            ] : null;
+            return $booking;
+        });
+
+        return Inertia::render('App/Admin/Booking/Room/Cancelled', [
+            'bookings' => $bookings,
+            'filters' => $filters,
+            'roomTypes' => RoomType::select('id', 'name')->get(),
+            'rooms' => Room::select('id', 'name')->get(),
+        ]);
+    }
+
+    private function applyFilters($query, $filters)
+    {
+        // Search
+        // Customer Type & Search Logic
+        $customerType = $filters['customer_type'] ?? 'all';
+        $search = $filters['search'] ?? null;
+
+        if ($customerType === 'member') {
+            $query->whereHas('member');
+            if ($search) {
+                $query->whereHas('member', function ($q) use ($search) {
+                    $q
+                        ->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%");
+                });
+            }
+        } elseif ($customerType === 'corporate') {
+            $query->whereHas('corporateMember');
+            if ($search) {
+                $query->whereHas('corporateMember', function ($q) use ($search) {
+                    $q
+                        ->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('membership_no', 'like', "%{$search}%");
+                });
+            }
+        } elseif ($customerType === 'guest') {
+            $query->whereHas('customer');
+            if ($search) {
+                $query->whereHas('customer', function ($q) use ($search) {
+                    $q
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('customer_no', 'like', "%{$search}%");
+                });
+            }
+        } else {
+            // ALL types
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('id', 'like', "%{$search}%")
+                        ->orWhere('booking_no', 'like', "%{$search}%")
+                        ->orWhereHas('member', function ($sub) use ($search) {
+                            $sub
+                                ->where('full_name', 'like', "%{$search}%")
+                                ->orWhere('membership_no', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($sub) use ($search) {
+                            $sub
+                                ->where('full_name', 'like', "%{$search}%")
+                                ->orWhere('membership_no', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('customer', function ($sub) use ($search) {
+                            $sub
+                                ->where('name', 'like', "%{$search}%")
+                                ->orWhere('customer_no', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('room', function ($sub) use ($search) {
+                            $sub->where('name', 'like', "%{$search}%");
+                        });
+                });
+            }
+        }
+
+        // Room Type
+        if (!empty($filters['room_type'])) {
+            $roomTypes = explode(',', $filters['room_type']);
+            $query->whereHas('room', function ($q) use ($roomTypes) {
+                $q->whereIn('room_type_id', $roomTypes);
+            });
+        }
+
+        // Room IDs
+        if (!empty($filters['room_ids'])) {
+            $roomIds = explode(',', $filters['room_ids']);
+            $query->whereIn('room_id', $roomIds);
+        }
+
+        // Booking Date
+        if (!empty($filters['booking_date_from'])) {
+            $query->whereDate('booking_date', '>=', $filters['booking_date_from']);
+        }
+        if (!empty($filters['booking_date_to'])) {
+            $query->whereDate('booking_date', '<=', $filters['booking_date_to']);
+        }
+
+        // Check In Date
+        if (!empty($filters['check_in_from'])) {
+            $query->whereDate('check_in_date', '>=', $filters['check_in_from']);
+        }
+        if (!empty($filters['check_in_to'])) {
+            $query->whereDate('check_in_date', '<=', $filters['check_in_to']);
+        }
+
+        // Check Out Date
+        if (!empty($filters['check_out_from'])) {
+            $query->whereDate('check_out_date', '>=', $filters['check_out_from']);
+        }
+        if (!empty($filters['check_out_to'])) {
+            $query->whereDate('check_out_date', '<=', $filters['check_out_to']);
+        }
+
+        // Booking Status
+        if (!empty($filters['booking_status'])) {
+            $query->where('status', $filters['booking_status']);
+        }
+    }
+
+    public function cancelBooking(Request $request, $id)
+    {
+        $request->validate([
+            'cancellation_reason' => 'nullable|string|max:500',
+            'refund_amount' => 'nullable|numeric|min:0',
+            'refund_mode' => 'nullable|string|required_with:refund_amount',
+            'refund_account' => 'nullable|string',
+        ]);
+
+        $booking = RoomBooking::with('invoice')->findOrFail($id);
+        $booking->status = 'cancelled';
+
+        $notes = "\n[Cancelled: " . now()->toDateTimeString() . ']';
+        if ($request->filled('cancellation_reason')) {
+            $notes .= ' Reason: ' . $request->cancellation_reason;
+        }
+
+        // Handle Refund
+        if ($request->filled('refund_amount') && $request->refund_amount > 0) {
+            $invoice = $booking->invoice;
+            if ($invoice) {
+                $maxRefundable = max($invoice->paid_amount, $invoice->advance_payment);
+
+                if ($request->refund_amount > $maxRefundable) {
+                    return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than refundable amount (' . $maxRefundable . ').']);
+                }
+
+                // Update Invoice Paid Amount
+                if ($invoice->paid_amount > 0) {
+                    $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
+                }
+                // Also deduct from advance_payment if available
+                if ($invoice->advance_payment > 0) {
+                    $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
+                }
+                // Optionally update status if balance becomes due? But for cancellation, usually irrelevant.
+
+                // However, logic says if cancelled, maybe we shouldn't care about balance?
+                // But we want to reflect "money returned".
+
+                $invoice->save();
+
+                $notes .= "\n[Refund Processed: " . $request->refund_amount . ' via ' . $request->refund_mode . ']';
+                if ($request->filled('refund_account')) {
+                    $notes .= ' Account: ' . $request->refund_account;
+                }
+            }
+        }
+
+        $booking->additional_notes .= $notes;
+        $booking->save();
+
+        if ($booking->invoice) {
+            $invoice = $booking->invoice->refresh();  // Refresh to get updated amounts
+            if ($invoice->paid_amount == 0 && $invoice->advance_payment == 0) {
+                // If balance is clear, status should be 'refunded' (if we refunded) or 'cancelled' (if it was unpaid)
+                // Since we are checking post-logic, if we processed a refund, it might be 'refunded'.
+                // Let's use 'refunded' if it was previously paid check, or 'cancelled' broadly.
+                // Actually, if we just cancelled and it had 0 paid, it is 'cancelled'.
+                // If we had paid > 0 and refunded it to 0, it is 'refunded'.
+                // Simple logic: If balance is 0, match booking status (cancelled) or better 'refunded' if there was a transaction?
+                // Let's check if we did a refund.
+                if ($request->filled('refund_amount') && $request->refund_amount > 0) {
+                    $invoice->update(['status' => 'refunded']);
+                    $booking->status = 'refunded';  // Also update booking to refunded for consistency? Or keep cancelled? User wants 'refunded' if money returned.
+                    $booking->save();
+                } else {
+                    // Just cancelled without refund (presumably unpaid or holding money).
+                    // User requested NOT to change invoice status to 'cancelled'.
+                    // So we keep it as 'paid' or 'unpaid'.
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Booking cancelled successfully');
+    }
+
+    public function processRefund(Request $request, $id)
+    {
+        $request->validate([
+            'refund_amount' => 'required|numeric|min:1',
+            'refund_mode' => 'required|string',
+            'refund_account' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $booking = RoomBooking::with('invoice')->findOrFail($id);
+        $invoice = $booking->invoice;
+
+        $maxRefundable = max($invoice->paid_amount, $invoice->advance_payment);
+
+        if (!$invoice || $request->refund_amount > $maxRefundable) {
+            return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than remaining refundable amount (' . $maxRefundable . ').']);
+        }
+
+        // Deduct logic: Prefer deducting from paid_amount first (if > 0), else from advance
+        if ($invoice->paid_amount > 0) {
+            $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
+        }
+        // Also deduct from advance_payment if available, to reflect the 'advance returned' request
+        if ($invoice->advance_payment > 0) {
+            $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
+        }
+        $invoice->save();
+
+        // FINAL SETTLEMENT LOGIC:
+        // We do NOT zero out the balance, so we keep record of what was retained (e.g. 100 tax).
+        // But we mark status as 'refunded' so the UI hides the refund button (no more refunds allowed).
+
+        $invoice->status = 'refunded';  // Mark as fully refunded/settled
+        $invoice->save();
+
+        // Update Booking Status
+        $booking->status = 'refunded';
+
+        $notes = "\n[Refund Processed (Post-Cancel): " . now()->toDateTimeString() . ']';
+        $notes .= ' Amount: ' . $request->refund_amount . ' via ' . $request->refund_mode;
+        if ($request->filled('refund_account')) {
+            $notes .= ' Account: ' . $request->refund_account;
+        }
+        if ($request->filled('notes')) {
+            $notes .= ' Note: ' . $request->notes;
+        }
+
+        $booking->additional_notes .= $notes;
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Refund processed successfully');
+    }
+
+    public function undoBooking($id)
+    {
+        $booking = RoomBooking::findOrFail($id);
+
+        // Logic to restrict undo time if needed (e.g. check updated_at)
+        // For now, allow undo.
+        // Revert to 'booked' or 'confirmed'? Usually 'booked' is the initial confirmed state in this system.
+        $previousStatus = $booking->status;
+
+        // Revert to 'confirmed'
+        $booking->status = 'confirmed';
+
+        // If it was refunded (money gone), we must reset financial records to reflect 'unpaid' state
+        if ($previousStatus === 'refunded' || ($booking->invoice && $booking->invoice->status === 'refunded')) {
+            if ($booking->invoice) {
+                $booking->invoice->status = 'unpaid';
+                $booking->invoice->advance_payment = 0;  // Clear advance since it was returned
+                $booking->invoice->save();
+            }
+            $booking->security_deposit = 0;  // Clear security deposit since it was returned
+        } elseif ($booking->invoice && $booking->invoice->status === 'cancelled') {
+            // If just cancelled (money held), revert invoice to paid/unpaid based on balance
+            $total = $booking->invoice->total_price;
+            $paid = $booking->invoice->paid_amount + $booking->invoice->advance_payment;
+            $booking->invoice->status = ($paid >= $total && $total > 0) ? 'paid' : 'unpaid';
+            $booking->invoice->save();
+        }
+
+        // Optionally note the undo
+        $booking->additional_notes .= "\n[Undo Cancel: " . now()->toDateTimeString() . ']';
+
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Booking cancellation undone successfully');
+    }
+
+    public function searchCustomers(Request $request)
+    {
+        $query = $request->input('query');
+        $type = $request->input('type', 'all');  // all, member, corporate, guest
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $results = collect();
+
+        // 1. Members
+        if ($type === 'all' || $type === 'member') {
+            $members = \App\Models\Member::where('status', 'active')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Member - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Member',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                    ];
+                });
+            $results = $results->merge($members);
+        }
+
+        // 2. Corporate Members
+        if ($type === 'all' || $type === 'corporate') {
+            $corporate = \App\Models\CorporateMember::where('status', 'active')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Corporate - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Corporate',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                    ];
+                });
+            $results = $results->merge($corporate);
+        }
+
+        // 3. Guests (Customers)
+        if ($type === 'all' || $type === 'guest') {
+            $guests = \App\Models\Customer::query()
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($c) {
+                    return [
+                        'label' => "{$c->name} (Guest - {$c->customer_no})",
+                        'value' => $c->name,
+                        'type' => 'Guest',
+                        'name' => $c->name,
+                        'customer_no' => $c->customer_no,
+                        'id' => $c->id,
+                        'status' => null,  // Guests don't have a status column
+                        'guest_type_id' => $c->guest_type_id,
+                    ];
+                });
+            $results = $results->merge($guests);
+        }
+
+        // 4. Dynamic Guest Types
+        if (str_starts_with($type, 'guest-')) {
+            $guestTypeId = str_replace('guest-', '', $type);
+            $guests = \App\Models\Customer::query()
+                ->where('guest_type_id', $guestTypeId)
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get()
+                ->map(function ($c) {
+                    return [
+                        'label' => "{$c->name} (Guest - {$c->customer_no})",
+                        'value' => $c->name,
+                        'type' => 'Guest',
+                        'name' => $c->name,
+                        'customer_no' => $c->customer_no,
+                        'id' => $c->id,
+                        'status' => null,
+                        'booking_type' => 'guest',  // Important for store method logic
+                    ];
+                });
+            $results = $results->merge($guests);
+        }
+
+        return response()->json($results);
     }
 }

@@ -60,8 +60,12 @@ class RoomBooking extends BaseModel
 
     public function getInvoiceAttribute()
     {
+        if ($this->relationLoaded('invoice')) {
+            return $this->getRelation('invoice');
+        }
+
         // Try polymorphic relationship first, fallback to JSON data
-        $invoice = $this->invoice()->select('id', 'status')->first();
+        $invoice = $this->invoice()->select('id', 'status', 'paid_amount', 'total_price', 'advance_payment')->first();
 
         return $invoice;
     }

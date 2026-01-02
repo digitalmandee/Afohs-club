@@ -139,7 +139,7 @@ export default function SideNav({ open, setOpen }) {
                                 path: route('rooms.dashboard'),
                             },
                             {
-                                text: 'Manage',
+                                text: 'Room Bookings',
                                 path: route('rooms.manage'),
                             },
                             {
@@ -149,6 +149,10 @@ export default function SideNav({ open, setOpen }) {
                             {
                                 text: 'Check-Out',
                                 path: route('rooms.checkout'),
+                            },
+                            {
+                                text: 'Cancelled',
+                                path: route('rooms.booking.cancelled'),
                             },
                             {
                                 text: 'Request',

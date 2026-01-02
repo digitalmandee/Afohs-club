@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TextField, Paper, MenuItem, CircularProgress } from '@mui/material';
+import { TextField, Paper, MenuItem, CircularProgress, Box, Typography, Chip } from '@mui/material';
 import axios from 'axios';
 
 const AsyncSearchTextField = ({
@@ -17,6 +17,7 @@ const AsyncSearchTextField = ({
     size = 'medium',
     resultFormat = (item) => `${item.label}`,
     resultsKey = 'results',
+    renderItem = null, // Custom render function for dropdown items
 }) => {
     const [inputValue, setInputValue] = useState(value?.label || '');
     const [suggestions, setSuggestions] = useState([]);
@@ -116,8 +117,8 @@ const AsyncSearchTextField = ({
                     }}
                 >
                     {suggestions.map((item) => (
-                        <MenuItem key={item.id} onClick={() => handleSelect(item)}>
-                            {resultFormat(item)}
+                        <MenuItem key={item.id} onClick={() => handleSelect(item)} sx={{ py: 1 }}>
+                            {renderItem ? renderItem(item) : resultFormat(item)}
                         </MenuItem>
                     ))}
                 </Paper>
