@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Dialog, DialogContent, DialogActions, Box, Typography, IconButton, Button, Snackbar, TextField } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 
-const ActivateMembershipDialog = ({ open, onClose, memberId, onSuccess }) => {
+const ActivateMembershipDialog = ({ open, onClose, memberId, onSuccess, updateUrl }) => {
     const [reason, setReason] = useState('');
     const [loading, setLoading] = useState(false);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', error: false });
@@ -23,7 +23,8 @@ const ActivateMembershipDialog = ({ open, onClose, memberId, onSuccess }) => {
                 status: 'active',
                 reason,
             };
-            await axios.post(route('membership.update-status'), payload);
+            const url = updateUrl || route('membership.update-status');
+            await axios.post(url, payload);
             setSnackbar({ open: true, message: 'Membership activated', error: false });
             onClose();
             onSuccess?.('active'); // Send back updated status

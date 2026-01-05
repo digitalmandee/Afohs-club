@@ -195,6 +195,70 @@ class CorporateMembershipController extends Controller
                 'invoiceable_type' => CorporateMember::class,
             ]);
 
+            // Handle family members
+            if (!empty($request->family_members)) {
+                foreach ($request->family_members as $familyMemberData) {
+                    $familyMember = CorporateMember::create([
+                        'barcode_no' => $familyMemberData['barcode_no'] ?? null,
+                        'parent_id' => $mainMember->id,
+                        'membership_no' => $mainMember->membership_no . '-' . $familyMemberData['family_suffix'],
+                        'family_suffix' => $familyMemberData['family_suffix'],
+                        'first_name' => $familyMemberData['first_name'] ?? null,
+                        'middle_name' => $familyMemberData['middle_name'] ?? null,
+                        'last_name' => $familyMemberData['last_name'] ?? null,
+                        'full_name' => $familyMemberData['full_name'],
+                        'personal_email' => $familyMemberData['email'] ?? null,
+                        'relation' => $familyMemberData['relation'],
+                        'gender' => $familyMemberData['gender'] ?? null,
+                        'date_of_birth' => $this->formatDateForDatabase($familyMemberData['date_of_birth']),
+                        'status' => $familyMemberData['status'],
+                        'start_date' => $this->formatDateForDatabase($familyMemberData['start_date'] ?? null),
+                        'end_date' => $this->formatDateForDatabase($familyMemberData['end_date'] ?? null),
+                        'card_issue_date' => $this->formatDateForDatabase($familyMemberData['card_issue_date'] ?? null),
+                        // Use getRawOriginal to avoid timezone issues for casted date fields if needed, but here we are setting it.
+                        'card_expiry_date' => $this->formatDateForDatabase($familyMemberData['card_expiry_date'] ?? null),
+                        'cnic_no' => $familyMemberData['cnic'] ?? null,
+                        'mobile_number_a' => $familyMemberData['phone_number'] ?? null,
+                        'passport_no' => $familyMemberData['passport_no'] ?? null,
+                        'nationality' => $familyMemberData['nationality'] ?? null,
+                        'martial_status' => $familyMemberData['martial_status'] ?? null,
+                        'corporate_company_id' => $mainMember->corporate_company_id,  // Inherit company
+                        'member_category_id' => $mainMember->member_category_id,  // Inherit category
+                    ]);
+
+                    // Handle family member profile photo using Media model
+                    if (!empty($familyMemberData['picture'])) {
+                        $file = $familyMemberData['picture'];
+
+                        // Get file metadata BEFORE moving the file
+                        $fileName = $file->getClientOriginalName();
+                        $mimeType = $file->getMimeType();
+                        $fileSize = $file->getSize();
+
+                        // Now save the file
+                        $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                        $familyMember->media()->create([
+                            'type' => 'profile_photo',
+                            'file_name' => $fileName,
+                            'file_path' => $filePath,
+                            'mime_type' => $mimeType,
+                            'file_size' => $fileSize,
+                            'disk' => 'public',
+                        ]);
+                    }
+
+                    $familyqrCodeData = route('member.profile', ['id' => $familyMember->id, 'type' => 'corporate']);
+
+                    // Create QR code image and save it
+                    $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
+                    $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
+
+                    $familyMember->qr_code = $qrImagePath;
+                    $familyMember->save();
+                }
+            }
+
             DB::commit();
 
             return response()->json(['message' => 'Corporate Membership created successfully.', 'member' => $mainMember], 200);
@@ -285,7 +349,7 @@ class CorporateMembershipController extends Controller
     public function edit(Request $request)
     {
         $user = CorporateMember::where('id', $request->id)
-            ->with(['documents', 'profilePhoto', 'memberCategory', 'familyMembers.profilePhoto'])
+            ->with(['documents', 'profilePhoto', 'memberCategory', 'familyMembers.profilePhoto', 'businessDeveloper', 'professionInfo'])
             ->first();
 
         if (!$user) {
@@ -296,7 +360,98 @@ class CorporateMembershipController extends Controller
             ? ['id' => $user->profilePhoto->id, 'file_path' => $user->profilePhoto->file_path]
             : null;
 
+        // Format dates for frontend (DD-MM-YYYY format) before toArray()
+        // For casted date fields, use getRawOriginal() to get raw database value
+        // This prevents timezone-induced day shifts
+        $formattedMembershipDate = $user->membership_date
+            ? \Carbon\Carbon::parse($user->membership_date)->format('d-m-Y')
+            : null;
+        $formattedCardIssueDate = $user->card_issue_date
+            ? \Carbon\Carbon::parse($user->card_issue_date)->format('d-m-Y')
+            : null;
+        // card_expiry_date is cast as 'date' - use getRawOriginal to avoid timezone issues
+        $formattedCardExpiryDate = null;
+        $rawCardExpiry = $user->getRawOriginal('card_expiry_date');
+        if ($rawCardExpiry) {
+            $formattedCardExpiryDate = \Carbon\Carbon::createFromFormat('Y-m-d', $rawCardExpiry)->format('d-m-Y');
+        }
+        // date_of_birth is cast as 'date' - use getRawOriginal to avoid timezone issues
+        $formattedDateOfBirth = null;
+        $rawDob = $user->getRawOriginal('date_of_birth');
+        if ($rawDob) {
+            $formattedDateOfBirth = \Carbon\Carbon::createFromFormat('Y-m-d', $rawDob)->format('d-m-Y');
+        }
+
         $userData = $user->toArray();
+
+        // Apply formatted dates
+        $userData['membership_date'] = $formattedMembershipDate;
+        $userData['card_issue_date'] = $formattedCardIssueDate;
+        $userData['card_expiry_date'] = $formattedCardExpiryDate;
+        $userData['date_of_birth'] = $formattedDateOfBirth;
+
+        // Add business developer for form
+        if ($user->businessDeveloper) {
+            $userData['business_developer'] = [
+                'id' => $user->businessDeveloper->id,
+                'name' => $user->businessDeveloper->name,
+                'label' => $user->businessDeveloper->name,
+                'employee_id' => $user->businessDeveloper->employee_id,
+            ];
+        }
+
+        // Format family members for the separate prop
+        $familyMembers = $user->familyMembers()->with('profilePhoto')->get()->map(function ($member) use ($user) {
+            // Get profile photo media for family member
+            $profilePhotoMedia = $member->profilePhoto;
+            $pictureUrl = null;
+            $pictureId = null;
+
+            if ($profilePhotoMedia) {
+                $pictureUrl = $profilePhotoMedia->file_path;
+                $pictureId = $profilePhotoMedia->id;
+            }
+
+            return [
+                'id' => $member->id,
+                'membership_no' => $member->membership_no,
+                'barcode_no' => $member->barcode_no,
+                'family_suffix' => $member->family_suffix,
+                'first_name' => $member->first_name,
+                'middle_name' => $member->middle_name,
+                'last_name' => $member->last_name,
+                'full_name' => $member->full_name,
+                'member_type_id' => $user->member_type_id,
+                'membership_category' => $user->member_category_id,
+                'relation' => $member->relation,
+                'gender' => $member->gender,
+                'nationality' => $member->nationality,
+                'passport_no' => $member->passport_no,
+                // 'martial_status' => $member->martial_status, // CorporateMember model might not have this, checking needed?
+                'cnic' => $member->cnic,  // Ensure column name matches
+                // Use getRawOriginal to avoid timezone issues for casted date fields
+                'date_of_birth' => $member->getRawOriginal('date_of_birth')
+                    ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('date_of_birth'))->format('d-m-Y')
+                    : null,
+                'phone_number' => $member->mobile_number_a,
+                'email' => $member->personal_email,
+                'start_date' => $member->start_date ? \Carbon\Carbon::parse($member->start_date)->format('d-m-Y') : null,
+                'end_date' => $member->end_date ? \Carbon\Carbon::parse($member->end_date)->format('d-m-Y') : null,
+                'card_issue_date' => $member->card_issue_date ? \Carbon\Carbon::parse($member->card_issue_date)->format('d-m-Y') : null,
+                // Use getRawOriginal to avoid timezone issues for casted date fields
+                'card_expiry_date' => $member->getRawOriginal('card_expiry_date')
+                    ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('card_expiry_date'))->format('d-m-Y')
+                    : null,
+                'profile_photo' => $member->profilePhoto,
+                'status' => $member->status,
+                'picture' => $pictureUrl,  // Full URL from file_path
+                'picture_id' => $pictureId,  // Media ID for tracking
+            ];
+        });
+
+        // Still keeping the nested loop for user["family_members"] if other parts need it,
+        // OR we can rely on the prop. The previous code modified $userData['family_members'].
+        // Let's keep $userData clean or matching the other controller.
 
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')
             ->where('status', 'active')
@@ -305,7 +460,7 @@ class CorporateMembershipController extends Controller
             })
             ->get();
 
-        return Inertia::render('App/Admin/CorporateMembership/CorporateMemberForm', compact('membercategories'))
+        return Inertia::render('App/Admin/CorporateMembership/CorporateMemberForm', compact('membercategories', 'familyMembers'))
             ->with(['user' => $userData]);
     }
 
@@ -340,6 +495,87 @@ class CorporateMembershipController extends Controller
             ->paginate($perPage);
 
         return response()->json($familyMembers);
+    }
+
+    /**
+     * Get All Corporate Family Members (Non-paginated) for Dropdown
+     */
+    public function getAllFamilyMembers(Request $request, $id)
+    {
+        $familyMembers = CorporateMember::where('parent_id', $id)
+            ->select('id', 'parent_id', 'full_name', 'first_name', 'membership_no', 'relation', 'status')
+            ->get();
+
+        return response()->json($familyMembers);
+    }
+
+    /**
+     * Get Profession Info for Corporate Member
+     */
+    public function getProfessionInfo($id)
+    {
+        $member = CorporateMember::with('professionInfo')->find($id);
+
+        if (!$member) {
+            return response()->json(['error' => 'Member not found'], 404);
+        }
+
+        return response()->json(['profession_info' => $member->professionInfo]);
+    }
+
+    /**
+     * Store Step 4 (Next of Kin) for Corporate Member
+     */
+    public function storeStep4(Request $request)
+    {
+        try {
+            $member = CorporateMember::find($request->member_id);
+            if (!$member) {
+                return response()->json(['error' => 'Member not found'], 404);
+            }
+
+            // Prepare data for MemberProfessionInfo
+            // Note: CorporateMember uses MemberProfessionInfo via 'professionInfo' relationship
+            // IMPORTANT: The migration '2025_12_26_180000_add_corporate_member_id_to_profession.php' adds corporate_member_id
+            // and '2025_12_26_181500_make_member_id_nullable_in_profession.php' makes member_id nullable.
+            $professionData = $request->except([
+                'id',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'created_by',
+                'updated_by',
+                'deleted_by',
+                'member_id',  // Prevent overwriting member_id if it's passed
+                'profession',  // Exclude fields that are not in the table
+                'office_address',
+                'office_phone',
+                'referral_name',
+            ]);
+
+            // Explicitly set corporate_member_id and nullify member_id (since this is a corporate member)
+            // But relying on relation create/update handles the foreign key for the relation (corporate_member_id via 'professionInfo')
+            // However, checking the 'professionInfo' relation in CorporateMember model is key.
+            // If relationship is `hasOne(MemberProfessionInfo::class, 'corporate_member_id')`, then creating via relation sets it automatically.
+
+            // Ensure our new ID fields are included if passed
+            $professionData['nominee_id'] = $request->nominee_id;
+            $professionData['referral_member_id'] = $request->referral_member_id;
+            $professionData['referral_is_corporate'] = $request->boolean('referral_is_corporate');
+
+            // Update or Create MemberProfessionInfo
+            if ($member->professionInfo) {
+                $member->professionInfo->update($professionData);
+            } else {
+                // Creating via relationship automatically sets the foreign key defined in the relationship
+                $member->professionInfo()->create($professionData);
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Error saving corporate step 4: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to save information: ' . $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -465,6 +701,125 @@ class CorporateMembershipController extends Controller
                         'file_size' => $fileSize,
                         'disk' => 'public',
                     ]);
+                }
+            }
+
+            // Update Family Members
+            if ($request->filled('family_members')) {
+                foreach ($request->family_members as $newMemberData) {
+                    // Check if family member is new
+                    if (str_starts_with($newMemberData['id'], 'new-')) {
+                        $familyMember = CorporateMember::create([
+                            'barcode_no' => $newMemberData['barcode_no'] ?? null,
+                            'parent_id' => $member->id,
+                            'membership_no' => $request->membership_no . ($newMemberData['family_suffix'] ? '-' . $newMemberData['family_suffix'] : ''),
+                            'family_suffix' => $newMemberData['family_suffix'] ?? null,
+                            'first_name' => $newMemberData['first_name'] ?? null,
+                            'middle_name' => $newMemberData['middle_name'] ?? null,
+                            'last_name' => $newMemberData['last_name'] ?? null,
+                            'full_name' => $newMemberData['full_name'],
+                            'personal_email' => $newMemberData['email'] ?? null,
+                            'relation' => $newMemberData['relation'],
+                            'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']),
+                            'status' => $newMemberData['status'],
+                            'gender' => $newMemberData['gender'] ?? null,
+                            'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null),
+                            'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null),
+                            'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null),
+                            'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null),
+                            'cnic_no' => $newMemberData['cnic'] ?? null,
+                            'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                            'passport_no' => $newMemberData['passport_no'] ?? null,
+                            'nationality' => $newMemberData['nationality'] ?? null,
+                            'martial_status' => $newMemberData['martial_status'] ?? null,
+                            'corporate_company_id' => $member->corporate_company_id,  // Inherit company
+                            'member_category_id' => $member->member_category_id,  // Inherit category
+                        ]);
+
+                        // Handle family member profile photo using Media model
+                        if (!empty($newMemberData['picture'])) {
+                            $file = $newMemberData['picture'];
+
+                            // Get file metadata BEFORE moving the file
+                            $fileName = $file->getClientOriginalName();
+                            $mimeType = $file->getMimeType();
+                            $fileSize = $file->getSize();
+
+                            // Now save the file
+                            $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                            $familyMember->media()->create([
+                                'type' => 'profile_photo',
+                                'file_name' => $fileName,
+                                'file_path' => $filePath,
+                                'mime_type' => $mimeType,
+                                'file_size' => $fileSize,
+                                'disk' => 'public',
+                            ]);
+                        }
+
+                        $familyqrCodeData = route('member.profile', ['id' => $familyMember->id, 'type' => 'corporate']);
+
+                        // Create QR code image and save it
+                        $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
+                        $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
+
+                        $familyMember->qr_code = $qrImagePath;
+                        $familyMember->save();
+                    } else {
+                        // Update existing family member
+                        $familyMember = CorporateMember::find($newMemberData['id']);
+                        if ($familyMember) {
+                            $familyMember->update([
+                                'barcode_no' => $newMemberData['barcode_no'] ?? $familyMember->barcode_no,
+                                'first_name' => $newMemberData['first_name'] ?? $familyMember->first_name,
+                                'middle_name' => $newMemberData['middle_name'] ?? $familyMember->middle_name,
+                                'last_name' => $newMemberData['last_name'] ?? $familyMember->last_name,
+                                'full_name' => $newMemberData['full_name'] ?? $familyMember->full_name,
+                                'personal_email' => $newMemberData['email'] ?? $familyMember->personal_email,
+                                'relation' => $newMemberData['relation'] ?? $familyMember->relation,
+                                'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']) ?? $familyMember->date_of_birth,
+                                'status' => $newMemberData['status'] ?? $familyMember->status,
+                                'gender' => $newMemberData['gender'] ?? $familyMember->gender,
+                                'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null) ?? $familyMember->start_date,
+                                'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null) ?? $familyMember->end_date,
+                                'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null) ?? $familyMember->card_issue_date,
+                                'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null) ?? $familyMember->card_expiry_date,
+                                'cnic_no' => $newMemberData['cnic'] ?? $familyMember->cnic_no ?? null,
+                                'mobile_number_a' => $newMemberData['phone_number'] ?? $familyMember->mobile_number_a ?? null,
+                                'passport_no' => $newMemberData['passport_no'] ?? $familyMember->passport_no,
+                                'nationality' => $newMemberData['nationality'] ?? $familyMember->nationality,
+                                'martial_status' => $newMemberData['martial_status'] ?? $familyMember->martial_status,
+                            ]);
+
+                            // Handle profile photo update
+                            if (!empty($newMemberData['picture']) && $newMemberData['picture'] instanceof \Illuminate\Http\UploadedFile) {
+                                $file = $newMemberData['picture'];
+
+                                $fileName = $file->getClientOriginalName();
+                                $mimeType = $file->getMimeType();
+                                $fileSize = $file->getSize();
+
+                                $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                                // Delete old photo
+                                $oldPhoto = $familyMember->media()->where('type', 'profile_photo')->first();
+                                if ($oldPhoto) {
+                                    $oldPhoto->deleteFile();
+                                    $oldPhoto->delete();
+                                }
+
+                                $familyMember->media()->create([
+                                    'type' => 'profile_photo',
+                                    'file_name' => $fileName,
+                                    'file_path' => $filePath,
+                                    'mime_type' => $mimeType,
+                                    'file_size' => $fileSize,
+                                    'disk' => 'public',
+                                ]);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -677,5 +1032,71 @@ class CorporateMembershipController extends Controller
             ->get();
 
         return response()->json(['members' => $members]);
+    }
+
+    /**
+     * Update status of corporate member.
+     */
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'member_id' => 'required|exists:corporate_members,id',
+            'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
+            'reason' => 'nullable|string',
+            'duration_type' => 'required_if:status,suspended,absent|in:1Day,1Monthly,1Year,CustomDate',
+            'custom_start_date' => 'required_if:duration_type,CustomDate|nullable|date',
+            'custom_end_date' => 'required_if:duration_type,CustomDate|nullable|date|after:custom_start_date',
+        ]);
+
+        $member = CorporateMember::findOrFail($request->member_id);
+
+        $startDate = now();
+        $endDate = null;
+
+        if (in_array($request->status, ['suspended', 'absent'])) {
+            switch ($request->duration_type) {
+                case '1Day':
+                    $endDate = now()->addDay();
+                    break;
+                case '1Monthly':
+                    $endDate = now()->addMonth();
+                    break;
+                case '1Year':
+                    $endDate = now()->addYear();
+                    break;
+                case 'CustomDate':
+                    $startDate = Carbon::parse($request->custom_start_date);
+                    $endDate = Carbon::parse($request->custom_end_date);
+                    break;
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $member->update([
+                'status' => $request->status,
+                // 'paused_at' => $request->status === 'absent' ? now() : null,
+            ]);
+
+            // Update open-ended history
+            $member->statusHistories()->whereNull('end_date')->update(['end_date' => now()]);
+
+            // Create new history
+            \App\Models\MemberStatusHistory::create([
+                'corporate_member_id' => $member->id,
+                'status' => $request->status,
+                'reason' => $request->reason,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'created_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+            return response()->json(['message' => 'Status updated successfully']);
+        } catch (\Exception $e) {
+            Log::error('Corporate Status update failed', ['error' => $e->getMessage()]);
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update status'], 500);
+        }
     }
 }

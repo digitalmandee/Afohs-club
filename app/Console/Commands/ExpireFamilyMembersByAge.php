@@ -28,25 +28,48 @@ class ExpireFamilyMembersByAge extends Command
     public function handle()
     {
         $isDryRun = $this->option('dry-run');
-        
+
         $this->info('Starting family member age-based expiry process (excluding wives)...');
-        
-        // Get family members who should be expired by age
+
+        // Get regular family members who should be expired by age
         $membersToExpire = Member::familyMembersToExpire()->get();
-        
-        if ($membersToExpire->isEmpty()) {
+        $this->info("Found {$membersToExpire->count()} regular family member(s) to expire.");
+        $this->processExpiry($membersToExpire, $isDryRun, $expiredCount);
+
+        // Get corporate family members who should be expired by age
+        $corporateMembersToExpire = \App\Models\CorporateMember::familyMembersToExpire()->get();
+        $this->info("Found {$corporateMembersToExpire->count()} corporate family member(s) to expire.");
+        $this->processExpiry($corporateMembersToExpire, $isDryRun, $expiredCount);
+
+        if ($expiredCount === 0 && $membersToExpire->isEmpty() && $corporateMembersToExpire->isEmpty()) {
             $this->info('No family members found that need to be expired by age.');
             return Command::SUCCESS;
         }
-        
-        $this->info("Found {$membersToExpire->count()} family member(s) to expire:");
-        
-        $expiredCount = 0;
-        
-        foreach ($membersToExpire as $member) {
+
+        if ($isDryRun) {
+            $this->warn('DRY RUN: No changes were made. Use without --dry-run to actually expire members.');
+        } else {
+            $this->info("Successfully expired {$expiredCount} family member(s).");
+
+            // Send notification to admins if any members were expired
+            if ($expiredCount > 0) {
+                $this->notifyAdmins($expiredCount);
+            }
+        }
+
+        return Command::SUCCESS;
+    }
+
+    /**
+     * Process member expiry
+     */
+    private function processExpiry($members, $isDryRun, &$expiredCount)
+    {
+        foreach ($members as $member) {
             $age = $member->age;
-            $memberInfo = "{$member->full_name} (ID: {$member->id}, Age: {$age})";
-            
+            $type = $member instanceof \App\Models\CorporateMember ? 'Corporate' : 'Regular';
+            $memberInfo = "[$type] {$member->full_name} (ID: {$member->id}, Age: {$age})";
+
             if ($isDryRun) {
                 $this->line("Would expire: {$memberInfo}");
             } else {
@@ -56,40 +79,28 @@ class ExpireFamilyMembersByAge extends Command
                     $expiredCount++;
                 } catch (\Exception $e) {
                     $this->error("✗ Failed to expire {$memberInfo}: {$e->getMessage()}");
-                    Log::error("Failed to expire family member by age", [
+                    Log::error('Failed to expire family member by age', [
                         'member_id' => $member->id,
+                        'type' => $type,
                         'error' => $e->getMessage(),
                     ]);
                 }
             }
         }
-        
-        if ($isDryRun) {
-            $this->warn("DRY RUN: No changes were made. Use without --dry-run to actually expire members.");
-        } else {
-            $this->info("Successfully expired {$expiredCount} family member(s).");
-            
-            // Send notification to admins if any members were expired
-            if ($expiredCount > 0) {
-                $this->notifyAdmins($expiredCount);
-            }
-        }
-        
-        return Command::SUCCESS;
     }
-    
+
     /**
      * Notify administrators about expired members
      */
     private function notifyAdmins($expiredCount)
     {
         // You can implement email notification, database notification, etc.
-        Log::info("Family member expiry notification", [
+        Log::info('Family member expiry notification', [
             'expired_count' => $expiredCount,
             'date' => now()->toDateString(),
             'message' => "{$expiredCount} family member(s) were automatically expired due to reaching 25 years of age."
         ]);
-        
+
         $this->info("Admin notification logged for {$expiredCount} expired member(s).");
     }
 }

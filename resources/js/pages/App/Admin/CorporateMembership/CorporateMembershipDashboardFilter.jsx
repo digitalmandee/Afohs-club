@@ -302,10 +302,11 @@ const CorporateMembershipDashboardFilter = () => {
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>
-                    <MenuItem value="active">Active</MenuItem>
-                    <MenuItem value="suspended">Suspended</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
-                    <MenuItem value="pause">Pause</MenuItem>
+                    {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status, idx) => (
+                        <MenuItem key={idx} value={status} sx={{ textTransform: 'capitalize' }}>
+                            {status.replace(/_/g, ' ')}
+                        </MenuItem>
+                    ))}
                 </TextField>
                 <TextField
                     select

@@ -77,7 +77,7 @@ class MembershipController extends Controller
     public function edit(Request $request)
     {
         $user = Member::where('id', $request->id)
-            ->with(['memberType', 'kinshipMember', 'documents', 'profilePhoto', 'memberCategory'])
+            ->with(['memberType', 'kinshipMember', 'documents', 'profilePhoto', 'memberCategory', 'businessDeveloper'])
             ->first();
 
         $user->profile_photo = $user->profilePhoto
@@ -122,11 +122,24 @@ class MembershipController extends Controller
         if ($userData['card_issue_date']) {
             $userData['card_issue_date'] = \Carbon\Carbon::parse($userData['card_issue_date'])->format('d-m-Y');
         }
-        // card_expiry_date is cast to date in Model
-        if ($userData['card_expiry_date']) {
-            $userData['card_expiry_date'] = is_string($userData['card_expiry_date'])
-                ? \Carbon\Carbon::parse($userData['card_expiry_date'])->format('d-m-Y')
-                : \Carbon\Carbon::parse($userData['card_expiry_date'])->format('d-m-Y');
+        // card_expiry_date is cast to date in Model - use getRawOriginal to avoid timezone issues
+        $rawCardExpiry = $user->getRawOriginal('card_expiry_date');
+        if ($rawCardExpiry) {
+            $userData['card_expiry_date'] = \Carbon\Carbon::createFromFormat('Y-m-d', $rawCardExpiry)->format('d-m-Y');
+        }
+        // date_of_birth is cast to date in Model - use getRawOriginal to avoid timezone issues
+        $rawDob = $user->getRawOriginal('date_of_birth');
+        if ($rawDob) {
+            $userData['date_of_birth'] = \Carbon\Carbon::createFromFormat('Y-m-d', $rawDob)->format('d-m-Y');
+        }
+        // Add business developer for form
+        if ($user->businessDeveloper) {
+            $userData['business_developer'] = [
+                'id' => $user->businessDeveloper->id,
+                'name' => $user->businessDeveloper->name,
+                'label' => $user->businessDeveloper->name,
+                'employee_id' => $user->businessDeveloper->employee_id,
+            ];
         }
 
         $familyMembers = $user->familyMembers()->with('profilePhoto')->get()->map(function ($member) use ($user) {
@@ -157,13 +170,19 @@ class MembershipController extends Controller
                 'passport_no' => $member->passport_no,
                 'martial_status' => $member->martial_status,
                 'cnic' => $member->cnic_no,
-                'date_of_birth' => optional($member->date_of_birth)->format('d-m-Y'),
+                // Use getRawOriginal to avoid timezone issues for casted date fields
+                'date_of_birth' => $member->getRawOriginal('date_of_birth')
+                    ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('date_of_birth'))->format('d-m-Y')
+                    : null,
                 'phone_number' => $member->mobile_number_a,
                 'email' => $member->personal_email,
                 'start_date' => $member->start_date ? \Carbon\Carbon::parse($member->start_date)->format('d-m-Y') : null,
                 'end_date' => $member->end_date ? \Carbon\Carbon::parse($member->end_date)->format('d-m-Y') : null,
                 'card_issue_date' => $member->card_issue_date ? \Carbon\Carbon::parse($member->card_issue_date)->format('d-m-Y') : null,
-                'card_expiry_date' => optional($member->card_expiry_date)->format('d-m-Y'),
+                // Use getRawOriginal to avoid timezone issues for casted date fields
+                'card_expiry_date' => $member->getRawOriginal('card_expiry_date')
+                    ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('card_expiry_date'))->format('d-m-Y')
+                    : null,
                 'profile_photo' => $member->profilePhoto,
                 'status' => $member->status,
                 'picture' => $pictureUrl,  // Full URL from file_path
@@ -996,6 +1015,16 @@ class MembershipController extends Controller
         return response()->json($familyMembers);
     }
 
+    // Get All Member Family Members (Non-paginated) for Dropdown
+    public function getAllFamilyMembers(Request $request, $id)
+    {
+        $familyMembers = Member::where('parent_id', $id)
+            ->select('id', 'parent_id', 'full_name', 'first_name', 'membership_no', 'relation', 'gender', 'status', 'card_status')
+            ->get();
+
+        return response()->json($familyMembers);
+    }
+
     // Get Member Order History (Transactions)
     public function getMemberOrderHistory(Request $request, $id)
     {
@@ -1047,8 +1076,8 @@ class MembershipController extends Controller
             'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
             'reason' => 'nullable|string',
             'duration_type' => 'required_if:status,suspended,absent|in:1Day,1Monthly,1Year,CustomDate',
-            'custom_start_date' => 'required_if:duration_type,CustomDate|date',
-            'custom_end_date' => 'required_if:duration_type,CustomDate|date|after:custom_start_date',
+            'custom_start_date' => 'required_if:duration_type,CustomDate|nullable|date',
+            'custom_end_date' => 'required_if:duration_type,CustomDate|nullable|date|after:custom_start_date',
         ]);
 
         $member = Member::findOrFail($request->member_id);

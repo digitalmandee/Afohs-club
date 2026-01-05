@@ -6,7 +6,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { usePage, router } from '@inertiajs/react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment, Tooltip } from '@mui/material';
-import { Search, Visibility } from '@mui/icons-material';
+import { Search, Visibility, Edit } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { styled } from '@mui/material/styles';
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
@@ -152,28 +152,19 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                             {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell> */}
-                                            <TableCell sx={{
-                                                color: '#7F7F7F',
-                                                fontWeight: 400,
-                                                fontSize: '14px',
-                                                maxWidth: '120px',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
-                                                <Tooltip
-                                                    title={
-                                                        booking.customer ? booking.customer.name :
-                                                            booking.member ? booking.member.full_name :
-                                                                booking.corporateMember || booking.corporate_member ?
-                                                                    (booking.corporateMember || booking.corporate_member).full_name :
-                                                                    ''
-                                                    }
-                                                    arrow
-                                                >
-                                                    <span>
-                                                        {booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}
-                                                    </span>
+                                            <TableCell
+                                                sx={{
+                                                    color: '#7F7F7F',
+                                                    fontWeight: 400,
+                                                    fontSize: '14px',
+                                                    maxWidth: '120px',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                <Tooltip title={booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''} arrow>
+                                                    <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
                                                 </Tooltip>
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
@@ -194,6 +185,9 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                 >
                                                     <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1, color: '#063455' }}>
                                                         <Visibility fontSize="small" />
+                                                    </Button>
+                                                    <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', p: '4px', mr: 1, color: '#063455' }}>
+                                                        <Edit fontSize="small" />
                                                     </Button>
                                                     <Button variant="outlined" size="small" color="#063455" style={{ marginRight: '8px', width: 100, textTransform: 'none', color: '#063455' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                         Check Out

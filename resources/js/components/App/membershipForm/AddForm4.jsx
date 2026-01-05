@@ -1,13 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Grid, TextField, Typography, Button, MenuItem, FormControl, InputLabel, Select, FormControlLabel, Radio, RadioGroup, FormLabel, IconButton, Autocomplete, CircularProgress } from '@mui/material';
+import { Box, Grid, TextField, Typography, Button, MenuItem, FormControl, InputLabel, Select, FormControlLabel, Radio, RadioGroup, FormLabel, IconButton, Autocomplete, CircularProgress, Chip } from '@mui/material';
 import { Add, Delete } from '@mui/icons-material';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
 
-const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
+const AddForm4 = ({ onNext, onBack, memberId, initialData, familyMembers = [], isCorporate = false }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [loading, setLoading] = useState(false);
+    const [fetchedFamilyMembers, setFetchedFamilyMembers] = useState(familyMembers || []);
+
+    // Fetch family members from API to ensure we have the latest data
+    useEffect(() => {
+        const fetchFamilyMembers = async () => {
+            if (!memberId) {
+                setFetchedFamilyMembers(familyMembers);
+                return;
+            }
+
+            const url = isCorporate ? route('corporate-membership.members.all-family-members', memberId) : route('membership.members.all-family-members', memberId);
+
+            try {
+                const response = await axios.get(url);
+                if (response.data && Array.isArray(response.data)) {
+                    setFetchedFamilyMembers(response.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch family members', error);
+            }
+        };
+
+        fetchFamilyMembers();
+    }, [memberId, isCorporate]);
     const [formData, setFormData] = useState({
         nominee_name: '',
         nominee_relation: '',
@@ -50,7 +74,9 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                 referral_name: initialData.referral_name || '',
                 referral_membership_no: initialData.referral_membership_no || '',
                 referral_contact: initialData.referral_contact || '',
-                referral_contact: initialData.referral_contact || '',
+                nominee_name: initialData.nominee_name || '',
+                nominee_relation: initialData.nominee_relation || '',
+                nominee_contact: initialData.nominee_contact || '',
             }));
             if (initialData.business_developer_id && initialData.business_developer) {
                 // Remove logic
@@ -65,7 +91,9 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
             if (!memberId) return;
 
             try {
-                const response = await axios.get(route('membership.profession-info.get', memberId));
+                const url = isCorporate ? route('corporate-membership.profession-info.get', memberId) : route('membership.profession-info.get', memberId);
+
+                const response = await axios.get(url);
                 const info = response.data.profession_info;
                 if (info) {
                     setFormData((prev) => ({
@@ -142,7 +170,8 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                 ...formData,
                 member_id: memberId,
             };
-            const response = await axios.post(route('membership.store-step-4'), dataToSubmit);
+            const url = isCorporate ? route('corporate-membership.store-step-4') : route('membership.store-step-4');
+            const response = await axios.post(url, dataToSubmit);
             if (response.data.success) {
                 enqueueSnackbar('Profession & Referral information saved successfully', { variant: 'success' });
                 onNext();
@@ -166,7 +195,62 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} md={4}>
-                                <TextField size="small" fullWidth label="Nominate your Next of Kin" name="nominee_name" value={formData.nominee_name} onChange={handleChange} />
+                                <Autocomplete
+                                    size="small"
+                                    options={fetchedFamilyMembers || []}
+                                    getOptionLabel={(option) => {
+                                        if (typeof option === 'string') return option;
+                                        return option?.full_name || option?.first_name || '';
+                                    }}
+                                    value={fetchedFamilyMembers?.find((fm) => fm.full_name === formData.nominee_name || fm.first_name === formData.nominee_name) || null}
+                                    onChange={(event, newValue) => {
+                                        if (newValue) {
+                                            setFormData({
+                                                ...formData,
+                                                nominee_name: newValue.full_name || newValue.first_name || '',
+                                                nominee_id: newValue.id, // Set nominee_id
+                                                nominee_relation: newValue.relation || '',
+                                                nominee_contact: newValue.phone_number || newValue.mobile_number_a || '',
+                                            });
+                                        } else {
+                                            setFormData({
+                                                ...formData,
+                                                nominee_name: '',
+                                                nominee_id: '',
+                                                nominee_relation: '',
+                                                nominee_contact: '',
+                                            });
+                                        }
+                                    }}
+                                    freeSolo
+                                    renderInput={(params) => <TextField {...params} label="Nominate your Next of Kin" fullWidth />}
+                                    renderOption={(props, option) => (
+                                        <li {...props} key={option.id || option.full_name}>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                                <Box>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {option.full_name || option.first_name}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {option.relation || 'Family Member'} {option.membership_no ? `| ${option.membership_no}` : ''}
+                                                    </Typography>
+                                                </Box>
+                                                <Chip
+                                                    label={option.status || 'N/A'}
+                                                    size="small"
+                                                    sx={{
+                                                        height: '20px',
+                                                        fontSize: '10px',
+                                                        textTransform: 'capitalize',
+                                                        backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : option.status === 'expired' ? '#ffebee' : '#f5f5f5',
+                                                        color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : option.status === 'expired' ? '#c62828' : '#616161',
+                                                    }}
+                                                />
+                                            </Box>
+                                        </li>
+                                    )}
+                                    noOptionsText="No family members available"
+                                />
                             </Grid>
                             <Grid item xs={12} md={4}>
                                 <TextField size="small" fullWidth label="Relationship" name="nominee_relation" value={formData.nominee_relation} onChange={handleChange} />
@@ -203,7 +287,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
 
                 {/* Application History */}
                 <Grid item xs={12}>
-                    <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 1, boxShadow: 1 }}>
+                    <Box sx={{ bgcolor: 'white', p: 1.5, borderRadius: 1, boxShadow: 1 }}>
                         <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', fontWeight: 600, color: '#063455' }}>
                             Application History
                         </Typography>
@@ -261,7 +345,55 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData }) => {
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} md={6}>
-                                <AsyncSearchTextField label="Member Name" name="referral_member_name" value={{ label: formData.referral_member_name }} onChange={handleReferralSelect} endpoint="api.members.search" queryParam="query" resultsKey="members" size="small" resultFormat={(item) => `${item.full_name} (${item.membership_no})`} />
+                                <AsyncSearchTextField
+                                    label="Member Name"
+                                    name="referral_member_name"
+                                    value={{ label: formData.referral_member_name }}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        if (value) {
+                                            setFormData({
+                                                ...formData,
+                                                referral_member_name: value.full_name,
+                                                referral_membership_no: value.membership_no,
+                                                referral_contact: value.mobile_number_a,
+                                                referral_member_id: value.id,
+                                                referral_is_corporate: isCorporate, // Use the prop to determine if searched in corporate
+                                            });
+                                        } else {
+                                            // Only clear if explicitly necessary, or keep text
+                                            // AsyncSearchTextField passes null on clear
+                                        }
+                                    }}
+                                    endpoint={isCorporate ? 'api.corporate-members.search' : 'api.members.search'}
+                                    queryParam="query"
+                                    resultsKey="members"
+                                    size="small"
+                                    resultFormat={(item) => `${item.full_name} (${item.membership_no})`}
+                                    renderItem={(item) => (
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                                            <Box>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {item.full_name}
+                                                </Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {item.membership_no}
+                                                </Typography>
+                                            </Box>
+                                            <Chip
+                                                label={item.status || 'N/A'}
+                                                size="small"
+                                                sx={{
+                                                    height: '20px',
+                                                    fontSize: '10px',
+                                                    textTransform: 'capitalize',
+                                                    backgroundColor: item.status === 'active' ? '#e8f5e9' : item.status === 'suspended' ? '#fff3e0' : item.status === 'expired' ? '#ffebee' : '#f5f5f5',
+                                                    color: item.status === 'active' ? '#2e7d32' : item.status === 'suspended' ? '#ef6c00' : item.status === 'expired' ? '#c62828' : '#616161',
+                                                }}
+                                            />
+                                        </Box>
+                                    )}
+                                />
                             </Grid>
                             <Grid item xs={12} md={6}>
                                 <TextField size="small" fullWidth label="Membership No." name="referral_membership_no" value={formData.referral_membership_no} onChange={handleChange} />

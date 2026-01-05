@@ -9,6 +9,11 @@ import { useSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
 import dayjs from 'dayjs';
 import MembershipCardComponent from '../Membership/UserCard';
+import MembershipSuspensionDialog from '../Membership/Modal';
+import MembershipPauseDialog from '../Membership/MembershipPauseDialog';
+import MembershipCancellationDialog from '../Membership/CancelModal';
+import ActivateMembershipDialog from '../Membership/ActivateMembershipDialog';
+import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 
 import CorporateMembershipDashboardFilter from './CorporateMembershipDashboardFilter';
 const CorporateMembers = ({ members }) => {
@@ -23,6 +28,17 @@ const CorporateMembers = ({ members }) => {
     const [selectedMember, setSelectedMember] = useState(null);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [cardMember, setCardMember] = useState(null);
+
+    // Status Dialog States
+    const [suspendOpen, setSuspendOpen] = useState(false);
+    const [pauseOpen, setPauseOpen] = useState(false);
+    const [cancelOpen, setCancelOpen] = useState(false);
+    const [activateOpen, setActivateOpen] = useState(false);
+
+    const handleStatusSuccess = (newStatus) => {
+        setFilteredMembers((prev) => prev.map((m) => (m.id === selectedMember.id ? { ...m, status: newStatus } : m)));
+        enqueueSnackbar(`Status updated to ${newStatus}`, { variant: 'success' });
+    };
 
     // Sync filteredMembers with props.members.data when props change (e.g. pagination)
     useEffect(() => {
@@ -158,7 +174,68 @@ const CorporateMembers = ({ members }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                         <TableCell>
-                                            <span style={{ color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f', fontWeight: 'medium' }}>{user.status || 'N/A'}</span>
+                                            <PopupState variant="popover" popupId={`status-menu-${user.id}`}>
+                                                {(popupState) => (
+                                                    <>
+                                                        <div
+                                                            {...bindTrigger(popupState)}
+                                                            style={{
+                                                                cursor: 'pointer',
+                                                                display: 'inline-block',
+                                                            }}
+                                                        >
+                                                            <Chip
+                                                                label={user.status || 'N/A'}
+                                                                size="small"
+                                                                sx={{
+                                                                    backgroundColor: user.status === 'active' ? '#dcedc8' : user.status === 'suspended' ? '#ffe0b2' : user.status === 'absent' ? '#fff9c4' : '#ffcdd2',
+                                                                    color: user.status === 'active' ? '#33691e' : user.status === 'suspended' ? '#e65100' : user.status === 'absent' ? '#fbc02d' : '#c62828',
+                                                                    fontWeight: 600,
+                                                                    textTransform: 'capitalize',
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <Menu {...bindMenu(popupState)}>
+                                                            <MenuItem
+                                                                onClick={() => {
+                                                                    popupState.close();
+                                                                    setSelectedMember(user);
+                                                                    setSuspendOpen(true);
+                                                                }}
+                                                            >
+                                                                Suspend
+                                                            </MenuItem>
+                                                            <MenuItem
+                                                                onClick={() => {
+                                                                    popupState.close();
+                                                                    setSelectedMember(user);
+                                                                    setPauseOpen(true);
+                                                                }}
+                                                            >
+                                                                Absent
+                                                            </MenuItem>
+                                                            <MenuItem
+                                                                onClick={() => {
+                                                                    popupState.close();
+                                                                    setSelectedMember(user);
+                                                                    setCancelOpen(true);
+                                                                }}
+                                                            >
+                                                                Cancel Membership
+                                                            </MenuItem>
+                                                            <MenuItem
+                                                                onClick={() => {
+                                                                    popupState.close();
+                                                                    setSelectedMember(user);
+                                                                    setActivateOpen(true);
+                                                                }}
+                                                            >
+                                                                Activate
+                                                            </MenuItem>
+                                                        </Menu>
+                                                    </>
+                                                )}
+                                            </PopupState>
                                         </TableCell>
                                         <TableCell>
                                             <Button
@@ -221,33 +298,21 @@ const CorporateMembers = ({ members }) => {
                                             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                                                 {/* View Profile */}
                                                 <Tooltip title="View Profile">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => router.visit(route('corporate-membership.profile', user.id))}
-                                                        sx={{ color: '#063455' }}
-                                                    >
+                                                    <IconButton size="small" onClick={() => router.visit(route('corporate-membership.profile', user.id))} sx={{ color: '#063455' }}>
                                                         <Visibility size={18} />
                                                     </IconButton>
                                                 </Tooltip>
 
                                                 {/* Edit */}
                                                 <Tooltip title="Edit Member">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => router.visit(route('corporate-membership.edit', user.id))}
-                                                        sx={{ color: '#f57c00' }}
-                                                    >
+                                                    <IconButton size="small" onClick={() => router.visit(route('corporate-membership.edit', user.id))} sx={{ color: '#f57c00' }}>
                                                         <FaEdit size={18} />
                                                     </IconButton>
                                                 </Tooltip>
 
                                                 {/* Delete */}
                                                 <Tooltip title="Delete Member">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => handleDeleteClick(user)}
-                                                        sx={{ color: '#d32f2f' }}
-                                                    >
+                                                    <IconButton size="small" onClick={() => handleDeleteClick(user)} sx={{ color: '#d32f2f' }}>
                                                         <Delete size={18} />
                                                     </IconButton>
                                                 </Tooltip>
@@ -305,6 +370,12 @@ const CorporateMembers = ({ members }) => {
             </div>
 
             <MembershipCardComponent open={openCardModal} onClose={() => setOpenCardModal(false)} member={cardMember} memberData={members} />
+
+            {/* Status Dialogs */}
+            <MembershipSuspensionDialog open={suspendOpen} onClose={() => setSuspendOpen(false)} memberId={selectedMember?.id} onSuccess={handleStatusSuccess} updateUrl={route('corporate-membership.update-status')} />
+            <MembershipPauseDialog open={pauseOpen} onClose={() => setPauseOpen(false)} memberId={selectedMember?.id} onSuccess={handleStatusSuccess} updateUrl={route('corporate-membership.update-status')} />
+            <MembershipCancellationDialog open={cancelOpen} onClose={() => setCancelOpen(false)} memberId={selectedMember?.id} onSuccess={handleStatusSuccess} updateUrl={route('corporate-membership.update-status')} />
+            <ActivateMembershipDialog open={activateOpen} onClose={() => setActivateOpen(false)} memberId={selectedMember?.id} onSuccess={handleStatusSuccess} updateUrl={route('corporate-membership.update-status')} />
         </>
     );
 };
