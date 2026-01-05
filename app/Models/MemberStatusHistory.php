@@ -20,11 +20,17 @@ class MemberStatusHistory extends BaseModel
         'deleted_by',
         'used_up_to',
         'changed_by',
-        'changed_at'
+        'changed_at',
+        'corporate_member_id',
     ];
 
     public function member()
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function corporateMember()
+    {
+        return $this->belongsTo(CorporateMember::class);
     }
 }

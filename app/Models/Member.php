@@ -391,7 +391,7 @@ class Member extends BaseModel
             ->whereNotNull('date_of_birth')
             ->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) >= 25')
             ->where('status', '!=', 'expired')
-            ->where('relation', '!=', 'Wife')  // Exclude wives from age-based expiry
+            ->whereNotIn('relation', ['Wife', 'Second Wife', 'Husband'])  // Exclude spouses from age-based expiry
             ->where(function ($q) {
                 $q
                     ->whereNull('expiry_extension_date')

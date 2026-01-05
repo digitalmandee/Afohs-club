@@ -1076,8 +1076,8 @@ class MembershipController extends Controller
             'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
             'reason' => 'nullable|string',
             'duration_type' => 'required_if:status,suspended,absent|in:1Day,1Monthly,1Year,CustomDate',
-            'custom_start_date' => 'required_if:duration_type,CustomDate|date',
-            'custom_end_date' => 'required_if:duration_type,CustomDate|date|after:custom_start_date',
+            'custom_start_date' => 'required_if:duration_type,CustomDate|nullable|date',
+            'custom_end_date' => 'required_if:duration_type,CustomDate|nullable|date|after:custom_start_date',
         ]);
 
         $member = Member::findOrFail($request->member_id);

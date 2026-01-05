@@ -4,7 +4,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-const MembershipPauseDialog = ({ open, onClose, memberId, onSuccess }) => {
+const MembershipPauseDialog = ({ open, onClose, memberId, onSuccess, updateUrl }) => {
     const [loading, setLoading] = useState(false);
     const [durationType, setDurationType] = useState('1Day');
     const [customStartDate, setCustomStartDate] = useState('');
@@ -45,7 +45,8 @@ const MembershipPauseDialog = ({ open, onClose, memberId, onSuccess }) => {
                 reason: reason,
             };
 
-            await axios.post(route('membership.update-status'), payload);
+            const url = updateUrl || route('membership.update-status');
+            await axios.post(url, payload);
             enqueueSnackbar('Membership marked as absent successfully', { variant: 'success' });
             onClose();
             onSuccess?.('absent');

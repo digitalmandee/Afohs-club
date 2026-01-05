@@ -1033,4 +1033,70 @@ class CorporateMembershipController extends Controller
 
         return response()->json(['members' => $members]);
     }
+
+    /**
+     * Update status of corporate member.
+     */
+    public function updateStatus(Request $request)
+    {
+        $request->validate([
+            'member_id' => 'required|exists:corporate_members,id',
+            'status' => 'required|in:active,suspended,cancelled,absent,expired,terminated,not_assign,in_suspension_process',
+            'reason' => 'nullable|string',
+            'duration_type' => 'required_if:status,suspended,absent|in:1Day,1Monthly,1Year,CustomDate',
+            'custom_start_date' => 'required_if:duration_type,CustomDate|nullable|date',
+            'custom_end_date' => 'required_if:duration_type,CustomDate|nullable|date|after:custom_start_date',
+        ]);
+
+        $member = CorporateMember::findOrFail($request->member_id);
+
+        $startDate = now();
+        $endDate = null;
+
+        if (in_array($request->status, ['suspended', 'absent'])) {
+            switch ($request->duration_type) {
+                case '1Day':
+                    $endDate = now()->addDay();
+                    break;
+                case '1Monthly':
+                    $endDate = now()->addMonth();
+                    break;
+                case '1Year':
+                    $endDate = now()->addYear();
+                    break;
+                case 'CustomDate':
+                    $startDate = Carbon::parse($request->custom_start_date);
+                    $endDate = Carbon::parse($request->custom_end_date);
+                    break;
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $member->update([
+                'status' => $request->status,
+                // 'paused_at' => $request->status === 'absent' ? now() : null,
+            ]);
+
+            // Update open-ended history
+            $member->statusHistories()->whereNull('end_date')->update(['end_date' => now()]);
+
+            // Create new history
+            \App\Models\MemberStatusHistory::create([
+                'corporate_member_id' => $member->id,
+                'status' => $request->status,
+                'reason' => $request->reason,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'created_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+            return response()->json(['message' => 'Status updated successfully']);
+        } catch (\Exception $e) {
+            Log::error('Corporate Status update failed', ['error' => $e->getMessage()]);
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update status'], 500);
+        }
+    }
 }

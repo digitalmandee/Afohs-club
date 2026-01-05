@@ -4,7 +4,7 @@ import { Box, Typography, TextField, Button, Dialog, DialogContent, DialogAction
 import { Close as CloseIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 
-const MembershipCancellationDialog = ({ open, onClose, memberId, onSuccess }) => {
+const MembershipCancellationDialog = ({ open, onClose, memberId, onSuccess, updateUrl }) => {
     const [cancelReason, setCancelReason] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -24,7 +24,8 @@ const MembershipCancellationDialog = ({ open, onClose, memberId, onSuccess }) =>
                 reason: cancelReason,
             };
 
-            await axios.post(route('membership.update-status'), payload); // Adjust route if needed
+            const url = updateUrl || route('membership.update-status');
+            await axios.post(url, payload); // Adjust route if needed
             enqueueSnackbar('Membership cancelled successfully', { variant: 'success' });
             onClose();
             onSuccess?.('cancelled'); // Send back updated status

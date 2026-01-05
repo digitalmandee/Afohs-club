@@ -587,6 +587,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('family-members', [CorporateMembershipController::class, 'familyMembersIndex'])->name('corporate-membership.family-members')->middleware('permission:members.view');
         Route::post('store', [CorporateMembershipController::class, 'store'])->name('corporate-membership.store')->middleware('permission:members.create');
         Route::post('store-step-4', [CorporateMembershipController::class, 'storeStep4'])->name('corporate-membership.store-step-4')->middleware('permission:members.create');
+        Route::post('update-status', [CorporateMembershipController::class, 'updateStatus'])->name('corporate-membership.update-status')->middleware('permission:members.edit');
         Route::post('update/{id}', [CorporateMembershipController::class, 'update'])->name('corporate-membership.update')->middleware('permission:members.edit');
         Route::delete('/{id}', [CorporateMembershipController::class, 'destroy'])->name('corporate-membership.destroy')->middleware('permission:members.delete');
         Route::get('trashed', [CorporateMembershipController::class, 'trashed'])->name('corporate-membership.trashed')->middleware('permission:members.delete');

@@ -4,7 +4,7 @@ import { Box, Typography, TextField, Dialog, DialogContent, DialogActions, IconB
 import { Close as CloseIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 
-const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
+const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess, updateUrl }) => {
     const [suspensionReason, setSuspensionReason] = useState('');
     const [suspensionDuration, setSuspensionDuration] = useState('1Day');
     const [customStartDate, setCustomStartDate] = useState('');
@@ -47,7 +47,8 @@ const MembershipSuspensionDialog = ({ open, onClose, memberId, onSuccess }) => {
                 custom_end_date: suspensionDuration === 'CustomDate' ? customEndDate : null,
             };
 
-            await axios.post(route('membership.update-status'), payload);
+            const url = updateUrl || route('membership.update-status');
+            await axios.post(url, payload);
             enqueueSnackbar('Membership suspended successfully', { variant: 'success' });
             onClose();
             onSuccess?.('suspended');
