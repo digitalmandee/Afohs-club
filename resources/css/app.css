@@ -7,3 +7,26 @@ html, body {
   /* overflow: hidden; */
   box-sizing: border-box;
 }
+
+.rdrDay .rdrInRange,
+.rdrDay .rdrStartEdge,
+.rdrDay .rdrEndEdge,
+.rdrDay .rdrDayNumberWrapper[aria-pressed="true"] {
+  background-color: #063455 !important;
+  color: white !important;
+}
+
+.rdrDay .rdrInRange {
+  background-color: rgba(6, 52, 85, 0.3) !important;
+}
+
+/* Selected day */
+.rdrDayNumberWrapper span[style*="background-color"] {
+  background-color: #063455 !important;
+  color: white !important;
+}
+
+/* Hover fix */
+.rdrDayNumberWrapper:hover {
+  background-color: rgba(6, 52, 85, 0.1) !important;
+}

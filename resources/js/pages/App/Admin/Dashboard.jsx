@@ -30,7 +30,7 @@ const Dashboard = () => {
     const currentYear = new Date().getFullYear();
 
     // Available months for the dropdown
-    const months = ['Jan-2025', 'Feb-2025', 'Mar-2025', 'Apr-2025', 'May-2025', 'Jun-2025', 'Jul-2025', 'Aug-2025', 'Sep-2025', 'Oct-2025', 'Nov-2025', 'Dec-2025'];
+    // const months = ['Jan-2025', 'Feb-2025', 'Mar-2025', 'Apr-2025', 'May-2025', 'Jun-2025', 'Jul-2025', 'Aug-2025', 'Sep-2025', 'Oct-2025', 'Nov-2025', 'Dec-2025'];
     const [selectedMonth, setSelectedMonth] = useState(`${currentMonth}-${currentYear}`);
     const [revenueType, setRevenueType] = useState('Revenue');
     const [chartYear, setChartYear] = useState('2025');
@@ -124,6 +124,27 @@ const Dashboard = () => {
         return "20px";                     // extreme values
     };
 
+    const generateMonths = () => {
+        const now = new Date(); // Jan 5, 2026
+        const currentMonth = now.getMonth(); // 0 (January)
+        const currentYear = now.getFullYear(); // 2026
+
+        const monthNames = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+
+        const months = [];
+        for (let i = 0; i < 12; i++) {
+            const monthIndex = (currentMonth + i) % 12;
+            const year = currentMonth + i >= 12 ? currentYear + 1 : currentYear;
+            months.push(`${monthNames[monthIndex]}-${year}`);
+        }
+        return months;
+    };
+
+    const months = generateMonths();
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -178,26 +199,9 @@ const Dashboard = () => {
                             select
                             size="small"
                             value={selectedMonth}
-                            displayEmpty
-                            renderValue={(selected) => {
-                                if (!selected) {
-                                    return <span style={{ color: '#202020ff', opacity: 0.7 }}>Search...</span>;
-                                }
-                                return selected;
-                            }}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            sx={{
-                                width: '160px',
-                                '& .MuiOutlinedInput-root': {
-                                    borderRadius: '16px',
-                                    '& .MuiSelect-select': {
-                                        color: '#7F7F7F',
-                                        '&:focus': {
-                                            color: '#000'  // Fix focus color if needed
-                                        }
-                                    }
-                                }
-                            }}
+                            // renderValue={(selected) => selected || getCurrentMonth()}
+                            // onChange={(e) => setSelectedMonth(e.target.value || '')}
                             SelectProps={{
                                 IconComponent: () => null,
                                 MenuProps: {
@@ -212,6 +216,18 @@ const Dashboard = () => {
                                                     color: 'white !important'
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            }}
+                            sx={{
+                                width: '170px',
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                    '& .MuiSelect-select': {
+                                        color: '#7F7F7F',
+                                        '&:focus': {
+                                            color: '#000'  // Fix focus color if needed
                                         }
                                     }
                                 }
