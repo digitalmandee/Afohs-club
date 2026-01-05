@@ -197,20 +197,20 @@ class CorporateMember extends BaseModel
 
     public function statusHistories()
     {
-        return $this->hasMany(MemberStatusHistory::class, 'member_id', 'id');
+        return $this->hasMany(MemberStatusHistory::class, 'corporate_member_id', 'id');
     }
 
     public function membershipInvoice()
     {
         return $this
-            ->hasOne(FinancialInvoice::class, 'member_id', 'id')
+            ->hasOne(FinancialInvoice::class, 'corporate_member_id', 'id')
             ->where('fee_type', 'membership_fee')
             ->orderBy('id', 'desc');
     }
 
     public function professionInfo()
     {
-        return $this->hasOne(MemberProfessionInfo::class, 'member_id');
+        return $this->hasOne(MemberProfessionInfo::class, 'corporate_member_id');
     }
 
     public function media()

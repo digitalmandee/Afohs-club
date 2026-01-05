@@ -91,7 +91,9 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData, familyMembers = [], i
             if (!memberId) return;
 
             try {
-                const response = await axios.get(route('membership.profession-info.get', memberId));
+                const url = isCorporate ? route('corporate-membership.profession-info.get', memberId) : route('membership.profession-info.get', memberId);
+
+                const response = await axios.get(url);
                 const info = response.data.profession_info;
                 if (info) {
                     setFormData((prev) => ({
@@ -206,6 +208,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData, familyMembers = [], i
                                             setFormData({
                                                 ...formData,
                                                 nominee_name: newValue.full_name || newValue.first_name || '',
+                                                nominee_id: newValue.id, // Set nominee_id
                                                 nominee_relation: newValue.relation || '',
                                                 nominee_contact: newValue.phone_number || newValue.mobile_number_a || '',
                                             });
@@ -213,6 +216,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData, familyMembers = [], i
                                             setFormData({
                                                 ...formData,
                                                 nominee_name: '',
+                                                nominee_id: '',
                                                 nominee_relation: '',
                                                 nominee_contact: '',
                                             });
@@ -283,7 +287,7 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData, familyMembers = [], i
 
                 {/* Application History */}
                 <Grid item xs={12}>
-                    <Box sx={{ bgcolor: 'white', p: 2, borderRadius: 1, boxShadow: 1 }}>
+                    <Box sx={{ bgcolor: 'white', p: 1.5, borderRadius: 1, boxShadow: 1 }}>
                         <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', fontWeight: 600, color: '#063455' }}>
                             Application History
                         </Typography>
@@ -345,7 +349,22 @@ const AddForm4 = ({ onNext, onBack, memberId, initialData, familyMembers = [], i
                                     label="Member Name"
                                     name="referral_member_name"
                                     value={{ label: formData.referral_member_name }}
-                                    onChange={handleReferralSelect}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        if (value) {
+                                            setFormData({
+                                                ...formData,
+                                                referral_member_name: value.full_name,
+                                                referral_membership_no: value.membership_no,
+                                                referral_contact: value.mobile_number_a,
+                                                referral_member_id: value.id,
+                                                referral_is_corporate: isCorporate, // Use the prop to determine if searched in corporate
+                                            });
+                                        } else {
+                                            // Only clear if explicitly necessary, or keep text
+                                            // AsyncSearchTextField passes null on clear
+                                        }
+                                    }}
                                     endpoint={isCorporate ? 'api.corporate-members.search' : 'api.members.search'}
                                     queryParam="query"
                                     resultsKey="members"

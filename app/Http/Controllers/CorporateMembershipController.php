@@ -349,7 +349,7 @@ class CorporateMembershipController extends Controller
     public function edit(Request $request)
     {
         $user = CorporateMember::where('id', $request->id)
-            ->with(['documents', 'profilePhoto', 'memberCategory', 'familyMembers.profilePhoto', 'businessDeveloper'])
+            ->with(['documents', 'profilePhoto', 'memberCategory', 'familyMembers.profilePhoto', 'businessDeveloper', 'professionInfo'])
             ->first();
 
         if (!$user) {
@@ -510,18 +510,34 @@ class CorporateMembershipController extends Controller
     }
 
     /**
+     * Get Profession Info for Corporate Member
+     */
+    public function getProfessionInfo($id)
+    {
+        $member = CorporateMember::with('professionInfo')->find($id);
+
+        if (!$member) {
+            return response()->json(['error' => 'Member not found'], 404);
+        }
+
+        return response()->json(['profession_info' => $member->professionInfo]);
+    }
+
+    /**
      * Store Step 4 (Next of Kin) for Corporate Member
      */
     public function storeStep4(Request $request)
     {
         try {
-            $member = CorporateMember::find($request->id);
+            $member = CorporateMember::find($request->member_id);
             if (!$member) {
                 return response()->json(['error' => 'Member not found'], 404);
             }
 
             // Prepare data for MemberProfessionInfo
             // Note: CorporateMember uses MemberProfessionInfo via 'professionInfo' relationship
+            // IMPORTANT: The migration '2025_12_26_180000_add_corporate_member_id_to_profession.php' adds corporate_member_id
+            // and '2025_12_26_181500_make_member_id_nullable_in_profession.php' makes member_id nullable.
             $professionData = $request->except([
                 'id',
                 'created_at',
@@ -530,24 +546,35 @@ class CorporateMembershipController extends Controller
                 'created_by',
                 'updated_by',
                 'deleted_by',
-                // Exclude fields that might be passed but belong to other steps if necessary
+                'member_id',  // Prevent overwriting member_id if it's passed
+                'profession',  // Exclude fields that are not in the table
+                'office_address',
+                'office_phone',
+                'referral_name',
             ]);
 
-            // Explicitly map nominee fields if they are not in the top-level request automatically?
-            // The request typically contains: nominee_name, nominee_relation, nominee_contact, etc.
-            // These map directly to MemberProfessionInfo columns.
+            // Explicitly set corporate_member_id and nullify member_id (since this is a corporate member)
+            // But relying on relation create/update handles the foreign key for the relation (corporate_member_id via 'professionInfo')
+            // However, checking the 'professionInfo' relation in CorporateMember model is key.
+            // If relationship is `hasOne(MemberProfessionInfo::class, 'corporate_member_id')`, then creating via relation sets it automatically.
+
+            // Ensure our new ID fields are included if passed
+            $professionData['nominee_id'] = $request->nominee_id;
+            $professionData['referral_member_id'] = $request->referral_member_id;
+            $professionData['referral_is_corporate'] = $request->boolean('referral_is_corporate');
 
             // Update or Create MemberProfessionInfo
             if ($member->professionInfo) {
                 $member->professionInfo->update($professionData);
             } else {
+                // Creating via relationship automatically sets the foreign key defined in the relationship
                 $member->professionInfo()->create($professionData);
             }
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            \Log::error('Error saving corporate step 4: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to save information'], 500);
+            \Illuminate\Support\Facades\Log::error('Error saving corporate step 4: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to save information: ' . $e->getMessage()], 500);
         }
     }
 

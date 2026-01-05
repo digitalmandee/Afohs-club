@@ -583,6 +583,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('profile/{id}', [CorporateMembershipController::class, 'showMemberProfile'])->name('corporate-membership.profile')->middleware('permission:members.view');
         Route::get('profile/{id}/family-members', [CorporateMembershipController::class, 'getFamilyMembers'])->name('corporate-membership.profile.family-members')->middleware('permission:members.view');
         Route::get('profile/{id}/all-family-members', [CorporateMembershipController::class, 'getAllFamilyMembers'])->name('corporate-membership.members.all-family-members')->middleware('permission:members.view');
+        Route::get('profile/{id}/profession-info', [CorporateMembershipController::class, 'getProfessionInfo'])->name('corporate-membership.profession-info.get')->middleware('permission:members.view');
         Route::get('family-members', [CorporateMembershipController::class, 'familyMembersIndex'])->name('corporate-membership.family-members')->middleware('permission:members.view');
         Route::post('store', [CorporateMembershipController::class, 'store'])->name('corporate-membership.store')->middleware('permission:members.create');
         Route::post('store-step-4', [CorporateMembershipController::class, 'storeStep4'])->name('corporate-membership.store-step-4')->middleware('permission:members.create');
