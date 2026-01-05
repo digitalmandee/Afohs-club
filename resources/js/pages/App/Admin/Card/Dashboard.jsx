@@ -404,14 +404,16 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                             </Box>
                         )}
 
-                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
                             <Button
                                 variant="outlined"
-                                size="small"
+                                // size="small"
                                 style={{
                                     color: '#063455',
                                     border: '1px solid #063455',
                                     borderRadius: '16px',
+                                    paddingLeft: 25,
+                                    paddingRight: 25
                                 }}
                                 onClick={() => {
                                     setFilterValues({
@@ -430,10 +432,10 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                 Reset
                             </Button>
                             <Button
-                                variant="contained"
+                                variant="outlined"
                                 startIcon={<Search />}
-                                size="small"
-                                style={{ borderRadius: '16px' }}
+                                // size="small"
+                                style={{ borderRadius: '16px', color: '#fff', paddingLeft: 25, paddingRight: 25 }}
                                 onClick={() => {
                                     const params = new URLSearchParams(window.location.search);
 
@@ -454,6 +456,7 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                 sx={{
                                     backgroundColor: '#063455',
                                     textTransform: 'none',
+                                    border: 'none',
                                     '&:hover': { backgroundColor: '#052d45' },
                                 }}
                             >
@@ -545,8 +548,37 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                                             {subscription.member?.full_name?.charAt(0)}
                                                         </Avatar>
                                                         <div>
-                                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.member?.full_name}</Typography>
-                                                            <Typography sx={{ color: '#999', fontSize: '12px' }}>{subscription.member?.membership_no}</Typography>
+                                                            <Typography sx={{
+                                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}>
+                                                                <Tooltip
+                                                                    title={subscription.member?.full_name}
+                                                                    arrow
+                                                                >
+                                                                    <span>
+                                                                        {subscription.member?.full_name}
+                                                                    </span>
+                                                                </Tooltip>
+                                                            </Typography>
+                                                            <Typography sx={{
+                                                                color: '#7f7f7f', fontSize: '14px', maxWidth: '120px',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap'
+                                                            }}>
+
+                                                                <Tooltip
+                                                                    title={subscription.member?.membership_no}
+                                                                    arrow
+                                                                >
+                                                                    <span>
+                                                                        {subscription.member?.membership_no}
+                                                                    </span>
+                                                                </Tooltip>
+                                                            </Typography>
                                                         </div>
                                                     </div>
                                                 </TableCell>
@@ -562,11 +594,11 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                                         label={getCardStatus(subscription)}
                                                         size="small"
                                                         sx={{
-                                                            backgroundColor: getCardStatusColor(getCardStatus(subscription)),
-                                                            color: '#fff',
+                                                            color: getCardStatusColor(getCardStatus(subscription)),
+                                                            backgroundColor: 'transparent',
                                                             fontWeight: 500,
-                                                            fontSize: '12px',
-                                                            textTransform: 'capitalize',
+                                                            fontSize: '14px',
+                                                            // textTransform: 'capitalize',
                                                         }}
                                                     />
                                                 </TableCell>
@@ -575,20 +607,14 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                                 <TableCell>
                                                     <Button
                                                         variant="contained"
-                                                        size="small"
-                                                        sx={{
-                                                            backgroundColor: '#063455',
-                                                            color: 'white',
-                                                            textTransform: 'none',
-                                                            fontWeight: 500,
-                                                            '&:hover': { backgroundColor: '#0a4d73' },
-                                                        }}
+                                                        // size="small"
+                                                        style={{ color: '#063455', border: '1px solid #063455', backgroundColor: 'transparent', textTransform: 'none' }}
                                                         onClick={() => {
                                                             setSelectMember(subscription);
                                                             setOpenCardModal(true);
                                                         }}
                                                     >
-                                                        View Card
+                                                        View
                                                     </Button>
                                                 </TableCell>
                                             </TableRow>
@@ -634,25 +660,25 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                         </TableContainer>
                     ) : (
                         /* Members/Family Table */
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', position: 'relative' }}>
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Membership No</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Member Name</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Category</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Type</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Card Status</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Member Status</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Card Issue Date</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Card Expiry</TableCell>
-                                        <TableCell sx={{ color: '#000000', fontSize: '14px', fontWeight: 500 }}>Card</TableCell>
+                                    <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Name</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Category</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Issue Date</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Expiry</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody sx={{ opacity: isLoading ? 0.5 : 1, transition: 'opacity 0.3s' }}>
                                     {members?.data?.map((member) => (
                                         <TableRow key={member.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', cursor: 'pointer' }}>
+                                            <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px', cursor: 'pointer' }}>
                                                 {member.membership_no || 'N/A'}
                                                 {member.parent_id && member.parent && <Typography sx={{ fontSize: '12px', color: '#999', fontStyle: 'italic' }}>(Parent: {member.parent.membership_no})</Typography>}
                                             </TableCell>
@@ -660,7 +686,7 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={member.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={member.full_name} style={{ marginRight: '10px' }} />
                                                     <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
+                                                        {/* <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }} className="d-flex align-items-center gap-2">
                                                             {member.full_name}
                                                             {member.parent_id && <span style={{ fontSize: '12px', color: '#999' }}>(Family)</span>}
 
@@ -669,27 +695,92 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                                                     <WarningAmberIcon color="warning" fontSize="small" />
                                                                 </Tooltip>
                                                             )}
+                                                        </Typography> */}
+                                                        <Typography sx={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 1  // MUI gap instead of Bootstrap class
+                                                        }}>
+                                                            {/* Truncated Name */}
+                                                            <Tooltip title={member.full_name} arrow>
+                                                                <span style={{
+                                                                    maxWidth: '120px',  // ~20 chars
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    {member.full_name}
+                                                                </span>
+                                                            </Tooltip>
+
+                                                            {/* Family tag - unaffected */}
+                                                            {member.parent_id && (
+                                                                <span style={{ fontSize: '12px', color: '#999' }}>
+                                                                    (Family)
+                                                                </span>
+                                                            )}
+
+                                                            {/* Warning icon - unaffected */}
+                                                            {member.is_document_enabled && (
+                                                                <Tooltip title="Documents missing" arrow>
+                                                                    <WarningAmberIcon color="warning" fontSize="small" />
+                                                                </Tooltip>
+                                                            )}
                                                         </Typography>
 
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                        {/* <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                             {member.mobile_number_a || 'N/A'}
                                                             {member.parent_id && member.parent && <span style={{ fontSize: '12px', color: '#999', marginLeft: '8px' }}>• Parent: {member.parent.full_name}</span>}
+                                                        </Typography> */}
+                                                        <Typography sx={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 1
+                                                        }}>
+                                                            {/* Truncated Mobile Number */}
+                                                            <Tooltip
+                                                                title={member.mobile_number_a || 'N/A'}
+                                                                arrow
+                                                            >
+                                                                <span style={{
+                                                                    maxWidth: '140px',  // ~12 digits
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}>
+                                                                    {member.mobile_number_a || 'N/A'}
+                                                                </span>
+                                                            </Tooltip>
+
+                                                            {/* Parent info - fully visible */}
+                                                            {member.parent_id && member.parent && (
+                                                                <span style={{ fontSize: '12px', color: '#999' }}>
+                                                                    • Parent: {member.parent.full_name}
+                                                                </span>
+                                                            )}
                                                         </Typography>
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member_category?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.member_type?.name || 'N/A'}</TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                 {member.card_status ? (
                                                     <Chip
                                                         label={member.card_status}
                                                         size="small"
                                                         sx={{
-                                                            backgroundColor: member.card_status === 'Issued' ? '#4caf50' : member.card_status === 'E-Card Issued' ? '#2196f3' : member.card_status === 'Printed' ? '#9c27b0' : member.card_status === 'Received' ? '#ff9800' : member.card_status === 'In-Process' ? '#ffc107' : member.card_status === 'Applied' ? '#00bcd4' : member.card_status === 'Re-Printed' ? '#673ab7' : member.card_status === 'Expired' ? '#f44336' : member.card_status === 'Not Applied' ? '#9e9e9e' : member.card_status === 'Not Applicable' ? '#607d8b' : '#757575',
-                                                            color: '#fff',
-                                                            fontWeight: 500,
-                                                            fontSize: '12px',
+                                                            backgroundColor: 'transparent',
+                                                            // backgroundColor: member.card_status === 'Issued' ? '#4caf50' : member.card_status === 'E-Card Issued' ? '#2196f3' : member.card_status === 'Printed' ? '#9c27b0' : member.card_status === 'Received' ? '#ff9800' : member.card_status === 'In-Process' ? '#ffc107' : member.card_status === 'Applied' ? '#00bcd4' : member.card_status === 'Re-Printed' ? '#673ab7' : member.card_status === 'Expired' ? '#f44336' : member.card_status === 'Not Applied' ? '#9e9e9e' : member.card_status === 'Not Applicable' ? '#607d8b' : '#757575',
+                                                            color: '#7f7f7f',
+                                                            // fontWeight: 500,
+                                                            // fontSize: '12px',
                                                         }}
                                                     />
                                                 ) : (
@@ -702,10 +793,11 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                                         label={member.status.charAt(0).toUpperCase() + member.status.slice(1)}
                                                         size="small"
                                                         sx={{
-                                                            backgroundColor: member.status === 'active' ? '#4caf50' : member.status === 'suspended' ? '#ff9800' : member.status === 'cancelled' ? '#f44336' : member.status === 'pause' ? '#2196f3' : '#757575',
-                                                            color: '#fff',
+                                                            backgroundColor: 'transparent',
+                                                            color: member.status === 'active' ? '#2E7D32' : member.status === 'suspended' ? '#ff9800' : member.status === 'cancelled' ? '#f44336' : member.status === 'pause' ? '#2196f3' : '#757575',
+                                                            // color: '#fff',
                                                             fontWeight: 500,
-                                                            fontSize: '12px',
+                                                            fontSize: '14px',
                                                         }}
                                                     />
                                                 ) : (
@@ -716,13 +808,14 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{member.card_expiry_date || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Button
-                                                    style={{ color: '#0C67AA', textDecoration: 'underline', textTransform: 'none' }}
+                                                    variant='contained'
+                                                    style={{ color: '#063455', border: '1px solid #063455', backgroundColor: 'transparent', textTransform: 'none' }}
                                                     onClick={() => {
                                                         setSelectMember(member);
                                                         setOpenCardModal(true);
                                                     }}
                                                 >
-                                                    View Card
+                                                    View
                                                 </Button>
                                             </TableCell>
                                         </TableRow>

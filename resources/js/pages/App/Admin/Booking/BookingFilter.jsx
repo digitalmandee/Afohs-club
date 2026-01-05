@@ -309,7 +309,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
 
                     {/* Action Buttons */}
                     <Grid item xs={12} md={2} sx={{ display: 'flex', gap: 1 }}>
-                        <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color:'#063455', border:'1px solid #063455' }}>
                             Reset
                         </Button>
                         <Button variant="contained" startIcon={<Search />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none' }}>

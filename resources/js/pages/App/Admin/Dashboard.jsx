@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider, CircularProgress, ListItemAvatar, Avatar, ListItemButton } from '@mui/material';
+import { Box, Typography, MenuList, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider, CircularProgress, ListItemAvatar, Avatar, ListItemButton } from '@mui/material';
 import { CalendarToday as CalendarIcon, Print as PrintIcon, People as PeopleIcon, ShoppingBag as ShoppingBagIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import usePermission from '@/hooks/usePermission';
@@ -138,14 +138,14 @@ const Dashboard = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography sx={{ fontSize: '30px', fontWeight: 700, color: '#063455' }}>Dashboard</Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <TextField
+                        {/* <TextField
                             select
                             size="small"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
                             sx={{
                                 width: '200px',
-                                bgcolor: 'white',
+                                // bgcolor: 'white',
                                 '& .MuiOutlinedInput-root': {
                                     borderRadius: '16px',
                                     '& .MuiOutlinedInput-root': {
@@ -159,6 +159,62 @@ const Dashboard = () => {
                             }
                             SelectProps={{
                                 IconComponent: () => null,
+                            }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <CalendarIcon fontSize="small" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        >
+                            {months.map((month) => (
+                                <MenuItem key={month} value={month}>
+                                    {month}
+                                </MenuItem>
+                            ))}
+                        </TextField> */}
+                        <TextField
+                            select
+                            size="small"
+                            value={selectedMonth}
+                            displayEmpty
+                            renderValue={(selected) => {
+                                if (!selected) {
+                                    return <span style={{ color: '#202020ff', opacity: 0.7 }}>Search...</span>;
+                                }
+                                return selected;
+                            }}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            sx={{
+                                width: '160px',
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                    '& .MuiSelect-select': {
+                                        color: '#7F7F7F',
+                                        '&:focus': {
+                                            color: '#000'  // Fix focus color if needed
+                                        }
+                                    }
+                                }
+                            }}
+                            SelectProps={{
+                                IconComponent: () => null,
+                                MenuProps: {
+                                    sx: {
+                                        mt: 0.5, // Adds space/gap between TextField and menu (adjust as needed: 1=8px, 2=16px, etc.)
+                                        '& .MuiMenu-paper': {
+                                            borderRadius: '16px',  // ✅ Rounded menu corners
+                                            '& .MuiMenuItem-root': {
+                                                transition: 'background-color 0.2s ease',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: 'white !important'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }}
                             InputProps={{
                                 endAdornment: (

@@ -84,7 +84,7 @@ const RoomTypes = ({ roomTypesData }) => {
                             Room Types
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px', textTransform:'none' }} onClick={handleAdd}>
                         Add Type
                     </Button>
                 </Box>
