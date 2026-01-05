@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { FilterAlt, Search, Visibility,Cancel } from '@mui/icons-material';
+import { FilterAlt, Search, Visibility, Cancel, Edit } from '@mui/icons-material';
 import { Box, Button, Paper, InputAdornment, Table, TableBody, TextField, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, Tooltip } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useMemo, useState } from 'react';
@@ -204,10 +204,10 @@ const RoomScreen = ({ bookings }) => {
     }, [bookings]);
 
     const statusColors = {
-        'checkedout': '#008000',    // Green
-        'checkedin': '#FFFF00',     // Yellow
-        'confirmed': '#800080',   // Purple
-        'cancelled': '#FF0000',   // Red
+        checkedout: '#008000', // Green
+        checkedin: '#FFFF00', // Yellow
+        confirmed: '#800080', // Purple
+        cancelled: '#FF0000', // Red
         // fallback for others
     };
 
@@ -274,28 +274,19 @@ const RoomScreen = ({ bookings }) => {
                                             <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{booking.booking_no}</TableCell>
                                                 {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell> */}
-                                                <TableCell sx={{
-                                                    color: '#7F7F7F',
-                                                    fontWeight: 400,
-                                                    fontSize: '14px',
-                                                    maxWidth: '120px',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
-                                                    <Tooltip
-                                                        title={
-                                                            booking.customer ? booking.customer.name :
-                                                                booking.member ? booking.member.full_name :
-                                                                    booking.corporateMember || booking.corporate_member ?
-                                                                        (booking.corporateMember || booking.corporate_member).full_name :
-                                                                        ''
-                                                        }
-                                                        arrow
-                                                    >
-                                                        <span>
-                                                            {booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}
-                                                        </span>
+                                                <TableCell
+                                                    sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '120px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                    }}
+                                                >
+                                                    <Tooltip title={booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''} arrow>
+                                                        <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
                                                     </Tooltip>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
@@ -349,6 +340,9 @@ const RoomScreen = ({ bookings }) => {
                                                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                                         <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', color: '#063455' }}>
                                                             <Visibility fontSize="small" />
+                                                        </Button>
+                                                        <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', color: '#063455' }}>
+                                                            <Edit fontSize="small" />
                                                         </Button>
                                                         <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)}>
                                                             View
