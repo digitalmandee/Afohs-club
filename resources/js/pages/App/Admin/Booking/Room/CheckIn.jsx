@@ -109,7 +109,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography
                             sx={{
-                                marginLeft: '10px',
+                                // marginLeft: '10px',
                                 fontWeight: 700,
                                 color: '#063455',
                                 fontSize: '30px',
@@ -118,7 +118,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
                             Room CheckIn
                         </Typography>
                     </Box>
-                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Register an arriving guest into an allocated room</Typography>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Register an arriving guest into an allocated room</Typography>
 
                     {/* Filter Section */}
                     {/* Filter Section */}

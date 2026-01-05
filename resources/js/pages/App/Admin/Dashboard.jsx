@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider, CircularProgress, ListItemAvatar, Avatar, ListItemButton } from '@mui/material';
+import { Box, Typography, MenuList, Card, CardContent, Grid, Button, TextField, InputAdornment, MenuItem, List, ListItem, ListItemText, Divider, CircularProgress, ListItemAvatar, Avatar, ListItemButton } from '@mui/material';
 import { CalendarToday as CalendarIcon, Print as PrintIcon, People as PeopleIcon, ShoppingBag as ShoppingBagIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import usePermission from '@/hooks/usePermission';
@@ -30,7 +30,7 @@ const Dashboard = () => {
     const currentYear = new Date().getFullYear();
 
     // Available months for the dropdown
-    const months = ['Jan-2025', 'Feb-2025', 'Mar-2025', 'Apr-2025', 'May-2025', 'Jun-2025', 'Jul-2025', 'Aug-2025', 'Sep-2025', 'Oct-2025', 'Nov-2025', 'Dec-2025'];
+    // const months = ['Jan-2025', 'Feb-2025', 'Mar-2025', 'Apr-2025', 'May-2025', 'Jun-2025', 'Jul-2025', 'Aug-2025', 'Sep-2025', 'Oct-2025', 'Nov-2025', 'Dec-2025'];
     const [selectedMonth, setSelectedMonth] = useState(`${currentMonth}-${currentYear}`);
     const [revenueType, setRevenueType] = useState('Revenue');
     const [chartYear, setChartYear] = useState('2025');
@@ -124,6 +124,27 @@ const Dashboard = () => {
         return "20px";                     // extreme values
     };
 
+    const generateMonths = () => {
+        const now = new Date(); // Jan 5, 2026
+        const currentMonth = now.getMonth(); // 0 (January)
+        const currentYear = now.getFullYear(); // 2026
+
+        const monthNames = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        ];
+
+        const months = [];
+        for (let i = 0; i < 12; i++) {
+            const monthIndex = (currentMonth + i) % 12;
+            const year = currentMonth + i >= 12 ? currentYear + 1 : currentYear;
+            months.push(`${monthNames[monthIndex]}-${year}`);
+        }
+        return months;
+    };
+
+    const months = generateMonths();
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -138,14 +159,14 @@ const Dashboard = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Typography sx={{ fontSize: '30px', fontWeight: 700, color: '#063455' }}>Dashboard</Typography>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <TextField
+                        {/* <TextField
                             select
                             size="small"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
                             sx={{
                                 width: '200px',
-                                bgcolor: 'white',
+                                // bgcolor: 'white',
                                 '& .MuiOutlinedInput-root': {
                                     borderRadius: '16px',
                                     '& .MuiOutlinedInput-root': {
@@ -159,6 +180,57 @@ const Dashboard = () => {
                             }
                             SelectProps={{
                                 IconComponent: () => null,
+                            }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <CalendarIcon fontSize="small" />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        >
+                            {months.map((month) => (
+                                <MenuItem key={month} value={month}>
+                                    {month}
+                                </MenuItem>
+                            ))}
+                        </TextField> */}
+                        <TextField
+                            select
+                            size="small"
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            // renderValue={(selected) => selected || getCurrentMonth()}
+                            // onChange={(e) => setSelectedMonth(e.target.value || '')}
+                            SelectProps={{
+                                IconComponent: () => null,
+                                MenuProps: {
+                                    sx: {
+                                        mt: 0.5, // Adds space/gap between TextField and menu (adjust as needed: 1=8px, 2=16px, etc.)
+                                        '& .MuiMenu-paper': {
+                                            borderRadius: '16px',  // ✅ Rounded menu corners
+                                            '& .MuiMenuItem-root': {
+                                                transition: 'background-color 0.2s ease',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: 'white !important'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }}
+                            sx={{
+                                width: '170px',
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                    '& .MuiSelect-select': {
+                                        color: '#7F7F7F',
+                                        '&:focus': {
+                                            color: '#000'  // Fix focus color if needed
+                                        }
+                                    }
+                                }
                             }}
                             InputProps={{
                                 endAdornment: (

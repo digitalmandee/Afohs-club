@@ -195,7 +195,7 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
                         display: 'grid',
                         gridTemplateColumns: '1fr 160px 60px',
                         alignItems: 'center',
-                        border: '4px solid #063455',
+                        border: '3px solid #063455',
                         borderRadius: '6px',
                         marginBottom: '10px',
                     }}
@@ -229,9 +229,23 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
                                         </Button>
                                     </Box>
 
-                                    <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
-                                        <Box ref={popperRef} sx={{ bgcolor: 'background.paper', p: 2, zIndex: 1300 }}>
+                                    {/* <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
+                                        <Box ref={popperRef} sx={{ bgcolor: 'background.paper', zIndex: 1300 }}>
                                             <DateRange editableDateInputs={true} onChange={(item) => setRange([item.selection])} moveRangeOnFirstSelection={false} ranges={range} months={2} showSelectionPreview={false} showDateDisplay={false} direction="horizontal" />
+                                        </Box>
+                                    </Popper> */}
+                                    <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
+                                        <Box ref={popperRef} sx={{ bgcolor: 'background.paper', zIndex: 1300 }}>
+                                            <DateRange
+                                                editableDateInputs={true}
+                                                onChange={(item) => setRange([item.selection])}
+                                                moveRangeOnFirstSelection={false}
+                                                ranges={range}
+                                                months={2}
+                                                showSelectionPreview={false}
+                                                showDateDisplay={false}
+                                                direction="horizontal"
+                                            />
                                         </Box>
                                     </Popper>
                                 </Box>

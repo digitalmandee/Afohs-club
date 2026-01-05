@@ -134,9 +134,9 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <Box sx={{ p: 4 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <IconButton onClick={() => router.visit(route('rooms.dashboard'))} sx={{ color: '#063455' }}>
+                            {/* <IconButton onClick={() => router.visit(route('rooms.dashboard'))} sx={{ color: '#063455' }}>
                                 <ArrowBack />
-                            </IconButton>
+                            </IconButton> */}
                             <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Cancelled & Refunded Room Bookings</Typography>
                         </Box>
 

@@ -184,10 +184,49 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {showDates.booking && (
                         <>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Booking From" format="DD-MM-YYYY" value={bookingDateFrom ? dayjs(bookingDateFrom) : null} onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
+                                <DatePicker
+                                    label="Booking From" format="DD-MM-YYYY"
+                                    value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
+                                    onChange={(newValue) =>
+                                        setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                    enableAccessibleFieldDOMStructure={false}
+                                    slots={{ textField: RoundedTextField }}
+                                    slotProps=
+                                    {{
+                                        textField: {
+                                            size: 'small', fullWidth: true,
+                                            sx: { minWidth: '150px' },
+                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click()
+                                        },
+                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        popper: {
+                                            sx: {
+                                                mt: 1, // Top spacing
+                                                // mb: 2,
+                                                '& .MuiPaper-root': {
+                                                    borderRadius: '16px', // ✅ Rounded corners
+                                                    boxShadow: 'none'
+                                                }
+                                            }
+                                        }
+                                    }}
+                                />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Booking To" format="DD-MM-YYYY" value={bookingDateTo ? dayjs(bookingDateTo) : null} onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
+                                <DatePicker label="Booking To" format="DD-MM-YYYY" value={bookingDateTo ? dayjs(bookingDateTo) : null} onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{
+                                    textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    popper: {
+                                        sx: {
+                                            mt: 1, // Top spacing
+                                            // mb: 2,
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px', // ✅ Rounded corners
+                                                boxShadow: 'none'
+                                            }
+                                        }
+                                    }
+                                }}
+                                />
                             </Grid>
                         </>
                     )}
@@ -196,10 +235,34 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {showDates.checkIn && (
                         <>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-In From" format="DD-MM-YYYY" value={checkInFrom ? dayjs(checkInFrom) : null} onChange={(newValue) => setCheckInFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
+                                <DatePicker label="Check-In From" format="DD-MM-YYYY" value={checkInFrom ? dayjs(checkInFrom) : null} onChange={(newValue) => setCheckInFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{
+                                    textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    popper: {
+                                        sx: {
+                                            mt: 1, // Top spacing
+                                            // mb: 2,
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px', // ✅ Rounded corners
+                                                boxShadow: 'none'
+                                            }
+                                        }
+                                    }
+                                }} />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-In To" format="DD-MM-YYYY" value={checkInTo ? dayjs(checkInTo) : null} onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
+                                <DatePicker label="Check-In To" format="DD-MM-YYYY" value={checkInTo ? dayjs(checkInTo) : null} onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{
+                                    textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    popper: {
+                                        sx: {
+                                            mt: 1, // Top spacing
+                                            // mb: 2,
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px', // ✅ Rounded corners
+                                                boxShadow: 'none'
+                                            }
+                                        }
+                                    }
+                                }} />
                             </Grid>
                         </>
                     )}
@@ -208,10 +271,34 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {showDates.checkOut && (
                         <>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-Out From" format="DD-MM-YYYY" value={checkOutFrom ? dayjs(checkOutFrom) : null} onChange={(newValue) => setCheckOutFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
+                                <DatePicker label="Check-Out From" format="DD-MM-YYYY" value={checkOutFrom ? dayjs(checkOutFrom) : null} onChange={(newValue) => setCheckOutFrom(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{
+                                    textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    popper: {
+                                        sx: {
+                                            mt: 1, // Top spacing
+                                            // mb: 2,
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px', // ✅ Rounded corners
+                                                boxShadow: 'none'
+                                            }
+                                        }
+                                    }
+                                }} />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-Out To" format="DD-MM-YYYY" value={checkOutTo ? dayjs(checkOutTo) : null} onChange={(newValue) => setCheckOutTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] } }} />
+                                <DatePicker label="Check-Out To" format="DD-MM-YYYY" value={checkOutTo ? dayjs(checkOutTo) : null} onChange={(newValue) => setCheckOutTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{
+                                    textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    popper: {
+                                        sx: {
+                                            mt: 1, // Top spacing
+                                            // mb: 2,
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px', // ✅ Rounded corners
+                                                boxShadow: 'none'
+                                            }
+                                        }
+                                    }
+                                }} />
                             </Grid>
                         </>
                     )}
@@ -235,6 +322,15 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                                 })}
                                             </Box>
                                         );
+                                    }}
+                                    MenuProps={{
+                                        sx: {
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px',  // ✅ Rounded corners
+                                                boxShadow: 'none !important',  // ✅ No shadow
+                                                marginTop: '4px'  // Optional: small gap from input
+                                            }
+                                        }
                                     }}
                                 >
                                     {roomTypes.map((type) => (
@@ -264,6 +360,15 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                             })}
                                         </Box>
                                     );
+                                }}
+                                MenuProps={{
+                                    sx: {
+                                        '& .MuiPaper-root': {
+                                            borderRadius: '16px',
+                                            boxShadow: 'none !important',
+                                            marginTop: '4px'
+                                        }
+                                    }
                                 }}
                             >
                                 {rooms &&
@@ -295,11 +400,26 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                             </Box>
                                         );
                                     }}
+                                    MenuProps={{
+                                        sx: {
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px',
+                                                boxShadow: 'none !important',
+                                                marginTop: '4px'
+                                            },
+                                            '& .MuiMenuItem-root': {
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: '#fff !important'
+                                                }
+                                            }
+                                        }
+                                    }}
                                 >
                                     {/* 'checked_in', 'checked_out',  */}
                                     {['confirmed', 'cancelled', 'refunded'].map((status) => (
                                         <MenuItem key={status} value={status}>
-                                            {status.replace('_', ' ').toUpperCase()}
+                                            {status.replace('_', ' ')}
                                         </MenuItem>
                                     ))}
                                 </Select>
@@ -309,7 +429,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
 
                     {/* Action Buttons */}
                     <Grid item xs={12} md={2} sx={{ display: 'flex', gap: 1 }}>
-                        <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none' }}>
+                        <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455' }}>
                             Reset
                         </Button>
                         <Button variant="contained" startIcon={<Search />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none' }}>

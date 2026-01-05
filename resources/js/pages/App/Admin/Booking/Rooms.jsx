@@ -75,7 +75,16 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
                     <Box sx={{ p: 1, mt: 3, maxHeight: 'calc(100vh - 120px)', overflowY: 'auto' }}>
                         {filteredRooms && filteredRooms.length > 0 ? (
                             filteredRooms.map((item, index) => (
-                                <div key={index} className="border mb-3 p-2" style={{ height: 88, border: '1px solid #E3E3E3', borderRadius:'16px' }} onClick={() => router.visit(route('rooms.create.booking', { room_id: item.id, checkin, checkout, persons }))}>
+                                <div key={index} className="border mb-3 p-2" style={{
+                                    height: 88, border: '1px solid #E3E3E3', borderRadius: '16px', transition: 'box-shadow 0.3s ease-in-out',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+
+                                }} onMouseEnter={(e) => {
+                                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';  // ✅ Hover shadow
+                                }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';   // ✅ Back to default
+                                    }} onClick={() => router.visit(route('rooms.create.booking', { room_id: item.id, checkin, checkout, persons }))}>
                                     <Row style={{ cursor: 'pointer' }}>
                                         <Col xs={2}>
                                             <img src={item.image ? '/' + item.image : '/placeholder.svg'} alt={type === 'room' ? item.type : item.name} style={{ width: 100, height: 67, borderRadius: '26px' }} />
@@ -88,7 +97,7 @@ const AvailableRooms = ({ data, type, checkin, checkout, persons }) => {
                                                             {item.name} ({checkin && checkout && <span style={{ fontWeight: 'bold', color: '#121212' }}>{item.room_type?.name}</span>})
                                                         </h5>
                                                         <div>
-                                                            <Button size="small" variant="outlined" onMouseEnter={(e) => handlePopoverOpen(e, item)} sx={{ textTransform: 'capitalize', fontSize: 13, ml: 1, color: '#063455', borderRadius:'12px' }}>
+                                                            <Button size="small" variant="outlined" onMouseEnter={(e) => handlePopoverOpen(e, item)} sx={{ textTransform: 'capitalize', fontSize: 13, ml: 1, color: '#063455', borderRadius: '12px' }}>
                                                                 Per night charges
                                                             </Button>
                                                         </div>

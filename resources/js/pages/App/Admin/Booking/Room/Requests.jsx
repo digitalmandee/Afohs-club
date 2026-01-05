@@ -40,7 +40,7 @@ const BookingRequests = () => {
                 <Box sx={{ p: 3 }}>
                     <Box display="flex" justifyContent="space-between">
                         <div className="d-flex align-items-center">
-                            <Typography sx={{ marginLeft: '10px', fontWeight: 700, color: '#063455', fontSize: '30px' }}>Room Request</Typography>
+                            <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Room Request</Typography>
                         </div>
                         <Button
                             variant="contained"
@@ -57,7 +57,7 @@ const BookingRequests = () => {
                             Add Room Request
                         </Button>
                     </Box>
-                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>View and approve special room requests from members or guests</Typography>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and approve special room requests from members or guests</Typography>
 
                     <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px', marginTop: '2rem' }}>
                         <Table>
@@ -70,7 +70,7 @@ const BookingRequests = () => {
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Guest/Member</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Room Type</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, maxWidth: '200px' }}>Notes</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, maxWidth: '200px' }}>Persons</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                 </TableRow>
@@ -110,9 +110,9 @@ const BookingRequests = () => {
                                                 </span>
                                             </Tooltip>
                                         </TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.room?.name}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.room?.name || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.persons}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.per_day_charge}</TableCell>
+                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{req.per_day_charge}</TableCell> */}
                                         {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                             <Select value={req.status} onChange={(e) => handleStatusChange(req.id, e.target.value)} size="small" sx={{ borderRadius: '16px' }}>
                                                 <MenuItem value="pending">Pending</MenuItem>

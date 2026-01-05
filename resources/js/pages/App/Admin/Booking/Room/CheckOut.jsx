@@ -108,7 +108,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Typography
                             sx={{
-                                marginLeft: '10px',
+                                // marginLeft: '10px',
                                 fontWeight: 700,
                                 color: '#063455',
                                 fontSize: '30px',
@@ -117,7 +117,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                             Room CheckOut
                         </Typography>
                     </Box>
-                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Finalize bills, log checkout times, and free up room availability</Typography>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Finalize bills, log checkout times, and free up room availability</Typography>
 
                     {/* Filter Section */}
                     {/* Filter Section */}

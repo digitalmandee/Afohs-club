@@ -88,7 +88,7 @@ const RoomCategories = ({ roomCategoriesData }) => {
                         Add Category
                     </Button>
                 </Box>
-                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
                     Define and manage room classifications based on comfort level and facilities</Typography>
 
                 <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
