@@ -442,11 +442,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             [field]: value,
         };
 
-        // Auto-calculate expiry date when date of birth changes
-        if (field === 'date_of_birth') {
-            updatedMember.card_expiry_date = calculateExpiryDate(value);
-        }
-
         // Real-time email validation
         if (field === 'email') {
             const currentErrors = { ...familyMemberErrors };
@@ -2328,11 +2323,6 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     onOpen={() => setFamilyCardExpiryOpen(true)}
                                                                 />
                                                             </LocalizationProvider>
-                                                            {currentFamilyMember.auto_expiry_calculated && (
-                                                                <Typography variant="caption" sx={{ color: '#2196f3', mt: 1, display: 'block' }}>
-                                                                    📅 Auto-calculated based on 25th birthday
-                                                                </Typography>
-                                                            )}
                                                         </Box>
                                                     </Grid>
                                                     <Grid item xs={4}>
