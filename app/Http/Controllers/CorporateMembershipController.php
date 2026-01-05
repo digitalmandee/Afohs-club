@@ -195,6 +195,70 @@ class CorporateMembershipController extends Controller
                 'invoiceable_type' => CorporateMember::class,
             ]);
 
+            // Handle family members
+            if (!empty($request->family_members)) {
+                foreach ($request->family_members as $familyMemberData) {
+                    $familyMember = CorporateMember::create([
+                        'barcode_no' => $familyMemberData['barcode_no'] ?? null,
+                        'parent_id' => $mainMember->id,
+                        'membership_no' => $mainMember->membership_no . '-' . $familyMemberData['family_suffix'],
+                        'family_suffix' => $familyMemberData['family_suffix'],
+                        'first_name' => $familyMemberData['first_name'] ?? null,
+                        'middle_name' => $familyMemberData['middle_name'] ?? null,
+                        'last_name' => $familyMemberData['last_name'] ?? null,
+                        'full_name' => $familyMemberData['full_name'],
+                        'personal_email' => $familyMemberData['email'] ?? null,
+                        'relation' => $familyMemberData['relation'],
+                        'gender' => $familyMemberData['gender'] ?? null,
+                        'date_of_birth' => $this->formatDateForDatabase($familyMemberData['date_of_birth']),
+                        'status' => $familyMemberData['status'],
+                        'start_date' => $this->formatDateForDatabase($familyMemberData['start_date'] ?? null),
+                        'end_date' => $this->formatDateForDatabase($familyMemberData['end_date'] ?? null),
+                        'card_issue_date' => $this->formatDateForDatabase($familyMemberData['card_issue_date'] ?? null),
+                        // Use getRawOriginal to avoid timezone issues for casted date fields if needed, but here we are setting it.
+                        'card_expiry_date' => $this->formatDateForDatabase($familyMemberData['card_expiry_date'] ?? null),
+                        'cnic_no' => $familyMemberData['cnic'] ?? null,
+                        'mobile_number_a' => $familyMemberData['phone_number'] ?? null,
+                        'passport_no' => $familyMemberData['passport_no'] ?? null,
+                        'nationality' => $familyMemberData['nationality'] ?? null,
+                        'martial_status' => $familyMemberData['martial_status'] ?? null,
+                        'corporate_company_id' => $mainMember->corporate_company_id,  // Inherit company
+                        'member_category_id' => $mainMember->member_category_id,  // Inherit category
+                    ]);
+
+                    // Handle family member profile photo using Media model
+                    if (!empty($familyMemberData['picture'])) {
+                        $file = $familyMemberData['picture'];
+
+                        // Get file metadata BEFORE moving the file
+                        $fileName = $file->getClientOriginalName();
+                        $mimeType = $file->getMimeType();
+                        $fileSize = $file->getSize();
+
+                        // Now save the file
+                        $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                        $familyMember->media()->create([
+                            'type' => 'profile_photo',
+                            'file_name' => $fileName,
+                            'file_path' => $filePath,
+                            'mime_type' => $mimeType,
+                            'file_size' => $fileSize,
+                            'disk' => 'public',
+                        ]);
+                    }
+
+                    $familyqrCodeData = route('member.profile', ['id' => $familyMember->id, 'type' => 'corporate']);
+
+                    // Create QR code image and save it
+                    $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
+                    $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
+
+                    $familyMember->qr_code = $qrImagePath;
+                    $familyMember->save();
+                }
+            }
+
             DB::commit();
 
             return response()->json(['message' => 'Corporate Membership created successfully.', 'member' => $mainMember], 200);
@@ -610,6 +674,125 @@ class CorporateMembershipController extends Controller
                         'file_size' => $fileSize,
                         'disk' => 'public',
                     ]);
+                }
+            }
+
+            // Update Family Members
+            if ($request->filled('family_members')) {
+                foreach ($request->family_members as $newMemberData) {
+                    // Check if family member is new
+                    if (str_starts_with($newMemberData['id'], 'new-')) {
+                        $familyMember = CorporateMember::create([
+                            'barcode_no' => $newMemberData['barcode_no'] ?? null,
+                            'parent_id' => $member->id,
+                            'membership_no' => $request->membership_no . ($newMemberData['family_suffix'] ? '-' . $newMemberData['family_suffix'] : ''),
+                            'family_suffix' => $newMemberData['family_suffix'] ?? null,
+                            'first_name' => $newMemberData['first_name'] ?? null,
+                            'middle_name' => $newMemberData['middle_name'] ?? null,
+                            'last_name' => $newMemberData['last_name'] ?? null,
+                            'full_name' => $newMemberData['full_name'],
+                            'personal_email' => $newMemberData['email'] ?? null,
+                            'relation' => $newMemberData['relation'],
+                            'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']),
+                            'status' => $newMemberData['status'],
+                            'gender' => $newMemberData['gender'] ?? null,
+                            'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null),
+                            'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null),
+                            'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null),
+                            'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null),
+                            'cnic_no' => $newMemberData['cnic'] ?? null,
+                            'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                            'passport_no' => $newMemberData['passport_no'] ?? null,
+                            'nationality' => $newMemberData['nationality'] ?? null,
+                            'martial_status' => $newMemberData['martial_status'] ?? null,
+                            'corporate_company_id' => $member->corporate_company_id,  // Inherit company
+                            'member_category_id' => $member->member_category_id,  // Inherit category
+                        ]);
+
+                        // Handle family member profile photo using Media model
+                        if (!empty($newMemberData['picture'])) {
+                            $file = $newMemberData['picture'];
+
+                            // Get file metadata BEFORE moving the file
+                            $fileName = $file->getClientOriginalName();
+                            $mimeType = $file->getMimeType();
+                            $fileSize = $file->getSize();
+
+                            // Now save the file
+                            $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                            $familyMember->media()->create([
+                                'type' => 'profile_photo',
+                                'file_name' => $fileName,
+                                'file_path' => $filePath,
+                                'mime_type' => $mimeType,
+                                'file_size' => $fileSize,
+                                'disk' => 'public',
+                            ]);
+                        }
+
+                        $familyqrCodeData = route('member.profile', ['id' => $familyMember->id, 'type' => 'corporate']);
+
+                        // Create QR code image and save it
+                        $familyqrqrBinary = QrCode::format('png')->size(300)->generate($familyqrCodeData);
+                        $qrImagePath = FileHelper::saveBinaryImage($familyqrqrBinary, 'qr_codes');
+
+                        $familyMember->qr_code = $qrImagePath;
+                        $familyMember->save();
+                    } else {
+                        // Update existing family member
+                        $familyMember = CorporateMember::find($newMemberData['id']);
+                        if ($familyMember) {
+                            $familyMember->update([
+                                'barcode_no' => $newMemberData['barcode_no'] ?? $familyMember->barcode_no,
+                                'first_name' => $newMemberData['first_name'] ?? $familyMember->first_name,
+                                'middle_name' => $newMemberData['middle_name'] ?? $familyMember->middle_name,
+                                'last_name' => $newMemberData['last_name'] ?? $familyMember->last_name,
+                                'full_name' => $newMemberData['full_name'] ?? $familyMember->full_name,
+                                'personal_email' => $newMemberData['email'] ?? $familyMember->personal_email,
+                                'relation' => $newMemberData['relation'] ?? $familyMember->relation,
+                                'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']) ?? $familyMember->date_of_birth,
+                                'status' => $newMemberData['status'] ?? $familyMember->status,
+                                'gender' => $newMemberData['gender'] ?? $familyMember->gender,
+                                'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null) ?? $familyMember->start_date,
+                                'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null) ?? $familyMember->end_date,
+                                'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null) ?? $familyMember->card_issue_date,
+                                'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null) ?? $familyMember->card_expiry_date,
+                                'cnic_no' => $newMemberData['cnic'] ?? $familyMember->cnic_no ?? null,
+                                'mobile_number_a' => $newMemberData['phone_number'] ?? $familyMember->mobile_number_a ?? null,
+                                'passport_no' => $newMemberData['passport_no'] ?? $familyMember->passport_no,
+                                'nationality' => $newMemberData['nationality'] ?? $familyMember->nationality,
+                                'martial_status' => $newMemberData['martial_status'] ?? $familyMember->martial_status,
+                            ]);
+
+                            // Handle profile photo update
+                            if (!empty($newMemberData['picture']) && $newMemberData['picture'] instanceof \Illuminate\Http\UploadedFile) {
+                                $file = $newMemberData['picture'];
+
+                                $fileName = $file->getClientOriginalName();
+                                $mimeType = $file->getMimeType();
+                                $fileSize = $file->getSize();
+
+                                $filePath = FileHelper::saveImage($file, 'familymembers');
+
+                                // Delete old photo
+                                $oldPhoto = $familyMember->media()->where('type', 'profile_photo')->first();
+                                if ($oldPhoto) {
+                                    $oldPhoto->deleteFile();
+                                    $oldPhoto->delete();
+                                }
+
+                                $familyMember->media()->create([
+                                    'type' => 'profile_photo',
+                                    'file_name' => $fileName,
+                                    'file_path' => $filePath,
+                                    'mime_type' => $mimeType,
+                                    'file_size' => $fileSize,
+                                    'disk' => 'public',
+                                ]);
+                            }
+                        }
+                    }
                 }
             }
 
