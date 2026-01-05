@@ -146,8 +146,8 @@ export const handlePrintMembershipCard = (member) => {
 }
 
 .qr {
-    width: 100px;
-    height: 100px;
+    width: 60px;
+    height: 60px;
     border-radius: 4px;
     border: 'none';
     object-fit: contain;
@@ -161,7 +161,7 @@ export const handlePrintMembershipCard = (member) => {
 
 /* Only this label (under QR) gets spacing */
 .label-valid-until {
-    margin-top: 18px;   /* <-- your required padding from top */
+    margin-top: 58px;   /* <-- your required padding from top */
 }
 
 .value {
