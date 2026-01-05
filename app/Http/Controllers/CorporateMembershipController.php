@@ -285,7 +285,7 @@ class CorporateMembershipController extends Controller
     public function edit(Request $request)
     {
         $user = CorporateMember::where('id', $request->id)
-            ->with(['documents', 'profilePhoto', 'memberCategory', 'familyMembers.profilePhoto'])
+            ->with(['documents', 'profilePhoto', 'memberCategory', 'familyMembers.profilePhoto', 'businessDeveloper'])
             ->first();
 
         if (!$user) {
@@ -296,7 +296,98 @@ class CorporateMembershipController extends Controller
             ? ['id' => $user->profilePhoto->id, 'file_path' => $user->profilePhoto->file_path]
             : null;
 
+        // Format dates for frontend (DD-MM-YYYY format) before toArray()
+        // For casted date fields, use getRawOriginal() to get raw database value
+        // This prevents timezone-induced day shifts
+        $formattedMembershipDate = $user->membership_date
+            ? \Carbon\Carbon::parse($user->membership_date)->format('d-m-Y')
+            : null;
+        $formattedCardIssueDate = $user->card_issue_date
+            ? \Carbon\Carbon::parse($user->card_issue_date)->format('d-m-Y')
+            : null;
+        // card_expiry_date is cast as 'date' - use getRawOriginal to avoid timezone issues
+        $formattedCardExpiryDate = null;
+        $rawCardExpiry = $user->getRawOriginal('card_expiry_date');
+        if ($rawCardExpiry) {
+            $formattedCardExpiryDate = \Carbon\Carbon::createFromFormat('Y-m-d', $rawCardExpiry)->format('d-m-Y');
+        }
+        // date_of_birth is cast as 'date' - use getRawOriginal to avoid timezone issues
+        $formattedDateOfBirth = null;
+        $rawDob = $user->getRawOriginal('date_of_birth');
+        if ($rawDob) {
+            $formattedDateOfBirth = \Carbon\Carbon::createFromFormat('Y-m-d', $rawDob)->format('d-m-Y');
+        }
+
         $userData = $user->toArray();
+
+        // Apply formatted dates
+        $userData['membership_date'] = $formattedMembershipDate;
+        $userData['card_issue_date'] = $formattedCardIssueDate;
+        $userData['card_expiry_date'] = $formattedCardExpiryDate;
+        $userData['date_of_birth'] = $formattedDateOfBirth;
+
+        // Add business developer for form
+        if ($user->businessDeveloper) {
+            $userData['business_developer'] = [
+                'id' => $user->businessDeveloper->id,
+                'name' => $user->businessDeveloper->name,
+                'label' => $user->businessDeveloper->name,
+                'employee_id' => $user->businessDeveloper->employee_id,
+            ];
+        }
+
+        // Format family members for the separate prop
+        $familyMembers = $user->familyMembers()->with('profilePhoto')->get()->map(function ($member) use ($user) {
+            // Get profile photo media for family member
+            $profilePhotoMedia = $member->profilePhoto;
+            $pictureUrl = null;
+            $pictureId = null;
+
+            if ($profilePhotoMedia) {
+                $pictureUrl = $profilePhotoMedia->file_path;
+                $pictureId = $profilePhotoMedia->id;
+            }
+
+            return [
+                'id' => $member->id,
+                'membership_no' => $member->membership_no,
+                'barcode_no' => $member->barcode_no,
+                'family_suffix' => $member->family_suffix,
+                'first_name' => $member->first_name,
+                'middle_name' => $member->middle_name,
+                'last_name' => $member->last_name,
+                'full_name' => $member->full_name,
+                'member_type_id' => $user->member_type_id,
+                'membership_category' => $user->member_category_id,
+                'relation' => $member->relation,
+                'gender' => $member->gender,
+                'nationality' => $member->nationality,
+                'passport_no' => $member->passport_no,
+                // 'martial_status' => $member->martial_status, // CorporateMember model might not have this, checking needed?
+                'cnic' => $member->cnic,  // Ensure column name matches
+                // Use getRawOriginal to avoid timezone issues for casted date fields
+                'date_of_birth' => $member->getRawOriginal('date_of_birth')
+                    ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('date_of_birth'))->format('d-m-Y')
+                    : null,
+                'phone_number' => $member->mobile_number_a,
+                'email' => $member->personal_email,
+                'start_date' => $member->start_date ? \Carbon\Carbon::parse($member->start_date)->format('d-m-Y') : null,
+                'end_date' => $member->end_date ? \Carbon\Carbon::parse($member->end_date)->format('d-m-Y') : null,
+                'card_issue_date' => $member->card_issue_date ? \Carbon\Carbon::parse($member->card_issue_date)->format('d-m-Y') : null,
+                // Use getRawOriginal to avoid timezone issues for casted date fields
+                'card_expiry_date' => $member->getRawOriginal('card_expiry_date')
+                    ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('card_expiry_date'))->format('d-m-Y')
+                    : null,
+                'profile_photo' => $member->profilePhoto,
+                'status' => $member->status,
+                'picture' => $pictureUrl,  // Full URL from file_path
+                'picture_id' => $pictureId,  // Media ID for tracking
+            ];
+        });
+
+        // Still keeping the nested loop for user["family_members"] if other parts need it,
+        // OR we can rely on the prop. The previous code modified $userData['family_members'].
+        // Let's keep $userData clean or matching the other controller.
 
         $membercategories = MemberCategory::select('id', 'name', 'description', 'fee', 'subscription_fee')
             ->where('status', 'active')
@@ -305,7 +396,7 @@ class CorporateMembershipController extends Controller
             })
             ->get();
 
-        return Inertia::render('App/Admin/CorporateMembership/CorporateMemberForm', compact('membercategories'))
+        return Inertia::render('App/Admin/CorporateMembership/CorporateMemberForm', compact('membercategories', 'familyMembers'))
             ->with(['user' => $userData]);
     }
 
@@ -340,6 +431,60 @@ class CorporateMembershipController extends Controller
             ->paginate($perPage);
 
         return response()->json($familyMembers);
+    }
+
+    /**
+     * Get All Corporate Family Members (Non-paginated) for Dropdown
+     */
+    public function getAllFamilyMembers(Request $request, $id)
+    {
+        $familyMembers = CorporateMember::where('parent_id', $id)
+            ->select('id', 'parent_id', 'full_name', 'first_name', 'membership_no', 'relation', 'status')
+            ->get();
+
+        return response()->json($familyMembers);
+    }
+
+    /**
+     * Store Step 4 (Next of Kin) for Corporate Member
+     */
+    public function storeStep4(Request $request)
+    {
+        try {
+            $member = CorporateMember::find($request->id);
+            if (!$member) {
+                return response()->json(['error' => 'Member not found'], 404);
+            }
+
+            // Prepare data for MemberProfessionInfo
+            // Note: CorporateMember uses MemberProfessionInfo via 'professionInfo' relationship
+            $professionData = $request->except([
+                'id',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+                'created_by',
+                'updated_by',
+                'deleted_by',
+                // Exclude fields that might be passed but belong to other steps if necessary
+            ]);
+
+            // Explicitly map nominee fields if they are not in the top-level request automatically?
+            // The request typically contains: nominee_name, nominee_relation, nominee_contact, etc.
+            // These map directly to MemberProfessionInfo columns.
+
+            // Update or Create MemberProfessionInfo
+            if ($member->professionInfo) {
+                $member->professionInfo->update($professionData);
+            } else {
+                $member->professionInfo()->create($professionData);
+            }
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            \Log::error('Error saving corporate step 4: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to save information'], 500);
+        }
     }
 
     /**

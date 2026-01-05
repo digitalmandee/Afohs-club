@@ -465,6 +465,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('permission:members.edit');
         Route::get('profile/{id}', [MembershipController::class, 'showMemberProfile'])->name('membership.profile')->middleware('permission:members.view');
         Route::get('profile/{id}/family-members', [MembershipController::class, 'getMemberFamilyMembers'])->name('membership.profile.family-members')->middleware('permission:members.view');
+        Route::get('profile/{id}/all-family-members', [MembershipController::class, 'getAllFamilyMembers'])->name('membership.members.all-family-members')->middleware('permission:members.view');
         Route::get('profile/{id}/order-history', [MembershipController::class, 'getMemberOrderHistory'])->name('membership.profile.order-history')->middleware('permission:members.view');
         Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('member.orderhistory.invoice');
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update')->middleware('permission:members.edit');
@@ -581,8 +582,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('edit/{id}', [CorporateMembershipController::class, 'edit'])->name('corporate-membership.edit')->middleware('permission:members.edit');
         Route::get('profile/{id}', [CorporateMembershipController::class, 'showMemberProfile'])->name('corporate-membership.profile')->middleware('permission:members.view');
         Route::get('profile/{id}/family-members', [CorporateMembershipController::class, 'getFamilyMembers'])->name('corporate-membership.profile.family-members')->middleware('permission:members.view');
+        Route::get('profile/{id}/all-family-members', [CorporateMembershipController::class, 'getAllFamilyMembers'])->name('corporate-membership.members.all-family-members')->middleware('permission:members.view');
         Route::get('family-members', [CorporateMembershipController::class, 'familyMembersIndex'])->name('corporate-membership.family-members')->middleware('permission:members.view');
         Route::post('store', [CorporateMembershipController::class, 'store'])->name('corporate-membership.store')->middleware('permission:members.create');
+        Route::post('store-step-4', [CorporateMembershipController::class, 'storeStep4'])->name('corporate-membership.store-step-4')->middleware('permission:members.create');
         Route::post('update/{id}', [CorporateMembershipController::class, 'update'])->name('corporate-membership.update')->middleware('permission:members.edit');
         Route::delete('/{id}', [CorporateMembershipController::class, 'destroy'])->name('corporate-membership.destroy')->middleware('permission:members.delete');
         Route::get('trashed', [CorporateMembershipController::class, 'trashed'])->name('corporate-membership.trashed')->middleware('permission:members.delete');
