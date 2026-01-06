@@ -32,34 +32,6 @@ use Inertia\Inertia;
 
 class EventBookingController extends Controller
 {
-    public function index()
-    {
-        $bookings = EventBooking::with([
-            'customer',
-            'member:id,membership_no,full_name,personal_email',
-            'corporateMember:id,membership_no,full_name,personal_email',
-            'eventVenue:id,name'
-        ])
-            ->orderBy('created_at', 'desc')
-            ->limit(20)
-            ->get();
-
-        $data = [
-            'bookingsData' => $bookings,
-            'totalEventBookings' => EventBooking::count(),
-            'availableVenuesToday' => EventVenue::where('status', 'active')->count(),
-            'confirmedBookings' => EventBooking::where('status', 'confirmed')->count(),
-            'completedBookings' => EventBooking::where('status', 'completed')->count(),
-        ];
-
-        $eventVenues = EventVenue::where('status', 'active')->get();
-
-        return Inertia::render('App/Admin/Events/BookingDashboard', [
-            'data' => $data,
-            'eventVenues' => $eventVenues
-        ]);
-    }
-
     // Create Events
     public function create()
     {
@@ -691,6 +663,40 @@ class EventBookingController extends Controller
     /**
      * Show all event bookings page
      */
+    public function index(Request $request)
+    {
+        $query = EventBooking::with([
+            'customer',
+            'member:id,membership_no,full_name,personal_email',
+            'corporateMember:id,membership_no,full_name,personal_email',
+            'eventVenue:id,name'
+        ]);
+
+        // Apply centralized filters
+        $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to']);
+        $this->applyFilters($query, $filters);
+
+        $bookings = $query->orderBy('created_at', 'desc')->limit(20)->get();
+
+        $data = [
+            'bookingsData' => $bookings,
+            'totalEventBookings' => EventBooking::count(),
+            'availableVenuesToday' => EventVenue::where('status', 'active')->count(),
+            'confirmedBookings' => EventBooking::where('status', 'confirmed')->count(),
+            'completedBookings' => EventBooking::where('status', 'completed')->count(),
+        ];
+
+        $eventVenues = EventVenue::where('status', 'active')->get();
+
+        return Inertia::render('App/Admin/Events/BookingDashboard', [
+            'data' => $data,
+            'filters' => $filters,
+            'eventVenues' => $eventVenues
+        ]);
+    }
+
+    // ... (create, store, edit, update, showInvoice, updateStatus, calendarData methods remain unchanged) ...
+
     public function manage(Request $request)
     {
         $query = EventBooking::with([
@@ -700,53 +706,17 @@ class EventBookingController extends Controller
             'eventVenue:id,name'
         ]);
 
-        // Search by name
-        if ($request->filled('search_name')) {
-            $searchName = $request->search_name;
-            $query->where(function ($q) use ($searchName) {
-                $q
-                    ->where('name', 'like', "%{$searchName}%")
-                    ->orWhereHas('customer', function ($subQ) use ($searchName) {
-                        $subQ->where('name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('member', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    });
-            });
-        }
+        $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'status']);
+        $this->applyFilters($query, $filters);
 
-        // Search by booking ID
-        if ($request->filled('search_id')) {
-            $query->where('booking_no', 'like', "%{$request->search_id}%");
-        }
-
-        // Filter by booking date range
-        if ($request->filled('booking_date_from')) {
-            $query->whereDate('created_at', '>=', $request->booking_date_from);
-        }
-        if ($request->filled('booking_date_to')) {
-            $query->whereDate('created_at', '<=', $request->booking_date_to);
-        }
-
-        // Filter by event date range
-        if ($request->filled('event_date_from')) {
-            $query->whereDate('event_date', '>=', $request->event_date_from);
-        }
-        if ($request->filled('event_date_to')) {
-            $query->whereDate('event_date', '<=', $request->event_date_to);
-        }
-
-        // Filter by venues
+        // Filter by venues (specific to manage/completed/cancelled pages which have extra venue filter)
         if ($request->filled('venues') && is_array($request->venues)) {
             $query->whereHas('eventVenue', function ($q) use ($request) {
                 $q->whereIn('name', $request->venues);
             });
         }
 
-        // Filter by status
+        // Filter by status (specific extra logic for manage page)
         if ($request->filled('status') && is_array($request->status)) {
             $query->where(function ($q) use ($request) {
                 $bookingStatuses = [];
@@ -763,12 +733,10 @@ class EventBookingController extends Controller
                     }
                 }
 
-                // Add booking status conditions
                 if (!empty($bookingStatuses)) {
                     $q->orWhereIn('status', $bookingStatuses);
                 }
 
-                // Add invoice status conditions using exists queries
                 if ($includesPaid) {
                     $q->orWhereExists(function ($subQ) {
                         $subQ
@@ -779,7 +747,6 @@ class EventBookingController extends Controller
                             ->where('status', 'paid');
                     });
                 }
-
                 if ($includesUnpaid) {
                     $q->orWhereExists(function ($subQ) {
                         $subQ
@@ -793,17 +760,14 @@ class EventBookingController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         return inertia('App/Admin/Events/Manage', [
             'bookings' => $bookings,
-            'filters' => $request->only(['search_name', 'search_id', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'status'])
+            'filters' => $filters
         ]);
     }
 
-    /**
-     * Show completed event bookings page
-     */
     public function completed(Request $request)
     {
         $query = EventBooking::with([
@@ -813,41 +777,8 @@ class EventBookingController extends Controller
             'eventVenue:id,name'
         ])->where('status', 'completed');
 
-        // Apply same filters as manage method
-        if ($request->filled('search_name')) {
-            $searchName = $request->search_name;
-            $query->where(function ($q) use ($searchName) {
-                $q
-                    ->where('name', 'like', "%{$searchName}%")
-                    ->orWhereHas('customer', function ($subQ) use ($searchName) {
-                        $subQ->where('name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('member', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    });
-            });
-        }
-
-        if ($request->filled('search_id')) {
-            $query->where('booking_no', 'like', "%{$request->search_id}%");
-        }
-
-        if ($request->filled('booking_date_from')) {
-            $query->whereDate('created_at', '>=', $request->booking_date_from);
-        }
-        if ($request->filled('booking_date_to')) {
-            $query->whereDate('created_at', '<=', $request->booking_date_to);
-        }
-
-        if ($request->filled('event_date_from')) {
-            $query->whereDate('event_date', '>=', $request->event_date_from);
-        }
-        if ($request->filled('event_date_to')) {
-            $query->whereDate('event_date', '<=', $request->event_date_to);
-        }
+        $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues']);
+        $this->applyFilters($query, $filters);
 
         if ($request->filled('venues') && is_array($request->venues)) {
             $query->whereHas('eventVenue', function ($q) use ($request) {
@@ -855,17 +786,14 @@ class EventBookingController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         return inertia('App/Admin/Events/Completed', [
             'bookings' => $bookings,
-            'filters' => $request->only(['search_name', 'search_id', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues'])
+            'filters' => $filters
         ]);
     }
 
-    /**
-     * Show cancelled event bookings page
-     */
     public function cancelled(Request $request)
     {
         $query = EventBooking::with([
@@ -875,41 +803,8 @@ class EventBookingController extends Controller
             'eventVenue:id,name'
         ])->where('status', 'cancelled');
 
-        // Apply same filters as manage method
-        if ($request->filled('search_name')) {
-            $searchName = $request->search_name;
-            $query->where(function ($q) use ($searchName) {
-                $q
-                    ->where('name', 'like', "%{$searchName}%")
-                    ->orWhereHas('customer', function ($subQ) use ($searchName) {
-                        $subQ->where('name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('member', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    })
-                    ->orWhereHas('corporateMember', function ($subQ) use ($searchName) {
-                        $subQ->where('full_name', 'like', "%{$searchName}%");
-                    });
-            });
-        }
-
-        if ($request->filled('search_id')) {
-            $query->where('booking_no', 'like', "%{$request->search_id}%");
-        }
-
-        if ($request->filled('booking_date_from')) {
-            $query->whereDate('created_at', '>=', $request->booking_date_from);
-        }
-        if ($request->filled('booking_date_to')) {
-            $query->whereDate('created_at', '<=', $request->booking_date_to);
-        }
-
-        if ($request->filled('event_date_from')) {
-            $query->whereDate('event_date', '>=', $request->event_date_from);
-        }
-        if ($request->filled('event_date_to')) {
-            $query->whereDate('event_date', '<=', $request->event_date_to);
-        }
+        $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues']);
+        $this->applyFilters($query, $filters);
 
         if ($request->filled('venues') && is_array($request->venues)) {
             $query->whereHas('eventVenue', function ($q) use ($request) {
@@ -917,12 +812,86 @@ class EventBookingController extends Controller
             });
         }
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         return inertia('App/Admin/Events/Cancelled', [
             'bookings' => $bookings,
-            'filters' => $request->only(['search_name', 'search_id', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues'])
+            'filters' => $filters
         ]);
+    }
+
+    /**
+     * Apply common filters to the query
+     */
+    private function applyFilters($query, $filters)
+    {
+        // 1. Customer Type Filter
+        $customerType = $filters['customer_type'] ?? 'all';
+        // Note: The original 'manage' search logic conflated search term with type check somewhat.
+        // Here we explictly filter by type if selected.
+        if ($customerType === 'member') {
+            $query->whereNotNull('member_id');
+        } elseif ($customerType === 'corporate') {
+            $query->whereNotNull('corporate_member_id');
+        } elseif ($customerType === 'guest') {
+            $query
+                ->whereNotNull('customer_id')
+                ->whereNull('member_id')
+                ->whereNull('corporate_member_id');
+        }
+
+        // 2. Search Filter (Name, ID, etc.)
+        // This 'search' comes from the unified search box in BookingFilter
+        // It replaces 'search_name' from the old logic, but we should support both or map them.
+        // We will prioritize 'search' but fallback to 'search_name' if passed (legacy support or if frontend uses it).
+        $search = $filters['search'] ?? ($filters['search_name'] ?? null);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('name', 'like', "%{$search}%")  // Guest Name stored directly on booking sometimes? Or is it 'name' column?
+                    ->orWhere('booking_no', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($sub) use ($search) {
+                        $sub
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('customer_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('member', function ($sub) use ($search) {
+                        $sub
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('corporateMember', function ($sub) use ($search) {
+                        $sub
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('membership_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('eventVenue', function ($sub) use ($search) {
+                        $sub->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // 3. Search by ID (Specific field)
+        if (!empty($filters['search_id'])) {
+            $query->where('booking_no', 'like', "%{$filters['search_id']}%");
+        }
+
+        // 4. Booking Date Range
+        if (!empty($filters['booking_date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['booking_date_from']);
+        }
+        if (!empty($filters['booking_date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['booking_date_to']);
+        }
+
+        // 5. Event Date Range
+        if (!empty($filters['event_date_from'])) {
+            $query->whereDate('event_date', '>=', $filters['event_date_from']);
+        }
+        if (!empty($filters['event_date_to'])) {
+            $query->whereDate('event_date', '<=', $filters['event_date_to']);
+        }
     }
 
     /**

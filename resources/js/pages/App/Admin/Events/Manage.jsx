@@ -1,19 +1,17 @@
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search, Visibility } from '@mui/icons-material';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, TextField, FormControl, Select, MenuItem, Grid, Chip, Tooltip } from '@mui/material';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, Tooltip } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge, Container } from 'react-bootstrap';
 import dayjs from 'dayjs';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
 import EventViewDocumentsModal from '@/components/App/Events/EventViewDocumentsModal';
-import debounce from 'lodash.debounce';
 import axios from 'axios';
 import { FaEdit } from 'react-icons/fa';
-import { styled } from '@mui/material/styles';
+import RoomBookingFilter from '../Booking/BookingFilter';
 
 const theme = createTheme({
     palette: {
@@ -33,15 +31,6 @@ const theme = createTheme({
 });
 
 const EventsManage = ({ bookings, filters = {} }) => {
-    // const [open, setOpen] = useState(true);
-    const [searchTerm, setSearchTerm] = useState(filters.search_name || '');
-    const [searchId, setSearchId] = useState(filters.search_id || '');
-    const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from || '');
-    const [bookingDateTo, setBookingDateTo] = useState(filters.booking_date_to || '');
-    const [eventDateFrom, setEventDateFrom] = useState(filters.event_date_from || '');
-    const [eventDateTo, setEventDateTo] = useState(filters.event_date_to || '');
-    const [selectedVenue, setSelectedVenue] = useState(filters.venues || []);
-    const [selectedStatus, setSelectedStatus] = useState(filters.status || []);
     const [filteredBookings, setFilteredBookings] = useState(bookings.data || []);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState(null);
@@ -50,19 +39,6 @@ const EventsManage = ({ bookings, filters = {} }) => {
     // View Documents Modal state
     const [showDocsModal, setShowDocsModal] = useState(false);
     const [selectedBookingForDocs, setSelectedBookingForDocs] = useState(null);
-
-    const debouncedSearch = useMemo(
-        () =>
-            debounce((value) => {
-                router.get(route('events.manage'), { search: value }, { preserveState: true });
-            }, 500),
-        [],
-    );
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-        debouncedSearch(e.target.value);
-    };
 
     const handleShowInvoice = (booking) => {
         setSelectedBookingId(booking.id);
@@ -87,45 +63,6 @@ const EventsManage = ({ bookings, filters = {} }) => {
     const handleCloseDocs = () => {
         setShowDocsModal(false);
         setSelectedBookingForDocs(null);
-    };
-
-    const handleReset = () => {
-        setSearchTerm('');
-        setSearchId('');
-        setBookingDateFrom('');
-        setBookingDateTo('');
-        setEventDateFrom('');
-        setEventDateTo('');
-        setSelectedVenue([]);
-        setSelectedStatus([]);
-
-        // Clear URL parameters
-        router.get(
-            route('events.manage'),
-            {},
-            {
-                preserveState: true,
-                preserveScroll: true,
-            },
-        );
-    };
-
-    const handleApply = () => {
-        const filterParams = {};
-
-        if (searchTerm) filterParams.search_name = searchTerm;
-        if (searchId) filterParams.search_id = searchId;
-        if (bookingDateFrom) filterParams.booking_date_from = bookingDateFrom;
-        if (bookingDateTo) filterParams.booking_date_to = bookingDateTo;
-        if (eventDateFrom) filterParams.event_date_from = eventDateFrom;
-        if (eventDateTo) filterParams.event_date_to = eventDateTo;
-        if (selectedVenue.length > 0) filterParams.venues = selectedVenue;
-        if (selectedStatus.length > 0) filterParams.status = selectedStatus;
-
-        router.get(route('events.manage'), filterParams, {
-            preserveState: true,
-            preserveScroll: true,
-        });
     };
 
     const getStatusBadge = (booking) => {
@@ -162,15 +99,8 @@ const EventsManage = ({ bookings, filters = {} }) => {
         setFilteredBookings(bookings.data || []);
     }, [bookings]);
 
-    const RoundedTextField = styled(TextField)({
-        '& .MuiOutlinedInput-root': {
-            borderRadius: '16px',
-        },
-    });
-
     return (
         <>
-            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div
                 style={{
                     minHeight: '100vh',
@@ -184,302 +114,13 @@ const EventsManage = ({ bookings, filters = {} }) => {
                             {/* Header */}
                             <Box className="d-flex justify-content-between align-items-center">
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    {/* <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color: '#063455' }}>
-                                        <ArrowBack />
-                                    </IconButton> */}
                                     <Typography style={{ color: '#003366', fontWeight: 700, fontSize: '30px' }}>Event Bookings</Typography>
                                 </Box>
                             </Box>
                             <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Create, edit, and monitor all event bookings</Typography>
 
                             {/* Filter Section */}
-                            <Box sx={{ mb: 3, mt: 3, boxShadow: 'none' }}>
-                                <Grid container spacing={2} alignItems="center">
-                                    {/* Search by Name */}
-                                    <Grid item xs={12} md={2.5}>
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            label="Search by Name"
-                                            placeholder="Enter guest name..."
-                                            value={searchTerm}
-                                            onChange={(e) => setSearchTerm(e.target.value)}
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '16px',
-                                                },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    {/* Search by ID */}
-                                    <Grid item xs={12} md={2.5}>
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            label="Search by ID"
-                                            placeholder="Enter booking ID..."
-                                            value={searchId}
-                                            onChange={(e) => setSearchId(e.target.value)}
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '16px',
-                                                },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    {/* Booking Date From */}
-                                    <Grid item xs={12} md={2.5}>
-                                        {/* <DatePicker
-                                            label="Booking Date From"
-                                            format="DD-MM-YYYY"
-                                            value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
-                                            onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            slotProps={{
-                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        /> */}
-                                        <DatePicker
-                                            label="Booking Date From"
-                                            format="DD-MM-YYYY"
-                                            value={bookingDateFrom ? dayjs(bookingDateFrom) : null}
-                                            onChange={(newValue) => setBookingDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            enableAccessibleFieldDOMStructure={false} // important with custom textField
-                                            slots={{ textField: RoundedTextField }}
-                                            slotProps={{
-                                                textField: {
-                                                    size: 'small',
-                                                    fullWidth: true,
-                                                    placeholder: 'Select date',
-                                                    sx: { minWidth: '180px' },
-                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
-                                                },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    {/* Booking Date To */}
-                                    <Grid item xs={12} md={2.5}>
-                                        {/* <DatePicker
-                                            label="Booking Date To"
-                                            format="DD-MM-YYYY"
-                                            value={bookingDateTo ? dayjs(bookingDateTo) : null}
-                                            onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            enableAccessibleFieldDOMStructure={false}   // important with custom textField
-                                            slots={{ textField: RoundedTextField }}
-                                            slotProps={{
-                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        /> */}
-                                        <DatePicker
-                                            label="Booking Date To"
-                                            format="DD-MM-YYYY"
-                                            value={bookingDateTo ? dayjs(bookingDateTo) : null}
-                                            onChange={(newValue) => setBookingDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            enableAccessibleFieldDOMStructure={false}
-                                            slots={{ textField: RoundedTextField }}
-                                            slotProps={{
-                                                textField: {
-                                                    size: 'small',
-                                                    fullWidth: true,
-                                                    placeholder: 'Select date', // instead of InputLabelProps.shrink
-                                                    sx: { minWidth: '180px' },
-                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
-                                                },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    {/* Event Date From */}
-                                    <Grid item xs={12} md={2.5}>
-                                        {/* <DatePicker
-                                            label="Event Date From"
-                                            format="DD-MM-YYYY"
-                                            value={eventDateFrom ? dayjs(eventDateFrom) : null}
-                                            onChange={(newValue) => setEventDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            slotProps={{
-                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        /> */}
-                                        <DatePicker
-                                            label="Event Date From"
-                                            format="DD-MM-YYYY"
-                                            value={eventDateFrom ? dayjs(eventDateFrom) : null}
-                                            onChange={(newValue) => setEventDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            enableAccessibleFieldDOMStructure={false}
-                                            slots={{ textField: RoundedTextField }}
-                                            slotProps={{
-                                                textField: {
-                                                    size: 'small',
-                                                    fullWidth: true,
-                                                    placeholder: 'Select date', // instead of InputLabelProps: { shrink: true }
-                                                    sx: { minWidth: '180px' },
-                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
-                                                },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    {/* Event Date To */}
-                                    <Grid item xs={12} md={2.5}>
-                                        {/* <DatePicker
-                                            label="Event Date To"
-                                            format="DD-MM-YYYY"
-                                            value={eventDateTo ? dayjs(eventDateTo) : null}
-                                            onChange={(newValue) => setEventDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            slotProps={{
-                                                textField: { size: 'small', fullWidth: true, InputLabelProps: { shrink: true }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        /> */}
-                                        <DatePicker
-                                            label="Event Date To"
-                                            format="DD-MM-YYYY"
-                                            value={eventDateTo ? dayjs(eventDateTo) : null}
-                                            onChange={(newValue) => setEventDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                            enableAccessibleFieldDOMStructure={false}
-                                            slots={{ textField: RoundedTextField }}
-                                            slotProps={{
-                                                textField: {
-                                                    size: 'small',
-                                                    fullWidth: true,
-                                                    placeholder: 'Select date', // instead of InputLabelProps: { shrink: true }
-                                                    sx: { minWidth: '180px' },
-                                                    onClick: (e) => e.target.closest('.MuiFormControl-root')?.querySelector('button')?.click(),
-                                                },
-                                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                            }}
-                                        />
-                                    </Grid>
-
-                                    {/* Choose Venues */}
-                                    <Grid item xs={12} md={2.5}>
-                                        <FormControl
-                                            fullWidth
-                                            size="small"
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '16px',
-                                                },
-                                            }}
-                                        >
-                                            <Select
-                                                multiple
-                                                value={selectedVenue}
-                                                onChange={(e) => setSelectedVenue(e.target.value)}
-                                                displayEmpty
-                                                renderValue={(selected) => {
-                                                    if (selected.length === 0) {
-                                                        return <em style={{ color: '#999' }}>Choose Venues</em>;
-                                                    }
-                                                    return (
-                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                            {selected.map((value) => {
-                                                                const venueObj = venues.find((v) => v.value === value);
-                                                                return <Chip key={value} label={venueObj?.label || value} size="small" />;
-                                                            })}
-                                                        </Box>
-                                                    );
-                                                }}
-                                            >
-                                                {venues.map((venue) => (
-                                                    <MenuItem key={venue.value} value={venue.value}>
-                                                        {venue.label}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Status Filter */}
-                                    <Grid item xs={12} md={2.5}>
-                                        <FormControl
-                                            fullWidth
-                                            size="small"
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '16px',
-                                                },
-                                            }}
-                                        >
-                                            <Select
-                                                multiple
-                                                value={selectedStatus}
-                                                onChange={(e) => setSelectedStatus(e.target.value)}
-                                                displayEmpty
-                                                renderValue={(selected) => {
-                                                    if (selected.length === 0) {
-                                                        return <em style={{ color: '#999' }}>Choose Status</em>;
-                                                    }
-                                                    const statusOptions = [
-                                                        { value: 'confirmed', label: 'Confirmed' },
-                                                        { value: 'completed', label: 'Completed' },
-                                                        { value: 'cancelled', label: 'Cancelled' },
-                                                        // { value: 'unpaid', label: 'Unpaid' },
-                                                        // { value: 'paid', label: 'Paid' }
-                                                    ];
-                                                    return (
-                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                            {selected.map((value) => {
-                                                                const statusObj = statusOptions.find((s) => s.value === value);
-                                                                return <Chip key={value} label={statusObj?.label || value} size="small" />;
-                                                            })}
-                                                        </Box>
-                                                    );
-                                                }}
-                                            >
-                                                <MenuItem value="confirmed">Confirmed</MenuItem>
-                                                <MenuItem value="completed">Completed</MenuItem>
-                                                <MenuItem value="cancelled">Cancelled</MenuItem>
-                                                {/* <MenuItem value="unpaid">Unpaid</MenuItem>
-                                            <MenuItem value="paid">Paid</MenuItem> */}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-
-                                    {/* Action Buttons */}
-                                    <Grid item xs={12} md={2} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                        <Button
-                                            variant="outlined"
-                                            onClick={handleReset}
-                                            sx={{
-                                                // borderColor: '#dc2626',
-                                                // color: '#dc2626',
-                                                textTransform: 'none',
-                                                borderRadius: '16px',
-                                                '&:hover': {
-                                                    // backgroundColor: '#fef2f2',
-                                                    // borderColor: '#dc2626',
-                                                },
-                                            }}
-                                        >
-                                            Reset
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            startIcon={<Search />}
-                                            onClick={handleApply}
-                                            sx={{
-                                                backgroundColor: '#063455',
-                                                textTransform: 'none',
-                                                borderRadius: '16px',
-                                                '&:hover': {
-                                                    // backgroundColor: '#047857',
-                                                },
-                                            }}
-                                        >
-                                            Search
-                                        </Button>
-                                    </Grid>
-                                </Grid>
-                            </Box>
+                            <RoomBookingFilter routeName="events.manage" showRoomType={false} showVenues={true} venues={venues} showDates={{ booking: true, checkIn: true, checkOut: false }} dateLabels={{ booking: 'Booking Date', checkIn: 'Event Date' }} />
 
                             {/* Bookings Table */}
                             <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
@@ -502,54 +143,50 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                 <TableRow key={booking.id}>
                                                     <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_no}</TableCell>
                                                     {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}</TableCell> */}
-                                                    <TableCell sx={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 400,
-                                                        fontSize: '14px',
-                                                        maxWidth: '120px',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
-                                                        <Tooltip
-                                                            title={booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}
-                                                            arrow
-                                                        >
-                                                            <span>
-                                                                {booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}
-                                                            </span>
+                                                    <TableCell
+                                                        sx={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            maxWidth: '120px',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
+                                                        <Tooltip title={booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'} arrow>
+                                                            <span>{booking.name || booking.customer?.name || booking.member?.full_name || booking.corporateMember?.full_name || booking.corporate_member?.full_name || 'N/A'}</span>
                                                         </Tooltip>
                                                     </TableCell>
-                                                    <TableCell sx={{
-                                                        color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
+                                                    <TableCell
+                                                        sx={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            maxWidth: '100px',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
                                                         {/* {booking.nature_of_event} */}
-                                                        <Tooltip
-                                                            title={booking.nature_of_event || 'N/A'}
-                                                            arrow
-                                                        >
-                                                            <span>
-                                                                {booking.nature_of_event || 'N/A'}
-                                                            </span>
+                                                        <Tooltip title={booking.nature_of_event || 'N/A'} arrow>
+                                                            <span>{booking.nature_of_event || 'N/A'}</span>
                                                         </Tooltip>
                                                     </TableCell>
-                                                    <TableCell sx={{
-                                                        color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
-
-                                                        <Tooltip
-                                                            title={booking.event_venue?.name || 'N/A'}
-                                                            arrow
-                                                        >
-                                                            <span>
-                                                                {booking.event_venue?.name || 'N/A'}
-                                                            </span>
+                                                    <TableCell
+                                                        sx={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            maxWidth: '100px',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
+                                                        <Tooltip title={booking.event_venue?.name || 'N/A'} arrow>
+                                                            <span>{booking.event_venue?.name || 'N/A'}</span>
                                                         </Tooltip>
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.created_at ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
