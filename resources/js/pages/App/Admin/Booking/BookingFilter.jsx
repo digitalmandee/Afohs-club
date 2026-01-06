@@ -19,7 +19,7 @@ const RoundedTextField = styled(TextField)({
 
 const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, showRoomType = true, showVenues = false, venues = [], showDates = { booking: true, checkIn: true, checkOut: true }, dateLabels = { booking: 'Booking Date', checkIn: 'Check-In', checkOut: 'Check-Out' } }) => {
     const { props } = usePage();
-    const { filters, roomTypes, rooms } = props; // Receive rooms prop
+    const { filters, roomTypes = [], rooms = [] } = props; // Receive rooms prop
 
     // Local state for filters
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -134,9 +134,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
         router.get(route(routeName), {}, { preserveState: true, preserveScroll: true });
     };
 
-    const selectedRoomTypeObjects = roomTypes.filter(rt =>
-        selectedRoomTypes.includes(rt.id.toString())
-    );
+    const selectedRoomTypeObjects = roomTypes.filter((rt) => selectedRoomTypes.includes(rt.id.toString()));
 
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -288,19 +286,28 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                 />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <DatePicker label="Check-In To" format="DD-MM-YYYY" value={checkInTo ? dayjs(checkInTo) : null} onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')} enableAccessibleFieldDOMStructure={false} slots={{ textField: RoundedTextField }} slotProps={{
-                                    textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                    popper: {
-                                        sx: {
-                                            mt: 2, // Top spacing
-                                            // mb: 2,
-                                            '& .MuiPaper-root': {
-                                                borderRadius: '16px', // ✅ Rounded corners
-                                                boxShadow: 'none'
-                                            }
-                                        }
-                                    }
-                                }} />
+                                <DatePicker
+                                    label="Check-In To"
+                                    format="DD-MM-YYYY"
+                                    value={checkInTo ? dayjs(checkInTo) : null}
+                                    onChange={(newValue) => setCheckInTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                    enableAccessibleFieldDOMStructure={false}
+                                    slots={{ textField: RoundedTextField }}
+                                    slotProps={{
+                                        textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        popper: {
+                                            sx: {
+                                                mt: 2, // Top spacing
+                                                // mb: 2,
+                                                '& .MuiPaper-root': {
+                                                    borderRadius: '16px', // ✅ Rounded corners
+                                                    boxShadow: 'none',
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
                             </Grid>
                         </>
                     )}
@@ -384,16 +391,16 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                             '& .MuiPaper-root': {
                                                 borderRadius: '16px',
                                                 boxShadow: 'none !important',
-                                                marginTop: '4px'
+                                                marginTop: '4px',
                                             },
                                             '& .MuiMenuItem-root': {
                                                 borderRadius: '16px',
                                                 '&:hover': {
                                                     backgroundColor: '#063455 !important',
-                                                    color: '#fff !important'
-                                                }
-                                            }
-                                        }
+                                                    color: '#fff !important',
+                                                },
+                                            },
+                                        },
                                     }}
                                 >
                                     {roomTypes.map((type) => (
@@ -455,46 +462,46 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {/* Room Selection */}
                     {showRoomType && rooms && (
                         <Grid item xs={12} md={2}>
-                        <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                            <Select
-                                multiple
-                                value={selectedRooms}
-                                onChange={(e) => setSelectedRooms(e.target.value)}
-                                displayEmpty
-                                renderValue={(selected) => {
-                                    if (selected.length === 0) return <Typography color="text.secondary">Select Room</Typography>;
-                                    return (
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {selected.map((value) => {
-                                                const room = rooms.find((r) => r.id == value);
-                                                return <Chip key={value} label={room ? room.name : value} size="small" style={{ color: '#fff', backgroundColor: '#063455' }} />;
-                                            })}
-                                        </Box>
-                                    );
-                                }}
-                                MenuProps={{
-                                    sx: {
-                                        '& .MuiPaper-root': {
-                                            borderRadius: '16px',
-                                            boxShadow: 'none !important',
-                                            marginTop: '4px',
-                                            maxHeight: '180px',  // Limits height after 4+ rooms
-                                            overflowY: 'auto'    // Adds scroll when needed
+                            <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select
+                                    multiple
+                                    value={selectedRooms}
+                                    onChange={(e) => setSelectedRooms(e.target.value)}
+                                    displayEmpty
+                                    renderValue={(selected) => {
+                                        if (selected.length === 0) return <Typography color="text.secondary">Select Room</Typography>;
+                                        return (
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                {selected.map((value) => {
+                                                    const room = rooms.find((r) => r.id == value);
+                                                    return <Chip key={value} label={room ? room.name : value} size="small" style={{ color: '#fff', backgroundColor: '#063455' }} />;
+                                                })}
+                                            </Box>
+                                        );
+                                    }}
+                                    MenuProps={{
+                                        sx: {
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px',
+                                                boxShadow: 'none !important',
+                                                marginTop: '4px',
+                                                maxHeight: '180px', // Limits height after 4+ rooms
+                                                overflowY: 'auto', // Adds scroll when needed
+                                            },
+                                            '& .MuiMenuItem-root': {
+                                                borderRadius: '16px',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: '#fff !important',
+                                                },
+                                            },
                                         },
-                                        '& .MuiMenuItem-root': {
-                                            borderRadius: '16px',
-                                            '&:hover': {
-                                                backgroundColor: '#063455 !important',
-                                                color: '#fff !important'
-                                            }
-                                        }
-                                    }
-                                }}
-                            >
-                                {rooms &&
-                                    rooms.map((room) => (
-                                        <MenuItem key={room.id} value={String(room.id)}>
-                                            {room.name}
+                                    }}
+                                >
+                                    {rooms &&
+                                        rooms.map((room) => (
+                                            <MenuItem key={room.id} value={String(room.id)}>
+                                                {room.name}
                                             </MenuItem>
                                         ))}
                                 </Select>
@@ -560,14 +567,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                                 {selected.map((value) => {
                                                     const label = value.replace('_', ' ');
                                                     const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
-                                                    return (
-                                                        <Chip
-                                                            key={value}
-                                                            label={capitalizedLabel}
-                                                            size="small"
-                                                            style={{ color: '#fff', backgroundColor: '#063455' }}
-                                                        />
-                                                    );
+                                                    return <Chip key={value} label={capitalizedLabel} size="small" style={{ color: '#fff', backgroundColor: '#063455' }} />;
                                                 })}
                                             </Box>
                                         );

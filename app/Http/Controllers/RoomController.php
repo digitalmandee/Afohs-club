@@ -103,7 +103,7 @@ class RoomController extends Controller
         $totalRooms = $rooms->count();
 
         $conflictedRooms = RoomBooking::query()
-            ->whereIn('status', ['confirmed', 'pending'])
+            ->whereIn('status', ['confirmed', 'checked_in'])
             ->where('check_in_date', '<', now()->addDay())
             ->where('check_out_date', '>', now())
             ->pluck('room_id')

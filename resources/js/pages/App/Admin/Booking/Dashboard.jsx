@@ -166,7 +166,14 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
     const handleClear = () => {
         setBookingType('room');
         setErrors({ date: '' });
-        setRange([]);
+        // setRange([]);
+        setRange([
+            {
+                startDate: null,
+                endDate: null,
+                key: 'selection',
+            },
+        ]);
         setFilterApplied(false);
         clearFilter(false);
         onSearch({ bookingType: 'room', checkin: '', checkout: '' });
@@ -338,9 +345,7 @@ const RoomBookingDashboard = ({ data, roomTypes }) => {
                             <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Dashboard</Typography>
                         </Col>
                     </Row>
-                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        Shows key statistics on room occupancy, upcoming check-ins, and recent bookings
-                    </Typography>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Shows key statistics on room occupancy, upcoming check-ins, and recent bookings</Typography>
 
                     <Row className="mb-4 mt-4">
                         <Col md={6}>
