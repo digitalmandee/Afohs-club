@@ -34,7 +34,7 @@ class CheckMembershipStatusExpiry extends Command
         Log::info('Starting members:check-status-expiry command.');
 
         // Find members who are currently suspended or absent
-        $members = Member::whereIn('status', ['suspended', 'absent'])->get();
+        $members = Member::whereIn('status', ['suspended', 'absent', 'in_suspension_process'])->get();
 
         $count = 0;
 
@@ -86,7 +86,7 @@ class CheckMembershipStatusExpiry extends Command
 
         // --- Process Corporate Members ---
         $this->info('Checking for expired corporate membership statuses...');
-        $corporateMembers = \App\Models\CorporateMember::whereIn('status', ['suspended', 'absent'])->get();
+        $corporateMembers = \App\Models\CorporateMember::whereIn('status', ['suspended', 'absent', 'in_suspension_process'])->get();
         $corporateCount = 0;
 
         foreach ($corporateMembers as $member) {
