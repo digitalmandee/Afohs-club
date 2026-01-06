@@ -5,7 +5,6 @@ import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 
-
 const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
     // const [open, setOpen] = useState(true);
 
@@ -15,13 +14,16 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
         name: eventMenu?.name || '',
         status: eventMenu?.status || 'active',
         amount: eventMenu?.amount || '',
-        items: eventMenu?.items || [{ id: '', name: '' }],
+        items: eventMenu?.items?.map((i) => ({
+            id: i.menu_category_id || menuItems?.find((m) => m.name === i.name)?.id,
+            name: i.name,
+        })) || [{ id: '', name: '' }],
     });
 
     const handleItemChange = (index, id) => {
         const item = allItems.find((i) => i.id === id);
         const updated = [...data.items];
-        updated[index] = item;
+        updated[index] = { id: item.id, name: item.name };
         setData('items', updated);
     };
 
@@ -56,15 +58,19 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                     <IconButton onClick={() => window.history.back()}>
                         <ArrowBackIcon sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                        {eventMenu ? 'Edit Event Menu' : 'Create Event Menu'}
-                    </Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>{eventMenu ? 'Edit Event Menu' : 'Create Event Menu'}</Typography>
                 </Box>
                 <Box sx={{ p: 3 }}>
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={4}>
-                                <TextField label="Menu Name" fullWidth value={data.name} onChange={(e) => setData('name', e.target.value)} error={!!errors.name} helperText={errors.name}
+                                <TextField
+                                    label="Menu Name"
+                                    fullWidth
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    error={!!errors.name}
+                                    helperText={errors.name}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '16px',
@@ -75,12 +81,20 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                                             // }
                                         },
                                         '& .MuiInputLabel-root': {
-                                            fontSize: '14px'
-                                        }
-                                    }} />
+                                            fontSize: '14px',
+                                        },
+                                    }}
+                                />
                             </Grid>
                             <Grid item xs={12} sm={4}>
-                                <TextField label="Amount" type="number" fullWidth value={data.amount} onChange={(e) => setData('amount', e.target.value)} error={!!errors.amount} helperText={errors.amount}
+                                <TextField
+                                    label="Amount"
+                                    type="number"
+                                    fullWidth
+                                    value={data.amount}
+                                    onChange={(e) => setData('amount', e.target.value)}
+                                    error={!!errors.amount}
+                                    helperText={errors.amount}
                                     sx={{
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '16px',
@@ -91,9 +105,10 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                                             // }
                                         },
                                         '& .MuiInputLabel-root': {
-                                            fontSize: '14px'
-                                        }
-                                    }} />
+                                            fontSize: '14px',
+                                        },
+                                    }}
+                                />
                             </Grid>
                             <Grid item xs={12} sm={4}>
                                 <FormControl fullWidth>
@@ -114,7 +129,7 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                                         <Grid item xs={11}>
                                             <FormControl fullWidth>
                                                 <InputLabel>Select Item</InputLabel>
-                                                <Select value={item.menu_category_id || ''} onChange={(e) => handleItemChange(index, e.target.value)}>
+                                                <Select value={item.id || ''} onChange={(e) => handleItemChange(index, e.target.value)}>
                                                     {allItems.map((opt) => (
                                                         <MenuItem key={opt.id} value={opt.id}>
                                                             {opt.name}

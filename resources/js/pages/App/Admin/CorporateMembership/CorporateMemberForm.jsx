@@ -94,6 +94,8 @@ const CorporateMemberForm = ({ membershipNo, applicationNo, membercategories, fa
             date_of_birth: user.date_of_birth || '',
             education: user.education || '',
             reason: user.reason || '',
+            start_date: user.start_date ? dayjs(user.start_date).format('DD-MM-YYYY') : '',
+            end_date: user.end_date ? dayjs(user.end_date).format('DD-MM-YYYY') : '',
             mobile_number_a: user.mobile_number_a || '',
             mobile_number_b: user.mobile_number_b || '',
             mobile_number_c: user.mobile_number_c || '',
@@ -169,6 +171,8 @@ const CorporateMemberForm = ({ membershipNo, applicationNo, membercategories, fa
         date_of_birth: '',
         education: '',
         reason: '',
+        start_date: '',
+        end_date: '',
         mobile_number_a: '',
         mobile_number_b: '',
         mobile_number_c: '',
@@ -295,6 +299,7 @@ const CorporateMemberForm = ({ membershipNo, applicationNo, membercategories, fa
         end_date: '',
         card_issue_date: '',
         card_expiry_date: '',
+        card_status: 'In-Process',
         status: 'active',
         picture: null,
         picture_preview: null,
@@ -465,7 +470,6 @@ const CorporateMemberForm = ({ membershipNo, applicationNo, membercategories, fa
                     </Typography>
                 </Box>
                 <Box sx={{ mb: 4 }}>
-                    {createdMember?.id || user?.id}
                     <MembershipStepper step={step} onStepClick={handleStepClick} />
                 </Box>
                 {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}

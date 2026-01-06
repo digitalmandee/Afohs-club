@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tooltip, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog, IconButton } from '@mui/material';
+import { Box, Typography, Tooltip, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning, Receipt, Visibility } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
@@ -39,6 +39,10 @@ const ViewProfile = ({ member }) => {
     // Receipt Dialog State
     const [openReceiptModal, setOpenReceiptModal] = useState(false);
     const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState(null);
+
+    // Comment Dialog State
+    const [openCommentModal, setOpenCommentModal] = useState(false);
+    const [selectedComment, setSelectedComment] = useState('');
 
     // Helper function to format status
     const formatStatus = (status) => {
@@ -163,6 +167,16 @@ const ViewProfile = ({ member }) => {
     const handleCloseReceiptModal = () => {
         setOpenReceiptModal(false);
         setSelectedOrderForReceipt(null);
+    };
+
+    const handleViewComment = (comment) => {
+        setSelectedComment(comment);
+        setOpenCommentModal(true);
+    };
+
+    const handleCloseCommentModal = () => {
+        setOpenCommentModal(false);
+        setSelectedComment('');
     };
 
     const handleBack = () => {
@@ -891,6 +905,7 @@ const ViewProfile = ({ member }) => {
                                                 <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px', whiteSpace: 'nowrap' }}>Marital Status</TableCell>
                                                 <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Status</TableCell>
                                                 <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px', whiteSpace: 'nowrap' }}>Card Status</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Comments</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -934,6 +949,13 @@ const ViewProfile = ({ member }) => {
                                                     </TableCell>
                                                     <TableCell>
                                                         <Chip label={formatStatus(familyMember.card_status)} size="small" variant="outlined" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {familyMember.comment_box && (
+                                                            <IconButton onClick={() => handleViewComment(familyMember.comment_box)} size="small">
+                                                                <Visibility sx={{ color: '#063455' }} />
+                                                            </IconButton>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -1156,6 +1178,19 @@ const ViewProfile = ({ member }) => {
                     {/* Receipt Component */}
                     <ReceiptComponent invoiceId={selectedOrderForReceipt?.invoice_id || selectedOrderForReceipt?.id} invoiceRoute="member.orderhistory.invoice" openModal={openReceiptModal} closeModal={handleCloseReceiptModal} />
                 </Box>
+            </Dialog>
+
+            {/* Comment Dialog */}
+            <Dialog open={openCommentModal} onClose={handleCloseCommentModal} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ color: '#063455', fontWeight: 600 }}>Family Member Comment</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ color: 'text.primary', whiteSpace: 'pre-wrap' }}>{selectedComment}</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseCommentModal} variant="contained" sx={{ backgroundColor: '#063455', '&:hover': { backgroundColor: '#052a42' } }}>
+                        Close
+                    </Button>
+                </DialogActions>
             </Dialog>
         </>
     );

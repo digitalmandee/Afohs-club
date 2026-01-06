@@ -16,6 +16,7 @@ class EventMenuController extends Controller
         $this->middleware('super.admin:events.menu.edit')->only('edit', 'update');
         $this->middleware('permission:events.menu.delete')->only('destroy');
     }
+
     public function index()
     {
         $eventMenusData = EventMenu::orderBy('created_at', 'desc')->get();
@@ -59,7 +60,7 @@ class EventMenuController extends Controller
             $category = EventMenuCategory::find($item['id']);
             if ($category) {
                 $menu->items()->create([
-                    'name' => $category->name,
+                    'menu_category_id' => $category->id,
                     'status' => 'active',
                 ]);
             }
@@ -94,7 +95,7 @@ class EventMenuController extends Controller
             $category = EventMenuCategory::find($item['id']);
             if ($category) {
                 $menu->items()->create([
-                    'name' => $category->name,
+                    'menu_category_id' => $category->id,
                     'status' => 'active',
                 ]);
             }

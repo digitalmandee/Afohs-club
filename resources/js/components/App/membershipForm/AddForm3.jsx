@@ -111,6 +111,8 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
     const [familyDobOpen, setFamilyDobOpen] = useState(false);
     const [familyCardIssueOpen, setFamilyCardIssueOpen] = useState(false);
     const [familyCardExpiryOpen, setFamilyCardExpiryOpen] = useState(false);
+    const [startDateOpen, setStartDateOpen] = useState(false);
+    const [endDateOpen, setEndDateOpen] = useState(false);
 
     // Barcode Validation State
     const [barcodeStatus, setBarcodeStatus] = useState(null); // 'available', 'exists', 'error'
@@ -619,6 +621,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             picture_preview: null,
             is_document_missing: false,
             documents: '',
+            comments: '',
         });
         setShowFamilyMember(false);
         setFamilyMemberErrors({});
@@ -677,6 +680,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             picture_preview: null,
             is_document_missing: false,
             documents: '',
+            comments: '',
         });
     };
 
@@ -707,6 +711,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             picture_preview: null,
             is_document_missing: false,
             documents: '',
+            comments: '',
         });
         setShowFamilyMember(false);
     };
@@ -1477,6 +1482,92 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         </FormControl>
                                     </Box>
                                 </Grid>
+
+                                {['suspended', 'cancelled', 'absent', 'in_suspension_process'].includes(data.status) && (
+                                    <Grid item xs={12} container spacing={2} sx={{ mt: 2, p: 2, bgcolor: '#fff4e5', borderRadius: 1, border: '1px solid #ffcc80', ml: 2, width: 'calc(100% - 16px)' }}>
+                                        <Grid item xs={12}>
+                                            <Typography variant="subtitle2" color="warning.main" gutterBottom sx={{ fontWeight: 'bold' }}>
+                                                {data.status.charAt(0).toUpperCase() + data.status.slice(1)} Details
+                                            </Typography>
+                                        </Grid>
+
+                                        {/* Reason */}
+                                        <Grid item xs={12}>
+                                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                                Reason
+                                            </Typography>
+                                            <TextField fullWidth multiline rows={2} variant="outlined" placeholder={`Enter reason for ${data.status} status`} size="small" name="reason" value={data.reason || ''} onChange={handleChange} sx={{ bgcolor: 'white' }} />
+                                        </Grid>
+
+                                        {/* Start Date */}
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                                Start Date
+                                            </Typography>
+                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                <DatePicker
+                                                    format="DD-MM-YYYY"
+                                                    value={data.start_date ? dayjs(data.start_date, 'DD-MM-YYYY') : null}
+                                                    onChange={(newValue) =>
+                                                        handleChange({
+                                                            target: {
+                                                                name: 'start_date',
+                                                                value: newValue ? newValue.format('DD-MM-YYYY') : '',
+                                                            },
+                                                        })
+                                                    }
+                                                    slotProps={{
+                                                        textField: {
+                                                            fullWidth: true,
+                                                            size: 'small',
+                                                            name: 'start_date',
+                                                            sx: { bgcolor: 'white', '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' }, '& .MuiInputBase-root': { height: 40, paddingRight: 0 } },
+                                                            onClick: () => setStartDateOpen(true),
+                                                        },
+                                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                    }}
+                                                    open={startDateOpen}
+                                                    onClose={() => setStartDateOpen(false)}
+                                                    onOpen={() => setStartDateOpen(true)}
+                                                />
+                                            </LocalizationProvider>
+                                        </Grid>
+
+                                        {/* End Date */}
+                                        <Grid item xs={6}>
+                                            <Typography variant="body2" sx={{ mb: 1 }}>
+                                                End Date
+                                            </Typography>
+                                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                                <DatePicker
+                                                    format="DD-MM-YYYY"
+                                                    value={data.end_date ? dayjs(data.end_date, 'DD-MM-YYYY') : null}
+                                                    onChange={(newValue) =>
+                                                        handleChange({
+                                                            target: {
+                                                                name: 'end_date',
+                                                                value: newValue ? newValue.format('DD-MM-YYYY') : '',
+                                                            },
+                                                        })
+                                                    }
+                                                    slotProps={{
+                                                        textField: {
+                                                            fullWidth: true,
+                                                            size: 'small',
+                                                            name: 'end_date',
+                                                            sx: { bgcolor: 'white', '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ccc' }, '& .MuiInputBase-root': { height: 40, paddingRight: 0 } },
+                                                            onClick: () => setEndDateOpen(true),
+                                                        },
+                                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                                    }}
+                                                    open={endDateOpen}
+                                                    onClose={() => setEndDateOpen(false)}
+                                                    onOpen={() => setEndDateOpen(true)}
+                                                />
+                                            </LocalizationProvider>
+                                        </Grid>
+                                    </Grid>
+                                )}
                                 <Grid item xs={12}>
                                     {data.previewFiles && data.previewFiles.length > 0 && (
                                         <Box>
@@ -2354,6 +2445,70 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     );
                                                                 })}
                                                             </Select>
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
+                                                            <FormControl fullWidth variant="outlined">
+                                                                <Select
+                                                                    name="card_status"
+                                                                    value={currentFamilyMember.card_status}
+                                                                    onChange={(e) => handleFamilyMemberChange('card_status', e.target.value)}
+                                                                    displayEmpty
+                                                                    renderValue={(selected) => {
+                                                                        if (!selected) {
+                                                                            return <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                                        }
+                                                                        return selected;
+                                                                    }}
+                                                                    sx={{
+                                                                        height: 40,
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        '& .MuiSelect-select': {
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            paddingY: 0,
+                                                                        },
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                >
+                                                                    {['In-Process', 'Printed', 'Received', 'Issued', 'Re-Printed', 'E-Card Issued', 'Expired'].map((status) => (
+                                                                        <MenuItem key={status} value={status}>
+                                                                            {status}
+                                                                        </MenuItem>
+                                                                    ))}
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ width: '100%', mt: 2 }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Comments</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                multiline
+                                                                rows={2}
+                                                                placeholder="Enter Comments"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.comments || ''}
+                                                                onChange={(e) => handleFamilyMemberChange('comments', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-root': {
+                                                                        backgroundColor: '#fff',
+                                                                        borderRadius: '8px',
+                                                                        '& fieldset': { borderColor: '#E0E0E0' },
+                                                                        '&:hover fieldset': { borderColor: '#BDBDBD' },
+                                                                        '&.Mui-focused fieldset': { borderColor: '#0c4b6e' },
+                                                                    },
+                                                                    '& .MuiInputBase-input': {
+                                                                        color: '#333',
+                                                                    },
+                                                                }}
+                                                            />
                                                         </Box>
                                                     </Grid>
                                                 </Grid>

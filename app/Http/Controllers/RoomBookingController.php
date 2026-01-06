@@ -1003,6 +1003,27 @@ class RoomBookingController extends Controller
                     ];
                 });
             $results = $results->merge($guests);
+
+            // 4. Past Event Guests (Names in EventBooking)
+            // Search for guests who might not be in Customer table but booked an event
+            $eventGuests = \App\Models\EventBooking::where('name', 'like', "%{$query}%")
+                ->select('name')
+                ->distinct()
+                ->limit(5)
+                ->get()
+                ->map(function ($eb) {
+                    return [
+                        'label' => "{$eb->name} (Event Guest)",
+                        'value' => $eb->name,
+                        'type' => 'Guest',
+                        'name' => $eb->name,
+                        'membership_no' => 'N/A',
+                        'status' => 'active',
+                    ];
+                });
+
+            // Merge unique names
+            $results = $results->merge($eventGuests);
         }
 
         // 4. Dynamic Guest Types
