@@ -767,7 +767,8 @@ const ChargesInfo = ({ formData, handleChange }) => {
     const handleMenuItemChange = (index, id) => {
         const item = props.menuCategoryItems?.find((i) => i.id === id);
         const updated = [...formData.menuItems];
-        updated[index] = item || { id: '', name: '' };
+        // Ensure we preserve the structure expected by Select (menu_category_id)
+        updated[index] = item ? { ...item, menu_category_id: item.id } : { id: '', name: '' };
         handleChange({ target: { name: 'menuItems', value: updated } });
     };
 
