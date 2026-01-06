@@ -300,7 +300,7 @@ const AllMembers = ({ members }) => {
                                         {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell> */}
                                         <TableCell>
                                             <Typography sx={{
-                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',  // ~20 chars width
+                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',  // ~20 chars width
                                                 whiteSpace: 'nowrap',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis'
@@ -324,7 +324,7 @@ const AllMembers = ({ members }) => {
                                                             }}
                                                             {...bindTrigger(popupState)}
                                                         >
-                                                            {user.status || 'N/A'}
+                                                            {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'N/A'}
                                                             {user.status === 'suspended' && (
                                                                 <img
                                                                     src="/assets/system-expired.png"

@@ -73,7 +73,7 @@ const CorporateCompanies = ({ companies }) => {
                             color: '#d32f2f',
                             borderColor: '#d32f2f',
                             borderRadius: '16px',
-                            textTransform:'none',
+                            textTransform: 'none',
                             '&:hover': {
                                 backgroundColor: '#ffebee',
                                 borderColor: '#d32f2f',
@@ -89,7 +89,7 @@ const CorporateCompanies = ({ companies }) => {
                         sx={{
                             backgroundColor: '#063455',
                             borderRadius: '16px',
-                            textTransform:'none',
+                            textTransform: 'none',
                             '&:hover': { backgroundColor: '#002244' },
                         }}
                     >
@@ -117,9 +117,28 @@ const CorporateCompanies = ({ companies }) => {
                                     <MoreVertIcon />
                                 </IconButton>
                             </Box>
-                            <CardContent>
+                            {/* <CardContent>
                                 <Typography variant="body2" color="text.secondary" mb={1}>
                                     <strong>Status:</strong> <Chip label={company.status} size="small" color={company.status === 'active' ? 'success' : 'default'} />
+                                </Typography>
+                            </CardContent> */}
+                            <CardContent>
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    mb={1}
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <strong>Status:</strong>
+                                    <Chip
+                                        label={company.status ? company.status.charAt(0).toUpperCase() + company.status.slice(1) : company.status}
+                                        size="small"
+                                        color={company.status === 'active' ? 'success' : 'default'}
+                                    />
                                 </Typography>
                             </CardContent>
                         </Card>
@@ -136,11 +155,11 @@ const CorporateCompanies = ({ companies }) => {
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
                 <MenuItem onClick={handleEdit}>
-                    <FaEdit size={18} style={{color: '#f57c00', marginRight:15}} />
+                    <FaEdit size={18} style={{ color: '#f57c00', marginRight: 15 }} />
                     Edit
                 </MenuItem>
                 <MenuItem onClick={handleDelete}>
-                    <DeleteIcon color='error' style={{marginRight:5}} />
+                    <DeleteIcon color='error' style={{ marginRight: 5 }} />
                     Delete
                 </MenuItem>
             </Menu>

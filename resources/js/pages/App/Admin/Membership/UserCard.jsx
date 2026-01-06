@@ -349,6 +349,7 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
                     margin: '20px auto 0',
                     width: 500,
                     borderRadius: '8px',
+                    // bgcolor:'#000'
                 },
             }}
         >

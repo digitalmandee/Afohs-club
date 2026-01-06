@@ -30,3 +30,15 @@ html, body {
 .rdrDayNumberWrapper:hover {
   background-color: rgba(6, 52, 85, 0.1) !important;
 }
+
+/* .rdrYearDropdownMenu .rdrDropdownMenuItem:not(.rdrDropdownMenuItem--selected):not([data-year*="${new Date().getFullYear()}"]):not([data-year*="${new Date().getFullYear()-1}"]):not([data-year*="${new Date().getFullYear()-2}"]):not([data-year*="${new Date().getFullYear()-3}"]):not([data-year*="${new Date().getFullYear()-4}"]) {
+  display: none !important;
+} */
+
+.rdrYearDropdownMenu .rdrDropdownMenuItem {
+  position: relative;
+}
+
+.rdrYearDropdownMenu [data-year]:not([data-year="2022"]):not([data-year="2023"]):not([data-year="2024"]):not([data-year="2025"]):not([data-year="2026"]) {
+  display: none !important;
+}

@@ -365,6 +365,21 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                                                         </Box>
                                                     );
                                                 }}
+                                                MenuProps={{
+                                                    sx: {
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px'
+                                                        },
+                                                        '& .MuiMenuItem-root': {
+                                                            borderRadius: '16px',
+                                                            transition: 'all 0.2s ease',
+                                                            '&:hover': {
+                                                                backgroundColor: '#063455 !important',
+                                                                color: '#fff !important'
+                                                            }
+                                                        }
+                                                    }
+                                                }}
                                             >
                                                 {venues.map((venue) => (
                                                     <MenuItem key={venue.value} value={venue.value}>

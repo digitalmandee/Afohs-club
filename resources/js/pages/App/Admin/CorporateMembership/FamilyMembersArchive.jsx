@@ -365,7 +365,12 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                         </Typography>
                                                     </Tooltip>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.parent?.full_name}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', textOverflow:'ellipsis', overflow:'hidden', whiteSpace:'nowrap', maxWidth:'120px' }}>
+                                                    <Tooltip title={user.parent?.full_name} arrow>
+                                                        {user.parent?.full_name}
+                                                    </Tooltip>
+                                                    
+                                                </TableCell>
                                                 <TableCell>
                                                     <Box display="flex" alignItems="center">
                                                         <Box display="flex" alignItems="center">
@@ -401,10 +406,12 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Button
+                                                        variant='outlined'
                                                         size="small"
+                                                        color='#063455'
                                                         style={{
-                                                            color: '#0C67AA',
-                                                            textDecoration: 'underline',
+                                                            color: '#063455',
+                                                            // textDecoration: 'underline',
                                                             textTransform: 'none',
                                                         }}
                                                         onClick={() => {

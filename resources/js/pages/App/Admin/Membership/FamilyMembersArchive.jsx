@@ -132,16 +132,16 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
 
     const getMemberStatusConfig = (status) => {
         const statusMap = {
-            active: { color: '#27ae60', label: 'Active', bgColor: '#d4edda' },
-            suspended: { color: '#e67e22', label: 'Suspended', bgColor: '#fff3cd' },
-            cancelled: { color: '#e74c3c', label: 'Cancelled', bgColor: '#f8d7da' },
-            absent: { color: '#95a5a6', label: 'Absent', bgColor: '#e2e3e5' },
-            expired: { color: '#c0392b', label: 'Expired', bgColor: '#f8d7da' },
-            terminated: { color: '#8e44ad', label: 'Terminated', bgColor: '#e7d6f0' },
-            not_assign: { color: '#7f8c8d', label: 'Not Assigned', bgColor: '#d6d8db' },
-            in_suspension_process: { color: '#f39c12', label: 'In Suspension', bgColor: '#fff3cd' },
+            active: { color: '#2E7D32', label: 'Active' },
+            suspended: { color: '#e67e22', label: 'Suspended', },
+            cancelled: { color: '#e74c3c', label: 'Cancelled', },
+            absent: { color: '#95a5a6', label: 'Absent', },
+            expired: { color: '#c0392b', label: 'Expired', },
+            terminated: { color: '#8e44ad', label: 'Terminated', },
+            not_assign: { color: '#7f8c8d', label: 'Not Assigned', },
+            in_suspension_process: { color: '#f39c12', label: 'In Suspension', },
         };
-        return statusMap[status] || { color: '#063455', label: status || 'N/A', bgColor: '#cfe2ff' };
+        return statusMap[status] || { color: '#063455', label: status || 'N/A', };
     };
 
     return (
@@ -399,7 +399,24 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                     },
                                                 }}>{user.membership_no}</TableCell>
                                                 <TableCell>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.full_name}</Typography>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>   
+                                                        <Tooltip title={user.full_name} arrow>
+                                                            <Typography
+                                                                sx={{
+                                                                    color: '#7F7F7F',
+                                                                    fontWeight: 400,
+                                                                    fontSize: '14px',
+                                                                    maxWidth: '120px',     // controls visible length (~15 chars)
+                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    cursor: 'pointer',
+                                                                }}
+                                                            >
+                                                                {user.full_name}
+                                                            </Typography>
+                                                        </Tooltip>
+                                                    </Typography>
                                                     {/* <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography> */}
                                                     <Tooltip title={user.personal_email} arrow>
                                                         <Typography
@@ -419,7 +436,7 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                     </Tooltip>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    
+
                                                     <Tooltip title={user.parent?.full_name} arrow>
                                                         <Typography
                                                             sx={{
@@ -479,8 +496,8 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                         sx={{
                                                             backgroundColor: getMemberStatusConfig(user.status).bgColor,
                                                             color: getMemberStatusConfig(user.status).color,
-                                                            fontWeight: 'bold',
-                                                            fontSize: '12px',
+                                                            // fontWeight: 'bold',
+                                                            fontSize: '14px',
                                                             border: `1px solid ${getMemberStatusConfig(user.status).color}`,
                                                         }}
                                                     />
@@ -488,14 +505,15 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                                                 <TableCell>
                                                     <Button
                                                         size="small"
-                                                        variant='contained'
+                                                        variant='outlined'
+                                                        color='#063455'
                                                         style={{
                                                             color: '#063455',
-                                                            border:'1px solid #063455',
-                                                            backgroundColor:'transparent',
+                                                            // border: '1px solid #063455',
+                                                            backgroundColor: 'transparent',
                                                             // textDecoration: 'underline',
                                                             textTransform: 'none',
-                                                            boxShadow:'none'
+                                                            boxShadow: 'none'
                                                         }}
                                                         onClick={() => {
                                                             setSelectMember(user);

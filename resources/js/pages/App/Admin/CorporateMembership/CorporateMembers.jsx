@@ -14,7 +14,7 @@ import MembershipPauseDialog from '../Membership/MembershipPauseDialog';
 import MembershipCancellationDialog from '../Membership/CancelModal';
 import ActivateMembershipDialog from '../Membership/ActivateMembershipDialog';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
-
+import { MdModeEdit } from 'react-icons/md';
 import CorporateMembershipDashboardFilter from './CorporateMembershipDashboardFilter';
 const CorporateMembers = ({ members }) => {
     const props = usePage().props;
@@ -160,17 +160,29 @@ const CorporateMembers = ({ members }) => {
                                             <div className="d-flex align-items-center">
                                                 <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.full_name} style={{ marginRight: '10px' }} />
                                                 <div>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.full_name}</Typography>
-                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.personal_email}</Typography>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                                        <Tooltip title={user.full_name} arrow>
+                                                            <span>{user.full_name}</span>
+                                                        </Tooltip>
+                                                    </Typography>
+                                                    <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                                        <Tooltip title={user.personal_email} arrow>
+                                                            <span>{user.personal_email}</span>
+                                                        </Tooltip>
+                                                    </Typography>
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.member_category?.description || 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                             <Chip label="Corporate" size="small" sx={{ backgroundColor: '#1976d2', color: 'white', fontWeight: 600, fontSize: '11px' }} />
                                         </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.cnic_no || 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell>
+                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                            <Tooltip title={user.mobile_number_a || 'N/A'} arrow>
+                                                <span>{user.mobile_number_a || 'N/A'}</span>
+                                            </Tooltip>
+                                        </TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
                                         <TableCell>
@@ -189,11 +201,12 @@ const CorporateMembers = ({ members }) => {
                                                                 size="small"
                                                                 sx={{
                                                                     backgroundColor: user.status === 'active' ? '#dcedc8' : user.status === 'suspended' ? '#ffe0b2' : user.status === 'absent' ? '#fff9c4' : '#ffcdd2',
-                                                                    color: user.status === 'active' ? '#33691e' : user.status === 'suspended' ? '#e65100' : user.status === 'absent' ? '#fbc02d' : '#c62828',
-                                                                    fontWeight: 600,
+                                                                    color: user.status === 'active' ? '#2E7D32' : user.status === 'suspended' ? '#e65100' : user.status === 'absent' ? '#fbc02d' : '#D32F2F',
+                                                                    // fontWeight: 600,
                                                                     textTransform: 'capitalize',
                                                                 }}
                                                             />
+                                                            <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
                                                         </div>
                                                         <Menu {...bindMenu(popupState)}>
                                                             <MenuItem
@@ -239,10 +252,13 @@ const CorporateMembers = ({ members }) => {
                                         </TableCell>
                                         <TableCell>
                                             <Button
+                                            variant='outlined'
                                                 size="small"
+                                                color='#063455'
                                                 style={{
-                                                    color: '#0C67AA',
-                                                    textDecoration: 'underline',
+                                                    color: '#063455',
+                                                    // border:'1px solid #063455',
+                                                    // textDecoration: 'underline',
                                                     textTransform: 'none',
                                                 }}
                                                 onClick={() => {

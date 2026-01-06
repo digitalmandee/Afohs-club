@@ -117,6 +117,10 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
         router.get(route(routeName), {}, { preserveState: true, preserveScroll: true });
     };
 
+    const selectedRoomTypeObjects = roomTypes.filter(rt =>
+        selectedRoomTypes.includes(rt.id.toString())
+    );
+
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Box sx={{ mb: 3, mt: 3, boxShadow: 'none' }}>
@@ -124,7 +128,23 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {/* Customer Type Selection */}
                     <Grid item xs={12} md={2}>
                         <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                            <Select value={customerType} onChange={(e) => setCustomerType(e.target.value)} displayEmpty>
+                            <Select value={customerType} onChange={(e) => setCustomerType(e.target.value)} displayEmpty
+                                MenuProps={{
+                                    sx: {
+                                        '& .MuiPaper-root': {
+                                            borderRadius: '16px'
+                                        },
+                                        '& .MuiMenuItem-root': {
+                                            borderRadius: '16px',
+                                            transition: 'all 0.2s ease',
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important'
+                                            }
+                                        }
+                                    }
+                                }}
+                            >
                                 <MenuItem value="all">All</MenuItem>
                                 <MenuItem value="member">Member</MenuItem>
                                 <MenuItem value="corporate">Corporate Member</MenuItem>
@@ -254,7 +274,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     textField: { size: 'small', fullWidth: true, sx: { minWidth: '150px' }, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() }, actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                     popper: {
                                         sx: {
-                                            mt: 1, // Top spacing
+                                            mt: 2, // Top spacing
                                             // mb: 2,
                                             '& .MuiPaper-root': {
                                                 borderRadius: '16px', // ✅ Rounded corners
@@ -313,12 +333,12 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     onChange={(e) => setSelectedRoomTypes(e.target.value)}
                                     displayEmpty
                                     renderValue={(selected) => {
-                                        if (selected.length === 0) return <em style={{ color: '#999' }}>Room Type</em>;
+                                        if (selected.length === 0) return <Typography color="text.secondary">Room Type</Typography>;
                                         return (
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                 {selected.map((value) => {
                                                     const type = roomTypes.find((rt) => rt.id == value);
-                                                    return <Chip key={value} label={type ? type.name : value} size="small" />;
+                                                    return <Chip key={value} label={type ? type.name : value} size="small" style={{ color: '#fff', backgroundColor: '#063455' }} />;
                                                 })}
                                             </Box>
                                         );
@@ -326,9 +346,16 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     MenuProps={{
                                         sx: {
                                             '& .MuiPaper-root': {
-                                                borderRadius: '16px',  // ✅ Rounded corners
-                                                boxShadow: 'none !important',  // ✅ No shadow
-                                                marginTop: '4px'  // Optional: small gap from input
+                                                borderRadius: '16px',
+                                                boxShadow: 'none !important',
+                                                marginTop: '4px'
+                                            },
+                                            '& .MuiMenuItem-root': {
+                                                borderRadius: '16px',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: '#fff !important'
+                                                }
                                             }
                                         }
                                     }}
@@ -340,6 +367,53 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     ))}
                                 </Select>
                             </FormControl>
+                            {/* <Autocomplete
+                                multiple
+                                options={roomTypes}
+                                getOptionLabel={(option) => option.name}
+                                value={selectedRoomTypeObjects}
+                                onChange={(_, newValue) => {
+                                    // newValue is array of roomType objects
+                                    setSelectedRoomTypes(newValue.map(v => v.id.toString()));
+                                }}
+                                // placeholder when nothing selected
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        placeholder="Room Type"
+                                        size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+                                            },
+                                        }}
+                                    />
+                                )}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) => (
+                                        <Chip
+                                            {...getTagProps({ index })}
+                                            key={option.id}
+                                            label={option.name}
+                                            size="small"
+                                        />
+                                    ))
+                                }
+                                sx={{
+                                    // dropdown paper styling
+                                    '& .MuiAutocomplete-popper .MuiPaper-root': {
+                                        borderRadius: '16px',
+                                        boxShadow: 'none',
+                                        marginTop: '4px',
+                                    },
+                                    '& .MuiAutocomplete-popper .MuiAutocomplete-option': {
+                                        '&:hover': {
+                                            backgroundColor: '#063455',
+                                            color: '#fff',
+                                        },
+                                    },
+                                }}
+                            /> */}
                         </Grid>
                     )}
                     {/* Room Selection */}
@@ -356,7 +430,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                             {selected.map((value) => {
                                                 const room = rooms.find((r) => r.id == value);
-                                                return <Chip key={value} label={room ? room.name : value} size="small" />;
+                                                return <Chip key={value} label={room ? room.name : value} size="small" style={{ color: '#fff', backgroundColor: '#063455' }} />;
                                             })}
                                         </Box>
                                     );
@@ -366,7 +440,16 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                         '& .MuiPaper-root': {
                                             borderRadius: '16px',
                                             boxShadow: 'none !important',
-                                            marginTop: '4px'
+                                            marginTop: '4px',
+                                            maxHeight: '180px',  // Limits height after 4+ rooms
+                                            overflowY: 'auto'    // Adds scroll when needed
+                                        },
+                                        '& .MuiMenuItem-root': {
+                                            borderRadius: '16px',
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important'
+                                            }
                                         }
                                     }
                                 }}
@@ -391,12 +474,21 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     onChange={(e) => setSelectedStatus(e.target.value)}
                                     displayEmpty
                                     renderValue={(selected) => {
-                                        if (selected.length === 0) return <em style={{ color: '#999' }}>Status</em>;
+                                        if (selected.length === 0) return <Typography color="text.secondary">Status</Typography>;
                                         return (
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                                {selected.map((value) => (
-                                                    <Chip key={value} label={value.replace('_', ' ').toUpperCase()} size="small" />
-                                                ))}
+                                                {selected.map((value) => {
+                                                    const label = value.replace('_', ' ');
+                                                    const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
+                                                    return (
+                                                        <Chip
+                                                            key={value}
+                                                            label={capitalizedLabel}
+                                                            size="small"
+                                                            style={{ color: '#fff', backgroundColor: '#063455' }}
+                                                        />
+                                                    );
+                                                })}
                                             </Box>
                                         );
                                     }}
@@ -408,9 +500,11 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                                 marginTop: '4px'
                                             },
                                             '& .MuiMenuItem-root': {
+                                                borderRadius: '16px',
+                                                // px:5,
                                                 '&:hover': {
                                                     backgroundColor: '#063455 !important',
-                                                    color: '#fff !important'
+                                                    color: '#fff !important',
                                                 }
                                             }
                                         }

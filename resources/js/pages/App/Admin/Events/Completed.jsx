@@ -365,6 +365,21 @@ const EventsCompleted = ({ bookings, filters = {} }) => {
                                                         </Box>
                                                     );
                                                 }}
+                                                MenuProps={{
+                                                    sx: {
+                                                        '& .MuiPaper-root': {
+                                                            borderRadius: '16px'
+                                                        },
+                                                        '& .MuiMenuItem-root': {
+                                                            borderRadius: '16px',
+                                                            transition: 'all 0.2s ease',
+                                                            '&:hover': {
+                                                                backgroundColor: '#063455 !important',
+                                                                color: '#fff !important'
+                                                            }
+                                                        }
+                                                    }
+                                                }}
                                             >
                                                 {venues.map((venue) => (
                                                     <MenuItem key={venue.value} value={venue.value}>
@@ -499,10 +514,12 @@ const EventsCompleted = ({ bookings, filters = {} }) => {
                                                             <Button
                                                                 variant="outlined"
                                                                 size="small"
+                                                                color='#063455'
                                                                 onClick={() => handleShowInvoice(booking)}
                                                                 style={{
-                                                                    border: '1px solid #063455',
+                                                                    // border: '1px solid #063455',
                                                                     color: '#063455',
+                                                                    textTransform: 'none'
                                                                 }}
                                                             >
                                                                 View
