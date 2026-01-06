@@ -10,6 +10,7 @@ import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
 import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 import debounce from 'lodash.debounce';
+import { FaEdit } from 'react-icons/fa';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -341,8 +342,8 @@ const RoomScreen = ({ bookings }) => {
                                                         <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', color: '#063455' }}>
                                                             <Visibility fontSize="small" />
                                                         </Button>
-                                                        <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', color: '#063455' }}>
-                                                            <Edit fontSize="small" />
+                                                        <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', color: '#f57c00' }}>
+                                                            <FaEdit size={18} />
                                                         </Button>
                                                         <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)}>
                                                             View

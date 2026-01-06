@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from '@mui/material';
+import { Box, Typography, Tooltip, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning, Receipt, Visibility } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import ReceiptComponent from '@/components/App/Invoice/Receipt';
+import { FaEdit } from 'react-icons/fa';
 
 function TabPanel({ children, value, index, ...other }) {
     return (
@@ -203,20 +204,21 @@ const ViewProfile = ({ member }) => {
                             <IconButton onClick={() => window.history.back()}>
                                 <ArrowBackIcon sx={{ color: '#063455' }} />
                             </IconButton>
-                            <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                                 Member Profile
                             </Typography>
                         </Box>
                         <Button
-                            startIcon={<Edit />}
+                            startIcon={<FaEdit />}
                             onClick={handleEdit}
                             variant="contained"
                             size="large"
                             sx={{
                                 backgroundColor: '#063455',
-                                borderRadius: '12px',
-                                px: 3,
-                                py: 1.5,
+                                borderRadius: '16px',
+                                textTransform: 'none',
+                                // px: 3,
+                                // py: 1.5,
                                 '&:hover': {
                                     backgroundColor: '#052a42',
                                 },
@@ -885,25 +887,24 @@ const ViewProfile = ({ member }) => {
                                 <TableContainer
                                     component={Paper}
                                     sx={{
-                                        borderRadius: '12px',
-                                        border: '1px solid #E5E5EA',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                        overflowX: 'auto',
+                                        borderRadius: '16px',
                                     }}
                                 >
                                     <Table>
                                         <TableHead>
-                                            <TableRow sx={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Photo</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Name</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Membership No</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Relation</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Gender</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Card Expiry Date</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Passport</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Nationality</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Marital Status</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Status</TableCell>
-                                                <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Card Status</TableCell>
+                                            <TableRow sx={{ backgroundColor: '#063455', height: '30px' }}>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Photo</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Name</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px', whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Relation</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Gender</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px', whiteSpace: 'nowrap' }}>Card Expiry</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Passport</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Nationality</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px', whiteSpace: 'nowrap' }}>Marital Status</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px' }}>Status</TableCell>
+                                                <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '14px', whiteSpace: 'nowrap' }}>Card Status</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455', fontSize: '14px' }}>Comments</TableCell>
                                             </TableRow>
                                         </TableHead>
@@ -913,31 +914,35 @@ const ViewProfile = ({ member }) => {
                                                     <TableCell>
                                                         <Avatar src={familyMember.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={familyMember.full_name} sx={{ width: 40, height: 40 }} />
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                            {familyMember.full_name}
-                                                        </Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', maxWidth: '120px', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', }}>
+                                                        <Tooltip title={familyMember.full_name} arrow>
+                                                            <span>{familyMember.full_name}</span>
+                                                        </Tooltip>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2">{familyMember.membership_no || 'N/A'}</Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', maxWidth: '100px', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+                                                        <Tooltip title={familyMember.membership_no || 'N/A'} arrow>
+                                                            <span>{familyMember.membership_no || 'N/A'}</span>
+                                                        </Tooltip>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2">{familyMember.relation || 'N/A'}</Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                        {familyMember.relation || 'N/A'}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2">{familyMember.gender || 'N/A'}</Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                        {familyMember.gender || 'N/A'}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2">{formatDate(familyMember.card_expiry_date)}</Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                        {formatDate(familyMember.card_expiry_date)}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2">{familyMember.passport_no || 'N/A'}</Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', maxWidth:'100px', textOverflow:'ellipsis', overflow:'hidden', whiteSpace: 'nowrap' }}>
+                                                        <Tooltip title={familyMember.passport_no || 'N/A'} arrow>
+                                                            <span>{familyMember.passport_no || 'N/A'}</span>
+                                                        </Tooltip>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2">{familyMember.nationality || 'N/A'}</Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                        {familyMember.nationality || 'N/A'}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Typography variant="body2">{familyMember.martial_status || 'N/A'}</Typography>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                        {familyMember.martial_status || 'N/A'}
                                                     </TableCell>
                                                     <TableCell>
                                                         <Chip label={formatStatus(familyMember.status)} color={getStatusColor(familyMember.status)} size="small" />

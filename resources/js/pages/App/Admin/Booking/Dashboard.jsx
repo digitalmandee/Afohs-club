@@ -149,8 +149,6 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
             hasError = true;
         }
 
-        // Persons is now optional - no validation required
-
         setErrors(newErrors);
 
         if (hasError) return;
@@ -176,7 +174,6 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
 
     const startDate = range[0]?.startDate;
     const endDate = range[0]?.endDate;
-
     const displayText = startDate && endDate ? `${format(startDate, 'dd-MM-yyyy')} — ${format(endDate, 'dd-MM-yyyy')}` : 'Check-in date — Check-out date';
 
     return (
@@ -239,6 +236,7 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
                                             <DateRange
                                                 editableDateInputs={true}
                                                 onChange={(item) => setRange([item.selection])}
+                                                // onChange={handleRangeChange}
                                                 moveRangeOnFirstSelection={false}
                                                 ranges={range}
                                                 months={2}

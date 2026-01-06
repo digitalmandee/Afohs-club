@@ -80,7 +80,7 @@ const RoomChargesType = ({ roomChargesData }) => {
                         {/* <IconButton>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton> */}
-                        <Typography sx={{ fontWeight: 600, color: '#063455', fontSize: '30px' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>
                             Room Charges
                         </Typography>
                     </Box>

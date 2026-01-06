@@ -196,10 +196,12 @@ const EventsCompleted = ({ bookings, filters = {}, aggregates }) => {
                                                             <Button
                                                                 variant="outlined"
                                                                 size="small"
+                                                                color='#063455'
                                                                 onClick={() => handleShowInvoice(booking)}
                                                                 style={{
-                                                                    border: '1px solid #063455',
+                                                                    // border: '1px solid #063455',
                                                                     color: '#063455',
+                                                                    textTransform: 'none'
                                                                 }}
                                                             >
                                                                 View

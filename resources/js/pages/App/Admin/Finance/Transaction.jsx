@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment, Pagination, MenuItem, Select, FormControl } from '@mui/material';
+import { Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment, Pagination, MenuItem, Select, FormControl, Tooltip } from '@mui/material';
 import { Search, FilterAlt, Payment } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -310,7 +310,11 @@ const Transaction = ({ transactions, filters }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     <div>
-                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap' }}>{transaction.member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</div>
+                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '200px' }}>
+                                                            <Tooltip title={transaction.member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'} arrow>
+                                                                <span>{transaction.member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</span>
+                                                            </Tooltip>
+                                                        </div>
                                                         {transaction.member?.membership_no && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member.membership_no}</div>}
                                                     </div>
                                                 </TableCell>
@@ -328,7 +332,11 @@ const Transaction = ({ transactions, filters }) => {
                                                         {formatType(displayType)}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>Rs {transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px', whiteSpace:'nowrap', textOverflow:'ellipsis', overflow:'hidden', maxWidth:'120px' }}> 
+                                                    <Tooltip title={transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0} arrow>
+                                                        <span> Rs {transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0}</span>
+                                                    </Tooltip>
+                                                </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     <span
                                                         style={{
@@ -376,11 +384,12 @@ const Transaction = ({ transactions, filters }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{transaction.valid_from && transaction.valid_to ? <span>{dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1}</span> : <span style={{ color: '#7F7F7F' }}>-</span>}</TableCell>
                                                 <TableCell sx={{ display: 'flex', gap: '4px' }}>
                                                     <Button
-                                                        variant="contained"
+                                                        variant="outlined"
                                                         size="small"
+                                                        color='#063455'
                                                         style={{
-                                                            border: '1px solid #063455',
-                                                            backgroundColor: 'transparent',
+                                                            // border: '1px solid #063455',
+                                                            // backgroundColor: 'transparent',
                                                             textTransform: 'none',
                                                             color: '#063455',
                                                         }}
