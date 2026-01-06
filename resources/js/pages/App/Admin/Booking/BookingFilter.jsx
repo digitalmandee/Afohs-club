@@ -273,10 +273,9 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                         actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                         popper: {
                                             sx: {
-                                                mt: 1, // Top spacing
-                                                // mb: 2,
+                                                mt: 1,
                                                 '& .MuiPaper-root': {
-                                                    borderRadius: '16px', // ✅ Rounded corners
+                                                    borderRadius: '16px',
                                                     boxShadow: 'none',
                                                 },
                                             },
