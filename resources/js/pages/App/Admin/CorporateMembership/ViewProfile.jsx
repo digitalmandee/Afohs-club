@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog, IconButton } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Card, CardContent, Grid, Avatar, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, CircularProgress, Button, Divider, Alert, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Person, Groups, Edit, Phone, Email, LocationOn, CalendarToday, CreditCard, Badge, Warning, Receipt, Visibility } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
@@ -37,6 +37,10 @@ const CorporateViewProfile = ({ member }) => {
     // Receipt Dialog State
     const [openReceiptModal, setOpenReceiptModal] = useState(false);
     const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState(null);
+
+    // Comment Dialog State
+    const [openCommentModal, setOpenCommentModal] = useState(false);
+    const [selectedComment, setSelectedComment] = useState('');
 
     // Helper function to format status
     const formatStatus = (status) => {
@@ -132,6 +136,16 @@ const CorporateViewProfile = ({ member }) => {
 
     const handleEdit = () => {
         router.visit(route('corporate-membership.edit', member.id));
+    };
+
+    const handleViewComment = (comment) => {
+        setSelectedComment(comment);
+        setOpenCommentModal(true);
+    };
+
+    const handleCloseCommentModal = () => {
+        setOpenCommentModal(false);
+        setSelectedComment('');
     };
 
     return (
@@ -646,7 +660,14 @@ const CorporateViewProfile = ({ member }) => {
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Name</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Membership No</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Relation</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Gender</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Card Expiry Date</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Passport</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Nationality</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Marital Status</TableCell>
                                                 <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Status</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Card Status</TableCell>
+                                                <TableCell sx={{ fontWeight: 700, color: '#063455' }}>Comments</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -658,8 +679,23 @@ const CorporateViewProfile = ({ member }) => {
                                                     <TableCell>{fm.full_name}</TableCell>
                                                     <TableCell>{fm.membership_no || 'N/A'}</TableCell>
                                                     <TableCell>{fm.relation || 'N/A'}</TableCell>
+                                                    <TableCell>{fm.gender || 'N/A'}</TableCell>
+                                                    <TableCell>{formatDate(fm.card_expiry_date)}</TableCell>
+                                                    <TableCell>{fm.passport_no || 'N/A'}</TableCell>
+                                                    <TableCell>{fm.nationality || 'N/A'}</TableCell>
+                                                    <TableCell>{fm.martial_status || 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <Chip label={formatStatus(fm.status)} size="small" color={getStatusColor(fm.status)} />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Chip label={formatStatus(fm.card_status)} size="small" variant="outlined" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {fm.comment_box && (
+                                                            <IconButton onClick={() => handleViewComment(fm.comment_box)} size="small">
+                                                                <Visibility sx={{ color: '#063455' }} />
+                                                            </IconButton>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -676,6 +712,19 @@ const CorporateViewProfile = ({ member }) => {
                     </TabPanel>
                 </Card>
             </Box>
+
+            {/* Comment Dialog */}
+            <Dialog open={openCommentModal} onClose={handleCloseCommentModal} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ color: '#063455', fontWeight: 600 }}>Family Member Comment</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ color: 'text.primary', whiteSpace: 'pre-wrap' }}>{selectedComment}</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseCommentModal} variant="contained" sx={{ backgroundColor: '#063455', '&:hover': { backgroundColor: '#052a42' } }}>
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };

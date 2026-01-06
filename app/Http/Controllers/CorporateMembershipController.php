@@ -211,6 +211,7 @@ class CorporateMembershipController extends Controller
                         'relation' => $familyMemberData['relation'],
                         'gender' => $familyMemberData['gender'] ?? null,
                         'date_of_birth' => $this->formatDateForDatabase($familyMemberData['date_of_birth']),
+                        'card_status' => $familyMemberData['card_status'],
                         'status' => $familyMemberData['status'],
                         'start_date' => $this->formatDateForDatabase($familyMemberData['start_date'] ?? null),
                         'end_date' => $this->formatDateForDatabase($familyMemberData['end_date'] ?? null),
@@ -224,6 +225,7 @@ class CorporateMembershipController extends Controller
                         'martial_status' => $familyMemberData['martial_status'] ?? null,
                         'corporate_company_id' => $mainMember->corporate_company_id,  // Inherit company
                         'member_category_id' => $mainMember->member_category_id,  // Inherit category
+                        'comment_box' => $familyMemberData['comments'] ?? null,
                     ]);
 
                     // Handle family member profile photo using Media model
@@ -443,9 +445,11 @@ class CorporateMembershipController extends Controller
                     ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('card_expiry_date'))->format('d-m-Y')
                     : null,
                 'profile_photo' => $member->profilePhoto,
+                'card_status' => $member->card_status,
                 'status' => $member->status,
                 'picture' => $pictureUrl,  // Full URL from file_path
                 'picture_id' => $pictureId,  // Media ID for tracking
+                'comments' => $member->comment_box,
             ];
         });
 
@@ -491,7 +495,8 @@ class CorporateMembershipController extends Controller
         $perPage = $request->input('per_page', 10);
 
         $familyMembers = CorporateMember::where('parent_id', $id)
-            ->with(['profilePhoto'])
+            ->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])
+            ->select('id', 'parent_id', 'full_name', 'membership_no', 'relation', 'gender', 'status', 'card_status', 'card_expiry_date', 'passport_no', 'nationality', 'martial_status', 'comment_box')
             ->paginate($perPage);
 
         return response()->json($familyMembers);
@@ -721,19 +726,19 @@ class CorporateMembershipController extends Controller
                             'personal_email' => $newMemberData['email'] ?? null,
                             'relation' => $newMemberData['relation'],
                             'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']),
+                            'card_status' => $newMemberData['card_status'],
                             'status' => $newMemberData['status'],
                             'gender' => $newMemberData['gender'] ?? null,
                             'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null),
                             'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null),
                             'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null),
                             'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null),
-                            'cnic_no' => $newMemberData['cnic'] ?? null,
+                            'cnic_no' => $newMemberData['cnic'],
                             'mobile_number_a' => $newMemberData['phone_number'] ?? null,
                             'passport_no' => $newMemberData['passport_no'] ?? null,
                             'nationality' => $newMemberData['nationality'] ?? null,
                             'martial_status' => $newMemberData['martial_status'] ?? null,
-                            'corporate_company_id' => $member->corporate_company_id,  // Inherit company
-                            'member_category_id' => $member->member_category_id,  // Inherit category
+                            'comment_box' => $newMemberData['comments'] ?? null,
                         ]);
 
                         // Handle family member profile photo using Media model
@@ -771,25 +776,27 @@ class CorporateMembershipController extends Controller
                         $familyMember = CorporateMember::find($newMemberData['id']);
                         if ($familyMember) {
                             $familyMember->update([
-                                'barcode_no' => $newMemberData['barcode_no'] ?? $familyMember->barcode_no,
-                                'first_name' => $newMemberData['first_name'] ?? $familyMember->first_name,
-                                'middle_name' => $newMemberData['middle_name'] ?? $familyMember->middle_name,
-                                'last_name' => $newMemberData['last_name'] ?? $familyMember->last_name,
-                                'full_name' => $newMemberData['full_name'] ?? $familyMember->full_name,
-                                'personal_email' => $newMemberData['email'] ?? $familyMember->personal_email,
-                                'relation' => $newMemberData['relation'] ?? $familyMember->relation,
-                                'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']) ?? $familyMember->date_of_birth,
-                                'status' => $newMemberData['status'] ?? $familyMember->status,
-                                'gender' => $newMemberData['gender'] ?? $familyMember->gender,
-                                'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null) ?? $familyMember->start_date,
-                                'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null) ?? $familyMember->end_date,
-                                'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null) ?? $familyMember->card_issue_date,
-                                'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null) ?? $familyMember->card_expiry_date,
-                                'cnic_no' => $newMemberData['cnic'] ?? $familyMember->cnic_no ?? null,
-                                'mobile_number_a' => $newMemberData['phone_number'] ?? $familyMember->mobile_number_a ?? null,
-                                'passport_no' => $newMemberData['passport_no'] ?? $familyMember->passport_no,
-                                'nationality' => $newMemberData['nationality'] ?? $familyMember->nationality,
-                                'martial_status' => $newMemberData['martial_status'] ?? $familyMember->martial_status,
+                                'first_name' => $newMemberData['first_name'] ?? null,
+                                'middle_name' => $newMemberData['middle_name'] ?? null,
+                                'last_name' => $newMemberData['last_name'] ?? null,
+                                'full_name' => $newMemberData['full_name'],
+                                'barcode_no' => $newMemberData['barcode_no'] ?? null,
+                                'personal_email' => $newMemberData['email'] ?? null,
+                                'gender' => $newMemberData['gender'] ?? null,
+                                'relation' => $newMemberData['relation'],
+                                'date_of_birth' => $this->formatDateForDatabase($newMemberData['date_of_birth']),
+                                'card_status' => $newMemberData['card_status'],
+                                'status' => $newMemberData['status'] ?? null,
+                                'start_date' => $this->formatDateForDatabase($newMemberData['start_date'] ?? null),
+                                'end_date' => $this->formatDateForDatabase($newMemberData['end_date'] ?? null),
+                                'card_issue_date' => $this->formatDateForDatabase($newMemberData['card_issue_date'] ?? null),
+                                'card_expiry_date' => $this->formatDateForDatabase($newMemberData['card_expiry_date'] ?? null),
+                                'cnic_no' => $newMemberData['cnic'] ?? null,
+                                'mobile_number_a' => $newMemberData['phone_number'] ?? null,
+                                'passport_no' => $newMemberData['passport_no'] ?? null,
+                                'nationality' => $newMemberData['nationality'] ?? null,
+                                'martial_status' => $newMemberData['martial_status'] ?? null,
+                                'comment_box' => $newMemberData['comments'] ?? null,
                             ]);
 
                             // Handle profile photo update

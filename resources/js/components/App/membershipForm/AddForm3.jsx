@@ -619,6 +619,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             picture_preview: null,
             is_document_missing: false,
             documents: '',
+            comments: '',
         });
         setShowFamilyMember(false);
         setFamilyMemberErrors({});
@@ -677,6 +678,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             picture_preview: null,
             is_document_missing: false,
             documents: '',
+            comments: '',
         });
     };
 
@@ -707,6 +709,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
             picture_preview: null,
             is_document_missing: false,
             documents: '',
+            comments: '',
         });
         setShowFamilyMember(false);
     };
@@ -2354,6 +2357,70 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                                                     );
                                                                 })}
                                                             </Select>
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={4}>
+                                                        <Box sx={{ width: '100%', '& .MuiInputBase-root': { height: 40, alignItems: 'center' }, '& .MuiInputBase-input': { padding: '0 14px' } }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Status of Card</Typography>
+                                                            <FormControl fullWidth variant="outlined">
+                                                                <Select
+                                                                    name="card_status"
+                                                                    value={currentFamilyMember.card_status}
+                                                                    onChange={(e) => handleFamilyMemberChange('card_status', e.target.value)}
+                                                                    displayEmpty
+                                                                    renderValue={(selected) => {
+                                                                        if (!selected) {
+                                                                            return <Typography sx={{ color: '#757575' }}>Choose Status</Typography>;
+                                                                        }
+                                                                        return selected;
+                                                                    }}
+                                                                    sx={{
+                                                                        height: 40,
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        '& .MuiSelect-select': {
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            paddingY: 0,
+                                                                        },
+                                                                        '& .MuiOutlinedInput-notchedOutline': {
+                                                                            borderColor: '#ccc',
+                                                                        },
+                                                                    }}
+                                                                >
+                                                                    {['In-Process', 'Printed', 'Received', 'Issued', 'Re-Printed', 'E-Card Issued', 'Expired'].map((status) => (
+                                                                        <MenuItem key={status} value={status}>
+                                                                            {status}
+                                                                        </MenuItem>
+                                                                    ))}
+                                                                </Select>
+                                                            </FormControl>
+                                                        </Box>
+                                                    </Grid>
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ width: '100%', mt: 2 }}>
+                                                            <Typography sx={{ mb: 1, fontWeight: 500 }}>Comments</Typography>
+                                                            <TextField
+                                                                fullWidth
+                                                                multiline
+                                                                rows={2}
+                                                                placeholder="Enter Comments"
+                                                                variant="outlined"
+                                                                value={currentFamilyMember.comments || ''}
+                                                                onChange={(e) => handleFamilyMemberChange('comments', e.target.value)}
+                                                                sx={{
+                                                                    '& .MuiOutlinedInput-root': {
+                                                                        backgroundColor: '#fff',
+                                                                        borderRadius: '8px',
+                                                                        '& fieldset': { borderColor: '#E0E0E0' },
+                                                                        '&:hover fieldset': { borderColor: '#BDBDBD' },
+                                                                        '&.Mui-focused fieldset': { borderColor: '#0c4b6e' },
+                                                                    },
+                                                                    '& .MuiInputBase-input': {
+                                                                        color: '#333',
+                                                                    },
+                                                                }}
+                                                            />
                                                         </Box>
                                                     </Grid>
                                                 </Grid>

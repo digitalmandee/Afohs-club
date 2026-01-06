@@ -331,6 +331,7 @@ const MembershipDashboard = ({ membershipNo, applicationNo, memberTypesData, mem
         end_date: '',
         card_issue_date: '',
         card_expiry_date: '',
+        card_status: 'In-Process',
         status: 'active',
         picture: null,
         picture_preview: null,

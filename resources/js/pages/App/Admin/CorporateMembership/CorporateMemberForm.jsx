@@ -295,6 +295,7 @@ const CorporateMemberForm = ({ membershipNo, applicationNo, membercategories, fa
         end_date: '',
         card_issue_date: '',
         card_expiry_date: '',
+        card_status: 'In-Process',
         status: 'active',
         picture: null,
         picture_preview: null,
@@ -465,7 +466,6 @@ const CorporateMemberForm = ({ membershipNo, applicationNo, membercategories, fa
                     </Typography>
                 </Box>
                 <Box sx={{ mb: 4 }}>
-                    {createdMember?.id || user?.id}
                     <MembershipStepper step={step} onStepClick={handleStepClick} />
                 </Box>
                 {step === 1 && <AddForm1 data={formsData} handleChange={handleChange} onNext={() => setStep(2)} />}

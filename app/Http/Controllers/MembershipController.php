@@ -184,9 +184,11 @@ class MembershipController extends Controller
                     ? \Carbon\Carbon::createFromFormat('Y-m-d', $member->getRawOriginal('card_expiry_date'))->format('d-m-Y')
                     : null,
                 'profile_photo' => $member->profilePhoto,
+                'card_status' => $member->card_status,
                 'status' => $member->status,
                 'picture' => $pictureUrl,  // Full URL from file_path
                 'picture_id' => $pictureId,  // Media ID for tracking
+                'comments' => $member->comment_box,
             ];
         });
 
@@ -488,6 +490,7 @@ class MembershipController extends Controller
                         'passport_no' => $familyMemberData['passport_no'] ?? null,
                         'nationality' => $familyMemberData['nationality'] ?? null,
                         'martial_status' => $familyMemberData['martial_status'] ?? null,
+                        'comment_box' => $familyMemberData['comments'] ?? null,
                     ]);
 
                     // Handle family member profile photo using Media model
@@ -793,6 +796,7 @@ class MembershipController extends Controller
                             'passport_no' => $newMemberData['passport_no'] ?? null,
                             'nationality' => $newMemberData['nationality'] ?? null,
                             'martial_status' => $newMemberData['martial_status'] ?? null,
+                            'comment_box' => $newMemberData['comments'] ?? null,
                         ]);
 
                         // Handle family member profile photo using Media model
@@ -881,6 +885,7 @@ class MembershipController extends Controller
                                 'passport_no' => $newMemberData['passport_no'] ?? null,
                                 'nationality' => $newMemberData['nationality'] ?? null,
                                 'martial_status' => $newMemberData['martial_status'] ?? null,
+                                'comment_box' => $newMemberData['comments'] ?? null,
                             ]);
                         }
                     }
@@ -1009,7 +1014,7 @@ class MembershipController extends Controller
 
         $familyMembers = Member::where('parent_id', $id)
             ->with(['profilePhoto:id,mediable_id,mediable_type,file_path'])
-            ->select('id', 'parent_id', 'full_name', 'membership_no', 'relation', 'gender', 'status', 'card_status', 'card_expiry_date', 'passport_no', 'nationality', 'martial_status')
+            ->select('id', 'parent_id', 'full_name', 'membership_no', 'relation', 'gender', 'status', 'card_status', 'card_expiry_date', 'passport_no', 'nationality', 'martial_status', 'comment_box')
             ->paginate($perPage);
 
         return response()->json($familyMembers);
