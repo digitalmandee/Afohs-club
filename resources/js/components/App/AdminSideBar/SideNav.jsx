@@ -196,7 +196,7 @@ export default function SideNav({ open, setOpen }) {
                                 path: route('events.dashboard'),
                             },
                             {
-                                text: 'Manage',
+                                text: 'Event Bookings',
                                 path: route('events.manage'),
                             },
                             {

@@ -13,6 +13,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { objectToFormData } from '@/helpers/objectToFormData';
 import { enqueueSnackbar } from 'notistack';
+import GuestCreateModal from '@/components/GuestCreateModal';
 
 const steps = ['Booking Details', 'Charges', 'Upload'];
 
@@ -22,6 +23,22 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
     const [activeStep, setActiveStep] = useState(0);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [guestTypes, setGuestTypes] = useState([]);
+    const [showGuestModal, setShowGuestModal] = useState(false);
+
+    useEffect(() => {
+        const fetchGuestTypes = async () => {
+            try {
+                const response = await axios.get(route('api.guest-types.active'));
+                setGuestTypes(response.data);
+            } catch (error) {
+                console.error('Error fetching guest types:', error);
+            }
+        };
+        fetchGuestTypes();
+    }, []);
+
     const [formData, setFormData] = useState({
         bookingNo: bookingNo || '',
         bookingDate: new Date().toISOString().split('T')[0],
@@ -181,6 +198,31 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         }
     }, [editMode, bookingData]);
 
+    const handleGuestCreated = (newGuest) => {
+        // Format the guest object to match Autocomplete option structure if needed
+        // The search API returns {label, value, ...} but Autocomplete mainly needs id and label for display
+        const formattedGuest = {
+            ...newGuest,
+            label: `${newGuest.name} (Guest - ${newGuest.customer_no})`,
+            booking_type: `guest-${newGuest.guest_type_id}`,
+        };
+
+        setFormData((prev) => ({
+            ...prev,
+            guest: formattedGuest,
+            bookingType: `guest-${newGuest.guest_type_id}`,
+            // Auto-fill guest details
+            bookedBy: newGuest.name,
+            guestFirstName: newGuest.name.split(' ')[0] || '',
+            guestLastName: newGuest.name.split(' ').slice(1).join(' ') || '',
+            mobile: newGuest.contact,
+            email: newGuest.email,
+            address: newGuest.address,
+            cnic: newGuest.cnic,
+        }));
+        setShowGuestModal(false);
+    };
+
     const handleNext = () => {
         const newErrors = {};
 
@@ -339,7 +381,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
     const renderStepContent = (step) => {
         switch (step) {
             case 0:
-                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} editMode={editMode} />;
+                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} editMode={editMode} onAddGuest={() => setShowGuestModal(true)} />;
             case 1:
                 return <ChargesInfo formData={formData} handleChange={handleChange} />;
             case 2:
@@ -420,12 +462,13 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                     </Box>
                 </Box>
             </div>
+            <GuestCreateModal open={showGuestModal} onClose={() => setShowGuestModal(false)} onSuccess={handleGuestCreated} guestTypes={guestTypes} />
         </>
     );
 };
 export default EventBooking;
 
-const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
+const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }) => {
     const { props } = usePage();
 
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -536,76 +579,83 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                     </RadioGroup>
                 </Grid>
 
-                <Grid item xs={12} sm={12}>
-                    <Autocomplete
-                        open={open}
-                        onOpen={() => setOpen(true)}
-                        onClose={() => setOpen(false)}
-                        isOptionEqualToValue={(option, value) => option.id === value?.id}
-                        getOptionLabel={(option) => option.label || ''}
-                        options={options}
-                        loading={loading}
-                        value={formData.guest || null}
-                        disabled={editMode}
-                        onInputChange={(event, newInputValue, reason) => {
-                            if (reason === 'input') {
-                                handleSearch(event, newInputValue);
-                            }
-                        }}
-                        onChange={(event, newValue) => {
-                            handleChange({ target: { name: 'guest', value: newValue } });
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Member / Guest Name"
-                                placeholder="Search members..."
-                                error={!!errors.guest}
-                                helperText={errors.guest}
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <React.Fragment>
-                                            {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </React.Fragment>
-                                    ),
-                                }}
-                            />
-                        )}
-                        renderOption={(props, option) => (
-                            <li {...props} key={option.id}>
-                                <Box sx={{ width: '100%' }}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                        <Typography variant="body2" fontWeight="bold">
-                                            {option.membership_no || option.customer_no || option.employee_id}
-                                        </Typography>
-                                        {option.status && (
-                                            <Chip
-                                                label={option.status}
-                                                size="small"
-                                                sx={{
-                                                    height: '20px',
-                                                    fontSize: '10px',
-                                                    backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
-                                                    color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
-                                                    textTransform: 'capitalize',
-                                                    ml: 1,
-                                                }}
-                                            />
-                                        )}
+                <Grid item xs={12} sm={12} display="flex" gap={1}>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Autocomplete
+                            open={open}
+                            onOpen={() => setOpen(true)}
+                            onClose={() => setOpen(false)}
+                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                            getOptionLabel={(option) => option.label || ''}
+                            options={options}
+                            loading={loading}
+                            value={formData.guest || null}
+                            disabled={editMode}
+                            onInputChange={(event, newInputValue, reason) => {
+                                if (reason === 'input') {
+                                    handleSearch(event, newInputValue);
+                                }
+                            }}
+                            onChange={(event, newValue) => {
+                                handleChange({ target: { name: 'guest', value: newValue } });
+                            }}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Member / Guest Name"
+                                    placeholder="Search members..."
+                                    error={!!errors.guest}
+                                    helperText={errors.guest}
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <React.Fragment>
+                                                {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                            </React.Fragment>
+                                        ),
+                                    }}
+                                />
+                            )}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id}>
+                                    <Box sx={{ width: '100%' }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {option.membership_no || option.customer_no || option.employee_id}
+                                            </Typography>
+                                            {option.status && (
+                                                <Chip
+                                                    label={option.status}
+                                                    size="small"
+                                                    sx={{
+                                                        height: '20px',
+                                                        fontSize: '10px',
+                                                        backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                        color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                        textTransform: 'capitalize',
+                                                        ml: 1,
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                        <Box display="flex" justifyContent="space-between">
+                                            <Typography variant="caption">{option.full_name || option.name}</Typography>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.cnic_no || option.cnic || option.mobile_number_a || option.contact}
+                                            </Typography>
+                                        </Box>
                                     </Box>
-                                    <Box display="flex" justifyContent="space-between">
-                                        <Typography variant="caption">{option.full_name || option.name}</Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            {option.cnic_no || option.cnic || option.mobile_number_a || option.contact}
-                                        </Typography>
-                                    </Box>
-                                </Box>
-                            </li>
-                        )}
-                    />
+                                </li>
+                            )}
+                        />
+                    </Box>
+                    <Button variant="contained" onClick={onAddGuest} sx={{ backgroundColor: '#063455', color: '#fff', height: '56px', minWidth: '100px' }}>
+                        + Add
+                    </Button>
+                </Grid>
 
+                <Grid item xs={12}>
                     {formData.guest && (
                         <Box sx={{ mt: 1, p: 1, border: '1px solid #ccc', borderRadius: 1 }}>
                             <Typography variant="h5" sx={{ mb: 1 }}>
