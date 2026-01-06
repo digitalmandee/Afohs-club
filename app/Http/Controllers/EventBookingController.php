@@ -760,11 +760,18 @@ class EventBookingController extends Controller
             });
         }
 
+        $aggregates = (clone $query)->selectRaw('
+            COALESCE(SUM(total_price), 0) as total_amount,
+            COALESCE(SUM(paid_amount), 0) as total_paid,
+            COALESCE(SUM(total_price - paid_amount), 0) as total_balance
+        ')->first();
+
         $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         return inertia('App/Admin/Events/Manage', [
             'bookings' => $bookings,
-            'filters' => $filters
+            'filters' => $filters,
+            'aggregates' => $aggregates
         ]);
     }
 
@@ -786,11 +793,18 @@ class EventBookingController extends Controller
             });
         }
 
+        $aggregates = (clone $query)->selectRaw('
+            COALESCE(SUM(total_price), 0) as total_amount,
+            COALESCE(SUM(paid_amount), 0) as total_paid,
+            COALESCE(SUM(total_price - paid_amount), 0) as total_balance
+        ')->first();
+
         $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         return inertia('App/Admin/Events/Completed', [
             'bookings' => $bookings,
-            'filters' => $filters
+            'filters' => $filters,
+            'aggregates' => $aggregates
         ]);
     }
 
@@ -812,11 +826,18 @@ class EventBookingController extends Controller
             });
         }
 
+        $aggregates = (clone $query)->selectRaw('
+            COALESCE(SUM(total_price), 0) as total_amount,
+            COALESCE(SUM(paid_amount), 0) as total_paid,
+            COALESCE(SUM(total_price - paid_amount), 0) as total_balance
+        ')->first();
+
         $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         return inertia('App/Admin/Events/Cancelled', [
             'bookings' => $bookings,
-            'filters' => $filters
+            'filters' => $filters,
+            'aggregates' => $aggregates
         ]);
     }
 

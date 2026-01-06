@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { ArrowBack, Visibility } from '@mui/icons-material';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, Tooltip, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton } from '@mui/material';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, Tooltip, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, TableFooter } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -30,7 +30,7 @@ const theme = createTheme({
     },
 });
 
-const EventsCancelled = ({ bookings, filters = {} }) => {
+const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
     // const [open, setOpen] = useState(true);
     const [filteredBookings, setFilteredBookings] = useState(bookings.data || []);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
@@ -121,6 +121,9 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Event Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Cancelled Date</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Total</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Paid</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Balance</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
@@ -181,6 +184,9 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.created_at ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.event_date ? dayjs(booking.event_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.updated_at ? dayjs(booking.updated_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.total_price}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.paid_amount}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.total_price - booking.paid_amount}</TableCell>
                                                     <TableCell>
                                                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                                                             <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color: '#063455' }}>
@@ -211,6 +217,19 @@ const EventsCancelled = ({ bookings, filters = {} }) => {
                                             </TableRow>
                                         )}
                                     </TableBody>
+                                    {aggregates && (
+                                        <TableFooter>
+                                            <TableRow>
+                                                <TableCell colSpan={7} sx={{ fontWeight: 'bold', fontSize: '15px' }}>
+                                                    Grand Total
+                                                </TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_amount}</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_paid}</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_balance}</TableCell>
+                                                <TableCell colSpan={1} />
+                                            </TableRow>
+                                        </TableFooter>
+                                    )}
                                 </Table>
                             </TableContainer>
 

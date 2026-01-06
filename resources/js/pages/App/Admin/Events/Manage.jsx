@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search, Visibility } from '@mui/icons-material';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, Tooltip } from '@mui/material';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, ThemeProvider, Typography, createTheme, IconButton, Tooltip, TableFooter } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -30,7 +30,7 @@ const theme = createTheme({
     },
 });
 
-const EventsManage = ({ bookings, filters = {} }) => {
+const EventsManage = ({ bookings, filters = {}, aggregates }) => {
     const [filteredBookings, setFilteredBookings] = useState(bookings.data || []);
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState(null);
@@ -133,6 +133,9 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Venue</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Event Date</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Total</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Paid</TableCell>
+                                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Balance</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
                                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                                         </TableRow>
@@ -191,6 +194,9 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                                     </TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.created_at ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.event_date ? dayjs(booking.event_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.total_price}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.paid_amount}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.total_price - booking.paid_amount}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '16px', whiteSpace: 'nowrap' }}>{getStatusBadge(booking)}</TableCell>
                                                     <TableCell>
                                                         <Box
@@ -248,6 +254,19 @@ const EventsManage = ({ bookings, filters = {} }) => {
                                             </TableRow>
                                         )}
                                     </TableBody>
+                                    {aggregates && (
+                                        <TableFooter>
+                                            <TableRow>
+                                                <TableCell colSpan={6} sx={{ fontWeight: 'bold', fontSize: '15px' }}>
+                                                    Grand Total
+                                                </TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_amount}</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_paid}</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', fontSize: '15px' }}>{aggregates.total_balance}</TableCell>
+                                                <TableCell colSpan={2} />
+                                            </TableRow>
+                                        </TableFooter>
+                                    )}
                                 </Table>
                             </TableContainer>
 
