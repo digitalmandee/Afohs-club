@@ -315,7 +315,21 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
             })
             .catch((err) => {
                 console.error('Submit error:', err);
-                enqueueSnackbar('Failed to ' + (editMode ? 'update' : 'create') + ' booking', { variant: 'error' });
+                if (err.response && err.response.status === 422) {
+                    setErrors(err.response.data.errors);
+                    enqueueSnackbar('Please correct the errors in the form.', { variant: 'error' });
+                } else if (err.response && err.response.data && err.response.data.message) {
+                    // Check if there are specific errors in the message object (like from ValidationException withMessages)
+                    if (err.response.data.errors) {
+                        setErrors(err.response.data.errors);
+                        const firstError = Object.values(err.response.data.errors)[0];
+                        enqueueSnackbar(Array.isArray(firstError) ? firstError[0] : firstError, { variant: 'error' });
+                    } else {
+                        enqueueSnackbar(err.response.data.message, { variant: 'error' });
+                    }
+                } else {
+                    enqueueSnackbar('Failed to ' + (editMode ? 'update' : 'create') + ' booking', { variant: 'error' });
+                }
             })
             .finally(() => {
                 setIsSubmitting(false);
@@ -654,10 +668,10 @@ const BookingDetails = ({ formData, handleChange, errors, editMode }) => {
                     </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Timing (From)*" type="time" name="eventTimeFrom" value={formData.eventTimeFrom} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeFrom} helperText={errors.eventTimeFrom} />
+                    <TextField label="Timing (From)*" type="time" name="eventTimeFrom" value={formData.eventTimeFrom} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeFrom} helperText={errors.eventTimeFrom} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Timing (To)*" type="time" name="eventTimeTo" value={formData.eventTimeTo} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeTo} helperText={errors.eventTimeTo} />
+                    <TextField label="Timing (To)*" type="time" name="eventTimeTo" value={formData.eventTimeTo} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeTo} helperText={errors.eventTimeTo} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
                 </Grid>
                 <Grid item xs={6} sm={4}>
                     <FormControl fullWidth error={!!errors.venue}>
@@ -761,6 +775,11 @@ const ChargesInfo = ({ formData, handleChange }) => {
     const removeMenuAddOn = (index) => {
         const updated = formData.menu_addons.filter((_, i) => i !== index);
         handleChange({ target: { name: 'menu_addons', value: updated } });
+    };
+
+    const removeOtherCharge = (index) => {
+        const updated = formData.other_charges.filter((_, i) => i !== index);
+        handleChange({ target: { name: 'other_charges', value: updated } });
     };
 
     const calculateTotals = () => {
@@ -891,15 +910,13 @@ const ChargesInfo = ({ formData, handleChange }) => {
                     <Grid item xs={2}>
                         <TextField label="Amount" type="number" fullWidth value={item.amount} onChange={(e) => handleMenuAddOnChange(index, 'amount', e.target.value)} />
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={3}>
                         <FormControlLabel control={<Checkbox checked={item.is_complementary} onChange={(e) => handleMenuAddOnChange(index, 'is_complementary', e.target.checked)} />} label="Complementary" />
                     </Grid>
-                    <Grid item xs={2}>
-                        {formData.menu_addons.length > 1 && (
-                            <IconButton onClick={() => removeMenuAddOn(index)} color="error">
-                                <CloseIcon />
-                            </IconButton>
-                        )}
+                    <Grid item xs={1}>
+                        <IconButton onClick={() => removeMenuAddOn(index)} color="error">
+                            <CloseIcon />
+                        </IconButton>
                     </Grid>
                 </React.Fragment>
             ))}
@@ -937,8 +954,13 @@ const ChargesInfo = ({ formData, handleChange }) => {
                     <Grid item xs={2}>
                         <TextField label="Amount" type="number" fullWidth value={item.amount} onChange={(e) => handleOtherChange(index, 'amount', e.target.value)} />
                     </Grid>
-                    <Grid item xs={2}>
+                    <Grid item xs={3}>
                         <FormControlLabel control={<Checkbox checked={item.is_complementary} onChange={(e) => handleOtherChange(index, 'is_complementary', e.target.checked)} />} label="Complementary" />
+                    </Grid>
+                    <Grid item xs={1}>
+                        <IconButton onClick={() => removeOtherCharge(index)} color="error">
+                            <CloseIcon />
+                        </IconButton>
                     </Grid>
                 </React.Fragment>
             ))}

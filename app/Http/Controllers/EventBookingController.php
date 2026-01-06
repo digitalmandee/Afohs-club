@@ -105,6 +105,26 @@ class EventBookingController extends Controller
             'grandTotal' => 'required|numeric|min:0',
         ]);
 
+        // Check for duplicate booking (overlapping time)
+        $start = $request->eventTimeFrom;
+        $end = $request->eventTimeTo;
+
+        $existingBooking = EventBooking::where('event_venue_id', $request->venue)
+            ->where('event_date', $request->eventDate)
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->where(function ($query) use ($start, $end) {
+                $query
+                    ->where('event_time_from', '<', $end)
+                    ->where('event_time_to', '>', $start);
+            })
+            ->exists();
+
+        if ($existingBooking) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'venue' => ['This venue is already booked for the selected date and time slot.'],
+            ]);
+        }
+
         $member_id = Auth::user()->id;
         $bookingNo = $this->getBookingId();
 
@@ -263,8 +283,11 @@ class EventBookingController extends Controller
 
     private function getBookingId()
     {
-        $booking_id = (int) EventBooking::max('booking_no');
-        return $booking_id + 1;
+        $maxBookingNo = EventBooking::withTrashed()
+            ->selectRaw('MAX(CAST(booking_no AS UNSIGNED)) as max_no')
+            ->value('max_no');
+
+        return ($maxBookingNo ? (int) $maxBookingNo : 0) + 1;
     }
 
     private function getInvoiceNo()
@@ -373,6 +396,27 @@ class EventBookingController extends Controller
             'numberOfGuests' => 'required|integer|min:1',
             'grandTotal' => 'required|numeric|min:0',
         ]);
+
+        // Check for duplicate booking (overlapping time)
+        $start = $request->eventTimeFrom;
+        $end = $request->eventTimeTo;
+
+        $existingBooking = EventBooking::where('event_venue_id', $request->venue)
+            ->where('event_date', $request->eventDate)
+            ->whereNotIn('status', ['cancelled', 'completed'])
+            ->where('id', '!=', $id)
+            ->where(function ($query) use ($start, $end) {
+                $query
+                    ->where('event_time_from', '<', $end)
+                    ->where('event_time_to', '>', $start);
+            })
+            ->exists();
+
+        if ($existingBooking) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'venue' => ['This venue is already booked for the selected date and time slot.'],
+            ]);
+        }
 
         DB::beginTransaction();
 
