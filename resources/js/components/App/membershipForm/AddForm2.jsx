@@ -61,7 +61,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                     <Grid item xs={12} md={6}>
                         <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#063455' }}>
                                     Contact Information
                                 </Typography>
                                 <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
@@ -119,7 +119,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
 
                             {/* In Case of Emergency Section */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, mt: 3 }}>
-                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#063455' }}>
                                     In Case of Emergency
                                 </Typography>
                                 <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
@@ -187,7 +187,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
                         <Paper sx={{ p: 3, boxShadow: 'none', border: '1px solid #e0e0e0' }}>
                             {/* Current Address Section */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#063455' }}>
                                     Current Address
                                 </Typography>
                                 <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
@@ -236,7 +236,7 @@ const AddForm2 = ({ data, handleChange, onNext, onBack, setSameAsCurrent, sameAs
 
                             {/* Permanent Address Section */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, mt: 3 }}>
-                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#063455' }}>
                                     Permanent Address
                                 </Typography>
                                 <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>

@@ -112,7 +112,7 @@ const CheckOut = () => {
                             startIcon={<PrintIcon />}
                             onClick={handlePrint}
                             style={{
-                                backgroundColor: '#003366',
+                                backgroundColor: '#063455',
                                 textTransform: 'none',
                                 color: 'white',
                                 borderRadius: '4px',
@@ -305,7 +305,7 @@ const CheckOut = () => {
                             onClick={handleCheckOut}
                             style={{
                                 textTransform: 'none',
-                                backgroundColor: '#003366',
+                                backgroundColor: '#063455',
                                 color: 'white',
                                 fontSize: '14px',
                                 padding: '6px 16px'

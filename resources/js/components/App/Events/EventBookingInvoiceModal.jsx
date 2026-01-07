@@ -10,10 +10,10 @@ import { router } from '@inertiajs/react';
 const theme = createTheme({
     palette: {
         primary: {
-            main: '#003366',
+            main: '#063455',
         },
         secondary: {
-            main: '#2c3e50',
+            main: '#063455',
         },
     },
 });
@@ -241,7 +241,7 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
 
                     {/* Print Button */}
                     <Button
-                        style={{ backgroundColor: '#003366', color: 'white' }}
+                        style={{ backgroundColor: '#063455', color: 'white' }}
                         onClick={() => {
                             const printWindow = window.open('', '_blank');
                             printWindow.document.write(`${generateEventInvoiceContent(selectedBooking)}`);

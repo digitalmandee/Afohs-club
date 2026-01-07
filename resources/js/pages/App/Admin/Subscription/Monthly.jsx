@@ -170,7 +170,7 @@ const MonthlyFee = ({ subscriptions, totalSubscriptions, collectedFee, pendingFe
                                     variant="contained"
                                     startIcon={<PrintIcon />}
                                     sx={{
-                                        backgroundColor: '#003366',
+                                        backgroundColor: '#063455',
                                         textTransform: 'none',
                                         color: 'white',
                                     }}

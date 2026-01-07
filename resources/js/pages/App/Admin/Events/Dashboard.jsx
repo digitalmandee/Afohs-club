@@ -21,7 +21,7 @@ const theme = createTheme({
             main: '#0e3c5f',
         },
         secondary: {
-            main: '#2c3e50',
+            main: '#063455',
         },
         success: {
             main: '#0e5f3c',
@@ -211,7 +211,7 @@ const generateInvoiceContent = (booking) => {
                         <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
                     </div>
                     <div class="grid-item-center">
-                        <div class="typography-h6" style="color: #003366">Afohs Club</div>
+                        <div class="typography-h6" style="color: #063455">Afohs Club</div>
                         <div class="typography-body3">
                             PAF Falcon complex, Gulberg III,<br />
                             Lahore, Pakistan
@@ -549,7 +549,7 @@ const EventBookingDashboard = ({ data, roomTypes }) => {
                                 </Button>
                                 {/* TODO: Optional - Keep print button if needed during testing */}
                                 <Button
-                                    style={{ backgroundColor: '#003366', color: 'white' }}
+                                    style={{ backgroundColor: '#063455', color: 'white' }}
                                     onClick={() => {
                                         const printWindow = window.open('', '_blank');
                                         printWindow.document.write(`${generateInvoiceContent(selectedBooking)}`);

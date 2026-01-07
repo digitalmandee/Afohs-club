@@ -258,7 +258,7 @@ const BookingDetail = () => {
                                 variant="contained"
                                 sx={{
                                     px: 4,
-                                    bgcolor: '#003366',
+                                    bgcolor: '#063455',
                                     '&:hover': {
                                         bgcolor: '#002244',
                                     },
@@ -291,7 +291,7 @@ const BookingDetail = () => {
                             <Box sx={{ px: 3, pt: 2 }}>
                                 <Box sx={{ p: 2, bgcolor: '#F6F6F6', border: '1px solid #E3E3E3', borderRadius: '4px' }}>
                                     <Typography variant="body1" sx={{ color: '#666' }}>
-                                        Hotel : <span style={{ color: '#003366', fontWeight: 'bold' }}>Afohs Club</span>
+                                        Hotel : <span style={{ color: '#063455', fontWeight: 'bold' }}>Afohs Club</span>
                                     </Typography>
                                 </Box>
                                 <Box
@@ -418,7 +418,7 @@ const BookingDetail = () => {
                                         variant="contained"
                                         sx={{
                                             px: 4,
-                                            bgcolor: '#003366',
+                                            bgcolor: '#063455',
                                             '&:hover': {
                                                 bgcolor: '#002244',
                                             },

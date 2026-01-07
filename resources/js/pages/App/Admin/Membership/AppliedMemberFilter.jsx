@@ -156,22 +156,41 @@ const AppliedMemberFilter = () => {
                             borderRadius: '16px'
                         }
                     }} />
-                    <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} fullWidth sx={{
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px'
-                        }
-                    }}>
+                    <TextField select label="Status" size="small" value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)} fullWidth
+                        sx={{
+                            // minWidth: 150,
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '16px'
+                            }
+                        }}
+                        SelectProps={{
+                            MenuProps: {
+                                sx: {
+                                    mt: 1,  // ✅ Top margin
+                                    '& .MuiPaper-root': {
+                                        borderRadius: '16px !important',
+                                        boxShadow: 'none !important'
+                                    },
+                                    '& .MuiMenuItem-root': {
+                                        '&:hover': {
+                                            backgroundColor: '#063455 !important',
+                                            color: '#fff !important'
+                                        }
+                                    }
+                                }
+                            }
+                        }}>
                         <MenuItem value="all">All</MenuItem>
                         <MenuItem value="permanent">Permanent Member</MenuItem>
                         <MenuItem value="not_permanent">Not Permanent</MenuItem>
                     </TextField>
                     <Box display="flex" gap={2}>
-                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#063455', borderRadius: '16px', borderColor: '#063455', textTransform: 'none', paddingLeft:5, paddingRight:5 }}>
+                        <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ color: '#063455', borderRadius: '16px', borderColor: '#063455', textTransform: 'none', paddingLeft: 5, paddingRight: 5 }}>
                             Reset
                         </Button>
                         <Button variant="contained"
                             startIcon={<Search />}
-                            size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#063455', borderRadius: '16px', color: 'white', textTransform: 'none',  paddingLeft:5, paddingRight:5, '&:hover': { backgroundColor: '#083352' } }}>
+                            size="small" onClick={handleApplyFilters} sx={{ backgroundColor: '#063455', borderRadius: '16px', color: 'white', textTransform: 'none', paddingLeft: 5, paddingRight: 5, '&:hover': { backgroundColor: '#083352' } }}>
                             Search
                         </Button>
                     </Box>

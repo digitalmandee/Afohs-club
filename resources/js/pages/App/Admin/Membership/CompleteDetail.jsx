@@ -114,7 +114,7 @@ const ViewFullDetails = () => {
                                 variant="contained"
                                 startIcon={<PrintIcon />}
                                 style={{
-                                    backgroundColor: '#003366',
+                                    backgroundColor: '#063455',
                                     textTransform: 'none',
                                     color: 'white',
                                     borderRadius: '4px',

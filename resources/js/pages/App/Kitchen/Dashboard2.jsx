@@ -376,7 +376,7 @@ const OrderManagement = () => {
                                                     : order.status === 'Process'
                                                       ? '#1565C0'
                                                       : order.status === 'New Order'
-                                                        ? '#003366'
+                                                        ? '#063455'
                                                         : '#00BCD4',
                                             color: 'white',
                                             padding: '12px',
@@ -508,7 +508,7 @@ const OrderManagement = () => {
                                                 fullWidth
                                                 style={{
                                                     marginLeft: '8px',
-                                                    backgroundColor: '#003366',
+                                                    backgroundColor: '#063455',
                                                     textTransform: 'none',
                                                 }}
                                             >
@@ -634,10 +634,10 @@ const OrderManagement = () => {
                                         onClick={() => handleDatePeriodChange('Custom Date')}
                                         variant={datePeriod === 'Custom Date' ? 'filled' : 'outlined'}
                                         style={{
-                                            backgroundColor: datePeriod === 'Custom Date' ? '#003366' : 'transparent',
-                                            color: datePeriod === 'Custom Date' ? 'white' : '#003366',
+                                            backgroundColor: datePeriod === 'Custom Date' ? '#063455' : 'transparent',
+                                            color: datePeriod === 'Custom Date' ? 'white' : '#063455',
                                             borderRadius: '16px',
-                                            border: '1px solid #003366',
+                                            border: '1px solid #063455',
                                             fontSize: '13px',
                                         }}
                                     />
@@ -687,7 +687,7 @@ const OrderManagement = () => {
                                             style={{
                                                 backgroundColor: statusFilters.includes(status)
                                                     ? status === 'All'
-                                                        ? '#003366'
+                                                        ? '#063455'
                                                         : status === 'New Order'
                                                           ? '#1976D2'
                                                           : '#E3F2FD'
@@ -720,7 +720,7 @@ const OrderManagement = () => {
                                             style={{
                                                 backgroundColor: orderTypeFilters.includes(type)
                                                     ? type === 'All'
-                                                        ? '#003366'
+                                                        ? '#063455'
                                                         : '#E3F2FD'
                                                     : 'transparent',
                                                 color: orderTypeFilters.includes(type) ? (type === 'All' ? 'white' : '#1976D2') : 'inherit',
@@ -753,7 +753,7 @@ const OrderManagement = () => {
                                     onClick={applyFilters}
                                     variant="contained"
                                     style={{
-                                        backgroundColor: '#003366',
+                                        backgroundColor: '#063455',
                                         color: '#fff',
                                         textTransform: 'none',
                                     }}

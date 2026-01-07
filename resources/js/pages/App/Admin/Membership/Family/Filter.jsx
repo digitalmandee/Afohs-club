@@ -321,9 +321,29 @@ const FamilyFilter = () => {
                     onChange={(e) => handleFilterChange('relation', e.target.value)}
                     fullWidth
                     sx={{
+                        minWidth: 150,
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                            borderRadius: '16px'
+                        }
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 1,  // ✅ Top margin
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                                '& .MuiMenuItem-root': {
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important'
+                                    }
+                                }
+                            }
+                        }
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>
@@ -341,9 +361,29 @@ const FamilyFilter = () => {
                     onChange={(e) => handleFilterChange('card_status', e.target.value)}
                     fullWidth
                     sx={{
+                        minWidth: 150,
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                            borderRadius: '16px'
+                        }
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 1,  // ✅ Top margin
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                                '& .MuiMenuItem-root': {
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important'
+                                    }
+                                }
+                            }
+                        }
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>
@@ -361,9 +401,29 @@ const FamilyFilter = () => {
                     onChange={(e) => handleFilterChange('status', e.target.value)}
                     fullWidth
                     sx={{
+                        minWidth: 150,
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                            borderRadius: '16px'
+                        }
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 1,  // ✅ Top margin
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                                '& .MuiMenuItem-root': {
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important'
+                                    }
+                                }
+                            }
+                        }
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>

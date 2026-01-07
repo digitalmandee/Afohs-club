@@ -516,7 +516,7 @@ const EventCalendar = () => {
                                     <Button onClick={() => router.visit(route('events.booking.edit', selectedBooking.id))} variant="outlined">
                                         Edit Booking
                                     </Button>
-                                    <Button onClick={() => router.visit(route('events.booking.invoice', selectedBooking.id))} variant="contained" sx={{ backgroundColor: '#003366' }}>
+                                    <Button onClick={() => router.visit(route('events.booking.invoice', selectedBooking.id))} variant="contained" sx={{ backgroundColor: '#063455' }}>
                                         View Invoice
                                     </Button>
                                 </>

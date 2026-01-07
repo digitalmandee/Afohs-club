@@ -301,8 +301,8 @@ const GuestHistory = () => {
                                                 onClick={() => setSelectedMembershipType(type)}
                                                 style={{
                                                     backgroundColor: selectedMembershipType === type ?
-                                                        (type === 'All Type' ? '#003366' : '#cce5ff') :
-                                                        (type === 'All Type' ? '#003366' : '#f0f0f0'),
+                                                        (type === 'All Type' ? '#063455' : '#cce5ff') :
+                                                        (type === 'All Type' ? '#063455' : '#f0f0f0'),
                                                     color: selectedMembershipType === type ?
                                                         (type === 'All Type' ? 'white' : '#0066cc') :
                                                         (type === 'All Type' ? 'white' : '#333'),
@@ -344,8 +344,8 @@ const GuestHistory = () => {
                                                 onClick={() => setSelectedStatusType(type)}
                                                 style={{
                                                     backgroundColor: selectedStatusType === type ?
-                                                        (type === 'All Type' ? '#003366' : '#cce5ff') :
-                                                        (type === 'All Type' ? '#003366' : '#f0f0f0'),
+                                                        (type === 'All Type' ? '#063455' : '#cce5ff') :
+                                                        (type === 'All Type' ? '#063455' : '#f0f0f0'),
                                                     color: selectedStatusType === type ?
                                                         (type === 'All Type' ? 'white' : '#0066cc') :
                                                         (type === 'All Type' ? 'white' : '#333'),
@@ -429,7 +429,7 @@ const GuestHistory = () => {
                                     onClick={handleApplyFilters}
                                     style={{
                                         textTransform: 'none',
-                                        backgroundColor: '#003366',
+                                        backgroundColor: '#063455',
                                         color: 'white'
                                     }}
                                     variant="contained"

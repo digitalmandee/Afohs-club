@@ -111,7 +111,7 @@ const MainDashboard = ({ kitchens }) => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('kitchens.create'))} style={{ backgroundColor: '#003366', color: 'white' }}>
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('kitchens.create'))} style={{ backgroundColor: '#063455', color: 'white' }}>
                                 Add Kitchen
                             </Button>
                         </div>

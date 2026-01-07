@@ -129,7 +129,7 @@ const EventViewDocumentsModal = ({ open, onClose, bookingId }) => {
         <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Visibility sx={{ color: '#003366' }} />
+                    <Visibility sx={{ color: '#063455' }} />
                     <Typography variant="h6">Attached Documents</Typography>
                 </Box>
                 <IconButton onClick={onClose} size="small">

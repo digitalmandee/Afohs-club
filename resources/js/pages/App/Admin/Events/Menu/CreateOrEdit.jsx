@@ -153,7 +153,7 @@ const CreateOrEditMenu = ({ eventMenu = null, menuItems }) => {
                             </Grid>
 
                             <Grid item xs={12}>
-                                <Button type="submit" variant="contained" style={{ backgroundColor: '#003366', textTransform: 'none' }} disabled={processing} size="large" sx={{ mt: 2 }}>
+                                <Button type="submit" variant="contained" style={{ backgroundColor: '#063455', textTransform: 'none' }} disabled={processing} size="large" sx={{ mt: 2 }}>
                                     {eventMenu ? 'Update' : 'Create'}
                                 </Button>
                             </Grid>

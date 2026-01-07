@@ -61,7 +61,7 @@ const SportsCategory = () => {
                         variant="contained"
                         startIcon={<AddIcon />}
                         sx={{
-                            backgroundColor: '#003366',
+                            backgroundColor: '#063455',
                             textTransform: 'none',
                             color: 'white',
                             borderRadius: '4px',
@@ -99,7 +99,7 @@ const SportsCategory = () => {
                                     <Typography
                                         sx={{
                                             fontWeight: 500,
-                                            color: '#003366',
+                                            color: '#063455',
                                             fontSize: '16px',
                                         }}
                                     >

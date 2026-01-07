@@ -51,7 +51,7 @@ const MembershipStepper = ({ step, onStepClick }) => {
                                 width: 30,
                                 height: 30,
                                 borderRadius: '50%',
-                                backgroundColor: isActive || isCompleted ? '#2c3e50' : '#e0e0e0',
+                                backgroundColor: isActive || isCompleted ? '#063455' : '#e0e0e0',
                                 color: isActive || isCompleted ? 'white' : '#333',
                                 display: 'flex',
                                 alignItems: 'center',
@@ -61,7 +61,7 @@ const MembershipStepper = ({ step, onStepClick }) => {
                         >
                             {isCompleted ? <CheckCircleIcon fontSize="small" /> : s.number}
                         </Box>
-                        <Typography sx={{ fontWeight: 500, fontSize: '0.9rem', color: isActive ? '#2c3e50' : '#666' }}>{s.label}</Typography>
+                        <Typography sx={{ fontWeight: 500, fontSize: '0.9rem', color: isActive ? '#063455' : '#666' }}>{s.label}</Typography>
                     </Box>
                 );
             })}
