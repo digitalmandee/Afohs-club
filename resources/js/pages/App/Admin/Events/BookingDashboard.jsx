@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Container, Row, Button, Form, Badge, Card, Col, Modal } from 'react-bootstrap';
+import { Container, Row, Form, Badge, Card, Col, Modal } from 'react-bootstrap';
 import { Search, Add } from '@mui/icons-material';
-import { ThemeProvider, createTheme, Box, Typography } from '@mui/material';
+import { ThemeProvider, Button, createTheme, Box, Typography } from '@mui/material';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -148,32 +148,13 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
             <ThemeProvider theme={theme}>
                 <style>{dialogStyles}</style>
                 <Container fluid className="p-4 bg-light">
-                    <Row className="align-items-center">
-                        <Col>
-                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Dashboard</Typography>
-                        </Col>
-                        <Col xs="auto">
-                            <Button
-                            // variant='contain'
-                                style={{
-                                    backgroundColor: '#063455',
-                                    color: 'white',
-                                    border: 'none',
-                                    // padding: '5px 10px',
-                                    borderRadius: '16px',
-                                    height: 35,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '1px',
-                                    textTransform: 'none'
-                                }}
-                                onClick={() => router.visit(route('events.booking.create'))}
-                            >
-                                <Add />
-                                Event Booking
-                            </Button>
-                        </Col>
-                    </Row>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Dashboard</Typography>
+                        <Button variant="contained" startIcon={<Add />} sx={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px', height: 35 }}
+                            onClick={() => router.visit(route('events.booking.create'))}>
+                            <Typography>Event Booking</Typography>
+                        </Button>
+                    </Box>
                     <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
                         Overview of upcoming, ongoing, and recent events</Typography>
 
@@ -355,7 +336,7 @@ const EventBookingDashboard = ({ data, eventVenues }) => {
                                                             textAlign: 'center',
                                                             cursor: 'pointer',
                                                             borderRadius: '12px',
-                                                            textTransform:'capitalize'
+                                                            textTransform: 'capitalize'
                                                         }}
                                                     >
                                                         {booking.status}
