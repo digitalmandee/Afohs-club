@@ -141,19 +141,57 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
             <Box sx={{ mb: 3, mt: 3, boxShadow: 'none' }}>
                 <Grid container spacing={2} alignItems="center">
                     {/* Customer Type Selection */}
-                    <Grid item xs={12} md={5}>
-                        <FormControl component="fieldset">
+                    <Grid item xs={12} md={3}>
+                        {/* <FormControl component="fieldset">
                             <RadioGroup row aria-label="customer-type" name="customer-type" value={customerType} onChange={(e) => setCustomerType(e.target.value)}>
                                 <FormControlLabel value="all" control={<Radio sx={{ color: '#063455', '&.Mui-checked': { color: '#063455' } }} />} label="All" />
                                 <FormControlLabel value="member" control={<Radio sx={{ color: '#063455', '&.Mui-checked': { color: '#063455' } }} />} label="Member" />
                                 <FormControlLabel value="corporate" control={<Radio sx={{ color: '#063455', '&.Mui-checked': { color: '#063455' } }} />} label="Corporate" />
                                 <FormControlLabel value="guest" control={<Radio sx={{ color: '#063455', '&.Mui-checked': { color: '#063455' } }} />} label="Guest" />
                             </RadioGroup>
+                        </FormControl> */}
+                        <FormControl
+                            size="small"
+                            sx={{
+                                width: '100%',
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px'
+                                }
+                            }}
+                        >
+                            <Select
+                                value={customerType}
+                                onChange={(e) => setCustomerType(e.target.value)}
+                                defaultValue="all"
+                                MenuProps={{
+                                    sx: {
+                                        '& .MuiPaper-root': {
+                                            borderRadius: '16px',
+                                            boxShadow: 'none !important',
+                                            marginTop: '4px',
+                                            maxHeight: '180px', // Limits height after 4+ rooms
+                                            overflowY: 'auto', // Adds scroll when needed
+                                        },
+                                        '& .MuiMenuItem-root': {
+                                            borderRadius: '16px',
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important',
+                                            },
+                                        },
+                                    },
+                                }}
+                            >
+                                <MenuItem value="all">All</MenuItem>
+                                <MenuItem value="member">Member</MenuItem>
+                                <MenuItem value="corporate">Corporate</MenuItem>
+                                <MenuItem value="guest">Guest</MenuItem>
+                            </Select>
                         </FormControl>
                     </Grid>
 
                     {/* Search by Name with Autocomplete */}
-                    <Grid item xs={12} md={2}>
+                    <Grid item xs={12} md={3}>
                         <Autocomplete
                             freeSolo
                             disablePortal
@@ -196,14 +234,14 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     </Grid>
 
                     {/* Search by ID */}
-                    <Grid item xs={12} md={2}>
+                    <Grid item xs={12} md={3}>
                         <TextField fullWidth size="small" label="Booking ID" placeholder="Booking ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
                     </Grid>
 
                     {/* Booking Date Range */}
                     {showDates.booking && (
                         <>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={12} md={3}>
                                 <DatePicker
                                     label={`${dateLabels.booking} From`}
                                     format="DD-MM-YYYY"
@@ -232,7 +270,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     }}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={12} md={3}>
                                 <DatePicker
                                     label={`${dateLabels.booking} To`}
                                     format="DD-MM-YYYY"
@@ -262,7 +300,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {/* Check In Date Range */}
                     {showDates.checkIn && (
                         <>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={12} md={3}>
                                 <DatePicker
                                     label={`${dateLabels.checkIn} From`}
                                     format="DD-MM-YYYY"
@@ -285,7 +323,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     }}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={12} md={3}>
                                 <DatePicker
                                     label="Check-In To"
                                     format="DD-MM-YYYY"
@@ -315,7 +353,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     {/* Check Out Date Range */}
                     {showDates.checkOut && (
                         <>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={12} md={3}>
                                 <DatePicker
                                     label={`${dateLabels.checkOut} From`}
                                     format="DD-MM-YYYY"
@@ -339,7 +377,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     }}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={12} md={3}>
                                 <DatePicker
                                     label={`${dateLabels.checkOut} To`}
                                     format="DD-MM-YYYY"
@@ -368,7 +406,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
 
                     {/* Room Type Filter */}
                     {showRoomType && roomTypes && (
-                        <Grid item xs={12} md={2}>
+                        <Grid item xs={12} md={3}>
                             <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
                                 <Select
                                     multiple
@@ -461,7 +499,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     )}
                     {/* Room Selection */}
                     {showRoomType && rooms && (
-                        <Grid item xs={12} md={2}>
+                        <Grid item xs={12} md={3}>
                             <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
                                 <Select
                                     multiple
@@ -511,7 +549,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
 
                     {/* Venue Selection (For Events) */}
                     {showVenues && venues && (
-                        <Grid item xs={12} md={2}>
+                        <Grid item xs={12} md={3}>
                             <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
                                 <Select
                                     multiple
@@ -519,7 +557,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                     onChange={(e) => setSelectedVenues(e.target.value)}
                                     displayEmpty
                                     renderValue={(selected) => {
-                                        if (selected.length === 0) return <em style={{ color: '#999' }}>Choose Venues</em>;
+                                        if (selected.length === 0) return <Typography style={{ color: '#999' }}>Choose Venues</Typography>;
                                         return (
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                                 {selected.map((value) => {
@@ -538,6 +576,14 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                                 boxShadow: 'none !important',
                                                 marginTop: '4px',
                                             },
+                                            '& .MuiMenuItem-root': {
+                                                borderRadius: '16px',
+                                                // px:5,
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: '#fff !important',
+                                                },
+                                            },
                                         },
                                     }}
                                 >
@@ -553,7 +599,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
 
                     {/* Status Filter */}
                     {showStatus && (
-                        <Grid item xs={12} md={2}>
+                        <Grid item xs={12} md={3}>
                             <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
                                 <Select
                                     multiple
@@ -602,11 +648,11 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                     )}
 
                     {/* Action Buttons */}
-                    <Grid item xs={12} md={2} sx={{ display: 'flex', gap: 1 }}>
-                        <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455' }}>
+                    <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 2 }}>
+                        <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455', paddingLeft: 4, paddingRight: 4 }}>
                             Reset
                         </Button>
-                        <Button variant="contained" startIcon={<Search />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none' }}>
+                        <Button variant="contained" startIcon={<Search />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none', paddingLeft: 4, paddingRight: 4 }}>
                             Search
                         </Button>
                     </Grid>

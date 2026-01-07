@@ -345,7 +345,7 @@ const RoomScreen = ({ bookings }) => {
                                                         <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', color: '#f57c00' }}>
                                                             <FaEdit size={18} />
                                                         </Button>
-                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)}>
+                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)} style={{textTransform:'none'}}>
                                                             View
                                                         </Button>
                                                         {!['cancelled', 'refunded'].includes(booking.status) && (
@@ -361,8 +361,8 @@ const RoomScreen = ({ bookings }) => {
                                                             </Button>
                                                         )}
                                                         {booking.status === 'cancelled' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
-                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}>
-                                                                <span style={{ fontSize: '10px' }}>Refund</span>
+                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ textTransform:'none' }}>
+                                                                Refund
                                                             </Button>
                                                         )}
                                                     </Box>

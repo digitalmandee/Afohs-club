@@ -80,11 +80,11 @@ const EventVenues = ({ eventVenuesData }) => {
                         {/* <IconButton onClick={() => router.visit(route('events.dashboard'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton> */}
-                        <Typography variant="h5" sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                             Event Venues
                         </Typography>
                     </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px' }} onClick={handleAdd}>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px', height:35 }} onClick={handleAdd}>
                         Add Venue
                     </Button>
                 </Box>
