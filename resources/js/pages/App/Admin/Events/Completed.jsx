@@ -16,10 +16,10 @@ import RoomBookingFilter from '../Booking/BookingFilter';
 const theme = createTheme({
     palette: {
         primary: {
-            main: '#003366',
+            main: '#063455',
         },
         secondary: {
-            main: '#2c3e50',
+            main: '#063455',
         },
         success: {
             main: '#0e5f3c',
@@ -101,7 +101,7 @@ const EventsCompleted = ({ bookings, filters = {}, aggregates }) => {
                                     {/* <IconButton onClick={() => router.visit(route('events.dashboard'))} sx={{ color: '#063455' }}>
                                         <ArrowBack />
                                     </IconButton> */}
-                                    <Typography style={{ color: '#003366', fontWeight: 700, fontSize: '30px' }}>Completed Events</Typography>
+                                    <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Completed Events</Typography>
                                 </Box>
                             </Box>
                             <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Useful for reporting, billing review, and historical reference</Typography>
@@ -211,7 +211,7 @@ const EventsCompleted = ({ bookings, filters = {}, aggregates }) => {
                                                                 size="small"
                                                                 onClick={() => router.visit(route('events.booking.edit', booking.id))}
                                                                 style={{
-                                                                    backgroundColor: '#003366',
+                                                                    backgroundColor: '#063455',
                                                                     border: 'none',
                                                                     color: 'white',
                                                                 }}

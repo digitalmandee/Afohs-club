@@ -16,10 +16,10 @@ import RoomBookingFilter from '../Booking/BookingFilter';
 const theme = createTheme({
     palette: {
         primary: {
-            main: '#003366',
+            main: '#063455',
         },
         secondary: {
-            main: '#2c3e50',
+            main: '#063455',
         },
         success: {
             main: '#0e5f3c',

@@ -59,7 +59,7 @@ const StyledTextField = styled(TextField)({
             borderColor: '#b0b0b0',
         },
         '&.Mui-focused fieldset': {
-            borderColor: '#003366',
+            borderColor: '#063455',
         },
     },
 });
@@ -72,12 +72,12 @@ const StyledSelect = styled(Select)({
         borderColor: '#b0b0b0',
     },
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-        borderColor: '#003366',
+        borderColor: '#063455',
     },
 });
 
 const SaveButton = styled(Button)({
-    backgroundColor: '#003366',
+    backgroundColor: '#063455',
     color: 'white',
     '&:hover': {
         backgroundColor: '#002244',
@@ -872,7 +872,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.cashier.dineIn ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.cashier.dineIn ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.cashier.dineIn && (
@@ -917,7 +917,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.cashier.pickUp ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.cashier.pickUp ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.cashier.pickUp && (
@@ -962,7 +962,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.cashier.delivery ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.cashier.delivery ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.cashier.delivery && (
@@ -1007,7 +1007,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.cashier.takeaway ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.cashier.takeaway ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.cashier.takeaway && (
@@ -1052,7 +1052,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.cashier.reservation ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.cashier.reservation ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.cashier.reservation && (
@@ -1107,7 +1107,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.selfOrder.dineIn ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.selfOrder.dineIn ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.selfOrder.dineIn && (
@@ -1152,7 +1152,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.selfOrder.pickUp ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.selfOrder.pickUp ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.selfOrder.pickUp && (
@@ -1197,7 +1197,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.selfOrder.delivery ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.selfOrder.delivery ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.selfOrder.delivery && (
@@ -1242,7 +1242,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.selfOrder.takeaway ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.selfOrder.takeaway ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.selfOrder.takeaway && (
@@ -1287,7 +1287,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.selfOrder.reservation ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.selfOrder.reservation ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.selfOrder.reservation && (
@@ -1342,7 +1342,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.mobileApp.dineIn ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.mobileApp.dineIn ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.mobileApp.dineIn && (
@@ -1387,7 +1387,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.mobileApp.pickUp ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.mobileApp.pickUp ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.mobileApp.pickUp && (
@@ -1432,7 +1432,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.mobileApp.delivery ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.mobileApp.delivery ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.mobileApp.delivery && (
@@ -1477,7 +1477,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.mobileApp.takeaway ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.mobileApp.takeaway ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.mobileApp.takeaway && (
@@ -1522,7 +1522,7 @@ const SettingDashboard = () => {
                                                         display: 'flex',
                                                         alignItems: 'center',
                                                         justifyContent: 'center',
-                                                        backgroundColor: orderTypes.mobileApp.reservation ? '#003366' : 'transparent',
+                                                        backgroundColor: orderTypes.mobileApp.reservation ? '#063455' : 'transparent',
                                                     }}
                                                 >
                                                     {orderTypes.mobileApp.reservation && (
@@ -1616,7 +1616,7 @@ const SettingDashboard = () => {
                                                 onClick={handleAddCategory}
                                                 sx={{
                                                     ml: 1,
-                                                    backgroundColor: '#003366',
+                                                    backgroundColor: '#063455',
                                                     color: 'white',
                                                     '&:hover': {
                                                         backgroundColor: '#002244',
@@ -1707,7 +1707,7 @@ const SettingDashboard = () => {
                                                 onClick={handleAddPaymentType}
                                                 sx={{
                                                     ml: 1,
-                                                    backgroundColor: '#003366',
+                                                    backgroundColor: '#063455',
                                                     color: 'white',
                                                     '&:hover': {
                                                         backgroundColor: '#002244',
@@ -1839,7 +1839,7 @@ const SettingDashboard = () => {
                                                 onClick={handleAddBankAccount}
                                                 sx={{
                                                     ml: 1,
-                                                    backgroundColor: '#003366',
+                                                    backgroundColor: '#063455',
                                                     color: 'white',
                                                     '&:hover': {
                                                         backgroundColor: '#002244',
@@ -1901,7 +1901,7 @@ const SettingDashboard = () => {
                                     sx={{
                                         py: 2,
                                         borderRadius: 0,
-                                        backgroundColor: tableManagementTab === 'floor-data' ? '#2c3e50' : 'transparent',
+                                        backgroundColor: tableManagementTab === 'floor-data' ? '#063455' : 'transparent',
                                         color: tableManagementTab === 'floor-data' ? 'white' : 'inherit',
                                         '&:hover': {
                                             backgroundColor: tableManagementTab === 'floor-data' ? '#1a2530' : 'rgba(0,0,0,0.04)',
@@ -1917,7 +1917,7 @@ const SettingDashboard = () => {
                                     sx={{
                                         py: 2,
                                         borderRadius: 0,
-                                        backgroundColor: tableManagementTab === 'area-data' ? '#2c3e50' : 'transparent',
+                                        backgroundColor: tableManagementTab === 'area-data' ? '#063455' : 'transparent',
                                         color: tableManagementTab === 'area-data' ? 'white' : 'inherit',
                                         '&:hover': {
                                             backgroundColor: tableManagementTab === 'area-data' ? '#1a2530' : 'rgba(0,0,0,0.04)',
@@ -1986,7 +1986,7 @@ const SettingDashboard = () => {
                                                     onClick={handleAddFloor}
                                                     sx={{
                                                         ml: 1,
-                                                        backgroundColor: '#003366',
+                                                        backgroundColor: '#063455',
                                                         color: 'white',
                                                         '&:hover': {
                                                             backgroundColor: '#002244',

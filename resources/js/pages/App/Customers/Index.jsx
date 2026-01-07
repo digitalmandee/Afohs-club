@@ -66,7 +66,7 @@ const ManageCustomer = ({ customerData }) => {
                             Customers
                         </Typography>
                     </Box>
-                    <Button variant="contained" sx={{ backgroundColor: '#003366', textTransform: 'none' }} onClick={() => router.visit(route('customers.create'))}>
+                    <Button variant="contained" sx={{ backgroundColor: '#063455', textTransform: 'none' }} onClick={() => router.visit(route('customers.create'))}>
                         Add Customer
                     </Button>
                 </Box>

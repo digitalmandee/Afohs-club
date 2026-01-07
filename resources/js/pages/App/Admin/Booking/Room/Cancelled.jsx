@@ -15,8 +15,8 @@ import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 
 const theme = createTheme({
     palette: {
-        primary: { main: '#003366' },
-        secondary: { main: '#2c3e50' },
+        primary: { main: '#063455' },
+        secondary: { main: '#063455' },
     },
 });
 

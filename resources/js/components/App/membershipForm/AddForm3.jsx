@@ -996,7 +996,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                     <Grid container spacing={3}>
                         <Grid item xs={12} md={12}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#063455' }}>
                                     Membership Information
                                 </Typography>
                                 <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>
@@ -1947,7 +1947,7 @@ const AddForm3 = ({ data, handleChange, handleChangeData, onSubmit, onBack, memb
                                         {showFamilyMember && (
                                             <>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                                                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                                                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#063455' }}>
                                                         Family Member Information
                                                     </Typography>
                                                     <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>

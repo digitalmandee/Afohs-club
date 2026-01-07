@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Button, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Typography, Button, createTheme, ThemeProvider, TextField, Table, TableContainer, TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Avatar, Box, InputAdornment, Menu, MenuItem, Tooltip, Drawer, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import axios from 'axios';
 import { Search, FilterAlt, Visibility, Delete } from '@mui/icons-material';
@@ -161,6 +161,13 @@ const AllMembers = ({ members }) => {
         }
     };
 
+    const theme = createTheme({
+        palette: {
+            primary: { main: '#063455' },
+            secondary: { main: '#063455' },
+        },
+    });
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} />
@@ -174,193 +181,195 @@ const AllMembers = ({ members }) => {
             > */}
             <div className="container-fluid p-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Recently Joined Section */}
-                <div className="mx-3">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Members</Typography>
-                        <Button
-                            variant="outlined"
-                            startIcon={<Delete />}
-                            component="a"
-                            onClick={() => router.get(route('membership.trashed'))}
-                            sx={{
-                                color: '#d32f2f',
-                                borderColor: '#d32f2f',
-                                borderRadius: '16px',
-                                textTransform: 'none',
-                                '&:hover': {
-                                    backgroundColor: '#ffebee',
+                <ThemeProvider theme={theme}>
+                    <div className="mx-3">
+                        <div className="d-flex justify-content-between align-items-center">
+                            <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Members</Typography>
+                            <Button
+                                variant="outlined"
+                                startIcon={<Delete />}
+                                component="a"
+                                onClick={() => router.get(route('membership.trashed'))}
+                                sx={{
+                                    color: '#d32f2f',
                                     borderColor: '#d32f2f',
-                                },
-                            }}
-                        >
-                            Deleted Members
-                        </Button>
-                    </div>
-                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        A quick overview of membership statistics, recent activities, and important alerts
-                    </Typography>
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        backgroundColor: '#ffebee',
+                                        borderColor: '#d32f2f',
+                                    },
+                                }}
+                            >
+                                Deleted Members
+                            </Button>
+                        </div>
+                        <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
+                            A quick overview of membership statistics, recent activities, and important alerts
+                        </Typography>
 
-                    {/* Filter Modal */}
-                    <MembershipDashboardFilter />
+                        {/* Filter Modal */}
+                        <MembershipDashboardFilter />
 
-                    {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
-                        <Table>
-                            <TableHead>
-                                <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Category</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Family Members</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                    {/* <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
+                        {/* Members Table */}
+                        <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Member</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Member Category</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Type</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>CNIC</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Contact</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership Date</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Duration</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Family Members</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600, whiteSpace: 'nowrap' }}>Card Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                                        {/* <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Card</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Invoice</TableCell>
                                     <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Documents</TableCell> */}
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>
-                                        Files
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredMembers.map((user) => (
-                                    <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell
-                                            onClick={() => router.visit(route('membership.profile', user.id))}
-                                            sx={{
-                                                color: '#000',
-                                                fontWeight: 600,
-                                                fontSize: '14px',
-                                                cursor: 'pointer',
-                                                '&:hover': {
-                                                    color: '#7f7f7f', // dark text on hover
-                                                    fontWeight: 600, // bold on hover
-                                                },
-                                            }}
-                                        >
-                                            {user.membership_no || 'N/A'}
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>
+                                            Files
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="d-flex align-items-center">
-                                                <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
-                                                <div>
-                                                    <Typography sx={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 400,
-                                                        fontSize: '14px',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        maxWidth: '150px',  // Container for name + icon
-                                                    }}>
-                                                        {/* ✅ Name truncates independently */}
-                                                        <div style={{
-                                                            maxWidth: '110px',  // Exactly 15 chars
-                                                            whiteSpace: 'nowrap',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis'
+                                        <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {filteredMembers.map((user) => (
+                                        <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
+                                            <TableCell
+                                                onClick={() => router.visit(route('membership.profile', user.id))}
+                                                sx={{
+                                                    color: '#000',
+                                                    fontWeight: 600,
+                                                    fontSize: '14px',
+                                                    cursor: 'pointer',
+                                                    '&:hover': {
+                                                        color: '#7f7f7f', // dark text on hover
+                                                        fontWeight: 600, // bold on hover
+                                                    },
+                                                }}
+                                            >
+                                                {user.membership_no || 'N/A'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="d-flex align-items-center">
+                                                    <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.name} style={{ marginRight: '10px' }} />
+                                                    <div>
+                                                        <Typography sx={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            maxWidth: '150px',  // Container for name + icon
                                                         }}>
-                                                            <Tooltip title={user.full_name || 'N/A'} arrow>
-                                                                <span>{user.full_name}</span>
-                                                            </Tooltip>
-                                                        </div>
+                                                            {/* ✅ Name truncates independently */}
+                                                            <div style={{
+                                                                maxWidth: '110px',  // Exactly 15 chars
+                                                                whiteSpace: 'nowrap',
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis'
+                                                            }}>
+                                                                <Tooltip title={user.full_name || 'N/A'} arrow>
+                                                                    <span>{user.full_name}</span>
+                                                                </Tooltip>
+                                                            </div>
 
-                                                        {/* ✅ Icon stays separate */}
-                                                        {user.is_document_enabled && (
-                                                            <Tooltip title="Documents missing" arrow>
-                                                                <WarningAmberIcon color="warning" fontSize="small" />
-                                                            </Tooltip>
-                                                        )}
-                                                    </Typography>
-                                                </div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.cnic_no || 'N/A'}</TableCell>
-                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell> */}
-                                        <TableCell>
-                                            <Typography sx={{
-                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',  // ~20 chars width
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis'
-                                            }}>
-                                                <Tooltip title={user.mobile_number_a || 'N/A'} arrow>
-                                                    <span>{user.mobile_number_a || 'N/A'}</span>
-                                                </Tooltip>
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
-                                        {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell> */}
-                                        <TableCell>
-                                            <Typography sx={{
-                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',  // ~20 chars width
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis'
-                                            }}>
-                                                <Tooltip title={user.membership_duration || 'N/A'} arrow>
-                                                    <span>{user.membership_duration || 'N/A'}</span>
-                                                </Tooltip>
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
-                                        <TableCell>
-                                            <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
-                                                {(popupState) => (
-                                                    <>
-                                                        <span
-                                                            style={{
-                                                                color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
-                                                                fontWeight: 'medium',
-                                                                cursor: 'pointer',
-                                                            }}
-                                                            {...bindTrigger(popupState)}
-                                                        >
-                                                            {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'N/A'}
-                                                            {user.status === 'suspended' && (
-                                                                <img
-                                                                    src="/assets/system-expired.png"
-                                                                    alt=""
-                                                                    style={{
-                                                                        width: 25,
-                                                                        height: 25,
-                                                                        marginLeft: 2,
-                                                                        marginBottom: 5,
-                                                                    }}
-                                                                />
+                                                            {/* ✅ Icon stays separate */}
+                                                            {user.is_document_enabled && (
+                                                                <Tooltip title="Documents missing" arrow>
+                                                                    <WarningAmberIcon color="warning" fontSize="small" />
+                                                                </Tooltip>
                                                             )}
-                                                            <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
-                                                        </span>
-                                                        <Menu {...bindMenu(popupState)}>
-                                                            {getAvailableStatusActions(user.status).map((statusOption) => (
-                                                                <MenuItem
-                                                                    key={statusOption}
-                                                                    onClick={() => {
-                                                                        popupState.close();
-                                                                        setSelectMember(user);
-                                                                        if (statusOption === 'suspended') setSuspensionModalOpen(true);
-                                                                        else if (statusOption === 'cancelled') setCancelModalOpen(true);
-                                                                        else if (statusOption === 'active') setActivateModalOpen(true);
-                                                                        else if (statusOption === 'absent') setPauseModalOpen(true);
-                                                                    }}
-                                                                >
-                                                                    {statusOption === 'active' ? 'Activate' : statusOption}
-                                                                </MenuItem>
-                                                            ))}
-                                                        </Menu>
-                                                    </>
-                                                )}
-                                            </PopupState>
-                                        </TableCell>
-                                        {/* <TableCell>
+                                                        </Typography>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_category?.description || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.member_type?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{user.cnic_no || 'N/A'}</TableCell>
+                                            {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.mobile_number_a || 'N/A'}</TableCell> */}
+                                            <TableCell>
+                                                <Typography sx={{
+                                                    color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px',  // ~20 chars width
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    <Tooltip title={user.mobile_number_a || 'N/A'} arrow>
+                                                        <span>{user.mobile_number_a || 'N/A'}</span>
+                                                    </Tooltip>
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
+                                            {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_duration || 'N/A'}</TableCell> */}
+                                            <TableCell>
+                                                <Typography sx={{
+                                                    color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',  // ~20 chars width
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>
+                                                    <Tooltip title={user.membership_duration || 'N/A'} arrow>
+                                                        <span>{user.membership_duration || 'N/A'}</span>
+                                                    </Tooltip>
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.family_members_count || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <PopupState variant="popover" popupId={`status-popup-${user.id}`}>
+                                                    {(popupState) => (
+                                                        <>
+                                                            <span
+                                                                style={{
+                                                                    color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
+                                                                    fontWeight: 'medium',
+                                                                    cursor: 'pointer',
+                                                                    whiteSpace: 'nowrap'
+                                                                }}
+                                                                {...bindTrigger(popupState)}
+                                                            >
+                                                                {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'N/A'}
+                                                                {user.status === 'suspended' && (
+                                                                    <img
+                                                                        src="/assets/system-expired.png"
+                                                                        alt=""
+                                                                        style={{
+                                                                            width: 25,
+                                                                            height: 25,
+                                                                            marginLeft: 2,
+                                                                            marginBottom: 5,
+                                                                        }}
+                                                                    />
+                                                                )}
+                                                                <MdModeEdit size={18} style={{ marginLeft: '5px' }} />
+                                                            </span>
+                                                            <Menu {...bindMenu(popupState)}>
+                                                                {getAvailableStatusActions(user.status).map((statusOption) => (
+                                                                    <MenuItem
+                                                                        key={statusOption}
+                                                                        onClick={() => {
+                                                                            popupState.close();
+                                                                            setSelectMember(user);
+                                                                            if (statusOption === 'suspended') setSuspensionModalOpen(true);
+                                                                            else if (statusOption === 'cancelled') setCancelModalOpen(true);
+                                                                            else if (statusOption === 'active') setActivateModalOpen(true);
+                                                                            else if (statusOption === 'absent') setPauseModalOpen(true);
+                                                                        }}
+                                                                    >
+                                                                        {statusOption === 'active' ? 'Activate' : statusOption}
+                                                                    </MenuItem>
+                                                                ))}
+                                                            </Menu>
+                                                        </>
+                                                    )}
+                                                </PopupState>
+                                            </TableCell>
+                                            {/* <TableCell>
                                             <Button
                                                 style={{
                                                     color: '#0C67AA',
@@ -409,7 +418,7 @@ const AllMembers = ({ members }) => {
                                                 View
                                             </Button>
                                         </TableCell> */}
-                                        {/* <TableCell>
+                                            {/* <TableCell>
                                             <IconButton
                                                 size="small"
                                                 onClick={(e) => handleOpenMenu(e, user)}
@@ -445,61 +454,61 @@ const AllMembers = ({ members }) => {
                                                 <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
                                             </Menu>
                                         </TableCell> */}
-                                        <TableCell>
-                                            <IconButton
-                                                size="small"
-                                                onClick={(e) => handleOpenMenu(e, user)}
-                                            >
-                                                <MoreVertIcon sx={{ color: '#063455' }} />
-                                            </IconButton>
-                                            <Menu
-                                                anchorEl={menuAnchor}  // Fixed: anchorEl (not anchorE2)
-                                                open={Boolean(menuAnchor && selectedUserId === user.id)}
-                                                onClose={handleCloseMenu}
-                                                anchorOrigin={{
-                                                    vertical: 'bottom',
-                                                    horizontal: 'right',
-                                                }}
-                                                transformOrigin={{
-                                                    vertical: 'top',
-                                                    horizontal: 'right',
-                                                }}
-                                            // slotProps={{
-                                            //     paper: {
-                                            //         sx: { mt: -5 },
-                                            //     },
-                                            // }}
-                                            >
-                                                <MenuItem onClick={handleOpenCard}>Card</MenuItem>
-                                                <MenuItem onClick={handleOpenInvoice}>
-                                                    {menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend')
-                                                        ? 'Send Remind'
-                                                        : 'Invoice'
-                                                    }
-                                                </MenuItem>
-                                                <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
-                                            </Menu>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                                <Tooltip title="View Profile">
-                                                    <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
-                                                        <Visibility size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Edit Member">
-                                                    <IconButton onClick={() => router.visit(route('membership.edit', user.id))} sx={{ color: '#f57c00' }}>
-                                                        <FaEdit size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Delete Member">
-                                                    <IconButton onClick={() => handleDeleteClick(user)} sx={{ color: '#d32f2f' }}>
-                                                        <Delete size={18} />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                        {/* <TableCell align="center">
+                                            <TableCell>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={(e) => handleOpenMenu(e, user)}
+                                                >
+                                                    <MoreVertIcon sx={{ color: '#063455' }} />
+                                                </IconButton>
+                                                <Menu
+                                                    anchorEl={menuAnchor}  // Fixed: anchorEl (not anchorE2)
+                                                    open={Boolean(menuAnchor && selectedUserId === user.id)}
+                                                    onClose={handleCloseMenu}
+                                                    anchorOrigin={{
+                                                        vertical: 'bottom',
+                                                        horizontal: 'right',
+                                                    }}
+                                                    transformOrigin={{
+                                                        vertical: 'top',
+                                                        horizontal: 'right',
+                                                    }}
+                                                // slotProps={{
+                                                //     paper: {
+                                                //         sx: { mt: -5 },
+                                                //     },
+                                                // }}
+                                                >
+                                                    <MenuItem onClick={handleOpenCard}>Card</MenuItem>
+                                                    <MenuItem onClick={handleOpenInvoice}>
+                                                        {menuMember && (menuMember.card_status === 'Expired' || menuMember.card_status === 'Suspend')
+                                                            ? 'Send Remind'
+                                                            : 'Invoice'
+                                                        }
+                                                    </MenuItem>
+                                                    <MenuItem onClick={handleOpenDocuments}>Documents</MenuItem>
+                                                </Menu>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                                    <Tooltip title="View Profile">
+                                                        <IconButton onClick={() => router.visit(route('membership.profile', user.id))} sx={{ color: '#063455' }}>
+                                                            <Visibility size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Edit Member">
+                                                        <IconButton onClick={() => router.visit(route('membership.edit', user.id))} sx={{ color: '#f57c00' }}>
+                                                            <FaEdit size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Delete Member">
+                                                        <IconButton onClick={() => handleDeleteClick(user)} sx={{ color: '#d32f2f' }}>
+                                                            <Delete size={18} />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
+                                            {/* <TableCell align="center">
                                             <IconButton
                                                 onClick={(e) => setAnchorEl(e.currentTarget)}
                                                 sx={{ color: '#063455' }}
@@ -552,33 +561,33 @@ const AllMembers = ({ members }) => {
                                                 </MenuItem>
                                             </Menu>
                                         </TableCell> */}
-                                    </TableRow>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                            <Box display="flex" justifyContent="center" mt={2}>
+                                {members.links?.map((link, index) => (
+                                    <Button
+                                        key={index}
+                                        onClick={() => link.url && router.visit(link.url)}
+                                        disabled={!link.url}
+                                        variant={link.active ? 'contained' : 'outlined'}
+                                        size="small"
+                                        style={{
+                                            margin: '0 5px',
+                                            minWidth: '36px',
+                                            padding: '6px 10px',
+                                            fontWeight: link.active ? 'bold' : 'normal',
+                                            backgroundColor: link.active ? '#333' : '#fff',
+                                        }}
+                                    >
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    </Button>
                                 ))}
-                            </TableBody>
-                        </Table>
-                        <Box display="flex" justifyContent="center" mt={2}>
-                            {members.links?.map((link, index) => (
-                                <Button
-                                    key={index}
-                                    onClick={() => link.url && router.visit(link.url)}
-                                    disabled={!link.url}
-                                    variant={link.active ? 'contained' : 'outlined'}
-                                    size="small"
-                                    style={{
-                                        margin: '0 5px',
-                                        minWidth: '36px',
-                                        padding: '6px 10px',
-                                        fontWeight: link.active ? 'bold' : 'normal',
-                                        backgroundColor: link.active ? '#333' : '#fff',
-                                    }}
-                                >
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                </Button>
-                            ))}
-                        </Box>
-                    </TableContainer>
-                </div>
-
+                            </Box>
+                        </TableContainer>
+                    </div>
+                </ThemeProvider>
                 {/* Modal */}
                 <MembershipPauseDialog open={pauseModalOpen} onClose={() => setPauseModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
                 <MembershipSuspensionDialog open={suspensionModalOpen} onClose={() => setSuspensionModalOpen(false)} memberId={selectMember?.id} onSuccess={(newStatus) => handleStatusUpdate(selectMember.id, newStatus)} />
@@ -680,13 +689,13 @@ const AllMembers = ({ members }) => {
                 <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
                     <DialogTitle id="alert-dialog-title">{'Confirm Deletion'}</DialogTitle>
                     <DialogContent>
-                        <DialogContentText id="alert-dialog-description" style={{color:'#D32F2F'}}>Are you sure you want to delete this member? </DialogContentText>
+                        <DialogContentText id="alert-dialog-description" style={{ color: '#D32F2F' }}>Are you sure you want to delete this member? </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setDeleteDialogOpen(false)} style={{color:'#063455', border:'1px solid #063455'}}>
+                        <Button onClick={() => setDeleteDialogOpen(false)} style={{ color: '#063455', border: '1px solid #063455' }}>
                             Cancel
                         </Button>
-                        <Button onClick={confirmDelete} autoFocus style={{color:'#D32F2F', border:'1px solid #D32F2F'}}>
+                        <Button onClick={confirmDelete} autoFocus style={{ color: '#D32F2F', border: '1px solid #D32F2F' }}>
                             Delete
                         </Button>
                     </DialogActions>

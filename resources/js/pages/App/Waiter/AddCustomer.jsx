@@ -250,7 +250,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                         </Grid>
                         <Grid item xs={12}>
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 0 }}>
-                                <Button variant="contained" onClick={handleSaveCustomer} sx={{ backgroundColor: '#003366' }}>
+                                <Button variant="contained" onClick={handleSaveCustomer} sx={{ backgroundColor: '#063455' }}>
                                     {isEditMode ? 'Save Changes' : 'Save'}
                                 </Button>
                             </Box>

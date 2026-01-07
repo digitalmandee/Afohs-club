@@ -329,15 +329,45 @@ const MembershipDashboardFilter = () => {
                             borderRadius: '16px',
                         },
                     }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 0.5,
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                            },
+                        },
+                    }}
                 >
-                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="all"
+                        sx={{
+                            borderRadius: '16px',
+                            '&:hover': {
+                                backgroundColor: '#063455 !important',
+                                color: '#fff !important',
+                            },
+                        }}
+                    >
+                        All</MenuItem>
                     {['In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued'].map((status, idx) => (
-                        <MenuItem key={idx} value={status}>
+                        <MenuItem key={idx} value={status}
+                            sx={{
+                                borderRadius: '16px',
+                                textTransform: 'capitalize',
+                                '&:hover': {
+                                    backgroundColor: '#063455 !important',
+                                    color: '#fff !important',
+                                },
+                            }}>
                             {status}
                         </MenuItem>
                     ))}
                 </TextField>
-                <TextField
+                {/* <TextField
                     select
                     label="Status"
                     size="small"
@@ -356,7 +386,63 @@ const MembershipDashboardFilter = () => {
                             {status.replace(/_/g, ' ')}
                         </MenuItem>
                     ))}
+                </TextField> */}
+                <TextField
+                    select
+                    label="Status"
+                    size="small"
+                    value={filters.status}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    fullWidth
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            borderRadius: '16px',
+                        },
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 0.5,
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                            },
+                        },
+                    }}
+                >
+                    <MenuItem
+                        value="all"
+                        sx={{
+                            borderRadius: '16px',
+                            '&:hover': {
+                                backgroundColor: '#063455 !important',
+                                color: '#fff !important',
+                            },
+                        }}
+                    >
+                        All
+                    </MenuItem>
+                    {['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'].map((status, idx) => (
+                        <MenuItem
+                            key={idx}
+                            value={status}
+                            sx={{
+                                borderRadius: '16px',
+                                textTransform: 'capitalize',
+                                '&:hover': {
+                                    backgroundColor: '#063455 !important',
+                                    color: '#fff !important',
+                                },
+                            }}
+                        >
+                            {status.replace(/_/g, ' ')}
+                        </MenuItem>
+                    ))}
                 </TextField>
+
                 {/* Sorting and chip filter sections remain as they are... */}
 
                 <Box display="flex" justifyContent="flex-end" gap={1}>

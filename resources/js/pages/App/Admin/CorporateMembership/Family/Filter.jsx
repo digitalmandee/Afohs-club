@@ -326,9 +326,29 @@ const CorporateFamilyFilter = () => {
                     onChange={(e) => handleFilterChange('relation', e.target.value)}
                     fullWidth
                     sx={{
+                        minWidth: 150,
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                            borderRadius: '16px'
+                        }
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 1,  // ✅ Top margin
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                                '& .MuiMenuItem-root': {
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important'
+                                    }
+                                }
+                            }
+                        }
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>
@@ -346,9 +366,29 @@ const CorporateFamilyFilter = () => {
                     onChange={(e) => handleFilterChange('card_status', e.target.value)}
                     fullWidth
                     sx={{
+                        minWidth: 150,
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                            borderRadius: '16px'
+                        }
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 1,  // ✅ Top margin
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                                '& .MuiMenuItem-root': {
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important'
+                                    }
+                                }
+                            }
+                        }
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>
@@ -366,9 +406,29 @@ const CorporateFamilyFilter = () => {
                     onChange={(e) => handleFilterChange('status', e.target.value)}
                     fullWidth
                     sx={{
+                        minWidth: 150,
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                            borderRadius: '16px'
+                        }
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 1,  // ✅ Top margin
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                                '& .MuiMenuItem-root': {
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important'
+                                    }
+                                }
+                            }
+                        }
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>
@@ -385,9 +445,29 @@ const CorporateFamilyFilter = () => {
                     onChange={(e) => handleFilterChange('member_category', e.target.value)}
                     fullWidth
                     sx={{
+                        minWidth: 150,
                         '& .MuiOutlinedInput-root': {
-                            borderRadius: '16px',
-                        },
+                            borderRadius: '16px'
+                        }
+                    }}
+                    SelectProps={{
+                        MenuProps: {
+                            sx: {
+                                mt: 1,  // ✅ Top margin
+                                '& .MuiPaper-root': {
+                                    borderRadius: '16px !important',
+                                    boxShadow: 'none !important',
+                                    maxHeight: '200px',
+                                    overflowY: 'auto'
+                                },
+                                '& .MuiMenuItem-root': {
+                                    '&:hover': {
+                                        backgroundColor: '#063455 !important',
+                                        color: '#fff !important'
+                                    }
+                                }
+                            }
+                        }
                     }}
                 >
                     <MenuItem value="all">All</MenuItem>
@@ -399,7 +479,7 @@ const CorporateFamilyFilter = () => {
                         ))}
                 </TextField>
                 <Box display="flex" justifyContent="flex-end" gap={1}>
-                    <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ width: '100%', borderRadius: '16px', color: '#333', borderColor: '#ddd', textTransform: 'none' }}>
+                    <Button variant="outlined" size="small" onClick={handleResetFilters} sx={{ width: '100%', borderRadius: '16px', color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
                         Reset
                     </Button>
                     <Button variant="contained" startIcon={<Search />} size="small" onClick={handleApplyFilters} sx={{ width: '100%', borderRadius: '16px', backgroundColor: '#0a3d62', color: 'white', textTransform: 'none', '&:hover': { backgroundColor: '#083352' } }}>

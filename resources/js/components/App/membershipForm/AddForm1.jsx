@@ -215,7 +215,7 @@ const AddForm1 = ({ data, handleChange, onNext }) => {
             {/* Main Form */}
             <Paper sx={{ p: 3, mb: 3, boxShadow: 'none' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#2c3e50' }}>
+                    <Typography variant="h6" component="h2" sx={{ fontWeight: 500, color: '#063455' }}>
                         Personal Information
                     </Typography>
                     <Box sx={{ borderBottom: '1px dashed #ccc', flexGrow: 1, ml: 2 }}></Box>

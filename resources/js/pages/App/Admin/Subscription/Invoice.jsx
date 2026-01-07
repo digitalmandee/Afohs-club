@@ -129,7 +129,7 @@ const handlePrintReceipt = (data) => {
                     <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo"/>
                   </div>
                   <div class="grid-item-center">
-                    <div class="typography-h6" style="color: #003366;">Afohs Club</div>
+                    <div class="typography-h6" style="color: #063455;">Afohs Club</div>
                     <div class="typography-body2">
                       PAF Falcon complex, Gulberg III,<br />
                       Lahore, Pakistan
@@ -409,7 +409,7 @@ const InvoiceSlip = ({ open, onClose, data }) => {
                             <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" style={{ height: '60px' }} />
                         </Grid>
                         <Grid item xs={4} sx={{ textAlign: 'center' }}>
-                            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#003366', fontSize: '18px' }}>
+                            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#063455', fontSize: '18px' }}>
                                 Afohs Club
                             </Typography>
                             <Typography variant="body2" sx={{ color: '#555', fontSize: '12px', lineHeight: 1.4 }}>

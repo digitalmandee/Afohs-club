@@ -453,7 +453,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                     <Paper elevation={1} style={{ borderRadius: '8px', overflow: 'hidden' }}>
                                         <div
                                             style={{
-                                                backgroundColor: order.status === 'completed' ? '#4CAF50' : order.status === 'pending' ? '#1565C0' : order.status === 'cancelled' && order.status === 'Refund' ? '#00BCD4' : order.status === 'in_progress' ? '#003366' : '#00BCD4',
+                                                backgroundColor: order.status === 'completed' ? '#4CAF50' : order.status === 'pending' ? '#1565C0' : order.status === 'cancelled' && order.status === 'Refund' ? '#00BCD4' : order.status === 'in_progress' ? '#063455' : '#00BCD4',
                                                 color: 'white',
                                                 padding: '12px',
                                                 display: 'flex',
@@ -573,7 +573,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                                     disabled={loadingOrders[order.id] || false}
                                                     style={{
                                                         marginLeft: '8px',
-                                                        backgroundColor: order.status === 'pending' ? '#1565C0' : '#003366',
+                                                        backgroundColor: order.status === 'pending' ? '#1565C0' : '#063455',
                                                         textTransform: 'none',
                                                     }}
                                                     onClick={(e) => handleStatusChange(e, order.id)}
@@ -680,10 +680,10 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                         onClick={() => handleDatePeriodChange('Custom Date')}
                                         variant={datePeriod === 'Custom Date' ? 'filled' : 'outlined'}
                                         style={{
-                                            backgroundColor: datePeriod === 'Custom Date' ? '#003366' : 'transparent',
-                                            color: datePeriod === 'Custom Date' ? 'white' : '#003366',
+                                            backgroundColor: datePeriod === 'Custom Date' ? '#063455' : 'transparent',
+                                            color: datePeriod === 'Custom Date' ? 'white' : '#063455',
                                             borderRadius: '16px',
-                                            border: '1px solid #003366',
+                                            border: '1px solid #063455',
                                             fontSize: '13px',
                                         }}
                                     />
@@ -727,7 +727,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                             onClick={() => handleStatusFilterChange(status)}
                                             variant={statusFilters.includes(status) ? 'filled' : 'outlined'}
                                             style={{
-                                                backgroundColor: statusFilters.includes(status) ? (status === 'All' ? '#003366' : status === 'New Order' ? '#1976D2' : '#E3F2FD') : 'transparent',
+                                                backgroundColor: statusFilters.includes(status) ? (status === 'All' ? '#063455' : status === 'New Order' ? '#1976D2' : '#E3F2FD') : 'transparent',
                                                 color: statusFilters.includes(status) ? (status === 'All' || status === 'New Order' ? 'white' : '#1976D2') : 'inherit',
                                                 borderRadius: '16px',
                                                 fontSize: '13px',
@@ -748,7 +748,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                             onClick={() => handleOrderTypeFilterChange(type)}
                                             variant={orderTypeFilters.includes(type) ? 'filled' : 'outlined'}
                                             style={{
-                                                backgroundColor: orderTypeFilters.includes(type) ? (type === 'All' ? '#003366' : '#E3F2FD') : 'transparent',
+                                                backgroundColor: orderTypeFilters.includes(type) ? (type === 'All' ? '#063455' : '#E3F2FD') : 'transparent',
                                                 color: orderTypeFilters.includes(type) ? (type === 'All' ? 'white' : '#1976D2') : 'inherit',
                                                 borderRadius: '16px',
                                                 fontSize: '13px',
@@ -778,7 +778,7 @@ const OrderManagement = ({ kitchenOrders, flash }) => {
                                     onClick={applyFilters}
                                     variant="contained"
                                     style={{
-                                        backgroundColor: '#003366',
+                                        backgroundColor: '#063455',
                                         color: '#fff',
                                         textTransform: 'none',
                                     }}

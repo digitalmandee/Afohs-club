@@ -221,7 +221,7 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                     <div className="my-4 p-4 bg-white rounded border" style={{ maxWidth: '700px', margin: '0 auto' }}>
                         <Card className="mb-4 p-3">
                             <Box>
-                                <h5 style={{ color: '#003366', fontWeight: 600 }}>Customer Info</h5>
+                                <h5 style={{ color: '#063455', fontWeight: 600 }}>Customer Info</h5>
                             </Box>
                             <Grid container spacing={2}>
                                 <Grid item xs={12} sm={6}>
@@ -339,7 +339,7 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                         {roomOrders && roomOrders.length > 0 && (
                             <Card className="mb-4">
                                 <Card.Body>
-                                    <h6 style={{ color: '#003366', fontWeight: 600, marginBottom: '15px' }}>Unpaid Room Orders</h6>
+                                    <h6 style={{ color: '#063455', fontWeight: 600, marginBottom: '15px' }}>Unpaid Room Orders</h6>
                                     {roomOrders.map((order) => (
                                         <div key={order.id} className="d-flex justify-content-between border-bottom py-2">
                                             <div>
@@ -464,8 +464,8 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                                             onClick={() => handleBankSelect('HBL')}
                                             className="rounded-pill"
                                             style={{
-                                                backgroundColor: invoiceForm.bankName === 'HBL' ? '#003366' : 'transparent',
-                                                borderColor: invoiceForm.bankName === 'HBL' ? '#003366' : '#dee2e6',
+                                                backgroundColor: invoiceForm.bankName === 'HBL' ? '#063455' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'HBL' ? '#063455' : '#dee2e6',
                                             }}
                                         >
                                             HBL
@@ -475,8 +475,8 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                                             onClick={() => handleBankSelect('MCB Bank')}
                                             className="rounded-pill"
                                             style={{
-                                                backgroundColor: invoiceForm.bankName === 'MCB Bank' ? '#003366' : 'transparent',
-                                                borderColor: invoiceForm.bankName === 'MCB Bank' ? '#003366' : '#dee2e6',
+                                                backgroundColor: invoiceForm.bankName === 'MCB Bank' ? '#063455' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'MCB Bank' ? '#063455' : '#dee2e6',
                                             }}
                                         >
                                             MCB Bank
@@ -486,8 +486,8 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                                             onClick={() => handleBankSelect('UBL')}
                                             className="rounded-pill"
                                             style={{
-                                                backgroundColor: invoiceForm.bankName === 'UBL' ? '#003366' : 'transparent',
-                                                borderColor: invoiceForm.bankName === 'UBL' ? '#003366' : '#dee2e6',
+                                                backgroundColor: invoiceForm.bankName === 'UBL' ? '#063455' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'UBL' ? '#063455' : '#dee2e6',
                                             }}
                                         >
                                             UBL
@@ -497,8 +497,8 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                                             onClick={() => handleBankSelect('Standard Chartered')}
                                             className="rounded-pill"
                                             style={{
-                                                backgroundColor: invoiceForm.bankName === 'Standard Chartered' ? '#003366' : 'transparent',
-                                                borderColor: invoiceForm.bankName === 'Standard Chartered' ? '#003366' : '#dee2e6',
+                                                backgroundColor: invoiceForm.bankName === 'Standard Chartered' ? '#063455' : 'transparent',
+                                                borderColor: invoiceForm.bankName === 'Standard Chartered' ? '#063455' : '#dee2e6',
                                             }}
                                         >
                                             Standard Chartered
@@ -528,7 +528,7 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                                 <Button variant="outlined" color="secondary" onClick={handleSkipNow} className="d-flex align-items-center">
                                     Skip for Now
                                 </Button>
-                                <Button style={{ backgroundColor: '#003366', borderColor: '#003366' }} className="d-flex align-items-center" onClick={handlePayNow} disabled={loading}>
+                                <Button style={{ backgroundColor: '#063455', borderColor: '#063455' }} className="d-flex align-items-center" onClick={handlePayNow} disabled={loading}>
                                     Pay Now
                                     <KeyboardArrowRight fontSize="small" className="ms-1" />
                                 </Button>

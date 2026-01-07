@@ -16,10 +16,10 @@ import RoomBookingFilter from '../Booking/BookingFilter';
 const theme = createTheme({
     palette: {
         primary: {
-            main: '#003366',
+            main: '#063455',
         },
         secondary: {
-            main: '#2c3e50',
+            main: '#063455',
         },
         success: {
             main: '#0e5f3c',
@@ -114,7 +114,7 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                             {/* Header */}
                             <Box className="d-flex justify-content-between align-items-center">
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Typography style={{ color: '#003366', fontWeight: 700, fontSize: '30px' }}>Event Bookings</Typography>
+                                    <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Event Bookings</Typography>
                                 </Box>
                             </Box>
                             <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Create, edit, and monitor all event bookings</Typography>
@@ -218,8 +218,8 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                                                 size="small"
                                                                 onClick={() => handleShowInvoice(booking)}
                                                                 sx={{
-                                                                    border: '1px solid #003366',
-                                                                    // color: '#003366',
+                                                                    border: '1px solid #063455',
+                                                                    // color: '#063455',
                                                                     textTransform: 'none',
                                                                     // width: 100,
                                                                 }}
@@ -232,7 +232,7 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                                                 size="small"
                                                                 onClick={() => router.visit(route('events.booking.edit', booking.id))}
                                                                 sx={{
-                                                                    backgroundColor: '#003366',
+                                                                    backgroundColor: '#063455',
                                                                     border: 'none',
                                                                     textTransform: 'none',
                                                                     '&:hover': { backgroundColor: '#002855' },

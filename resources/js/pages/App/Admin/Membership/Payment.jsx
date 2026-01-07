@@ -312,7 +312,7 @@ const Payment = ({ invoice, onBack }) => {
                                     width: 24,
                                     height: 24,
                                     borderRadius: '50%',
-                                    backgroundColor: '#2c3e50',
+                                    backgroundColor: '#063455',
                                     color: 'white',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -322,7 +322,7 @@ const Payment = ({ invoice, onBack }) => {
                             >
                                 2
                             </Box>
-                            <Typography sx={{ fontWeight: 500, color: '#2c3e50' }}>Payment Detail</Typography>
+                            <Typography sx={{ fontWeight: 500, color: '#063455' }}>Payment Detail</Typography>
                         </Box>
                     </Paper>
 

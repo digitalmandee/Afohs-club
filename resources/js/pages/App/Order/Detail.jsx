@@ -638,7 +638,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                 variant="contained"
                                 onClick={handleApplyDiscount}
                                 sx={{
-                                    backgroundColor: '#003366',
+                                    backgroundColor: '#063455',
                                     color: '#FFFFFF',
                                     textTransform: 'none',
                                     fontSize: '14px',

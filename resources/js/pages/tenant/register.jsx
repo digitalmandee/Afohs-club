@@ -111,7 +111,7 @@ const Register = ({ tenant }) => {
 
                         {/* Submit */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <Button type="submit" variant="contained" sx={{ backgroundColor: '#003366', textTransform: 'none' }} disabled={processing} fullWidth>
+                            <Button type="submit" variant="contained" sx={{ backgroundColor: '#063455', textTransform: 'none' }} disabled={processing} fullWidth>
                                 {processing && <CircularProgress size={24} style={{ marginRight: '10px' }} />}
                                 {isEdit ? 'Update Kitchen' : 'Create Kitchen'}
                             </Button>

@@ -190,7 +190,7 @@ export const generateEventInvoiceContent = (booking) => {
             .charges-table th {
                 background: #f8f9fa;
                 font-weight: bold;
-                color: #003366;
+                color: #063455;
             }
             .charges-table .amount {
                 text-align: right;
@@ -211,7 +211,7 @@ export const generateEventInvoiceContent = (booking) => {
                         <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
                     </div>
                     <div class="grid-item-center">
-                        <div class="typography-h6" style="color: #003366">Afohs Club</div>
+                        <div class="typography-h6" style="color: #063455">Afohs Club</div>
                         <div class="typography-body3">
                             PAF Falcon complex, Gulberg III,<br />
                             Lahore, Pakistan

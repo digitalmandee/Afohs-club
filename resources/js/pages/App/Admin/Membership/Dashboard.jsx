@@ -23,7 +23,7 @@ const styles = {
     root: {
         backgroundColor: '#f5f5f5',
         minHeight: '100vh',
-        fontFamily: 'Arial, sans-serif',
+        // fontFamily: 'Arial, sans-serif',
     },
 };
 
@@ -297,18 +297,24 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                         <TableRow key={user.id} style={{ borderBottom: '1px solid #eee' }}>
                                             <TableCell
                                                 onClick={() => router.visit(route('membership.profile', user.id))}
-                                                sx={{
+                                                style={{
                                                     color: '#000',
                                                     fontWeight: 600,
                                                     fontSize: '14px',
                                                     cursor: 'pointer',
+                                                    maxWidth: '100px',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
                                                     '&:hover': {
                                                         color: '#7f7f7f', // dark text on hover
                                                         fontWeight: 600, // bold on hover
                                                     },
                                                 }}
                                             >
-                                                {user.membership_no || 'N/A'}
+                                                <Tooltip title={user.membership_no || 'N/A'} arrow>
+                                                    <span>{user.membership_no || 'N/A'}</span>
+                                                </Tooltip>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
@@ -390,10 +396,11 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                                     color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
                                                                     fontWeight: 'medium',
                                                                     cursor: 'pointer',
+                                                                    whiteSpace:'nowrap'
                                                                 }}
                                                                 {...bindTrigger(popupState)}
                                                             >
-                                                                {user.status || 'N/A'}
+                                                                {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'N/A'}
                                                                 {user.status === 'suspended' && (
                                                                     <img
                                                                         src="/assets/system-expired.png"
@@ -526,7 +533,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     </Tooltip>
                                                 </Box>
                                             </TableCell>
-                                        
+
                                             {/* <TableCell align="center">
                                                 <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ color: '#063455' }}>
                                                     <MoreVertIcon />
@@ -614,17 +621,31 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     fontWeight: 600,
                                                     fontSize: '14px',
                                                     cursor: 'pointer',
+                                                    textOverflow: 'ellipsis',
+                                                    overflow: 'hidden',
+                                                    whiteSpace: 'nowrap',
+                                                    maxWidth: '100px',
                                                     '&:hover': { color: '#7f7f7f', fontWeight: 600 },
                                                 }}
                                             >
-                                                {user.membership_no || 'N/A'}
+                                                <Tooltip title={user.membership_no || 'N/A'} arrow>
+                                                    <span>{user.membership_no || 'N/A'}</span>
+                                                </Tooltip>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="d-flex align-items-center">
                                                     <Avatar src={user.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={user.full_name} style={{ marginRight: '10px' }} />
                                                     <div>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.full_name}</Typography>
-                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.personal_email}</Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '150px', whiteSpace: 'nowrap' }}>
+                                                            <Tooltip title={user.full_name || 'N/A'} arrow>
+                                                                <span>{user.full_name || 'N/A'}</span>
+                                                            </Tooltip>
+                                                        </Typography>
+                                                        <Typography sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '120px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                            <Tooltip title={user.personal_email} arrow>
+                                                                <span>{user.personal_email}</span>
+                                                            </Tooltip>
+                                                        </Typography>
                                                     </div>
                                                 </div>
                                             </TableCell>
@@ -640,15 +661,27 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.membership_date ? dayjs(user.membership_date).format('DD-MM-YYYY') : 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{user.card_status || 'N/A'}</TableCell>
-                                            <TableCell>
+                                            {/* <TableCell>
                                                 <span style={{ color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f', fontWeight: 'medium' }}>{user.status || 'N/A'}</span>
+                                            </TableCell> */}
+                                            <TableCell>
+                                                <span
+                                                    style={{
+                                                        color: user.status === 'active' ? '#2e7d32' : user.status === 'suspended' ? '#FFA90B' : '#d32f2f',
+                                                        fontWeight: 'medium'
+                                                    }}
+                                                >
+                                                    {user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : 'N/A'}
+                                                </span>
                                             </TableCell>
                                             <TableCell>
                                                 <Button
+                                                    variant='outlined'
                                                     size="small"
+                                                    color='#063455'
                                                     style={{
-                                                        color: '#0C67AA',
-                                                        textDecoration: 'underline',
+                                                        color: '#063455',
+                                                        // textDecoration: 'underline',
                                                         textTransform: 'none',
                                                     }}
                                                     onClick={() => {
@@ -659,7 +692,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                                                     View
                                                 </Button>
                                             </TableCell>
-                                            <TableCell align="center">
+                                            <TableCell style={{ whiteSpace: 'nowrap' }}>
                                                 <IconButton onClick={() => router.visit(route('corporate-membership.edit', user.id))} sx={{ color: '#f57c00' }}>
                                                     <FaEdit size={16} />
                                                 </IconButton>
@@ -770,7 +803,7 @@ const MembershipDashboard = ({ members = [], corporateMembers = [], total_member
                     ) : (
                         <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>No attached documents</div>
                         // <div style={{ marginTop: '20px', textAlign: 'center', color: '#7F7F7F', fontSize: '14px' }}>
-                            // No attached documents
+                        // No attached documents
                         // </div>
                     )}
                 </Box>

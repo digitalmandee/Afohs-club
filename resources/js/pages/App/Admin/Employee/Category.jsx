@@ -52,7 +52,7 @@ const LeaveCategory = () => {
                 width: '20px',
                 height: '20px',
                 borderRadius: '4px',
-                backgroundColor: '#003366',
+                backgroundColor: '#063455',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -102,7 +102,7 @@ const LeaveCategory = () => {
                             variant="contained"
                             startIcon={<AddIcon />}
                             style={{
-                                backgroundColor: '#003366',
+                                backgroundColor: '#063455',
                                 textTransform: 'none',
                                 color: 'white',
                                 borderRadius: '4px',
