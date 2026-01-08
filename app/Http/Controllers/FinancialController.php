@@ -220,7 +220,8 @@ class FinancialController extends Controller
             'customer',
             'subscriptionType',
             'subscriptionCategory',
-            'invoiceable'
+            'invoiceable',
+            'items',
         ];
 
         // 1. Try to find by invoice ID directly

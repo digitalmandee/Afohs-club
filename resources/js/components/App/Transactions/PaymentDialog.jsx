@@ -139,50 +139,59 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
                             <Select value={data.payment_method} label="Payment Method" onChange={(e) => handleChange('payment_method', e.target.value)}>
                                 <MenuItem value="cash">Cash</MenuItem>
                                 <MenuItem value="credit_card">Credit Card</MenuItem>
+                                <MenuItem value="cheque">Cheque</MenuItem>
+                                <MenuItem value="online">Online Transfer</MenuItem>
                             </Select>
                             {errors.payment_method && <FormHelperText>{errors.payment_method}</FormHelperText>}
                         </FormControl>
                     </Grid>
 
                     {data.payment_method === 'credit_card' && (
-                        <>
-                            <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth size="small" error={!!errors.credit_card_type}>
-                                    <InputLabel>Card Type</InputLabel>
-                                    <Select value={data.credit_card_type} label="Card Type" onChange={(e) => handleChange('credit_card_type', e.target.value)}>
-                                        <MenuItem value="visa">Visa</MenuItem>
-                                        <MenuItem value="mastercard">MasterCard</MenuItem>
-                                    </Select>
-                                    {errors.credit_card_type && <FormHelperText>{errors.credit_card_type}</FormHelperText>}
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                                <Button
-                                    variant="outlined"
-                                    component="label"
-                                    fullWidth
-                                    startIcon={<CloudUpload />}
-                                    sx={{
-                                        height: '40px',
-                                        color: errors.receipt_file ? 'error.main' : 'primary.main',
-                                        borderColor: errors.receipt_file ? 'error.main' : 'rgba(0, 0, 0, 0.23)',
-                                    }}
-                                >
-                                    {data.receipt_file ? 'Change Receipt' : 'Upload Receipt'}
-                                    <input type="file" hidden accept="image/*,.pdf" onChange={handleFileChange} />
-                                </Button>
-                                {errors.receipt_file && (
-                                    <Typography variant="caption" color="error" sx={{ ml: 1.5, mt: 0.5, display: 'block' }}>
-                                        {errors.receipt_file}
-                                    </Typography>
-                                )}
-                                {data.receipt_file && (
-                                    <Typography variant="caption" color="success.main" sx={{ display: 'block', mt: 0.5, textAlign: 'center' }}>
-                                        Selected: {data.receipt_file.name}
-                                    </Typography>
-                                )}
-                            </Grid>
-                        </>
+                        <Grid item xs={12} sm={6}>
+                            <FormControl fullWidth size="small" error={!!errors.credit_card_type}>
+                                <InputLabel>Card Type</InputLabel>
+                                <Select value={data.credit_card_type} label="Card Type" onChange={(e) => handleChange('credit_card_type', e.target.value)}>
+                                    <MenuItem value="visa">Visa</MenuItem>
+                                    <MenuItem value="mastercard">MasterCard</MenuItem>
+                                </Select>
+                                {errors.credit_card_type && <FormHelperText>{errors.credit_card_type}</FormHelperText>}
+                            </FormControl>
+                        </Grid>
+                    )}
+
+                    {(data.payment_method === 'credit_card' || data.payment_method === 'cheque' || data.payment_method === 'online') && (
+                        <Grid item xs={12} sm={data.payment_method === 'credit_card' ? 6 : 12}>
+                            <Button
+                                variant="outlined"
+                                component="label"
+                                fullWidth
+                                startIcon={<CloudUpload />}
+                                sx={{
+                                    height: '40px',
+                                    color: errors.receipt_file ? 'error.main' : 'primary.main',
+                                    borderColor: errors.receipt_file ? 'error.main' : 'rgba(0, 0, 0, 0.23)',
+                                }}
+                            >
+                                {data.receipt_file ? 'Change Receipt' : 'Upload Receipt (Optional)'}
+                                <input type="file" hidden accept="image/*,.pdf" onChange={handleFileChange} />
+                            </Button>
+                            {errors.receipt_file && (
+                                <Typography variant="caption" color="error" sx={{ ml: 1.5, mt: 0.5, display: 'block' }}>
+                                    {errors.receipt_file}
+                                </Typography>
+                            )}
+                            {data.receipt_file && (
+                                <Typography variant="caption" color="success.main" sx={{ display: 'block', mt: 0.5, textAlign: 'center' }}>
+                                    Selected: {data.receipt_file.name}
+                                </Typography>
+                            )}
+                        </Grid>
+                    )}
+
+                    {(data.payment_method === 'cheque' || data.payment_method === 'online') && (
+                        <Grid item xs={12}>
+                            <TextField fullWidth size="small" label={data.payment_method === 'cheque' ? 'Cheque No' : 'Transaction ID/Ref'} value={data.payment_mode_details || ''} onChange={(e) => handleChange('payment_mode_details', e.target.value)} />
+                        </Grid>
                     )}
                 </Grid>
             </DialogContent>
@@ -191,7 +200,7 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
                     Cancel
                 </Button>
                 <Button onClick={handleSubmit} variant="contained" color="success" disabled={submitting} startIcon={submitting ? <CircularProgress size={20} color="inherit" /> : <Payment />}>
-                    {submitting ? 'Processing...' : 'Confirm Payment'}
+                    {submitting ? 'Processing...' : 'Save & Receive'}
                 </Button>
             </DialogActions>
         </Dialog>
