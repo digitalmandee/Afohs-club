@@ -137,4 +137,9 @@ class FinancialInvoice extends BaseModel
     {
         return $this->hasMany(Subscription::class, 'invoice_id');
     }
+
+    public function items()
+    {
+        return $this->hasMany(FinancialInvoiceItem::class, 'invoice_id');
+    }
 }

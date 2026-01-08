@@ -413,6 +413,10 @@ export default function SideNav({ open, setOpen }) {
                         path: route('finance.transaction'),
                     },
                     {
+                        text: 'Charge Types',
+                        path: route('finance.charge-types.index'),
+                    },
+                    {
                         text: 'Vouchers',
                         icon: <ConfirmationNumberIcon />,
                         path: route('vouchers.dashboard'),

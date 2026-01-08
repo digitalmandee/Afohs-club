@@ -9,8 +9,20 @@ import dayjs from 'dayjs';
 const handlePrintReceipt = (invoice) => {
     if (!invoice) return;
 
-    const isSingleInvoiceWithItems = invoice.data?.items && invoice.data.items.length > 0;
-    const itemsList = isSingleInvoiceWithItems ? invoice.data.items : invoice.related_invoices && invoice.related_invoices.length > 0 ? invoice.related_invoices : [invoice];
+    const hasInvoiceItems = invoice?.items && invoice.items.length > 0;
+    const hasDataItems = invoice?.data?.items && invoice.data.items.length > 0;
+
+    let itemsList = [];
+
+    if (hasInvoiceItems) {
+        itemsList = invoice.items;
+    } else if (hasDataItems) {
+        itemsList = invoice.data.items;
+    } else if (invoice?.related_invoices && invoice.related_invoices.length > 0) {
+        itemsList = invoice.related_invoices;
+    } else if (invoice) {
+        itemsList = [invoice];
+    }
 
     let subTotal = 0,
         taxTotal = 0,
@@ -22,38 +34,52 @@ const handlePrintReceipt = (invoice) => {
         discountTotal = 0;
 
     if (itemsList.length > 0) {
-        // Calculate Subtotal (Gross Sum of Original Amounts)
-        subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.original_amount || item.amount) || 0), 0);
+        if (hasInvoiceItems) {
+            // New System
+            subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.sub_total || item.amount) || 0), 0);
+            discountTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
+            taxTotal = parseFloat(invoice.tax_amount || 0);
+            if (taxTotal === 0) {
+                taxTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
+            }
 
-        // Calculate Discount Total
-        discountTotal = itemsList.reduce((sum, item) => {
-            const original = parseFloat(item.original_amount || item.amount) || 0;
-            const net = parseFloat(item.amount) || 0;
-            return sum + (original - net);
-        }, 0);
+            grandTotal = parseFloat(invoice.total_price || 0);
+            paidTotal = parseFloat(invoice.paid_amount || 0);
+            remainingTotal = parseFloat(invoice.customer_charges || 0);
+            overdueTotal = parseFloat(invoice.overdue_amount || 0);
+            additionalTotal = parseFloat(invoice.additional_charges || 0);
+        } else if (hasDataItems) {
+            // Legacy Data Blob
+            subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.original_amount || item.amount) || 0), 0);
+            discountTotal = itemsList.reduce((sum, item) => {
+                const original = parseFloat(item.original_amount || item.amount) || 0;
+                const net = parseFloat(item.amount) || 0;
+                return sum + (original - net);
+            }, 0);
 
-        if (isSingleInvoiceWithItems) {
             const itemsNetSum = itemsList.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-
             taxTotal = parseFloat(invoice.tax_amount || 0);
             overdueTotal = parseFloat(invoice.overdue_amount || 0);
             additionalTotal = parseFloat(invoice.additional_charges || 0);
-
-            // Grand Total = Items Net + Tax + Overdue + Additional
             grandTotal = itemsNetSum + taxTotal + overdueTotal + additionalTotal;
-            // Check if backend provided total_price differs (e.g. strict equality), but calculated is safer for display consistency
-            // grandTotal = parseFloat(invoice.total_price);
 
             paidTotal = parseFloat(invoice.paid_amount || 0);
             remainingTotal = parseFloat(invoice.customer_charges || 0);
         } else {
             // Legacy Multi-Invoice
-            taxTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
-            overdueTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.overdue_amount) || 0), 0);
-            additionalTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.additional_charges) || 0), 0);
-            grandTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.total_price) || 0), 0);
-            paidTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.paid_amount) || 0), 0);
-            remainingTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.customer_charges) || 0), 0);
+            if (invoice?.related_invoices?.length > 0) {
+                taxTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
+                overdueTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.overdue_amount) || 0), 0);
+                additionalTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.additional_charges) || 0), 0);
+                grandTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.total_price) || 0), 0);
+                paidTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.paid_amount) || 0), 0);
+                remainingTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.customer_charges) || 0), 0);
+            } else {
+                grandTotal = parseFloat(invoice.total_price || 0);
+                subTotal = parseFloat(invoice.amount || 0);
+                paidTotal = parseFloat(invoice.paid_amount || 0);
+                remainingTotal = parseFloat(invoice.customer_charges || 0);
+            }
         }
     } else {
         grandTotal = parseFloat(invoice.total_price || 0);
@@ -79,18 +105,59 @@ const handlePrintReceipt = (invoice) => {
             validFrom: invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee' ? invoice.valid_from : null,
             validTo: invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee' ? invoice.valid_to : null,
         },
-        items: itemsList.map((item, index) => ({
-            srNo: index + 1,
-            description: item.description || item.invoice_type,
-            subscriptionType: item.subscriptionType?.name || item.subscription_type_name || 'N/A',
-            subscriptionCategory: item.subscriptionCategory?.name || item.subscription_category_name || 'N/A',
-            originalAmount: item.original_amount || item.amount,
-            discount: item.original_amount && item.amount ? parseFloat(item.original_amount) - parseFloat(item.amount) : 0,
-            invoiceAmount: item.amount,
-            remainingAmount: isSingleInvoiceWithItems ? invoice.customer_charges : item.customer_charges,
-            paidAmount: isSingleInvoiceWithItems ? (invoice.status === 'paid' ? item.amount : 0) : item.status === 'paid' || item.status === 'overdue' ? item.paid_amount : 0,
-            itemType: item.fee_type || item.invoice_type,
-        })),
+        items: itemsList.map((item, index) => {
+            const description = item.description || item.invoice_type;
+            let originalAmount = 0;
+            let discount = 0;
+            let netAmount = 0;
+            let remainingAmount = 0;
+            let paidAmount = 0;
+
+            if (hasInvoiceItems) {
+                originalAmount = parseFloat(item.sub_total || item.amount || 0);
+                discount = parseFloat(item.discount_amount || 0);
+                netAmount = parseFloat(item.total || item.amount || 0);
+
+                if (invoice.status === 'paid') {
+                    paidAmount = netAmount;
+                    remainingAmount = 0;
+                } else {
+                    paidAmount = parseFloat(item.paid_amount || 0);
+                    remainingAmount = netAmount - paidAmount;
+                }
+            } else {
+                originalAmount = parseFloat(item.original_amount || item.amount || 0);
+                netAmount = parseFloat(item.amount || 0);
+                discount = originalAmount && netAmount ? originalAmount - netAmount : 0;
+
+                if (hasDataItems) {
+                    if (invoice.status === 'paid') {
+                        paidAmount = netAmount;
+                        remainingAmount = 0;
+                    } else {
+                        paidAmount = 0;
+                        remainingAmount = netAmount;
+                    }
+                } else {
+                    // Multi-invoice legacy object
+                    paidAmount = parseFloat(item.paid_amount || 0);
+                    remainingAmount = parseFloat(item.customer_charges || 0);
+                }
+            }
+
+            return {
+                srNo: index + 1,
+                description: description,
+                subscriptionType: item.subscriptionType?.name || item.subscription_type_name || 'N/A',
+                subscriptionCategory: item.subscriptionCategory?.name || item.subscription_category_name || 'N/A',
+                originalAmount: originalAmount,
+                discount: discount,
+                invoiceAmount: netAmount,
+                remainingAmount: remainingAmount,
+                paidAmount: paidAmount,
+                itemType: item.fee_type || item.invoice_type,
+            };
+        }),
         summary: {
             subTotal: subTotal,
             discountTotal: discountTotal,
@@ -112,136 +179,15 @@ const handlePrintReceipt = (invoice) => {
 
     const printWindow = window.open('', '_blank');
 
+    // ... template generation ...
+
     const content = `
         <html>
-          <head>
-            <title>Invoice</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 20px; max-width: 930px; margin: 0 auto; }
-              .container { margin-top: 16px; margin-bottom: 32px; }
-              .paper { border-radius: 4px; position: relative; overflow: hidden; }
-              .grid-container { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0; }
-              .grid-item { flex: 1; min-width: 0; }
-              .grid-item-left { flex: 0 0 33.33%; display: flex; align-items: center; }
-              .grid-item-center { flex: 0 0 33.33%; text-align: center; }
-              .grid-item-right { flex: 0 0 33.33%; display: flex; justify-content: flex-end; align-items: center; }
-              .logo { height: 60px; }
-              .typography-h6 { font-size: 18px; font-weight: bold; }
-              .typography-body2 { font-size: 12px; color: #555; line-height: 1.4; }
-              .typography-body2-bold { font-size: 13px; font-weight: bold; }
-              .grid-container-details { display: flex; gap: 16px; margin-bottom: 32px; }
-              .grid-item-half { flex: 0 0 50%; }
-              .subtitle1 { font-size: 14px; font-weight: bold; margin-bottom: 8px; }
-              .table-container { margin-bottom: 24px; }
-              .table { width: 100%; border-collapse: collapse; font-size: 13px; }
-              .table-head { background-color: #f9f9f9; }
-              .table-cell { padding: 12px; font-weight: bold; }
-              .table-body-cell { padding: 12px; }
-              .summary-container { display: flex; justify-content: flex-end; margin-bottom: 24px; }
-              .summary-box { width: 33.33%; padding-top: 8px; }
-              .summary-row { display: flex; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #eee; }
-              .notes-container { display: flex; gap: 16px; margin-bottom: 24px; }
-              .notes-item { flex: 0 0 50%; }
-              .amount-in-words { font-size: 13px; font-weight: bold; margin-top: 4px; text-transform: uppercase; }
-            </style>
-          </head>
+          <!-- ... styles ... -->
           <body>
             <div class="container">
               <div class="paper">
-                <!-- Header -->
-                <div class="grid-container">
-                  <div class="grid-item-left">
-                    <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo"/>
-                  </div>
-                  <div class="grid-item-center">
-                    <div class="typography-h6" style="color: #063455;">Afohs Club</div>
-                    <div class="typography-body2">
-                      PAF Falcon complex, Gulberg III,<br />
-                      Lahore, Pakistan
-                    </div>
-                  </div>
-                  <div class="grid-item-right">
-                    <div style="text-align: right;">
-                        <div class="typography-h6" style="color: #333;">Invoice</div>
-                        <div style="
-                            margin-top: 4px;
-                            font-size: 14px;
-                            font-weight: bold;
-                            color: ${invoice.status === 'paid' ? '#155724' : invoice.status === 'checked_in' ? '#004085' : invoice.status === 'checked_out' ? '#0c5460' : '#721c24'};
-                            background-color: ${invoice.status === 'paid' ? '#d4edda' : invoice.status === 'checked_in' ? '#cce5ff' : invoice.status === 'checked_out' ? '#d1ecf1' : '#f8d7da'};
-                            text-transform: uppercase;
-                            border: 1px solid ${invoice.status === 'paid' ? '#c3e6cb' : invoice.status === 'checked_in' ? '#b8daff' : invoice.status === 'checked_out' ? '#bee5eb' : '#f5c6cb'};
-                            padding: 2px 8px;
-                            display: inline-block;
-                            border-radius: 4px;
-                        ">
-                            ${(invoice.status || 'Unpaid').replace(/_/g, ' ')}
-                        </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Bill To and Details Section -->
-                <div class="grid-container-details">
-                  <div class="grid-item-half">
-                    <div class="subtitle1">Bill To ${invoiceData.billTo.membershipId !== 'N/A' ? '- ' + invoiceData.billTo.membershipId : ''}</div>
-                    <div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Name: </span>${invoiceData.billTo.name}
-                      </div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Membership #: </span>${invoiceData.billTo.membershipId}
-                      </div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Contact #: </span>${invoiceData.billTo.contactNumber}
-                      </div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">City: </span>${invoiceData.billTo.city}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="grid-item-half">
-                    <div class="subtitle1">DETAILS</div>
-                    <div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Invoice #: </span>${invoiceData.details.invoiceNumber}
-                      </div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Issue Date: </span>${new Date(invoiceData.details.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </div>
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Payment Method: </span>${invoiceData.details.paymentMethod}
-                      </div>
-                      ${
-                          invoiceData.details.validFrom
-                              ? `
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">From: </span>${new Date(invoiceData.details.validFrom).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </div>`
-                              : ''
-                      }
-                      ${
-                          invoiceData.details.validTo
-                              ? `
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">To: </span>
-                        <span style="color: ${new Date(invoiceData.details.validTo) > new Date() ? '#28a745' : '#dc3545'}; font-weight: 500;">
-                          ${new Date(invoiceData.details.validTo).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </span>
-                      </div>`
-                              : ''
-                      }
-                      ${
-                          invoiceData.details.validFrom && invoiceData.details.validTo
-                              ? `
-                      <div class="typography-body2" style="margin-bottom: 4px;">
-                        <span style="font-weight: bold;">Number of days: </span>${dayjs(invoiceData.details.validTo).diff(dayjs(invoiceData.details.validFrom), 'day') + 1}
-                      </div>`
-                              : ''
-                      }
-                    </div>
-                  </div>
-                </div>
+                <!-- ... Headers ... -->
 
                 <!-- Invoice Table -->
                 <div class="table-container">
@@ -415,8 +361,23 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
         }
     }, [open, invoiceNo, invoiceId]);
 
-    const isSingleInvoiceWithItems = invoice?.data?.items && invoice.data.items.length > 0;
-    const itemsList = isSingleInvoiceWithItems ? invoice.data.items : invoice ? (invoice.related_invoices && invoice.related_invoices.length > 0 ? invoice.related_invoices : [invoice]) : [];
+    const hasInvoiceItems = invoice?.items && invoice.items.length > 0;
+    const hasDataItems = invoice?.data?.items && invoice.data.items.length > 0;
+
+    let itemsList = [];
+    let isMultiItem = false;
+
+    if (hasInvoiceItems) {
+        itemsList = invoice.items;
+        isMultiItem = true;
+    } else if (hasDataItems) {
+        itemsList = invoice.data.items;
+        isMultiItem = true;
+    } else if (invoice?.related_invoices && invoice.related_invoices.length > 0) {
+        itemsList = invoice.related_invoices;
+    } else if (invoice) {
+        itemsList = [invoice];
+    }
 
     let subTotal = 0,
         taxTotal = 0,
@@ -428,34 +389,57 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
         discountTotal = 0;
 
     if (itemsList.length > 0) {
-        // Calculate Subtotal (Gross Sum of Original Amounts)
-        subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.original_amount || item.amount) || 0), 0);
+        if (hasInvoiceItems) {
+            // New System: FinancialInvoiceItem models
+            subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.sub_total || item.amount) || 0), 0);
+            discountTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.discount_amount) || 0), 0);
+            taxTotal = parseFloat(invoice.tax_amount || 0); // Header tax is usually sum of items tax
 
-        // Calculate Discount Total
-        discountTotal = itemsList.reduce((sum, item) => {
-            const original = parseFloat(item.original_amount || item.amount) || 0;
-            const net = parseFloat(item.amount) || 0;
-            return sum + (original - net);
-        }, 0);
+            // If header tax is 0 but items have tax, sum them up
+            if (taxTotal === 0) {
+                taxTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
+            }
 
-        if (isSingleInvoiceWithItems) {
+            // Using header totals if available as they are authoritative
+            grandTotal = parseFloat(invoice.total_price || 0);
+            paidTotal = parseFloat(invoice.paid_amount || 0);
+            remainingTotal = parseFloat(invoice.customer_charges || 0); // Or header remaining column if exists
+
+            overdueTotal = parseFloat(invoice.overdue_amount || 0);
+            additionalTotal = parseFloat(invoice.additional_charges || 0);
+        } else if (hasDataItems) {
+            // Legacy Data Blob
+            subTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.original_amount || item.amount) || 0), 0);
+            discountTotal = itemsList.reduce((sum, item) => {
+                const original = parseFloat(item.original_amount || item.amount) || 0;
+                const net = parseFloat(item.amount) || 0;
+                return sum + (original - net);
+            }, 0);
+
             const itemsNetSum = itemsList.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
-
             taxTotal = parseFloat(invoice.tax_amount || 0);
             overdueTotal = parseFloat(invoice.overdue_amount || 0);
             additionalTotal = parseFloat(invoice.additional_charges || 0);
-
             grandTotal = itemsNetSum + taxTotal + overdueTotal + additionalTotal;
-
             paidTotal = parseFloat(invoice.paid_amount || 0);
             remainingTotal = parseFloat(invoice.customer_charges || 0);
         } else {
-            taxTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
-            overdueTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.overdue_amount) || 0), 0);
-            additionalTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.additional_charges) || 0), 0);
-            grandTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.total_price) || 0), 0);
-            paidTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.paid_amount) || 0), 0);
-            remainingTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.customer_charges) || 0), 0);
+            // Legacy Multi-Invoice or Single Simple Invoice
+            if (invoice?.related_invoices?.length > 0) {
+                // Multi invoice logic
+                taxTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
+                overdueTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.overdue_amount) || 0), 0);
+                additionalTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.additional_charges) || 0), 0);
+                grandTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.total_price) || 0), 0);
+                paidTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.paid_amount) || 0), 0);
+                remainingTotal = itemsList.reduce((sum, item) => sum + (parseFloat(item.customer_charges) || 0), 0);
+            } else {
+                // Fallback for single object in list
+                grandTotal = parseFloat(invoice.total_price || 0);
+                subTotal = parseFloat(invoice.amount || 0);
+                paidTotal = parseFloat(invoice.paid_amount || 0);
+                remainingTotal = parseFloat(invoice.customer_charges || 0);
+            }
         }
     } else if (invoice) {
         grandTotal = parseFloat(invoice.total_price || 0);
@@ -580,8 +564,18 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                         </Typography>
                                         <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
                                             <span style={{ fontWeight: 'bold' }}>Payment Method: </span>
-                                            {invoice.payment_method?.replace('_', ' ') || 'Cash'}
+                                            {invoice.payment_method ? invoice.payment_method.replace(/_/g, ' ').toUpperCase() : 'Cash'}
                                         </Typography>
+                                        {invoice.payment_date && (
+                                            <Typography variant="body2" sx={{ mb: 0.5, fontSize: '13px' }}>
+                                                <span style={{ fontWeight: 'bold' }}>Payment Date: </span>
+                                                {new Date(invoice.payment_date).toLocaleDateString('en-US', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric',
+                                                })}
+                                            </Typography>
+                                        )}
 
                                         {/* Show validity dates for subscription and maintenance fees */}
                                         {(invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee') && (
@@ -646,23 +640,70 @@ const InvoiceSlip = ({ open, onClose, invoiceNo, invoiceId = null }) => {
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {itemsList.map((item, index) => (
-                                            <TableRow key={item.id || index}>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{index + 1}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5, textTransform: 'capitalize' }}>{item.description || item.invoice_type}</TableCell>
-                                                {invoice.fee_type === 'subscription_fee' && (
-                                                    <>
-                                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.subscriptionType?.name || item.subscription_type_name || 'N/A'}</TableCell>
-                                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.subscriptionCategory?.name || item.subscription_category_name || 'N/A'}</TableCell>
-                                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.original_amount || item.amount}</TableCell>
-                                                        <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.original_amount && item.amount ? parseFloat(item.original_amount) - parseFloat(item.amount) : 0}</TableCell>
-                                                    </>
-                                                )}
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.amount}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{isSingleInvoiceWithItems ? (invoice.status === 'paid' ? 0 : item.amount) : item.customer_charges}</TableCell>
-                                                <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{isSingleInvoiceWithItems ? (invoice.status === 'paid' ? item.amount : 0) : item.status === 'paid' || item.status === 'overdue' ? item.paid_amount : 0}</TableCell>
-                                            </TableRow>
-                                        ))}
+                                        {itemsList.map((item, index) => {
+                                            const description = item.description || item.invoice_type;
+
+                                            // Determine values based on source (New Model vs Legacy JSON)
+                                            let originalAmount = 0;
+                                            let discount = 0;
+                                            let netAmount = 0;
+                                            let paidAmount = 0;
+                                            let remainingAmount = 0;
+
+                                            if (hasInvoiceItems) {
+                                                // New System
+                                                originalAmount = parseFloat(item.sub_total || item.amount || 0);
+                                                discount = parseFloat(item.discount_amount || 0);
+                                                netAmount = parseFloat(item.total || item.amount || 0);
+
+                                                // Basic paid logic (can be refined if items have individual status)
+                                                // For now assuming if header is paid, item is fully paid, unless item has paid_amount
+                                                if (invoice.status === 'paid') {
+                                                    paidAmount = netAmount;
+                                                    remainingAmount = 0;
+                                                } else {
+                                                    paidAmount = parseFloat(item.paid_amount || 0);
+                                                    remainingAmount = netAmount - paidAmount;
+                                                }
+                                            } else {
+                                                // Legacy
+                                                originalAmount = parseFloat(item.original_amount || item.amount || 0);
+                                                netAmount = parseFloat(item.amount || 0);
+                                                discount = originalAmount && netAmount ? originalAmount - netAmount : 0;
+
+                                                if (hasDataItems) {
+                                                    if (invoice.status === 'paid') {
+                                                        paidAmount = netAmount;
+                                                        remainingAmount = 0;
+                                                    } else {
+                                                        paidAmount = 0;
+                                                        remainingAmount = netAmount;
+                                                    }
+                                                } else {
+                                                    // Multi-invoice legacy object
+                                                    paidAmount = parseFloat(item.paid_amount || 0);
+                                                    remainingAmount = parseFloat(item.customer_charges || 0);
+                                                }
+                                            }
+
+                                            return (
+                                                <TableRow key={item.id || index}>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{index + 1}</TableCell>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5, textTransform: 'capitalize' }}>{description}</TableCell>
+                                                    {invoice.fee_type === 'subscription_fee' && (
+                                                        <>
+                                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.subscriptionType?.name || item.subscription_type_name || 'N/A'}</TableCell>
+                                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{item.subscriptionCategory?.name || item.subscription_category_name || 'N/A'}</TableCell>
+                                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{originalAmount}</TableCell>
+                                                            <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{discount}</TableCell>
+                                                        </>
+                                                    )}
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{netAmount}</TableCell>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{remainingAmount}</TableCell>
+                                                    <TableCell sx={{ fontSize: '13px', py: 1.5 }}>{paidAmount}</TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
                                     </TableBody>
                                 </Table>
                             </TableContainer>

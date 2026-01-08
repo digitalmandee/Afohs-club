@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton, Divider } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -10,12 +10,14 @@ import axios from 'axios';
 import { Person, Search, Save, Print, Receipt, Visibility, Payment } from '@mui/icons-material';
 import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
 import PaymentDialog from './PaymentDialog';
+import InvoiceItemsGrid from './InvoiceItemsGrid';
 
 export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null }) {
     // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
     const [membershipFeePaid, setMembershipFeePaid] = useState(false);
+    const [ledgerBalance, setLedgerBalance] = useState(null);
     const [searchLoading, setSearchLoading] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
     const [submitting, setSubmitting] = useState(false);
@@ -28,6 +30,32 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [paymentConfirmationOpen, setPaymentConfirmationOpen] = useState(false);
     const [transactionToPay, setTransactionToPay] = useState(null);
 
+    // New State for Invoice Grid
+    const [transactionTypes, setTransactionTypes] = useState([]);
+    const [invoiceItems, setInvoiceItems] = useState([
+        {
+            id: Date.now(),
+            fee_type: '',
+            fee_type_name: '',
+            description: '',
+            qty: 1,
+            amount: '',
+            tax_percentage: 0,
+            overdue_percentage: 0,
+            discount_type: 'fixed',
+            discount_value: 0,
+            discount_amount: 0,
+            additional_charges: 0,
+            valid_from: null,
+            valid_to: null,
+            remarks: '',
+            subscription_type_id: '',
+            subscription_category_id: '',
+            family_member_id: '',
+            total: 0,
+        },
+    ]);
+
     // Pagination and search states
     const [searchInvoice, setSearchInvoice] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -35,51 +63,39 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [bookingType, setBookingType] = useState('0'); // 0: member, 2: corporate, guest-*: guest
 
-    const [quarterStatus, setQuarterStatus] = useState({
-        paidQuarters: [],
-        nextAvailableQuarter: 1,
-        currentYear: new Date().getFullYear(),
-    });
-
-    const [subscriptionItems, setSubscriptionItems] = useState([]); // Array to store multiple subscriptions
-
     const { data, setData, post, processing, errors, reset } = useForm({
         booking_type: 'member',
         member_id: '',
         corporate_member_id: '',
         customer_id: '',
-        fee_type: '',
-        payment_frequency: 'monthly',
-        discount_type: '',
-        discount_value: '',
+        // Main items array
+        items: [],
+        // Invoice Header Details
+        payment_frequency: 'monthly', // Can be specific to maintenance items, but kept for legacy compat if needed
         payment_method: 'cash',
-        amount: '',
-        tax_percentage: '',
-        overdue_percentage: '',
-        additional_charges: '',
+        amount: 0, // Total Amount
         remarks: '',
-        valid_from: '',
-        valid_to: '',
-        starting_quarter: 1,
         credit_card_type: '',
         receipt_file: null,
-        // Temporary fields for adding a subscription
-        subscription_type_id: '',
-        subscription_category_id: '',
-        family_member_id: null, // null means SELF (primary member)
-        item_amount: '', // Editable amount for the item being added
-        item_discount_type: '',
-        item_discount_value: '',
-        subscriptions: [], // Array to send to backend
     });
 
-    // Auto-update payment suggestions when member changes
+    // Fetch Transaction Types
     useEffect(() => {
-        if (selectedMember && data.fee_type === 'maintenance_fee') {
-            const currentFrequency = data.payment_frequency || 'monthly';
-            suggestMaintenancePeriod(currentFrequency);
-        }
-    }, [selectedMember, memberTransactions]); // Trigger when member or their transactions change
+        axios
+            .get(route('finance.transaction.types'))
+            .then((res) => setTransactionTypes(res.data))
+            .catch((err) => console.error('Failed to fetch transaction types', err));
+    }, []);
+
+    // Sync items to form data
+    useEffect(() => {
+        const total = invoiceItems.reduce((sum, item) => sum + (item.total || 0), 0);
+        setData((prev) => ({
+            ...prev,
+            items: invoiceItems,
+            amount: total,
+        }));
+    }, [invoiceItems]);
 
     // Handle pre-selected member
     useEffect(() => {
@@ -87,338 +103,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             handleMemberSelect(preSelectedMember);
         }
     }, [preSelectedMember]);
-
-    // Auto-set fee type based on member status
-    useEffect(() => {
-        // Only apply auto-logic for regular (0) and corporate (2) members
-        if (bookingType !== '0' && bookingType !== '2') return;
-
-        if (selectedMember) {
-            const isAllowed = (type) => !allowedFeeTypes || allowedFeeTypes.includes(type);
-
-            if ((selectedMember.status === 'cancelled' || selectedMember.status === 'expired') && isAllowed('reinstating_fee')) {
-                // For cancelled or expired members, automatically set to reinstating fee
-                handleFeeTypeChange('reinstating_fee');
-            } else if (!membershipFeePaid) {
-                if (isAllowed('membership_fee')) {
-                    // If membership fee is not paid, force it
-                    handleFeeTypeChange('membership_fee');
-                }
-            } else {
-                // For non-cancelled/expired members, clear fee type if it was reinstating fee
-                // validation for allowed types on auto-switch
-                if (data.fee_type === 'reinstating_fee' || data.fee_type === 'membership_fee') {
-                    if (isAllowed('maintenance_fee')) {
-                        handleFeeTypeChange('maintenance_fee');
-                    } else if (isAllowed('subscription_fee')) {
-                        handleFeeTypeChange('subscription_fee');
-                    }
-                }
-            }
-        }
-    }, [selectedMember?.status, membershipFeePaid, allowedFeeTypes, bookingType]); // Trigger when member status or payment status changes
-
-    const analyzeQuarterStatus = (transactions, membershipDate) => {
-        // If corporate or guest, we don't track quarterly status the same way
-        if ((bookingType !== '0' && bookingType !== '2') || !membershipDate) {
-            return {
-                paidQuarters: [],
-                nextAvailableQuarter: 1,
-                currentYear: new Date().getFullYear(),
-                isNewCycle: false,
-                latestEndDate: null,
-            };
-        }
-
-        const membershipYear = new Date(membershipDate).getFullYear();
-        const membershipMonth = new Date(membershipDate).getMonth(); // 0-based (0 = Jan, 11 = Dec)
-        const currentYear = new Date().getFullYear();
-        const currentMonth = new Date().getMonth();
-        // Get maintenance fee transactions
-        const maintenanceTransactions = transactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid');
-        // Sort transactions by validity end date (latest first)
-        const sortedTransactions = [...maintenanceTransactions].sort((a, b) => new Date(b.valid_to) - new Date(a.valid_to));
-
-        let paidQuarters = [];
-        let latestEndDate = null;
-        let showCompletedYear = false;
-        let isFirstYear = true; // Default to first year
-        let completedCycles = 0;
-
-        if (sortedTransactions.length > 0) {
-            const mostRecentTransaction = sortedTransactions[0];
-            const mostRecentEnd = new Date(mostRecentTransaction.valid_to);
-
-            // Check if we've moved past the first year (December 31st of membership year)
-            const firstYearEnd = new Date(membershipYear, 11, 31); // Dec 31 of membership year
-            isFirstYear = mostRecentEnd <= firstYearEnd;
-
-            latestEndDate = mostRecentEnd.toISOString().split('T')[0];
-        }
-
-        // Check if all first year months are paid to determine which system to use
-        const monthsInFirstYear = [];
-        for (let month = membershipMonth + 1; month <= 11; month++) {
-            monthsInFirstYear.push(month);
-        }
-
-        const paidMonthsInFirstYear = [];
-        sortedTransactions.forEach((transaction) => {
-            const txStart = new Date(transaction.valid_from);
-            const txEnd = new Date(transaction.valid_to);
-
-            let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
-            const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-
-            while (currentDate <= endDate) {
-                const month = currentDate.getMonth();
-                const year = currentDate.getFullYear();
-
-                const monthStart = new Date(year, month, 1);
-                const monthEnd = new Date(year, month + 1, 0);
-                const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
-
-                if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonthsInFirstYear.includes(month)) {
-                    paidMonthsInFirstYear.push(month);
-                }
-
-                currentDate.setMonth(currentDate.getMonth() + 1);
-            }
-        });
-
-        const allFirstYearMonthsPaid = paidMonthsInFirstYear.length >= monthsInFirstYear.length;
-
-        if (isFirstYear && !allFirstYearMonthsPaid) {
-            // FIRST YEAR: Monthly payment logic (only show if still paying monthly)
-            // Map months to quarters for display (approximate)
-            paidMonthsInFirstYear.forEach((month) => {
-                const quarter = Math.floor(month / 3) + 1; // 0-2->Q1, 3-5->Q2, 6-8->Q3, 9-11->Q4
-                if (!paidQuarters.includes(quarter)) {
-                    paidQuarters.push(quarter);
-                }
-            });
-        } else {
-            // SUBSEQUENT YEARS: Quarterly payment logic (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
-            // Determine the correct analysis year based on latest payment
-            let analysisYear = currentYear;
-
-            // If we have payments, use the year after the latest payment end date
-            if (sortedTransactions.length > 0) {
-                const latestPaymentEnd = new Date(sortedTransactions[0].valid_to);
-                const latestPaymentYear = latestPaymentEnd.getFullYear();
-                const latestPaymentMonth = latestPaymentEnd.getMonth();
-
-                console.log('Latest payment end:', latestPaymentEnd);
-                console.log('Latest payment year:', latestPaymentYear);
-                console.log('Current year:', currentYear);
-
-                // Analyze the year of the latest payment to show its quarter status
-                analysisYear = latestPaymentYear;
-
-                console.log('Analysis year determined:', analysisYear);
-            }
-
-            // For quarter analysis, we need to check if the latest payment year is complete
-            // If latest payment ended in December of a future year, show all quarters as paid for that year
-            let quarterlyTransactions = [];
-
-            if (sortedTransactions.length > 0) {
-                const latestPaymentEnd = new Date(sortedTransactions[0].valid_to);
-                const latestPaymentYear = latestPaymentEnd.getFullYear();
-                const latestPaymentMonth = latestPaymentEnd.getMonth();
-
-                // If latest payment ended in December of any year, that year is complete
-                if (latestPaymentMonth === 11) {
-                    // December
-                    showCompletedYear = true;
-                    analysisYear = latestPaymentYear;
-                    // Show all quarters as paid for the completed year
-                    paidQuarters = [1, 2, 3, 4];
-                } else {
-                    // Show partial year progress
-                    quarterlyTransactions = sortedTransactions.filter((transaction) => {
-                        const txStart = new Date(transaction.valid_from);
-                        const txEnd = new Date(transaction.valid_to);
-
-                        // Include transactions that overlap with analysis year
-                        return (txStart.getFullYear() <= analysisYear && txEnd.getFullYear() >= analysisYear) || txStart.getFullYear() === analysisYear || txEnd.getFullYear() === analysisYear;
-                    });
-                }
-            } else {
-                // No transactions, analyze current year
-                quarterlyTransactions = [];
-            }
-
-            // Analyze which months are covered by all transactions combined
-            const paidMonthsInYear = new Set();
-
-            console.log('Quarterly transactions to analyze:', quarterlyTransactions);
-            console.log('Analysis year:', analysisYear);
-
-            quarterlyTransactions.forEach((transaction) => {
-                const txStart = new Date(transaction.valid_from);
-                const txEnd = new Date(transaction.valid_to);
-
-                console.log(`Analyzing transaction: ${transaction.valid_from} to ${transaction.valid_to}`);
-
-                // Mark each month covered by this transaction
-                let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
-                const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-
-                while (currentDate <= endDate) {
-                    const year = currentDate.getFullYear();
-                    const month = currentDate.getMonth();
-
-                    console.log(`Checking month: ${year}-${month}, analysisYear: ${analysisYear}`);
-
-                    // Count months from current analysis year
-                    if (year === analysisYear) {
-                        const monthKey = `${year}-${month}`;
-                        paidMonthsInYear.add(monthKey);
-                        console.log(`Added paid month: ${monthKey}`);
-                    }
-
-                    currentDate.setMonth(currentDate.getMonth() + 1);
-                }
-            });
-
-            console.log('Paid months in year:', Array.from(paidMonthsInYear));
-
-            // Now check which quarters are completely covered and track partial quarters
-            const currentAnalysisYear = analysisYear; // Use current year for analysis
-            const partialQuarters = {}; // Track which quarters are partially paid
-
-            for (let quarter = 1; quarter <= 4; quarter++) {
-                const quarterStartMonth = (quarter - 1) * 3; // Q1=0(Jan), Q2=3(Apr), Q3=6(Jul), Q4=9(Oct)
-                const monthsInQuarter = [quarterStartMonth, quarterStartMonth + 1, quarterStartMonth + 2];
-
-                const paidMonthsInQuarter = monthsInQuarter.filter((month) => {
-                    const monthKey = `${currentAnalysisYear}-${month}`;
-                    return paidMonthsInYear.has(monthKey);
-                });
-
-                const allMonthsPaid = paidMonthsInQuarter.length === 3;
-                const someMonthsPaid = paidMonthsInQuarter.length > 0;
-
-                if (allMonthsPaid) {
-                    paidQuarters.push(quarter);
-                } else if (someMonthsPaid) {
-                    // Track partial quarter info
-                    const unpaidMonths = monthsInQuarter.filter((month) => {
-                        const monthKey = `${currentAnalysisYear}-${month}`;
-                        return !paidMonthsInYear.has(monthKey);
-                    });
-
-                    partialQuarters[quarter] = {
-                        paidMonths: paidMonthsInQuarter,
-                        unpaidMonths: unpaidMonths,
-                        nextUnpaidMonth: Math.min(...unpaidMonths),
-                    };
-                }
-            }
-
-            // Store partial quarter info for later use
-            window.partialQuarters = partialQuarters;
-        }
-
-        paidQuarters.sort((a, b) => a - b);
-
-        // Determine next payment period
-        let nextQuarter = 1;
-        let isNewCycle = false;
-
-        if (isFirstYear) {
-            // For first year, determine next month to pay
-            const monthsInFirstYear = [];
-            for (let month = membershipMonth + 1; month <= 11; month++) {
-                monthsInFirstYear.push(month);
-            }
-
-            const paidMonths = [];
-            sortedTransactions.forEach((transaction) => {
-                const txStart = new Date(transaction.valid_from);
-                const txEnd = new Date(transaction.valid_to);
-
-                // More accurate month detection: check each month the transaction spans
-                let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
-                const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-
-                while (currentDate <= endDate) {
-                    const month = currentDate.getMonth();
-                    const year = currentDate.getFullYear();
-
-                    // Check if this month overlaps with the transaction period
-                    const monthStart = new Date(year, month, 1);
-                    const monthEnd = new Date(year, month + 1, 0); // Last day of month
-
-                    // Transaction covers this month if there's any overlap
-                    const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
-
-                    if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
-                        paidMonths.push(month);
-                    }
-
-                    currentDate.setMonth(currentDate.getMonth() + 1);
-                }
-            });
-
-            // Check if all first year months are paid
-            if (paidMonths.length >= monthsInFirstYear.length) {
-                // Move to quarterly system for next year
-                nextQuarter = 1;
-                isNewCycle = true;
-            } else {
-                // Still in first year, find next month
-                const nextMonth = monthsInFirstYear.find((month) => !paidMonths.includes(month));
-                nextQuarter = Math.floor((nextMonth || 0) / 3) + 1;
-            }
-        } else {
-            // Quarterly system logic
-            const hasAllQuarters = paidQuarters.includes(1) && paidQuarters.includes(2) && paidQuarters.includes(3) && paidQuarters.includes(4);
-            const partialQuarters = window.partialQuarters || {};
-
-            if (hasAllQuarters || showCompletedYear) {
-                nextQuarter = 1;
-                isNewCycle = true;
-                // If showing completed year, reset quarters for display of next year
-                if (showCompletedYear) {
-                    paidQuarters = [1, 2, 3, 4]; // Keep showing completed year
-                } else {
-                    paidQuarters = []; // Reset for new cycle display
-                }
-            } else {
-                // Check for partial quarters first (priority)
-                let foundPartialQuarter = false;
-                for (let i = 1; i <= 4; i++) {
-                    if (partialQuarters[i]) {
-                        nextQuarter = i;
-                        foundPartialQuarter = true;
-                        break;
-                    }
-                }
-
-                // If no partial quarters, find next unpaid quarter
-                if (!foundPartialQuarter) {
-                    for (let i = 1; i <= 4; i++) {
-                        if (!paidQuarters.includes(i)) {
-                            nextQuarter = i;
-                            break;
-                        }
-                    }
-                }
-                isNewCycle = false;
-            }
-        }
-
-        return {
-            paidQuarters,
-            nextAvailableQuarter: nextQuarter,
-            currentYear: currentYear,
-            isNewCycle,
-            latestEndDate,
-            completedCycles,
-        };
-    };
 
     // Search members function
     const searchMembers = async (query) => {
@@ -460,11 +144,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             setSelectedMember(response.data.member);
             setMemberTransactions(response.data.transactions);
             setFilteredTransactions(response.data.transactions);
+            setFilteredTransactions(response.data.transactions);
             setMembershipFeePaid(response.data.membership_fee_paid);
-
-            // Analyze quarter payment status
-            const quarterAnalysis = analyzeQuarterStatus(response.data.transactions, response.data.member.membership_date);
-            setQuarterStatus(quarterAnalysis);
+            setLedgerBalance(response.data.ledger_balance);
 
             return response.data;
         } catch (error) {
@@ -492,7 +174,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         } else {
             // Reset transactions for non-members as we might not need to show history or logic differs
             setMemberTransactions([]);
-            setQuarterStatus({ paidQuarters: [], nextAvailableQuarter: 1, currentYear: new Date().getFullYear() });
         }
         enqueueSnackbar(`Selected: ${member.full_name || member.name}`, { variant: 'info' });
     };
@@ -580,12 +261,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     // We only populate remarks here as suggestMaintenancePeriod handles amount/dates
                     const maintRemarks = [selectedMember.comment_box, selectedMember.maintenance_fee_additional_remarks, selectedMember.maintenance_fee_discount_remarks].filter(Boolean).join('; ');
                     newData.remarks = maintRemarks;
-
-                    // Auto-suggest monthly period
-                    setTimeout(() => suggestMaintenancePeriod('monthly'), 0);
                 } else if (feeType === 'subscription_fee') {
-                    // For subscription fees, reset items and amount
-                    setSubscriptionItems([]);
+                    // For subscription fees, reset amount
                     newData.amount = '';
                 } else if (feeType === 'reinstating_fee') {
                     // For reinstating fees, set a standard amount (can be customized)
@@ -613,10 +290,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         if (type === '2') {
             backendType = 'corporate';
         } else if (type.startsWith('guest')) {
-        } else if (bookingType.startsWith('guest')) {
             backendType = 'guest'; // Keep it generic 'guest' for now, or specific if backend supports it.
-            // Actually, for searchMembers logic below, we might need the specific type.
-            // But here we are resetting data.
         }
 
         setData((prev) => ({
@@ -643,290 +317,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         };
         fetchGuestTypes();
     }, []);
-
-    const handleAddSubscription = () => {
-        // Validate required fields
-        const newErrors = {};
-        if (!data.subscription_type_id) newErrors.subscription_type_id = 'Subscription Type is required';
-        if (!data.subscription_category_id) newErrors.subscription_category_id = 'Subscription Category is required';
-        if (!data.valid_from) newErrors.valid_from = 'Start Date is required';
-        if (!data.valid_to) newErrors.valid_to = 'End Date is required';
-
-        if (Object.keys(newErrors).length > 0) {
-            setFormErrors((prev) => ({ ...prev, ...newErrors }));
-            enqueueSnackbar('Please fill all required subscription fields', { variant: 'error' });
-            return;
-        }
-
-        // Get details for display
-        const type = subscriptionTypes.find((t) => t.id == data.subscription_type_id);
-        const category = subscriptionCategories.find((c) => c.id == data.subscription_category_id);
-
-        let familyMemberName = 'SELF';
-        let familyMemberRelation = 'Primary Member';
-        if (data.family_member_id) {
-            const familyMember = selectedMember.family_members.find((f) => f.id == data.family_member_id);
-            if (familyMember) {
-                familyMemberName = familyMember.full_name;
-                familyMemberRelation = familyMember.relation;
-            }
-        }
-
-        // Calculate net amount for this item
-        const baseAmount = parseFloat(data.item_amount) || 0;
-        const discountVal = parseFloat(data.item_discount_value) || 0;
-        let netAmount = baseAmount;
-
-        if (data.item_discount_type === 'fixed') {
-            netAmount = Math.max(0, baseAmount - discountVal);
-        } else if (data.item_discount_type === 'percent') {
-            netAmount = Math.max(0, baseAmount - (baseAmount * discountVal) / 100);
-        }
-
-        const newItem = {
-            id: Date.now(), // Temporary ID
-            subscription_type_id: data.subscription_type_id,
-            subscription_category_id: data.subscription_category_id,
-            family_member_id: data.family_member_id,
-            valid_from: data.valid_from,
-            valid_to: data.valid_to,
-
-            // Financials
-            amount: baseAmount,
-            discount_type: data.item_discount_type,
-            discount_value: data.item_discount_value,
-            net_amount: netAmount,
-
-            // Display only props
-            type_name: type?.name,
-            category_name: category?.name,
-            family_member_name: familyMemberName,
-            family_member_relation: familyMemberRelation,
-        };
-
-        const updatedItems = [...subscriptionItems, newItem];
-        setSubscriptionItems(updatedItems);
-
-        // Update total amount (Sum of Net Amounts)
-        const totalAmount = updatedItems.reduce((sum, item) => sum + item.net_amount, 0);
-
-        // Reset inputs
-        setData((prev) => ({
-            ...prev,
-            amount: totalAmount,
-            subscription_type_id: '',
-            subscription_category_id: '',
-            family_member_id: null,
-            item_amount: '',
-            item_discount_type: '',
-            item_discount_value: '',
-            // valid_from: '', // Optional: keep or reset
-            // valid_to: '',
-        }));
-
-        enqueueSnackbar('Subscription added to list', { variant: 'success' });
-        setFormErrors({});
-    };
-
-    const handleRemoveSubscription = (index) => {
-        const updatedItems = [...subscriptionItems];
-        updatedItems.splice(index, 1);
-        setSubscriptionItems(updatedItems);
-
-        // Recalculate total amount
-        // Recalculate total amount
-        const totalAmount = updatedItems.reduce((sum, item) => sum + item.net_amount, 0);
-        setData('amount', totalAmount || '');
-    };
-
-    const suggestMaintenancePeriod = (frequency) => {
-        if (!selectedMember) {
-            return;
-        }
-
-        const membershipDate = new Date(selectedMember.membership_date);
-        const membershipYear = membershipDate.getFullYear();
-        const membershipMonth = membershipDate.getMonth(); // 0-based
-        const currentYear = new Date().getFullYear();
-
-        // Debug logging
-        console.log('=== SUGGEST MAINTENANCE PERIOD DEBUG ===');
-        console.log('Member:', selectedMember.full_name);
-        console.log('Membership Date:', membershipDate);
-        console.log('Membership Year:', membershipYear);
-        console.log('Current Year:', currentYear);
-        console.log('Transactions:', memberTransactions);
-        console.log('Quarter Status:', quarterStatus);
-
-        // Check if we're still in the first year (monthly payment system)
-        const firstYearEnd = new Date(Date.UTC(membershipYear, 11, 31)); // Dec 31 of membership year
-        const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
-
-        // Check if all first year months are already paid
-        const monthsInFirstYear = [];
-        for (let month = membershipMonth + 1; month <= 11; month++) {
-            monthsInFirstYear.push(month);
-        }
-
-        const paidMonths = [];
-        const maintenanceTransactions = memberTransactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid');
-        maintenanceTransactions.forEach((transaction) => {
-            const txStart = new Date(transaction.valid_from);
-            const txEnd = new Date(transaction.valid_to);
-
-            let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
-            const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-
-            while (currentDate <= endDate) {
-                const month = currentDate.getMonth();
-                const year = currentDate.getFullYear();
-
-                const monthStart = new Date(year, month, 1);
-                const monthEnd = new Date(year, month + 1, 0);
-                const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
-
-                if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
-                    paidMonths.push(month);
-                }
-
-                currentDate.setMonth(currentDate.getMonth() + 1);
-            }
-        });
-
-        const allFirstYearMonthsPaid = paidMonths.length >= monthsInFirstYear.length;
-
-        let startDate, endDate, amount;
-
-        if (isFirstYear && !allFirstYearMonthsPaid) {
-            // FIRST YEAR: Monthly payment system (only if not all months are paid)
-            if (quarterStatus.latestEndDate && paidMonths.length > 0) {
-                // Continue from where last payment ended - start from first day of next month
-                const lastEndDate = new Date(quarterStatus.latestEndDate);
-                // Use UTC to avoid timezone issues and start from first day of next month
-                startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
-            } else {
-                // Start from the month after membership month (for new members or no payments)
-                // Use UTC to avoid timezone issues
-                startDate = new Date(Date.UTC(membershipYear, membershipMonth + 1, 1));
-            }
-
-            // Calculate how many months to pay based on frequency
-            let monthsToAdd;
-            if (frequency === 'monthly') {
-                monthsToAdd = 1;
-            } else if (frequency === 'quarterly') {
-                monthsToAdd = 3;
-            } else if (frequency === 'half_yearly') {
-                monthsToAdd = 6;
-            } else if (frequency === 'three_quarters') {
-                monthsToAdd = 9;
-            } else {
-                // annually
-                monthsToAdd = 12;
-            }
-
-            // Calculate end date using complete months
-            endDate = new Date(startDate);
-            endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
-            endDate.setUTCDate(0); // Last day of previous month (complete month)
-
-            // Cap at December 31st of membership year
-            if (endDate > firstYearEnd) {
-                endDate = new Date(firstYearEnd);
-            }
-
-            // Calculate amount based on actual months covered
-            const actualMonths = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-
-            // Determine monthly fee from member table only (no category fallback)
-            const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
-            let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
-
-            amount = Math.round(monthlyFee * actualMonths);
-        } else {
-            // SUBSEQUENT YEARS OR FIRST YEAR COMPLETE: Quarterly payment system (Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec)
-            // But also support monthly payments and partial quarter completion
-            const partialQuarters = window.partialQuarters || {};
-            const currentPartialQuarter = partialQuarters[quarterStatus.nextAvailableQuarter];
-
-            let quartersToAdd, monthsToAdd;
-
-            // Check if we're completing a partial quarter
-            if (currentPartialQuarter && frequency === 'quarterly') {
-                // For partial quarter completion, only pay remaining months
-                monthsToAdd = currentPartialQuarter.unpaidMonths.length;
-                quartersToAdd = 1;
-            } else if (frequency === 'monthly') {
-                monthsToAdd = 1;
-                quartersToAdd = 1; // For calculation purposes
-            } else if (frequency === 'quarterly') {
-                monthsToAdd = 3;
-                quartersToAdd = 1;
-            } else if (frequency === 'half_yearly') {
-                monthsToAdd = 6;
-                quartersToAdd = 2;
-            } else if (frequency === 'three_quarters') {
-                monthsToAdd = 9;
-                quartersToAdd = 3;
-            } else {
-                // annually
-                monthsToAdd = 12;
-                quartersToAdd = 4;
-            }
-
-            if (quarterStatus.latestEndDate && !allFirstYearMonthsPaid) {
-                // Continue from where last payment ended - start from first day of next month
-                const lastEndDate = new Date(quarterStatus.latestEndDate);
-                startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
-            } else if (allFirstYearMonthsPaid || !isFirstYear) {
-                // Start from January 1st of the year after membership year, or continue quarterly system
-                if (currentPartialQuarter) {
-                    // For partial quarters, start from the first unpaid month in that quarter
-                    const nextUnpaidMonth = currentPartialQuarter.nextUnpaidMonth;
-                    // Use the year from latest payment, not current year
-                    const latestPaymentYear = quarterStatus.latestEndDate ? new Date(quarterStatus.latestEndDate).getFullYear() : currentYear;
-                    startDate = new Date(Date.UTC(latestPaymentYear, nextUnpaidMonth, 1));
-                } else if (quarterStatus.latestEndDate) {
-                    const lastEndDate = new Date(quarterStatus.latestEndDate);
-                    console.log('Latest end date:', quarterStatus.latestEndDate);
-                    console.log('Calculated start date year:', lastEndDate.getUTCFullYear());
-                    console.log('Calculated start date month:', lastEndDate.getUTCMonth() + 1);
-                    startDate = new Date(Date.UTC(lastEndDate.getUTCFullYear(), lastEndDate.getUTCMonth() + 1, 1));
-                    console.log('Final start date:', startDate.toISOString().split('T')[0]);
-                } else {
-                    // Start from current year if no previous payments
-                    startDate = new Date(Date.UTC(currentYear, 0, 1));
-                }
-            } else {
-                // Start from current year if no previous payments
-                startDate = new Date(Date.UTC(currentYear, 0, 1));
-            }
-
-            // Calculate end date by adding months - complete months
-            endDate = new Date(startDate);
-            endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
-            endDate.setUTCDate(0); // Last day of previous month (complete month)
-
-            // Calculate amount based on frequency and monthly fee from member table only (no category fallback)
-            const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
-            let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
-
-            if (frequency === 'monthly') {
-                amount = Math.round(monthlyFee);
-            } else if (currentPartialQuarter && frequency === 'quarterly') {
-                // For partial quarter completion, charge only for remaining months
-                amount = Math.round(monthlyFee * monthsToAdd);
-            } else {
-                // For quarterly, half-yearly, or annual payments, multiply monthly fee by number of months
-                amount = Math.round(monthlyFee * monthsToAdd);
-            }
-        }
-
-        setData('valid_from', startDate.toISOString().split('T')[0]);
-        setData('valid_to', endDate.toISOString().split('T')[0]);
-        setData('starting_quarter', quarterStatus.nextAvailableQuarter);
-        setData('amount', amount);
-    };
 
     const calculateBreakdown = () => {
         const amount = parseFloat(data.amount) || 0;
@@ -964,7 +354,40 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     };
 
     const calculateTotal = () => {
-        return calculateBreakdown().totalAmount;
+        if (!invoiceItems || invoiceItems.length === 0) return 0;
+
+        return invoiceItems.reduce((sum, item) => {
+            const amount = parseFloat(item.amount) || 0;
+            // If items manage their own tax/discount, enable this logic:
+            // const tax = parseFloat(item.tax) || 0;
+            // const discount = parseFloat(item.discount_val) || 0;
+            // let itemTotal = amount;
+            // if (item.discount_type === 'percent') itemTotal -= (amount * discount / 100);
+            // else itemTotal -= discount;
+            // itemTotal += (itemTotal * tax / 100);
+            // return sum + itemTotal;
+
+            // For now, as per Grid logic, let's assume 'amount' is the base.
+            // If the user wants full calc, we can duplicate Grid logic or just sum amounts.
+            // The InvoiceItemsGrid usually updates a 'total' field if implemented, or we recalc here.
+            // Let's implement a safe recalculation:
+
+            let net = amount;
+            const discountVal = parseFloat(item.discount_val) || 0;
+            const taxPct = parseFloat(item.tax) || 0;
+            const addChg = parseFloat(item.add_charges) || 0;
+
+            if (item.discount_type === 'percent') {
+                net -= (amount * discountVal) / 100;
+            } else {
+                net -= discountVal;
+            }
+
+            const taxAmt = (net * taxPct) / 100;
+            const itemTotal = net + taxAmt + addChg;
+
+            return sum + (itemTotal > 0 ? itemTotal : 0);
+        }, 0);
     };
 
     const validateDateOverlap = () => {
@@ -997,7 +420,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 };
             }
         }
-
         return { isValid: true };
     };
 
@@ -1024,32 +446,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         return lastDayFormatted;
     };
 
-    // Helper function to calculate period description from dates
-    const calculatePeriodDescription = (startDate, endDate) => {
-        if (!startDate || !endDate) return '';
-
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-
-        // Calculate total months
-        const monthsDiff = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
-
-        // Calculate quarters (3 months = 1 quarter)
-        const quarters = Math.round((monthsDiff / 3) * 10) / 10; // Round to 1 decimal place
-
-        if (monthsDiff === 1) {
-            return '1 Month';
-        } else if (monthsDiff < 3) {
-            return `${monthsDiff} Months`;
-        } else if (quarters === 1) {
-            return '1 Quarter';
-        } else if (quarters % 1 === 0) {
-            return `${quarters} Quarters`;
-        } else {
-            return `${quarters} Quarters (${monthsDiff} months)`;
-        }
-    };
-
     // Real-time validation when dates change
     const handleDateChange = (field, dateValue) => {
         let value = dateValue ? dayjs(dateValue).format('YYYY-MM-DD') : '';
@@ -1069,193 +465,240 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
         setData(field, value);
 
-        // Update validation after a short delay
-        setTimeout(() => {
-            const validation = validateDateOverlap();
-            setDateValidation(validation);
+        // Recalculate amount if both dates are present
+        const currentFromDate = field === 'valid_from' ? value : data.valid_from;
+        const currentToDate = field === 'valid_to' ? value : data.valid_to;
 
-            // Recalculate amount if both dates are present
-            const currentFromDate = field === 'valid_from' ? value : data.valid_from;
-            const currentToDate = field === 'valid_to' ? value : data.valid_to;
+        if (selectedMember && currentFromDate && currentToDate) {
+            const fromDate = new Date(currentFromDate);
+            const toDate = new Date(currentToDate);
 
-            if (selectedMember && currentFromDate && currentToDate) {
-                const fromDate = new Date(currentFromDate);
-                const toDate = new Date(currentToDate);
+            if (fromDate && toDate && toDate >= fromDate) {
+                if (data.fee_type === 'maintenance_fee') {
+                    // Calculate number of months between dates for maintenance fee
+                    const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
 
-                if (fromDate && toDate && toDate >= fromDate) {
-                    if (data.fee_type === 'maintenance_fee') {
-                        // Calculate number of months between dates for maintenance fee
-                        const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
+                    // Calculate amount based on monthly fee from member table only (no category fallback)
+                    const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
+                    let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
 
-                        // Calculate amount based on monthly fee from member table only (no category fallback)
-                        const parseAmount = (val) => parseFloat(String(val || 0).replace(/,/g, ''));
-                        let monthlyFee = parseAmount(selectedMember.total_maintenance_fee);
+                    const newAmount = monthlyFee * monthsDiff;
 
-                        const newAmount = monthlyFee * monthsDiff;
+                    setData('amount', newAmount);
+
+                    enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${monthsDiff} months`, {
+                        variant: 'info',
+                    });
+                } else if (data.fee_type === 'subscription_fee' && data.subscription_category_id) {
+                    // Calculate amount for subscription fee based on selected category and date range
+                    const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
+
+                    if (selectedCategory) {
+                        let newAmount;
+                        let periodText;
+
+                        // Calculate total days between dates
+                        const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+                        // Check if it's full months or partial days
+                        const isFullMonths = fromDate.getDate() === 1 && toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate();
+
+                        if (isFullMonths) {
+                            // Full months calculation
+                            const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
+                            newAmount = Math.round(selectedCategory.fee * monthsDiff);
+                            periodText = `${monthsDiff} month${monthsDiff > 1 ? 's' : ''} (${totalDays} days)`;
+                        } else {
+                            // Daily calculation - use average month (30 days) for consistency
+                            const dailyRate = Math.round(selectedCategory.fee / 30);
+                            newAmount = dailyRate * totalDays;
+                            periodText = `${totalDays} day${totalDays > 1 ? 's' : ''} (Rs ${dailyRate}/day)`;
+                        }
 
                         setData('amount', newAmount);
 
-                        enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${monthsDiff} months`, {
+                        enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${periodText}`, {
                             variant: 'info',
                         });
-                    } else if (data.fee_type === 'subscription_fee' && data.subscription_category_id) {
-                        // Calculate amount for subscription fee based on selected category and date range
-                        const selectedCategory = subscriptionCategories?.find((cat) => cat.id == data.subscription_category_id);
-
-                        if (selectedCategory) {
-                            let newAmount;
-                            let periodText;
-
-                            // Calculate total days between dates
-                            const totalDays = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-                            // Check if it's full months or partial days
-                            const isFullMonths = fromDate.getDate() === 1 && toDate.getDate() === new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0).getDate();
-
-                            if (isFullMonths) {
-                                // Full months calculation
-                                const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + (toDate.getMonth() - fromDate.getMonth()) + 1;
-                                newAmount = Math.round(selectedCategory.fee * monthsDiff);
-                                periodText = `${monthsDiff} month${monthsDiff > 1 ? 's' : ''} (${totalDays} days)`;
-                            } else {
-                                // Daily calculation - use average month (30 days) for consistency
-                                const dailyRate = Math.round(selectedCategory.fee / 30);
-                                newAmount = dailyRate * totalDays;
-                                periodText = `${totalDays} day${totalDays > 1 ? 's' : ''} (Rs ${dailyRate}/day)`;
-                            }
-
-                            setData('item_amount', newAmount);
-
-                            enqueueSnackbar(`Amount updated to Rs ${newAmount.toLocaleString()} for ${periodText}`, {
-                                variant: 'info',
-                            });
-                        }
                     }
                 }
             }
-        }, 100);
+        }
     };
 
-    const handleSubmit = async (e, targetStatus = 'paid') => {
+    const handleSubmit = async (e, targetStatus = 'paid', shouldPrint = false) => {
         if (e) e.preventDefault();
 
-        // Validate date overlap before submitting
-        const validation = validateDateOverlap();
-        if (!validation.isValid) {
-            enqueueSnackbar(`Date Conflict: ${validation.message}`, { variant: 'error' });
+        // Validate items
+        if (!invoiceItems || invoiceItems.length === 0) {
+            enqueueSnackbar('Please add at least one item to the invoice', { variant: 'error' });
             return;
         }
 
-        // Validate credit card fields if credit card is selected
-        if (data.payment_method === 'credit_card') {
-            if (!data.credit_card_type) {
-                enqueueSnackbar('Please select credit card type', { variant: 'error' });
-                return;
-            }
-            if (!data.receipt_file) {
-                enqueueSnackbar('Please upload receipt for credit card payment', { variant: 'error' });
-                return;
-            }
+        // If paying, open the dialog first (unless already confirmed)
+        if (targetStatus === 'paid') {
+            setTransactionToPay({
+                isNew: true,
+                invoice_no: 'NEW', // Placeholder
+                total_price: calculateTotal(),
+                member: selectedMember,
+                fee_type: data.fee_type, // For display
+            });
+            setPaymentConfirmationOpen(true);
+            return;
         }
 
+        // For Unpaid, check basic validation but no payment details needed
+        // Pass shouldPrint to processSubmit
+        processSubmit(targetStatus, null, shouldPrint);
+    };
+
+    const processSubmit = async (targetStatus, paymentDetails, shouldPrint = false) => {
         setSubmitting(true);
+        console.log('--- processSubmit Started ---');
+        console.log('Booking Type:', bookingType);
+        console.log('Selected Member:', selectedMember);
+        console.log('Target Status:', targetStatus);
+        console.log('Payment Details:', paymentDetails);
 
         try {
             // Create FormData for file upload
             const formData = new FormData();
 
-            // Add all form fields to FormData
-            Object.keys(data).forEach((key) => {
-                if (key === 'receipt_file' && data[key]) {
-                    formData.append('receipt_file', data[key]);
-                } else if (key === 'subscriptions') {
-                    // Skip handling here, we'll do it separately for subscription_fee
-                } else if (data[key] !== null && data[key] !== '') {
-                    formData.append(key, data[key]);
-                }
-            });
+            // Add common fields
+            // Use data.booking_type as it is already normalized to 'member', 'corporate', 'guest'
+            const normalizedBookingType = data.booking_type;
+            formData.append('booking_type', normalizedBookingType);
 
-            // Special handling for subscription items
-            if (data.fee_type === 'subscription_fee') {
-                if (subscriptionItems.length === 0) {
-                    enqueueSnackbar('Please add at least one subscription item', { variant: 'error' });
-                    setSubmitting(false);
-                    return;
-                }
-                formData.append('subscriptions', JSON.stringify(subscriptionItems));
-                // We'll also append the first item's dates as a fallback/reference for the "invoice" if needed,
-                // but the backend will iterate over items.
-                // Actually, the main amount is already updated in data.amount
+            // Handle member IDs based on mapped booking type
+            // Ensure selectedMember exists before accessing ID
+            if (!selectedMember) {
+                console.error('No member selected!');
+                enqueueSnackbar('No member selected!', { variant: 'error' });
+                setSubmitting(false);
+                return;
             }
 
-            // Append status
+            if (normalizedBookingType === 'member') {
+                formData.append('member_id', selectedMember.id);
+            } else if (normalizedBookingType === 'corporate') {
+                formData.append('corporate_member_id', selectedMember.id);
+            } else if (normalizedBookingType === 'guest') {
+                // For generic guest, or specific guest types masked as 'guest'
+                formData.append('customer_id', selectedMember.id);
+            }
+
+            // Determine Action string for backend validation
+            let action = 'save';
+            if (targetStatus === 'paid') {
+                action = 'save_receive';
+            } else if (shouldPrint) {
+                action = 'save_print';
+            }
+            formData.append('action', action);
+            console.log('Action determined:', action);
+
             formData.append('status', targetStatus);
+            if (data.remarks) formData.append('remarks', data.remarks);
+
+            // Payment Details
+            if (targetStatus === 'paid' && paymentDetails) {
+                formData.append('payment_method', paymentDetails.payment_method);
+
+                // Common optional fields
+                if (paymentDetails.payment_mode_details) {
+                    formData.append('payment_mode_details', paymentDetails.payment_mode_details);
+                }
+
+                if (paymentDetails.payment_method === 'credit_card') {
+                    formData.append('credit_card_type', paymentDetails.credit_card_type);
+                }
+
+                // Allow receipt file for all applicable methods
+                if (paymentDetails.receipt_file) formData.append('receipt_file', paymentDetails.receipt_file);
+            }
+
+            // Append Items
+            invoiceItems.forEach((item, index) => {
+                Object.keys(item).forEach((key) => {
+                    const value = item[key];
+                    if (value !== null && value !== undefined) {
+                        // Format dates if they are Date objects or dayjs objects
+                        if ((key === 'valid_from' || key === 'valid_to') && value) {
+                            try {
+                                // check if it's already a string in YYYY-MM-DD
+                                if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                    formData.append(`items[${index}][${key}]`, value);
+                                } else {
+                                    formData.append(`items[${index}][${key}]`, dayjs(value).format('YYYY-MM-DD'));
+                                }
+                            } catch (e) {
+                                formData.append(`items[${index}][${key}]`, value);
+                            }
+                        } else {
+                            formData.append(`items[${index}][${key}]`, value);
+                        }
+                    }
+                });
+            });
+
+            // Log FormData keys
+            for (var pair of formData.entries()) {
+                console.log(pair[0] + ', ' + pair[1]);
+            }
 
             const response = await axios.post(route('finance.transaction.store'), formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-            console.log(response.data);
+
             if (response.data.success) {
                 // Set invoice details for modal
-                if (response.data.transaction) {
-                    setCreatedInvoiceId(response.data.transaction.id); // For single, or first of many
-                    setCreatedMemberId(response.data.transaction.member_id);
-                    setShowInvoiceModal(true);
+                const transactionData = response.data.transaction || response.data.invoice;
+                if (transactionData) {
+                    setCreatedInvoiceId(transactionData.id);
+                    // Use invoice_no as memberId placeholder if that's what the modal expects, or actual member ID
+                    // Looking at Invoice Modal usage: invoiceNo={createdMemberId} invoiceId={createdInvoiceId}
+                    // It seems legacy used invoice_no? Let's pass invoice_no as safe fallback
+                    setCreatedMemberId(transactionData.invoice_no);
+
+                    if (shouldPrint || targetStatus === 'paid') {
+                        // For Save & Print, we want to open the modal AND ideally auto-trigger print inside it
+                        // Or just opening the modal allows the user to click Print.
+                        // User request: "it save but not open print invoice"
+                        setShowInvoiceModal(true);
+                    }
                 }
 
-                // If we got multiple transactions (should generally share invoice_no, so we can pick any id for the slip?)
-                // The backend response format needs to be checked.
-                // Assuming it returns one representative transaction object or a list.
-                // We will adjust backend to return the first one or a clear "main" one.
+                enqueueSnackbar('Transaction saved successfully', { variant: 'success' });
 
-                // Reset form but keep member if pre-selected
-                setSubscriptionItems([]); // Clear subscription items
+                setSubmitting(false);
+
+                // Reset form
                 setData({
-                    booking_type: data.booking_type, // Preserve booking type
-                    member_id: data.booking_type === 'member' ? (selectedMember ? selectedMember.id : '') : '',
-                    corporate_member_id: data.booking_type === 'corporate' ? (selectedMember ? selectedMember.id : '') : '',
-                    customer_id: data.booking_type === 'guest' ? (selectedMember ? selectedMember.id : '') : '',
-                    fee_type: 'maintenance_fee',
-                    payment_frequency: 'monthly',
-                    amount: '',
-                    discount_type: '',
-                    discount_value: '',
+                    ...data,
                     payment_method: 'cash',
-                    valid_from: '',
-                    valid_to: '',
-                    starting_quarter: 1,
                     credit_card_type: '',
                     receipt_file: null,
-                    additional_charges: '',
-                    tax_percentage: '',
-                    overdue_percentage: '',
                     remarks: '',
-                    subscription_type_id: '',
-                    subscription_category_id: '',
-                    family_member_id: null,
                 });
+
+                // Clear items
+                setInvoiceItems([]);
 
                 if (!preSelectedMember) {
                     // Reset member selection
                     setSelectedMember(null);
                     setMemberTransactions([]);
                     setMembershipFeePaid(false);
-                    setQuarterStatus({
-                        paidQuarters: [],
-                        nextAvailableQuarter: 1,
-                        currentYear: new Date().getFullYear(),
-                    });
+                    // Reset quarter status manually if needed, or it will be reset on next member select
                 } else {
                     // Refresh transactions for the pre-selected member
-                    handleMemberSelect(preSelectedMember);
+                    fetchMemberTransactions(selectedMember.id); // Assuming this function exists and works
                 }
 
                 setFormErrors({});
-                setDateValidation({ isValid: true });
-
-                fetchMemberTransactions(selectedMember.id);
 
                 // Show success message
                 enqueueSnackbar(`Transaction created successfully (${targetStatus})!`, { variant: 'success' });
@@ -1281,6 +724,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             } else {
                 // Other errors
                 enqueueSnackbar('Failed to create transaction. Please try again.', { variant: 'error' });
+                console.error(error);
             }
         } finally {
             setSubmitting(false);
@@ -1343,15 +787,30 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const handleConfirmPayment = async (paymentData) => {
         if (!transactionToPay) return;
 
+        // NEW: Check if this is a newly created transaction that needs submission
+        if (transactionToPay.isNew) {
+            setPaymentConfirmationOpen(false);
+            setTransactionToPay(null);
+            // Submit the full form with payment details
+            await processSubmit('paid', paymentData);
+            return;
+        }
+
         setSubmittingPayment(true);
         const formData = new FormData();
         formData.append('status', 'paid');
         formData.append('payment_method', paymentData.payment_method);
+
+        if (paymentData.payment_mode_details) {
+            formData.append('payment_mode_details', paymentData.payment_mode_details);
+        }
+
         if (paymentData.payment_method === 'credit_card') {
             formData.append('credit_card_type', paymentData.credit_card_type);
-            if (paymentData.receipt_file) {
-                formData.append('receipt_file', paymentData.receipt_file);
-            }
+        }
+
+        if (paymentData.receipt_file) {
+            formData.append('receipt_file', paymentData.receipt_file);
         }
 
         try {
@@ -1377,45 +836,42 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     return (
         <>
-            <Box sx={{ p: 4 }}>
+            <Box sx={{ p: 2 }}>
                 {/* Header */}
-                <Box sx={{ mb: 4 }}>
-                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Invoice Generation</Typography>
-                    <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '15px' }}>Search for a member and create a new transaction</Typography>
+                <Box sx={{ mb: 2 }}>
+                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '24px' }}>Invoice Generation</Typography>
+                    <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '13px' }}>Search for a member and create a new transaction</Typography>
                 </Box>
 
                 <Grid container spacing={3}>
                     {/* Step 1: Member Search */}
                     {!preSelectedMember && (
                         <Grid item xs={12}>
-                            <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                                <CardContent sx={{ p: 3 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                            <Card sx={{ mb: 2, boxShadow: '0 2px 4px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                                <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                         <Box
                                             sx={{
                                                 bgcolor: '#0a3d62',
                                                 color: 'white',
                                                 borderRadius: '50%',
-                                                width: 32,
-                                                height: 32,
+                                                width: 24,
+                                                height: 24,
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
-                                                mr: 2,
-                                                fontSize: '14px',
+                                                mr: 1.5,
+                                                fontSize: '12px',
                                                 fontWeight: 600,
                                             }}
                                         >
                                             1
                                         </Box>
-                                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
                                             Booking Type
                                         </Typography>
                                     </Box>
-                                    <Grid item xs={12} mb={3}>
-                                        <FormLabel component="legend" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                            Booking Type
-                                        </FormLabel>
+                                    <Grid item xs={12} mb={1}>
                                         <RadioGroup row name="bookingType" value={bookingType} onChange={handleBookingTypeChange}>
                                             <FormControlLabel value="0" control={<Radio />} label="Member" />
                                             <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
@@ -1476,6 +932,84 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             </li>
                                         )}
                                     />
+                                    {selectedMember && (
+                                        <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+                                                {/* Member Info */}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Person sx={{ fontSize: 18, color: '#64748b' }} />
+                                                    <Box>
+                                                        <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 1.1 }}>
+                                                            {selectedMember.full_name}{' '}
+                                                            <Typography component="span" variant="caption" color="text.secondary">
+                                                                ({selectedMember.membership_no || 'No #'})
+                                                            </Typography>
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                            {formatStatus(selectedMember.status)} • {selectedMember.cnic_no || selectedMember.cnic || 'No CNIC'}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+
+                                                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
+
+                                                {/* Fees Summary Strip */}
+                                                <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, flexWrap: 'wrap' }}>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Membership
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} color="primary.main">
+                                                            {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Monthly
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} color="error.main">
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Quarterly
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} color="secondary.main">
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Joined
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600}>
+                                                            {formatDate(selectedMember.membership_date)}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Ledger Balance
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} sx={{ color: (ledgerBalance || 0) > 0 ? 'error.main' : 'success.main' }}>
+                                                            {formatCurrency(ledgerBalance || 0)}
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => {
+                                                                    // Navigate to ledger details or scroll to history
+                                                                    const historySection = document.getElementById('transaction-history-section');
+                                                                    if (historySection) historySection.scrollIntoView({ behavior: 'smooth' });
+                                                                }}
+                                                                sx={{ ml: 0.5, p: 0 }}
+                                                            >
+                                                                <Visibility fontSize="inherit" />
+                                                            </IconButton>
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Box>
+                                        </Box>
+                                    )}
                                 </CardContent>
                             </Card>
                         </Grid>
@@ -1485,680 +1019,37 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     <Grid item xs={12}>
                         <Grid container spacing={3}>
                             {/* Left Column: Transaction Form */}
-                            <Grid item xs={12} md={8}>
-                                <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                                    <CardContent sx={{ p: 3 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                            <Grid item xs={12}>
+                                <Card sx={{ mb: 2, boxShadow: '0 2px 4px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                             <Box
                                                 sx={{
                                                     bgcolor: selectedMember ? '#0a3d62' : 'grey.300',
                                                     color: 'white',
                                                     borderRadius: '50%',
-                                                    width: 32,
-                                                    height: 32,
+                                                    width: 24,
+                                                    height: 24,
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
-                                                    mr: 2,
-                                                    fontSize: '14px',
+                                                    mr: 1.5,
+                                                    fontSize: '12px',
                                                     fontWeight: 600,
                                                 }}
                                             >
                                                 2
                                             </Box>
-                                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
                                                 Transaction Details
                                             </Typography>
                                         </Box>
                                         {selectedMember ? (
-                                            <form onSubmit={handleSubmit}>
+                                            <form onSubmit={(e) => handleSubmit(e)}>
                                                 <Grid container spacing={3}>
-                                                    {/* Fee Type Selection */}
+                                                    {/* Invoice Items Grid */}
                                                     <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                            Fee Type
-                                                        </Typography>
-                                                        <FormControl fullWidth>
-                                                            <Select size="small" value={data.fee_type} onChange={(e) => handleFeeTypeChange(e.target.value)} error={!!errors.fee_type} sx={{ borderRadius: 2 }}>
-                                                                {bookingType === '0' || bookingType === '2' ? (
-                                                                    [
-                                                                        <MenuItem key="membership_fee" value="membership_fee">
-                                                                            Membership Fee
-                                                                        </MenuItem>,
-                                                                        <MenuItem key="maintenance_fee" value="maintenance_fee">
-                                                                            Maintenance Fee
-                                                                        </MenuItem>,
-                                                                        <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                            Subscription Fee
-                                                                        </MenuItem>,
-                                                                        <MenuItem key="reinstating_fee" value="reinstating_fee">
-                                                                            Reinstating Fee
-                                                                        </MenuItem>,
-                                                                    ]
-                                                                ) : (
-                                                                    <MenuItem key="subscription_fee" value="subscription_fee">
-                                                                        Subscription Fee
-                                                                    </MenuItem>
-                                                                )}
-                                                            </Select>
-                                                            {errors.fee_type && (
-                                                                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                                                                    {errors.fee_type}
-                                                                </Typography>
-                                                            )}
-                                                            {(selectedMember?.status === 'cancelled' || selectedMember?.status === 'expired') && (
-                                                                <Alert severity="info" sx={{ mt: 2 }}>
-                                                                    <strong>Member Status: {formatStatus(selectedMember.status)}</strong>
-                                                                    <br />
-                                                                    Only Reinstating Fee is available for {selectedMember.status} members. This fee will reactivate the member's status upon successful payment.
-                                                                </Alert>
-                                                            )}
-                                                        </FormControl>
-                                                    </Grid>
-
-                                                    {/* Maintenance Fee Quarter Status */}
-                                                    {data.fee_type === 'maintenance_fee' && (
-                                                        <>
-                                                            <Grid item xs={12}>
-                                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                    Quarter Payment Status
-                                                                </Typography>
-                                                                <Box
-                                                                    sx={{
-                                                                        p: 2,
-                                                                        bgcolor: quarterStatus.isNewCycle ? 'info.50' : 'warning.50',
-                                                                        borderRadius: 2,
-                                                                        border: '1px solid',
-                                                                        borderColor: quarterStatus.isNewCycle ? 'info.200' : 'warning.200',
-                                                                    }}
-                                                                >
-                                                                    {(() => {
-                                                                        const membershipDate = new Date(selectedMember.membership_date);
-                                                                        const membershipYear = membershipDate.getFullYear();
-                                                                        const firstYearEnd = new Date(membershipYear, 11, 31);
-                                                                        // Only consider first year if there are remaining months (i.e., joined before December)
-                                                                        const isFirstYear = (!quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd) && membershipDate.getMonth() < 11;
-
-                                                                        return (
-                                                                            <>
-                                                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-                                                                                    {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
-                                                                                </Typography>
-
-                                                                                {isFirstYear ? (
-                                                                                    <Box sx={{ mb: 2 }}>
-                                                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                                            <strong>Payment Method:</strong> Monthly fees for remaining months in {membershipYear}
-                                                                                        </Typography>
-                                                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                                            <strong>Membership Month:</strong> {membershipDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} (Free)
-                                                                                        </Typography>
-                                                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                                                            <strong>Payable Period:</strong> {new Date(membershipYear, membershipDate.getMonth() + 1, 1).toLocaleDateString('en-US', { month: 'long' })} - December {membershipYear}
-                                                                                        </Typography>
-
-                                                                                        {/* Debug: Show paid months */}
-                                                                                        {(() => {
-                                                                                            const membershipMonth = membershipDate.getMonth();
-                                                                                            const monthsInFirstYear = [];
-                                                                                            for (let month = membershipMonth + 1; month <= 11; month++) {
-                                                                                                monthsInFirstYear.push(month);
-                                                                                            }
-
-                                                                                            const paidMonths = [];
-                                                                                            memberTransactions
-                                                                                                .filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid')
-                                                                                                .forEach((transaction) => {
-                                                                                                    const txStart = new Date(transaction.valid_from);
-                                                                                                    const txEnd = new Date(transaction.valid_to);
-
-                                                                                                    // More accurate month detection: check each month the transaction spans
-                                                                                                    let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
-                                                                                                    const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
-
-                                                                                                    while (currentDate <= endDate) {
-                                                                                                        const month = currentDate.getMonth();
-                                                                                                        const year = currentDate.getFullYear();
-
-                                                                                                        // Check if this month overlaps with the transaction period
-                                                                                                        const monthStart = new Date(year, month, 1);
-                                                                                                        const monthEnd = new Date(year, month + 1, 0); // Last day of month
-
-                                                                                                        // Transaction covers this month if there's any overlap
-                                                                                                        const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
-
-                                                                                                        if (hasOverlap && year === membershipYear && monthsInFirstYear.includes(month) && !paidMonths.includes(month)) {
-                                                                                                            paidMonths.push(month);
-                                                                                                        }
-
-                                                                                                        currentDate.setMonth(currentDate.getMonth() + 1);
-                                                                                                    }
-                                                                                                });
-
-                                                                                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-                                                                                            return (
-                                                                                                <Typography variant="body2" color="text.secondary">
-                                                                                                    <strong>Paid Months:</strong> {paidMonths.length > 0 ? paidMonths.map((m) => monthNames[m]).join(', ') : 'None'}
-                                                                                                    <br />
-                                                                                                    <strong>Remaining:</strong>{' '}
-                                                                                                    {monthsInFirstYear
-                                                                                                        .filter((m) => !paidMonths.includes(m))
-                                                                                                        .map((m) => monthNames[m])
-                                                                                                        .join(', ') || 'All paid!'}
-                                                                                                </Typography>
-                                                                                            );
-                                                                                        })()}
-                                                                                    </Box>
-                                                                                ) : (
-                                                                                    <>
-                                                                                        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                                                                                            {[1, 2, 3, 4].map((quarter) => (
-                                                                                                <Chip key={quarter} label={`Q${quarter}`} color={quarterStatus.paidQuarters.includes(quarter) ? 'success' : 'default'} variant={quarterStatus.paidQuarters.includes(quarter) ? 'filled' : 'outlined'} size="medium" sx={{ minWidth: 50, fontWeight: 600 }} />
-                                                                                            ))}
-                                                                                        </Box>
-                                                                                        <Typography variant="body2" color="text.secondary">
-                                                                                            <strong>Quarters:</strong> Q1 (Jan-Mar), Q2 (Apr-Jun), Q3 (Jul-Sep), Q4 (Oct-Dec)
-                                                                                        </Typography>
-                                                                                    </>
-                                                                                )}
-
-                                                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                                                    <strong>Next payment:</strong> Monthly payment system
-                                                                                    {!isFirstYear && quarterStatus.latestEndDate && <span> (Last payment ended: {formatDate(quarterStatus.latestEndDate)})</span>}
-                                                                                    {!quarterStatus.latestEndDate && !isFirstYear && <span> (No previous maintenance payments found)</span>}
-                                                                                </Typography>
-                                                                            </>
-                                                                        );
-                                                                    })()}
-                                                                </Box>
-                                                            </Grid>
-
-                                                            <Grid item xs={12}>
-                                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                    Payment Period Selection
-                                                                </Typography>
-                                                                <Alert severity="info" sx={{ mb: 2 }}>
-                                                                    <Typography variant="body2">
-                                                                        <strong>Next suggested payment:</strong> Monthly maintenance fee
-                                                                        <br />
-                                                                        Select your desired payment period using the dates below. Amount will calculate automatically.
-                                                                    </Typography>
-                                                                </Alert>
-
-                                                                {/* Quick Payment Period Buttons */}
-                                                                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('monthly')} sx={{ borderRadius: 2 }}>
-                                                                        1 Month
-                                                                    </Button>
-                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('quarterly')} sx={{ borderRadius: 2 }}>
-                                                                        1 Quarter (3 months)
-                                                                    </Button>
-                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('half_yearly')} sx={{ borderRadius: 2 }}>
-                                                                        6 Months
-                                                                    </Button>
-                                                                    <Button size="small" variant="outlined" onClick={() => suggestMaintenancePeriod('annually')} sx={{ borderRadius: 2 }}>
-                                                                        1 Year
-                                                                    </Button>
-                                                                </Box>
-                                                            </Grid>
-                                                        </>
-                                                    )}
-
-                                                    {/* Reinstating Fee Section */}
-                                                    {selectedMember && data.fee_type === 'reinstating_fee' && (
-                                                        <Grid item xs={12}>
-                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                Member Reinstatement Information
-                                                            </Typography>
-                                                            <Box sx={{ p: 3, backgroundColor: '#fef3c7', borderRadius: 2, border: '1px solid #f59e0b' }}>
-                                                                <Grid container spacing={2}>
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
-                                                                            Current Status:
-                                                                            <Chip
-                                                                                label={formatStatus(selectedMember.status)}
-                                                                                size="small"
-                                                                                sx={{
-                                                                                    ml: 1,
-                                                                                    backgroundColor: selectedMember.status === 'active' ? '#dcfce7' : '#fecaca',
-                                                                                    color: selectedMember.status === 'active' ? '#166534' : '#dc2626',
-                                                                                }}
-                                                                            />
-                                                                        </Typography>
-                                                                    </Grid>
-                                                                    <Grid item xs={12} md={6}>
-                                                                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#92400e' }}>
-                                                                            Member ID: {selectedMember.id}
-                                                                        </Typography>
-                                                                    </Grid>
-                                                                    <Grid item xs={12}>
-                                                                        <Typography variant="body2" sx={{ color: '#92400e' }}>
-                                                                            <strong>Reinstating Fee:</strong> This fee is charged to reactivate members whose status is cancelled, expired, suspended, or terminated. Upon successful payment, the member status will be updated to "Active".
-                                                                        </Typography>
-                                                                    </Grid>
-                                                                    {!['cancelled', 'expired', 'suspended', 'terminated'].includes(selectedMember.status) && (
-                                                                        <Grid item xs={12}>
-                                                                            <Alert severity="warning">This member's current status ({formatStatus(selectedMember.status)}) may not require reinstatement. Reinstating fees are typically for cancelled, expired, suspended, or terminated members.</Alert>
-                                                                        </Grid>
-                                                                    )}
-                                                                </Grid>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-
-                                                    {/* Subscription Details Section - Show before Amount & Discount */}
-                                                    {selectedMember && data.fee_type === 'subscription_fee' && (
-                                                        <Grid item xs={12}>
-                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                Subscription Details
-                                                            </Typography>
-                                                            <Box
-                                                                sx={{
-                                                                    p: 3,
-                                                                    bgcolor: 'grey.50',
-                                                                    borderRadius: 2,
-                                                                    border: '1px solid',
-                                                                    borderColor: 'grey.200',
-                                                                    mb: 3,
-                                                                }}
-                                                            >
-                                                                {/* Add New Subscription Form */}
-                                                                <Grid container spacing={3}>
-                                                                    <Grid item xs={6}>
-                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                                                            Subscription Type
-                                                                        </Typography>
-                                                                        <FormControl fullWidth>
-                                                                            <Select
-                                                                                size="small"
-                                                                                value={data.subscription_type_id}
-                                                                                onChange={(e) => {
-                                                                                    setData('subscription_type_id', e.target.value);
-                                                                                    setData('subscription_category_id', ''); // Reset category when type changes
-                                                                                    // Do NOT reset main amount, as it may hold total of other items
-                                                                                }}
-                                                                                error={!!(errors.subscription_type_id || formErrors.subscription_type_id)}
-                                                                                sx={{ borderRadius: 2 }}
-                                                                                displayEmpty
-                                                                            >
-                                                                                <MenuItem value="">Select Subscription Type</MenuItem>
-                                                                                {subscriptionTypes?.map((type) => (
-                                                                                    <MenuItem key={type.id} value={type.id}>
-                                                                                        {type.name}
-                                                                                    </MenuItem>
-                                                                                ))}
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Grid>
-
-                                                                    <Grid item xs={6}>
-                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                                                            Subscription Category
-                                                                        </Typography>
-                                                                        <FormControl fullWidth>
-                                                                            <Select
-                                                                                size="small"
-                                                                                value={data.subscription_category_id}
-                                                                                onChange={(e) => {
-                                                                                    const categoryId = e.target.value;
-                                                                                    setData('subscription_category_id', categoryId);
-
-                                                                                    // Auto-populate dates from selected category for THIS item (not yet added)
-                                                                                    const selectedCategory = subscriptionCategories?.find((cat) => cat.id == categoryId);
-                                                                                    if (selectedCategory) {
-                                                                                        // Default dates: 1 month from today
-                                                                                        const today = new Date();
-                                                                                        const startDate = today.toISOString().split('T')[0];
-
-                                                                                        const nextMonth = new Date(today);
-                                                                                        nextMonth.setMonth(today.getMonth() + 1);
-                                                                                        nextMonth.setDate(today.getDate() - 1);
-                                                                                        const endDate = nextMonth.toISOString().split('T')[0];
-
-                                                                                        setData((prev) => ({
-                                                                                            ...prev,
-                                                                                            valid_from: startDate,
-                                                                                            valid_to: endDate,
-                                                                                            item_amount: selectedCategory.fee, // Set default amount
-                                                                                            item_discount_type: '',
-                                                                                            item_discount_value: '',
-                                                                                        }));
-                                                                                    }
-                                                                                }}
-                                                                                error={!!(errors.subscription_category_id || formErrors.subscription_category_id)}
-                                                                                sx={{ borderRadius: 2 }}
-                                                                                displayEmpty
-                                                                                disabled={!data.subscription_type_id}
-                                                                            >
-                                                                                <MenuItem value="">Select Category</MenuItem>
-                                                                                {subscriptionCategories
-                                                                                    ?.filter((cat) => cat.subscription_type_id == data.subscription_type_id)
-                                                                                    ?.map((category) => (
-                                                                                        <MenuItem key={category.id} value={category.id}>
-                                                                                            {category.name} - Rs. {category.fee}
-                                                                                        </MenuItem>
-                                                                                    ))}
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Grid>
-
-                                                                    {/* Dates for the item */}
-                                                                    <Grid item xs={6}>
-                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                                            <DatePicker
-                                                                                label="From"
-                                                                                value={data.valid_from ? dayjs(data.valid_from) : null}
-                                                                                onChange={(newValue) => handleDateChange('valid_from', newValue)}
-                                                                                format="DD-MM-YYYY"
-                                                                                slotProps={{
-                                                                                    textField: {
-                                                                                        size: 'small',
-                                                                                        fullWidth: true,
-                                                                                        error: !!(errors.valid_from || formErrors.valid_from),
-                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                                                                    },
-                                                                                }}
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </Grid>
-                                                                    <Grid item xs={6}>
-                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                                            <DatePicker
-                                                                                label="To"
-                                                                                value={data.valid_to ? dayjs(data.valid_to) : null}
-                                                                                onChange={(newValue) => handleDateChange('valid_to', newValue)}
-                                                                                format="DD-MM-YYYY"
-                                                                                slotProps={{
-                                                                                    textField: {
-                                                                                        size: 'small',
-                                                                                        fullWidth: true,
-                                                                                        error: !!(errors.valid_to || formErrors.valid_to),
-                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                                                                    },
-                                                                                }}
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </Grid>
-
-                                                                    <Grid item xs={12}>
-                                                                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: '#374151' }}>
-                                                                            Family Member
-                                                                        </Typography>
-                                                                        <FormControl fullWidth>
-                                                                            <Select size="small" value={data.family_member_id || ''} onChange={(e) => setData('family_member_id', e.target.value || null)} sx={{ borderRadius: 2 }} displayEmpty>
-                                                                                <MenuItem value="">
-                                                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                                        <Person sx={{ mr: 1, fontSize: 18, color: '#1976d2' }} />
-                                                                                        <Box>
-                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                                                                {selectedMember?.full_name} (SELF)
-                                                                                            </Typography>
-                                                                                        </Box>
-                                                                                    </Box>
-                                                                                </MenuItem>
-                                                                                {selectedMember?.family_members?.map((familyMember) => (
-                                                                                    <MenuItem key={familyMember.id} value={familyMember.id}>
-                                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                                                            <Person sx={{ mr: 1, fontSize: 18, color: '#666' }} />
-                                                                                            <Box>
-                                                                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                                                                    {familyMember.full_name}
-                                                                                                </Typography>
-                                                                                                <Typography variant="caption" color="text.secondary">
-                                                                                                    {familyMember.relation}
-                                                                                                </Typography>
-                                                                                            </Box>
-                                                                                        </Box>
-                                                                                    </MenuItem>
-                                                                                ))}
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Grid>
-
-                                                                    {/* Override Amount for Item */}
-                                                                    {/* Amount and Discount - Compact Row */}
-                                                                    <Grid item xs={12} sm={6}>
-                                                                        <TextField
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label="Amount"
-                                                                            type="number"
-                                                                            value={data.item_amount}
-                                                                            onChange={(e) => setData('item_amount', e.target.value)}
-                                                                            InputProps={{
-                                                                                startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary', fontSize: '0.8rem' }}>Rs</Typography>,
-                                                                            }}
-                                                                        />
-                                                                    </Grid>
-
-                                                                    <Grid item xs={12} sm={6}>
-                                                                        <Box sx={{ display: 'flex', gap: 1 }}>
-                                                                            <FormControl fullWidth size="small">
-                                                                                <Select
-                                                                                    value={data.item_discount_type}
-                                                                                    onChange={(e) => {
-                                                                                        setData('item_discount_type', e.target.value);
-                                                                                        if (!e.target.value) setData('item_discount_value', '');
-                                                                                    }}
-                                                                                    displayEmpty
-                                                                                    sx={{ borderRadius: 2 }}
-                                                                                >
-                                                                                    <MenuItem value="">Dsc Type</MenuItem>
-                                                                                    <MenuItem value="fixed">Fixed</MenuItem>
-                                                                                    <MenuItem value="percent">%</MenuItem>
-                                                                                </Select>
-                                                                            </FormControl>
-                                                                            <TextField size="small" fullWidth label="Val" type="number" value={data.item_discount_value} onChange={(e) => setData('item_discount_value', e.target.value)} disabled={!data.item_discount_type} />
-                                                                        </Box>
-                                                                    </Grid>
-
-                                                                    <Grid item xs={12}>
-                                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
-                                                                            {/* Net Calculation Display */}
-                                                                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                                                                                Net Item:{' '}
-                                                                                {formatCurrency(
-                                                                                    (() => {
-                                                                                        const amt = parseFloat(data.item_amount) || 0;
-                                                                                        const dVal = parseFloat(data.item_discount_value) || 0;
-                                                                                        if (data.item_discount_type === 'fixed') return Math.max(0, amt - dVal);
-                                                                                        if (data.item_discount_type === 'percent') return Math.max(0, amt - (amt * dVal) / 100);
-                                                                                        return amt;
-                                                                                    })(),
-                                                                                )}
-                                                                            </Typography>
-
-                                                                            <Button variant="contained" onClick={handleAddSubscription} disabled={!data.subscription_type_id || !data.subscription_category_id}>
-                                                                                Add to Invoice
-                                                                            </Button>
-                                                                        </Box>
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </Box>
-
-                                                            {/* Added Subscriptions List */}
-                                                            {subscriptionItems.length > 0 && (
-                                                                <TableContainer component={Paper} sx={{ mb: 3, borderRadius: '16px' }}>
-                                                                    <Table size="small">
-                                                                        <TableHead sx={{ bgcolor: '#063455' }}>
-                                                                            <TableRow>
-                                                                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>
-                                                                                    <strong>Type</strong>
-                                                                                </TableCell>
-                                                                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>
-                                                                                    <strong>Member</strong>
-                                                                                </TableCell>
-                                                                                <TableCell sx={{ color: '#fff', fontWeight: '600' }}>
-                                                                                    <strong>Period</strong>
-                                                                                </TableCell>
-                                                                                <TableCell align="right" sx={{ color: '#fff', fontWeight: '600' }}>
-                                                                                    <strong>Amount</strong>
-                                                                                </TableCell>
-                                                                                <TableCell align="right" sx={{ color: '#fff', fontWeight: '600' }}>
-                                                                                    <strong>Action</strong>
-                                                                                </TableCell>
-                                                                            </TableRow>
-                                                                        </TableHead>
-                                                                        <TableBody>
-                                                                            {subscriptionItems.map((item, index) => (
-                                                                                <TableRow key={index}>
-                                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
-                                                                                        {item.type_name}
-                                                                                        <Typography>{item.category_name}</Typography>
-                                                                                    </TableCell>
-                                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
-                                                                                        {item.family_member_name}
-                                                                                        <Typography variant="caption" display="block" color="text.secondary">
-                                                                                            {item.family_member_relation}
-                                                                                        </Typography>
-                                                                                    </TableCell>
-                                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
-                                                                                        {formatDate(item.valid_from)} - {formatDate(item.valid_to)}
-                                                                                    </TableCell>
-                                                                                    <TableCell align="right" sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
-                                                                                        {formatCurrency(item.amount)}
-                                                                                        {item.discount_type && (
-                                                                                            <Typography variant="caption" display="block" color="error">
-                                                                                                -{item.discount_type === 'percent' ? `${item.discount_value}%` : formatCurrency(item.discount_value)}
-                                                                                            </Typography>
-                                                                                        )}
-                                                                                        {item.discount_type && (
-                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                                                                {formatCurrency(item.net_amount)}
-                                                                                            </Typography>
-                                                                                        )}
-                                                                                    </TableCell>
-                                                                                    <TableCell align="right">
-                                                                                        <Button size="small" color="error" onClick={() => handleRemoveSubscription(index)} sx={{ textTransform: 'none' }}>
-                                                                                            Remove
-                                                                                        </Button>
-                                                                                    </TableCell>
-                                                                                </TableRow>
-                                                                            ))}
-                                                                            <TableRow sx={{ bgcolor: 'grey.50' }}>
-                                                                                <TableCell colSpan={3} align="right">
-                                                                                    <strong>Total Subscriptions:</strong>
-                                                                                </TableCell>
-                                                                                <TableCell align="right">
-                                                                                    <strong>{formatCurrency(subscriptionItems.reduce((acc, item) => acc + item.net_amount, 0))}</strong>
-                                                                                </TableCell>
-                                                                                <TableCell />
-                                                                            </TableRow>
-                                                                        </TableBody>
-                                                                    </Table>
-                                                                </TableContainer>
-                                                            )}
-                                                        </Grid>
-                                                    )}
-
-                                                    {/* Amount and Discount Section */}
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                            Amount & Discount
-                                                        </Typography>
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={12}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="Amount (PKR)"
-                                                                    type="number"
-                                                                    value={data.amount}
-                                                                    onChange={(e) => setData('amount', e.target.value)}
-                                                                    error={!!errors.amount}
-                                                                    helperText={errors.amount}
-                                                                    disabled={data.fee_type === 'subscription_fee'} // Readonly for subscription fees
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                    InputProps={{
-                                                                        startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary' }}>Rs</Typography>,
-                                                                    }}
-                                                                />
-                                                            </Grid>
-                                                            {data.fee_type !== 'subscription_fee' && (
-                                                                <>
-                                                                    <Grid item xs={6}>
-                                                                        <FormControl fullWidth>
-                                                                            <Select size="small" value={data.discount_type} onChange={(e) => setData('discount_type', e.target.value)} displayEmpty sx={{ borderRadius: 2 }}>
-                                                                                <MenuItem value="">No Discount</MenuItem>
-                                                                                <MenuItem value="percent">Percentage</MenuItem>
-                                                                                <MenuItem value="fixed">Fixed Amount</MenuItem>
-                                                                            </Select>
-                                                                        </FormControl>
-                                                                    </Grid>
-                                                                    <Grid item xs={6}>
-                                                                        <TextField
-                                                                            size="small"
-                                                                            fullWidth
-                                                                            label="Discount Value"
-                                                                            type="number"
-                                                                            value={data.discount_value}
-                                                                            onChange={(e) => setData('discount_value', e.target.value)}
-                                                                            disabled={!data.discount_type}
-                                                                            error={!!errors.discount_value}
-                                                                            helperText={errors.discount_value}
-                                                                            sx={{
-                                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                            }}
-                                                                        />
-                                                                    </Grid>
-                                                                </>
-                                                            )}
-                                                            <Grid item xs={6}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="Tax (%)"
-                                                                    type="number"
-                                                                    value={data.tax_percentage}
-                                                                    onChange={(e) => setData('tax_percentage', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                    InputProps={{
-                                                                        endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
-                                                                    }}
-                                                                />
-                                                            </Grid>
-                                                            <Grid item xs={6}>
-                                                                <TextField
-                                                                    size="small"
-                                                                    fullWidth
-                                                                    label="Overdue (%)"
-                                                                    type="number"
-                                                                    value={data.overdue_percentage}
-                                                                    onChange={(e) => setData('overdue_percentage', e.target.value)}
-                                                                    sx={{
-                                                                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                    }}
-                                                                    InputProps={{
-                                                                        endAdornment: <Typography sx={{ ml: 1, color: 'text.secondary' }}>%</Typography>,
-                                                                    }}
-                                                                />
-                                                            </Grid>
-                                                            {(data.fee_type === 'membership_fee' || data.fee_type === 'maintenance_fee') && (
-                                                                <Grid item xs={12}>
-                                                                    <TextField
-                                                                        size="small"
-                                                                        fullWidth
-                                                                        label="Additional Charges (PKR)"
-                                                                        type="number"
-                                                                        value={data.additional_charges}
-                                                                        onChange={(e) => setData('additional_charges', e.target.value)}
-                                                                        error={!!errors.additional_charges}
-                                                                        helperText={errors.additional_charges}
-                                                                        sx={{
-                                                                            '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                        }}
-                                                                        InputProps={{
-                                                                            startAdornment: <Typography sx={{ mr: 1, color: 'text.secondary' }}>Rs</Typography>,
-                                                                        }}
-                                                                    />
-                                                                </Grid>
-                                                            )}
-                                                        </Grid>
+                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} />
                                                     </Grid>
 
                                                     {/* Remarks Section */}
@@ -2181,332 +1072,51 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         />
                                                     </Grid>
 
-                                                    {/* Payment Method Section */}
+                                                    {/* Action Buttons */}
                                                     <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                            Payment Method
-                                                        </Typography>
-                                                        <FormControl fullWidth>
-                                                            <Select size="small" value={data.payment_method} onChange={(e) => setData('payment_method', e.target.value)} sx={{ borderRadius: 2 }}>
-                                                                <MenuItem value="cash">Cash Payment</MenuItem>
-                                                                <MenuItem value="credit_card">Credit Card</MenuItem>
-                                                            </Select>
-                                                        </FormControl>
-                                                    </Grid>
-
-                                                    {/* Credit Card Additional Fields */}
-                                                    {data.payment_method === 'credit_card' && (
-                                                        <Grid item xs={12}>
-                                                            <Box
-                                                                sx={{
-                                                                    p: 3,
-                                                                    bgcolor: 'primary.50',
-                                                                    borderRadius: 2,
-                                                                    border: '1px solid',
-                                                                    borderColor: 'primary.200',
-                                                                }}
-                                                            >
-                                                                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#0a3d62' }}>
-                                                                    Credit Card Details
-                                                                </Typography>
-                                                                <Grid container spacing={2}>
-                                                                    <Grid item xs={12} sm={6}>
-                                                                        <FormControl fullWidth>
-                                                                            <Select size="small" value={data.credit_card_type} onChange={(e) => setData('credit_card_type', e.target.value)} error={!!formErrors.credit_card_type} displayEmpty sx={{ borderRadius: 2 }}>
-                                                                                <MenuItem value="">Select Card Type</MenuItem>
-                                                                                <MenuItem value="mastercard">MasterCard</MenuItem>
-                                                                                <MenuItem value="visa">Visa</MenuItem>
-                                                                            </Select>
-                                                                            {formErrors.credit_card_type && (
-                                                                                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                                                                                    {formErrors.credit_card_type[0]}
-                                                                                </Typography>
-                                                                            )}
-                                                                        </FormControl>
-                                                                    </Grid>
-                                                                    <Grid item xs={12} sm={6}>
-                                                                        <Box>
-                                                                            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                                                                                Upload Receipt
-                                                                            </Typography>
-                                                                            <input
-                                                                                type="file"
-                                                                                accept="image/*,.pdf"
-                                                                                onChange={(e) => setData('receipt_file', e.target.files[0])}
-                                                                                style={{
-                                                                                    width: '100%',
-                                                                                    padding: '12px',
-                                                                                    border: `2px dashed ${formErrors.receipt_file ? '#f44336' : '#d1d5db'}`,
-                                                                                    borderRadius: '8px',
-                                                                                    fontSize: '14px',
-                                                                                    backgroundColor: '#f9fafb',
-                                                                                    cursor: 'pointer',
-                                                                                }}
-                                                                            />
-                                                                            {formErrors.receipt_file && (
-                                                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'block' }}>
-                                                                                    {formErrors.receipt_file[0]}
-                                                                                </Typography>
-                                                                            )}
-                                                                            {data.receipt_file && (
-                                                                                <Box sx={{ mt: 1, p: 1, bgcolor: 'success.50', borderRadius: 1, border: '1px solid', borderColor: 'success.200' }}>
-                                                                                    <Typography variant="caption" color="success.main" sx={{ fontWeight: 500 }}>
-                                                                                        {data.receipt_file.name}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            )}
-                                                                        </Box>
-                                                                    </Grid>
-                                                                </Grid>
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-
-                                                    {/* Validity Period Section - Only show for maintenance fees */}
-                                                    {selectedMember && data.fee_type === 'maintenance_fee' && (
-                                                        <Grid item xs={12}>
-                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                Validity Period
-                                                            </Typography>
-                                                            <Box
-                                                                sx={{
-                                                                    p: 3,
-                                                                    bgcolor: 'grey.50',
-                                                                    borderRadius: 2,
-                                                                    border: '1px solid',
-                                                                    borderColor: 'grey.200',
-                                                                }}
-                                                            >
-                                                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                                        Set Payment Period
-                                                                    </Typography>
-                                                                    <Button size="small" variant="outlined" onClick={() => (data.fee_type === 'membership_fee' ? handleFeeTypeChange('membership_fee') : suggestMaintenancePeriod(data.payment_frequency))} sx={{ borderRadius: 2 }}>
-                                                                        Auto-Suggest Dates
-                                                                    </Button>
-                                                                </Box>
-
-                                                                <Grid container spacing={2}>
-                                                                    <Grid item xs={6}>
-                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                                            <DatePicker
-                                                                                label={data.fee_type === 'maintenance_fee' ? 'Valid From (1st of month)' : 'Valid From'}
-                                                                                value={data.valid_from ? dayjs(data.valid_from) : null}
-                                                                                onChange={(newValue) => handleDateChange('valid_from', newValue)}
-                                                                                format="DD-MM-YYYY"
-                                                                                slotProps={{
-                                                                                    textField: {
-                                                                                        size: 'small',
-                                                                                        fullWidth: true,
-                                                                                        error: !!(errors.valid_from || formErrors.valid_from || !dateValidation.isValid),
-                                                                                        helperText: errors.valid_from || formErrors.valid_from?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to 1st of selected month' : ''),
-                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                                                                    },
-                                                                                }}
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </Grid>
-                                                                    <Grid item xs={6}>
-                                                                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                                                            <DatePicker
-                                                                                label={data.fee_type === 'maintenance_fee' ? 'Valid To (last day of month)' : 'Valid To'}
-                                                                                value={data.valid_to ? dayjs(data.valid_to) : null}
-                                                                                onChange={(newValue) => handleDateChange('valid_to', newValue)}
-                                                                                format="DD-MM-YYYY"
-                                                                                slotProps={{
-                                                                                    textField: {
-                                                                                        size: 'small',
-                                                                                        fullWidth: true,
-                                                                                        error: !!(errors.valid_to || formErrors.valid_to || !dateValidation.isValid),
-                                                                                        helperText: errors.valid_to || formErrors.valid_to?.[0] || (!dateValidation.isValid ? 'Date conflict detected' : '') || (data.fee_type === 'maintenance_fee' ? 'Will auto-set to last day of selected month' : ''),
-                                                                                        onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                                                                    },
-                                                                                }}
-                                                                            />
-                                                                        </LocalizationProvider>
-                                                                    </Grid>
-                                                                </Grid>
-
-                                                                {data.valid_from && data.valid_to && (
-                                                                    <>
-                                                                        {!dateValidation.isValid && (
-                                                                            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
-                                                                                <strong>Date Conflict:</strong> {dateValidation.message}
-                                                                            </Alert>
-                                                                        )}
-
-                                                                        <Alert severity={dateValidation.isValid ? 'success' : 'warning'} sx={{ mt: 2, borderRadius: 2 }}>
-                                                                            <strong>Selected Period:</strong> {formatDate(data.valid_from)} to {formatDate(data.valid_to)}
-                                                                            {data.fee_type === 'membership_fee' && <span> (Membership Fee Validity)</span>}
-                                                                            {data.fee_type === 'maintenance_fee' && data.valid_from && data.valid_to && <span> ({calculatePeriodDescription(data.valid_from, data.valid_to)})</span>}
-                                                                        </Alert>
-                                                                    </>
-                                                                )}
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-
-                                                    {/* Total Amount Summary */}
-                                                    {data.amount > 0 && (
-                                                        <Grid item xs={12}>
-                                                            <Box
-                                                                sx={{
-                                                                    p: 2,
-                                                                    bgcolor: 'primary.50',
-                                                                    borderRadius: 2,
-                                                                    border: '2px solid',
-                                                                    borderColor: 'primary.200',
-                                                                }}
-                                                            >
-                                                                {(() => {
-                                                                    const breakdown = calculateBreakdown();
-                                                                    return (
-                                                                        <>
-                                                                            <Grid container spacing={1} sx={{ mb: 1 }}>
-                                                                                <Grid item xs={6}>
-                                                                                    <Typography variant="body2" color="text.secondary">
-                                                                                        Subtotal:
-                                                                                    </Typography>
-                                                                                </Grid>
-                                                                                <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                                    <Typography variant="body2">{formatCurrency(breakdown.grossAmount)}</Typography>
-                                                                                </Grid>
-
-                                                                                {breakdown.discountAmount > 0 && (
-                                                                                    <>
-                                                                                        <Grid item xs={6}>
-                                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                                Discount {data.discount_type === 'percent' ? `(${data.discount_value}%)` : ''}:
-                                                                                            </Typography>
-                                                                                        </Grid>
-                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                                            <Typography variant="body2" color="error.main">
-                                                                                                - {formatCurrency(breakdown.discountAmount)}
-                                                                                            </Typography>
-                                                                                        </Grid>
-                                                                                    </>
-                                                                                )}
-
-                                                                                {breakdown.discountAmount > 0 && (
-                                                                                    <>
-                                                                                        <Grid item xs={6}>
-                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                                                                Net Amount:
-                                                                                            </Typography>
-                                                                                        </Grid>
-                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                                                                                {formatCurrency(breakdown.netAmount)}
-                                                                                            </Typography>
-                                                                                        </Grid>
-                                                                                    </>
-                                                                                )}
-
-                                                                                {breakdown.taxAmount > 0 && (
-                                                                                    <>
-                                                                                        <Grid item xs={6}>
-                                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                                Tax ({data.tax_percentage}%):
-                                                                                            </Typography>
-                                                                                        </Grid>
-                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                                            <Typography variant="body2">+ {formatCurrency(breakdown.taxAmount)}</Typography>
-                                                                                        </Grid>
-                                                                                    </>
-                                                                                )}
-
-                                                                                {breakdown.overdueAmount > 0 && (
-                                                                                    <>
-                                                                                        <Grid item xs={6}>
-                                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                                Overdue ({data.overdue_percentage}%):
-                                                                                            </Typography>
-                                                                                        </Grid>
-                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                                            <Typography variant="body2">+ {formatCurrency(breakdown.overdueAmount)}</Typography>
-                                                                                        </Grid>
-                                                                                    </>
-                                                                                )}
-
-                                                                                {breakdown.additionalCharges > 0 && (
-                                                                                    <>
-                                                                                        <Grid item xs={6}>
-                                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                                Additional Charges:
-                                                                                            </Typography>
-                                                                                        </Grid>
-                                                                                        <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                                            <Typography variant="body2">+ {formatCurrency(breakdown.additionalCharges)}</Typography>
-                                                                                        </Grid>
-                                                                                    </>
-                                                                                )}
-                                                                            </Grid>
-                                                                            <Box sx={{ borderTop: '1px dashed', borderColor: 'primary.300', pt: 1, mt: 1 }}>
-                                                                                <Grid container spacing={1} alignItems="center">
-                                                                                    <Grid item xs={6}>
-                                                                                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#0a3d62' }}>
-                                                                                            Total Payable:
-                                                                                        </Typography>
-                                                                                    </Grid>
-                                                                                    <Grid item xs={6} sx={{ textAlign: 'right' }}>
-                                                                                        <Typography variant="h6" sx={{ fontWeight: 700, color: '#0a3d62' }}>
-                                                                                            {formatCurrency(breakdown.totalAmount)}
-                                                                                        </Typography>
-                                                                                    </Grid>
-                                                                                </Grid>
-                                                                            </Box>
-                                                                        </>
-                                                                    );
-                                                                })()}
-                                                            </Box>
-                                                        </Grid>
-                                                    )}
-
-                                                    {/* Submit Button */}
-                                                    <Grid item xs={12}>
-                                                        <Box sx={{ display: 'flex', gap: 2, mt: 3 }}>
+                                                        <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
                                                             <Button
-                                                                type="button"
-                                                                onClick={(e) => handleSubmit(e, 'unpaid')}
+                                                                onClick={(e) => handleSubmit(e, 'unpaid', false)}
                                                                 variant="outlined"
                                                                 size="large"
-                                                                fullWidth
-                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && subscriptionItems.length === 0)}
+                                                                disabled={submitting || invoiceItems.length === 0}
                                                                 sx={{
-                                                                    py: 2,
-                                                                    borderColor: '#0a3d62',
-                                                                    color: '#0a3d62',
+                                                                    py: 1.5,
                                                                     borderRadius: 2,
-                                                                    fontSize: '16px',
-                                                                    fontWeight: 600,
                                                                     textTransform: 'none',
-                                                                    '&:hover': {
-                                                                        borderColor: '#082f4b',
-                                                                        bgcolor: 'rgba(10, 61, 98, 0.04)',
-                                                                    },
+                                                                    fontWeight: 600,
+                                                                }}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                onClick={(e) => handleSubmit(e, 'unpaid', true)}
+                                                                variant="outlined"
+                                                                size="large"
+                                                                disabled={submitting || invoiceItems.length === 0}
+                                                                sx={{
+                                                                    py: 1.5,
+                                                                    borderRadius: 2,
+                                                                    color: '#0a3d62',
+                                                                    borderColor: '#0a3d62',
+                                                                    textTransform: 'none',
+                                                                    fontWeight: 600,
                                                                 }}
                                                             >
                                                                 {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
                                                                 Save & Print
                                                             </Button>
                                                             <Button
-                                                                type="button"
                                                                 onClick={(e) => handleSubmit(e, 'paid')}
                                                                 variant="contained"
                                                                 size="large"
-                                                                fullWidth
-                                                                disabled={submitting || !data.fee_type || !data.amount || (data.fee_type === 'maintenance_fee' && (!data.valid_from || !data.valid_to || !dateValidation.isValid)) || (data.fee_type === 'subscription_fee' && subscriptionItems.length === 0)}
+                                                                disabled={submitting || invoiceItems.length === 0}
                                                                 sx={{
-                                                                    py: 2,
+                                                                    py: 1.5,
                                                                     bgcolor: '#0a3d62',
                                                                     borderRadius: 2,
-                                                                    fontSize: '16px',
-                                                                    fontWeight: 600,
                                                                     textTransform: 'none',
-                                                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-                                                                    '&:hover': {
-                                                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                                                    },
+                                                                    fontWeight: 600,
                                                                 }}
                                                             >
                                                                 {submitting ? <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} /> : <Save sx={{ mr: 1 }} />}
@@ -2523,87 +1133,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                 </Card>
                             </Grid>
 
-                            {/* Right Column: Member Details */}
-                            {selectedMember && (
-                                <Grid item xs={12} md={4}>
-                                    <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, position: 'sticky', top: 20 }}>
-                                        <CardContent sx={{ p: 3 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                <Person sx={{ mr: 1, color: 'success.main' }} />
-                                                <Typography variant="h6" sx={{ fontWeight: 600, color: 'success.main' }}>
-                                                    Selected Member
-                                                </Typography>
-                                            </Box>
-                                            <Box
-                                                sx={{
-                                                    p: 2,
-                                                    bgcolor: 'success.50',
-                                                    borderRadius: 2,
-                                                    border: '1px solid',
-                                                    borderColor: 'success.200',
-                                                }}
-                                            >
-                                                <Grid container spacing={2}>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                            Full Name
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                            {selectedMember.full_name} ({formatStatus(selectedMember.status)})
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                            Membership No
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                            {selectedMember.membership_no}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                            Membership Date
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                            {formatDate(selectedMember.membership_date)}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                            Membership Fee
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ fontWeight: 500, color: '#059669' }}>
-                                                            Rs {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                            Maintenance Fee (Monthly)
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ fontWeight: 500, color: '#dc2626' }}>
-                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                                                            Quarterly Fee
-                                                        </Typography>
-                                                        <Typography variant="body1" sx={{ fontWeight: 500, color: '#7c3aed' }}>
-                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
-                                                        </Typography>
-                                                    </Grid>
-                                                </Grid>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            )}
+                            {/* Right Column Removed - Merged into simplified top bar above */}
                         </Grid>
                     </Grid>
 
                     {/* Step 3: Transaction History */}
                     {selectedMember && (
-                        <Grid item xs={12}>
+                        <Grid item xs={12} id="transaction-history-section">
                             <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
                                 <CardContent sx={{ p: 3 }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -2680,10 +1216,41 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 <TableRow key={transaction.id}>
                                                                     <TableCell sx={{ color: '#000', fontWeight: '600', whiteSpace: 'nowrap' }}>{transaction.invoice_no}</TableCell>
                                                                     <TableCell>
-                                                                        <Chip label={transaction.fee_type?.replace('_', ' ')} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize' }} />
+                                                                        {transaction.items && transaction.items.length > 0 ? (
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                {transaction.items.map((item, idx) => {
+                                                                                    let label = item.fee_type || item.invoice_type || 'Item';
+                                                                                    // Check if it's a numeric ID
+                                                                                    const typeObj = transactionTypes.find((t) => t.id == label || t.id == item.fee_type);
+                                                                                    if (typeObj) {
+                                                                                        label = typeObj.name;
+                                                                                    }
+                                                                                    return <Chip key={idx} label={label.toString().replace('_', ' ')} color="primary" size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize', maxWidth: 'fit-content' }} />;
+                                                                                })}
+                                                                            </Box>
+                                                                        ) : (
+                                                                            <Chip label={transaction.fee_type?.replace('_', ' ')} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize' }} />
+                                                                        )}
                                                                     </TableCell>
                                                                     <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
-                                                                        {transaction.fee_type === 'subscription_fee' ? (
+                                                                        {transaction.items && transaction.items.length > 0 ? (
+                                                                            <Box>
+                                                                                {transaction.items.map((item, idx) => (
+                                                                                    <Box key={idx} sx={{ mb: 0.5 }}>
+                                                                                        <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', textTransform: 'capitalize' }}>
+                                                                                            {item.description || item.fee_type?.replace('_', ' ')}
+                                                                                        </Typography>
+                                                                                        {item.fee_type === 'subscription_fee' && item.subscription_type_id && (
+                                                                                            <Typography variant="caption" color="text.secondary">
+                                                                                                {/* Ideally load names, but might need ID lookup or specific resource loading if not joined */}
+                                                                                                {/* Fallback to legacy structure if present or generic */}
+                                                                                                Subscription
+                                                                                            </Typography>
+                                                                                        )}
+                                                                                    </Box>
+                                                                                ))}
+                                                                            </Box>
+                                                                        ) : transaction.fee_type === 'subscription_fee' ? (
                                                                             <Box>
                                                                                 <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
                                                                                     {transaction.data?.subscription_type_name || 'Subscription'}
@@ -2703,7 +1270,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                             </Box>
                                                                         ) : (
                                                                             <Typography variant="caption" color="text.secondary">
-                                                                                Lifetime Membership
+                                                                                {transaction.remarks || 'Lifetime Membership'}
                                                                             </Typography>
                                                                         )}
                                                                     </TableCell>
