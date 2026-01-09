@@ -1147,7 +1147,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '13px' }}>Search for a member and create a new transaction</Typography>
                 </Box>
 
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                     {/* Step 1: Member Search */}
                     {!preSelectedMember && (
                         <Grid item xs={12}>
@@ -1237,7 +1237,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         )}
                                     />
                                     {selectedMember && (
-                                        <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
+                                        <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
                                                 {/* Member Info */}
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
