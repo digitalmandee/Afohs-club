@@ -20,7 +20,7 @@ class AppliedMemberController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AppliedMember::query()->with('financialInvoice')->orderBy('created_at', 'desc');
+        $query = AppliedMember::query()->with('financialInvoice.items')->orderBy('created_at', 'desc');
 
         // Apply Filters
         if ($request->has('name') && $request->name) {
@@ -165,6 +165,17 @@ class AppliedMemberController extends Controller
                 ]
             ]);
 
+            // ✅ Create Invoice Item
+            \App\Models\FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'fee_type' => 'applied_member_fee',
+                'description' => 'Applied Member Registration Fee',
+                'qty' => 1,
+                'amount' => $appliedMember->amount_paid,
+                'sub_total' => $appliedMember->amount_paid,
+                'total' => $appliedMember->amount_paid,
+            ]);
+
             // 1. Create Ledger Entry (Debit) - Invoice
             Transaction::create([
                 'type' => 'debit',
@@ -302,6 +313,17 @@ class AppliedMemberController extends Controller
                         'data' => [
                             'member_name' => $member->name,
                         ]
+                    ]);
+
+                    // ✅ Create Invoice Item
+                    \App\Models\FinancialInvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'fee_type' => 'applied_member_fee',
+                        'description' => 'Applied Member Registration Fee',
+                        'qty' => 1,
+                        'amount' => $amountPaid,
+                        'sub_total' => $amountPaid,
+                        'total' => $amountPaid,
                     ]);
 
                     // 1. Create Ledger Entry (Debit) - Invoice

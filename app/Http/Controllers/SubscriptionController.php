@@ -5,10 +5,14 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\Category;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
+use App\Models\FinancialReceipt;
 use App\Models\Member;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
 use App\Models\SubscriptionType;
+use App\Models\Transaction;
+use App\Models\TransactionRelation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -290,6 +294,41 @@ class SubscriptionController extends Controller
             'data' => [$data]
         ]);
 
+        // ✅ Create Invoice Item
+        FinancialInvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'fee_type' => 'subscription_fee',
+            'description' => 'Subscription Charges',
+            'qty' => 1,
+            'amount' => $request->amount,
+            'sub_total' => $request->amount,
+            'total' => $request->amount,
+        ]);
+
+        // ✅ Ledger Logic (Debit Transaction for Subscription)
+        // Check if user is member
+        $user = User::find($request->customer['id']);
+        $payerId = $user->id;
+        $payerType = \App\Models\Customer::class;
+        if ($user && $user->member) {
+            $payerType = \App\Models\Member::class;
+            $payerId = $user->member->id;
+            // Update invoice fields?
+            $invoice->update(['member_id' => $user->member->id, 'customer_id' => null]);
+        }
+
+        Transaction::create([
+            'type' => 'debit',
+            'amount' => $request->amount,
+            'date' => now(),
+            'description' => 'Subscription Invoice #' . $invoice_no,
+            'payable_type' => $payerType,
+            'payable_id' => $payerId,
+            'reference_type' => FinancialInvoice::class,
+            'reference_id' => $invoice->id,
+            'created_by' => Auth::id(),
+        ]);
+
         $qrCodeData = route('member.profile', ['id' => $request->customer['id']]) . '?' . http_build_query(['subscription_id' => $subscription->id]);
 
         // Create QR code image and save it
@@ -338,6 +377,49 @@ class SubscriptionController extends Controller
                 'status' => 'paid',
                 'payment_method' => $request->method,
                 'payment_date' => now(),
+            ]);
+
+            // ✅ Ledger Logic for Payment
+            $payerId = $invoice->member_id ?? $invoice->corporate_member_id ?? $invoice->customer_id;
+            $payerType = null;
+            if ($invoice->member_id)
+                $payerType = \App\Models\Member::class;
+            elseif ($invoice->corporate_member_id)
+                $payerType = \App\Models\CorporateMember::class;
+            elseif ($invoice->customer_id)
+                $payerType = \App\Models\Customer::class;  // Fallback, though subscriptions usually have users
+
+            // Create Receipt
+            $receipt = FinancialReceipt::create([
+                'receipt_no' => time() . rand(10, 99),
+                'payer_type' => $payerType,
+                'payer_id' => $payerId,
+                'amount' => $invoice->total_price,
+                'payment_method' => $request->method,
+                'receipt_date' => now(),
+                'status' => 'active',
+                'remarks' => 'Bulk Payment for Invoice #' . $invoice->invoice_no,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Create Credit Transaction
+            Transaction::create([
+                'type' => 'credit',
+                'amount' => $invoice->total_price,
+                'date' => now(),
+                'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => FinancialReceipt::class,
+                'reference_id' => $receipt->id,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Link Receipt to Invoice
+            TransactionRelation::create([
+                'invoice_id' => $invoice->id,
+                'receipt_id' => $receipt->id,
+                'amount' => $invoice->total_price,
             ]);
         }
 
@@ -414,7 +496,7 @@ class SubscriptionController extends Controller
 
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $invoiceNo,
-                'customer_id' => $request->customer_id,
+                'customer_id' => $request->customer_id,  // This field is technically 'customer_id' on invoice table but might mean user_id
                 'invoice_type' => $request->invoice_type,
                 'subscription_type' => $request->subscription_type,
                 'discount_type' => $request->discount_type,
@@ -432,6 +514,75 @@ class SubscriptionController extends Controller
                 'payment_date' => $now,
                 'reciept' => $receiptPath,
                 'status' => 'paid',
+            ]);
+
+            // ✅ Create Invoice Item
+            FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'fee_type' => 'subscription_fee',
+                'description' => 'Subscription Charges (' . $request->subscription_type . ')',
+                'qty' => 1,
+                'amount' => $paidAmount,
+                'sub_total' => $paidAmount,
+                'total' => $paidAmount,
+            ]);
+
+            // ✅ Ledger Logic for Create & Pay
+            // Assuming customer_id maps to User
+            $payerId = $request->customer_id;
+            $payerType = \App\Models\Customer::class;  // Defaulting to Customer
+            // Check if user is actually a member
+            $user = User::find($request->customer_id);
+            if ($user && $user->member) {
+                $payerType = \App\Models\Member::class;
+                $payerId = $user->member->id;
+            }
+
+            // 1. Debit Transaction (Invoice)
+            Transaction::create([
+                'type' => 'debit',
+                'amount' => $paidAmount,
+                'date' => $now,
+                'description' => 'Subscription Invoice #' . $invoiceNo,
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'created_by' => Auth::id(),
+            ]);
+
+            // 2. Receipt
+            $receipt = FinancialReceipt::create([
+                'receipt_no' => time(),
+                'payer_type' => $payerType,
+                'payer_id' => $payerId,
+                'amount' => $paidAmount,
+                'payment_method' => $request->method,
+                'receipt_date' => $now,
+                'status' => 'active',
+                'remarks' => 'Payment for Subscription #' . $invoiceNo,
+                'created_by' => Auth::id(),
+                'receipt_image' => $receiptPath,
+            ]);
+
+            // 3. Credit Transaction (Payment)
+            Transaction::create([
+                'type' => 'credit',
+                'amount' => $paidAmount,
+                'date' => $now,
+                'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => FinancialReceipt::class,
+                'reference_id' => $receipt->id,
+                'created_by' => Auth::id(),
+            ]);
+
+            // 4. Link
+            TransactionRelation::create([
+                'invoice_id' => $invoice->id,
+                'receipt_id' => $receipt->id,
+                'amount' => $paidAmount,
             ]);
 
             DB::commit();
@@ -453,6 +604,49 @@ class SubscriptionController extends Controller
         $invoice->status = 'paid';
         $invoice->payment_date = now();
         $invoice->save();
+
+        // ✅ Ledger Logic (Single Payment)
+        $payerId = $invoice->member_id ?? $invoice->corporate_member_id ?? $invoice->customer_id;
+        $payerType = null;
+        if ($invoice->member_id)
+            $payerType = \App\Models\Member::class;
+        elseif ($invoice->corporate_member_id)
+            $payerType = \App\Models\CorporateMember::class;
+        elseif ($invoice->customer_id)
+            $payerType = \App\Models\Customer::class;
+
+        // Create Receipt
+        $receipt = FinancialReceipt::create([
+            'receipt_no' => time(),
+            'payer_type' => $payerType,
+            'payer_id' => $payerId,
+            'amount' => $invoice->total_price,
+            'payment_method' => 'cash',  // Default or need input? Controller method doesn't take input.
+            'receipt_date' => now(),
+            'status' => 'active',
+            'remarks' => 'Quick Pay for Invoice #' . $invoice->invoice_no,
+            'created_by' => Auth::id(),
+        ]);
+
+        // Create Credit Transaction
+        Transaction::create([
+            'type' => 'credit',
+            'amount' => $invoice->total_price,
+            'date' => now(),
+            'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+            'payable_type' => $payerType,
+            'payable_id' => $payerId,
+            'reference_type' => FinancialReceipt::class,
+            'reference_id' => $receipt->id,
+            'created_by' => Auth::id(),
+        ]);
+
+        // Link Receipt to Invoice
+        TransactionRelation::create([
+            'invoice_id' => $invoice->id,
+            'receipt_id' => $receipt->id,
+            'amount' => $invoice->total_price,
+        ]);
 
         return response()->json(['message' => 'Invoice paid successfully']);
     }

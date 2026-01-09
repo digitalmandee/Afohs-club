@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
+use App\Models\FinancialReceipt;
 use App\Models\MaintenanceFee;
 use App\Models\Member;
 use App\Models\MemberCategory;
@@ -976,7 +978,7 @@ class MemberTransactionController extends Controller
                 }
 
                 // Create financial invoice
-                $transaction = FinancialInvoice::create([
+                $invoice = FinancialInvoice::create([
                     'member_id' => $request->member_id,
                     'invoice_no' => $paymentData['invoice_no'],
                     'invoice_type' => $paymentData['fee_type'] === 'membership_fee' ? 'membership' : 'maintenance',
@@ -1000,7 +1002,20 @@ class MemberTransactionController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                $createdTransactions[] = $transaction;
+                // ✅ Create Invoice Item
+                FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => $paymentData['fee_type'],
+                    'description' => ucfirst(str_replace('_', ' ', $paymentData['fee_type'])),
+                    'qty' => 1,
+                    'amount' => $totalPrice,  // Using total price as amount for single item
+                    'sub_total' => $totalPrice,
+                    'total' => $totalPrice,
+                    'start_date' => $validFrom,
+                    'end_date' => $validTo,
+                ]);
+
+                $createdTransactions[] = $invoice;
             }
 
             DB::commit();

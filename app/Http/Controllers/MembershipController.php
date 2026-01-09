@@ -583,6 +583,19 @@ class MembershipController extends Controller
                 'end_date' => null,
             ]);
 
+            // Maintenance Fee Item
+            if (($request->total_maintenance_fee ?? 0) > 0) {
+                \App\Models\FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => 'maintenance_fee',
+                    'description' => 'Maintenance Fee (Initial)',
+                    'qty' => 1,
+                    'amount' => $request->total_maintenance_fee,
+                    'sub_total' => $request->total_maintenance_fee,
+                    'total' => $request->total_maintenance_fee,
+                ]);
+            }
+
             // 3. Update Invoice Header with Totals
             $invoice->update([
                 'amount' => $request->membership_fee ?? 0,

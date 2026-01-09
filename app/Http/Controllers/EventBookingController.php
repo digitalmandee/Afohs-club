@@ -16,6 +16,8 @@ use App\Models\EventMenuAddOn;
 use App\Models\EventMenuCategory;
 use App\Models\EventVenue;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
+use App\Models\FinancialReceipt;
 use App\Models\Member;
 use App\Models\Room;
 use App\Models\RoomBooking;
@@ -23,6 +25,8 @@ use App\Models\RoomCategory;
 use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
 use App\Models\RoomType;
+use App\Models\Transaction;
+use App\Models\TransactionRelation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -222,17 +226,105 @@ class EventBookingController extends Controller
                 ]
             ];
 
-            // ✅ Assign member/customer ID based on guest type
+            // ✅ Determine Payer Details for Ledger & Invoice Data
+            $payerId = null;
+            $payerType = null;
+            $memberName = 'Guest';
+
             if (!empty($request->guest['is_corporate']) || ($request->guest['booking_type'] ?? '') == '2') {
-                $invoiceData['corporate_member_id'] = (int) $request->guest['id'];
+                $payerId = (int) $request->guest['id'];
+                $payerType = \App\Models\CorporateMember::class;
+                $memberName = $request->guest['name'] ?? 'Corporate Member';
+                $invoiceData['corporate_member_id'] = $payerId;
             } elseif (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
-                $invoiceData['member_id'] = (int) $request->guest['id'];
+                $payerId = (int) $request->guest['id'];
+                $payerType = \App\Models\Member::class;
+                $memberName = $request->guest['name'] ?? 'Member';
+                $invoiceData['member_id'] = $payerId;
             } else {
-                $invoiceData['customer_id'] = (int) $request->guest['id'];
+                $payerId = (int) $request->guest['id'];
+                $payerType = \App\Models\Customer::class;
+                $memberName = $request->guest['name'] ?? 'Guest';
+                $invoiceData['customer_id'] = $payerId;
             }
+
+            // ✅ Add member_name to invoice data
+            $invoiceData['data']['member_name'] = $memberName;
 
             // ✅ Use relationship to create invoice (automatically sets invoiceable_id and invoiceable_type)
             $invoice = $eventBooking->invoice()->create($invoiceData);
+
+            // ✅ Create Invoice Items
+            // 1. Menu Charges
+            if ($request->menuAmount > 0) {
+                FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => 'event_menu',
+                    'description' => 'Event Menu Charges',
+                    'qty' => $request->numberOfGuests,
+                    'amount' => $request->menuAmount,  // Per person
+                    'sub_total' => $request->menuAmount * $request->numberOfGuests,
+                    'total' => $request->menuAmount * $request->numberOfGuests,
+                ]);
+            }
+
+            // 2. Addons
+            if ($request->menu_addons) {
+                foreach ($request->menu_addons as $addon) {
+                    if (!empty($addon['amount'])) {
+                        $addonAmount = $addon['amount'];
+                        $isComplementary = filter_var($addon['is_complementary'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                        if ($isComplementary)
+                            continue;  // Skip if free? Or record as 0? Usually skip.
+
+                        FinancialInvoiceItem::create([
+                            'invoice_id' => $invoice->id,
+                            'fee_type' => 'event_addon',
+                            'description' => 'Addon: ' . ($addon['type'] ?? 'Addon'),
+                            'qty' => $request->numberOfGuests,  // Addons usually per guest? Or lumpsum? Code calculated total add-ons then multiplied by guests in store method line 136?
+                            // Line 136: (($request->menuAmount ?? 0) + calculateMenuAddOnsTotal) * Guests. So yes, per guest.
+                            'amount' => $addonAmount,
+                            'sub_total' => $addonAmount * $request->numberOfGuests,
+                            'total' => $addonAmount * $request->numberOfGuests,
+                        ]);
+                    }
+                }
+            }
+
+            // 3. Other Charges
+            if ($request->other_charges) {
+                foreach ($request->other_charges as $charge) {
+                    if (!empty($charge['amount'])) {
+                        $chargeAmount = $charge['amount'];
+                        $isComplementary = filter_var($charge['is_complementary'] ?? false, FILTER_VALIDATE_BOOLEAN);
+                        if ($isComplementary)
+                            continue;
+
+                        FinancialInvoiceItem::create([
+                            'invoice_id' => $invoice->id,
+                            'fee_type' => 'event_other',
+                            'description' => 'Charge: ' . ($charge['type'] ?? 'Charge'),
+                            'qty' => 1,  // Other charges usually lumpsum?
+                            'amount' => $chargeAmount,
+                            'sub_total' => $chargeAmount,
+                            'total' => $chargeAmount,
+                        ]);
+                    }
+                }
+            }
+
+            // ✅ Create Ledger Entry (Debit) - Invoice Created
+            Transaction::create([
+                'type' => 'debit',
+                'amount' => $finalAmount,
+                'date' => now(),
+                'description' => 'Event Booking Invoice #' . $invoice->invoice_no,
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'created_by' => Auth::id(),
+            ]);
 
             DB::commit();
 
@@ -504,34 +596,56 @@ class EventBookingController extends Controller
                 $originalAmount = round($this->calculateOriginalAmount($request));
                 $finalAmount = round(floatval($request->grandTotal));
 
+                // ✅ Determine Payer Details for Ledger & Invoice Data
+                $payerId = null;
+                $payerType = null;
+                $memberName = 'Guest';
+
+                // Check guest info from request - logic matches store()
+                if (!empty($request->guest['is_corporate']) || ($request->guest['booking_type'] ?? '') == '2') {
+                    $payerId = (int) $request->guest['id'];
+                    $payerType = \App\Models\CorporateMember::class;
+                    $memberName = $request->guest['name'] ?? 'Corporate Member';
+                } elseif (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
+                    $payerId = (int) $request->guest['id'];
+                    $payerType = \App\Models\Member::class;
+                    $memberName = $request->guest['name'] ?? 'Member';
+                } else {
+                    $payerId = (int) $request->guest['id'];
+                    $payerType = \App\Models\Customer::class;
+                    $memberName = $request->guest['name'] ?? 'Guest';
+                }
+
                 $invoiceData = [
                     'discount_type' => $request->discountType ?? null,
                     'discount_value' => $request->discount ?? 0,
                     'amount' => $originalAmount,  // Original amount before discount
                     'total_price' => $finalAmount,  // Final amount after discount
+                    'member_id' => $payerType === \App\Models\Member::class ? $payerId : null,
+                    'corporate_member_id' => $payerType === \App\Models\CorporateMember::class ? $payerId : null,
+                    'customer_id' => $payerType === \App\Models\Customer::class ? $payerId : null,
+                    'data' => array_merge($invoice->data ?? [], ['member_name' => $memberName])
                 ];
 
-                // Update member/customer/corporate ID if guest type changes
-                // Note: The frontend might not be sending the full guest object in 'update' if it wasn't changed.
-                // However, based on the request logic, likely the whole form is submitted.
-                // We should check if guest info is present in request.
-
-                // Based on store logic:
-                if (!empty($request->guest['is_corporate']) || ($request->guest['booking_type'] ?? '') == '2') {
-                    $invoiceData['corporate_member_id'] = (int) $request->guest['id'];
-                    $invoiceData['member_id'] = null;
-                    $invoiceData['customer_id'] = null;
-                } elseif (!empty($request->guest['booking_type']) && $request->guest['booking_type'] === 'member') {
-                    $invoiceData['member_id'] = (int) $request->guest['id'];
-                    $invoiceData['corporate_member_id'] = null;
-                    $invoiceData['customer_id'] = null;
-                } elseif (!empty($request->guest['id'])) {
-                    $invoiceData['customer_id'] = (int) $request->guest['id'];
-                    $invoiceData['member_id'] = null;
-                    $invoiceData['corporate_member_id'] = null;
-                }
-
                 $invoice->update($invoiceData);
+
+                // ✅ Sync Ledger (Debit Transaction) if Invoice is Unpaid
+                // If unpaid, we assume we can just correct the ledger entry.
+                if ($invoice->status === 'unpaid') {
+                    $transaction = Transaction::where('reference_type', FinancialInvoice::class)
+                        ->where('reference_id', $invoice->id)
+                        ->where('type', 'debit')
+                        ->first();
+
+                    if ($transaction) {
+                        $transaction->update([
+                            'amount' => $finalAmount,
+                            'payable_type' => $payerType,
+                            'payable_id' => $payerId,
+                            'description' => 'Event Booking Invoice #' . $invoice->invoice_no . ' (Updated)',
+                        ]);
+                    }
+                }
             }
 
             DB::commit();

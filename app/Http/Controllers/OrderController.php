@@ -9,6 +9,8 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
+use App\Models\FinancialReceipt;
 use App\Models\Floor;
 use App\Models\Invoices;
 use App\Models\Member;
@@ -23,7 +25,10 @@ use App\Models\RoomBooking;
 use App\Models\RoomType;
 use App\Models\Table;
 use App\Models\Tenant;
+use App\Models\Transaction;
+use App\Models\TransactionRelation;
 use App\Models\User;
+use App\Models\Variant;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -623,7 +628,90 @@ class OrderController extends Controller
                 $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
             }
 
-            FinancialInvoice::create($invoiceData);
+            $invoice = FinancialInvoice::create($invoiceData);
+
+            // ✅ Create Invoice Items
+            if (!empty($request->order_items)) {
+                foreach ($request->order_items as $item) {
+                    $qty = $item['quantity'] ?? 1;
+                    $price = $item['price'] ?? 0;
+                    $subTotal = $qty * $price;
+
+                    FinancialInvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'fee_type' => 'food_item',
+                        'description' => $item['name'] ?? 'Food Item',
+                        'qty' => $qty,
+                        'amount' => $price,
+                        'sub_total' => $subTotal,
+                        'total' => $subTotal,  // Before tax/discount logic if simple
+                    ]);
+                }
+            }
+
+            // ✅ Ledger Logic (Debit)
+            $payerId = null;
+            $payerType = null;
+
+            if ($request->member['booking_type'] == 'member') {
+                $payerType = \App\Models\Member::class;
+                $payerId = $request->member['id'];
+            } elseif ($request->member['booking_type'] == 'guest') {
+                $payerType = \App\Models\Customer::class;
+                $payerId = $request->member['id'];
+            } else {
+                // Employee or other
+                $payerType = \App\Models\User::class;  // Or Employee class if exists
+                $payerId = $request->member['id'];
+            }
+
+            Transaction::create([
+                'type' => 'debit',
+                'amount' => $request->total_price,
+                'date' => now(),
+                'description' => 'Food Order Invoice #' . $invoiceData['invoice_no'],
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'created_by' => Auth::id(),
+            ]);
+
+            // If Paid (Takeaway) -> Receipt + Credit + Link
+            if ($orderType == 'takeaway') {
+                $receiptImg = $orderData['receipt'] ?? null;
+
+                $receipt = FinancialReceipt::create([
+                    'receipt_no' => time(),
+                    'payer_type' => $payerType,
+                    'payer_id' => $payerId,
+                    'amount' => $request->payment['paid_amount'],
+                    'payment_method' => $request->payment['payment_method'],
+                    'receipt_date' => now(),
+                    'status' => 'active',
+                    'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
+                    'created_by' => Auth::id(),
+                    'receipt_image' => $receiptImg,
+                ]);
+
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $request->payment['paid_amount'],
+                    'date' => now(),
+                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'reference_type' => FinancialReceipt::class,
+                    'reference_id' => $receipt->id,
+                    'created_by' => Auth::id(),
+                ]);
+
+                TransactionRelation::create([
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'amount' => $request->payment['paid_amount'],
+                ]);
+            }
 
             DB::commit();
 
@@ -773,6 +861,32 @@ class OrderController extends Controller
                         'amount' => $validated['subtotal'],
                         'total_price' => $validated['total_price'],
                     ]);
+
+                    // ✅ Sync Ledger (Debit) if unpaid
+                    $transaction = Transaction::where('reference_type', FinancialInvoice::class)
+                        ->where('reference_id', $financialInvoice->id)
+                        ->where('type', 'debit')
+                        ->first();
+
+                    if ($transaction) {
+                        $transaction->update([
+                            'amount' => $validated['total_price'],
+                            'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
+                        ]);
+                    }
+
+                    // ✅ Sync Ledger (Debit) if unpaid
+                    $transaction = Transaction::where('reference_type', FinancialInvoice::class)
+                        ->where('reference_id', $financialInvoice->id)
+                        ->where('type', 'debit')
+                        ->first();
+
+                    if ($transaction) {
+                        $transaction->update([
+                            'amount' => $validated['total_price'],
+                            'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
+                        ]);
+                    }
                 }
             }
 
