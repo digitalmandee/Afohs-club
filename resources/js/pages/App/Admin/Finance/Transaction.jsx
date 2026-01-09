@@ -140,6 +140,23 @@ const Transaction = ({ transactions, filters }) => {
         }
     };
 
+    // Handle filter application
+    const handleFilterApply = (newFilters) => {
+        router.get(
+            route('finance.transaction'),
+            {
+                search: searchQuery,
+                per_page: perPage,
+                ...newFilters,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            },
+        );
+    };
+
     return (
         <>
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -263,7 +280,7 @@ const Transaction = ({ transactions, filters }) => {
                                         };
 
                                         // Use fee_type if available, otherwise use invoice_type
-                                        const displayType = transaction.fee_type || transaction.invoice_type;
+                                        const displayType = transaction.fee_type_formatted || transaction.fee_type || transaction.invoice_type;
 
                                         // Format payment method
                                         const formatPaymentMethod = (method) => {
@@ -311,11 +328,11 @@ const Transaction = ({ transactions, filters }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     <div>
                                                         <div style={{ fontWeight: 500, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '200px' }}>
-                                                            <Tooltip title={transaction.member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'} arrow>
-                                                                <span>{transaction.member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</span>
+                                                            <Tooltip title={transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'} arrow>
+                                                                <span>{transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</span>
                                                             </Tooltip>
                                                         </div>
-                                                        {transaction.member?.membership_no && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member.membership_no}</div>}
+                                                        {(transaction.member?.membership_no || transaction.corporate_member?.membership_no) && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member?.membership_no || transaction.corporate_member?.membership_no}</div>}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
@@ -329,10 +346,31 @@ const Transaction = ({ transactions, filters }) => {
                                                             fontWeight: 500,
                                                         }}
                                                     >
-                                                        {formatType(displayType)}
+                                                        {displayType === 'Multiple Items' ? (
+                                                            <Tooltip
+                                                                title={
+                                                                    transaction.items && transaction.items.length > 0 ? (
+                                                                        <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+                                                                            {transaction.items.map((item, idx) => (
+                                                                                <li key={idx}>
+                                                                                    {item.fee_type_formatted || formatType(item.fee_type)} {item.description ? ` - ${item.description}` : ''}
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    ) : (
+                                                                        'Multiple items'
+                                                                    )
+                                                                }
+                                                                arrow
+                                                            >
+                                                                <span>{displayType}</span>
+                                                            </Tooltip>
+                                                        ) : (
+                                                            formatType(displayType)
+                                                        )}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px', whiteSpace:'nowrap', textOverflow:'ellipsis', overflow:'hidden', maxWidth:'120px' }}> 
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '120px' }}>
                                                     <Tooltip title={transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0} arrow>
                                                         <span> Rs {transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0}</span>
                                                     </Tooltip>
@@ -386,7 +424,7 @@ const Transaction = ({ transactions, filters }) => {
                                                     <Button
                                                         variant="outlined"
                                                         size="small"
-                                                        color='#063455'
+                                                        color="#063455"
                                                         style={{
                                                             // border: '1px solid #063455',
                                                             // backgroundColor: 'transparent',
@@ -401,12 +439,13 @@ const Transaction = ({ transactions, filters }) => {
                                                             } else if (transaction.invoice_type === 'event_booking' && transaction.invoiceable_id) {
                                                                 setSelectedBookingId(transaction.invoiceable_id);
                                                                 setShowEventInvoiceModal(true);
-                                                            } else if (transaction.member && transaction.member.id) {
-                                                                // Member-related invoices
+                                                            } else if ((transaction.member && transaction.member.id) || (transaction.corporate_member && transaction.corporate_member.id)) {
+                                                                // Member/Corporate related invoices
                                                                 if (transaction.fee_type === 'membership_fee') {
-                                                                    // Membership fee: use member ID only
-                                                                    setSelectedMemberUserId(transaction.member.id);
-                                                                    setSelectedInvoiceId(null);
+                                                                    // For membership fee, we prefer using the specific invoice ID if available
+                                                                    // But legacy logic used member ID. Let's try to use invoice ID first if we have it (which we do here)
+                                                                    setSelectedInvoiceId(transaction.id);
+                                                                    setSelectedMemberUserId(null);
                                                                 } else {
                                                                     // Subscription/Maintenance fees: use invoice ID
                                                                     setSelectedMemberUserId(null);
@@ -452,7 +491,7 @@ const Transaction = ({ transactions, filters }) => {
                         </div>
                     )}
                 </div>
-                <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} />
+                <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} />
 
                 {/* Fallback Invoice Modal (for non-member transactions) */}
                 <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />

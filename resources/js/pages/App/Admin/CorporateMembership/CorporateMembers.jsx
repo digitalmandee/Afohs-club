@@ -16,6 +16,8 @@ import ActivateMembershipDialog from '../Membership/ActivateMembershipDialog';
 import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
 import { MdModeEdit } from 'react-icons/md';
 import CorporateMembershipDashboardFilter from './CorporateMembershipDashboardFilter';
+import InvoiceSlip from '../Membership/Invoice';
+import { Description as ReceiptIcon } from '@mui/icons-material';
 const CorporateMembers = ({ members }) => {
     const props = usePage().props;
     const { enqueueSnackbar } = useSnackbar();
@@ -28,6 +30,8 @@ const CorporateMembers = ({ members }) => {
     const [selectedMember, setSelectedMember] = useState(null);
     const [openCardModal, setOpenCardModal] = useState(false);
     const [cardMember, setCardMember] = useState(null);
+    const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
+    const [invoiceMember, setInvoiceMember] = useState(null);
 
     // Status Dialog States
     const [suspendOpen, setSuspendOpen] = useState(false);
@@ -212,7 +216,7 @@ const CorporateMembers = ({ members }) => {
                                                                         color: user.status === 'active' ? '#2E7D32' : user.status === 'suspended' ? '#e65100' : user.status === 'absent' ? '#fbc02d' : '#D32F2F',
                                                                         fontWeight: 'medium',
                                                                         textTransform: 'capitalize',
-                                                                        whiteSpace: 'nowrap'
+                                                                        whiteSpace: 'nowrap',
                                                                     }}
                                                                 />
                                                                 <MdModeEdit size={18} style={{ marginLeft: '5px', color: '#2E7D32' }} />
@@ -261,9 +265,9 @@ const CorporateMembers = ({ members }) => {
                                             </TableCell>
                                             <TableCell>
                                                 <Button
-                                                    variant='outlined'
+                                                    variant="outlined"
                                                     size="small"
-                                                    color='#063455'
+                                                    color="#063455"
                                                     style={{
                                                         color: '#063455',
                                                         // border:'1px solid #063455',
@@ -335,6 +339,20 @@ const CorporateMembers = ({ members }) => {
                                                         </IconButton>
                                                     </Tooltip>
 
+                                                    {/* View Invoice */}
+                                                    <Tooltip title="View Invoice">
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => {
+                                                                setInvoiceMember(user);
+                                                                setOpenInvoiceModal(true);
+                                                            }}
+                                                            sx={{ color: '#2e7d32' }}
+                                                        >
+                                                            <ReceiptIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+
                                                     {/* Delete */}
                                                     <Tooltip title="Delete Member">
                                                         <IconButton size="small" onClick={() => handleDeleteClick(user)} sx={{ color: '#d32f2f' }}>
@@ -401,6 +419,16 @@ const CorporateMembers = ({ members }) => {
             <MembershipPauseDialog open={pauseOpen} onClose={() => setPauseOpen(false)} memberId={selectedMember?.id} onSuccess={handleStatusSuccess} updateUrl={route('corporate-membership.update-status')} />
             <MembershipCancellationDialog open={cancelOpen} onClose={() => setCancelOpen(false)} memberId={selectedMember?.id} onSuccess={handleStatusSuccess} updateUrl={route('corporate-membership.update-status')} />
             <ActivateMembershipDialog open={activateOpen} onClose={() => setActivateOpen(false)} memberId={selectedMember?.id} onSuccess={handleStatusSuccess} updateUrl={route('corporate-membership.update-status')} />
+
+            <InvoiceSlip
+                open={openInvoiceModal}
+                onClose={() => {
+                    setOpenInvoiceModal(false);
+                    setInvoiceMember(null);
+                }}
+                invoiceNo={invoiceMember?.membership_invoice?.id ? null : invoiceMember?.id}
+                invoiceId={invoiceMember?.membership_invoice?.id || null}
+            />
         </>
     );
 };

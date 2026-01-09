@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
+use App\Models\FinancialReceipt;
 use App\Models\MaintenanceFee;
 use App\Models\Member;
 use App\Models\MemberCategory;
@@ -256,6 +258,8 @@ class MemberTransactionController extends Controller
                 $memberName = $member->full_name;
                 $payerType = CorporateMember::class;
                 $payerId = $member->id;
+                $invoiceableId = $member->id;
+                $invoiceableType = CorporateMember::class;
             } elseif (str_starts_with($request->booking_type, 'guest')) {
                 $member = \App\Models\Customer::find($request->customer_id);
                 $memberId = null;
@@ -264,6 +268,8 @@ class MemberTransactionController extends Controller
                 $memberName = $member->name;
                 $payerType = \App\Models\Customer::class;
                 $payerId = $member->id;
+                $invoiceableId = null;  // Guests usually don't have a polymorphic invoiceable user link in the same way, or use Customer?
+                $invoiceableType = null;
             } else {
                 $member = Member::where('id', $request->member_id)->first();
                 $memberId = $request->member_id;
@@ -272,6 +278,8 @@ class MemberTransactionController extends Controller
                 $memberName = $member->full_name;
                 $payerType = Member::class;
                 $payerId = $member->id;
+                $invoiceableId = $member->id;
+                $invoiceableType = Member::class;
             }
 
             // 3. One-Time Membership Fee Validation
@@ -395,12 +403,15 @@ class MemberTransactionController extends Controller
             $totalDiscount = 0;
 
             // 4. Create Invoice Header (Unpaid initially)
+            // 4. Create Invoice Header (Unpaid initially)
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $invoiceNo,
                 'member_id' => $memberId,
                 'corporate_member_id' => $corporateId,
                 'customer_id' => $customerId,
-                'fee_type' => count($request->items) > 1 ? 'mixed' : ($request->items[0]['fee_type'] ?? 'general'),
+                'invoiceable_id' => $invoiceableId,
+                'invoiceable_type' => $invoiceableType,
+                'fee_type' => 'mixed',
                 'invoice_type' => 'invoice',
                 'amount' => 0,  // Will update after processing items
                 'total_price' => 0,
@@ -462,9 +473,9 @@ class MemberTransactionController extends Controller
                 // (kept minimal for brevity, but should be added back for full feature parity)
                 if ($itemData['fee_type'] === 'subscription_fee') {
                     $this->createSubscriptionRecord($itemData, $invoice, $member, $request->booking_type);
-                } elseif ($itemData['fee_type'] === 'maintenance_fee') {
-                    $this->createMaintenanceRecord($itemData, $invoice, $member, $request->booking_type, $request->payment_frequency);
                 }
+                // Maintenance Fee: We no longer create separate maintenance records.
+                // We rely on financial_invoice_items which stores valid_from/valid_to ranges.
             }
 
             // Update Invoice Totals
@@ -541,6 +552,9 @@ class MemberTransactionController extends Controller
 
             DB::commit();
 
+            // Reload relationships ensuring corporate/member data is available for frontend
+            $invoice->load(['member', 'corporateMember', 'customer']);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Transaction saved successfully.',
@@ -577,35 +591,10 @@ class MemberTransactionController extends Controller
         }
         $sub->save();
 
-        // QR Code generation (simplified)
-        // ...
-    }
-
-    // Helper for Maintenance Record
-    private function createMaintenanceRecord($data, $invoice, $member, $bookingType, $freq)
-    {
-        $validFrom = $data['valid_from'] ?? $data['start_date'] ?? now()->toDateString();
-
-        // Create maintenance_fees record
-        $currentYear = date('Y', strtotime($validFrom));
-        $currentMonth = date('n', strtotime($validFrom));
-
-        $mf = new MaintenanceFee([
-            'year' => $currentYear,
-            'month' => $currentMonth,
-            'amount' => $data['amount'],
-            'status' => 'paid',  // Assuming if invoiced it's tracked?
-        ]);
-        if ($bookingType === 'corporate') {
-            $mf->corporate_member_id = $member->id;
-        } else {
-            $mf->member_id = $member->id;
+        // Placeholder: Generate QR Code or Card Number if not present
+        if (!$member->card_number && !$member->qr_code) {
+            // Logic to generate card number can be added here or via Observer
         }
-        $mf->save();
-
-        // Link invoice
-        // Note: The main invoice invoiceable_id is 1:1. With multi-items, this relationship breaks on the Header.
-        // The InvoiceItem should ideally link to it, or we rely on the `financial_invoice_items` data.
     }
 
     private function checkMaintenanceExists($memberId, $from, $to)
@@ -989,7 +978,7 @@ class MemberTransactionController extends Controller
                 }
 
                 // Create financial invoice
-                $transaction = FinancialInvoice::create([
+                $invoice = FinancialInvoice::create([
                     'member_id' => $request->member_id,
                     'invoice_no' => $paymentData['invoice_no'],
                     'invoice_type' => $paymentData['fee_type'] === 'membership_fee' ? 'membership' : 'maintenance',
@@ -1013,7 +1002,20 @@ class MemberTransactionController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                $createdTransactions[] = $transaction;
+                // ✅ Create Invoice Item
+                FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => $paymentData['fee_type'],
+                    'description' => ucfirst(str_replace('_', ' ', $paymentData['fee_type'])),
+                    'qty' => 1,
+                    'amount' => $totalPrice,  // Using total price as amount for single item
+                    'sub_total' => $totalPrice,
+                    'total' => $totalPrice,
+                    'start_date' => $validFrom,
+                    'end_date' => $validTo,
+                ]);
+
+                $createdTransactions[] = $invoice;
             }
 
             DB::commit();
@@ -1126,8 +1128,49 @@ class MemberTransactionController extends Controller
 
         $transaction->save();
 
-        // Force update to ensure column is set (wildcard fix for potential model caching/fillable issues)
-        if ($request->status === 'paid') {
+        // CANCELLATION LOGIC
+        if ($request->status === 'cancelled') {
+            DB::transaction(function () use ($transaction, $request) {
+                // 1. Store Reason
+                $data = $transaction->data ?? [];
+                $data['cancellation_reason'] = $request->cancellation_reason;
+                // Update via direct DB query to avoid model issues
+                DB::table('financial_invoices')
+                    ->where('id', $transaction->id)
+                    ->update([
+                        'data' => json_encode($data),
+                        'status' => 'cancelled'  // Ensure status is set here too
+                    ]);
+
+                // 2. Void Ledger Debit (The Invoice Charge)
+                \App\Models\Transaction::where('reference_type', FinancialInvoice::class)
+                    ->where('reference_id', $transaction->id)
+                    ->where('type', 'debit')
+                    ->delete();
+
+                // 3. If Paid, Void Ledger Credit (The Payment) & Receipt
+                if ($transaction->status === 'paid' || $transaction->paid_amount > 0) {
+                    // Find relations
+                    $relations = \App\Models\TransactionRelation::where('invoice_id', $transaction->id)->get();
+
+                    foreach ($relations as $relation) {
+                        if ($relation->receipt_id) {
+                            // Delete Credit Ledger Entry for this Receipt
+                            \App\Models\Transaction::where('reference_type', \App\Models\FinancialReceipt::class)
+                                ->where('reference_id', $relation->receipt_id)
+                                ->where('type', 'credit')
+                                ->delete();
+
+                            // Delete/Void Receipt
+                            \App\Models\FinancialReceipt::where('id', $relation->receipt_id)->delete();
+                        }
+                    }
+
+                    // Also check for direct receipt linkage if Relation missing (legacy fallback)
+                    // (Assuming strict Relation usage for new system, skipping fallback for now to avoid accidental deletions)
+                }
+            });
+        } elseif ($request->status === 'paid') {
             $data = $transaction->data ?? [];
             if ($request->payment_mode_details) {
                 $data['payment_details'] = $request->payment_mode_details;

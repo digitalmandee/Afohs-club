@@ -91,7 +91,7 @@ const handlePrintReceipt = (invoice) => {
     // Map data to invoiceData for consistency with JSX
     const invoiceData = {
         billTo: {
-            name: invoice.member?.full_name || invoice.member?.name || invoice.corporate_member?.full_name || invoice.customer?.name || 'N/A',
+            name: invoice.member?.full_name || invoice.member?.name || invoice.corporate_member?.full_name || invoice.customer?.name || invoice.data?.member_name || 'N/A',
             category: invoice.member?.member_type?.name || 'Member',
             membershipId: invoice.member?.membership_no || invoice.corporate_member?.membership_no || invoice.customer?.customer_no || 'N/A',
             contactNumber: invoice.member?.mobile_number_a || invoice.corporate_member?.mobile_number_a || invoice.customer?.contact || 'N/A',

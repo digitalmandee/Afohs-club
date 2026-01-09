@@ -8,6 +8,7 @@ use App\Models\BookingEvents;
 use App\Models\CorporateMember;
 use App\Models\EventBooking;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialReceipt;
 use App\Models\Member;
 use App\Models\Room;
 use App\Models\RoomBooking;
@@ -15,6 +16,8 @@ use App\Models\RoomCategory;
 use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
 use App\Models\RoomType;
+use App\Models\Transaction;
+use App\Models\TransactionRelation;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -300,6 +303,58 @@ class BookingController extends Controller
             // Re-calculate status based on NEW total
             $invoice->status = $invoice->paid_amount >= $invoice->total_price ? 'paid' : 'unpaid';
             $invoice->save();
+
+            // ✅ Determine Payer Details for Ledger
+            $payerId = $invoice->member_id ?? $invoice->corporate_member_id ?? $invoice->customer_id ?? null;
+            $payerType = null;
+
+            if ($invoice->member_id) {
+                $payerType = \App\Models\Member::class;
+            } elseif ($invoice->corporate_member_id) {
+                $payerType = \App\Models\CorporateMember::class;
+            } elseif ($invoice->customer_id) {
+                $payerType = \App\Models\Customer::class;
+            }
+
+            // ✅ 1. Create Financial Receipt
+            $receipt = FinancialReceipt::create([
+                'receipt_no' => time(),
+                'payer_type' => $payerType,
+                'payer_id' => $payerId,
+                'amount' => $request->amount,
+                'payment_method' => match ($request->payment_method) {
+                    'Credit Card' => 'credit_card',
+                    'Bank Transfer' => 'bank',
+                    'Online' => 'bank',
+                    default => 'cash',
+                },
+                'payment_details' => $request->paymentAccount ?? null,
+                'receipt_date' => now(),
+                'status' => 'active',
+                'remarks' => 'Payment for Booking Invoice #' . $invoice->invoice_no,
+                'created_by' => Auth::id(),
+                'receipt_image' => $recieptPath,
+            ]);
+
+            // ✅ 2. Create Ledger Entry (Credit)
+            Transaction::create([
+                'type' => 'credit',
+                'amount' => $request->amount,
+                'date' => now(),
+                'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => FinancialReceipt::class,
+                'reference_id' => $receipt->id,
+                'created_by' => Auth::id(),
+            ]);
+
+            // ✅ 3. Link Receipt to Invoice
+            TransactionRelation::create([
+                'invoice_id' => $invoice->id,
+                'receipt_id' => $receipt->id,
+                'amount' => $request->amount,
+            ]);
 
             // ✅ Update booking status using polymorphic relationship
             if ($request->booking_status && $invoice->invoiceable) {

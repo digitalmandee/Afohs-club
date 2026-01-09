@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
+use App\Models\FinancialReceipt;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\RoomCategory;
 use App\Models\RoomChargesType;
 use App\Models\RoomMiniBar;
 use App\Models\RoomType;
+use App\Models\Transaction;
+use App\Models\TransactionRelation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -287,17 +291,154 @@ class RoomBookingController extends Controller
                 ],
             ];
 
-            // ✅ Assign member/customer ID based on guest type
+            // ✅ Determine Payer Details for Ledger & Invoice Data
+            $payerId = null;
+            $payerType = null;
+            $memberName = 'Guest';
+
             if ($data['bookingType'] == '2') {
-                $invoiceData['corporate_member_id'] = (int) $data['guest']['id'];
+                $payerId = (int) $data['guest']['id'];
+                $payerType = \App\Models\CorporateMember::class;
+                $memberName = $data['guest']['name'] ?? 'Corporate Member';
+                $invoiceData['corporate_member_id'] = $payerId;
             } elseif (!empty($data['guest']['booking_type']) && $data['guest']['booking_type'] === 'member') {
-                $invoiceData['member_id'] = (int) $data['guest']['id'];
+                $payerId = (int) $data['guest']['id'];
+                $payerType = \App\Models\Member::class;
+                $memberName = $data['guest']['name'] ?? 'Member';
+                $invoiceData['member_id'] = $payerId;
             } else {
-                $invoiceData['customer_id'] = (int) $data['guest']['id'];
+                $payerId = (int) $data['guest']['id'];
+                $payerType = \App\Models\Customer::class;
+                $memberName = $data['guest']['name'] ?? 'Guest';
+                $invoiceData['customer_id'] = $payerId;
             }
+
+            // ✅ Add member_name to invoice data
+            $invoiceData['data']['member_name'] = $memberName;
 
             // ✅ Use relationship to create invoice (automatically sets invoiceable_id and invoiceable_type)
             $invoice = $booking->invoice()->create($invoiceData);
+
+            // ✅ Create Invoice Items
+            // 1. Room Charges
+            if (($data['roomCharge'] ?? 0) > 0) {
+                FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => 'room_rent',
+                    'description' => 'Room Rent (' . ($data['nights'] ?? 1) . ' Nights)',
+                    'qty' => $data['nights'] ?? 1,
+                    'amount' => $data['perDayCharge'] ?? $data['roomCharge'],
+                    'sub_total' => $data['roomCharge'],
+                    'total' => $data['roomCharge'],
+                ]);
+            }
+
+            // 2. Mini Bar Items
+            if (!empty($data['mini_bar_items'])) {
+                foreach ($data['mini_bar_items'] as $item) {
+                    $qty = $item['quantity'] ?? 0;
+                    $amount = $item['amount'] ?? 0;
+                    if ($qty > 0 && $amount > 0) {
+                        // Check if amount is per item or total? Usually amount is unit price.
+                        // But if mini_bar_items came from request like {id, quantity, amount}, verify if amount is unit or total.
+                        // Assuming 'amount' is unit price
+                        $total = $qty * $amount;
+
+                        FinancialInvoiceItem::create([
+                            'invoice_id' => $invoice->id,
+                            'fee_type' => 'room_minibar',
+                            'description' => 'Mini Bar: ' . ($item['name'] ?? 'Item'),  // name might not be in request, might need lookup if only ID passed. Request usually sends simple array.
+                            // Request in booking method: 'mini_bar_items' => 'nullable|array'. Usually passed as objects with props.
+                            // If name is missing, will default to Item.
+                            'qty' => $qty,
+                            'amount' => $amount,
+                            'sub_total' => $total,
+                            'total' => $total,
+                        ]);
+                    }
+                }
+            }
+
+            // 3. Other Charges
+            if (!empty($data['other_charges'])) {
+                foreach ($data['other_charges'] as $charge) {
+                    $cAmount = $charge['amount'] ?? 0;
+                    if ($cAmount > 0) {
+                        FinancialInvoiceItem::create([
+                            'invoice_id' => $invoice->id,
+                            'fee_type' => 'room_other',
+                            'description' => 'Charge: ' . ($charge['type'] ?? 'Charge'),
+                            'qty' => 1,
+                            'amount' => $cAmount,
+                            'sub_total' => $cAmount,
+                            'total' => $cAmount,
+                        ]);
+                    }
+                }
+            }
+
+            // ✅ 1. Create Ledger Entry (Debit) - Invoice Created
+            Transaction::create([
+                'type' => 'debit',
+                'amount' => $booking->grand_total,
+                'date' => now(),
+                'description' => 'Room Booking Invoice #' . $invoice->invoice_no,
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'created_by' => Auth::id(),
+            ]);
+
+            // ✅ 2. Handle Advance Payment (Receipt + Credit Transaction)
+            if (($data['securityDeposit'] ?? 0) > 0) {
+                // Create Receipt
+                $receipt = FinancialReceipt::create([
+                    'receipt_no' => time(),
+                    'payer_type' => $payerType,
+                    'payer_id' => $payerId,
+                    'amount' => $data['securityDeposit'],
+                    'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
+                        'Bank Transfer' => 'bank',
+                        'Credit Card' => 'credit_card',
+                        'Online' => 'bank',
+                        default => 'cash',
+                    },
+                    'payment_details' => $data['paymentAccount'] ?? null,
+                    'receipt_date' => now(),
+                    'status' => 'active',
+                    'remarks' => 'Advance Payment / Security Deposit for Room Booking #' . $booking->booking_no,
+                    'created_by' => Auth::id(),
+                ]);
+
+                // Create Ledger Entry (Credit)
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $data['securityDeposit'],
+                    'date' => now(),
+                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'reference_type' => FinancialReceipt::class,
+                    'reference_id' => $receipt->id,
+                    'created_by' => Auth::id(),
+                ]);
+
+                // Link Receipt to Invoice
+                TransactionRelation::create([
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'amount' => $data['securityDeposit'],
+                ]);
+
+                // Update Invoice Paid Amount
+                $invoice->update([
+                    'paid_amount' => $data['securityDeposit'],
+                    // If advance covers full amount, update status? Usually room booking is strictly advance.
+                    // Let's keep status 'unpaid' unless fully covered?
+                    'status' => ($data['securityDeposit'] >= $booking->grand_total) ? 'paid' : 'unpaid'
+                ]);
+            }
 
             DB::commit();
 
@@ -792,12 +933,31 @@ class RoomBookingController extends Controller
                 if ($invoice->advance_payment > 0) {
                     $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
                 }
-                // Optionally update status if balance becomes due? But for cancellation, usually irrelevant.
-
-                // However, logic says if cancelled, maybe we shouldn't care about balance?
-                // But we want to reflect "money returned".
 
                 $invoice->save();
+
+                // ✅ Determine Payer Details for Ledger
+                $payerId = $invoice->member_id ?? $invoice->corporate_member_id ?? $invoice->customer_id ?? null;
+                $payerType = null;
+                if ($invoice->member_id)
+                    $payerType = \App\Models\Member::class;
+                elseif ($invoice->corporate_member_id)
+                    $payerType = \App\Models\CorporateMember::class;
+                elseif ($invoice->customer_id)
+                    $payerType = \App\Models\Customer::class;
+
+                // ✅ Create Refund Ledger Entry (Debit)
+                Transaction::create([
+                    'type' => 'debit',
+                    'amount' => $request->refund_amount,
+                    'date' => now(),
+                    'description' => 'Refund processed for Booking Cancellation #' . $booking->booking_no,
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'reference_type' => FinancialInvoice::class,  // Or Receipt if we had a refund receipt model, but invoice is fine
+                    'reference_id' => $invoice->id,
+                    'created_by' => Auth::id(),
+                ]);
 
                 $notes .= "\n[Refund Processed: " . $request->refund_amount . ' via ' . $request->refund_mode . ']';
                 if ($request->filled('refund_account')) {
@@ -861,6 +1021,29 @@ class RoomBookingController extends Controller
             $invoice->advance_payment = max(0, $invoice->advance_payment - $request->refund_amount);
         }
         $invoice->save();
+
+        // ✅ Determine Payer Details for Ledger
+        $payerId = $invoice->member_id ?? $invoice->corporate_member_id ?? $invoice->customer_id ?? null;
+        $payerType = null;
+        if ($invoice->member_id)
+            $payerType = \App\Models\Member::class;
+        elseif ($invoice->corporate_member_id)
+            $payerType = \App\Models\CorporateMember::class;
+        elseif ($invoice->customer_id)
+            $payerType = \App\Models\Customer::class;
+
+        // ✅ Create Refund Ledger Entry (Debit)
+        Transaction::create([
+            'type' => 'debit',
+            'amount' => $request->refund_amount,
+            'date' => now(),
+            'description' => 'Refund processed (Post-Cancel) for Booking #' . $booking->booking_no,
+            'payable_type' => $payerType,
+            'payable_id' => $payerId,
+            'reference_type' => FinancialInvoice::class,
+            'reference_id' => $invoice->id,
+            'created_by' => Auth::id(),
+        ]);
 
         // FINAL SETTLEMENT LOGIC:
         // We do NOT zero out the balance, so we keep record of what was retained (e.g. 100 tax).

@@ -371,6 +371,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
 
         // Charge Types Management (CRUD)
+        Route::get('charge-types/trashed', [TransactionTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
+        Route::post('charge-types/restore/{id}', [TransactionTypeController::class, 'restore'])->name('finance.charge-types.restore');
+        Route::delete('charge-types/force-delete/{id}', [TransactionTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
         Route::resource('charge-types', TransactionTypeController::class)->names('finance.charge-types');
     });
 
@@ -635,6 +638,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/stats', [DataMigrationController::class, 'getMigrationStats'])->name('data-migration.stats');
         Route::post('/migrate-members', [DataMigrationController::class, 'migrateMembers'])->name('data-migration.migrate-members');
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
+        Route::post('/migrate-customers', [DataMigrationController::class, 'migrateCustomers'])->name('data-migration.customers');
+        Route::post('/migrate-employees', [DataMigrationController::class, 'migrateEmployees'])->name('data-migration.employees');
         Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoices'])->name('data-migration.migrate-invoices');
         Route::post('/migrate-corporate-members', [DataMigrationController::class, 'migrateCorporateMembers'])->name('data-migration.migrate-corporate-members');
         Route::post('/migrate-corporate-families', [DataMigrationController::class, 'migrateCorporateFamilies'])->name('data-migration.migrate-corporate-families');

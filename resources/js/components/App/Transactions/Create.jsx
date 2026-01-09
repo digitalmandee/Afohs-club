@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton, Divider } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton, Divider, Tooltip, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
-import { Person, Search, Save, Print, Receipt, Visibility, Payment } from '@mui/icons-material';
+import { Person, Search, Save, Print, Receipt, Visibility, Payment, Cancel as CancelIcon, ExpandMore } from '@mui/icons-material';
 import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
 import PaymentDialog from './PaymentDialog';
 import InvoiceItemsGrid from './InvoiceItemsGrid';
@@ -63,6 +63,14 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [bookingType, setBookingType] = useState('0'); // 0: member, 2: corporate, guest-*: guest
 
+    // Quarter Status State
+    const [quarterStatus, setQuarterStatus] = useState({
+        paidQuarters: [],
+        nextAvailableQuarter: 1,
+        currentYear: new Date().getFullYear(),
+        partialQuarters: {},
+    });
+
     const { data, setData, post, processing, errors, reset } = useForm({
         booking_type: 'member',
         member_id: '',
@@ -103,6 +111,255 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             handleMemberSelect(preSelectedMember);
         }
     }, [preSelectedMember]);
+
+    // Analyze Quarter Status Logic
+    const analyzeQuarterStatus = (transactions, membershipDate) => {
+        // If corporate or guest, we don't track quarterly status the same way
+        if ((bookingType !== '0' && bookingType !== '2') || !membershipDate) {
+            return {
+                paidQuarters: [],
+                nextAvailableQuarter: 1,
+                currentYear: new Date().getFullYear(),
+                isNewCycle: false,
+                latestEndDate: null,
+                partialQuarters: {},
+            };
+        }
+
+        const membershipYear = new Date(membershipDate).getFullYear();
+        const membershipMonth = new Date(membershipDate).getMonth(); // 0-based
+        const currentYear = new Date().getFullYear();
+
+        const maintenanceTransactions = transactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid');
+        const sortedTransactions = [...maintenanceTransactions].sort((a, b) => new Date(b.valid_to) - new Date(a.valid_to));
+
+        let paidQuarters = [];
+        let latestEndDate = null;
+        let showCompletedYear = false;
+        let isFirstYear = true;
+        let completedCycles = 0;
+
+        if (sortedTransactions.length > 0) {
+            const mostRecentTransaction = sortedTransactions[0];
+            const mostRecentEnd = new Date(mostRecentTransaction.valid_to);
+            // Check if we've moved past the first year (December 31st of membership year)
+            const firstYearEnd = new Date(membershipYear, 11, 31); // Dec 31 of membership year
+            isFirstYear = mostRecentEnd <= firstYearEnd;
+
+            latestEndDate = mostRecentEnd.toISOString().split('T')[0];
+        }
+
+        const monthsInFirstYear = [];
+        for (let month = membershipMonth + 1; month <= 11; month++) {
+            monthsInFirstYear.push(month);
+        }
+
+        const paidMonthsInFirstYear = [];
+        // Helper to track covered months
+        const checkCoverage = (txStart, txEnd, yearToCheck) => {
+            let currentDate = new Date(txStart.getFullYear(), txStart.getMonth(), 1);
+            const endDate = new Date(txEnd.getFullYear(), txEnd.getMonth(), 1);
+            const covered = [];
+
+            while (currentDate <= endDate) {
+                const month = currentDate.getMonth();
+                const year = currentDate.getFullYear();
+                const monthStart = new Date(year, month, 1);
+                const monthEnd = new Date(year, month + 1, 0);
+                const hasOverlap = txStart <= monthEnd && txEnd >= monthStart;
+
+                if (hasOverlap && year === yearToCheck) {
+                    covered.push(month);
+                }
+                currentDate.setMonth(currentDate.getMonth() + 1);
+            }
+            return covered;
+        };
+
+        sortedTransactions.forEach((transaction) => {
+            const txStart = new Date(transaction.valid_from);
+            const txEnd = new Date(transaction.valid_to);
+            const covered = checkCoverage(txStart, txEnd, membershipYear);
+            covered.forEach((m) => {
+                if (monthsInFirstYear.includes(m) && !paidMonthsInFirstYear.includes(m)) paidMonthsInFirstYear.push(m);
+            });
+        });
+
+        const allFirstYearMonthsPaid = paidMonthsInFirstYear.length >= monthsInFirstYear.length;
+        let partialQuarters = {};
+
+        if (isFirstYear && !allFirstYearMonthsPaid) {
+            // First Year Logic
+            paidMonthsInFirstYear.forEach((month) => {
+                const quarter = Math.floor(month / 3) + 1;
+                if (!paidQuarters.includes(quarter)) paidQuarters.push(quarter);
+            });
+        } else {
+            // Subsequent Years Logic
+            let analysisYear = currentYear;
+            if (sortedTransactions.length > 0) {
+                const latestPaymentEnd = new Date(sortedTransactions[0].valid_to);
+                analysisYear = latestPaymentEnd.getFullYear();
+                if (latestPaymentEnd.getMonth() === 11) {
+                    showCompletedYear = true;
+                    paidQuarters = [1, 2, 3, 4];
+                }
+            }
+
+            if (!showCompletedYear) {
+                // Determine paid months in analysis year
+                const paidMonthsInYear = new Set();
+                sortedTransactions.forEach((t) => {
+                    const txStart = new Date(t.valid_from);
+                    const txEnd = new Date(t.valid_to);
+                    const covered = checkCoverage(txStart, txEnd, analysisYear);
+                    covered.forEach((m) => paidMonthsInYear.add(`${analysisYear}-${m}`));
+                });
+
+                for (let quarter = 1; quarter <= 4; quarter++) {
+                    const qStart = (quarter - 1) * 3;
+                    const monthsInQ = [qStart, qStart + 1, qStart + 2];
+                    const paidInQ = monthsInQ.filter((m) => paidMonthsInYear.has(`${analysisYear}-${m}`));
+
+                    if (paidInQ.length === 3) {
+                        paidQuarters.push(quarter);
+                    } else if (paidInQ.length > 0) {
+                        const unpaid = monthsInQ.filter((m) => !paidMonthsInYear.has(`${analysisYear}-${m}`));
+                        partialQuarters[quarter] = {
+                            paidMonths: paidInQ,
+                            unpaidMonths: unpaid,
+                            nextUnpaidMonth: Math.min(...unpaid),
+                        };
+                    }
+                }
+            }
+        }
+
+        paidQuarters.sort((a, b) => a - b);
+
+        let nextQuarter = 1;
+        let isNewCycle = false;
+
+        if (isFirstYear) {
+            if (paidMonthsInFirstYear.length >= monthsInFirstYear.length) {
+                nextQuarter = 1;
+                isNewCycle = true;
+            } else {
+                const nextMonth = monthsInFirstYear.find((m) => !paidMonthsInFirstYear.includes(m));
+                nextQuarter = Math.floor((nextMonth || 0) / 3) + 1;
+            }
+        } else {
+            const hasAllQuarters = [1, 2, 3, 4].every((q) => paidQuarters.includes(q));
+            if (hasAllQuarters || showCompletedYear) {
+                nextQuarter = 1;
+                isNewCycle = true;
+                if (!showCompletedYear) paidQuarters = [];
+            } else {
+                let foundPartial = false;
+                for (let i = 1; i <= 4; i++) {
+                    if (partialQuarters[i]) {
+                        nextQuarter = i;
+                        foundPartial = true;
+                        break;
+                    }
+                }
+                if (!foundPartial) {
+                    for (let i = 1; i <= 4; i++) {
+                        if (!paidQuarters.includes(i)) {
+                            nextQuarter = i;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return {
+            paidQuarters,
+            nextAvailableQuarter: nextQuarter,
+            currentYear: currentYear,
+            isNewCycle,
+            latestEndDate,
+            partialQuarters,
+        };
+    };
+
+    const suggestMaintenancePeriod = (frequency) => {
+        if (!selectedMember) return;
+        const membershipDate = new Date(selectedMember.membership_date);
+        const membershipYear = membershipDate.getFullYear();
+        const membershipMonth = membershipDate.getMonth();
+        const firstYearEnd = new Date(Date.UTC(membershipYear, 11, 31));
+        const isFirstYear = !quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd;
+
+        let startDate, endDate, amount;
+
+        // ... (Logic from OldCreate.jsx simplified for brevity but functional) ...
+        // Re-implementing core logic quickly
+        let monthsToAdd = frequency === 'monthly' ? 1 : frequency === 'quarterly' ? 3 : frequency === 'half_yearly' ? 6 : 12;
+
+        if (isFirstYear) {
+            // Logic for first year
+            if (quarterStatus.latestEndDate) {
+                const lastEnd = new Date(quarterStatus.latestEndDate);
+                startDate = new Date(Date.UTC(lastEnd.getUTCFullYear(), lastEnd.getUTCMonth() + 1, 1));
+            } else {
+                startDate = new Date(Date.UTC(membershipYear, membershipMonth + 1, 1));
+            }
+            // Cap at end of year
+            endDate = new Date(startDate);
+            endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
+            endDate.setUTCDate(0);
+            if (endDate > firstYearEnd) endDate = new Date(firstYearEnd);
+        } else {
+            // Logic for subsequent years
+            // Use partial quarters if available
+            const currentPartial = quarterStatus.partialQuarters[quarterStatus.nextAvailableQuarter];
+            if (currentPartial && frequency === 'quarterly') {
+                monthsToAdd = currentPartial.unpaidMonths.length;
+            }
+
+            if (quarterStatus.latestEndDate) {
+                const lastEnd = new Date(quarterStatus.latestEndDate);
+                startDate = new Date(Date.UTC(lastEnd.getUTCFullYear(), lastEnd.getUTCMonth() + 1, 1));
+            } else {
+                startDate = new Date(Date.UTC(quarterStatus.currentYear, 0, 1));
+            }
+
+            endDate = new Date(startDate);
+            endDate.setUTCMonth(startDate.getUTCMonth() + monthsToAdd);
+            endDate.setUTCDate(0);
+        }
+
+        // Amount calculation
+        const monthDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24 * 30)); // approx
+        // Better: use diff in months
+        const exactMonths = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
+
+        const monthlyFee = parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, ''));
+        amount = monthlyFee * exactMonths;
+
+        // Set Invoice Items
+        const newItem = {
+            id: Date.now(),
+            fee_type: 'maintenance_fee',
+            description: `Maintenance Fee (${frequency})`,
+            qty: 1,
+            amount: amount,
+            tax_percentage: 0,
+            overdue_percentage: 0,
+            discount_type: 'fixed',
+            discount_value: 0,
+            additional_charges: 0,
+            valid_from: startDate.toISOString().split('T')[0],
+            valid_to: endDate.toISOString().split('T')[0],
+            remarks: '',
+            total: amount,
+        };
+
+        setInvoiceItems([newItem]);
+        enqueueSnackbar(`Set payment period to ${frequency} (${exactMonths} months)`, { variant: 'info' });
+    };
 
     // Search members function
     const searchMembers = async (query) => {
@@ -147,6 +404,12 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             setFilteredTransactions(response.data.transactions);
             setMembershipFeePaid(response.data.membership_fee_paid);
             setLedgerBalance(response.data.ledger_balance);
+
+            setLedgerBalance(response.data.ledger_balance);
+
+            // Analyze quarter payment status
+            const quarterAnalysis = analyzeQuarterStatus(response.data.transactions, response.data.member.membership_date);
+            setQuarterStatus(quarterAnalysis);
 
             return response.data;
         } catch (error) {
@@ -542,7 +805,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 invoice_no: 'NEW', // Placeholder
                 total_price: calculateTotal(),
                 member: selectedMember,
-                fee_type: data.fee_type, // For display
+                fee_type: invoiceItems.length === 1 ? invoiceItems[0].fee_type_name || invoiceItems[0].fee_type : 'Multiple Items', // For display
             });
             setPaymentConfirmationOpen(true);
             return;
@@ -834,6 +1097,47 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
     };
 
+    // Cancellation Logic
+    const [cancellationOpen, setCancellationOpen] = useState(false);
+    const [transactionToCancel, setTransactionToCancel] = useState(null);
+    const [cancellationReason, setCancellationReason] = useState('');
+    const [cancelling, setCancelling] = useState(false);
+
+    const handleCancelClick = (transaction) => {
+        setTransactionToCancel(transaction);
+        setCancellationReason('');
+        setCancellationOpen(true);
+    };
+
+    const handleConfirmCancellation = async () => {
+        if (!transactionToCancel) return;
+        if (!cancellationReason.trim()) {
+            enqueueSnackbar('Please provide a reason for cancellation.', { variant: 'error' });
+            return;
+        }
+
+        setCancelling(true);
+        const formData = new FormData();
+        formData.append('status', 'cancelled');
+        formData.append('cancellation_reason', cancellationReason);
+
+        try {
+            const response = await axios.post(route('finance.transaction.update-status', transactionToCancel.id), formData);
+            if (response.data.success) {
+                enqueueSnackbar('Invoice cancelled successfully.', { variant: 'success' });
+                // Refresh transactions
+                fetchMemberTransactions(selectedMember.id);
+                setCancellationOpen(false);
+                setTransactionToCancel(null);
+            }
+        } catch (error) {
+            console.error('Error cancelling invoice:', error);
+            enqueueSnackbar(error.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(', ') : 'Failed to cancel invoice', { variant: 'error' });
+        } finally {
+            setCancelling(false);
+        }
+    };
+
     return (
         <>
             <Box sx={{ p: 2 }}>
@@ -843,7 +1147,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '13px' }}>Search for a member and create a new transaction</Typography>
                 </Box>
 
-                <Grid container spacing={3}>
+                <Grid container spacing={2}>
                     {/* Step 1: Member Search */}
                     {!preSelectedMember && (
                         <Grid item xs={12}>
@@ -933,7 +1237,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         )}
                                     />
                                     {selectedMember && (
-                                        <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
+                                        <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
                                             <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
                                                 {/* Member Info */}
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -992,7 +1296,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Ledger Balance
                                                         </Typography>
                                                         <Typography variant="body2" fontWeight={600} sx={{ color: (ledgerBalance || 0) > 0 ? 'error.main' : 'success.main' }}>
-                                                            {formatCurrency(ledgerBalance || 0)}
+                                                            {formatCurrency(Math.max(0, ledgerBalance || 0))}
                                                             <IconButton
                                                                 size="small"
                                                                 onClick={() => {
@@ -1047,9 +1351,52 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         {selectedMember ? (
                                             <form onSubmit={(e) => handleSubmit(e)}>
                                                 <Grid container spacing={3}>
+                                                    {/* Maintenance Status Accordion */}
+                                                    {selectedMember && (bookingType === '0' || bookingType === '2') && (
+                                                        <Grid item xs={12}>
+                                                            <Accordion sx={{ background: '#f8fafc', border: '1px solid #e2e8f0', boxShadow: 'none' }}>
+                                                                <AccordionSummary expandIcon={<ExpandMore />}>
+                                                                    <Typography sx={{ fontWeight: 600, color: '#0f172a' }}>Quarter Payment Status</Typography>
+                                                                </AccordionSummary>
+                                                                <AccordionDetails>
+                                                                    <Box sx={{ mb: 2 }}>
+                                                                        {(() => {
+                                                                            const membershipDate = new Date(selectedMember.membership_date);
+                                                                            const membershipYear = membershipDate.getFullYear();
+                                                                            const firstYearEnd = new Date(membershipYear, 11, 31);
+                                                                            const isFirstYear = (!quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd) && membershipDate.getMonth() < 11;
+
+                                                                            return (
+                                                                                <>
+                                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                                                                                        {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
+                                                                                    </Typography>
+
+                                                                                    {!isFirstYear && (
+                                                                                        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                                                                            {[1, 2, 3, 4].map((quarter) => (
+                                                                                                <Chip key={quarter} label={`Q${quarter}`} color={quarterStatus.paidQuarters.includes(quarter) ? 'success' : 'default'} variant={quarterStatus.paidQuarters.includes(quarter) ? 'filled' : 'outlined'} size="medium" sx={{ minWidth: 50, fontWeight: 600 }} />
+                                                                                            ))}
+                                                                                        </Box>
+                                                                                    )}
+
+                                                                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                                                        <strong>Next payment:</strong> {isFirstYear ? 'Monthly payment' : `Q${quarterStatus.nextAvailableQuarter}`}
+                                                                                        {quarterStatus.latestEndDate && <span> (Last paid until: {formatDate(quarterStatus.latestEndDate)})</span>}
+                                                                                        {!quarterStatus.latestEndDate && <span> (No maintenance history)</span>}
+                                                                                    </Typography>
+                                                                                </>
+                                                                            );
+                                                                        })()}
+                                                                    </Box>
+                                                                </AccordionDetails>
+                                                            </Accordion>
+                                                        </Grid>
+                                                    )}
+
                                                     {/* Invoice Items Grid */}
                                                     <Grid item xs={12}>
-                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} />
+                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} onQuickSelectMaintenance={suggestMaintenancePeriod} />
                                                     </Grid>
 
                                                     {/* Remarks Section */}
@@ -1299,6 +1646,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                 Pay Now
                                                                             </Button>
                                                                         )}
+                                                                        {transaction.status !== 'cancelled' && (
+                                                                            <Tooltip title="Cancel Invoice">
+                                                                                <IconButton size="small" color="error" onClick={() => handleCancelClick(transaction)} sx={{ ml: 1 }}>
+                                                                                    <CancelIcon />
+                                                                                </IconButton>
+                                                                            </Tooltip>
+                                                                        )}
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <Chip label={transaction.status?.toUpperCase()} color={getStatusColor(transaction.status)} size="small" />
@@ -1370,6 +1724,26 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 onConfirm={handleConfirmPayment}
                 submitting={submittingPayment}
             />
+
+            {/* Cancellation Dialog */}
+            <Dialog open={cancellationOpen} onClose={() => setCancellationOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ bgcolor: '#d32f2f', color: 'white' }}>Cancel Invoice</DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
+                    <Typography variant="body2" sx={{ mb: 2, mt: 2 }}>
+                        Are you sure you want to cancel this invoice? This action cannot be undone.
+                        {transactionToCancel?.status === 'paid' && <span style={{ fontWeight: 'bold', display: 'block', color: '#d32f2f', marginTop: '8px' }}>WARNING: This is a PAID invoice. Cancelling it will VOID the payment and remove it from the ledger.</span>}
+                    </Typography>
+                    <TextField autoFocus margin="dense" label="Reason for Cancellation" fullWidth multiline rows={3} value={cancellationReason} onChange={(e) => setCancellationReason(e.target.value)} variant="outlined" />
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setCancellationOpen(false)} disabled={cancelling}>
+                        Back
+                    </Button>
+                    <Button onClick={handleConfirmCancellation} variant="contained" color="error" disabled={cancelling} startIcon={cancelling ? <CircularProgress size={20} color="inherit" /> : null}>
+                        {cancelling ? 'Cancelling...' : 'Confirm Cancellation'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 }

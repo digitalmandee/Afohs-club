@@ -17,7 +17,9 @@ class Employee extends BaseModel
         // Additional fields from old HR system
         'father_name', 'age', 'date_of_birth', 'mob_b', 'tel_a', 'tel_b', 'cur_city', 'cur_country',
         'per_address', 'per_city', 'per_country', 'license', 'license_no', 'vehicle_details', 'bank_details',
-        'learn_of_org', 'anyone_in_org', 'company', 'crime', 'crime_details', 'remarks', 'barcode', 'picture'
+        'learn_of_org', 'anyone_in_org', 'company', 'crime', 'crime_details', 'remarks', 'barcode', 'picture',
+        'old_employee_id', 'total_addon_charges', 'total_salary', 'days', 'hours', 'total_deduction_charges',
+        'old_department', 'old_subdepartment'
     ];
 
     public function user()

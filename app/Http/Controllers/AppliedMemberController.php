@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\AppliedMember;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialReceipt;
 use App\Models\Member;
+use App\Models\Transaction;
+use App\Models\TransactionRelation;
 use App\Models\User;
 use App\Models\UserDetail;
 use Illuminate\Database\QueryException;
@@ -17,7 +20,7 @@ class AppliedMemberController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AppliedMember::query()->with('financialInvoice')->orderBy('created_at', 'desc');
+        $query = AppliedMember::query()->with('financialInvoice.items')->orderBy('created_at', 'desc');
 
         // Apply Filters
         if ($request->has('name') && $request->name) {
@@ -144,7 +147,7 @@ class AppliedMemberController extends Controller
             // Generate Invoice
             $invoiceNo = FinancialInvoice::withTrashed()->max('invoice_no') + 1;
 
-            FinancialInvoice::create([
+            $invoice = FinancialInvoice::create([
                 'invoice_no' => $invoiceNo,
                 'invoice_type' => 'applied_member',  // Custom type
                 'invoiceable_id' => $appliedMember->id,
@@ -157,7 +160,68 @@ class AppliedMemberController extends Controller
                 'due_date' => now(),
                 'payment_date' => now(),
                 'remarks' => 'Applied Member Registration Fee',
+                'data' => [
+                    'member_name' => $appliedMember->name,
+                ]
             ]);
+
+            // ✅ Create Invoice Item
+            \App\Models\FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'fee_type' => 'applied_member_fee',
+                'description' => 'Applied Member Registration Fee',
+                'qty' => 1,
+                'amount' => $appliedMember->amount_paid,
+                'sub_total' => $appliedMember->amount_paid,
+                'total' => $appliedMember->amount_paid,
+            ]);
+
+            // 1. Create Ledger Entry (Debit) - Invoice
+            Transaction::create([
+                'type' => 'debit',
+                'amount' => $appliedMember->amount_paid,
+                'date' => now(),
+                'description' => 'Applied Member Registration Fee Invoice #' . $invoiceNo,
+                'payable_type' => AppliedMember::class,
+                'payable_id' => $appliedMember->id,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'created_by' => auth()->id(),
+            ]);
+
+            if ($appliedMember->amount_paid > 0) {
+                // 2. Create Receipt
+                $receipt = FinancialReceipt::create([
+                    'receipt_no' => time(),
+                    'payer_type' => AppliedMember::class,
+                    'payer_id' => $appliedMember->id,
+                    'amount' => $appliedMember->amount_paid,
+                    'payment_method' => 'cash',  // Defaulting to cash as per previous logic
+                    'receipt_date' => now(),
+                    'status' => 'active',
+                    'created_by' => auth()->id(),
+                ]);
+
+                // 3. Create Ledger Entry (Credit) - Payment
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $appliedMember->amount_paid,
+                    'date' => now(),
+                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                    'payable_type' => AppliedMember::class,
+                    'payable_id' => $appliedMember->id,
+                    'reference_type' => FinancialReceipt::class,
+                    'reference_id' => $receipt->id,
+                    'created_by' => auth()->id(),
+                ]);
+
+                // 4. Link Invoice and Receipt
+                TransactionRelation::create([
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'amount' => $appliedMember->amount_paid,
+                ]);
+            }
 
             return response()->json(['message' => 'Applied member created successfully.'], 200);
         } catch (QueryException $e) {
@@ -232,7 +296,7 @@ class AppliedMemberController extends Controller
                     // Generate Invoice
                     $invoiceNo = $this->generateInvoiceNumber();
 
-                    FinancialInvoice::create([
+                    $invoice = FinancialInvoice::create([
                         'invoice_no' => $invoiceNo,
                         'invoice_type' => 'applied_member',  // Custom type
                         'invoiceable_id' => $member->id,
@@ -246,7 +310,68 @@ class AppliedMemberController extends Controller
                         'due_date' => now(),
                         'payment_date' => now(),
                         'remarks' => 'Applied Member Registration Fee',
+                        'data' => [
+                            'member_name' => $member->name,
+                        ]
                     ]);
+
+                    // ✅ Create Invoice Item
+                    \App\Models\FinancialInvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'fee_type' => 'applied_member_fee',
+                        'description' => 'Applied Member Registration Fee',
+                        'qty' => 1,
+                        'amount' => $amountPaid,
+                        'sub_total' => $amountPaid,
+                        'total' => $amountPaid,
+                    ]);
+
+                    // 1. Create Ledger Entry (Debit) - Invoice
+                    Transaction::create([
+                        'type' => 'debit',
+                        'amount' => $amountPaid,
+                        'date' => now(),
+                        'description' => 'Applied Member Registration Fee Invoice #' . $invoiceNo,
+                        'payable_type' => AppliedMember::class,
+                        'payable_id' => $member->id,
+                        'reference_type' => FinancialInvoice::class,
+                        'reference_id' => $invoice->id,
+                        'created_by' => auth()->id(),
+                    ]);
+
+                    if ($amountPaid > 0) {
+                        // 2. Create Receipt
+                        $receipt = FinancialReceipt::create([
+                            'receipt_no' => time(),
+                            'payer_type' => AppliedMember::class,
+                            'payer_id' => $member->id,
+                            'amount' => $amountPaid,
+                            'payment_method' => 'cash',
+                            'receipt_date' => now(),
+                            'status' => 'active',
+                            'created_by' => auth()->id(),
+                        ]);
+
+                        // 3. Create Ledger Entry (Credit) - Payment
+                        Transaction::create([
+                            'type' => 'credit',
+                            'amount' => $amountPaid,
+                            'date' => now(),
+                            'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                            'payable_type' => AppliedMember::class,
+                            'payable_id' => $member->id,
+                            'reference_type' => FinancialReceipt::class,
+                            'reference_id' => $receipt->id,
+                            'created_by' => auth()->id(),
+                        ]);
+
+                        // 4. Link Invoice and Receipt
+                        TransactionRelation::create([
+                            'invoice_id' => $invoice->id,
+                            'receipt_id' => $receipt->id,
+                            'amount' => $amountPaid,
+                        ]);
+                    }
                 }
             }
 

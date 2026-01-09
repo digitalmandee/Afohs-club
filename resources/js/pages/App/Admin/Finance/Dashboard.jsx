@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col, Card, Button, Form } from 'react-bootstrap';
 import { People, CheckCircle, Timer, Cancel, BarChart, EventNote, CardMembership, Fastfood, Print, Payment } from '@mui/icons-material';
-import { Table, Typography, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField } from '@mui/material';
+import { Table, Typography, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, TextField, Tooltip } from '@mui/material';
 import { router } from '@inertiajs/react';
 import InvoiceSlip from '../Subscription/Invoice';
 import MembershipInvoiceSlip from '../Membership/Invoice';
@@ -445,7 +445,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                 };
 
                                                 // Use fee_type if available, otherwise use invoice_type
-                                                const displayType = transaction.fee_type || transaction.invoice_type;
+                                                const displayType = transaction.fee_type_formatted || transaction.fee_type || transaction.invoice_type;
 
                                                 // Format payment method
                                                 const formatPaymentMethod = (method) => {
@@ -500,7 +500,28 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                                     fontWeight: 500,
                                                                 }}
                                                             >
-                                                                {formatType(displayType)}
+                                                                {displayType === 'Multiple Items' ? (
+                                                                    <Tooltip
+                                                                        title={
+                                                                            transaction.items && transaction.items.length > 0 ? (
+                                                                                <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+                                                                                    {transaction.items.map((item, idx) => (
+                                                                                        <li key={idx}>
+                                                                                            {formatType(item.fee_type)} {item.description ? ` - ${item.description}` : ''}
+                                                                                        </li>
+                                                                                    ))}
+                                                                                </ul>
+                                                                            ) : (
+                                                                                'Multiple items'
+                                                                            )
+                                                                        }
+                                                                        arrow
+                                                                    >
+                                                                        <span>{displayType}</span>
+                                                                    </Tooltip>
+                                                                ) : (
+                                                                    formatType(displayType)
+                                                                )}
                                                             </span>
                                                         </TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>Rs {transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0}</TableCell>
