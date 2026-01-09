@@ -1126,8 +1126,49 @@ class MemberTransactionController extends Controller
 
         $transaction->save();
 
-        // Force update to ensure column is set (wildcard fix for potential model caching/fillable issues)
-        if ($request->status === 'paid') {
+        // CANCELLATION LOGIC
+        if ($request->status === 'cancelled') {
+            DB::transaction(function () use ($transaction, $request) {
+                // 1. Store Reason
+                $data = $transaction->data ?? [];
+                $data['cancellation_reason'] = $request->cancellation_reason;
+                // Update via direct DB query to avoid model issues
+                DB::table('financial_invoices')
+                    ->where('id', $transaction->id)
+                    ->update([
+                        'data' => json_encode($data),
+                        'status' => 'cancelled'  // Ensure status is set here too
+                    ]);
+
+                // 2. Void Ledger Debit (The Invoice Charge)
+                \App\Models\Transaction::where('reference_type', FinancialInvoice::class)
+                    ->where('reference_id', $transaction->id)
+                    ->where('type', 'debit')
+                    ->delete();
+
+                // 3. If Paid, Void Ledger Credit (The Payment) & Receipt
+                if ($transaction->status === 'paid' || $transaction->paid_amount > 0) {
+                    // Find relations
+                    $relations = \App\Models\TransactionRelation::where('invoice_id', $transaction->id)->get();
+
+                    foreach ($relations as $relation) {
+                        if ($relation->receipt_id) {
+                            // Delete Credit Ledger Entry for this Receipt
+                            \App\Models\Transaction::where('reference_type', \App\Models\FinancialReceipt::class)
+                                ->where('reference_id', $relation->receipt_id)
+                                ->where('type', 'credit')
+                                ->delete();
+
+                            // Delete/Void Receipt
+                            \App\Models\FinancialReceipt::where('id', $relation->receipt_id)->delete();
+                        }
+                    }
+
+                    // Also check for direct receipt linkage if Relation missing (legacy fallback)
+                    // (Assuming strict Relation usage for new system, skipping fallback for now to avoid accidental deletions)
+                }
+            });
+        } elseif ($request->status === 'paid') {
             $data = $transaction->data ?? [];
             if ($request->payment_mode_details) {
                 $data['payment_details'] = $request->payment_mode_details;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton, Divider } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton, Divider, Tooltip } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
-import { Person, Search, Save, Print, Receipt, Visibility, Payment } from '@mui/icons-material';
+import { Person, Search, Save, Print, Receipt, Visibility, Payment, Cancel as CancelIcon } from '@mui/icons-material';
 import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
 import PaymentDialog from './PaymentDialog';
 import InvoiceItemsGrid from './InvoiceItemsGrid';
@@ -834,6 +834,47 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
     };
 
+    // Cancellation Logic
+    const [cancellationOpen, setCancellationOpen] = useState(false);
+    const [transactionToCancel, setTransactionToCancel] = useState(null);
+    const [cancellationReason, setCancellationReason] = useState('');
+    const [cancelling, setCancelling] = useState(false);
+
+    const handleCancelClick = (transaction) => {
+        setTransactionToCancel(transaction);
+        setCancellationReason('');
+        setCancellationOpen(true);
+    };
+
+    const handleConfirmCancellation = async () => {
+        if (!transactionToCancel) return;
+        if (!cancellationReason.trim()) {
+            enqueueSnackbar('Please provide a reason for cancellation.', { variant: 'error' });
+            return;
+        }
+
+        setCancelling(true);
+        const formData = new FormData();
+        formData.append('status', 'cancelled');
+        formData.append('cancellation_reason', cancellationReason);
+
+        try {
+            const response = await axios.post(route('finance.transaction.update-status', transactionToCancel.id), formData);
+            if (response.data.success) {
+                enqueueSnackbar('Invoice cancelled successfully.', { variant: 'success' });
+                // Refresh transactions
+                fetchMemberTransactions(selectedMember.id);
+                setCancellationOpen(false);
+                setTransactionToCancel(null);
+            }
+        } catch (error) {
+            console.error('Error cancelling invoice:', error);
+            enqueueSnackbar(error.response?.data?.errors ? Object.values(error.response.data.errors).flat().join(', ') : 'Failed to cancel invoice', { variant: 'error' });
+        } finally {
+            setCancelling(false);
+        }
+    };
+
     return (
         <>
             <Box sx={{ p: 2 }}>
@@ -992,7 +1033,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             Ledger Balance
                                                         </Typography>
                                                         <Typography variant="body2" fontWeight={600} sx={{ color: (ledgerBalance || 0) > 0 ? 'error.main' : 'success.main' }}>
-                                                            {formatCurrency(ledgerBalance || 0)}
+                                                            {formatCurrency(Math.max(0, ledgerBalance || 0))}
                                                             <IconButton
                                                                 size="small"
                                                                 onClick={() => {
@@ -1299,6 +1340,13 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                 Pay Now
                                                                             </Button>
                                                                         )}
+                                                                        {transaction.status !== 'cancelled' && (
+                                                                            <Tooltip title="Cancel Invoice">
+                                                                                <IconButton size="small" color="error" onClick={() => handleCancelClick(transaction)} sx={{ ml: 1 }}>
+                                                                                    <CancelIcon />
+                                                                                </IconButton>
+                                                                            </Tooltip>
+                                                                        )}
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <Chip label={transaction.status?.toUpperCase()} color={getStatusColor(transaction.status)} size="small" />
@@ -1370,6 +1418,26 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 onConfirm={handleConfirmPayment}
                 submitting={submittingPayment}
             />
+
+            {/* Cancellation Dialog */}
+            <Dialog open={cancellationOpen} onClose={() => setCancellationOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ bgcolor: '#d32f2f', color: 'white' }}>Cancel Invoice</DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
+                    <Typography variant="body2" sx={{ mb: 2, mt: 2 }}>
+                        Are you sure you want to cancel this invoice? This action cannot be undone.
+                        {transactionToCancel?.status === 'paid' && <span style={{ fontWeight: 'bold', display: 'block', color: '#d32f2f', marginTop: '8px' }}>WARNING: This is a PAID invoice. Cancelling it will VOID the payment and remove it from the ledger.</span>}
+                    </Typography>
+                    <TextField autoFocus margin="dense" label="Reason for Cancellation" fullWidth multiline rows={3} value={cancellationReason} onChange={(e) => setCancellationReason(e.target.value)} variant="outlined" />
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setCancellationOpen(false)} disabled={cancelling}>
+                        Back
+                    </Button>
+                    <Button onClick={handleConfirmCancellation} variant="contained" color="error" disabled={cancelling} startIcon={cancelling ? <CircularProgress size={20} color="inherit" /> : null}>
+                        {cancelling ? 'Cancelling...' : 'Confirm Cancellation'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 }
