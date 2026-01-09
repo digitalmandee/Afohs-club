@@ -44,13 +44,28 @@ class MembershipController extends Controller
             ->with([
                 'memberCategory:id,name,description',
                 'profilePhoto:id,mediable_id,mediable_type,file_path',
+                'membershipInvoice:id,corporate_member_id,invoice_no,status,total_price',
             ])
             ->latest()
             ->limit(6)
             ->get();
 
         $total_members = Member::whereNull('parent_id')->count();
-        $total_payment = FinancialInvoice::where('invoice_type', 'membership')->where('status', 'paid')->sum('total_price');
+
+        // Legacy Payment Calculation (Old 'membership' invoice type)
+        $legacy_payment = FinancialInvoice::where('invoice_type', 'membership')
+            ->where('status', 'paid')
+            ->sum('total_price');
+
+        // New Payment Calculation (Items with 'membership_fee')
+        $new_payment = \App\Models\FinancialInvoiceItem::where('fee_type', 'membership_fee')
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            })
+            ->sum('total');
+
+        $total_payment = $legacy_payment + $new_payment;
+
         $total_corporate_members = \App\Models\CorporateMember::whereNull('parent_id')->count();
 
         return Inertia::render('App/Admin/Membership/Dashboard', compact('members', 'corporateMembers', 'total_members', 'total_payment', 'total_corporate_members'));
@@ -529,25 +544,66 @@ class MembershipController extends Controller
                 }
             }
 
-            // Create unpaid membership fee invoice
-            FinancialInvoice::create([
+            // 1. Create Invoice Header
+            $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->generateInvoiceNumber(),
                 'member_id' => $mainMember->id,
+                'fee_type' => 'mixed',
+                'invoice_type' => 'invoice',
+                'amount' => 0,
+                'additional_charges' => 0,
+                'discount_type' => null,
+                'discount_value' => 0,
+                'discount_details' => null,
+                'total_price' => 0,
+                'tax_amount' => 0,
+                'discount_amount' => 0,
+                'payment_method' => null,
+                'status' => 'unpaid',
+                'remarks' => $request->membership_fee_additional_remarks,
+                'invoiceable_id' => $mainMember->id,
+                'invoiceable_type' => Member::class,
+            ]);
+
+            // 2. Create Invoice Item (New System Compatibility)
+            \App\Models\FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
                 'fee_type' => 'membership_fee',
-                'invoice_type' => 'membership',
+                'description' => 'Membership Fee',
+                'qty' => 1,
+                'amount' => $request->membership_fee ?? 0,
+                'sub_total' => ($request->membership_fee ?? 0) * 1,
+                'additional_charges' => $request->additional_membership_charges ?? 0,
+                'tax_percentage' => 0,
+                'tax_amount' => 0,
+                'discount_amount' => $request->membership_fee_discount ?? 0,
+                'discount_details' => $request->membership_fee_discount_remarks,
+                'total' => $request->total_membership_fee,
+                'start_date' => $this->formatDateForDatabase($request->membership_date),
+                'end_date' => null,
+            ]);
+
+            // 3. Update Invoice Header with Totals
+            $invoice->update([
                 'amount' => $request->membership_fee ?? 0,
                 'additional_charges' => $request->additional_membership_charges ?? 0,
                 'discount_type' => 'fixed',
                 'discount_value' => $request->membership_fee_discount ?? 0,
                 'discount_details' => $request->membership_fee_discount_remarks,
+                'discount_amount' => $request->membership_fee_discount ?? 0,
                 'total_price' => $request->total_membership_fee,
-                'payment_method' => null,  // Will be set when payment is made
-                'valid_from' => $this->formatDateForDatabase($request->membership_date),
-                'valid_to' => null,
-                'status' => 'unpaid',
-                'remarks' => $request->membership_fee_additional_remarks,
-                'invoiceable_id' => $mainMember->id,
-                'invoiceable_type' => Member::class,
+            ]);
+
+            // 3. Create Ledger Entry (Debit)
+            \App\Models\Transaction::create([
+                'type' => 'debit',
+                'amount' => $request->total_membership_fee,
+                'date' => now(),  // Transaction Date
+                'description' => 'Membership Fee Invoice #' . $invoice->invoice_no,
+                'payable_type' => Member::class,
+                'payable_id' => $mainMember->id,  // Linked to the new member
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
             ]);
 
             DB::commit();

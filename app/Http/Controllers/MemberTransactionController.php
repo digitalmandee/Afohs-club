@@ -256,6 +256,8 @@ class MemberTransactionController extends Controller
                 $memberName = $member->full_name;
                 $payerType = CorporateMember::class;
                 $payerId = $member->id;
+                $invoiceableId = $member->id;
+                $invoiceableType = CorporateMember::class;
             } elseif (str_starts_with($request->booking_type, 'guest')) {
                 $member = \App\Models\Customer::find($request->customer_id);
                 $memberId = null;
@@ -264,6 +266,8 @@ class MemberTransactionController extends Controller
                 $memberName = $member->name;
                 $payerType = \App\Models\Customer::class;
                 $payerId = $member->id;
+                $invoiceableId = null;  // Guests usually don't have a polymorphic invoiceable user link in the same way, or use Customer?
+                $invoiceableType = null;
             } else {
                 $member = Member::where('id', $request->member_id)->first();
                 $memberId = $request->member_id;
@@ -272,6 +276,8 @@ class MemberTransactionController extends Controller
                 $memberName = $member->full_name;
                 $payerType = Member::class;
                 $payerId = $member->id;
+                $invoiceableId = $member->id;
+                $invoiceableType = Member::class;
             }
 
             // 3. One-Time Membership Fee Validation
@@ -395,12 +401,15 @@ class MemberTransactionController extends Controller
             $totalDiscount = 0;
 
             // 4. Create Invoice Header (Unpaid initially)
+            // 4. Create Invoice Header (Unpaid initially)
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $invoiceNo,
                 'member_id' => $memberId,
                 'corporate_member_id' => $corporateId,
                 'customer_id' => $customerId,
-                'fee_type' => count($request->items) > 1 ? 'mixed' : ($request->items[0]['fee_type'] ?? 'general'),
+                'invoiceable_id' => $invoiceableId,
+                'invoiceable_type' => $invoiceableType,
+                'fee_type' => 'mixed',
                 'invoice_type' => 'invoice',
                 'amount' => 0,  // Will update after processing items
                 'total_price' => 0,
@@ -540,6 +549,9 @@ class MemberTransactionController extends Controller
             }
 
             DB::commit();
+
+            // Reload relationships ensuring corporate/member data is available for frontend
+            $invoice->load(['member', 'corporateMember', 'customer']);
 
             return response()->json([
                 'success' => true,

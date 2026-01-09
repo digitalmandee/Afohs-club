@@ -204,7 +204,17 @@ class CorporateMember extends BaseModel
     {
         return $this
             ->hasOne(FinancialInvoice::class, 'corporate_member_id', 'id')
-            ->where('fee_type', 'membership_fee')
+            ->where(function ($query) {
+                $query
+                    ->where('fee_type', 'membership_fee')
+                    ->orWhere(function ($q) {
+                        $q
+                            ->where('fee_type', 'mixed')
+                            ->whereHas('items', function ($sq) {
+                                $sq->where('fee_type', 'membership_fee');
+                            });
+                    });
+            })
             ->orderBy('id', 'desc');
     }
 

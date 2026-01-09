@@ -178,24 +178,65 @@ class CorporateMembershipController extends Controller
             $mainMember->save();
 
             // Create unpaid membership fee invoice
-            FinancialInvoice::create([
+            // 1. Create Invoice Header (Minimal)
+            $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->generateInvoiceNumber(),
-                'member_id' => $mainMember->id,
+                'member_id' => null,  // Explicitly null for corporate invoice
+                'corporate_member_id' => $mainMember->id,
+                'fee_type' => 'mixed',
+                'invoice_type' => 'invoice',
+                'amount' => 0,
+                'additional_charges' => 0,
+                'discount_type' => null,
+                'discount_value' => 0,
+                'discount_details' => null,
+                'total_price' => 0,
+                'payment_method' => null,
+                'status' => 'unpaid',
+                'remarks' => $request->membership_fee_additional_remarks,
+                'invoiceable_id' => $mainMember->id,
+                'invoiceable_type' => CorporateMember::class,
+            ]);
+
+            // 2. Create Invoice Item (Detailed)
+            \App\Models\FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
                 'fee_type' => 'membership_fee',
-                'invoice_type' => 'corporate_membership',
+                'description' => 'Corporate Membership Fee',
+                'qty' => 1,
+                'amount' => $request->membership_fee ?? 0,
+                'sub_total' => ($request->membership_fee ?? 0) * 1,
+                'additional_charges' => $request->additional_membership_charges ?? 0,
+                'tax_percentage' => 0,
+                'tax_amount' => 0,
+                'discount_amount' => $request->membership_fee_discount ?? 0,
+                'discount_details' => $request->membership_fee_discount_remarks,
+                'total' => $request->total_membership_fee,
+                'start_date' => $this->formatDateForDatabase($request->membership_date),
+                'end_date' => null,
+            ]);
+
+            // 3. Update Invoice Header with Totals
+            $invoice->update([
                 'amount' => $request->membership_fee ?? 0,
                 'additional_charges' => $request->additional_membership_charges ?? 0,
                 'discount_type' => 'fixed',
                 'discount_value' => $request->membership_fee_discount ?? 0,
                 'discount_details' => $request->membership_fee_discount_remarks,
+                'discount_amount' => $request->membership_fee_discount ?? 0,
                 'total_price' => $request->total_membership_fee,
-                'payment_method' => null,
-                'valid_from' => $this->formatDateForDatabase($request->membership_date),
-                'valid_to' => null,
-                'status' => 'unpaid',
-                'remarks' => $request->membership_fee_additional_remarks,
-                'invoiceable_id' => $mainMember->id,
-                'invoiceable_type' => CorporateMember::class,
+            ]);
+
+            // 4. Create Ledger Entry (Debit)
+            \App\Models\Transaction::create([
+                'type' => 'debit',
+                'amount' => $request->total_membership_fee,
+                'date' => now(),
+                'description' => 'Corporate Membership Fee Invoice #' . $invoice->invoice_no,
+                'payable_type' => CorporateMember::class,
+                'payable_id' => $mainMember->id,
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
             ]);
 
             // Handle family members
@@ -284,7 +325,7 @@ class CorporateMembershipController extends Controller
                 'profilePhoto:id,mediable_id,mediable_type,file_path',
                 'documents:id,mediable_id,mediable_type,file_path',
                 'memberCategory:id,name,description',
-                'membershipInvoice:id,member_id,invoice_no,status,total_price'
+                'membershipInvoice:id,corporate_member_id,invoice_no,status,total_price'
             ])
             ->withCount('familyMembers');
 
