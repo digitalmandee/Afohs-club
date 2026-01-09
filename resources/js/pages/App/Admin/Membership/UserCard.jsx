@@ -43,192 +43,193 @@ export const handlePrintMembershipCard = (member) => {
     const printWindow = window.open('', '_blank');
 
     const content = `
-        <!doctype html>
-        <html>
-        <head>
-            <title>Membership Card</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 0;
-                    padding: 10px;
-                    display: flex;
-                    justify-content: center;
-                    background-color: #f5f5f5;
-                }
+<!doctype html>
+<html>
+<head>
+    <title>Membership Card</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background-color: #f5f5f5;
+        }
 
-                .membership-card {
-                    width: 400px;
-                    border: 1px solid #e3e3e3;
-                    border-radius: 12px;
-                    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-                    background-color: white;
-                    overflow: hidden;
-                }
+        .membership-card {
+            width: 500px;
+            border: 1px solid #e3e3e3;
+            border-radius: 12px;
+            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
+            background-color: white;
+            overflow: hidden;
+        }
 
-                .content {
-                    padding: 16px 0;
-                }
+        .content {
+            padding: 16px 0;
+        }
 
-                .row {
-                    display: flex;
-                    width: 100%;
-                }
+        .row {
+            display: flex;
+            width: 100%;
+        }
 
-                .col {
-                    width: 33.33%;
-                    display: flex;
-                    flex-direction: column;
-                }
+        .col {
+            width: 33.33%;
+            display: flex;
+            flex-direction: column;
+        }
 
-                /* LEFT COLUMN (Avatar + Name) */
-                .left {
-                    padding-left: 20px;
-                    padding-top: 26px;
-                    align-items: flex-start;
-                }
+        /* LEFT COLUMN - Perfect MUI replica */
+        .left {
+            padding-left: 20px;
+            padding-top: 60px;
+            align-items: flex-start;
+        }
 
-                .avatar-wrapper {
-    width: 100px;
-    height: 100px;
-    border: 1px solid #0a3d62;
-    border-radius: 4px;
+        .avatar-wrapper {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #063455;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+        .avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
 
-    overflow: hidden;
-    box-sizing: border-box;
-}
+        .name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #000;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
 
-.avatar-img {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
+        /* CENTER COLUMN - Perfect MUI replica */
+        .center {
+            padding-top: -5px;
+            align-items: center;
+            justify-content: center;
+        }
 
-                .name {
-                    font-size: 12px;
-                    font-weight: 600;
-                    color: #063455;
-                    margin-top: 18px;
-                    text-transform: uppercase;
-                }
+        .logo {
+            height: 150px;
+        }
 
-                /* CENTER COLUMN (Logo + Membership ID) */
-                .center {
-                    justify-content: center;
-                    align-items: center;
-                }
+        .label {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            padding-left: 80px;
+            color: #000;
+            white-space: nowrap;
+        }
 
-                .logo {
-                    height: 100px;
-                }
+        .value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #000;
+        }
 
-                .label {
-                    margin-top: 32px;
-                    font-size: 12px;
-                    color: gray;
-                }
+        /* RIGHT COLUMN - Perfect MUI replica */
+        .right {
+            padding-right: 20px;
+            padding-top: 90px;
+            align-items: flex-end;
+        }
 
-                .value {
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: #063455;
-                }
+        .qr-wrapper {
+            width: 70px;
+            height: 70px;
+            border: 2px solid #000;
+            border-radius: 4px;
+            padding: 4px;
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-                /* RIGHT COLUMN (QR + Valid Until) */
-                .right {
-    padding-right: 20px;
-    padding-top: 26px;
-    align-items: flex-end;
-}
+        .qr-img {
+            width: 100%;
+            height: 100%;
+        }
 
-.qr {
-    width: 60px;
-    height: 60px;
-    border-radius: 4px;
-    border: 'none';
-    object-fit: contain;
-}
+        .label-valid-until {
+            margin-top: 1.6px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #000;
+        }
 
-/* Global label style */
-.label {
-    font-size: 12px;
-    color: gray;
-}
+        .footer {
+            background-color: #0a3d62;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 500;
+        }
 
-/* Only this label (under QR) gets spacing */
-.label-valid-until {
-    margin-top: 58px;   /* <-- your required padding from top */
-}
-
-.value {
-    font-size: 16px;
-    font-weight: bold;
-    color: #0a3d62;
-}
-
-.footer {
-    background-color: #0a3d62;
-    color: white;
-    padding: 16px;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 500;
-}
-
-                @media print {
-                    body {
-                        background-color: white;
-                        padding: 0;
-                    }
-                    .membership-card {
-                        box-shadow: none;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="membership-card">
-                <div class="content">
-                    <div class="row">
-
-                        <!-- LEFT COLUMN -->
-                        <div class="col left">
-    <div class="avatar-wrapper">
-        <img class="avatar-img" src="${member?.profile_photo?.file_path || '/placeholder.svg'}" />
-    </div>
-    <div class="name">${member?.full_name || 'N/A'}</div>
-</div>
-
-                        <!-- CENTER COLUMN -->
-                        <div class="col center">
-                            <img src="/assets/Logo.png" class="logo" />
-                            <div class="label">Membership ID</div>
-                            <div class="value">${member?.membership_no || 'N/A'}</div>
-                        </div>
-
-                        <!-- RIGHT COLUMN -->
-                        <div class="col right">
-                            <img src="/${member?.qr_code || ''}" class="qr" />
-                            <div class="label label-valid-until">Valid Until</div>
-                            <div class="value">
-                                ${formatExpiryDate(member?.card_expiry_date)}
-                            </div>
-                        </div>
-
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+            }
+            .membership-card {
+                box-shadow: none;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="membership-card">
+        <div class="content">
+            <div class="row">
+                <!-- LEFT COLUMN -->
+                <div class="col left">
+                    <div class="avatar-wrapper">
+                        <img class="avatar-img" src="${member?.profile_photo?.file_path || '/placeholder.svg'}" alt="Member Photo" />
                     </div>
+                    <div class="name">${member?.full_name || 'N/A'}</div>
                 </div>
 
-                <div class="footer">
-                    ${member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
+                <!-- CENTER COLUMN -->
+                <div class="col center">
+                    <img src="/assets/Logo.png" class="logo" alt="AFOHS CLUB" />
+                    <div class="label">Membership No</div>
+                    <div class="value">${member?.membership_no || 'N/A'}</div>
+                </div>
+
+                <!-- RIGHT COLUMN -->
+                <div class="col right">
+                    <div class="qr-wrapper">
+                        <img class="qr-img" src="/${member?.qr_code || ''}" alt="QR Code" />
+                    </div>
+                    <div class="label-valid-until">Valid Until</div>
+                    <div class="value">${formatExpiryDate(member?.card_expiry_date)}</div>
                 </div>
             </div>
-        </body>
-        </html>
-    `;
+        </div>
+
+        <div class="footer">
+            ${member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
+        </div>
+    </div>
+</body>
+</html>
+`;
 
     printWindow.document.write(content);
     printWindow.document.close();
@@ -245,15 +246,15 @@ export const MembershipCardContent = ({ member, id }) => {
             <CardContent sx={{ py: 2 }}>
                 <Grid container spacing={0} sx={{ width: '100%', m: 0 }}>
                     <Grid item xs={12} sm={4}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 4 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 8 }}>
                             {/* <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
                                 width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62', objectFit: 'cover', objectPosition: 'center', p: "4px", bgcolor:'#BDBDBD'
                             }} variant="square" /> */}
                             <Box
                                 sx={{
-                                    width: 100,
-                                    height: 100,
-                                    border: '1px solid #063455',
+                                    width: '140px',
+                                    height: '140px',
+                                    border: '2px solid #063455',
                                     borderRadius: 1,
                                     // p: '4px',
                                     // bgcolor: '#BDBDBD',
@@ -273,7 +274,7 @@ export const MembershipCardContent = ({ member, id }) => {
                                     }}
                                 />
                             </Box>
-                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', pt: 0.5 }} color="#063455">
+                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', pt: 0.5 }} color="#000">
                                 {member?.full_name || 'N/A'}
                             </Typography>
                         </Box>
@@ -281,23 +282,47 @@ export const MembershipCardContent = ({ member, id }) => {
                     <Grid item xs={12} sm={4}>
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
-                                <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 120 }} />
+                                <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 150 }} />
                             </Box>
-                            <Typography variant="caption" color="text.secondary" sx={{ pt: 2 }}>
-                                Membership ID
+                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 7, pl: 10, whiteSpace: 'nowrap', color:'#000' }}>
+                                Membership No
                             </Typography>
-                            <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
+                            <Typography variant="subtitle1" fontWeight="bold" color="#000">
                                 {member?.membership_no || 'N/A'}
                             </Typography>
                         </Box>
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pt: 4 }}>
-                            <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: 60, height: 60, borderRadius: 1 }} />
-                            <Typography variant="caption" color="text.secondary" sx={{ pt: 5.4 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pt: 14, pr: 0.1 }}>
+                            <Box
+                                sx={{
+                                    width: '90px',
+                                    height: '90px',
+                                    border: '2px solid #000',
+                                    borderRadius: 1,
+                                    p: '4px',
+                                    bgcolor: '#fff',
+                                    // display: 'flex',
+                                    // alignItems: 'center',
+                                    // justifyContent: 'center',
+                                    // overflow: 'hidden',
+                                }}
+                            >
+                                {/* <Box
+                                    component="img"
+                                    src={member?.profile_photo?.file_path}
+                                    alt="Member Photo"
+                                    sx={{
+                                        width: '100%',
+                                        height: '100%',
+                                    }}
+                                /> */}
+                                <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: "100%", height: "100%"}} />
+                            </Box>
+                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 0.4, color:'#000' }}>
                                 Valid Until
                             </Typography>
-                            <Typography variant="subtitle1" fontWeight="bold" color="#0a3d62">
+                            <Typography variant="subtitle1" fontWeight="bold" color="#000">
                                 {formatExpiryDate(member?.card_expiry_date)}
                             </Typography>
                         </Box>
@@ -347,7 +372,8 @@ const MembershipCardComponent = ({ open, onClose, member }) => {
             PaperProps={{
                 sx: {
                     margin: '20px auto 0',
-                    width: 500,
+                    width: 600,
+                    // height:900,
                     borderRadius: '8px',
                     // bgcolor:'#000'
                 },
