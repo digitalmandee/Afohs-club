@@ -13,6 +13,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         media: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         invoices: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         invoices: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        customers: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add customers state
         corporate_members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         corporate_families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
@@ -23,7 +24,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, customers: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false });
 
     useEffect(() => {
         refreshStats();
@@ -128,6 +129,21 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('invoices', 0);
     };
 
+    const startCustomersMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current.customers = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            customers: { ...prev.customers, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('customers', 0);
+    };
+
     const startCorporateMembersMigration = async () => {
         if (!stats.old_tables_exist) {
             alert('Old tables not found in database');
@@ -166,6 +182,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 media: '/admin/data-migration/migrate-media',
                 invoices: '/admin/data-migration/migrate-invoices',
                 invoices: '/admin/data-migration/migrate-invoices',
+                customers: '/admin/data-migration/migrate-customers',
                 corporate_members: '/admin/data-migration/migrate-corporate-members',
                 corporate_families: '/admin/data-migration/migrate-corporate-families',
                 qr_codes: '/admin/data-migration/generate-qr-codes',
@@ -187,6 +204,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 media: stats.old_media_count,
                 invoices: stats.old_invoices_count,
                 invoices: stats.old_invoices_count,
+                customers: stats.old_customers_count,
                 corporate_members: stats.old_corporate_members_count,
                 corporate_families: stats.old_corporate_families_count,
                 qr_codes: stats.pending_qr_codes_count,
@@ -474,6 +492,23 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         <Card>
                             <CardContent>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <People sx={{ mr: 1, color: 'secondary.main' }} />
+                                    <Typography variant="h6">Customers</Typography>
+                                </Box>
+                                <Typography variant="h4" color="secondary.main">
+                                    {stats.new_customers_count?.toLocaleString() || 0}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Migrated / {stats.old_customers_count?.toLocaleString() || 0}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    <Grid item xs={12} md={3}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                     <Box sx={{ mr: 1, color: 'info.main', fontWeight: 'bold', fontSize: '1.5rem' }}>QR</Box>
                                     <Typography variant="h6">Pending Corp QR</Typography>
                                 </Box>
@@ -746,6 +781,59 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
                                                         <strong>Invoice No:</strong> {error.invoice_no}
+                                                        <br />
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Customers Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Customers Migration
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {stats.customers_migration_percentage || 0}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.customers.running ? migrationStatus.customers.progress : stats.customers_migration_percentage || 0} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {migrationStatus.customers.migrated || stats.new_customers_count || 0} / {stats.old_customers_count || 0}
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.customers.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startCustomersMigration} disabled={migrationStatus.customers.running}>
+                                        {migrationStatus.customers.running ? 'Migrating...' : 'Start Migration'}
+                                    </Button>
+
+                                    {migrationStatus.customers.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('customers')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.customers.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.customers.errors.length} errors occurred during migration
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.customers.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
+                                                        <strong>ID:</strong> {error.customer_id}
                                                         <br />
                                                         <strong>Error:</strong> {error.error}
                                                     </Typography>
