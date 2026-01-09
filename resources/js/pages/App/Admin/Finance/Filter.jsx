@@ -1,51 +1,41 @@
 'use client';
 import { useState } from 'react';
-import { Box, Typography, IconButton, Chip, Button, Dialog, Collapse, TextField, InputAdornment } from '@mui/material';
+import { Box, Typography, IconButton, Chip, Button, Dialog, Collapse, TextField } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { CheckCircle as CheckCircleIcon, Check as CheckIcon, Circle as CircleIcon, Close as CloseIcon, TwoWheeler as DeliveryIcon, Diamond as DiamondIcon, LocalDining as DiningIcon, FilterAlt as FilterIcon, KeyboardArrowDown as KeyboardArrowDownIcon, Receipt as ReceiptIcon, EventSeat as ReservationIcon, Restaurant as RestaurantIcon, Search as SearchIcon, TakeoutDining as TakeoutIcon } from '@mui/icons-material';
+import { Close as CloseIcon, KeyboardArrowDown as KeyboardArrowDownIcon } from '@mui/icons-material';
 
 const styles = {
-    root: {
-        backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
-        fontFamily: 'Arial, sans-serif',
+    filterSection: {
+        marginBottom: '24px',
+        border: '1px solid #eee',
+        borderRadius: '8px',
+        padding: '16px',
+        backgroundColor: '#fff',
+        boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
     },
-    tabButton: {
-        borderRadius: '20px',
-        margin: '0 5px',
-        textTransform: 'none',
-        fontWeight: 'normal',
-        padding: '6px 16px',
-        border: '1px solid #00274D',
-        color: '#00274D',
-    },
-    activeTabButton: {
-        backgroundColor: '#0a3d62',
-        color: 'white',
-        borderRadius: '20px',
-        margin: '0 5px',
-        textTransform: 'none',
-        fontWeight: 'normal',
-        padding: '6px 16px',
+    filterHeader: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        cursor: 'pointer',
     },
 };
 
-const TransactionFilter = ({ open, onClose }) => {
+const TransactionFilter = ({ open, onClose, currentFilters, onApply }) => {
     const [expandedSections, setExpandedSections] = useState({
-        sorting: true,
-        orderType: true,
-        memberStatus: true,
-        orderStatus: true,
+        status: true,
+        type: true,
+        date: true,
     });
 
     const [filters, setFilters] = useState({
-        sort: 'asc',
-        orderType: 'all',
-        memberStatus: 'all',
-        orderStatus: 'all',
+        status: currentFilters?.status || 'all',
+        type: currentFilters?.type || 'all',
+        start_date: currentFilters?.start_date || null,
+        end_date: currentFilters?.end_date || null,
     });
 
     const toggleSection = (section) => {
@@ -62,387 +52,159 @@ const TransactionFilter = ({ open, onClose }) => {
         }));
     };
 
-    const handleResetFilters = () => {
-        setFilters({
-            sort: 'asc',
-            orderType: 'all',
-            memberStatus: 'all',
-            orderStatus: 'all',
-        });
+    const handleApply = () => {
+        // Convert dates to standard format if they are Dayjs objects
+        const appliedFilters = {
+            ...filters,
+            start_date: filters.start_date ? dayjs(filters.start_date).format('YYYY-MM-DD') : '',
+            end_date: filters.end_date ? dayjs(filters.end_date).format('YYYY-MM-DD') : '',
+        };
+        onApply(appliedFilters);
+        onClose();
     };
 
-    const handleApplyFilters = () => {
-        setOpenFilterModal(false);
+    const handleReset = () => {
+        const resetFilters = {
+            status: 'all',
+            type: 'all',
+            start_date: null,
+            end_date: null,
+        };
+        setFilters(resetFilters);
+        // Optional: auto-apply reset or wait for user to click Apply
     };
 
     return (
-        <>
-            <Dialog
-                open={open}
-                onClose={onClose}
-                fullWidth
-                maxWidth="sm"
-                PaperProps={{
-                    style: {
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        m: 0,
-                        width: '600px',
-                        borderRadius: 2,
-                        p: 2,
-                    },
-                }}
-            >
-                <Box sx={{ p: 3 }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                        <Typography sx={{ color: '#121212', fontWeight: 500, fontSize: '32px' }}>Transaction Filter</Typography>
-                        <IconButton edge="end">
-                            <CloseIcon />
-                        </IconButton>
-                    </Box>
-
-                    {/* Sorting Section */}
-                    <Box
-                        className={styles.filterSection}
-                        sx={{
-                            mb: 3,
-                            border: '1px solid #eee',
-                            borderRadius: '8px',
-                            p: 2,
-                            backgroundColor: '#fff',
-                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
-                        }}
-                    >
-                        <Box
-                            className={styles.filterHeader}
-                            onClick={() => toggleSection('sorting')}
-                            sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                cursor: 'pointer',
-                            }}
-                        >
-                            <Typography
-                                sx={{
-                                    color: '#121212',
-                                    fontWeight: 500,
-                                    fontSize: '16px',
-                                }}
-                            >
-                                Sorting
-                            </Typography>
-                            <KeyboardArrowDownIcon
-                                sx={{
-                                    transform: expandedSections.sorting ? 'rotate(180deg)' : 'rotate(0deg)',
-                                    transition: 'transform 0.3s ease',
-                                }}
-                            />
-                        </Box>
-
-                        <Collapse in={expandedSections.sorting}>
-                            <Box
-                                sx={{
-                                    mt: 2,
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'baseline',
-                                }}
-                            >
-                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>By Invoice ID</Typography>
-                                <Box display="flex" gap={2}>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => handleFilterChange('sort', 'asc')}
-                                        sx={{
-                                            backgroundColor: filters.sort === 'asc' ? '#063455' : '#B0DEFF',
-                                            color: filters.sort === 'asc' ? 'white' : 'black',
-                                            borderRadius: '20px',
-                                            textTransform: 'none',
-                                            fontWeight: 500,
-                                            minWidth: '130px',
-                                        }}
-                                        startIcon={
-                                            <span
-                                                style={{
-                                                    fontSize: '16px',
-                                                }}
-                                            >
-                                                ↑
-                                            </span>
-                                        }
-                                    >
-                                        Ascending
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => handleFilterChange('sort', 'desc')}
-                                        sx={{
-                                            backgroundColor: filters.sort === 'desc' ? '#063455' : '#B0DEFF',
-                                            color: filters.sort === 'desc' ? 'white' : 'black',
-                                            borderRadius: '20px',
-                                            textTransform: 'none',
-                                            fontWeight: 500,
-                                            minWidth: '130px',
-                                        }}
-                                        startIcon={
-                                            <span
-                                                style={{
-                                                    fontSize: '16px',
-                                                }}
-                                            >
-                                                ↓
-                                            </span>
-                                        }
-                                    >
-                                        Descending
-                                    </Button>
-                                </Box>
-                            </Box>
-                        </Collapse>
-
-                        <Collapse in={expandedSections.sorting}>
-                            <Box
-                                sx={{
-                                    mt: 2,
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'baseline',
-                                }}
-                            >
-                                <Typography sx={{ mb: 1, color: '#121212', fontSize: '14px', fontWeight: 400 }}>By Member Name</Typography>
-                                <Box display="flex" gap={2}>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => handleFilterChange('sort', 'asc')}
-                                        sx={{
-                                            backgroundColor: filters.sort === 'asc' ? '#b3e5fc' : '#e3f2fd',
-                                            color: '#000',
-                                            borderRadius: '20px',
-                                            textTransform: 'none',
-                                            fontWeight: 500,
-                                            '&:hover': {
-                                                backgroundColor: '#b3e5fc',
-                                            },
-                                            minWidth: '130px',
-                                        }}
-                                        startIcon={
-                                            <span
-                                                style={{
-                                                    fontSize: '16px',
-                                                }}
-                                            >
-                                                ↑
-                                            </span>
-                                        }
-                                    >
-                                        Ascending
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        onClick={() => handleFilterChange('sort', 'desc')}
-                                        sx={{
-                                            backgroundColor: filters.sort === 'desc' ? '#b3e5fc' : '#e3f2fd',
-                                            color: '#000',
-                                            borderRadius: '20px',
-                                            textTransform: 'none',
-                                            fontWeight: 500,
-                                            '&:hover': {
-                                                backgroundColor: '#b3e5fc',
-                                            },
-                                            minWidth: '130px',
-                                        }}
-                                        startIcon={
-                                            <span
-                                                style={{
-                                                    fontSize: '16px',
-                                                }}
-                                            >
-                                                ↓
-                                            </span>
-                                        }
-                                    >
-                                        Descending
-                                    </Button>
-                                </Box>
-                            </Box>
-                        </Collapse>
-                    </Box>
-
-                    {/* Order Type Section */}
-                    <Box
-                        className={styles.filterSection}
-                        sx={{
-                            mb: 3,
-                            border: '1px solid #eee',
-                            borderRadius: '8px',
-                            p: 2,
-                            backgroundColor: '#fff',
-                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
-                        }}
-                    >
-                        <Box
-                            className={styles.filterHeader}
-                            onClick={() => toggleSection('orderType')}
-                            sx={{
-                                p: 0,
-                                mb: 1,
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>By Category</Typography>
-                            <KeyboardArrowDownIcon
-                                sx={{
-                                    cursor: 'pointer',
-                                    transform: expandedSections.orderType ? 'rotate(180deg)' : 'rotate(0deg)',
-                                    transition: 'transform 0.3s',
-                                }}
-                            />
-                        </Box>
-
-                        <Collapse in={expandedSections.orderType}>
-                            <Box sx={{ mb: 1 }}>
-                                <Box display="flex" flexWrap="wrap" gap={1}>
-                                    {[
-                                        {
-                                            label: 'All Category',
-                                            value: 'all',
-                                            icon: null,
-                                        },
-                                        {
-                                            label: 'GYM',
-                                            value: 'dine-in',
-                                            icon: <DiningIcon />,
-                                        },
-                                        {
-                                            label: 'Events',
-                                            value: 'pickup',
-                                            icon: <TakeoutIcon />,
-                                        },
-                                        {
-                                            label: 'Pool',
-                                            value: 'delivery',
-                                            icon: <DeliveryIcon />,
-                                        },
-                                    ].map((item) => (
-                                        <Chip
-                                            key={item.value}
-                                            label={item.label}
-                                            onClick={() => handleFilterChange('orderType', item.value)}
-                                            sx={{
-                                                backgroundColor: filters.orderType === item.value ? '#063455' : '#B0DEFF', // light blue for unselected
-                                                color: filters.orderType === item.value ? 'white' : 'black',
-                                                fontWeight: 500,
-                                                borderRadius: '16px', // more round
-                                                px: 2,
-                                                py: 0.5,
-                                                fontSize: '0.875rem',
-                                            }}
-                                        />
-                                    ))}
-                                </Box>
-                            </Box>
-                        </Collapse>
-                    </Box>
-
-                    {/* Member Status Section */}
-                    <Box
-                        className={styles.filterSection}
-                        sx={{
-                            mb: 3,
-                            border: '1px solid #eee',
-                            borderRadius: '8px',
-                            p: 2,
-                            backgroundColor: '#fff',
-                            boxShadow: '0px 1px 4px rgba(0, 0, 0, 0.05)',
-                        }}
-                    >
-                        <Box
-                            className={styles.filterHeader}
-                            onClick={() => toggleSection('memberStatus')}
-                            sx={{
-                                p: 0,
-                                mb: 1,
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Check by Month/Year</Typography>
-                            <KeyboardArrowDownIcon
-                                sx={{
-                                    cursor: 'pointer',
-                                    transform: expandedSections.memberStatus ? 'rotate(180deg)' : 'rotate(0deg)',
-                                    transition: 'transform 0.3s',
-                                }}
-                            />
-                        </Box>
-                        <Collapse in={expandedSections.memberStatus}>
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    flexWrap: 'wrap',
-                                    gap: 2,
-                                    mt: 2,
-                                    px: 1,
-                                }}
-                            >
-                                <Typography sx={{ fontWeight: 400, fontSize: '14px' }}>Select your target date</Typography>
-
-                                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                    <DatePicker
-                                        value={filters.targetDate ? dayjs(filters.targetDate) : null}
-                                        onChange={(newValue) => handleFilterChange('targetDate', newValue ? dayjs(newValue).format('YYYY-MM-DD') : '')}
-                                        format="DD-MM-YYYY"
-                                        slotProps={{
-                                            textField: {
-                                                sx: { width: 220 },
-                                                InputLabelProps: { shrink: true },
-                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                            },
-                                        }}
-                                    />
-                                </LocalizationProvider>
-                            </Box>
-                        </Collapse>
-                    </Box>
-
-                    {/* Footer Buttons */}
-                    <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
-                        <Button
-                            variant="outlined"
-                            onClick={handleResetFilters}
-                            sx={{
-                                color: '#333',
-                                borderColor: '#ddd',
-                                textTransform: 'none',
-                            }}
-                        >
-                            Reset Filter
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={handleApplyFilters}
-                            sx={{
-                                backgroundColor: '#0a3d62',
-                                color: 'white',
-                                textTransform: 'none',
-                                '&:hover': {
-                                    backgroundColor: '#083352',
-                                },
-                            }}
-                        >
-                            Apply Filters
-                        </Button>
-                    </Box>
+        <Dialog
+            open={open}
+            onClose={onClose}
+            fullWidth
+            maxWidth="sm"
+            PaperProps={{
+                style: {
+                    position: 'absolute',
+                    top: 20,
+                    right: 20,
+                    margin: 0,
+                    width: '600px',
+                    borderRadius: 8,
+                    padding: 16,
+                },
+            }}
+        >
+            <Box sx={{ p: 2 }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Typography sx={{ color: '#121212', fontWeight: 500, fontSize: '24px' }}>Filter Transactions</Typography>
+                    <IconButton onClick={onClose} edge="end">
+                        <CloseIcon />
+                    </IconButton>
                 </Box>
-            </Dialog>
-        </>
+
+                {/* Status Section */}
+                <Box style={styles.filterSection}>
+                    <Box style={styles.filterHeader} onClick={() => toggleSection('status')}>
+                        <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Status</Typography>
+                        <KeyboardArrowDownIcon
+                            sx={{
+                                transform: expandedSections.status ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.3s',
+                            }}
+                        />
+                    </Box>
+                    <Collapse in={expandedSections.status}>
+                        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {['all', 'paid', 'unpaid', 'cancelled'].map((status) => (
+                                <Chip
+                                    key={status}
+                                    label={status.charAt(0).toUpperCase() + status.slice(1)}
+                                    onClick={() => handleFilterChange('status', status)}
+                                    sx={{
+                                        backgroundColor: filters.status === status ? '#063455' : '#e0e0e0',
+                                        color: filters.status === status ? '#fff' : '#000',
+                                        cursor: 'pointer',
+                                    }}
+                                />
+                            ))}
+                        </Box>
+                    </Collapse>
+                </Box>
+
+                {/* Type Section */}
+                <Box style={styles.filterSection}>
+                    <Box style={styles.filterHeader} onClick={() => toggleSection('type')}>
+                        <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Transaction Type</Typography>
+                        <KeyboardArrowDownIcon
+                            sx={{
+                                transform: expandedSections.type ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.3s',
+                            }}
+                        />
+                    </Box>
+                    <Collapse in={expandedSections.type}>
+                        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            {[
+                                { label: 'All', value: 'all' },
+                                { label: 'Membership', value: 'membership_fee' },
+                                { label: 'Subscription', value: 'subscription_fee' },
+                                { label: 'Maintenance', value: 'maintenance_fee' },
+                                { label: 'Event', value: 'event_booking' },
+                                { label: 'Room', value: 'room_booking' },
+                            ].map((type) => (
+                                <Chip
+                                    key={type.value}
+                                    label={type.label}
+                                    onClick={() => handleFilterChange('type', type.value)}
+                                    sx={{
+                                        backgroundColor: filters.type === type.value ? '#063455' : '#e0e0e0',
+                                        color: filters.type === type.value ? '#fff' : '#000',
+                                        cursor: 'pointer',
+                                    }}
+                                />
+                            ))}
+                        </Box>
+                    </Collapse>
+                </Box>
+
+                {/* Date Range Section */}
+                <Box style={styles.filterSection}>
+                    <Box style={styles.filterHeader} onClick={() => toggleSection('date')}>
+                        <Typography sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>Date Range</Typography>
+                        <KeyboardArrowDownIcon
+                            sx={{
+                                transform: expandedSections.date ? 'rotate(180deg)' : 'rotate(0deg)',
+                                transition: 'transform 0.3s',
+                            }}
+                        />
+                    </Box>
+                    <Collapse in={expandedSections.date}>
+                        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker label="Start Date" value={filters.start_date ? dayjs(filters.start_date) : null} onChange={(newValue) => handleFilterChange('start_date', newValue)} format="DD-MM-YYYY" slotProps={{ textField: { fullWidth: true, size: 'small' } }} />
+                                <DatePicker label="End Date" value={filters.end_date ? dayjs(filters.end_date) : null} onChange={(newValue) => handleFilterChange('end_date', newValue)} format="DD-MM-YYYY" slotProps={{ textField: { fullWidth: true, size: 'small' } }} />
+                            </LocalizationProvider>
+                        </Box>
+                    </Collapse>
+                </Box>
+
+                {/* Footer Buttons */}
+                <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+                    <Button variant="outlined" onClick={handleReset} sx={{ color: '#333', borderColor: '#ddd' }}>
+                        Reset
+                    </Button>
+                    <Button
+                        variant="contained"
+                        onClick={handleApply}
+                        sx={{
+                            backgroundColor: '#0a3d62',
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#083352' },
+                        }}
+                    >
+                        Apply Filters
+                    </Button>
+                </Box>
+            </Box>
+        </Dialog>
     );
 };
 

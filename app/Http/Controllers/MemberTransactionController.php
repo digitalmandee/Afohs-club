@@ -462,9 +462,9 @@ class MemberTransactionController extends Controller
                 // (kept minimal for brevity, but should be added back for full feature parity)
                 if ($itemData['fee_type'] === 'subscription_fee') {
                     $this->createSubscriptionRecord($itemData, $invoice, $member, $request->booking_type);
-                } elseif ($itemData['fee_type'] === 'maintenance_fee') {
-                    $this->createMaintenanceRecord($itemData, $invoice, $member, $request->booking_type, $request->payment_frequency);
                 }
+                // Maintenance Fee: We no longer create separate maintenance records.
+                // We rely on financial_invoice_items which stores valid_from/valid_to ranges.
             }
 
             // Update Invoice Totals
@@ -577,35 +577,10 @@ class MemberTransactionController extends Controller
         }
         $sub->save();
 
-        // QR Code generation (simplified)
-        // ...
-    }
-
-    // Helper for Maintenance Record
-    private function createMaintenanceRecord($data, $invoice, $member, $bookingType, $freq)
-    {
-        $validFrom = $data['valid_from'] ?? $data['start_date'] ?? now()->toDateString();
-
-        // Create maintenance_fees record
-        $currentYear = date('Y', strtotime($validFrom));
-        $currentMonth = date('n', strtotime($validFrom));
-
-        $mf = new MaintenanceFee([
-            'year' => $currentYear,
-            'month' => $currentMonth,
-            'amount' => $data['amount'],
-            'status' => 'paid',  // Assuming if invoiced it's tracked?
-        ]);
-        if ($bookingType === 'corporate') {
-            $mf->corporate_member_id = $member->id;
-        } else {
-            $mf->member_id = $member->id;
+        // Placeholder: Generate QR Code or Card Number if not present
+        if (!$member->card_number && !$member->qr_code) {
+            // Logic to generate card number can be added here or via Observer
         }
-        $mf->save();
-
-        // Link invoice
-        // Note: The main invoice invoiceable_id is 1:1. With multi-items, this relationship breaks on the Header.
-        // The InvoiceItem should ideally link to it, or we rely on the `financial_invoice_items` data.
     }
 
     private function checkMaintenanceExists($memberId, $from, $to)

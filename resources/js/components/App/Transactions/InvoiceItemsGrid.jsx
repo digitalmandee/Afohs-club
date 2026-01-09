@@ -6,8 +6,10 @@ import dayjs from 'dayjs';
 
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { useSnackbar } from 'notistack';
 
-export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [] }) {
+export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance }) {
+    const { enqueueSnackbar } = useSnackbar();
     // State to control DatePicker open status for each item field
     const [openPickers, setOpenPickers] = useState({});
 
@@ -60,6 +62,14 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
 
         // Handle Fee Type Change special logic
         if (field === 'fee_type') {
+            if (value === 'maintenance_fee') {
+                const hasMaintenance = newItems.some((i, iIdx) => i.fee_type === 'maintenance_fee' && iIdx !== index);
+                if (hasMaintenance) {
+                    enqueueSnackbar('Only one Maintenance Fee item is allowed per invoice.', { variant: 'warning' });
+                    return; // Prevent change
+                }
+            }
+
             const selectedType = transactionTypes.find((t) => t.id == value);
 
             // Auto-fill logic for System Fees
@@ -280,6 +290,23 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 onChange={(val) => handleChange(index, 'valid_to', val)}
                                             />
                                         </Box>
+                                        {/* Quick Select Buttons */}
+                                        {item.fee_type === 'maintenance_fee' && onQuickSelectMaintenance && (
+                                            <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
+                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('monthly', index)}>
+                                                    1 Mo
+                                                </Button>
+                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('quarterly', index)}>
+                                                    1 Qtr
+                                                </Button>
+                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('half_yearly', index)}>
+                                                    6 Mo
+                                                </Button>
+                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('annually', index)}>
+                                                    1 Yr
+                                                </Button>
+                                            </Box>
+                                        )}
                                     </Grid>
                                     <Grid item xs={6} md={1}>
                                         <TextField type="number" fullWidth size="small" label="Qty" value={item.qty} onChange={(e) => handleChange(index, 'qty', e.target.value)} sx={{ bgcolor: 'white' }} />
