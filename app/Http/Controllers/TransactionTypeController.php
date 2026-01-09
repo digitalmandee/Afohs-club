@@ -87,4 +87,42 @@ class TransactionTypeController extends Controller
 
         return back()->with('success', 'Charge Type deleted successfully.');
     }
+
+    /**
+     * Display a listing of trashed resources.
+     */
+    public function trashed(Request $request)
+    {
+        $types = TransactionType::onlyTrashed()->orderBy('deleted_at', 'desc')->paginate(10);
+        return Inertia::render('App/Admin/Membership/TransactionTypes/Trashed', [
+            'types' => $types
+        ]);
+    }
+
+    /**
+     * Restore the specified trashed resource.
+     */
+    public function restore($id)
+    {
+        $transactionType = TransactionType::withTrashed()->findOrFail($id);
+        $transactionType->restore();
+
+        return redirect()->route('finance.charge-types.index')->with('success', 'Charge Type restored successfully.');
+    }
+
+    /**
+     * Permanently remove the specified resource from storage.
+     */
+    public function forceDelete($id)
+    {
+        $transactionType = TransactionType::withTrashed()->findOrFail($id);
+
+        if ($transactionType->is_system) {
+            return back()->with('error', 'System types cannot be deleted.');
+        }
+
+        $transactionType->forceDelete();
+
+        return back()->with('success', 'Charge Type permanently deleted.');
+    }
 }

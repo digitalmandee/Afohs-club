@@ -371,6 +371,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
 
         // Charge Types Management (CRUD)
+        Route::get('charge-types/trashed', [TransactionTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
+        Route::post('charge-types/restore/{id}', [TransactionTypeController::class, 'restore'])->name('finance.charge-types.restore');
+        Route::delete('charge-types/force-delete/{id}', [TransactionTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
         Route::resource('charge-types', TransactionTypeController::class)->names('finance.charge-types');
     });
 
