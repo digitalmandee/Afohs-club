@@ -43,9 +43,11 @@ class DataMigrationController extends Controller
             $oldMembersCount = DB::table('memberships')->count();
             $oldFamiliesCount = DB::table('mem_families')->count();
             $oldMediaCount = DB::table('old_media')->count();
+            $oldEmployeesCount = DB::table('old_afohs.hr_employments')->count();
             $newMembersCount = Member::whereNull('parent_id')->count();
             $newFamiliesCount = Member::whereNotNull('parent_id')->count();
             $newMediaCount = Media::count();
+            $newEmployeesCount = \App\Models\Employee::whereNotNull('old_employee_id')->count();
 
             // Check migration status
             $migratedMembersCount = Member::whereNull('parent_id')
@@ -101,6 +103,10 @@ class DataMigrationController extends Controller
                 'customers_migration_percentage' => DB::table('old_afohs.customers')->count() > 0
                     ? round((\App\Models\Customer::count() / DB::table('old_afohs.customers')->count()) * 100, 2)
                     : 0,
+                // Employee Stats
+                'old_employees_count' => $oldEmployeesCount,
+                'new_employees_count' => $newEmployeesCount,
+                'employees_migration_percentage' => $oldEmployeesCount > 0 ? round(($newEmployeesCount / $oldEmployeesCount) * 100, 2) : 0,
             ];
         } catch (\Exception $e) {
             Log::error('Error getting migration stats: ' . $e->getMessage());
@@ -1614,5 +1620,115 @@ class DataMigrationController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function migrateEmployees(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 100);
+        $offset = $request->get('offset', 0);
+
+        try {
+            DB::beginTransaction();
+
+            $oldEmployees = DB::table('old_afohs.hr_employments')
+                ->offset($offset)
+                ->limit($batchSize)
+                ->get();
+
+            $migrated = 0;
+            $errors = [];
+
+            foreach ($oldEmployees as $oldEmployee) {
+                try {
+                    $this->migrateSingleEmployee($oldEmployee);
+                    $migrated++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'old_id' => $oldEmployee->id,
+                        'name' => $oldEmployee->name ?? 'N/A',
+                        'error' => $e->getMessage(),
+                    ];
+                    Log::error("Error migrating employee {$oldEmployee->id}: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $migrated,
+                'errors' => $errors,
+                'has_more' => count($oldEmployees) == $batchSize
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Employee migration batch error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function migrateSingleEmployee($oldEmployee)
+    {
+        // Check if exists
+        $existing = \App\Models\Employee::where('old_employee_id', $oldEmployee->id)->first();
+
+        if ($existing) {
+            return;
+        }
+
+        $employeeData = [
+            'old_employee_id' => $oldEmployee->id,
+            'employee_id' => $oldEmployee->barcode ?: 'OLD-' . $oldEmployee->id,
+            'name' => $oldEmployee->name,
+            'father_name' => $oldEmployee->father_name,
+            'national_id' => $oldEmployee->cnic,
+            'phone_no' => $oldEmployee->mob_a,
+            'mob_b' => $oldEmployee->mob_b,
+            'tel_a' => $oldEmployee->tel_a,
+            'tel_b' => $oldEmployee->tel_b,
+            'email' => !empty($oldEmployee->email) ? $oldEmployee->email : null,
+            'address' => $oldEmployee->cur_address,
+            'cur_city' => $oldEmployee->cur_city,
+            'cur_country' => $oldEmployee->cur_country,
+            'per_address' => $oldEmployee->per_address,
+            'per_city' => $oldEmployee->per_city,
+            'per_country' => $oldEmployee->per_country,
+            'gender' => $oldEmployee->gender,
+            'age' => $oldEmployee->age,
+            'license' => $oldEmployee->license,
+            'license_no' => $oldEmployee->license_no,
+            'bank_details' => $oldEmployee->bank_details,
+            'account_no' => $oldEmployee->account,  // Map account -> account_no
+            'vehicle_details' => $oldEmployee->vehicle_details,
+            'learn_of_org' => $oldEmployee->learn_of_org,
+            'anyone_in_org' => $oldEmployee->anyone_in_org,
+            'crime' => $oldEmployee->crime,
+            'crime_details' => $oldEmployee->crime_details,
+            'company' => $oldEmployee->company,
+            'remarks' => $oldEmployee->remarks,
+            'salary' => $oldEmployee->current_salary,  // Map current_salary -> salary
+            'total_salary' => $oldEmployee->total_salary,
+            'total_addon_charges' => $oldEmployee->total_addon_charges,
+            'total_deduction_charges' => $oldEmployee->total_deduction_charges,
+            'days' => $oldEmployee->days,
+            'hours' => $oldEmployee->hours,
+            'joining_date' => $oldEmployee->date_of_joining,
+            'barcode' => $oldEmployee->barcode,
+            'designation' => $oldEmployee->designation,
+            'old_department' => $oldEmployee->department,  // Map string
+            'old_subdepartment' => $oldEmployee->subdepartment,  // Map string
+            'created_by' => $oldEmployee->created_by,
+            'updated_by' => $oldEmployee->updated_by,
+            'deleted_by' => $oldEmployee->deleted_by,
+            'created_at' => $this->validateDate($oldEmployee->created_at),
+            'updated_at' => $this->validateDate($oldEmployee->updated_at),
+            'deleted_at' => $this->validateDate($oldEmployee->deleted_at),
+        ];
+
+        \App\Models\Employee::create($employeeData);
     }
 }
