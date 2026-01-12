@@ -20,40 +20,38 @@ export default function Trashed({ types }) {
     return (
         <AdminLayout>
             <Head title="Trashed Charge Types" />
-            <Box sx={{ p: 3 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Box>
-                        <Typography variant="h5" fontWeight="bold" color="#1e293b">
-                            Trashed Charge Types
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                            Restore or permanently delete removed charge types.
-                        </Typography>
-                    </Box>
-                    <Link href={route('finance.charge-types.index')}>
-                        <Button
-                            variant="outlined"
-                            startIcon={<ArrowBack />}
-                            sx={{
-                                textTransform: 'none',
-                                borderRadius: 2,
-                            }}
-                        >
-                            Back to List
-                        </Button>
-                    </Link>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', pt:2.5, pl:2 }}>
+            
+                <IconButton
+                    href={route('finance.charge-types.index')}
+                    sx={{
+                        mt: 0.5,
+                        color: '#063455',
+                        '&:hover': { bgcolor: 'rgba(6, 52, 85, 0.1)' }
+                    }}
+                >
+                    <ArrowBack />
+                </IconButton>
+                <Box>
+                    <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
+                        Trashed Charge Types
+                    </Typography>
+                    <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
+                        Restore or permanently delete removed charge types.
+                    </Typography>
                 </Box>
-
-                <Paper elevation={0} sx={{ borderRadius: 3, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                    <TableContainer>
+            </Box>
+            <Box sx={{ p: 3 }}>
+                <Box>
+                    <TableContainer sx={{ borderRadius: '12px', overflowX: 'auto' }}>
                         <Table>
-                            <TableHead sx={{ bgcolor: '#fee2e2' }}>
+                            <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 600, color: '#991b1b' }}>Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#991b1b' }}>Default Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#991b1b' }}>Pricing Mode</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#991b1b' }}>Status</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 600, color: '#991b1b' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Default Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Pricing Mode</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#ffff' }}>
                                         Actions
                                     </TableCell>
                                 </TableRow>
@@ -71,17 +69,17 @@ export default function Trashed({ types }) {
                                 ) : (
                                     types.data.map((type) => (
                                         <TableRow key={type.id} hover>
-                                            <TableCell>
-                                                <Typography variant="subtitle2" fontWeight={600} color="#1e293b">
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f' }}>
+                                                <Typography>
                                                     {type.name}
                                                 </Typography>
                                                 <Typography variant="caption" color="text.secondary">
                                                     {type.type || 'Generic'}
                                                 </Typography>
                                             </TableCell>
-                                            <TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f' }}>
                                                 {type.default_amount > 0 ? (
-                                                    <Typography variant="body2" fontWeight={600} color="primary.main">
+                                                    <Typography>
                                                         Rs {parseFloat(type.default_amount).toLocaleString()}
                                                     </Typography>
                                                 ) : (
@@ -90,7 +88,7 @@ export default function Trashed({ types }) {
                                                     </Typography>
                                                 )}
                                             </TableCell>
-                                            <TableCell>{type.is_fixed ? <Chip icon={<Lock sx={{ fontSize: '14px !important' }} />} label="Fixed Price" size="small" color="warning" variant="outlined" sx={{ borderRadius: 1, height: 24 }} /> : <Chip icon={<LockOpen sx={{ fontSize: '14px !important' }} />} label="Dynamic / Editable" size="small" color="success" variant="outlined" sx={{ borderRadius: 1, height: 24 }} />}</TableCell>
+                                            <TableCell sx={{ fontWeight: 400, color: '#7f7f7f' }}>{type.is_fixed ? <Chip icon={<Lock sx={{ fontSize: '14px !important' }} />} label="Fixed Price" size="small" color="warning" variant="outlined" sx={{ borderRadius: 1, height: 24 }} /> : <Chip icon={<LockOpen sx={{ fontSize: '14px !important' }} />} label="Dynamic / Editable" size="small" color="success" variant="outlined" sx={{ borderRadius: 1, height: 24 }} />}</TableCell>
                                             <TableCell>
                                                 <Chip label="Deleted" size="small" color="error" sx={{ textTransform: 'capitalize', height: 24 }} />
                                             </TableCell>
@@ -114,7 +112,7 @@ export default function Trashed({ types }) {
                             </TableBody>
                         </Table>
                     </TableContainer>
-                </Paper>
+                </Box>
             </Box>
         </AdminLayout>
     );

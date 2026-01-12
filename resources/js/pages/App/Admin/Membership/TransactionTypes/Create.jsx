@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
-import { Box, Button, Card, CardContent, Grid, TextField, Typography, FormControlLabel, Switch, MenuItem, Alert, Divider } from '@mui/material';
+import { Box, Button, Card, CardContent, IconButton, Grid, TextField, Typography, FormControlLabel, Switch, MenuItem, Alert, Divider } from '@mui/material';
 import { Save, ArrowBack, Lock, LockOpen } from '@mui/icons-material';
 import AdminLayout from '@/layouts/AdminLayout';
 
@@ -27,21 +27,40 @@ export default function Create({ item }) {
     return (
         <AdminLayout>
             <Head title={isEdit ? `Edit Charge Type: ${item.name}` : 'Create Charge Type'} />
-
-            <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-                <Box mb={3}>
-                    <Link href={route('finance.charge-types.index')}>
-                        <Button startIcon={<ArrowBack />} sx={{ mb: 2, textTransform: 'none' }}>
-                            Back to List
-                        </Button>
-                    </Link>
-                    <Typography variant="h5" fontWeight="bold" color="#1e293b">
+            {/* <Link href={route('finance.charge-types.index')}>
+                <Button startIcon={<ArrowBack />} sx={{ mb: 2, textTransform: 'none' }}>
+                    Back to List
+                </Button>
+            </Link>
+            <Box mb={3}>
+                <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
+                    {isEdit ? 'Edit Charge Type' : 'Create New Charge Type'}
+                </Typography>
+                <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
+                    Configure the fee name, default pricing, and whether the price should be locked for cashiers.
+                </Typography>
+            </Box> */}
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', pt:2.5, pl:2 }}>
+                <IconButton
+                    href={route('finance.charge-types.index')}
+                    sx={{
+                        mt: 0.5,
+                        color: '#063455',
+                        '&:hover': { bgcolor: 'rgba(6, 52, 85, 0.1)' }
+                    }}
+                >
+                    <ArrowBack />
+                </IconButton>
+                <Box>
+                    <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                         {isEdit ? 'Edit Charge Type' : 'Create New Charge Type'}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
                         Configure the fee name, default pricing, and whether the price should be locked for cashiers.
                     </Typography>
                 </Box>
+            </Box>
+            <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
 
                 <Card elevation={0} sx={{ border: '1px solid #e2e8f0', borderRadius: 3 }}>
                     <CardContent sx={{ p: 4 }}>
@@ -81,7 +100,7 @@ export default function Create({ item }) {
                                 </Grid>
 
                                 <Grid item xs={12}>
-                                    <Divider sx={{ my: 1 }} />
+                                    <Divider />
                                 </Grid>
 
                                 {/* Is Fixed Toggle */}
@@ -101,7 +120,7 @@ export default function Create({ item }) {
                                 <Grid item xs={12}>
                                     <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
                                         <Link href={route('finance.charge-types.index')}>
-                                            <Button variant="outlined" color="inherit" sx={{ borderRadius: 2 }}>
+                                            <Button variant="outlined" sx={{ color: '#063455', border: '1px solid #063455', borderRadius: 2, textTransform: 'none' }}>
                                                 Cancel
                                             </Button>
                                         </Link>
@@ -111,10 +130,11 @@ export default function Create({ item }) {
                                             disabled={processing}
                                             startIcon={<Save />}
                                             sx={{
-                                                bgcolor: '#0f172a',
-                                                '&:hover': { bgcolor: '#1e293b' },
+                                                bgcolor: '#063455',
+                                                '&:hover': { bgcolor: '#063455' },
                                                 borderRadius: 2,
-                                                px: 4,
+                                                px: 1,
+                                                textTransform: 'none'
                                             }}
                                         >
                                             {isEdit ? 'Update Charge Type' : 'Save Charge Type'}
