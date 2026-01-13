@@ -83,9 +83,15 @@ class MemberTransactionController extends Controller
             ->with('subscriptionType:id,name')
             ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
 
+        // Fetch Main Charges (Type 1) and Custom Charges (Type 2)
+        $mainCharges = TransactionType::where('type', 1)->get();
+        $chargeTypes = TransactionType::where('type', 2)->where('status', 'active')->get();
+
         return Inertia::render('App/Admin/Membership/Transactions/Create', [
             'subscriptionTypes' => $subscriptionTypes,
             'subscriptionCategories' => $subscriptionCategories,
+            'mainCharges' => $mainCharges,
+            'chargeTypes' => $chargeTypes,
         ]);
     }
 

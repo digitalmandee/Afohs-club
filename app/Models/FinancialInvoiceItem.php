@@ -32,6 +32,7 @@ class FinancialInvoiceItem extends Model
         'discount_value',
         'overdue_percentage',
         'additional_charges',
+        'extra_percentage',
         'remarks',
         'data',  // JSON for extra data
     ];

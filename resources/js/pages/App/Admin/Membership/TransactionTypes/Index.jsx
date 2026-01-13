@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react'; // Correct imports for V2
-import { Box, Button, Card, CardContent, Chip, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Tooltip } from '@mui/material'; // MUI components
+import { Box, Button, Card, CardContent, Chip, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Tooltip, Pagination } from '@mui/material'; // MUI components
 import { Add, Edit, Delete, Restaurant, CheckCircle, Warning, Lock, LockOpen } from '@mui/icons-material'; // Icons
 import AdminLayout from '@/layouts/AdminLayout'; // Layout
 
@@ -9,6 +9,17 @@ export default function Index({ types }) {
         if (confirm('Are you sure you want to delete this charge type?')) {
             router.delete(route('finance.charge-types.destroy', id));
         }
+    };
+
+    const handlePageChange = (event, value) => {
+        router.get(
+            route('finance.charge-types.index'),
+            { page: value },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     return (
@@ -128,6 +139,9 @@ export default function Index({ types }) {
                         </Table>
                     </TableContainer>
                 </Paper>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3, mb: 3 }}>
+                    <Pagination count={types.last_page} page={types.current_page} onChange={handlePageChange} color="primary" />
+                </Box>
             </Box>
         </AdminLayout>
     );
