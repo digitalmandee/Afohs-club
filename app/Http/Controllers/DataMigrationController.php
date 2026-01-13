@@ -1889,7 +1889,7 @@ class DataMigrationController extends Controller
                     $referenceType = null;
                     $referenceId = null;
 
-                    if ($t->debit_or_credit == 1) {
+                    if ($t->debit_or_credit == 0) {
                         // Invoice (Debit)
                         $oldInvoiceRow = DB::connection('old_afohs')->table('finance_invoices')->where('id', $t->trans_type_id)->first();
                         if ($oldInvoiceRow) {
@@ -1912,11 +1912,12 @@ class DataMigrationController extends Controller
 
                     \App\Models\Transaction::create([
                         'amount' => $t->trans_amount,
-                        'type' => $t->debit_or_credit == 1 ? 'debit' : 'credit',
+                        'type' => $t->debit_or_credit == 0 ? 'credit' : 'debit',
                         'payable_type' => $payable ? get_class($payable) : null,
                         'payable_id' => $payable ? $payable->id : null,
                         'reference_type' => $referenceType,
                         'reference_id' => $referenceId,
+                        'date' => $this->validateDate($t->date),
                         'created_at' => $this->validateDate($t->created_at),
                         'updated_at' => $this->validateDate($t->updated_at),
                     ]);
@@ -2151,7 +2152,7 @@ class DataMigrationController extends Controller
         $oldTrans = DB::connection('old_afohs')
             ->table('transactions')
             ->where('trans_type_id', $legacyInvoiceId)  // Assuming ID linkage
-            ->where('debit_or_credit', 1)  // Debit
+            ->where('debit_or_credit', 0)  // Debit
             ->first();
 
         if ($oldTrans) {
@@ -2162,6 +2163,7 @@ class DataMigrationController extends Controller
                 'payable_id' => $this->getPayableId($newInvoice),
                 'reference_type' => FinancialInvoice::class,
                 'reference_id' => $newInvoice->id,
+                'date' => $newInvoice->issue_date,
                 'created_at' => $this->validateDate($oldTrans->created_at),
                 'updated_at' => $this->validateDate($oldTrans->updated_at),
             ]);
@@ -2297,6 +2299,7 @@ class DataMigrationController extends Controller
             'payable_id' => $payerId,
             'reference_type' => \App\Models\FinancialReceipt::class,
             'reference_id' => $receipt->id,
+            'date' => $receipt->receipt_date,
             'created_at' => $this->validateDate($old->created_at),
             'updated_at' => $this->validateDate($old->updated_at),
         ]);
