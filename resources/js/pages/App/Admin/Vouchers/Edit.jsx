@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, TextField, MenuItem, Grid, Alert, Divider, Chip } from '@mui/material';
+import { Box, Typography, IconButton, Button, Card, CardContent, TextField, MenuItem, Grid, Alert, Divider, Chip } from '@mui/material';
 import { Save as SaveIcon, ArrowBack as BackIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
@@ -73,294 +73,301 @@ const EditVoucher = ({ voucher }) => {
     };
 
     return (
-        <Box sx={{ p: 3 }}>
-                    {/* Header */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Button startIcon={<BackIcon />} onClick={() => router.visit(route('vouchers.dashboard'))} sx={{ mr: 2 }}>
-                            Back to Vouchers
-                        </Button>
-                        <Typography variant="h4" fontWeight="bold">
-                            Edit Voucher - {voucher.voucher_code}
-                        </Typography>
-                    </Box>
+        <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <IconButton
+                    onClick={() => router.visit(route('vouchers.dashboard'))}
+                    sx={{
+                        mt: 0.5,
+                        color: '#063455',
+                        '&:hover': { bgcolor: 'rgba(6, 52, 85, 0.1)' },
+                    }}
+                >
+                    <BackIcon />
+                </IconButton>
+                <Typography sx={{color:'#063455', fontSize:'30px', fontWeight:'700'}}>
+                    Edit Voucher - {voucher.voucher_code}
+                </Typography>
+            </Box>
 
-                    <Grid container spacing={3}>
-                        {/* Voucher Information Card */}
-                        <Grid item xs={12} md={4}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom>
-                                        Voucher Information
+            <Grid container spacing={3}>
+                {/* Voucher Information Card */}
+                <Grid item xs={12} md={4}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>
+                                Voucher Information
+                            </Typography>
+                            <Divider sx={{ mb: 2 }} />
+
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Voucher Code
+                                </Typography>
+                                <Typography variant="body1" fontWeight="bold">
+                                    {voucher.voucher_code}
+                                </Typography>
+                            </Box>
+
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Type
+                                </Typography>
+                                <Chip
+                                    label={voucher.voucher_type}
+                                    color={getTypeColor(voucher.voucher_type)}
+                                    size="small"
+                                    sx={{ textTransform: 'capitalize', mt: 0.5 }}
+                                />
+                            </Box>
+
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Current Status
+                                </Typography>
+                                <Chip
+                                    label={voucher.status}
+                                    color={getStatusColor(voucher.status)}
+                                    size="small"
+                                    sx={{ textTransform: 'capitalize', mt: 0.5 }}
+                                />
+                            </Box>
+
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Recipient
+                                </Typography>
+                                <Typography variant="body1" fontWeight="medium">
+                                    {voucher.recipient}
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary">
+                                    {voucher.voucher_type === 'member' && voucher.member
+                                        ? `Membership: ${voucher.member.membership_no || 'N/A'}`
+                                        : voucher.voucher_type === 'employee' && voucher.employee
+                                            ? `Employee ID: ${voucher.employee.employee_id || 'N/A'}`
+                                            : 'N/A'
+                                    }
+                                </Typography>
+                            </Box>
+
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Created By
+                                </Typography>
+                                <Typography variant="body1">
+                                    {voucher.created_by ? voucher.created_by.name : 'System'}
+                                </Typography>
+                                <Typography variant="caption" color="textSecondary">
+                                    {formatDate(voucher.created_at)}
+                                </Typography>
+                            </Box>
+
+                            {voucher.is_used && (
+                                <Box>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Used At
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Voucher Code
-                                        </Typography>
-                                        <Typography variant="body1" fontWeight="bold">
-                                            {voucher.voucher_code}
-                                        </Typography>
-                                    </Box>
-
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Type
-                                        </Typography>
-                                        <Chip 
-                                            label={voucher.voucher_type} 
-                                            color={getTypeColor(voucher.voucher_type)} 
-                                            size="small" 
-                                            sx={{ textTransform: 'capitalize', mt: 0.5 }}
-                                        />
-                                    </Box>
-
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Current Status
-                                        </Typography>
-                                        <Chip 
-                                            label={voucher.status} 
-                                            color={getStatusColor(voucher.status)} 
-                                            size="small" 
-                                            sx={{ textTransform: 'capitalize', mt: 0.5 }}
-                                        />
-                                    </Box>
-
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Recipient
-                                        </Typography>
-                                        <Typography variant="body1" fontWeight="medium">
-                                            {voucher.recipient}
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary">
-                                            {voucher.voucher_type === 'member' && voucher.member 
-                                                ? `Membership: ${voucher.member.membership_no || 'N/A'}`
-                                                : voucher.voucher_type === 'employee' && voucher.employee
-                                                ? `Employee ID: ${voucher.employee.employee_id || 'N/A'}`
-                                                : 'N/A'
-                                            }
-                                        </Typography>
-                                    </Box>
-
-                                    <Box sx={{ mb: 2 }}>
-                                        <Typography variant="body2" color="text.secondary">
-                                            Created By
-                                        </Typography>
-                                        <Typography variant="body1">
-                                            {voucher.created_by ? voucher.created_by.name : 'System'}
-                                        </Typography>
-                                        <Typography variant="caption" color="textSecondary">
-                                            {formatDate(voucher.created_at)}
-                                        </Typography>
-                                    </Box>
-
-                                    {voucher.is_used && (
-                                        <Box>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Used At
-                                            </Typography>
-                                            <Typography variant="body1" color="info.main">
-                                                {formatDate(voucher.used_at)}
-                                            </Typography>
-                                        </Box>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* Edit Form */}
-                        <Grid item xs={12} md={8}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom>
-                                        Edit Voucher Details
+                                    <Typography variant="body1" color="info.main">
+                                        {formatDate(voucher.used_at)}
                                     </Typography>
-                                    <Divider sx={{ mb: 3 }} />
+                                </Box>
+                            )}
+                        </CardContent>
+                    </Card>
+                </Grid>
 
-                                    <Alert severity="warning" sx={{ mb: 3 }}>
-                                        Note: Voucher type and recipient cannot be changed after creation. Only voucher details, validity period, and status can be modified.
-                                    </Alert>
+                {/* Edit Form */}
+                <Grid item xs={12} md={8}>
+                    <Card>
+                        <CardContent>
+                            <Typography variant="h6" gutterBottom>
+                                Edit Voucher Details
+                            </Typography>
+                            <Divider sx={{ mb: 3 }} />
 
-                                    <form onSubmit={handleSubmit}>
-                                        <Grid container spacing={3}>
-                                            {/* Voucher Details */}
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Voucher Name"
-                                                    value={data.voucher_name}
-                                                    onChange={(e) => setData('voucher_name', e.target.value)}
-                                                    error={!!errors.voucher_name}
-                                                    helperText={errors.voucher_name}
-                                                    required
-                                                />
-                                            </Grid>
+                            <Alert severity="warning" sx={{ mb: 3 }}>
+                                Note: Voucher type and recipient cannot be changed after creation. Only voucher details, validity period, and status can be modified.
+                            </Alert>
 
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Amount (PKR)"
-                                                    type="number"
-                                                    value={data.amount}
-                                                    onChange={(e) => setData('amount', e.target.value)}
-                                                    error={!!errors.amount}
-                                                    helperText={errors.amount}
-                                                    inputProps={{ min: 0.01, step: 0.01 }}
-                                                    required
-                                                />
-                                            </Grid>
+                            <form onSubmit={handleSubmit}>
+                                <Grid container spacing={3}>
+                                    {/* Voucher Details */}
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Voucher Name"
+                                            value={data.voucher_name}
+                                            onChange={(e) => setData('voucher_name', e.target.value)}
+                                            error={!!errors.voucher_name}
+                                            helperText={errors.voucher_name}
+                                            required
+                                        />
+                                    </Grid>
 
-                                            <Grid item xs={12}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Description"
-                                                    multiline
-                                                    rows={3}
-                                                    value={data.description}
-                                                    onChange={(e) => setData('description', e.target.value)}
-                                                    error={!!errors.description}
-                                                    helperText={errors.description}
-                                                />
-                                            </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Amount (PKR)"
+                                            type="number"
+                                            value={data.amount}
+                                            onChange={(e) => setData('amount', e.target.value)}
+                                            error={!!errors.amount}
+                                            helperText={errors.amount}
+                                            inputProps={{ min: 0.01, step: 0.01 }}
+                                            required
+                                        />
+                                    </Grid>
 
-                                            {/* Validity Period */}
-                                            <Grid item xs={12}>
-                                                <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                                                    Validity Period
-                                                </Typography>
-                                            </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Description"
+                                            multiline
+                                            rows={3}
+                                            value={data.description}
+                                            onChange={(e) => setData('description', e.target.value)}
+                                            error={!!errors.description}
+                                            helperText={errors.description}
+                                        />
+                                    </Grid>
 
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Valid From"
-                                                    type="date"
-                                                    value={data.valid_from}
-                                                    onChange={(e) => setData('valid_from', e.target.value)}
-                                                    error={!!errors.valid_from}
-                                                    helperText={errors.valid_from}
-                                                    InputLabelProps={{
-                                                        shrink: true,
-                                                    }}
-                                                    required
-                                                />
-                                            </Grid>
+                                    {/* Validity Period */}
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                                            Validity Period
+                                        </Typography>
+                                    </Grid>
 
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Valid To"
-                                                    type="date"
-                                                    value={data.valid_to}
-                                                    onChange={(e) => setData('valid_to', e.target.value)}
-                                                    error={!!errors.valid_to}
-                                                    helperText={errors.valid_to}
-                                                    InputLabelProps={{
-                                                        shrink: true,
-                                                    }}
-                                                    inputProps={{
-                                                        min: getMinValidToDate()
-                                                    }}
-                                                    required
-                                                />
-                                            </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Valid From"
+                                            type="date"
+                                            value={data.valid_from}
+                                            onChange={(e) => setData('valid_from', e.target.value)}
+                                            error={!!errors.valid_from}
+                                            helperText={errors.valid_from}
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            required
+                                        />
+                                    </Grid>
 
-                                            {/* Status */}
-                                            <Grid item xs={12}>
-                                                <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                                                    Status Management
-                                                </Typography>
-                                            </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            label="Valid To"
+                                            type="date"
+                                            value={data.valid_to}
+                                            onChange={(e) => setData('valid_to', e.target.value)}
+                                            error={!!errors.valid_to}
+                                            helperText={errors.valid_to}
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            inputProps={{
+                                                min: getMinValidToDate()
+                                            }}
+                                            required
+                                        />
+                                    </Grid>
 
-                                            <Grid item xs={12} md={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    select
-                                                    label="Status"
-                                                    value={data.status}
-                                                    onChange={(e) => setData('status', e.target.value)}
-                                                    error={!!errors.status}
-                                                    helperText={errors.status}
-                                                >
-                                                    <MenuItem value="active">Active</MenuItem>
-                                                    <MenuItem value="inactive">Inactive</MenuItem>
-                                                    <MenuItem value="expired">Expired</MenuItem>
-                                                    <MenuItem value="used">Used</MenuItem>
-                                                </TextField>
-                                            </Grid>
+                                    {/* Status */}
+                                    <Grid item xs={12}>
+                                        <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                                            Status Management
+                                        </Typography>
+                                    </Grid>
 
-                                            {/* Preview */}
-                                            {data.voucher_name && data.amount && (
-                                                <Grid item xs={12}>
-                                                    <Card variant="outlined" sx={{ backgroundColor: '#f8f9fa', mt: 2 }}>
-                                                        <CardContent>
-                                                            <Typography variant="subtitle1" gutterBottom>
-                                                                Updated Voucher Preview
+                                    <Grid item xs={12} md={6}>
+                                        <TextField
+                                            fullWidth
+                                            select
+                                            label="Status"
+                                            value={data.status}
+                                            onChange={(e) => setData('status', e.target.value)}
+                                            error={!!errors.status}
+                                            helperText={errors.status}
+                                        >
+                                            <MenuItem value="active">Active</MenuItem>
+                                            <MenuItem value="inactive">Inactive</MenuItem>
+                                            <MenuItem value="expired">Expired</MenuItem>
+                                            <MenuItem value="used">Used</MenuItem>
+                                        </TextField>
+                                    </Grid>
+
+                                    {/* Preview */}
+                                    {data.voucher_name && data.amount && (
+                                        <Grid item xs={12}>
+                                            <Card variant="outlined" sx={{ backgroundColor: '#f8f9fa', mt: 2 }}>
+                                                <CardContent>
+                                                    <Typography variant="subtitle1" gutterBottom>
+                                                        Updated Voucher Preview
+                                                    </Typography>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={6}>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Voucher Name
                                                             </Typography>
-                                                            <Grid container spacing={2}>
-                                                                <Grid item xs={6}>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        Voucher Name
-                                                                    </Typography>
-                                                                    <Typography variant="body1" fontWeight="bold">
-                                                                        {data.voucher_name}
-                                                                    </Typography>
-                                                                </Grid>
-                                                                <Grid item xs={6}>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        Amount
-                                                                    </Typography>
-                                                                    <Typography variant="body1" fontWeight="bold" color="primary">
-                                                                        Rs {parseFloat(data.amount || 0).toFixed(2)}
-                                                                    </Typography>
-                                                                </Grid>
-                                                                <Grid item xs={6}>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        Status
-                                                                    </Typography>
-                                                                    <Chip 
-                                                                        label={data.status} 
-                                                                        color={getStatusColor(data.status)} 
-                                                                        size="small" 
-                                                                        sx={{ textTransform: 'capitalize' }}
-                                                                    />
-                                                                </Grid>
-                                                                <Grid item xs={6}>
-                                                                    <Typography variant="body2" color="text.secondary">
-                                                                        Valid Period
-                                                                    </Typography>
-                                                                    <Typography variant="body1">
-                                                                        {data.valid_from && data.valid_to 
-                                                                            ? `${data.valid_from} to ${data.valid_to}`
-                                                                            : 'Not set'
-                                                                        }
-                                                                    </Typography>
-                                                                </Grid>
-                                                            </Grid>
-                                                        </CardContent>
-                                                    </Card>
-                                                </Grid>
-                                            )}
-
-                                            {/* Action Buttons */}
-                                            <Grid item xs={12}>
-                                                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-                                                    <Button variant="outlined" onClick={() => router.visit(route('vouchers.dashboard'))} disabled={processing}>
-                                                        Cancel
-                                                    </Button>
-                                                    <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={processing} sx={{ backgroundColor: '#063455' }}>
-                                                        {processing ? 'Updating...' : 'Update Voucher'}
-                                                    </Button>
-                                                </Box>
-                                            </Grid>
+                                                            <Typography variant="body1" fontWeight="bold">
+                                                                {data.voucher_name}
+                                                            </Typography>
+                                                        </Grid>
+                                                        <Grid item xs={6}>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Amount
+                                                            </Typography>
+                                                            <Typography variant="body1" fontWeight="bold" color="primary">
+                                                                Rs {parseFloat(data.amount || 0).toFixed(2)}
+                                                            </Typography>
+                                                        </Grid>
+                                                        <Grid item xs={6}>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Status
+                                                            </Typography>
+                                                            <Chip
+                                                                label={data.status}
+                                                                color={getStatusColor(data.status)}
+                                                                size="small"
+                                                                sx={{ textTransform: 'capitalize' }}
+                                                            />
+                                                        </Grid>
+                                                        <Grid item xs={6}>
+                                                            <Typography variant="body2" color="text.secondary">
+                                                                Valid Period
+                                                            </Typography>
+                                                            <Typography variant="body1">
+                                                                {data.valid_from && data.valid_to
+                                                                    ? `${data.valid_from} to ${data.valid_to}`
+                                                                    : 'Not set'
+                                                                }
+                                                            </Typography>
+                                                        </Grid>
+                                                    </Grid>
+                                                </CardContent>
+                                            </Card>
                                         </Grid>
-                                    </form>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
+                                    )}
+
+                                    {/* Action Buttons */}
+                                    <Grid item xs={12}>
+                                        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+                                            <Button variant="outlined" onClick={() => router.visit(route('vouchers.dashboard'))} disabled={processing}>
+                                                Cancel
+                                            </Button>
+                                            <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={processing} sx={{ backgroundColor: '#063455' }}>
+                                                {processing ? 'Updating...' : 'Update Voucher'}
+                                            </Button>
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </form>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
         </Box>
     );
 };

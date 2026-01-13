@@ -28,10 +28,10 @@ export default function Index({ types }) {
             <Box sx={{ p: 3 }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Box>
-                        <Typography variant="h5" fontWeight="bold" color="#1e293b">
+                        <Typography sx={{fontWeight:'700', fontSize:'30px', color:'#063455'}} >
                             Charge Types
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography sx={{fontWeight:'600', fontSize:'15px', color:"#063455"}}>
                             Manage transaction fee types, default amounts, and fixed pricing rules.
                         </Typography>
                     </Box>
@@ -40,13 +40,14 @@ export default function Index({ types }) {
                             <Button
                                 variant="outlined"
                                 color="error"
+                                startIcon={<Delete/>}
                                 sx={{
                                     mr: 2,
                                     textTransform: 'none',
-                                    borderRadius: 2,
+                                    borderRadius: 16,
                                 }}
                             >
-                                Trashed
+                                Deleted Items
                             </Button>
                         </Link>
                         <Link href={route('finance.charge-types.create')}>
@@ -54,10 +55,10 @@ export default function Index({ types }) {
                                 variant="contained"
                                 startIcon={<Add />}
                                 sx={{
-                                    bgcolor: '#0f172a',
-                                    '&:hover': { bgcolor: '#1e293b' },
+                                    bgcolor: '#063455',
+                                    '&:hover': { bgcolor: '#063455' },
                                     textTransform: 'none',
-                                    borderRadius: 2,
+                                    borderRadius: 16,
                                 }}
                             >
                                 Add Charge Type
@@ -66,17 +67,17 @@ export default function Index({ types }) {
                     </Box>
                 </Box>
 
-                <Paper elevation={0} sx={{ borderRadius: 3, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                    <TableContainer>
+                <Box>
+                    <TableContainer sx={{ borderRadius: '12px', overflowX: 'auto' }}>
                         <Table>
-                            <TableHead sx={{ bgcolor: '#f8fafc' }}>
+                            <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Default Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Pricing Mode</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#475569' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#475569' }}>System</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 600, color: '#475569' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Default Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Pricing Mode</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>System</TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 600, color: '#fff' }}>
                                         Actions
                                     </TableCell>
                                 </TableRow>
