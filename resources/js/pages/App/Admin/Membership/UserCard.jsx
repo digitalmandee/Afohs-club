@@ -111,7 +111,7 @@ export const handlePrintMembershipCard = (member) => {
             font-weight: 700;
             color: #000;
             margin-top: 10px;
-            text-transform: uppercase;
+            text-transform: capitalize;
         }
 
         /* CENTER COLUMN - Perfect MUI replica */
@@ -138,12 +138,13 @@ export const handlePrintMembershipCard = (member) => {
             font-size: 16px;
             font-weight: 700;
             color: #000;
+            padding-left: 20px
         }
 
         /* RIGHT COLUMN - Perfect MUI replica */
         .right {
             padding-right: 20px;
-            padding-top: 90px;
+            padding-top: 80px;
             align-items: flex-end;
         }
 
@@ -166,7 +167,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label-valid-until {
-            margin-top: 1.6px;
+            margin-top: 10px;
             font-size: 16px;
             font-weight: 700;
             color: #000;
@@ -178,7 +179,8 @@ export const handlePrintMembershipCard = (member) => {
             padding: 16px;
             text-align: center;
             font-size: 20px;
-            font-weight: 500;
+            font-weight: 600;
+            text-transform: Uppercase;
         }
 
         @media print {
@@ -274,7 +276,7 @@ export const MembershipCardContent = ({ member, id }) => {
                                     }}
                                 />
                             </Box>
-                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', pt: 0.5 }} color="#000">
+                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'capitalize', pt: 0.5 }} color="#000">
                                 {member?.full_name || 'N/A'}
                             </Typography>
                         </Box>
@@ -287,7 +289,7 @@ export const MembershipCardContent = ({ member, id }) => {
                             <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 7, pl: 10, whiteSpace: 'nowrap', color:'#000' }}>
                                 Membership No
                             </Typography>
-                            <Typography variant="subtitle1" fontWeight="bold" color="#000">
+                            <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{pl:5}}>
                                 {member?.membership_no || 'N/A'}
                             </Typography>
                         </Box>
@@ -330,7 +332,7 @@ export const MembershipCardContent = ({ member, id }) => {
                 </Grid>
             </CardContent>
             <MembershipFooter>
-                <Typography variant="h6" fontWeight="medium">
+                <Typography variant="h6" fontWeight="medium" sx={{textTransform:'uppercase'}}>
                     {member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
                 </Typography>
             </MembershipFooter>
