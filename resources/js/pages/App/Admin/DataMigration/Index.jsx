@@ -17,7 +17,8 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         corporate_members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         corporate_families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
-        transaction_types: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add transaction_types state
+        transaction_types: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        subscription_types: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add subscription_types state
         corporate_qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         financials: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add financials state
         deep_migration: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Deep migration state
@@ -346,6 +347,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 corporate_qr_codes: '/admin/data-migration/generate-corporate-qr-codes',
                 financials: '/admin/data-migration/migrate-financials', // Add endpoint
                 transaction_types: '/admin/data-migration/migrate-transaction-types',
+                subscription_types: '/admin/data-migration/migrate-subscription-types',
             };
             const endpoint = endpointMap[type];
             const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : type === 'invoices' || type === 'financials' ? 80 : 100;
@@ -369,7 +371,8 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 qr_codes: stats.pending_qr_codes_count,
                 corporate_qr_codes: stats.pending_corporate_qr_codes_count,
                 financials: stats.old_financial_invoices_count, // Use invoice count as proxy for total work
-                transaction_types: 15, // Approx count, or use response total
+                transaction_types: 15, // Approx count
+                subscription_types: 10, // Approx count
             };
 
             setMigrationStatus((prev) => ({
@@ -826,11 +829,20 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         <Card>
                             <CardContent>
                                 <Typography variant="h6" gutterBottom>
-                                    Selective Atomic Migration
+                                    Selective Finance Migration
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                                     Migrates Invoices + Receipts + Transactions specifically for one Charge Type.
                                 </Typography>
+
+                                <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                    <Button variant="outlined" size="small" onClick={() => startGenericMigration('transaction_types')} disabled={migrationStatus.transaction_types.running}>
+                                        {migrationStatus.transaction_types.running ? 'Syncing Types...' : 'Sync Trans. Types'}
+                                    </Button>
+                                    <Button variant="outlined" size="small" onClick={() => startGenericMigration('subscription_types')} disabled={migrationStatus.subscription_types.running}>
+                                        {migrationStatus.subscription_types.running ? 'Syncing Subs...' : 'Sync Sub. Types'}
+                                    </Button>
+                                </Box>
 
                                 <Box sx={{ mb: 3 }}>
                                     <TextField select label="Select Transaction Type" fullWidth value={selectedTransactionType} onChange={handleTypeChange} disabled={migrationStatus.deep_migration.running} size="small">

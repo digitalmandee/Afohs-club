@@ -309,7 +309,7 @@ export const generateEventInvoiceContent = (booking) => {
                                     <td>${addon.details || 'No additional details'}</td>
                                     <td>${addon.is_complementary ? '<span class="complementary">Complimentary</span>' : 'Rs ' + (addon.amount || 0)}</td>
                                     <td>${booking.no_of_guests || 0}</td>
-                                    <td>${addon.is_complementary ? '<span class="complementary">✓ Complimentary</span>' : '✓ Paid'}</td>
+                                    <td>${addon.is_complementary ? '<span class="complementary">✓ Complimentary</span>' : '✓ Paid Service'}</td>
                                     <td class="amount"><strong>${addon.is_complementary ? '<span class="complementary">FREE</span>' : 'Rs ' + ((addon.amount || 0) * (booking.no_of_guests || 0))}</strong></td>
                                 </tr>
                             `).join('')}

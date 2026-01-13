@@ -48,17 +48,26 @@ const RoomCalendar = () => {
                         <span style="color: #666;">Status: <span style="color: ${getStatusColor(b.status)}; font-weight: bold;">${b.status?.charAt(0).toUpperCase() + b.status?.slice(1).replace('_', ' ')}</span></span><br/>
 
                         <div style="margin: 8px 0; padding: 6px; background: #f0f8ff; border-radius: 4px;">
-                            <a href="#" onclick="window.checkIn(${b.id}); return false;"
-                               style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-in</a>
-                            <a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank"
-                               style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-out</a>
-                            ${b.status !== 'cancelled' && b.status !== 'checked_out'
-                        ? `
+                            ${
+                                b.status === 'booked' || b.status === 'confirmed'
+                                    ? `<a href="#" onclick="window.checkIn(${b.id}); return false;"
+                                    style="display: inline-block; background: #007bff; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-in</a>`
+                                    : ''
+                            }
+                            ${
+                                b.status === 'checked_in'
+                                    ? `<a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank"
+                                    style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-out</a>`
+                                    : ''
+                            }
+                            ${
+                                b.status !== 'cancelled' && b.status !== 'checked_out' && b.status !== 'refunded'
+                                    ? `
                             <a href="#" onclick="window.cancelBooking(${b.id}); return false;"
-                               style="display: inline-block; background: #dc3545; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Cancel</a>
+                                style="display: inline-block; background: #dc3545; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px;">Cancel</a>
                             `
-                        : ''
-                    }
+                                    : ''
+                            }
                         </div>
 
                         <div style="margin-top: 8px; padding: 6px; background: #e3f2fd; border-radius: 4px;">
@@ -189,11 +198,15 @@ const RoomCalendar = () => {
                     <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Helps avoid double-booking and see occupancy trends at a glance</Typography>
 
                     <Box display="flex" gap={2} mb={2} mt={3}>
-                        <FormControl variant="outlined" size="small" sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '16px'
-                            }
-                        }}>
+                        <FormControl
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                            }}
+                        >
                             <InputLabel id="month-label">Month</InputLabel>
                             <Select labelId="month-label" value={month} onChange={(e) => setMonth(e.target.value)} label="Month">
                                 {moment.months().map((m, i) => (
@@ -204,11 +217,15 @@ const RoomCalendar = () => {
                             </Select>
                         </FormControl>
 
-                        <FormControl variant="outlined" size="small" sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '16px'
-                            }
-                        }}>
+                        <FormControl
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+                                },
+                            }}
+                        >
                             <InputLabel id="year-label">Year</InputLabel>
                             <Select labelId="year-label" value={year} onChange={(e) => setYear(e.target.value)} label="Year">
                                 {Array.from({ length: 5 }, (_, i) => 2023 + i).map((y) => (

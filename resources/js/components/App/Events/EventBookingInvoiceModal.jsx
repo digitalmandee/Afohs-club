@@ -29,13 +29,13 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
     useEffect(() => {
         if (!bookingId || !open) return;
         console.log(bookingId);
-        
+
         setLoading(true);
         axios
             .get(route('events.booking.invoice', { id: bookingId }))
             .then((res) => {
                 console.log(res);
-                
+
                 console.log('Event Booking Invoice Data:', res.data.booking);
                 console.log('Invoice Status:', res.data.booking?.invoice?.status);
                 setSelectedBooking(res.data.booking);
@@ -64,10 +64,9 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
             setShowCancelModal(true);
             return;
         }
-        
+
         if (status === 'completed') {
-            setNewStatus(status);
-            setShowStatusModal(true);
+            router.visit(route('events.booking.edit', { id: selectedBooking.id, mode: 'complete' }));
             return;
         }
 
@@ -78,11 +77,11 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
         try {
             const payload = {
                 status: status,
-                ...additionalData
+                ...additionalData,
             };
 
             await axios.put(route('events.booking.update.status', { id: selectedBooking.id }), payload);
-            
+
             setSelectedBooking((prev) => ({ ...prev, status: status }));
 
             if (setBookings) {
@@ -90,12 +89,11 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
             }
 
             enqueueSnackbar(`Booking ${status} successfully!`, { variant: 'success' });
-            
+
             // Close modals
             setShowStatusModal(false);
             setShowCancelModal(false);
             setCancelReason('');
-            
         } catch (error) {
             enqueueSnackbar('Failed to update booking status.', { variant: 'error' });
         }
@@ -140,7 +138,7 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
                             {selectedBooking && (
                                 <>
                                     <div dangerouslySetInnerHTML={{ __html: selectedBooking ? generateEventInvoiceContent(selectedBooking) : '' }} />
-                                    
+
                                     {/* Documents Preview */}
                                     {JSONParse(selectedBooking?.booking_docs) && JSONParse(selectedBooking?.booking_docs).length > 0 && (
                                         <div style={{ marginTop: '20px' }}>
@@ -163,12 +161,7 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
                                                     if (ext === 'pdf') {
                                                         return (
                                                             <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                                <img
-                                                                    src="/assets/pdf-icon.png"
-                                                                    alt="PDF"
-                                                                    style={{ width: '60px', cursor: 'pointer' }}
-                                                                    onClick={() => window.open(doc, '_blank')}
-                                                                />
+                                                                <img src="/assets/pdf-icon.png" alt="PDF" style={{ width: '60px', cursor: 'pointer' }} onClick={() => window.open(doc, '_blank')} />
                                                                 <p style={{ fontSize: '12px', marginTop: '5px' }}>PDF</p>
                                                             </div>
                                                         );
@@ -178,12 +171,7 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
                                                     if (ext === 'docx' || ext === 'doc') {
                                                         return (
                                                             <div key={index} style={{ width: '100px', textAlign: 'center' }}>
-                                                                <img
-                                                                    src="/assets/word-icon.png"
-                                                                    alt="DOCX"
-                                                                    style={{ width: '60px', cursor: 'pointer' }}
-                                                                    onClick={() => window.open(doc, '_blank')}
-                                                                />
+                                                                <img src="/assets/word-icon.png" alt="DOCX" style={{ width: '60px', cursor: 'pointer' }} onClick={() => window.open(doc, '_blank')} />
                                                                 <p style={{ fontSize: '12px', marginTop: '5px' }}>Word</p>
                                                             </div>
                                                         );
@@ -203,17 +191,12 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
                     <Button variant="contained" color="secondary" onClick={onClose}>
                         Close
                     </Button>
-                    
+
                     {!financeView && (
                         <>
                             {/* Status Action Buttons */}
                             {getAvailableActions(selectedBooking?.status).map((action) => (
-                                <Button
-                                    key={action}
-                                    variant="contained"
-                                    color={action === 'cancelled' ? 'error' : 'success'}
-                                    onClick={() => handleStatusUpdate(action)}
-                                >
+                                <Button key={action} variant="contained" color={action === 'cancelled' ? 'error' : 'success'} onClick={() => handleStatusUpdate(action)}>
                                     {action === 'confirmed' ? 'Confirm' : action === 'completed' ? 'Complete' : 'Cancel'}
                                 </Button>
                             ))}
@@ -233,7 +216,7 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
                             Pay Now
                         </Button>
                     ) : selectedBooking?.status !== 'cancelled' && selectedBooking?.invoice?.status === 'paid' ? (
-                        <Button variant="outlined" color='success' disabled>
+                        <Button variant="outlined" color="success" disabled>
                             Paid
                         </Button>
                     ) : null}
@@ -258,48 +241,26 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
             </Dialog>
 
             {/* Complete Booking Modal */}
-            <Dialog 
-                open={showStatusModal} 
-                onClose={() => setShowStatusModal(false)} 
-                maxWidth="sm"
-                fullWidth
-            >
+            <Dialog open={showStatusModal} onClose={() => setShowStatusModal(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Complete Event Booking</DialogTitle>
                 <DialogContent>
                     <Typography variant="body1" sx={{ mb: 2 }}>
                         Mark this event booking as completed?
                     </Typography>
-                    <TextField
-                        label="Completion Time"
-                        type="time"
-                        value={completedTime}
-                        onChange={(e) => setCompletedTime(e.target.value)}
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        sx={{ mt: 2 }}
-                    />
+                    <TextField label="Completion Time" type="time" value={completedTime} onChange={(e) => setCompletedTime(e.target.value)} fullWidth InputLabelProps={{ shrink: true }} sx={{ mt: 2 }} />
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outlined" onClick={() => setShowStatusModal(false)}>
                         Cancel
                     </Button>
-                    <Button 
-                        variant="contained" 
-                        onClick={handleCompleteBooking}
-                        sx={{ backgroundColor: '#28a745', '&:hover': { backgroundColor: '#1e7e34' } }}
-                    >
+                    <Button variant="contained" onClick={handleCompleteBooking} sx={{ backgroundColor: '#28a745', '&:hover': { backgroundColor: '#1e7e34' } }}>
                         Complete Booking
                     </Button>
                 </DialogActions>
             </Dialog>
 
             {/* Cancel Booking Modal */}
-            <Dialog 
-                open={showCancelModal} 
-                onClose={() => setShowCancelModal(false)} 
-                maxWidth="sm"
-                fullWidth
-            >
+            <Dialog open={showCancelModal} onClose={() => setShowCancelModal(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Cancel Event Booking</DialogTitle>
                 <DialogContent>
                     {/* Booking Details */}
@@ -352,31 +313,17 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
                             </Grid>
                         </Box>
                     )}
-                    
+
                     <Typography variant="body1" sx={{ mb: 2 }}>
                         Please provide a reason for cancelling this booking:
                     </Typography>
-                    <TextField
-                        label="Cancellation Reason"
-                        multiline
-                        rows={3}
-                        value={cancelReason}
-                        onChange={(e) => setCancelReason(e.target.value)}
-                        fullWidth
-                        required
-                        autoFocus
-                        sx={{ mt: 2 }}
-                    />
+                    <TextField label="Cancellation Reason" multiline rows={3} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} fullWidth required autoFocus sx={{ mt: 2 }} />
                 </DialogContent>
                 <DialogActions>
                     <Button variant="outlined" onClick={() => setShowCancelModal(false)}>
                         Close
                     </Button>
-                    <Button 
-                        variant="contained" 
-                        onClick={handleCancelBooking}
-                        sx={{ backgroundColor: '#dc3545', '&:hover': { backgroundColor: '#c82333' } }}
-                    >
+                    <Button variant="contained" onClick={handleCancelBooking} sx={{ backgroundColor: '#dc3545', '&:hover': { backgroundColor: '#c82333' } }}>
                         Cancel Booking
                     </Button>
                 </DialogActions>

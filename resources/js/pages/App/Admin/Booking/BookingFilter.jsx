@@ -24,6 +24,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
     // Local state for filters
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [searchId, setSearchId] = useState(filters.search_id || '');
+    const [membershipNo, setMembershipNo] = useState(filters.membership_no || '');
     const [customerType, setCustomerType] = useState(filters.customer_type || 'all');
 
     const [bookingDateFrom, setBookingDateFrom] = useState(filters.booking_date_from ? dayjs(filters.booking_date_from) : null);
@@ -42,6 +43,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
 
     // Suggestions State
     const [suggestions, setSuggestions] = useState([]);
+    const [membershipSuggestions, setMembershipSuggestions] = useState([]);
     const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
     // Fetch Suggestions
@@ -67,6 +69,34 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
         [],
     );
 
+    // Fetch Membership Suggestions
+    const fetchMembershipSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query) {
+                    setMembershipSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(route('api.bookings.search-customers'), {
+                        params: { query, type: 'all' }, // Search all types for membership/customer no
+                    });
+                    setMembershipSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching membership suggestions:', error);
+                }
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        if (membershipNo) {
+            fetchMembershipSuggestions(membershipNo);
+        } else {
+            setMembershipSuggestions([]);
+        }
+    }, [membershipNo]);
+
     useEffect(() => {
         if (searchTerm) {
             fetchSuggestions(searchTerm, customerType);
@@ -80,6 +110,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
 
         if (searchTerm) filterParams.search = searchTerm;
         if (searchId) filterParams.search_id = searchId;
+        if (membershipNo) filterParams.membership_no = membershipNo;
         if (customerType && customerType !== 'all') filterParams.customer_type = customerType;
 
         if (bookingDateFrom) filterParams.booking_date_from = bookingDateFrom.format('YYYY-MM-DD');
@@ -119,6 +150,7 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
     const handleReset = () => {
         setSearchTerm('');
         setSearchId('');
+        setMembershipNo('');
         setCustomerType('all');
         setBookingDateFrom(null);
         setBookingDateTo(null);
@@ -155,8 +187,8 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                             sx={{
                                 width: '100%',
                                 '& .MuiOutlinedInput-root': {
-                                    borderRadius: '16px'
-                                }
+                                    borderRadius: '16px',
+                                },
                             }}
                         >
                             <Select
@@ -202,6 +234,49 @@ const RoomBookingFilter = ({ routeName = 'rooms.manage', showStatus = true, show
                                 setSearchTerm(newInputValue);
                             }}
                             renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Guest Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id || option.label}>
+                                    <Box sx={{ width: '100%' }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {option.membership_no || option.customer_no || option.employee_id}
+                                            </Typography>
+                                            {option.status && (
+                                                <Chip
+                                                    label={option.status}
+                                                    size="small"
+                                                    sx={{
+                                                        height: '20px',
+                                                        fontSize: '10px',
+                                                        backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                        color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                        textTransform: 'capitalize',
+                                                        ml: 1,
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {option.name || option.label}
+                                        </Typography>
+                                    </Box>
+                                </li>
+                            )}
+                        />
+                    </Grid>
+
+                    {/* Search by Membership Number */}
+                    <Grid item xs={12} md={3}>
+                        <Autocomplete
+                            freeSolo
+                            disablePortal
+                            options={membershipSuggestions}
+                            getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
+                            inputValue={membershipNo}
+                            onInputChange={(event, newInputValue) => {
+                                setMembershipNo(newInputValue);
+                            }}
+                            renderInput={(params) => <TextField {...params} fullWidth size="small" label="Membership #" placeholder="Number..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                             renderOption={(props, option) => (
                                 <li {...props} key={option.id || option.label}>
                                     <Box sx={{ width: '100%' }}>

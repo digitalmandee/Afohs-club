@@ -267,12 +267,16 @@ export const generateInvoiceContent = (booking) => {
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Balance Due</span>
-                    <span class="typography-body2">Rs ${booking.grand_total - booking.security_deposit || '0'}</span>
+                    <span class="typography-body2">Rs ${(() => {
+            const total = parseFloat(booking.grand_total || 0);
+            const paid = parseFloat(booking.invoice?.paid_amount || 0);
+            return Math.max(0, total - paid).toFixed(2);
+        })()}</span>
                 </div>
                 <div class="summary-row">
                     <span class="typography-body2-bold">Amount Paid</span>
                     <span class="typography-body2">Rs ${(() => {
-            let paid = (booking.invoice?.paid_amount || 0) + (booking.invoice?.advance_payment || booking.security_deposit || 0);
+            let paid = parseFloat(booking.invoice?.paid_amount || 0);
             if (booking.invoice?.status === 'refunded') {
                 const notes = booking.additional_notes || booking.notes;
                 const match = notes && notes.match(/Refund Processed: (\d+)/);
@@ -283,8 +287,8 @@ export const generateInvoiceContent = (booking) => {
             return paid;
         })()}</span>
                 </div>
-            </div>
         </div>
+    </div>
 
         <div class="notes-container">
             <div class="notes-item">
