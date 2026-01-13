@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Head } from '@inertiajs/react';
-import { Card, CardContent, Typography, Button, LinearProgress, Box, Grid, Alert, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip, Divider, CircularProgress } from '@mui/material';
+import { Card, CardContent, Typography, Button, LinearProgress, Box, Grid, Alert, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, Chip, Divider, CircularProgress, TextField, MenuItem } from '@mui/material';
 import { PlayArrow, Stop, Refresh, CheckCircle, Error, Warning, Assessment, Storage, People, FamilyRestroom, Image, DeleteSweep, PhotoCamera, Receipt } from '@mui/icons-material';
 import AdminLayout from '@/Layouts/AdminLayout';
 import axios from 'axios';
@@ -12,24 +12,130 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         media: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         invoices: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
-        invoices: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         customers: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add customers state
         employees: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add employees state
         corporate_members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         corporate_families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        transaction_types: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add transaction_types state
         corporate_qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        financials: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add financials state
+        deep_migration: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Deep migration state
     });
+    const [transactionTypes, setTransactionTypes] = useState([]);
+    const [selectedTransactionType, setSelectedTransactionType] = useState('');
+    const [pendingTxCount, setPendingTxCount] = useState(0);
     const [validationDialog, setValidationDialog] = useState(false);
     const [validationResults, setValidationResults] = useState(null);
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false });
 
     useEffect(() => {
         refreshStats();
+        fetchTransactionTypes();
     }, []);
+
+    const fetchTransactionTypes = async () => {
+        try {
+            const response = await axios.get('/admin/data-migration/old-transaction-types');
+            setTransactionTypes(response.data);
+        } catch (error) {
+            console.error('Error fetching transaction types:', error);
+        }
+    };
+
+    const handleTypeChange = async (e) => {
+        const typeId = e.target.value;
+        setSelectedTransactionType(typeId);
+        if (typeId) {
+            try {
+                const response = await axios.get(`/admin/data-migration/pending-invoices-count?type_id=${typeId}`);
+                setPendingTxCount(response.data.count);
+            } catch (error) {
+                console.error('Error fetching pending count:', error);
+                setPendingTxCount(0);
+            }
+        } else {
+            setPendingTxCount(0);
+        }
+    };
+
+    const startDeepMigration = async () => {
+        if (!selectedTransactionType) {
+            alert('Please select a transaction type');
+            return;
+        }
+
+        migrationRunning.current.deep_migration = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            deep_migration: { ...prev.deep_migration, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processDeepMigrationBatch(0);
+    };
+
+    const processDeepMigrationBatch = async (offset) => {
+        try {
+            // Use 50 as batch size for deep migration since it does more work per item
+            const batchSize = 50;
+            const response = await axios.post('/admin/data-migration/migrate-invoices-deep', {
+                batch_size: batchSize,
+                offset: offset,
+                old_trans_type_id: selectedTransactionType,
+            });
+
+            const { migrated, success, errors, has_more } = response.data;
+
+            // For Deep Migration, "stats.total" isn't fixed, we rely on pending count or just migrated count
+            // Let's use pendingTxCount as approx total
+            const total = pendingTxCount || 1000;
+
+            setMigrationStatus((prev) => ({
+                ...prev,
+                deep_migration: {
+                    ...prev.deep_migration,
+                    migrated: prev.deep_migration.migrated + (migrated || 0),
+                    errors: [...prev.deep_migration.errors, ...(errors || [])],
+                    progress: Math.min(100, ((prev.deep_migration.migrated + (migrated || 0)) / total) * 100),
+                },
+            }));
+
+            if (has_more && migrationRunning.current.deep_migration) {
+                // For "offset" based loop:
+                // The backend uses offset to skip. However, if backend implementation of deep migration
+                // skips checks 'if exists continue' but STILL counts them in offset, we are fine.
+                // BUT, if we want to process ALL, we usually increment offset.
+                // Wait, if I migrate 50, next time I should ask for 50 at offset 50?
+                // Yes, SQL offset works that way.
+                setTimeout(() => {
+                    processDeepMigrationBatch(offset + batchSize);
+                }, 500);
+            } else {
+                migrationRunning.current.deep_migration = false;
+                setMigrationStatus((prev) => ({
+                    ...prev,
+                    deep_migration: { ...prev.deep_migration, running: false },
+                }));
+                refreshStats();
+                // Refresh pending count
+                handleTypeChange({ target: { value: selectedTransactionType } });
+            }
+        } catch (error) {
+            console.error('Error in deep migration:', error);
+            migrationRunning.current.deep_migration = false;
+            setMigrationStatus((prev) => ({
+                ...prev,
+                deep_migration: {
+                    ...prev.deep_migration,
+                    running: false,
+                    errors: [...prev.deep_migration.errors, { error: error.response?.data?.error || error.message }],
+                },
+            }));
+        }
+    };
 
     const refreshStats = async () => {
         try {
@@ -130,6 +236,21 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('invoices', 0);
     };
 
+    const startGenericMigration = async (type) => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current[type] = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            [type]: { ...prev[type], running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch(type, 0);
+    };
+
     const startCustomersMigration = async () => {
         if (!stats.old_tables_exist) {
             alert('Old tables not found in database');
@@ -190,6 +311,25 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('corporate_families', 0);
     };
 
+    const startFinancialsMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        // For now, let's just run transaction types, then invoices batched.
+        // We will switch this button to just run Invoices for now based on user request "run every invocei one time i want btach type".
+        // The user can run Types separately. All later steps (Receipts/Transactions) can be added later or run manually.
+
+        migrationRunning.current.invoices = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            invoices: { ...prev.invoices, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('invoices', 0);
+    };
+
     const processMigrationBatch = async (type, offset) => {
         try {
             const endpointMap = {
@@ -204,9 +344,11 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 corporate_families: '/admin/data-migration/migrate-corporate-families',
                 qr_codes: '/admin/data-migration/generate-qr-codes',
                 corporate_qr_codes: '/admin/data-migration/generate-corporate-qr-codes',
+                financials: '/admin/data-migration/migrate-financials', // Add endpoint
+                transaction_types: '/admin/data-migration/migrate-transaction-types',
             };
             const endpoint = endpointMap[type];
-            const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : 100;
+            const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : type === 'invoices' || type === 'financials' ? 80 : 100;
             const response = await axios.post(endpoint, {
                 batch_size: batchSize,
                 offset: offset,
@@ -219,14 +361,15 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 members: stats.old_members_count,
                 families: stats.old_families_count,
                 media: stats.old_media_count,
-                invoices: stats.old_invoices_count,
-                invoices: stats.old_invoices_count,
+                invoices: stats.old_financial_invoices_count,
                 customers: stats.old_customers_count,
                 employees: stats.old_employees_count,
                 corporate_members: stats.old_corporate_members_count,
                 corporate_families: stats.old_corporate_families_count,
                 qr_codes: stats.pending_qr_codes_count,
                 corporate_qr_codes: stats.pending_corporate_qr_codes_count,
+                financials: stats.old_financial_invoices_count, // Use invoice count as proxy for total work
+                transaction_types: 15, // Approx count, or use response total
             };
 
             setMigrationStatus((prev) => ({
@@ -597,7 +740,166 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
 
                 {/* Migration Controls */}
                 <Grid container spacing={3}>
+                    {/* Transaction Types Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Receipt sx={{ mr: 1, color: 'info.dark' }} />
+                                    <Typography variant="h6">Transaction Types</Typography>
+                                </Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Migrates Transaction Definitions (Debit/Credit types).
+                                    <br />
+                                    Run this before migrating Financials.
+                                </Typography>
+                                {migrationStatus.transaction_types.migrated > 0 && (
+                                    <Alert severity="success" sx={{ mb: 2 }}>
+                                        Migrated {migrationStatus.transaction_types.migrated} types.
+                                    </Alert>
+                                )}
+                                <Button variant="contained" color="info" startIcon={migrationStatus.transaction_types.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={() => startGenericMigration('transaction_types')} disabled={migrationStatus.transaction_types.running}>
+                                    {migrationStatus.transaction_types.running ? 'Migrating...' : 'Migrate Types'}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Financials Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Financial Data Migration
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {migrationStatus.invoices.progress > 0 ? migrationStatus.invoices.progress.toFixed(2) : 0}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.invoices.progress} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {migrationStatus.invoices.migrated} / {stats.old_financial_invoices_count || 0}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                                    Migrates Invoices, Items, Receipts, Transactions & Relations.
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.invoices.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startFinancialsMigration} disabled={migrationStatus.invoices.running}>
+                                        {migrationStatus.invoices.running ? 'Migrating...' : 'Start Migration'}
+                                    </Button>
+
+                                    {migrationStatus.invoices.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('invoices')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.invoices.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.invoices.errors.length} errors occurred during migration
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.invoices.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
+                                                        <strong>Invoice:</strong> {error.invoice_no}
+                                                        <br />
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Selective Deep Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Selective Atomic Migration
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Migrates Invoices + Receipts + Transactions specifically for one Charge Type.
+                                </Typography>
+
+                                <Box sx={{ mb: 3 }}>
+                                    <TextField select label="Select Transaction Type" fullWidth value={selectedTransactionType} onChange={handleTypeChange} disabled={migrationStatus.deep_migration.running} size="small">
+                                        <MenuItem value="">
+                                            <em>Select Type</em>
+                                        </MenuItem>
+                                        {transactionTypes.map((type) => (
+                                            <MenuItem key={type.id} value={type.id}>
+                                                {type.name} (ID: {type.id})
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                    {selectedTransactionType && (
+                                        <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                                            Total Records (Old): {pendingTxCount}
+                                        </Typography>
+                                    )}
+                                </Box>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {migrationStatus.deep_migration.progress > 0 ? migrationStatus.deep_migration.progress.toFixed(2) : 0}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.deep_migration.progress} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {migrationStatus.deep_migration.migrated}
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" color="secondary" startIcon={migrationStatus.deep_migration.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={startDeepMigration} disabled={migrationStatus.deep_migration.running || !selectedTransactionType}>
+                                        {migrationStatus.deep_migration.running ? 'Migrating...' : 'Start Atomic Migration'}
+                                    </Button>
+
+                                    {migrationStatus.deep_migration.running && (
+                                        <Button
+                                            variant="outlined"
+                                            startIcon={<Stop />}
+                                            onClick={() => {
+                                                migrationRunning.current.deep_migration = false;
+                                            }}
+                                        >
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.deep_migration.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.deep_migration.errors.length} errors occurred
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
+                                            {migrationStatus.deep_migration.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    {error.invoice_no ? `Invoice ${error.invoice_no}: ` : ''} {error.error}
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
                     {/* Members Migration */}
+
+                    {/* Validation Dialog */}
                     <Grid item xs={12} md={6}>
                         <Card>
                             <CardContent>

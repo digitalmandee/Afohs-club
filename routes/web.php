@@ -640,7 +640,17 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-families', [DataMigrationController::class, 'migrateFamilies'])->name('data-migration.migrate-families');
         Route::post('/migrate-customers', [DataMigrationController::class, 'migrateCustomers'])->name('data-migration.customers');
         Route::post('/migrate-employees', [DataMigrationController::class, 'migrateEmployees'])->name('data-migration.employees');
-        Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoices'])->name('data-migration.migrate-invoices');
+        Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoicesPublic'])->name('data-migration.migrate-invoices');
+        Route::post('/migrate-transaction-types', [DataMigrationController::class, 'migrateTransactionTypesPublic'])->name('data-migration.migrate-transaction-types');
+        // Removed duplicate/incorrect lines and referencing correct public method
+        // Route::post('/data-migration/migrate-invoices', ...); // Removed duplicate
+        Route::post('/data-migration/migrate-financials', [App\Http\Controllers\DataMigrationController::class, 'migrateFinancials'])->name('data-migration.migrate-financials');  // Added this route
+
+        // Atomic Financial Migration Routes
+        Route::get('/old-transaction-types', [DataMigrationController::class, 'getOldTransactionTypesPublic'])->name('data-migration.old-transaction-types');
+        Route::get('/pending-invoices-count', [DataMigrationController::class, 'getPendingInvoicesCount'])->name('data-migration.pending-invoices-count');
+        Route::post('/migrate-invoices-deep', [DataMigrationController::class, 'migrateInvoicesDeep'])->name('data-migration.migrate-invoices-deep');
+
         Route::post('/migrate-corporate-members', [DataMigrationController::class, 'migrateCorporateMembers'])->name('data-migration.migrate-corporate-members');
         Route::post('/migrate-corporate-families', [DataMigrationController::class, 'migrateCorporateFamilies'])->name('data-migration.migrate-corporate-families');
         Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');

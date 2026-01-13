@@ -14,12 +14,17 @@ class FinancialReceipt extends Model
         'receipt_no',
         'payer_type',
         'payer_id',
+        'employee_id',
         'amount',
         'payment_method',  // Cash, Cheque, Online, etc.
         'payment_details',  // Cheque no, Transaction ID
         'receipt_date',
         'remarks',
-        'created_by'
+        'created_by',
+        'guest_name',
+        'guest_contact',
+        'legacy_id'
+        // 'check_no' // If needed later
     ];
 
     public function payer()

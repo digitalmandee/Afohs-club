@@ -80,33 +80,39 @@ class DataMigrationController extends Controller
                 'families_migration_percentage' => $oldFamiliesCount > 0 ? round(($migratedFamiliesCount / $oldFamiliesCount) * 100, 2) : 0,
                 'media_migration_percentage' => $oldMediaCount > 0 ? round(($migratedMediaCount / $oldMediaCount) * 100, 2) : 0,
                 // Invoice Stats
-                'old_invoices_count' => DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count(),
+                'old_invoices_count' => DB::connection('old_afohs')->table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count(),
                 'migrated_invoices_count' => FinancialInvoice::whereIn('invoice_type', ['membership', 'maintenance'])->count(),
-                'invoices_migration_percentage' => DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count() > 0
-                    ? round((FinancialInvoice::whereIn('invoice_type', ['membership', 'maintenance'])->count() / DB::table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count()) * 100, 2)
+                'invoices_migration_percentage' => DB::connection('old_afohs')->table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count() > 0
+                    ? round((FinancialInvoice::whereIn('invoice_type', ['membership', 'maintenance'])->count() / DB::connection('old_afohs')->table('finance_invoices')->whereIn('charges_type', [3, 4])->whereNotNull('member_id')->count()) * 100, 2)
                     : 0,
                 // Corporate Stats
-                'old_corporate_members_count' => DB::table('corporate_memberships')->count(),
-                'old_corporate_families_count' => DB::table('corporate_mem_families')->count(),
+                'old_corporate_members_count' => DB::connection('old_afohs')->table('corporate_memberships')->count(),
+                'old_corporate_families_count' => DB::connection('old_afohs')->table('corporate_mem_families')->count(),
                 'corporate_members_count' => CorporateMember::whereNull('parent_id')->count(),
                 'corporate_families_count' => CorporateMember::whereNotNull('parent_id')->count(),
-                'corporate_members_migration_percentage' => DB::table('corporate_memberships')->count() > 0
-                    ? round((CorporateMember::whereNull('parent_id')->count() / DB::table('corporate_memberships')->count()) * 100, 2)
+                'corporate_members_migration_percentage' => DB::connection('old_afohs')->table('corporate_memberships')->count() > 0
+                    ? round((CorporateMember::whereNull('parent_id')->count() / DB::connection('old_afohs')->table('corporate_memberships')->count()) * 100, 2)
                     : 0,
-                'corporate_families_migration_percentage' => DB::table('corporate_mem_families')->count() > 0
-                    ? round((CorporateMember::whereNotNull('parent_id')->count() / DB::table('corporate_mem_families')->count()) * 100, 2)
+                'corporate_families_migration_percentage' => DB::connection('old_afohs')->table('corporate_mem_families')->count() > 0
+                    ? round((CorporateMember::whereNotNull('parent_id')->count() / DB::connection('old_afohs')->table('corporate_mem_families')->count()) * 100, 2)
                     : 0,
                 'pending_corporate_qr_codes_count' => CorporateMember::whereNull('qr_code')->orWhere('qr_code', '')->count(),
                 // Customer Stats
-                'old_customers_count' => DB::table('old_afohs.customers')->count(),
+                'old_customers_count' => DB::connection('old_afohs')->table('customers')->count(),
                 'new_customers_count' => \App\Models\Customer::count(),
-                'customers_migration_percentage' => DB::table('old_afohs.customers')->count() > 0
-                    ? round((\App\Models\Customer::count() / DB::table('old_afohs.customers')->count()) * 100, 2)
+                'customers_migration_percentage' => DB::connection('old_afohs')->table('customers')->count() > 0
+                    ? round((\App\Models\Customer::count() / DB::connection('old_afohs')->table('customers')->count()) * 100, 2)
                     : 0,
                 // Employee Stats
                 'old_employees_count' => $oldEmployeesCount,
                 'new_employees_count' => $newEmployeesCount,
                 'employees_migration_percentage' => $oldEmployeesCount > 0 ? round(($newEmployeesCount / $oldEmployeesCount) * 100, 2) : 0,
+                // Transaction Types Stats
+                'old_transaction_types_count' => DB::connection('old_afohs')->table('trans_types')->count(),
+                'migrated_transaction_types_count' => \App\Models\TransactionType::withTrashed()->count(),
+                // Financial Invoices (All)
+                'old_financial_invoices_count' => DB::connection('old_afohs')->table('finance_invoices')->distinct('invoice_no')->count('invoice_no'),
+                'migrated_financial_invoices_count' => \App\Models\FinancialInvoice::withTrashed()->count(),
             ];
         } catch (\Exception $e) {
             Log::error('Error getting migration stats: ' . $e->getMessage());
@@ -762,61 +768,6 @@ class DataMigrationController extends Controller
         }
     }
 
-    public function migrateInvoices(Request $request)
-    {
-        $batchSize = $request->input('batch_size', 100);
-        $offset = $request->input('offset', 0);
-
-        try {
-            // Check if old table exists
-            if (!$this->checkOldTablesExist()) {
-                return response()->json(['error' => 'Old tables not found'], 404);
-            }
-
-            // Get old invoices (Type 3 = Membership, Type 4 = Maintenance)
-            $oldInvoices = DB::table('finance_invoices')
-                ->whereIn('charges_type', [3, 4])
-                ->whereNotNull('member_id')
-                ->orderBy('id')
-                ->skip($offset)
-                ->take($batchSize)
-                ->get();
-
-            $migrated = 0;
-            $errors = [];
-
-            foreach ($oldInvoices as $oldInvoice) {
-                try {
-                    $this->migrateSingleInvoice($oldInvoice);
-                    $migrated++;
-                } catch (\Exception $e) {
-                    $errors[] = [
-                        'invoice_no' => $oldInvoice->invoice_no,
-                        'error' => $e->getMessage()
-                    ];
-                }
-            }
-
-            // Check if there are more records
-            $totalCount = DB::table('finance_invoices')
-                ->whereIn('charges_type', [3, 4])
-                ->whereNotNull('member_id')
-                ->count();
-
-            $hasMore = ($offset + $batchSize) < $totalCount;
-
-            return response()->json([
-                'migrated' => $migrated,
-                'errors' => $errors,
-                'has_more' => $hasMore,
-                'total_processed' => $offset + $migrated
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Invoice migration error: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
     public function migrateCustomers(Request $request)
     {
         $batchSize = $request->get('batch_size', 100);
@@ -1138,162 +1089,6 @@ class DataMigrationController extends Controller
         ];
 
         CorporateMember::create($familyData);
-    }
-
-    private function migrateSingleInvoice($old)
-    {
-        // Check if invoice already exists
-        $exists = FinancialInvoice::where('invoice_no', $old->invoice_no)->exists();
-        if ($exists) {
-            return;  // Skip if already migrated
-        }
-
-        // Determine Fee Type
-        $invoiceType = ($old->charges_type == 3) ? 'membership' : 'maintenance';
-        $feeType = ($old->charges_type == 3) ? 'membership_fee' : 'maintenance_fee';
-
-        // Calculate Discount Type
-        $discountType = (!empty($old->discount_percentage) && $old->discount_percentage > 0) ? 'percentage' : 'fixed';
-
-        // Calculate Quarter Number (for Maintenance)
-        $quarterNumber = ($invoiceType === 'maintenance') ? $this->calculateQuarter($old->start_date) : null;
-
-        // Find New Member ID
-        $member = Member::where('old_member_id', $old->member_id)->whereNull('parent_id')->first();
-        if (!$member) {
-            // Throw error if member not found, with details
-            $errorMsg = "Member not found for Invoice #{$old->invoice_no}. Old Member ID: {$old->member_id}, Mem No: {$old->mem_no}, Name: {$old->name}";
-            Log::warning($errorMsg);
-            throw new \Exception($errorMsg);
-        }
-        $newMemberId = $member->id;
-
-        // Find New Family ID (if applicable)
-        $newFamilyId = null;
-        if (!empty($old->family)) {
-            $familyMember = Member::where('old_family_id', $old->family)->whereNotNull('parent_id')->first();
-            if ($familyMember) {
-                $newFamilyId = $familyMember->id;
-            }
-        }
-
-        // Prepare Data
-        $data = [
-            // Direct Mappings
-            'invoice_no' => $old->invoice_no,
-            'member_id' => $newMemberId,
-            'invoice_type' => $invoiceType,
-            'discount_details' => $old->discount_details,
-            'status' => $old->status ?? 'pending',
-            'created_by' => $old->created_by,
-            'updated_by' => $old->updated_by,
-            'deleted_by' => $old->deleted_by,
-            'created_at' => $old->created_at,
-            'updated_at' => $old->updated_at,
-            'deleted_at' => $old->deleted_at,
-            // Renamed Fields
-            'issue_date' => $old->invoice_date,
-            'amount' => $old->total,
-            'total_price' => $old->grand_total,
-            'discount_value' => $old->discount_amount,
-            'remarks' => $old->comments,
-            'customer_charges' => $old->extra_charges,
-            'valid_from' => $old->start_date,
-            'valid_to' => $old->end_date,
-            // Customer Info (Preserved)
-            'name' => $old->name,
-            'mem_no' => $old->mem_no,
-            'address' => $old->address,
-            'contact' => $old->contact,
-            'cnic' => $old->cnic,
-            'email' => $old->email,
-            'family_id' => $newFamilyId,  // Maps to new family member ID
-            // Financial Calculations
-            'sub_total' => $old->sub_total,
-            'discount_percentage' => $old->discount_percentage,
-            'extra_details' => $old->extra_details,
-            'extra_percentage' => $old->extra_percentage,
-            'tax_amount' => $old->tax_charges,
-            'tax_details' => $old->tax_details,
-            'tax_percentage' => $old->tax_percentage,
-            'ledger_amount' => $old->ledger_amount,
-            // Quantity & Period
-            'number_of_days' => $old->days,
-            'quantity' => $old->qty,
-            'per_day_amount' => $old->per_day_amount,
-            'charges_type' => $old->charges_type,
-            'charges_amount' => $old->charges_amount,
-            // Metadata
-            'is_auto_generated' => $old->is_auto_generated,
-            'coa_code' => $old->coa_code,
-            'corporate_member_id' => $old->corporate_id,
-            'created_at' => $this->validateDate($old->created_at),
-            'updated_at' => $this->validateDate($old->updated_at),
-            'deleted_at' => $this->validateDate($old->deleted_at),
-            // New Fields / Calculated
-            'fee_type' => $feeType,
-            'discount_type' => $discountType,
-            'quarter_number' => $quarterNumber,
-            'paid_for_month' => $old->start_date ? Carbon::parse($old->start_date)->format('Y-m') : null,
-            'due_date' => $old->invoice_date ? Carbon::parse($old->invoice_date)->addDays(30) : null,
-            'payment_frequency' => $this->calculatePaymentFrequency($old->start_date, $old->end_date),
-            // Defaults
-            'advance_payment' => 0,
-            'paid_amount' => ($old->status === 'paid') ? $old->grand_total : 0,
-            'payment_date' => ($old->status === 'paid') ? $old->updated_at : null,
-            // JSON Data for extra preservation
-            'data' => [
-                'old_invoice_id' => $old->id,
-                'migration_source' => 'finance_invoices',
-            ]
-        ];
-
-        FinancialInvoice::create($data);
-    }
-
-    private function calculateQuarter($date)
-    {
-        if (!$date)
-            return null;
-        $month = (int) Carbon::parse($date)->format('m');
-        return ceil($month / 3);
-    }
-
-    private function calculatePaymentFrequency($start, $end)
-    {
-        if (!$start || !$end)
-            return 'one-time';
-
-        $startDate = Carbon::parse($start);
-        $endDate = Carbon::parse($end);
-        $diffInMonths = $startDate->diffInMonths($endDate);
-
-        if ($diffInMonths <= 1)
-            return 'monthly';
-        if ($diffInMonths <= 3)
-            return 'quarterly';
-        if ($diffInMonths <= 6)
-            return 'semi-annual';
-        if ($diffInMonths <= 12)
-            return 'annual';
-
-        return 'one-time';
-    }
-
-    private function getMemberSubscriptionDetails($memberId)
-    {
-        $member = Member::find($memberId);
-        if (!$member)
-            return ['type_id' => null, 'category_id' => null];
-
-        // Assuming Member model has relationships or fields for these
-        // If not, we might need to look them up from MemberCategory/Type models
-        // Based on existing code structure, trying to infer:
-
-        return [
-            'type_id' => $member->member_type_id ?? null,  // Adjust field name if needed
-            'category_id' => $member->category_id ?? null  // Adjust field name if needed
-        ];
     }
 
     public function migrateMedia(Request $request)
@@ -1730,5 +1525,817 @@ class DataMigrationController extends Controller
         ];
 
         \App\Models\Employee::create($employeeData);
+    }
+
+    public function migrateFinancials(Request $request)
+    {
+        $stats = [
+            'transaction_types' => 0,
+            'invoices' => 0,
+            'receipts' => 0,
+            'transactions' => 0,
+            'errors' => []
+        ];
+
+        try {
+            DB::beginTransaction();
+
+            $stats['transaction_types'] = $this->migrateTransactionTypes();
+            $stats['receipts'] = $this->migrateReceipts();
+            $stats['invoices'] = $this->migrateInvoices();
+            $stats['transactions'] = $this->migrateTransactions();
+
+            // Relations are handled within transactions or separately if needed.
+            // Based on plan, we can migrate relations here too.
+            $this->migrateTransactionRelations();
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Financials migrated successfully', 'stats' => $stats]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Migration failed: ' . $e->getMessage() . ' Line: ' . $e->getLine(), 'trace' => $e->getTraceAsString()], 500);
+        }
+    }
+
+    public function migrateTransactionTypesPublic(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $count = $this->migrateTransactionTypes();
+            DB::commit();
+
+            // Get total count for progress
+            $total = DB::connection('old_afohs')->table('trans_types')->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction Types migrated successfully',
+                'migrated' => $count,
+                'total' => $total
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    private function migrateTransactionTypes()
+    {
+        $oldTypes = DB::connection('old_afohs')->table('trans_types')->get();
+        $count = 0;
+
+        foreach ($oldTypes as $old) {
+            $existing = \App\Models\TransactionType::withTrashed()->find($old->id);
+
+            if ($existing) {
+                // Optional: Update if exists? For now skip to be safe, or update fields.
+                // Let's update fields to ensure new columns are populated
+                $existing->update([
+                    'table_name' => $old->table_name,
+                    'details' => $old->details,
+                    'account' => $old->account,
+                    'cash_or_payment' => $old->cash_or_payment,
+                    'cashrec_due' => $old->cashrec_due,
+                    'mod_id' => $old->mod_id,
+                ]);
+                continue;
+            }
+
+            \App\Models\TransactionType::create([
+                'id' => $old->id,
+                'name' => $old->name,
+                'type' => $old->debit_or_credit == 1 ? 'debit' : 'credit',
+                'status' => 'active',
+                'is_system' => false,
+                'default_amount' => 0,
+                'is_fixed' => false,
+                'table_name' => $old->table_name,
+                'details' => $old->details,
+                'account' => $old->account,  // Maps to 'account' column
+                'cash_or_payment' => $old->cash_or_payment,
+                'cashrec_due' => $old->cashrec_due,
+                'mod_id' => $old->mod_id,
+                'created_at' => $this->validateDate($old->created_at),
+                'updated_at' => $this->validateDate($old->updated_at),
+            ]);
+            $count++;
+        }
+        return $count;
+    }
+
+    private function migrateReceipts()
+    {
+        $oldReceipts = DB::connection('old_afohs')->table('finance_cash_receipts')->get();
+        $count = 0;
+
+        foreach ($oldReceipts as $old) {
+            if (\App\Models\FinancialReceipt::where('id', $old->id)->exists())
+                continue;
+
+            $payer = null;
+            if ($old->member_id) {
+                $payer = \App\Models\Member::where('old_member_id', $old->member_id)->first();
+            } elseif ($old->corporate_id) {
+                $payer = \App\Models\CorporateMember::where('old_member_id', $old->corporate_id)->first();  // Use old_member_id as per plan
+            } elseif ($old->customer_id) {
+                $payer = \App\Models\Customer::where('old_customer_id', $old->customer_id)->first();
+            }
+
+            \App\Models\FinancialReceipt::create([
+                'id' => $old->id,  // Preserve ID
+                'receipt_no' => $old->receipt_no,
+                'amount' => $old->total ?? 0,
+                'payment_method' => $old->account == 1 ? 'Cash' : ($old->account == 2 ? 'Bank' : 'Other'),
+                'receipt_date' => $this->validateDate($old->invoice_date),
+                'payer_type' => $payer ? get_class($payer) : null,
+                'payer_id' => $payer ? $payer->id : null,
+                'remarks' => $old->remarks,
+                'created_at' => $this->validateDate($old->created_at),
+                'updated_at' => $this->validateDate($old->updated_at),
+            ]);
+            $count++;
+        }
+        return $count;
+    }
+
+    private function migrateInvoices()
+    {
+        // Group by invoice_no - Include deleted records
+        $oldInvoices = DB::connection('old_afohs')
+            ->table('finance_invoices')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('invoice_no');
+
+        $count = 0;
+
+        foreach ($oldInvoices as $invoiceNo => $rows) {
+            $first = $rows->first();
+
+            // Check if already migrated
+            if (\App\Models\FinancialInvoice::where('invoice_no', $invoiceNo)->withTrashed()->exists())
+                continue;
+
+            $memberId = null;
+            $corporateMemberId = null;
+            $customerId = null;
+
+            if ($first->member_id) {
+                $member = \App\Models\Member::where('old_member_id', $first->member_id)->withTrashed()->first();
+                $memberId = $member ? $member->id : null;
+            } elseif ($first->corporate_id) {
+                $corp = \App\Models\CorporateMember::where('old_member_id', $first->corporate_id)->withTrashed()->first();
+                $corporateMemberId = $corp ? $corp->id : null;
+            } elseif ($first->customer_id) {
+                $cust = \App\Models\Customer::where('old_customer_id', $first->customer_id)->withTrashed()->first();
+                $customerId = $cust ? $cust->id : null;
+            }
+
+            // Create Header
+            $invoice = \App\Models\FinancialInvoice::create([
+                'invoice_no' => $invoiceNo,
+                'member_id' => $memberId,
+                'corporate_member_id' => $corporateMemberId,
+                'customer_id' => $customerId,
+                'issue_date' => $this->validateDate($first->invoice_date),
+                // period_start and period_end removed as per request (exist in items)
+                'total_price' => $rows->sum('grand_total'),
+                'remarks' => $first->comments,
+                'status' => 'unpaid',
+                'created_at' => $this->validateDate($first->created_at),
+                'updated_at' => $this->validateDate($first->updated_at),
+                'deleted_at' => $first->deleted_at ? $this->validateDate($first->deleted_at) : null,
+            ]);
+
+            // Create Items
+            foreach ($rows as $row) {
+                $familyMember = null;
+                if ($row->family) {
+                    $familyMember = \App\Models\Member::where('old_family_id', $row->family)->first();
+                }
+
+                $feeTypeMap = [
+                    3 => 'membership_fee',
+                    4 => 'maintenance_fee',
+                ];
+                $feeType = $feeTypeMap[$row->charges_type] ?? 'other';
+
+                $taxAmount = ($row->sub_total * ($row->tax_percentage ?? 0)) / 100;
+
+                \App\Models\FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => $feeType,
+                    'description' => $row->comments,
+                    'qty' => $row->qty ?? 1,
+                    'amount' => $row->charges_amount ?? 0,
+                    'sub_total' => $row->sub_total ?? 0,
+                    'total' => $row->grand_total ?? 0,
+                    'tax_percentage' => $row->tax_percentage ?? 0,
+                    'tax_amount' => $taxAmount,
+                    'discount_amount' => $row->discount_amount ?? 0,
+                    'discount_details' => $row->discount_details,
+                    'start_date' => $this->validateDate($row->start_date),
+                    'end_date' => $this->validateDate($row->end_date),
+                    'family_member_id' => $familyMember ? $familyMember->id : null,
+                    'additional_charges' => $row->extra_charges,
+                    'remarks' => $row->comments,  // Redundant but requested
+                    'data' => [
+                        'per_day_amount' => $row->per_day_amount,
+                        'days' => $row->days,
+                        'extra_details' => $row->extra_details,
+                        'tax_details' => $row->tax_details,
+                    ]
+                ]);
+            }
+            $count++;
+        }
+        return $count;
+    }
+
+    public function migrateInvoicesPublic(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 50);
+        $offset = $request->get('offset', 0);
+
+        try {
+            DB::beginTransaction();
+
+            // Get all unique invoice numbers for this batch
+            $invoiceNos = DB::connection('old_afohs')
+                ->table('finance_invoices')
+                ->select('invoice_no')
+                ->distinct()
+                ->orderBy('invoice_no')
+                ->offset($offset)
+                ->limit($batchSize)
+                ->pluck('invoice_no')
+                ->toArray();
+
+            $migrated = 0;
+            $errors = [];
+
+            if (!empty($invoiceNos)) {
+                // Fetch rows for this chunk of invoices
+                $rows = DB::connection('old_afohs')
+                    ->table('finance_invoices')
+                    ->whereIn('invoice_no', $invoiceNos)
+                    ->orderBy('id')
+                    ->get();
+
+                $grouped = $rows->groupBy('invoice_no');
+
+                foreach ($grouped as $invoiceNo => $groupRows) {
+                    try {
+                        $first = $groupRows->first();
+
+                        // Check if already migrated
+                        if (\App\Models\FinancialInvoice::where('invoice_no', $invoiceNo)->withTrashed()->exists())
+                            continue;
+
+                        $memberId = null;
+                        $corporateMemberId = null;
+                        $customerId = null;
+
+                        if ($first->member_id) {
+                            $member = \App\Models\Member::where('old_member_id', $first->member_id)->withTrashed()->first();
+                            $memberId = $member ? $member->id : null;
+                        } elseif ($first->corporate_id) {
+                            $corp = \App\Models\CorporateMember::where('old_member_id', $first->corporate_id)->withTrashed()->first();
+                            $corporateMemberId = $corp ? $corp->id : null;
+                        } elseif ($first->customer_id) {
+                            $cust = \App\Models\Customer::where('old_customer_id', $first->customer_id)->withTrashed()->first();
+                            $customerId = $cust ? $cust->id : null;
+                        }
+
+                        // Create Header
+                        $invoice = \App\Models\FinancialInvoice::create([
+                            'invoice_no' => $invoiceNo,
+                            'member_id' => $memberId,
+                            'corporate_member_id' => $corporateMemberId,
+                            'customer_id' => $customerId,
+                            'name' => $first->name,  // Mapped from old table
+                            'mem_no' => $first->mem_no,
+                            'address' => $first->address,
+                            'contact' => $first->contact,
+                            'cnic' => $first->cnic,
+                            'email' => $first->email,
+                            'coa_code' => $first->coa_code,
+                            'invoice_type' => $first->invoice_type,  // Mapped from old table (nullable now)
+                            'issue_date' => $this->validateDate($first->invoice_date),
+                            'total_price' => $groupRows->sum('grand_total'),
+                            'remarks' => $first->comments,
+                            'status' => 'unpaid',
+                            'created_at' => $this->validateDate($first->created_at),
+                            'updated_at' => $this->validateDate($first->updated_at),
+                            'deleted_at' => $first->deleted_at ? $this->validateDate($first->deleted_at) : null,
+                        ]);
+
+                        // Create Items
+                        foreach ($groupRows as $row) {
+                            $familyMember = null;
+                            if ($row->family) {
+                                $familyMember = \App\Models\Member::where('old_family_id', $row->family)->withTrashed()->first();
+                            }
+
+                            $feeTypeMap = [
+                                3 => 'membership_fee',
+                                4 => 'maintenance_fee',
+                                1 => 'guest_fee',
+                                11 => 'subscription_fee'
+                            ];
+
+                            $chargeTypeId = null;
+                            if (array_key_exists($row->charges_type, $feeTypeMap)) {
+                                $feeType = $feeTypeMap[$row->charges_type];
+                            } elseif (!empty($row->charges_type)) {
+                                $feeType = (string) $row->charges_type;
+                                $chargeTypeId = $row->charges_type;
+                            } else {
+                                $feeType = 'general';
+                            }
+
+                            $taxAmount = ($row->sub_total * ($row->tax_percentage ?? 0)) / 100;
+
+                            \App\Models\FinancialInvoiceItem::create([
+                                'invoice_id' => $invoice->id,
+                                'fee_type' => $feeType,
+                                'financial_charge_type_id' => $chargeTypeId,
+                                'description' => $row->comments,
+                                'qty' => $row->qty ?? 1,
+                                'amount' => $row->charges_amount ?? 0,
+                                'sub_total' => $row->sub_total ?? 0,
+                                'total' => $row->grand_total ?? 0,
+                                'tax_percentage' => $row->tax_percentage ?? 0,
+                                'tax_amount' => $taxAmount,
+                                'discount_amount' => $row->discount_amount ?? 0,
+                                'discount_details' => $row->discount_details,
+                                'discount_type' => 'percent',
+                                'discount_value' => $row->discount_percentage ?? 0,
+                                'start_date' => $this->validateDate($row->start_date),
+                                'end_date' => $this->validateDate($row->end_date),
+                                'family_member_id' => $familyMember ? $familyMember->id : null,
+                                'additional_charges' => $row->extra_charges ?? 0,
+                                'extra_percentage' => $row->extra_percentage ?? 0,
+                                'overdue_percentage' => $row->overdue_percentage ?? 0,
+                                'remarks' => $row->comments,
+                                'data' => [
+                                    'per_day_amount' => $row->per_day_amount,
+                                    'days' => $row->days,
+                                    'extra_details' => $row->extra_details,
+                                    'tax_details' => $row->tax_details,
+                                ]
+                            ]);
+                        }
+                        $migrated++;
+                    } catch (\Exception $e) {
+                        $errors[] = [
+                            'invoice_no' => $invoiceNo,
+                            'error' => $e->getMessage()
+                        ];
+                    }
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $migrated,
+                'errors' => $errors,
+                'has_more' => count($invoiceNos) == $batchSize
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    private function migrateTransactions()
+    {
+        $count = 0;
+
+        DB::connection('old_afohs')
+            ->table('transactions')
+            ->orderBy('id')
+            ->chunk(1000, function ($oldTrans) use (&$count) {
+                foreach ($oldTrans as $t) {
+                    $payable = null;
+                    if ($t->trans_moc) {
+                        $payable = \App\Models\Member::where('old_member_id', $t->trans_moc)->first();
+                        if (!$payable)
+                            $payable = \App\Models\CorporateMember::where('old_member_id', $t->trans_moc)->first();
+                        if (!$payable)
+                            $payable = \App\Models\Customer::where('old_customer_id', $t->trans_moc)->first();
+                    }
+
+                    $referenceType = null;
+                    $referenceId = null;
+
+                    if ($t->debit_or_credit == 1) {
+                        // Invoice (Debit)
+                        $oldInvoiceRow = DB::connection('old_afohs')->table('finance_invoices')->where('id', $t->trans_type_id)->first();
+                        if ($oldInvoiceRow) {
+                            $newInvoice = \App\Models\FinancialInvoice::where('invoice_no', $oldInvoiceRow->invoice_no)->first();
+                            if ($newInvoice) {
+                                $referenceType = \App\Models\FinancialInvoice::class;
+                                $referenceId = $newInvoice->id;
+                            }
+                        }
+                    } else {
+                        // Receipt (Credit)
+                        if ($t->receipt_id) {
+                            $newReceipt = \App\Models\FinancialReceipt::find($t->receipt_id);
+                            if ($newReceipt) {
+                                $referenceType = \App\Models\FinancialReceipt::class;
+                                $referenceId = $newReceipt->id;
+                            }
+                        }
+                    }
+
+                    \App\Models\Transaction::create([
+                        'amount' => $t->trans_amount,
+                        'type' => $t->debit_or_credit == 1 ? 'debit' : 'credit',
+                        'payable_type' => $payable ? get_class($payable) : null,
+                        'payable_id' => $payable ? $payable->id : null,
+                        'reference_type' => $referenceType,
+                        'reference_id' => $referenceId,
+                        'created_at' => $this->validateDate($t->created_at),
+                        'updated_at' => $this->validateDate($t->updated_at),
+                    ]);
+                    $count++;
+                }
+            });
+
+        return $count;
+    }
+
+    public function getOldTransactionTypesPublic()
+    {
+        try {
+            $types = DB::connection('old_afohs')
+                ->table('trans_types')
+                ->select('id', 'name')
+                ->orderBy('id')
+                ->get();
+            return response()->json($types);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getPendingInvoicesCount(Request $request)
+    {
+        $typeId = $request->get('type_id');
+        if (!$typeId) {
+            return response()->json(['count' => 0]);
+        }
+
+        try {
+            // Count invoices in old db with this charge type
+            // Note: Invoices are grouped by invoice_no, so we count distinct invoice_no
+            $count = DB::connection('old_afohs')
+                ->table('finance_invoices')
+                ->where('charges_type', $typeId)
+                ->distinct('invoice_no')
+                ->count('invoice_no');
+
+            // Check established count (optional, but good for UI "Pending" logic)
+            // But getting exact "pending" (Old - New) is hard without mapping every single one.
+            // For now, return Total Old Records count for that type.
+            return response()->json(['count' => $count]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Atomic Deep Migration for Invoices
+     */
+    public function migrateInvoicesDeep(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 50);
+        $oldTransTypeId = $request->get('old_trans_type_id');
+
+        if (!$oldTransTypeId) {
+            return response()->json(['success' => false, 'error' => 'Transaction Type ID required'], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Fetch Batch of Invoices
+            // We need to find invoices that are NOT yet migrated.
+            // Complex to check "not migrated" efficiently in SQL across DBs.
+            // Strategy: Get chunk from old DB, check existence in foreach.
+            // To make "chunk" effective (skipping already processed), we might need offset.
+            // But if we simply iterate all, it's slow.
+            // Better: User provides offset from frontend loop.
+
+            $offset = $request->get('offset', 0);
+
+            $invoiceNos = DB::connection('old_afohs')
+                ->table('finance_invoices')
+                ->where('charges_type', $oldTransTypeId)
+                ->select('invoice_no')
+                ->distinct()
+                ->orderBy('invoice_no')
+                ->offset($offset)
+                ->limit($batchSize)
+                ->pluck('invoice_no')
+                ->toArray();
+
+            if (empty($invoiceNos)) {
+                DB::commit();
+                return response()->json(['success' => true, 'migrated' => 0, 'has_more' => false]);
+            }
+
+            $rows = DB::connection('old_afohs')
+                ->table('finance_invoices')
+                ->whereIn('invoice_no', $invoiceNos)
+                ->get();
+
+            $grouped = $rows->groupBy('invoice_no');
+            $migratedCount = 0;
+            $errors = [];
+
+            foreach ($grouped as $invoiceNo => $groupRows) {
+                try {
+                    // Check if exists
+                    if (FinancialInvoice::where('invoice_no', $invoiceNo)->exists()) {
+                        continue;
+                    }
+
+                    $first = $groupRows->first();
+
+                    // --- A. Migrate Invoice Header & Items ---
+                    $invoice = $this->createInvoiceFromLegacy($first, $groupRows, $oldTransTypeId);
+
+                    // --- B. Migrate Debit Transaction ---
+                    $this->migrateDebitTransaction($invoiceNo, $first->id, $invoice);
+
+                    // --- C. Atomic Receipt & Relation Migration ---
+                    $this->migrateRelatedReceipts($invoice);
+
+                    $migratedCount++;
+                } catch (\Exception $e) {
+                    $errors[] = ['invoice_no' => $invoiceNo, 'error' => $e->getMessage()];
+                    Log::error("Deep migration error for invoice $invoiceNo: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $migratedCount,
+                'errors' => $errors,
+                'has_more' => count($invoiceNos) == $batchSize
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function createInvoiceFromLegacy($first, $groupRows, $typeId)
+    {
+        // Resolve Payer
+        $memberId = null;
+        $corpId = null;
+        $custId = null;
+
+        if ($first->member_id) {
+            $m = Member::where('old_member_id', $first->member_id)->first();
+            $memberId = $m ? $m->id : null;
+        } elseif ($first->corporate_id) {
+            $c = CorporateMember::where('old_member_id', $first->corporate_id)->first();
+            $corpId = $c ? $c->id : null;
+        } elseif ($first->customer_id) {
+            $cu = \App\Models\Customer::where('old_customer_id', $first->customer_id)->first();
+            $custId = $cu ? $cu->id : null;
+        }
+
+        // Map Type
+        $feeTypeMap = [
+            3 => 'membership_fee',
+            4 => 'maintenance_fee',
+        ];
+        $feeType = $feeTypeMap[$typeId] ?? 'other';
+
+        // Header
+        $invoice = FinancialInvoice::create([
+            'invoice_no' => $first->invoice_no,
+            'member_id' => $memberId,
+            'corporate_member_id' => $corpId,
+            'customer_id' => $custId,
+            'issue_date' => $this->validateDate($first->invoice_date),
+            'total_price' => $groupRows->sum('grand_total'),
+            'remarks' => $first->comments,
+            'status' => 'unpaid',  // Will update later
+            'created_at' => $this->validateDate($first->created_at),
+            'updated_at' => $this->validateDate($first->updated_at),
+        ]);
+
+        // Items
+        foreach ($groupRows as $row) {
+            \App\Models\FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'fee_type' => $feeType,
+                'financial_charge_type_id' => ($feeType === 'other') ? $typeId : null,  // If not mapped, save ID
+                'description' => $row->comments,
+                'amount' => $row->charges_amount ?? 0,
+                'qty' => $row->qty ?? 1,
+                'sub_total' => $row->sub_total ?? 0,
+                'total' => $row->grand_total ?? 0,
+                'tax_amount' => ($row->sub_total * ($row->tax_percentage ?? 0)) / 100,
+                'start_date' => $this->validateDate($row->start_date),
+                'end_date' => $this->validateDate($row->end_date),
+            ]);
+        }
+
+        return $invoice;
+    }
+
+    private function migrateDebitTransaction($invoiceNo, $legacyInvoiceId, $newInvoice)
+    {
+        // In old system, transactions table had trans_type_id pointing to invoice ID (or sometimes invoice_no, need check)
+        // Usually trans_type_id = finance_invoices.id when trans_type is invoice.
+
+        $oldTrans = DB::connection('old_afohs')
+            ->table('transactions')
+            ->where('trans_type_id', $legacyInvoiceId)  // Assuming ID linkage
+            ->where('debit_or_credit', 1)  // Debit
+            ->first();
+
+        if ($oldTrans) {
+            \App\Models\Transaction::create([
+                'amount' => $oldTrans->trans_amount,
+                'type' => 'debit',
+                'payable_type' => $this->getPayableType($newInvoice),
+                'payable_id' => $this->getPayableId($newInvoice),
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $newInvoice->id,
+                'created_at' => $this->validateDate($oldTrans->created_at),
+                'updated_at' => $this->validateDate($oldTrans->updated_at),
+            ]);
+        }
+    }
+
+    private function migrateRelatedReceipts($invoice)
+    {
+        // 1. Find relations in legacy DB using Invoice ID (we need the legacy ID)
+        // We can get legacy ID by querying old invoice table by invoice_no again or passing it.
+        // Let's query quickly.
+        $oldInvoice = DB::connection('old_afohs')->table('finance_invoices')->where('invoice_no', $invoice->invoice_no)->first();
+        if (!$oldInvoice)
+            return;
+
+        $relations = DB::connection('old_afohs')
+            ->table('trans_relations')
+            ->where('invoice', $oldInvoice->id)
+            ->get();
+
+        $totalPaid = 0;
+
+        foreach ($relations as $rel) {
+            // Receipt ID
+            $receiptId = $rel->receipt;
+
+            // Check existence
+            $receipt = \App\Models\FinancialReceipt::find($receiptId);
+
+            if (!$receipt) {
+                // Must migrate NOW
+                $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $receiptId)->first();
+                if ($oldReceipt) {
+                    $receipt = $this->migrateSingleReceipt($oldReceipt);
+                }
+            }
+
+            if ($receipt) {
+                // Create Relation
+                \App\Models\TransactionRelation::firstOrCreate([
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id
+                ], [
+                    'amount' => $rel->amount
+                ]);
+                $totalPaid += $rel->amount;
+            }
+        }
+
+        // Update Status
+        if ($totalPaid >= $invoice->total_price) {
+            $invoice->update(['status' => 'paid']);
+        } elseif ($totalPaid > 0) {
+            $invoice->update(['status' => 'partial']);
+        }
+    }
+
+    private function migrateSingleReceipt($old)
+    {
+        // 1. Resolve Payer
+        $payerType = null;
+        $payerId = null;
+
+        // "mem_number" -> Member
+        if (!empty($old->mem_number)) {
+            $m = Member::where('membership_no', $old->mem_number)->first();
+            $payerType = Member::class;
+            $payerId = $m ? $m->id : null;
+        }
+        // "corporate_id" -> Corporate
+        elseif (!empty($old->corporate_id)) {
+            // CAREFUL: corporate_id might be ID or some code. Assuming old_member_id map.
+            // If corporate_id is integer from corporate_memberships.id logic:
+            $c = CorporateMember::where('old_member_id', $old->corporate_id)->first();
+            $payerType = CorporateMember::class;
+            $payerId = $c ? $c->id : null;
+        }
+        // "customer_id" -> Customer
+        elseif (!empty($old->customer_id)) {
+            $cu = \App\Models\Customer::where('old_customer_id', $old->customer_id)->first();
+            $payerType = \App\Models\Customer::class;
+            $payerId = $cu ? $cu->id : null;
+        }
+
+        // 2. Resolve Employee (Created By)
+        // Map old employee_id -> Employee -> User -> created_by
+        $createdBy = null;
+        if (!empty($old->employee_id)) {
+            // Find employee by old_employee_id
+            $emp = \App\Models\Employee::where('old_employee_id', $old->employee_id)->first();
+            if ($emp && $emp->user_id) {
+                $createdBy = $emp->user_id;
+            }
+        }
+        // Fallback: use current user/system if needed, or null.
+        // If old data has valid employee, we used it. If not, maybe use receipt creator?
+        // Fallback logic removed.
+        // Priority given to employee_id as requested.
+
+        // 3. Create Receipt
+        $receiptData = [
+            // 'id' => $old->id, // REMOVED: User requested auto-increment
+            'receipt_no' => $old->invoice_no,  // finance_cash_receipts.invoice_no is the receipt #
+            'amount' => $old->total ?? 0,
+            'payment_method' => ($old->account == 1) ? 'cash' : 'bank',  // Simple map
+            'receipt_date' => $this->validateDate($old->invoice_date),
+            'payer_type' => $payerType,
+            'payer_id' => $payerId,
+            'remarks' => $old->remarks,
+            'created_by' => $createdBy,  // Set the mapped user ID
+            // New Fields
+            'employee_id' => $old->employee_id,  // Legacy HR Employee ID string
+            'guest_name' => $old->guest_name,
+            'guest_contact' => $old->guest_contact,
+            'legacy_id' => $old->id,
+            'created_at' => $this->validateDate($old->created_at),
+            'updated_at' => $this->validateDate($old->updated_at),
+            'deleted_at' => $old->deleted_at ? $this->validateDate($old->deleted_at) : null,
+        ];
+
+        $newId = \App\Models\FinancialReceipt::insertGetId($receiptData);
+
+        // Hydrate a model instance manually for return/usage to avoid re-query
+        $receiptData['id'] = $newId;  // Add the new ID to data
+        $receipt = new \App\Models\FinancialReceipt($receiptData);
+        $receipt->exists = true;  // Mark as existing to avoid issues if used later
+
+        // 4. Create Credit Transaction
+        \App\Models\Transaction::create([
+            'amount' => $old->total ?? 0,
+            'type' => 'credit',
+            'payable_type' => $payerType,
+            'payable_id' => $payerId,
+            'reference_type' => \App\Models\FinancialReceipt::class,
+            'reference_id' => $receipt->id,
+            'created_at' => $this->validateDate($old->created_at),
+            'updated_at' => $this->validateDate($old->updated_at),
+        ]);
+
+        return $receipt;
+    }
+
+    private function getPayableType($invoice)
+    {
+        if ($invoice->member_id)
+            return Member::class;
+        if ($invoice->corporate_member_id)
+            return CorporateMember::class;
+        if ($invoice->customer_id)
+            return \App\Models\Customer::class;
+        return null;
+    }
+
+    private function getPayableId($invoice)
+    {
+        if ($invoice->member_id)
+            return $invoice->member_id;
+        if ($invoice->corporate_member_id)
+            return $invoice->corporate_member_id;
+        if ($invoice->customer_id)
+            return $invoice->customer_id;
+        return null;
     }
 }

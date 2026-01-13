@@ -16,6 +16,12 @@ class TransactionType extends Model
         'status',  // 'active', 'inactive'
         'is_system',  // boolean, if true, cannot be deleted (e.g., Room Booking)
         'default_amount',
-        'is_fixed'
+        'is_fixed',
+        'table_name',
+        'details',
+        'account',
+        'cash_or_payment',
+        'cashrec_due',
+        'mod_id'
     ];
 }

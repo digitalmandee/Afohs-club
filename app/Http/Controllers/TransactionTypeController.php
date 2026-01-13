@@ -39,6 +39,11 @@ class TransactionTypeController extends Controller
             'status' => 'required|in:active,inactive',
         ]);
 
+        // Legacy compatibility
+        $validated['type'] = 2;  // Force 'Charges Types' identity
+        $validated['table_name'] = 'finance_invoice';
+        $validated['cash_or_payment'] = 0;
+
         TransactionType::create($validated);
 
         return redirect()->route('finance.charge-types.index')->with('success', 'Charge Type created successfully.');
