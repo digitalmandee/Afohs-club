@@ -28,19 +28,15 @@ export default function Index({ types }) {
             <Box sx={{ p: 3 }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Box>
-                        <Typography sx={{fontWeight:'700', fontSize:'30px', color:'#063455'}} >
-                            Charge Types
-                        </Typography>
-                        <Typography sx={{fontWeight:'600', fontSize:'15px', color:"#063455"}}>
-                            Manage transaction fee types, default amounts, and fixed pricing rules.
-                        </Typography>
+                        <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Charge Types</Typography>
+                        <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>Manage transaction fee types, default amounts, and fixed pricing rules.</Typography>
                     </Box>
                     <Box>
                         <Link href={route('finance.charge-types.trashed')}>
                             <Button
                                 variant="outlined"
                                 color="error"
-                                startIcon={<Delete/>}
+                                startIcon={<Delete />}
                                 sx={{
                                     mr: 2,
                                     textTransform: 'none',
@@ -67,14 +63,14 @@ export default function Index({ types }) {
                     </Box>
                 </Box>
 
-                <Box>
+                <Paper>
                     <TableContainer sx={{ borderRadius: '12px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Default Amount</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace:'nowrap' }}>Pricing Mode</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Default Amount</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Pricing Mode</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>System</TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 600, color: '#fff' }}>
