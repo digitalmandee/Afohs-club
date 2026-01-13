@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, Grid, Chip, Divider, Alert } from '@mui/material';
+import { Box, Typography, Button, IconButton, Card, CardContent, Grid, Chip, Divider, Alert } from '@mui/material';
 import { ArrowBack as BackIcon, Edit as EditIcon, CheckCircle as CheckCircleIcon, Print as PrintIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 
@@ -86,322 +86,337 @@ const ShowVoucher = ({ voucher }) => {
     };
 
     return (
-        <Box sx={{ p: 3 }}>
-                    {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Button startIcon={<BackIcon />} onClick={() => router.visit(route('vouchers.dashboard'))} sx={{ mr: 2 }}>
-                                Back to Vouchers
-                            </Button>
-                            <Typography variant="h4" fontWeight="bold">
-                                Voucher Details
+        <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+            {/* Header */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                    
+                    <IconButton
+                        onClick={() => router.visit(route('vouchers.dashboard'))}
+                        sx={{
+                            mt: 0.5,
+                            color: '#063455',
+                            '&:hover': { bgcolor: 'rgba(6, 52, 85, 0.1)' }
+                        }}
+                    >
+                        <BackIcon />
+                    </IconButton>
+                    <Typography
+                        sx={{
+                            fontWeight: '700',
+                            color: '#063455',
+                            fontSize:'30px',
+                            // mb: 0.5
+                        }}
+                    >
+                        Voucher Details
+                    </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => router.visit(route('vouchers.edit', voucher.id))} sx={{color:'#fff', bgcolor:'#063455', borderRadius:'16px', textTransform:'none'}}>
+                        Edit Voucher
+                    </Button>
+                    {voucher.status === 'active' && !voucher.is_used && isValid() && (
+                        <Button variant="contained" startIcon={<CheckCircleIcon />} onClick={handleMarkAsUsed} sx={{ backgroundColor: '#063455' }}>
+                            Mark as Used
+                        </Button>
+                    )}
+                </Box>
+            </Box>
+
+            {/* Status Alerts */}
+            {voucher.is_used && (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                    This voucher has been used on {formatDateTime(voucher.used_at)}
+                </Alert>
+            )}
+            {isExpired() && !voucher.is_used && (
+                <Alert severity="error" sx={{ mb: 3 }}>
+                    This voucher has expired on {formatDate(voucher.valid_to)}
+                </Alert>
+            )}
+            {isValid() && (
+                <Alert severity="success" sx={{ mb: 3 }}>
+                    This voucher is valid and can be used. {getDaysRemaining()} days remaining.
+                </Alert>
+            )}
+
+            <Grid container spacing={2}>
+                {/* Voucher Information */}
+                <Grid item xs={12} md={4}>
+                    <Card>
+                        <CardContent>
+                            <Typography sx={{color:'#063455', fontWeight:'600', fontSize:'24px'}}>
+                                Voucher Information:
                             </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Button variant="outlined" startIcon={<EditIcon />} onClick={() => router.visit(route('vouchers.edit', voucher.id))}>
-                                Edit Voucher
-                            </Button>
-                            {voucher.status === 'active' && !voucher.is_used && isValid() && (
-                                <Button variant="contained" startIcon={<CheckCircleIcon />} onClick={handleMarkAsUsed} sx={{ backgroundColor: '#063455' }}>
-                                    Mark as Used
-                                </Button>
-                            )}
-                        </Box>
-                    </Box>
+                            {/* <Divider sx={{ mb: 2 }} /> */}
 
-                    {/* Status Alerts */}
-                    {voucher.is_used && (
-                        <Alert severity="info" sx={{ mb: 3 }}>
-                            This voucher has been used on {formatDateTime(voucher.used_at)}
-                        </Alert>
-                    )}
-                    {isExpired() && !voucher.is_used && (
-                        <Alert severity="error" sx={{ mb: 3 }}>
-                            This voucher has expired on {formatDate(voucher.valid_to)}
-                        </Alert>
-                    )}
-                    {isValid() && (
-                        <Alert severity="success" sx={{ mb: 3 }}>
-                            This voucher is valid and can be used. {getDaysRemaining()} days remaining.
-                        </Alert>
-                    )}
-
-                    <Grid container spacing={3}>
-                        {/* Voucher Information */}
-                        <Grid item xs={12} md={6}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom>
-                                        Voucher Information
+                            <Grid container spacing={2} sx={{mt:2}}>
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Voucher Code:
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Voucher Code
-                                            </Typography>
-                                            <Typography variant="h6" fontWeight="bold" color="primary">
-                                                {voucher.voucher_code}
-                                            </Typography>
-                                        </Grid>
-                                        
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Status
-                                            </Typography>
-                                            <Chip 
-                                                label={voucher.status} 
-                                                color={getStatusColor(voucher.status)} 
-                                                size="medium" 
-                                                sx={{ textTransform: 'capitalize', mt: 0.5 }}
-                                            />
-                                        </Grid>
-
-                                        <Grid item xs={12}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Voucher Name
-                                            </Typography>
-                                            <Typography variant="h5" fontWeight="medium">
-                                                {voucher.voucher_name}
-                                            </Typography>
-                                        </Grid>
-
-                                        {voucher.description && (
-                                            <Grid item xs={12}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Description
-                                                </Typography>
-                                                <Typography variant="body1">
-                                                    {voucher.description}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Amount
-                                            </Typography>
-                                            <Typography variant="h4" fontWeight="bold" color="success.main">
-                                                {formatCurrency(voucher.amount)}
-                                            </Typography>
-                                        </Grid>
-
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Type
-                                            </Typography>
-                                            <Chip 
-                                                label={voucher.voucher_type} 
-                                                color={getTypeColor(voucher.voucher_type)} 
-                                                size="medium" 
-                                                sx={{ textTransform: 'capitalize', mt: 0.5 }}
-                                            />
-                                        </Grid>
-                                    </Grid>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* Recipient Information */}
-                        <Grid item xs={12} md={6}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom>
-                                        Recipient Information
+                                    <Typography sx={{color:'#063455', fontWeight:'600', fontSize:'16px'}}>
+                                        {voucher.voucher_code}
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Recipient Name
-                                            </Typography>
-                                            <Typography variant="h6" fontWeight="medium">
-                                                {voucher.recipient}
-                                            </Typography>
-                                        </Grid>
+                                </Grid>
 
-                                        {voucher.voucher_type === 'member' && voucher.member && (
-                                            <>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Membership Number
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {voucher.member.membership_no || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Phone
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {voucher.member.phone || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Email
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {voucher.member.email || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                            </>
-                                        )}
-
-                                        {voucher.voucher_type === 'employee' && voucher.employee && (
-                                            <>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Employee ID
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {voucher.employee.employee_id || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Designation
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {voucher.employee.designation || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Email
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {voucher.employee.email || 'N/A'}
-                                                    </Typography>
-                                                </Grid>
-                                            </>
-                                        )}
-                                    </Grid>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* Validity Information */}
-                        <Grid item xs={12} md={6}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom>
-                                        Validity Information
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Status:
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Valid From
-                                            </Typography>
-                                            <Typography variant="body1" fontWeight="medium">
-                                                {formatDate(voucher.valid_from)}
-                                            </Typography>
-                                        </Grid>
-                                        
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Valid To
-                                            </Typography>
-                                            <Typography variant="body1" fontWeight="medium">
-                                                {formatDate(voucher.valid_to)}
-                                            </Typography>
-                                        </Grid>
+                                    <Chip
+                                        label={voucher.status}
+                                        color={getStatusColor(voucher.status)}
+                                        size="medium"
+                                        sx={{ textTransform: 'capitalize', mt: 0.5 }}
+                                    />
+                                </Grid>
 
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Days Remaining
-                                            </Typography>
-                                            <Typography variant="h6" color={getDaysRemaining() > 7 ? 'success.main' : getDaysRemaining() > 0 ? 'warning.main' : 'error.main'}>
-                                                {getDaysRemaining()} days
-                                            </Typography>
-                                        </Grid>
-
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Is Used
-                                            </Typography>
-                                            <Chip 
-                                                label={voucher.is_used ? 'Yes' : 'No'} 
-                                                color={voucher.is_used ? 'info' : 'default'} 
-                                                size="small" 
-                                                sx={{ mt: 0.5 }}
-                                            />
-                                        </Grid>
-
-                                        {voucher.is_used && (
-                                            <Grid item xs={12}>
-                                                <Typography variant="body2" color="text.secondary">
-                                                    Used At
-                                                </Typography>
-                                                <Typography variant="body1" color="info.main">
-                                                    {formatDateTime(voucher.used_at)}
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                    </Grid>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-
-                        {/* System Information */}
-                        <Grid item xs={12} md={6}>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom>
-                                        System Information
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Voucher Name:
                                     </Typography>
-                                    <Divider sx={{ mb: 2 }} />
-                                    
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Created By
+                                    <Typography sx={{color:'#000', fontWeight:'600', fontSize:'16px'}}>
+                                        {voucher.voucher_name}
+                                    </Typography>
+                                </Grid>
+
+                                {voucher.description && (
+                                    <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                        <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                            Description:
+                                        </Typography>
+                                        <Typography sx={{color:'#000', fontWeight:'600', fontSize:'16px'}}>
+                                            {voucher.description}
+                                        </Typography>
+                                    </Grid>
+                                )}
+
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Amount:
+                                    </Typography>
+                                    <Typography sx={{color:'#063455', fontWeight:'600', fontSize:'16px'}}>
+                                        {formatCurrency(voucher.amount)}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Type:
+                                    </Typography>
+                                    <Chip
+                                        label={voucher.voucher_type}
+                                        color={getTypeColor(voucher.voucher_type)}
+                                        size="medium"
+                                        sx={{ textTransform: 'capitalize', mt: 0.5 }}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                {/* Recipient Information */}
+                <Grid item xs={12} md={4}>
+                    <Card>
+                        <CardContent>
+                            <Typography sx={{color:'#063455', fontWeight:'600', fontSize:'24px'}}>
+                                Recipient Information:
+                            </Typography>
+                            {/* <Divider sx={{ mb: 2 }} /> */}
+
+                            <Grid container spacing={2} sx={{mt:2}}>
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Recipient Name:
+                                    </Typography>
+                                    <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                        {voucher.recipient || 'N/A'}
+                                    </Typography>
+                                </Grid>
+
+                                {voucher.voucher_type === 'member' && voucher.member && (
+                                    <>
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Membership Number:
                                             </Typography>
-                                            <Typography variant="body1">
-                                                {voucher.created_by ? voucher.created_by.name : 'System'}
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                                {voucher.member.membership_no || 'N/A'}
                                             </Typography>
                                         </Grid>
-                                        
-                                        <Grid item xs={6}>
-                                            <Typography variant="body2" color="text.secondary">
-                                                Created At
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Phone:
                                             </Typography>
-                                            <Typography variant="body1">
-                                                {formatDateTime(voucher.created_at)}
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                                {voucher.member.phone || 'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Email:
+                                            </Typography>
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                                {voucher.member.email || 'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                    </>
+                                )}
+
+                                {voucher.voucher_type === 'employee' && voucher.employee && (
+                                    <>
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Employee ID:
+                                            </Typography>
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                                {voucher.employee.employee_id || 'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Designation:
+                                            </Typography>
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                                {voucher.employee.designation || 'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Email:
+                                            </Typography>
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                                {voucher.employee.email || 'N/A'}
+                                            </Typography>
+                                        </Grid>
+                                    </>
+                                )}
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                {/* Validity Information */}
+                <Grid item xs={12} md={4}>
+                    <Card>
+                        <CardContent>
+                            <Typography sx={{color:'#063455', fontWeight:'600', fontSize:'24px'}}>
+                                Validity Information:
+                            </Typography>
+                            {/* <Divider sx={{ mb: 2 }} /> */}
+
+                            <Grid container spacing={2} sx={{mt:2}}>
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Valid From:
+                                    </Typography>
+                                    <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                        {formatDate(voucher.valid_from)}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Valid To:
+                                    </Typography>
+                                    <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                        {formatDate(voucher.valid_to)}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Days Remaining:
+                                    </Typography>
+                                    <Typography color={getDaysRemaining() > 7 ? 'success.main' : getDaysRemaining() > 0 ? 'warning.main' : 'error.main'}>
+                                        {getDaysRemaining()} days
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Is Used:
+                                    </Typography>
+                                    <Chip
+                                        label={voucher.is_used ? 'Yes' : 'No'}
+                                        color={voucher.is_used ? 'info' : 'default'}
+                                        size="small"
+                                        sx={{ mt: 0.5 }}
+                                    />
+                                </Grid>
+
+                                {voucher.is_used && (
+                                    <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                        <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                            Used At:
+                                        </Typography>
+                                        <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                            {formatDateTime(voucher.used_at)}
+                                        </Typography>
+                                    </Grid>
+                                )}
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+
+                {/* System Information */}
+                <Grid item xs={12} md={4}>
+                    <Card>
+                        <CardContent>
+                            <Typography sx={{color:'#063455', fontWeight:'600', fontSize:'24px'}}>
+                                System Information:
+                            </Typography>
+                            {/* <Divider sx={{ mb: 2 }} /> */}
+
+                            <Grid container spacing={2} sx={{mt:2}}>
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Created By:
+                                    </Typography>
+                                    <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                        {voucher.created_by ? voucher.created_by.name : 'System'}
+                                    </Typography>
+                                </Grid>
+
+                                <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                    <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                        Created At:
+                                    </Typography>
+                                    <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                        {formatDateTime(voucher.created_at)}
+                                    </Typography>
+                                </Grid>
+
+                                {voucher.updated_by && (
+                                    <>
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Last Updated By:
+                                            </Typography>
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px'}}>
+                                                {voucher.updated_by.name}
                                             </Typography>
                                         </Grid>
 
-                                        {voucher.updated_by && (
-                                            <>
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Last Updated By
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {voucher.updated_by.name}
-                                                    </Typography>
-                                                </Grid>
-                                                
-                                                <Grid item xs={6}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Updated At
-                                                    </Typography>
-                                                    <Typography variant="body1">
-                                                        {formatDateTime(voucher.updated_at)}
-                                                    </Typography>
-                                                </Grid>
-                                            </>
-                                        )}
-                                    </Grid>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
+                                        <Grid item xs={12} sx={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                                            <Typography sx={{color:'#4b4949', fontSize:'16px'}}>
+                                                Updated At:
+                                            </Typography>
+                                            <Typography sx={{color:'#000', fontWeight:'500', fontSize:'16px', display:'flex', flexWrap:'wrap', ml:5}}>
+                                                {formatDateTime(voucher.updated_at)}
+                                            </Typography>
+                                        </Grid>
+                                    </>
+                                )}
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
         </Box>
     );
 };

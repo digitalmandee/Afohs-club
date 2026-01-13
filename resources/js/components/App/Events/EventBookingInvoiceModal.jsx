@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Stack, TextField, FormControl, InputLabel, Select, MenuItem, ThemeProvider, createTheme, Button, Typography, Box, Grid } from '@mui/material';
-
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import { generateEventInvoiceContent, JSONParse } from '@/helpers/generateEventTemplate';

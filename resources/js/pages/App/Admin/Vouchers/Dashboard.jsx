@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, MenuItem, InputAdornment, IconButton, Tooltip, Alert } from '@mui/material';
+import { Box, Typography, ThemeProvider, createTheme, Button, Card, CardContent, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, MenuItem, InputAdornment, IconButton, Tooltip, Alert } from '@mui/material';
 import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon, CheckCircle as CheckCircleIcon, Cancel as CancelIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import { FaEdit } from 'react-icons/fa';
+
+
 const VoucherDashboard = ({ vouchers, stats, filters }) => {
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [typeFilter, setTypeFilter] = useState(filters?.type || 'all');
@@ -44,7 +46,7 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
 
     // Get voucher type color
     const getTypeColor = (type) => {
-        return type === 'member' ? 'primary' : 'secondary';
+        return type === 'member' ? '#063455' : '#063455';
     };
 
     // Format currency
@@ -82,6 +84,7 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
     };
 
     return (
+        // <ThemeProvider theme={theme}>
         <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -97,14 +100,14 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
             </Typography>
 
             {/* Statistics Cards */}
-            <Grid container spacing={3} sx={{ mb: 3, mt:2 }}>
+            <Grid container spacing={3} sx={{ mb: 3, mt: 2 }}>
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography gutterBottom>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Total Vouchers
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {stats.total_vouchers}
                             </Typography>
                         </CardContent>
@@ -113,10 +116,10 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Active Vouchers
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {stats.active_vouchers}
                             </Typography>
                         </CardContent>
@@ -125,10 +128,10 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography gutterBottom>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Used Vouchers
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {stats.used_vouchers}
                             </Typography>
                         </CardContent>
@@ -137,10 +140,10 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography gutterBottom>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Total Value
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {formatCurrency(stats.total_value)}
                             </Typography>
                         </CardContent>
@@ -153,10 +156,10 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography gutterBottom>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Member Vouchers
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {stats.member_vouchers}
                             </Typography>
                         </CardContent>
@@ -165,10 +168,10 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography gutterBottom>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Employee Vouchers
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {stats.employee_vouchers}
                             </Typography>
                         </CardContent>
@@ -177,10 +180,10 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography gutterBottom>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Expired Vouchers
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {stats.expired_vouchers}
                             </Typography>
                         </CardContent>
@@ -189,10 +192,10 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ bgcolor: '#063455', borderRadius: '16px', color: '#fff' }}>
                         <CardContent>
-                            <Typography gutterBottom>
+                            <Typography sx={{ fontWeight: '600', fontSize: '14px' }}>
                                 Active Value
                             </Typography>
-                            <Typography variant="h4">
+                            <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
                                 {formatCurrency(stats.active_value)}
                             </Typography>
                         </CardContent>
@@ -237,6 +240,25 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderRadius: '16px',
                                 },
+                            }}
+                            SelectProps={{
+                                MenuProps: {
+                                    sx: {
+                                        '& .MuiPaper-root': {
+                                            borderRadius: '16px',
+                                            mt: 0.5,
+                                            // pt: 1,
+                                        },
+                                        '& .MuiMenuItem-root': {
+                                            borderRadius: '16px',
+                                            mx: 0.5,
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important'
+                                            }
+                                        }
+                                    }
+                                }
                             }}>
                             <MenuItem value="all">All Types</MenuItem>
                             <MenuItem value="member">Member</MenuItem>
@@ -253,6 +275,25 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                                 '& .MuiOutlinedInput-notchedOutline': {
                                     borderRadius: '16px',
                                 },
+                            }}
+                            SelectProps={{
+                                MenuProps: {
+                                    sx: {
+                                        '& .MuiPaper-root': {
+                                            borderRadius: '16px',
+                                            mt: 0.5,
+                                            // pt: 1,
+                                        },
+                                        '& .MuiMenuItem-root': {
+                                            borderRadius: '16px',
+                                            mx: 0.5,
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important'
+                                            }
+                                        }
+                                    }
+                                }
                             }}>
                             <MenuItem value="all">All Status</MenuItem>
                             <MenuItem value="active">Active</MenuItem>
@@ -292,100 +333,170 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {vouchers.data.map((voucher) => (
-                            <TableRow key={voucher.id} hover>
-                                <TableCell sx={{ color: '#000', fontWeight: '600' }}>
-                                    <Typography>
-                                        {voucher.voucher_code}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell sx={{ color: '#7f7f7f', fontWeight: '400' }}>
-                                    <Typography>
-                                        {voucher.voucher_name}
-                                    </Typography>
-                                    {voucher.description && (
-                                        <Typography variant="caption" color="textSecondary">
-                                            {voucher.description}
-                                        </Typography>
-                                    )}
-                                </TableCell>
-                                <TableCell>
+                        {vouchers.data.map((voucher) => {
+                            const dateRange = `${formatDate(voucher.valid_from)} - ${formatDate(voucher.valid_to)}`
+                            return (
+                                <TableRow key={voucher.id}>
+                                    <TableCell sx={{ color: '#000', fontWeight: '600' }}>
+                                        <Tooltip title={voucher.voucher_code}>
+                                            <div
+                                                style={{
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    maxWidth: '100px',  // ≈ 10 characters width
+                                                }}
+                                            >
+                                                {voucher.voucher_code}
+                                            </div>
+                                        </Tooltip>
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400' }}>
+                                        <Tooltip title={voucher.voucher_name}>
+                                            <div
+                                                style={{
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    maxWidth: '100px',  // ≈ 10 characters width
+                                                }}
+                                            >
+                                                {voucher.voucher_name}
+                                            </div>
+                                        </Tooltip>
+                                        {voucher.description && (
+                                            <Tooltip title={voucher.description}>
+                                                <div
+                                                    style={{
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '100px',  // ≈ 10 characters width
+                                                    }}
+                                                >
+                                                    {voucher.description}
+                                                </div>
+                                            </Tooltip>
+                                        )}
+                                    </TableCell>
+                                    {/* <TableCell>
                                     <Chip
                                         label={voucher.voucher_type}
                                         color={getTypeColor(voucher.voucher_type)}
                                         size="small"
-                                        sx={{ textTransform: 'capitalize', color: '#063455' }}
+                                        sx={{ textTransform: 'capitalize', color: '#fff' }}
                                     />
-                                </TableCell>
-                                <TableCell sx={{ color: '#7f7f7f', fontWeight: '400' }}>
-                                    <Typography>
+                                </TableCell> */}
+                                    <TableCell>
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                px: 1.5,
+                                                py: 0.5,
+                                                borderRadius: '12px',
+                                                fontSize: '12px',
+                                                fontWeight: 500,
+                                                textTransform: 'capitalize',
+                                                color: '#fff',
+                                                backgroundColor: getTypeColor(voucher.voucher_type)?.main || '#063455',
+                                                minWidth: 'fit-content'
+                                            }}
+                                        >
+                                            {voucher.voucher_type}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400' }}>
                                         {voucher.recipient}
-                                    </Typography>
-                                    {voucher.voucher_type === 'member' && voucher.member && (
-                                        <Typography variant="caption" color="textSecondary">
-                                            ID: {voucher.member.membership_no || 'N/A'}
-                                        </Typography>
-                                    )}
-                                    {voucher.voucher_type === 'employee' && voucher.employee && (
-                                        <Typography variant="caption" color="textSecondary">
-                                            ID: {voucher.employee.employee_id || 'N/A'}
-                                        </Typography>
-                                    )}
-                                </TableCell>
-                                <TableCell sx={{ color: '#7f7f7f', fontWeight: '400' }}>
-                                    <Typography>
-                                        {formatCurrency(voucher.amount)}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell sx={{ color: '#7f7f7f', fontWeight: '400' }}>
-                                    <Typography variant="caption" color="textSecondary">
-                                        {formatDate(voucher.valid_from)} - {formatDate(voucher.valid_to)}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={voucher.status}
-                                        color={getStatusColor(voucher.status)}
-                                        size="small"
-                                        sx={{ textTransform: 'capitalize' }}
-                                    />
-                                </TableCell>
-                                <TableCell>
-                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <Tooltip title="View Details">
-                                            <IconButton size="small" onClick={() => router.visit(route('vouchers.show', voucher.id))}>
-                                                <ViewIcon sx={{ color: '#063455' }} />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Edit">
-                                            <IconButton size="small" onClick={() => router.visit(route('vouchers.edit', voucher.id))}>
-                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
-                                            </IconButton>
-                                        </Tooltip>
-                                        {voucher.status === 'active' && !voucher.is_used && (
-                                            <Tooltip title="Mark as Used">
-                                                <IconButton
-                                                    size="small"
-                                                    color="success"
-                                                    onClick={() => handleMarkAsUsed(voucher.id)}
+                                        {voucher.voucher_type === 'member' && voucher.member && (
+                                            <Tooltip title={voucher.member.membership_no || 'N/A'}>
+                                                <Typography
+                                                    sx={{
+                                                        color: '#7f7f7f',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        maxWidth: '80px'
+                                                    }}
                                                 >
-                                                    <CheckCircleIcon />
-                                                </IconButton>
+                                                    ID: {voucher.member.membership_no || 'N/A'}
+                                                </Typography>
                                             </Tooltip>
                                         )}
-                                        <Tooltip title="Delete">
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                onClick={() => handleDelete(voucher.id)}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
+                                        {voucher.voucher_type === 'employee' && voucher.employee && (
+                                            <Tooltip title={voucher.employee.employee_id || 'N/A'}>
+                                                <div
+                                                    style=
+                                                    {{
+                                                        color: '#7f7f7f',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        textOverflow: 'ellipsis',
+                                                        overflow: 'hidden',
+                                                        maxWidth: '80px',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                    ID: {voucher.employee.employee_id || 'N/A'}
+                                                </div>
+                                            </Tooltip>
+                                        )}
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100px' }}>
+                                        <Tooltip title={formatCurrency(voucher.amount)}>
+                                            {formatCurrency(voucher.amount)}
                                         </Tooltip>
-                                    </Box>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                    </TableCell>
+                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '100px' }}>
+                                        <Tooltip title={dateRange}>
+                                            {dateRange}
+                                        </Tooltip>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={voucher.status}
+                                            color={getStatusColor(voucher.status)}
+                                            size="small"
+                                            sx={{ textTransform: 'capitalize' }}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                            <Tooltip title="View Details">
+                                                <IconButton size="small" onClick={() => router.visit(route('vouchers.show', voucher.id))}>
+                                                    <ViewIcon sx={{ color: '#063455' }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                            <Tooltip title="Edit">
+                                                <IconButton size="small" onClick={() => router.visit(route('vouchers.edit', voucher.id))}>
+                                                    <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
+                                                </IconButton>
+                                            </Tooltip>
+                                            {voucher.status === 'active' && !voucher.is_used && (
+                                                <Tooltip title="Mark as Used">
+                                                    <IconButton
+                                                        size="small"
+                                                        color="success"
+                                                        onClick={() => handleMarkAsUsed(voucher.id)}
+                                                    >
+                                                        <CheckCircleIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
+                                            <Tooltip title="Delete">
+                                                <IconButton
+                                                    size="small"
+                                                    color="error"
+                                                    onClick={() => handleDelete(voucher.id)}
+                                                >
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
                         {vouchers.data.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4 }}>
@@ -415,6 +526,7 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 </Box>
             )}
         </Box>
+        // </ThemeProvider>
     );
 };
 
