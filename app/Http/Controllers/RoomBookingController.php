@@ -72,6 +72,7 @@ class RoomBookingController extends Controller
             'perDayCharge' => $booking->per_day_charge,
             'roomCharge' => $booking->room_charge,
             'securityDeposit' => $booking->security_deposit,
+            'advanceAmount' => $booking->advance_amount,
             'discountType' => $booking->discount_type,
             'discount' => $booking->discount_value,
             'totalOtherCharges' => $booking->total_other_charges,
@@ -149,6 +150,7 @@ class RoomBookingController extends Controller
             'nights' => 'nullable|integer',
             'roomCharge' => 'nullable|numeric',
             'securityDeposit' => 'nullable|numeric',
+            'advanceAmount' => 'nullable|numeric',
             'bookedBy' => 'nullable|string',
             'guestFirstName' => 'nullable|string',
             'guestLastName' => 'nullable|string',
@@ -188,7 +190,7 @@ class RoomBookingController extends Controller
                 $roomId = $data['room']['id'];
 
                 $conflictingBooking = RoomBooking::where('room_id', $roomId)
-                    ->whereNotIn('status', ['cancelled', 'refunded', 'checked_out'])
+                    ->whereNotIn('status', ['cancelled', 'refunded', 'checked_out', 'Cancelled', 'Refunded'])
                     ->where(function ($query) use ($checkIn, $checkOut) {
                         $query
                             ->where('check_in_date', '<', $checkOut)
@@ -227,12 +229,13 @@ class RoomBookingController extends Controller
                 'room_id' => $data['room']['id'] ?? null,
                 'persons' => $data['persons'] ?? 0,
                 'category' => $data['bookingCategory'] ?? null,
-                'nights' => $data['nights'] ?? null,
+                'nights' => (isset($data['checkInDate']) && isset($data['checkOutDate'])) ? max(1, \Carbon\Carbon::parse($data['checkOutDate'])->diffInDays(\Carbon\Carbon::parse($data['checkInDate'])) + 1) : ($data['nights'] ?? null),
                 'per_day_charge' => $data['perDayCharge'] ?? null,
                 'room_charge' => $data['roomCharge'] ?? null,
                 'total_other_charges' => $data['totalOtherCharges'] ?? null,
                 'total_mini_bar' => $data['totalMiniBar'] ?? null,
                 'security_deposit' => $data['securityDeposit'] ?? null,
+                'advance_amount' => $data['advanceAmount'] ?? null,
                 'discount_type' => $data['discountType'] ?? null,
                 'discount_value' => $data['discount'] ?? 0,
                 'grand_total' => $data['grandTotal'],
@@ -273,7 +276,7 @@ class RoomBookingController extends Controller
                 'discount_value' => $data['discount'] ?? 0,
                 'amount' => $booking->grand_total,
                 'total_price' => $booking->grand_total,
-                'advance_payment' => $data['securityDeposit'] ?? 0,
+                'advance_payment' => 0,  // Security Deposit handled separately
                 'paid_amount' => 0,
                 'status' => 'unpaid',
                 'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
@@ -391,13 +394,17 @@ class RoomBookingController extends Controller
             ]);
 
             // ✅ 2. Handle Advance Payment (Receipt + Credit Transaction)
-            if (($data['securityDeposit'] ?? 0) > 0) {
+            if (($data['securityDeposit'] ?? 0) > 0 || ($data['advanceAmount'] ?? 0) > 0) {
+                $securityDeposit = $data['securityDeposit'] ?? 0;
+                $advanceAmount = $data['advanceAmount'] ?? 0;
+                $totalPaid = $securityDeposit + $advanceAmount;
+
                 // Create Receipt
                 $receipt = FinancialReceipt::create([
                     'receipt_no' => time(),
                     'payer_type' => $payerType,
                     'payer_id' => $payerId,
-                    'amount' => $data['securityDeposit'],
+                    'amount' => $totalPaid,
                     'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
                         'Bank Transfer' => 'bank',
                         'Credit Card' => 'credit_card',
@@ -407,14 +414,14 @@ class RoomBookingController extends Controller
                     'payment_details' => $data['paymentAccount'] ?? null,
                     'receipt_date' => now(),
                     'status' => 'active',
-                    'remarks' => 'Advance Payment / Security Deposit for Room Booking #' . $booking->booking_no,
+                    'remarks' => 'Payment (Security: ' . $securityDeposit . ', Advance: ' . $advanceAmount . ') for Room Booking #' . $booking->booking_no,
                     'created_by' => Auth::id(),
                 ]);
 
                 // Create Ledger Entry (Credit)
                 Transaction::create([
                     'type' => 'credit',
-                    'amount' => $data['securityDeposit'],
+                    'amount' => $totalPaid,
                     'date' => now(),
                     'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
                     'payable_type' => $payerType,
@@ -424,19 +431,21 @@ class RoomBookingController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                // Link Receipt to Invoice
-                TransactionRelation::create([
-                    'invoice_id' => $invoice->id,
-                    'receipt_id' => $receipt->id,
-                    'amount' => $data['securityDeposit'],
-                ]);
+                // Link Receipt to Invoice (ONLY Advance Amount)
+                if ($advanceAmount > 0) {
+                    TransactionRelation::create([
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,
+                        'amount' => $advanceAmount,
+                    ]);
+                }
 
                 // Update Invoice Paid Amount
+                // Only Advance Amount counts as 'paid_amount'. Security Deposit is NOT on invoice.
                 $invoice->update([
-                    'paid_amount' => $data['securityDeposit'],
-                    // If advance covers full amount, update status? Usually room booking is strictly advance.
-                    // Let's keep status 'unpaid' unless fully covered?
-                    'status' => ($data['securityDeposit'] >= $booking->grand_total) ? 'paid' : 'unpaid'
+                    'paid_amount' => $advanceAmount,
+                    'advance_payment' => 0,  // Security Deposit is not revenue/advance for invoice
+                    'status' => ($advanceAmount >= $booking->grand_total) ? 'paid' : 'unpaid'
                 ]);
             }
 
@@ -464,6 +473,7 @@ class RoomBookingController extends Controller
             'nights' => 'nullable|integer',
             'roomCharge' => 'nullable|numeric',
             'securityDeposit' => 'nullable|numeric',
+            'advanceAmount' => 'nullable|numeric',
             'bookedBy' => 'nullable|string',
             'guestFirstName' => 'nullable|string',
             'guestLastName' => 'nullable|string',
@@ -495,19 +505,23 @@ class RoomBookingController extends Controller
                 $checkOut = $data['checkOutDate'];
                 $roomId = $data['room']['id'];
 
-                $exists = RoomBooking::where('room_id', $roomId)
+                \Illuminate\Support\Facades\Log::info("Checking conflict for Booking ID: $id, Room: $roomId, In: $checkIn, Out: $checkOut");
+
+                $conflicts = RoomBooking::where('room_id', $roomId)
                     ->where('id', '!=', $id)  // Exclude current booking
-                    ->whereNotIn('status', ['cancelled', 'refunded'])
+                    ->whereNotIn('status', ['cancelled', 'refunded', 'checked_out', 'Cancelled', 'Refunded'])
                     ->where(function ($query) use ($checkIn, $checkOut) {
                         $query
                             ->where('check_in_date', '<', $checkOut)
                             ->where('check_out_date', '>', $checkIn);
                     })
-                    ->exists();
+                    ->get();
 
-                if ($exists) {
+                if ($conflicts->count() > 0) {
+                    $conflictIds = $conflicts->pluck('id')->implode(', ');
+                    \Illuminate\Support\Facades\Log::info('Conflict found with: ' . $conflictIds);
                     DB::rollBack();
-                    return response()->json(['error' => 'Room is already booked for these dates.'], 422);
+                    return response()->json(['error' => "Room is already booked. Checking ID: $id (Room $roomId) vs Found Conflict IDs: $conflictIds"], 422);
                 }
             }
 
@@ -519,6 +533,10 @@ class RoomBookingController extends Controller
                     $documentPaths[] = FileHelper::saveImage($file, 'booking_documents');
                 }
             }
+
+            // Capture old values for payment difference calculation
+            $oldSecurity = $booking->security_deposit ?? 0;
+            $oldAdvance = $booking->advance_amount ?? 0;
 
             $booking->update([
                 // 'booking_date' => $data['bookingDate'] ?? null,
@@ -542,12 +560,13 @@ class RoomBookingController extends Controller
                 'room_id' => $data['room']['id'] ?? null,
                 'persons' => $data['persons'] ?? 0,
                 'category' => $data['bookingCategory'] ?? null,
-                'nights' => $data['nights'] ?? null,
+                'nights' => (isset($data['checkInDate']) && isset($data['checkOutDate'])) ? max(1, \Carbon\Carbon::parse($data['checkOutDate'])->diffInDays(\Carbon\Carbon::parse($data['checkInDate'])) + 1) : ($data['nights'] ?? null),
                 'per_day_charge' => $data['perDayCharge'] ?? null,
                 'room_charge' => $data['roomCharge'] ?? null,
                 'total_other_charges' => $data['totalOtherCharges'] ?? null,
                 'total_mini_bar' => $data['totalMiniBar'] ?? null,
                 'security_deposit' => $data['securityDeposit'] ?? null,
+                'advance_amount' => $data['advanceAmount'] ?? null,
                 'discount_type' => $data['discountType'] ?? null,
                 'discount_value' => $data['discount'] ?? 0,
                 'grand_total' => $data['grandTotal'],
@@ -601,6 +620,77 @@ class RoomBookingController extends Controller
                 $invoice->update($updateData);
             }
 
+            // Calculate Payment Difference and Create Receipt if needed
+            $newSecurity = $data['securityDeposit'] ?? 0;
+            $newAdvance = $data['advanceAmount'] ?? 0;
+            $diffSecurity = max(0, $newSecurity - $oldSecurity);
+            $diffAdvance = max(0, $newAdvance - $oldAdvance);
+            $toBePaid = $diffSecurity + $diffAdvance;
+
+            if ($toBePaid > 0) {
+                // Determine Payer
+                $payerType = null;
+                $payerId = null;
+                if ($booking->member_id) {
+                    $payerType = \App\Models\Member::class;
+                    $payerId = $booking->member_id;
+                } elseif ($booking->corporate_member_id) {
+                    $payerType = \App\Models\CorporateMember::class;
+                    $payerId = $booking->corporate_member_id;
+                } elseif ($booking->customer_id) {
+                    $payerType = \App\Models\Customer::class;
+                    $payerId = $booking->customer_id;
+                }
+
+                // Create Receipt
+                $receipt = FinancialReceipt::create([
+                    'receipt_no' => time(),
+                    'payer_type' => $payerType,
+                    'payer_id' => $payerId,
+                    'amount' => $toBePaid,
+                    'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
+                        'Bank Transfer' => 'bank',
+                        'Credit Card' => 'credit_card',
+                        'Online' => 'bank',
+                        default => 'cash',
+                    },
+                    'payment_details' => $data['paymentAccount'] ?? null,
+                    'receipt_date' => now(),
+                    'status' => 'active',
+                    'remarks' => 'Additional Payment (Security: ' . $diffSecurity . ', Advance: ' . $diffAdvance . ') for Room Booking #' . $booking->booking_no,
+                    'created_by' => Auth::id(),
+                ]);
+
+                // Create Ledger Entry (Credit)
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $toBePaid,
+                    'date' => now(),
+                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'reference_type' => FinancialReceipt::class,
+                    'reference_id' => $receipt->id,
+                    'created_by' => Auth::id(),
+                ]);
+
+                // Link Receipt to Invoice (ONLY Advance Amount Difference)
+                if ($diffAdvance > 0 && $invoice) {
+                    TransactionRelation::create([
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,
+                        'amount' => $diffAdvance,
+                    ]);
+                }
+
+                // Update Invoice Paid Amount
+                if ($invoice) {
+                    $invoice->paid_amount += $diffAdvance;
+                    $invoice->status = ($invoice->paid_amount >= $booking->grand_total) ? 'paid' : 'unpaid';
+                    $invoice->save();
+                }
+            }
+
             DB::commit();
 
             return response()->json(['message' => 'Booking updated successfully.', 'invoice' => ['id' => $invoice->id, 'status' => $invoice->status]], 200);
@@ -633,8 +723,7 @@ class RoomBookingController extends Controller
                         ->where('check_out_date', '>', $monthEnd);
                 });
         })
-            ->where('status', '!=', 'cancelled')
-            ->where('status', '!=', 'cancelled')
+            ->whereNotIn('status', ['cancelled', 'refunded'])
             ->with(['room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email', 'invoice'])
             ->get()
             ->map(fn($b) => [
@@ -705,13 +794,15 @@ class RoomBookingController extends Controller
 
         // 3. Room Occupancy Validation
         if ($booking->room_id) {
-            $isOccupied = RoomBooking::where('room_id', $booking->room_id)
+            $occupant = RoomBooking::where('room_id', $booking->room_id)
                 ->where('status', 'checked_in')
                 ->where('id', '!=', $booking->id)
-                ->exists();
+                ->with(['customer', 'member', 'corporateMember'])
+                ->first();
 
-            if ($isOccupied) {
-                return response()->json(['message' => 'This room is currently occupied by another guest (Status: Checked In). Cannot check in new guest until the room is vacated.'], 422);
+            if ($occupant) {
+                $guestName = ($occupant->customer ? $occupant->customer->name : ($occupant->member ? $occupant->member->full_name : ($occupant->corporateMember ? $occupant->corporateMember->full_name : 'Unknown')));
+                return response()->json(['message' => "This room is currently occupied by another guest (Booking #{$occupant->booking_no}, Guest: $guestName). Cannot check in new guest until the room is vacated."], 422);
             }
         }
 

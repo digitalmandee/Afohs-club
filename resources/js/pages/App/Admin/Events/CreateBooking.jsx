@@ -24,6 +24,9 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Check for completion mode from URL
+    const isCompletionMode = new URLSearchParams(window.location.search).get('mode') === 'complete';
+
     const [guestTypes, setGuestTypes] = useState([]);
     const [showGuestModal, setShowGuestModal] = useState(false);
 
@@ -70,6 +73,9 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         documents: [],
         previewFiles: [],
         notes: '',
+        advanceAmount: '',
+        paymentMode: 'Cash',
+        paymentAccount: '',
     });
 
     // Auto-populate form from URL parameters (from calendar)
@@ -194,6 +200,10 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 totalOtherCharges: '',
                 totalMiniBar: '',
                 mini_bar_items: [{ item: '', amount: '', qty: '', total: '' }],
+                advanceAmount: bookingData.advance_amount || '',
+                // If we want to show payment info in edit mode we would need it in bookingData
+                // paymentMode: bookingData.payment_mode || 'Cash',
+                // paymentAccount: bookingData.payment_account || '',
             });
         }
     }, [editMode, bookingData]);
@@ -337,6 +347,10 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
 
         const payload = objectToFormData(formDataToSubmit);
 
+        if (isCompletionMode) {
+            payload.append('status', 'completed');
+        }
+
         setIsSubmitting(true);
 
         const url = editMode ? route('events.booking.update', { id: bookingData.id }) : route('events.booking.store');
@@ -345,7 +359,8 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         axios
             .post(url, payload)
             .then((res) => {
-                enqueueSnackbar(editMode ? 'Booking updated successfully' : 'Booking submitted successfully', { variant: 'success' });
+                const successMessage = isCompletionMode ? 'Event completed successfully' : editMode ? 'Booking updated successfully' : 'Booking submitted successfully';
+                enqueueSnackbar(successMessage, { variant: 'success' });
 
                 if (editMode) {
                     // Redirect back to events dashboard after edit
@@ -381,11 +396,11 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
     const renderStepContent = (step) => {
         switch (step) {
             case 0:
-                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} editMode={editMode} onAddGuest={() => setShowGuestModal(true)} />;
+                return <BookingDetails formData={formData} handleChange={handleChange} errors={errors} editMode={editMode} isCompletionMode={isCompletionMode} onAddGuest={() => setShowGuestModal(true)} />;
             case 1:
-                return <ChargesInfo formData={formData} handleChange={handleChange} />;
+                return <ChargesInfo formData={formData} handleChange={handleChange} isCompletionMode={isCompletionMode} />;
             case 2:
-                return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} />;
+                return <UploadInfo formData={formData} handleChange={handleChange} handleFileChange={handleFileChange} handleFileRemove={handleFileRemove} isCompletionMode={isCompletionMode} />;
             default:
                 return <Typography>Step not implemented yet</Typography>;
         }
@@ -455,7 +470,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                                     Back
                                 </Button>
                                 <Button style={{ backgroundColor: '#063455', color: '#fff' }} onClick={activeStep === steps.length - 1 ? handleSubmit : handleNext} disabled={isSubmitting} loading={isSubmitting} loadingPosition="start">
-                                    {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+                                    {activeStep === steps.length - 1 ? (isCompletionMode ? 'Complete Event' : 'Finish') : 'Next'}
                                 </Button>
                             </Box>
                         </Box>
@@ -468,7 +483,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
 };
 export default EventBooking;
 
-const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }) => {
+const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest, isCompletionMode }) => {
     const { props } = usePage();
 
     const [familyMembers, setFamilyMembers] = useState([]);
@@ -571,8 +586,8 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }
                             setOptions([]);
                         }}
                     >
-                        <FormControlLabel value="0" control={<Radio disabled={editMode} />} label="Member" />
-                        <FormControlLabel value="2" control={<Radio disabled={editMode} />} label="Corporate Member" />
+                        <FormControlLabel value="0" control={<Radio disabled={editMode || isCompletionMode} />} label="Member" />
+                        <FormControlLabel value="2" control={<Radio disabled={editMode || isCompletionMode} />} label="Corporate Member" />
                         {guestTypes.map((type) => (
                             <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
                         ))}
@@ -590,7 +605,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }
                             options={options}
                             loading={loading}
                             value={formData.guest || null}
-                            disabled={editMode}
+                            disabled={editMode || isCompletionMode}
                             onInputChange={(event, newInputValue, reason) => {
                                 if (reason === 'input') {
                                     handleSearch(event, newInputValue);
@@ -692,10 +707,10 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }
             </Typography>
             <Grid container spacing={2}>
                 <Grid item xs={12} sm={3}>
-                    <TextField label="Booked By*" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth error={!!errors.bookedBy} helperText={errors.bookedBy} />
+                    <TextField label="Booked By*" name="bookedBy" value={formData.bookedBy} onChange={handleChange} fullWidth error={!!errors.bookedBy} helperText={errors.bookedBy} disabled={isCompletionMode} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Nature of Event*" name="natureOfEvent" value={formData.natureOfEvent} onChange={handleChange} fullWidth error={!!errors.natureOfEvent} helperText={errors.natureOfEvent} />
+                    <TextField label="Nature of Event*" name="natureOfEvent" value={formData.natureOfEvent} onChange={handleChange} fullWidth error={!!errors.natureOfEvent} helperText={errors.natureOfEvent} disabled={isCompletionMode} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -704,6 +719,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }
                             format="DD-MM-YYYY"
                             value={formData.eventDate ? dayjs(formData.eventDate) : null}
                             onChange={(newValue) => handleChange({ target: { name: 'eventDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
+                            disabled={isCompletionMode}
                             slotProps={{
                                 textField: {
                                     fullWidth: true,
@@ -718,15 +734,15 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }
                     </LocalizationProvider>
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Timing (From)*" type="time" name="eventTimeFrom" value={formData.eventTimeFrom} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeFrom} helperText={errors.eventTimeFrom} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
+                    <TextField label="Timing (From)*" type="time" name="eventTimeFrom" value={formData.eventTimeFrom} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeFrom} helperText={errors.eventTimeFrom} onClick={(e) => !isCompletionMode && e.target.showPicker && e.target.showPicker()} disabled={isCompletionMode} />
                 </Grid>
                 <Grid item xs={6} sm={3}>
-                    <TextField label="Timing (To)*" type="time" name="eventTimeTo" value={formData.eventTimeTo} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeTo} helperText={errors.eventTimeTo} onClick={(e) => e.target.showPicker && e.target.showPicker()} />
+                    <TextField label="Timing (To)*" type="time" name="eventTimeTo" value={formData.eventTimeTo} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.eventTimeTo} helperText={errors.eventTimeTo} onClick={(e) => !isCompletionMode && e.target.showPicker && e.target.showPicker()} disabled={isCompletionMode} />
                 </Grid>
                 <Grid item xs={6} sm={4}>
                     <FormControl fullWidth error={!!errors.venue}>
                         <InputLabel>Venue*</InputLabel>
-                        <Select value={Number(formData.venue)} onChange={handleChange} name="venue" label="Venue*">
+                        <Select value={Number(formData.venue)} onChange={handleChange} name="venue" label="Venue*" disabled={isCompletionMode}>
                             <MenuItem value="">Choose Venue</MenuItem>
                             {props.eventVenues?.map((venue) => (
                                 <MenuItem key={venue.id} value={venue.id}>
@@ -746,7 +762,7 @@ const BookingDetails = ({ formData, handleChange, errors, editMode, onAddGuest }
     );
 };
 
-const ChargesInfo = ({ formData, handleChange }) => {
+const ChargesInfo = ({ formData, handleChange, isCompletionMode }) => {
     const { props } = usePage();
 
     // Handle menu selection
@@ -873,7 +889,7 @@ const ChargesInfo = ({ formData, handleChange }) => {
             <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                     <InputLabel>Select Menu</InputLabel>
-                    <Select value={formData.selectedMenu} label="Select Menu" onChange={(e) => handleMenuChange(e.target.value)}>
+                    <Select value={formData.selectedMenu} label="Select Menu" onChange={(e) => handleMenuChange(e.target.value)} disabled={isCompletionMode}>
                         <MenuItem value="">Choose Menu</MenuItem>
                         {props.eventMenus?.map((menu) => (
                             <MenuItem key={menu.id} value={menu.id}>
@@ -1067,6 +1083,25 @@ const ChargesInfo = ({ formData, handleChange }) => {
             <Grid item xs={2}>
                 <TextField label="Grand Total" value={Math.round(grandTotal)} fullWidth disabled />
             </Grid>
+            <Grid item xs={3}>
+                <TextField label="Advance Amount" type="number" name="advanceAmount" value={formData.advanceAmount} onChange={handleChange} fullWidth />
+            </Grid>
+            <Grid item xs={3}>
+                <FormControl fullWidth>
+                    <InputLabel>Payment Mode</InputLabel>
+                    <Select name="paymentMode" value={formData.paymentMode || 'Cash'} onChange={handleChange} label="Payment Mode">
+                        <MenuItem value="Cash">Cash</MenuItem>
+                        <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                        <MenuItem value="Credit Card">Credit Card</MenuItem>
+                        <MenuItem value="Online">Online</MenuItem>
+                    </Select>
+                </FormControl>
+            </Grid>
+            {formData.paymentMode !== 'Cash' && (
+                <Grid item xs={3}>
+                    <TextField label="Payment Account / Reference" name="paymentAccount" value={formData.paymentAccount || ''} onChange={handleChange} fullWidth />
+                </Grid>
+            )}
         </Grid>
     );
 };

@@ -259,6 +259,7 @@ const RoomScreen = ({ bookings }) => {
                                     <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Duration</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Advance Paid</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Account</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Total Amount</TableCell>
@@ -269,7 +270,7 @@ const RoomScreen = ({ bookings }) => {
                             <TableBody>
                                 {filteredBookings.length > 0 ? (
                                     filteredBookings.map((booking, index) => {
-                                        const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day');
+                                        const durationInDays = dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day') + 1;
 
                                         return (
                                             <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
@@ -297,7 +298,8 @@ const RoomScreen = ({ bookings }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.persons}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{durationInDays}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.per_day_charge}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.advance_payment : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.security_deposit || '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.advance_amount || '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.grand_total}</TableCell>
@@ -345,7 +347,7 @@ const RoomScreen = ({ bookings }) => {
                                                         <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', color: '#f57c00' }}>
                                                             <FaEdit size={18} />
                                                         </Button>
-                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)} style={{textTransform:'none'}}>
+                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)} style={{ textTransform: 'none' }}>
                                                             View
                                                         </Button>
                                                         {!['cancelled', 'refunded'].includes(booking.status) && (
@@ -361,7 +363,7 @@ const RoomScreen = ({ bookings }) => {
                                                             </Button>
                                                         )}
                                                         {booking.status === 'cancelled' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
-                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ textTransform:'none' }}>
+                                                            <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ textTransform: 'none' }}>
                                                                 Refund
                                                             </Button>
                                                         )}

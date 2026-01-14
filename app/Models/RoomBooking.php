@@ -40,6 +40,7 @@ class RoomBooking extends BaseModel
         'per_day_charge',
         'room_charge',
         'security_deposit',
+        'advance_amount',
         'total_other_charges',
         'total_mini_bar',
         'discount_type',

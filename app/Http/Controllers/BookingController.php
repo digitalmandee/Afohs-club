@@ -99,7 +99,7 @@ class BookingController extends Controller
 
         // Find conflicted rooms (already booked)
         $conflicted = RoomBooking::query()
-            ->whereIn('status', ['confirmed', 'pending', 'checked_in'])
+            ->whereNotIn('status', ['cancelled', 'refunded', 'checked_out', 'Cancelled', 'Refunded'])
             ->where(function ($query) use ($checkin, $checkout) {
                 $query
                     ->where('check_in_date', '<', $checkout)

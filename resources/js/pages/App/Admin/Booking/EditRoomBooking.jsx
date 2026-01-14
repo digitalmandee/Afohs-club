@@ -68,6 +68,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
         perDayCharge: booking.perDayCharge,
         roomCharge: booking.roomCharge,
         securityDeposit: booking.securityDeposit,
+        advanceAmount: booking.advanceAmount,
         discountType: booking.discountType,
         discount: booking.discount,
         totalOtherCharges: booking.totalOtherCharges,
@@ -78,6 +79,8 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
         previewFiles: booking.documents ?? [],
         mini_bar_items: booking.mini_bar_items ?? [],
         other_charges: booking.other_charges ?? [],
+        paymentMode: 'Cash',
+        paymentAccount: '',
     });
 
     const handleNext = () => {
@@ -195,7 +198,17 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             })
             .catch((err) => {
                 console.error('Submit error:', err);
-                // Optionally show backend validation errors
+                if (err.response && err.response.data) {
+                    if (err.response.data.error) {
+                        enqueueSnackbar(err.response.data.error, { variant: 'error' });
+                    } else if (err.response.data.message) {
+                        enqueueSnackbar(err.response.data.message, { variant: 'error' });
+                    } else {
+                        enqueueSnackbar('An error occurred. Please try again.', { variant: 'error' });
+                    }
+                } else {
+                    enqueueSnackbar('An error occurred. Please try again.', { variant: 'error' });
+                }
             })
             .finally(() => {
                 setIsSubmitting(false);
@@ -587,7 +600,7 @@ const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
     const { props } = usePage();
 
     // Automatically calculate nights between check-in and check-out
-    const nights = formData.checkInDate && formData.checkOutDate ? differenceInCalendarDays(new Date(formData.checkOutDate), new Date(formData.checkInDate)) : 0;
+    const nights = formData.checkInDate && formData.checkOutDate ? Math.max(1, dayjs(formData.checkOutDate).diff(dayjs(formData.checkInDate), 'day') + 1) : 0;
 
     // Find charge by selected booking category
     const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
@@ -598,10 +611,12 @@ const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
 
     // Sync calculated values into parent form state
     useEffect(() => {
-        handleChange({ target: { name: 'nights', value: nights } });
-        handleChange({ target: { name: 'perDayCharge', value: perDayCharge } });
-        handleChange({ target: { name: 'roomCharge', value: totalCharge } });
-    }, [formData.bookingCategory, formData.checkInDate, formData.checkOutDate]);
+        if (formData.nights !== nights || formData.perDayCharge !== perDayCharge || formData.roomCharge !== totalCharge) {
+            handleChange({ target: { name: 'nights', value: nights } });
+            handleChange({ target: { name: 'perDayCharge', value: perDayCharge } });
+            handleChange({ target: { name: 'roomCharge', value: totalCharge } });
+        }
+    }, [formData.bookingCategory, formData.checkInDate, formData.checkOutDate, nights, perDayCharge, totalCharge]);
 
     return (
         <Grid container spacing={2}>
@@ -639,9 +654,34 @@ const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
             <Grid item xs={3}>
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
-            <Grid item xs={4}>
-                <TextField type="number" label="Security Deposit" placeholder="Enter Amount of Security (if deposited)" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth disabled={isCheckout} />
+            <Grid item xs={2}>
+                <TextField type="number" label="Security" placeholder="Security" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth disabled={isCheckout} />
             </Grid>
+            <Grid item xs={3}>
+                <TextField type="number" label="Advance" placeholder="Advance" name="advanceAmount" value={formData.advanceAmount} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth disabled={isCheckout} />
+            </Grid>
+
+            {/* Payment Details - Shown if Security/Advance > 0 */}
+            {(formData.securityDeposit > 0 || formData.advanceAmount > 0) && (
+                <>
+                    <Grid item xs={6}>
+                        <FormControl fullWidth>
+                            <InputLabel>Payment Mode</InputLabel>
+                            <Select name="paymentMode" value={formData.paymentMode || 'Cash'} onChange={handleChange} label="Payment Mode" disabled={isCheckout}>
+                                <MenuItem value="Cash">Cash</MenuItem>
+                                <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                <MenuItem value="Credit Card">Credit Card</MenuItem>
+                                <MenuItem value="Online">Online</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Grid>
+                    {formData.paymentMode !== 'Cash' && ( // Only show reference if not Cash
+                        <Grid item xs={6}>
+                            <TextField label="Payment Account / Reference" name="paymentAccount" value={formData.paymentAccount || ''} onChange={handleChange} fullWidth disabled={isCheckout} />
+                        </Grid>
+                    )}
+                </>
+            )}
         </Grid>
     );
 };

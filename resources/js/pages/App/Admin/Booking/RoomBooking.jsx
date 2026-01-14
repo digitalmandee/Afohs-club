@@ -584,7 +584,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
     const { props } = usePage();
 
     // Automatically calculate nights between check-in and check-out
-    const nights = formData.checkInDate && formData.checkOutDate ? differenceInCalendarDays(new Date(formData.checkOutDate), new Date(formData.checkInDate)) : 0;
+    const nights = formData.checkInDate && formData.checkOutDate ? Math.max(1, dayjs(formData.checkOutDate).diff(dayjs(formData.checkInDate), 'day') + 1) : 0;
 
     // Find charge by selected booking category
     const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
@@ -595,10 +595,12 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
 
     // Sync calculated values into parent form state
     useEffect(() => {
-        handleChange({ target: { name: 'nights', value: nights } });
-        handleChange({ target: { name: 'perDayCharge', value: perDayCharge } });
-        handleChange({ target: { name: 'roomCharge', value: totalCharge } });
-    }, [formData.bookingCategory, formData.checkInDate, formData.checkOutDate]);
+        if (formData.nights !== nights || formData.perDayCharge !== perDayCharge || formData.roomCharge !== totalCharge) {
+            handleChange({ target: { name: 'nights', value: nights } });
+            handleChange({ target: { name: 'perDayCharge', value: perDayCharge } });
+            handleChange({ target: { name: 'roomCharge', value: totalCharge } });
+        }
+    }, [formData.bookingCategory, formData.checkInDate, formData.checkOutDate, nights, perDayCharge, totalCharge]);
 
     return (
         <Grid container spacing={2}>
@@ -637,12 +639,15 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
                 <TextField label="Room Charges" name="roomCharge" value={formData.roomCharge} fullWidth InputProps={{ readOnly: true }} disabled />
             </Grid>
             <Grid container spacing={2} item xs={12}>
-                <Grid item xs={4}>
+                <Grid item xs={3}>
                     <TextField type="number" label="Security Deposit" placeholder="Amount" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
                 </Grid>
-                {Number(formData.securityDeposit) > 0 && (
+                <Grid item xs={3}>
+                    <TextField type="number" label="Advance Paid" placeholder="Amount" name="advanceAmount" value={formData.advanceAmount} onChange={handleChange} onKeyDown={(e) => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()} fullWidth />
+                </Grid>
+                {(Number(formData.securityDeposit) > 0 || Number(formData.advanceAmount) > 0) && (
                     <>
-                        <Grid item xs={4}>
+                        <Grid item xs={3}>
                             <FormControl fullWidth>
                                 <InputLabel>Payment Mode</InputLabel>
                                 <Select name="paymentMode" value={formData.paymentMode || 'Cash'} label="Payment Mode" onChange={handleChange}>
@@ -655,7 +660,7 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
                             </FormControl>
                         </Grid>
                         {formData.paymentMode !== 'Cash' && (
-                            <Grid item xs={4}>
+                            <Grid item xs={3}>
                                 <TextField label="Payment Account / Reference" name="paymentAccount" placeholder="Bank Name - Account No / Trx ID" value={formData.paymentAccount || ''} onChange={handleChange} fullWidth />
                             </Grid>
                         )}

@@ -8,6 +8,8 @@ use App\Models\FinancialInvoice;
 use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
+use App\Models\SubscriptionType;
+use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1579,50 +1581,6 @@ class DataMigrationController extends Controller
         }
     }
 
-    private function migrateTransactionTypes()
-    {
-        $oldTypes = DB::connection('old_afohs')->table('trans_types')->get();
-        $count = 0;
-
-        foreach ($oldTypes as $old) {
-            $existing = \App\Models\TransactionType::withTrashed()->find($old->id);
-
-            if ($existing) {
-                // Optional: Update if exists? For now skip to be safe, or update fields.
-                // Let's update fields to ensure new columns are populated
-                $existing->update([
-                    'table_name' => $old->table_name,
-                    'details' => $old->details,
-                    'account' => $old->account,
-                    'cash_or_payment' => $old->cash_or_payment,
-                    'cashrec_due' => $old->cashrec_due,
-                    'mod_id' => $old->mod_id,
-                ]);
-                continue;
-            }
-
-            \App\Models\TransactionType::create([
-                'id' => $old->id,
-                'name' => $old->name,
-                'type' => $old->debit_or_credit == 1 ? 'debit' : 'credit',
-                'status' => 'active',
-                'is_system' => false,
-                'default_amount' => 0,
-                'is_fixed' => false,
-                'table_name' => $old->table_name,
-                'details' => $old->details,
-                'account' => $old->account,  // Maps to 'account' column
-                'cash_or_payment' => $old->cash_or_payment,
-                'cashrec_due' => $old->cashrec_due,
-                'mod_id' => $old->mod_id,
-                'created_at' => $this->validateDate($old->created_at),
-                'updated_at' => $this->validateDate($old->updated_at),
-            ]);
-            $count++;
-        }
-        return $count;
-    }
-
     private function migrateReceipts()
     {
         $oldReceipts = DB::connection('old_afohs')->table('finance_cash_receipts')->get();
@@ -1931,7 +1889,7 @@ class DataMigrationController extends Controller
                     $referenceType = null;
                     $referenceId = null;
 
-                    if ($t->debit_or_credit == 1) {
+                    if ($t->debit_or_credit == 0) {
                         // Invoice (Debit)
                         $oldInvoiceRow = DB::connection('old_afohs')->table('finance_invoices')->where('id', $t->trans_type_id)->first();
                         if ($oldInvoiceRow) {
@@ -1954,11 +1912,12 @@ class DataMigrationController extends Controller
 
                     \App\Models\Transaction::create([
                         'amount' => $t->trans_amount,
-                        'type' => $t->debit_or_credit == 1 ? 'debit' : 'credit',
+                        'type' => $t->debit_or_credit == 0 ? 'credit' : 'debit',
                         'payable_type' => $payable ? get_class($payable) : null,
                         'payable_id' => $payable ? $payable->id : null,
                         'reference_type' => $referenceType,
                         'reference_id' => $referenceId,
+                        'date' => $this->validateDate($t->date),
                         'created_at' => $this->validateDate($t->created_at),
                         'updated_at' => $this->validateDate($t->updated_at),
                     ]);
@@ -2115,12 +2074,40 @@ class DataMigrationController extends Controller
             $custId = $cu ? $cu->id : null;
         }
 
-        // Map Type
-        $feeTypeMap = [
-            3 => 'membership_fee',
-            4 => 'maintenance_fee',
-        ];
-        $feeType = $feeTypeMap[$typeId] ?? 'other';
+        // Map Type & Reference IDs
+        $feeType = 'custom';
+        $finChargeTypeId = null;
+        $subTypeId = null;
+
+        if ($typeId == 3) {
+            $feeType = 'membership_fee';
+        } elseif ($typeId == 4) {
+            $feeType = 'maintenance_fee';
+        } else {
+            // Lookup Legacy Definition to decide strategy
+            $legacyDef = DB::connection('old_afohs')->table('trans_types')->where('id', $typeId)->first();
+
+            if ($legacyDef) {
+                if ($legacyDef->type == 3) {
+                    // --- SUBSCRIPTION STRATEGY ---
+                    // Link to "Monthly Subscription" Generic TransactionType AND Specific SubscriptionType
+                    $feeType = 'subscription_fee';
+
+                    $generic = TransactionType::where('name', 'Monthly Subscription')->first();
+                    $finChargeTypeId = $generic ? $generic->id : null;
+
+                    $subTypeModel = \App\Models\SubscriptionType::where('title', $legacyDef->name)->first();
+                    $subTypeId = $subTypeModel ? $subTypeModel->id : null;
+                } else {
+                    // --- AD-HOC / CHARGES STRATEGY ---
+                    // Link directly to specific TransactionType
+                    $feeType = 'custom';
+
+                    $tt = TransactionType::where('name', $legacyDef->name)->first();
+                    $finChargeTypeId = $tt ? $tt->id : null;
+                }
+            }
+        }
 
         // Header
         $invoice = FinancialInvoice::create([
@@ -2141,7 +2128,8 @@ class DataMigrationController extends Controller
             \App\Models\FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'fee_type' => $feeType,
-                'financial_charge_type_id' => ($feeType === 'other') ? $typeId : null,  // If not mapped, save ID
+                'financial_charge_type_id' => $finChargeTypeId,
+                'subscription_type_id' => $subTypeId,
                 'description' => $row->comments,
                 'amount' => $row->charges_amount ?? 0,
                 'qty' => $row->qty ?? 1,
@@ -2164,7 +2152,7 @@ class DataMigrationController extends Controller
         $oldTrans = DB::connection('old_afohs')
             ->table('transactions')
             ->where('trans_type_id', $legacyInvoiceId)  // Assuming ID linkage
-            ->where('debit_or_credit', 1)  // Debit
+            ->where('debit_or_credit', 0)  // Debit
             ->first();
 
         if ($oldTrans) {
@@ -2175,6 +2163,7 @@ class DataMigrationController extends Controller
                 'payable_id' => $this->getPayableId($newInvoice),
                 'reference_type' => FinancialInvoice::class,
                 'reference_id' => $newInvoice->id,
+                'date' => $newInvoice->issue_date,
                 'created_at' => $this->validateDate($oldTrans->created_at),
                 'updated_at' => $this->validateDate($oldTrans->updated_at),
             ]);
@@ -2310,6 +2299,7 @@ class DataMigrationController extends Controller
             'payable_id' => $payerId,
             'reference_type' => \App\Models\FinancialReceipt::class,
             'reference_id' => $receipt->id,
+            'date' => $receipt->receipt_date,
             'created_at' => $this->validateDate($old->created_at),
             'updated_at' => $this->validateDate($old->updated_at),
         ]);
@@ -2337,5 +2327,96 @@ class DataMigrationController extends Controller
         if ($invoice->customer_id)
             return $invoice->customer_id;
         return null;
+    }
+
+    public function migrateTransactionTypes(Request $request = null)
+    {
+        $count = 0;
+
+        // 1. Migrate Types 1, 2, 4, 6 (Charges, Ad-hoc, Finance, POS)
+        $types = DB::connection('old_afohs')
+            ->table('trans_types')
+            ->whereIn('type', [1, 2, 4, 6])  // Exclude 3 (Subscriptions) and 7 (Payments)
+            ->get();
+
+        foreach ($types as $t) {
+            // Check if exists
+            $exists = TransactionType::where('name', $t->name)->exists();
+            if (!$exists) {
+                TransactionType::create([
+                    'name' => $t->name,
+                    'type' => 2,  // Default to "Charges Type" behavior for new system compatibility
+                    'status' => 'active',
+                    'cash_or_payment' => 0,  // Assuming charge
+                    'table_name' => 'finance_invoice',  // Default
+                ]);
+                $count++;
+            }
+        }
+
+        // 2. Ensure Generic "Monthly Subscription" Type Exists
+        $genericName = 'Monthly Subscription';
+        if (!TransactionType::where('name', $genericName)->exists()) {
+            TransactionType::create([
+                'name' => $genericName,
+                'type' => 2,
+                'status' => 'active',
+                'cash_or_payment' => 0,
+                'table_name' => 'finance_invoice'
+            ]);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    public function migrateSubscriptionTypes(Request $request = null)
+    {
+        $count = 0;
+
+        // Migrate Type 3 (Subscriptions) -> Valid Subscription Types
+        $types = DB::connection('old_afohs')
+            ->table('sports_subscriptions')
+            ->get();
+
+        foreach ($types as $t) {
+            // Check existence
+            $exists = \App\Models\SubscriptionCategory::where('title', $t->name)->exists();
+            if (!$exists) {
+                \App\Models\SubscriptionCategory::create([
+                    'subscription_type_id' => 1,
+                    'title' => $t->name,
+                    'status' => 'active',
+                    'fee' => 0,  // We don't know the default fee from trans_types
+                ]);
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    public function migrateSubscriptionTypesPublic(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $count = $this->migrateSubscriptionTypes($request);
+            DB::commit();
+
+            $total = DB::connection('old_afohs')
+                ->table('trans_types')
+                ->where('type', 3)
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $count,
+                'total' => $total,
+                'message' => 'Subscription Types migrated successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 }

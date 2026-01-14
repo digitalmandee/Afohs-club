@@ -435,10 +435,10 @@ const EventCalendar = () => {
                             <Box sx={{ width: 16, height: 16, backgroundColor: '#17a2b8', borderRadius: 1 }}></Box>
                             <span style={{ fontSize: '12px' }}>Completed</span>
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ width: 16, height: 16, backgroundColor: '#dc3545', borderRadius: 1 }}></Box>
                             <span style={{ fontSize: '12px' }}>Cancelled</span>
-                        </Box>
+                        </Box> */}
                     </Box>
 
                     {/* Calendar */}

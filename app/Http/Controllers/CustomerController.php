@@ -82,7 +82,10 @@ class CustomerController extends Controller
 
     private function getCustomerNo()
     {
-        $customer_no = (int) Customer::withTrashed()->max('customer_no');
-        return $customer_no + 1;
+        $maxCustomerNo = Customer::withTrashed()
+            ->selectRaw('MAX(CAST(customer_no AS UNSIGNED)) as max_no')
+            ->value('max_no');
+
+        return ($maxCustomerNo ?? 0) + 1;
     }
 }

@@ -16,7 +16,7 @@ const BookingPayment = ({ invoice, roomOrders }) => {
 
     const [paymentMethod, setPaymentMethod] = useState('cash');
 
-    const advancePayment = parseFloat(invoice?.advance_payment || 0);
+    const advancePayment = parseFloat(invoice?.paid_amount || 0) + parseFloat(invoice?.advance_payment || 0);
     const totalPrice = parseFloat(invoice?.total_price || 0);
 
     // Calculate Orders Total
@@ -30,7 +30,7 @@ const BookingPayment = ({ invoice, roomOrders }) => {
         setOrdersAmount(includeOrders ? ordersTotal : 0);
     }, [includeOrders, ordersTotal]);
 
-    const remainingAmount = totalPrice + ordersAmount - advancePayment - (parseFloat(invoice?.paid_amount) || 0);
+    const remainingAmount = totalPrice + ordersAmount - advancePayment;
 
     // Update input amount when remaining changes (auto-fill)
     useEffect(() => {
