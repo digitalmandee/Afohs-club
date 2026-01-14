@@ -23,7 +23,9 @@ class FinancialReceipt extends Model
         'created_by',
         'guest_name',
         'guest_contact',
-        'legacy_id'
+        'legacy_id',
+        'advance_amount',
+        'ntn',
         // 'check_no' // If needed later
     ];
 

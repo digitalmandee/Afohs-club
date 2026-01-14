@@ -12,7 +12,8 @@ class TransactionRelation extends Model
     protected $fillable = [
         'invoice_id',
         'receipt_id',
-        'amount'  // How much of the receipt is allocated to this invoice
+        'amount',  // How much of the receipt is allocated to this invoice
+        'legacy_transaction_id'
     ];
 
     public function invoice()

@@ -23,7 +23,8 @@ class Transaction extends Model
         'trans_type_id',  // Link to TransactionType
         'description',
         'date',
-        'remarks'
+        'remarks',
+        'receipt_id'
     ];
 
     // Polymorphic relation to the entity (Member, Customer, CorporateMember)

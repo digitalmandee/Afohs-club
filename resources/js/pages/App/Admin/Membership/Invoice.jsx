@@ -106,7 +106,22 @@ const handlePrintReceipt = (invoice) => {
             validTo: invoice.fee_type === 'subscription_fee' || invoice.fee_type === 'maintenance_fee' ? invoice.valid_to : null,
         },
         items: itemsList.map((item, index) => {
-            const description = item.description || item.invoice_type;
+            const formatFeeType = (type) => {
+                if (!type) return '';
+                return type
+                    .replace(/_/g, ' ')
+                    .split(' ')
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+            };
+
+            let description = item.description;
+            if (!description || description === 'undefined') {
+                if (item.fee_type_formatted) description = item.fee_type_formatted;
+                else if (item.fee_type) description = formatFeeType(item.fee_type);
+                else if (item.invoice_type) description = formatFeeType(item.invoice_type);
+                else description = 'Item';
+            }
             let originalAmount = 0;
             let discount = 0;
             let netAmount = 0;
@@ -179,149 +194,197 @@ const handlePrintReceipt = (invoice) => {
 
     const printWindow = window.open('', '_blank');
 
-    // ... template generation ...
-
     const content = `
         <html>
-          <!-- ... styles ... -->
-          <body>
-            <div class="container">
-              <div class="paper">
-                <!-- ... Headers ... -->
+        <head>
+          <title>Invoice #${invoiceData.details.invoiceNumber}</title>
+          <style>
+            * { box-sizing: border-box; }
+            body { font-family: 'Arial', sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; -webkit-print-color-adjust: exact; }
+            .container { max-width: 900px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 8px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 1px solid #f0f0f0; padding-bottom: 20px; }
+            .logo-section { display: flex; align-items: center; width: 33%; }
+            .logo { height: 60px; }
+            .company-info { text-align: center; width: 33%; }
+            .company-name { font-size: 18px; font-weight: bold; color: #063455; margin: 0 0 5px 0; }
+            .company-address { font-size: 12px; color: #555; line-height: 1.4; margin: 0; }
+            .invoice-title-section { text-align: right; width: 33%; }
+            .invoice-title { font-size: 18px; font-weight: bold; color: #333; margin: 0 0 5px 0; }
+            .status-badge { display: inline-block; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+            .status-paid { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+            .status-unpaid { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+            .status-default { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
 
-                <!-- Invoice Table -->
-                <div class="table-container">
-                  <table class="table">
-                    <thead class="table-head">
-                      <tr>
-                        <th class="table-cell">SR #</th>
-                        <th class="table-cell">Description</th>
-                        ${
-                            invoice.fee_type === 'subscription_fee'
-                                ? `
-                        <th class="table-cell">Type</th>
-                        <th class="table-cell">Category</th>
-                        <th class="table-cell">Fee</th>
-                        <th class="table-cell">Disc</th>
-                        `
-                                : ''
-                        }
-                        <th class="table-cell">Net Amount</th>
-                        <th class="table-cell">Remaining Amount</th>
-                        <th class="table-cell">Paid Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                        ${invoiceData.items
-                            .map(
-                                (item) => `
-                        <tr>
-                          <td class="table-body-cell">${item.srNo}</td>
-                          <td class="table-body-cell">${item.description}</td>
-                          ${
-                              invoice.fee_type === 'subscription_fee'
-                                  ? `
-                          <td class="table-body-cell">${item.subscriptionType}</td>
-                          <td class="table-body-cell">${item.subscriptionCategory}</td>
-                          <td class="table-body-cell">${item.originalAmount}</td>
-                          <td class="table-body-cell">${item.discount}</td>
-                          `
-                                  : ''
-                          }
-                          <td class="table-body-cell">${item.invoiceAmount}</td>
-                          <td class="table-body-cell">${item.remainingAmount}</td>
-                          <td class="table-body-cell">${item.paidAmount}</td>
-                        </tr>
-                        `,
-                            )
-                            .join('')}
-                    </tbody>
-                  </table>
+            .info-grid { display: flex; justify-content: space-between; margin-bottom: 40px; }
+            .info-column { width: 48%; }
+            .section-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; color: #333; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+            .info-row { font-size: 13px; margin-bottom: 6px; display: flex; }
+            .info-label { font-weight: bold; width: 120px; color: #333; }
+            .info-value { color: #555; flex: 1; }
+
+            .table-container { margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; font-size: 13px; }
+            th { text-align: left; padding: 12px 8px; background-color: #f9f9f9; font-weight: bold; color: #333; border-bottom: 2px solid #eee; }
+            td { padding: 12px 8px; border-bottom: 1px solid #eee; color: #444; }
+            .text-right { text-align: right; }
+
+            .summary-container { display: flex; justify-content: flex-end; margin-bottom: 40px; }
+            .summary-box { width: 300px; }
+            .summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 13px; }
+            .summary-label { font-weight: bold; color: #333; }
+            .summary-grand-total { font-weight: bold; font-size: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; margin-top: 5px; padding: 10px 0; }
+
+            .notes-container { display: flex; justify-content: space-between; font-size: 12px; color: #666; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+            .notes-left { width: 60%; }
+            .notes-right { width: 35%; text-align: right; }
+            .note-title { font-weight: bold; margin-bottom: 5px; color: #333; }
+            .amount-words { margin-top: 10px; font-weight: bold; font-style: italic; }
+
+            @media print {
+              @page { size: auto; margin: 5mm; }
+              body { background-color: white; margin: 0; padding: 0; }
+              .container { width: 100%; max-width: 100%; padding: 20px; margin: 0; box-shadow: none; border: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <div class="logo-section">
+                <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Logo" class="logo">
+              </div>
+              <div class="company-info">
+                <div class="company-name">Afohs Club</div>
+                <div class="company-address">PAF Falcon complex, Gulberg III,<br>Lahore, Pakistan</div>
+              </div>
+              <div class="invoice-title-section">
+                <div class="invoice-title">INVOICE</div>
+                <span class="status-badge ${invoice.status === 'paid' ? 'status-paid' : 'status-unpaid'}">
+                  ${(invoice.status || 'Unpaid').replace(/_/g, ' ')}
+                </span>
+              </div>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-column">
+                <div class="section-title">Bill To: ${invoiceData.billTo.membershipId}</div>
+                <div class="info-row"><span class="info-label">Name:</span><span class="info-value">${invoiceData.billTo.name}</span></div>
+                <div class="info-row"><span class="info-label">Membership #:</span><span class="info-value">${invoiceData.billTo.membershipId}</span></div>
+                <div class="info-row"><span class="info-label">Contact #:</span><span class="info-value">${invoiceData.billTo.contactNumber}</span></div>
+                <div class="info-row"><span class="info-label">City:</span><span class="info-value">${invoiceData.billTo.city}</span></div>
+              </div>
+              <div class="info-column">
+                <div class="section-title">Details</div>
+                <div class="info-row"><span class="info-label">Invoice #:</span><span class="info-value">${invoiceData.details.invoiceNumber}</span></div>
+                <div class="info-row"><span class="info-label">Issue Date:</span><span class="info-value">${new Date(invoiceData.details.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span></div>
+                <div class="info-row"><span class="info-label">Payment Method:</span><span class="info-value">${invoiceData.details.paymentMethod ? invoiceData.details.paymentMethod.replace(/_/g, ' ').toUpperCase() : 'CASH'}</span></div>
+                 ${invoiceData.details.validFrom ? `<div class="info-row"><span class="info-label">From:</span><span class="info-value">${new Date(invoiceData.details.validFrom).toLocaleDateString()}</span></div>` : ''}
+                 ${invoiceData.details.validTo ? `<div class="info-row"><span class="info-label">To:</span><span class="info-value">${new Date(invoiceData.details.validTo).toLocaleDateString()}</span></div>` : ''}
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>SR #</th>
+                    <th>Description</th>
+                    ${invoice.fee_type === 'subscription_fee' ? `<th>Type</th><th>Category</th><th>Fee</th><th>Disc</th>` : ''}
+                    <th>Net Amount</th>
+                    <th>Remaining</th>
+                    <th>Paid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoiceData.items
+                      .map(
+                          (item) => `
+                    <tr>
+                      <td>${item.srNo}</td>
+                      <td>${item.description}</td>
+                       ${invoice.fee_type === 'subscription_fee' ? `<td>${item.subscriptionType}</td><td>${item.subscriptionCategory}</td><td>${item.originalAmount}</td><td>${item.discount}</td>` : ''}
+                      <td>${item.invoiceAmount}</td>
+                      <td>${item.remainingAmount}</td>
+                      <td>${item.paidAmount}</td>
+                    </tr>
+                  `,
+                      )
+                      .join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="summary-container">
+              <div class="summary-box">
+                <div class="summary-row">
+                  <span class="summary-label">Subtotal</span>
+                  <span>Rs ${invoiceData.summary.subTotal}</span>
                 </div>
-
-                <!-- Summary Section -->
-                <div class="summary-container">
-                  <div class="summary-box">
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Subtotal</span>
-                      <span class="typography-body2">Rs ${invoiceData.summary.subTotal}</span>
-                    </div>
-                    ${
-                        invoiceData.summary.discountTotal > 0
-                            ? `
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Discount</span>
-                      <span class="typography-body2" style="color: #d32f2f;">- Rs ${invoiceData.summary.discountTotal}</span>
-                    </div>`
-                            : ''
-                    }
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Grand Total</span>
-                      <span class="typography-body2">Rs ${invoiceData.summary.grandTotal}</span>
-                    </div>
-                    ${
-                        invoiceData.summary.taxAmount > 0
-                            ? `
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Tax (${invoiceData.summary.taxPercentage}%)</span>
-                      <span class="typography-body2">Rs ${invoiceData.summary.taxAmount}</span>
-                    </div>`
-                            : ''
-                    }
-                    ${
-                        invoiceData.summary.overdueAmount > 0
-                            ? `
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Overdue (${invoiceData.summary.overduePercentage}%)</span>
-                      <span class="typography-body2">Rs ${invoiceData.summary.overdueAmount}</span>
-                    </div>`
-                            : ''
-                    }
-                    ${
-                        invoiceData.summary.additionalCharges > 0
-                            ? `
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Additional Charges</span>
-                      <span class="typography-body2">Rs ${invoiceData.summary.additionalCharges}</span>
-                    </div>`
-                            : ''
-                    }
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Remaining Amount</span>
-                      <span class="typography-body2">Rs ${invoiceData.summary.remainingAmount}</span>
-                    </div>
-                    <div class="summary-row">
-                      <span class="typography-body2-bold">Paid Amount</span>
-                      <span class="typography-body2">Rs ${invoiceData.summary.paidAmount}</span>
-                    </div>
-                  </div>
+                ${
+                    invoiceData.summary.discountTotal > 0
+                        ? `
+                <div class="summary-row">
+                  <span class="summary-label">Discount</span>
+                  <span style="color: #d32f2f;">- Rs ${invoiceData.summary.discountTotal}</span>
+                </div>`
+                        : ''
+                }
+                ${
+                    invoiceData.summary.taxAmount > 0
+                        ? `
+                <div class="summary-row">
+                  <span class="summary-label">Tax (${invoiceData.summary.taxPercentage}%)</span>
+                  <span>Rs ${invoiceData.summary.taxAmount}</span>
+                </div>`
+                        : ''
+                }
+                 ${
+                     invoiceData.summary.overdueAmount > 0
+                         ? `
+                <div class="summary-row">
+                  <span class="summary-label">Overdue (${invoiceData.summary.overduePercentage}%)</span>
+                  <span>Rs ${invoiceData.summary.overdueAmount}</span>
+                </div>`
+                         : ''
+                 }
+                 ${
+                     invoiceData.summary.additionalCharges > 0
+                         ? `
+                <div class="summary-row">
+                  <span class="summary-label">Additional Charges</span>
+                  <span>Rs ${invoiceData.summary.additionalCharges}</span>
+                </div>`
+                         : ''
+                 }
+                <div class="summary-row summary-grand-total">
+                  <span class="summary-label">Grand Total</span>
+                  <span>Rs ${invoiceData.summary.grandTotal}</span>
                 </div>
-
-                <!-- Notes Section -->
-                <div class="notes-container">
-                  <div class="notes-item">
-                    <div class="typography-body2-bold" style="margin-bottom: 4px;">Note:</div>
-                    <div class="typography-body2">This is a computer-generated receipt. It does not require any signature or stamp.</div>
-                    ${
-                        invoiceData.summary.remarks
-                            ? `
-                    <div class="typography-body2-bold" style="margin-top: 8px; margin-bottom: 4px;">Remarks:</div>
-                    <div class="typography-body2">${invoiceData.summary.remarks}</div>
-                    `
-                            : ''
-                    }
-                    <div style="margin-top: 16px;">
-                      <div class="typography-body2-bold" style="margin-bottom: 4px;">Sent By: Admin</div>
-                    </div>
-                  </div>
-                  <div class="notes-item">
-                    <div class="typography-body2">If paid by credit card or cheque, 5% surcharge will be added to the total amount.</div>
-                    <div class="amount-in-words">AMOUNT IN WORDS: ${invoiceData.amountInWords}</div>
-                  </div>
+                <div class="summary-row">
+                  <span class="summary-label">Remaining Amount</span>
+                  <span>Rs ${invoiceData.summary.remainingAmount}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Paid Amount</span>
+                  <span>Rs ${invoiceData.summary.paidAmount}</span>
                 </div>
               </div>
             </div>
-          </body>
+
+            <div class="notes-container">
+              <div class="notes-left">
+                <div class="note-title">Note:</div>
+                <div>${invoiceData.note}</div>
+                ${invoiceData.summary.remarks ? `<div style="margin-top: 10px;"><strong>Remarks:</strong> ${invoiceData.summary.remarks}</div>` : ''}
+              </div>
+              <div class="notes-right">
+                <div class="note-title">Sent By: ${invoiceData.sentBy}</div>
+                <div style="margin-top: 5px;">${invoiceData.paymentNote}</div>
+                <div class="amount-words">AMOUNT IN WORDS: ${invoiceData.amountInWords}</div>
+              </div>
+            </div>
+          </div>
+        </body>
         </html>
     `;
 
