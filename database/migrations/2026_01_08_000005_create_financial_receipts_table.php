@@ -21,8 +21,6 @@ return new class extends Migration {
             $table->date('receipt_date')->useCurrent();
             $table->text('remarks')->nullable();
 
-            $table->foreignId('created_by')->nullable()->constrained('users');
-
             $table->softDeletes();
             $table->timestamps();
         });

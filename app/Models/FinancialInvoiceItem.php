@@ -35,6 +35,9 @@ class FinancialInvoiceItem extends Model
         'extra_percentage',
         'remarks',
         'data',  // JSON for extra data
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     protected $casts = [

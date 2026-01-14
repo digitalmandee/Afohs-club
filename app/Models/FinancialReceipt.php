@@ -26,6 +26,9 @@ class FinancialReceipt extends Model
         'legacy_id',
         'advance_amount',
         'ntn',
+        'created_by',
+        'updated_by',
+        'deleted_by'
         // 'check_no' // If needed later
     ];
 

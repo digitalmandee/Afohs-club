@@ -25,6 +25,7 @@ use App\Http\Controllers\EventMenuController;
 use App\Http\Controllers\EventMenuTypeController;
 use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FamilyMembersArchiveConroller;
+use App\Http\Controllers\FinancialChargeTypeController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\GuestTypeController;
 use App\Http\Controllers\LeaveApplicationController;
@@ -371,10 +372,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
 
         // Charge Types Management (CRUD)
-        Route::get('charge-types/trashed', [TransactionTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
-        Route::post('charge-types/restore/{id}', [TransactionTypeController::class, 'restore'])->name('finance.charge-types.restore');
-        Route::delete('charge-types/force-delete/{id}', [TransactionTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
-        Route::resource('charge-types', TransactionTypeController::class)->names('finance.charge-types');
+        Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
+        Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore');
+        Route::delete('charge-types/force-delete/{id}', [FinancialChargeTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
+        Route::resource('charge-types', FinancialChargeTypeController::class)->names('finance.charge-types');
     });
 
     // Route for business developers, outside the 'admin/finance' group as per user's snippet structure

@@ -1603,7 +1603,7 @@ class DataMigrationController extends Controller
 
             \App\Models\FinancialReceipt::create([
                 'id' => $old->id,  // Preserve ID
-                'receipt_no' => $old->receipt_no,
+                'receipt_no' => $old->id,
                 'amount' => $old->total ?? 0,
                 'payment_method' => $old->account == 1 ? 'Cash' : ($old->account == 2 ? 'Bank' : 'Other'),
                 'receipt_date' => $this->validateDate($old->invoice_date),
@@ -2056,6 +2056,7 @@ class DataMigrationController extends Controller
                     // So we should prioritize B for credits too.
                     // Let's run migrateRelatedReceipts at the end to catch any payments NOT in transactions table (if any).
                     $this->migrateRelatedReceipts($invoice);
+                    $this->updateInvoiceStatus($invoice);
 
                     $migratedCount++;
                 } catch (\Exception $e) {
@@ -2102,9 +2103,11 @@ class DataMigrationController extends Controller
         $subTypeId = null;
 
         if ($typeId == 3) {
-            $feeType = 'membership_fee';
+            $generic = TransactionType::where('name', 'Membership Fee')->first();
+            $feeType = $generic ? $generic->id : null;
         } elseif ($typeId == 4) {
-            $feeType = 'maintenance_fee';
+            $generic = TransactionType::where('name', 'Monthly Maintenance Fee')->first();
+            $feeType = $generic ? $generic->id : null;
         } else {
             // Lookup Legacy Definition to decide strategy
             $legacyDef = DB::connection('old_afohs')->table('trans_types')->where('id', $typeId)->first();
@@ -2113,20 +2116,20 @@ class DataMigrationController extends Controller
                 if ($legacyDef->type == 3) {
                     // --- SUBSCRIPTION STRATEGY ---
                     // Link to "Monthly Subscription" Generic TransactionType AND Specific SubscriptionType
-                    $feeType = 'subscription_fee';
 
-                    $generic = TransactionType::where('name', 'Monthly Subscription')->first();
-                    $finChargeTypeId = $generic ? $generic->id : null;
+                    $generic = TransactionType::where('name', 'Subscription Fee')->first();
+                    $feeType = $generic ? $generic->id : null;
 
                     $subTypeModel = \App\Models\SubscriptionType::where('title', $legacyDef->name)->first();
                     $subTypeId = $subTypeModel ? $subTypeModel->id : null;
-                } else {
+                } elseif ($legacyDef->type == 2) {
                     // --- AD-HOC / CHARGES STRATEGY ---
                     // Link directly to specific TransactionType
-                    $feeType = 'custom';
+                    $generic = TransactionType::where('name', 'Charges Fee')->first();
+                    $feeType = $generic ? $generic->id : null;
 
-                    $tt = TransactionType::where('name', $legacyDef->name)->first();
-                    $finChargeTypeId = $tt ? $tt->id : null;
+                    $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
+                    $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
                 }
             }
         }
@@ -2143,25 +2146,9 @@ class DataMigrationController extends Controller
             'status' => 'unpaid',  // Will update later
             'created_at' => $this->validateDate($first->created_at),
             'updated_at' => $this->validateDate($first->updated_at),
+            'created_by' => $first->created_by ?? null,
+            'updated_by' => $first->updated_by ?? null,
         ]);
-
-        // Items
-        foreach ($groupRows as $row) {
-            \App\Models\FinancialInvoiceItem::create([
-                'invoice_id' => $invoice->id,
-                'fee_type' => $feeType,
-                'financial_charge_type_id' => $finChargeTypeId,
-                'subscription_type_id' => $subTypeId,
-                'description' => $row->comments,
-                'amount' => $row->charges_amount ?? 0,
-                'qty' => $row->qty ?? 1,
-                'sub_total' => $row->sub_total ?? 0,
-                'total' => $row->grand_total ?? 0,
-                'tax_amount' => ($row->sub_total * ($row->tax_percentage ?? 0)) / 100,
-                'start_date' => $this->validateDate($row->start_date),
-                'end_date' => $this->validateDate($row->end_date),
-            ]);
-        }
 
         $itemsMap = [];
 
@@ -2180,6 +2167,8 @@ class DataMigrationController extends Controller
                 'tax_amount' => ($row->sub_total * ($row->tax_percentage ?? 0)) / 100,
                 'start_date' => $this->validateDate($row->start_date),
                 'end_date' => $this->validateDate($row->end_date),
+                'created_by' => $row->created_by ?? null,
+                'updated_by' => $row->updated_by ?? null,
             ]);
             $itemsMap[$row->id] = $item;
         }
@@ -2214,15 +2203,12 @@ class DataMigrationController extends Controller
                     'payable_id' => $payableId,
                     'reference_type' => \App\Models\FinancialInvoiceItem::class,
                     'reference_id' => $newItem->id,
-                    'trans_type_id' => $newInvoice->id,  // Storing Main Invoice ID here as requested ("add invoice id main" -> using trans_type_id or similar field if available, user approved generic approach but mentioned main invoice id)
-                    // Wait, Transaction model has trans_type_id which links to TransactionType usually.
-                    // If we want to store Invoice ID, we might need to put it in remarks or data if strictly needed,
-                    // BUT newItem->invoice_id exists.
-                    // Let's try to pass it if schema allows? No, stick to newItem linkage.
-                    // Actually, let's put it in description/remarks if helpful? No.
+                    'invoice_id' => $newInvoice->id,
                     'date' => $this->validateDate($t->date),
                     'created_at' => $this->validateDate($t->created_at),
                     'updated_at' => $this->validateDate($t->updated_at),
+                    'created_by' => $t->created_by ?? null,
+                    'updated_by' => $t->updated_by ?? null,
                 ]);
             } else {
                 // CREDIT (Payment)
@@ -2256,12 +2242,14 @@ class DataMigrationController extends Controller
                     'payable_id' => $payableId,
                     'reference_type' => \App\Models\FinancialInvoiceItem::class,
                     'reference_id' => $newItem->id,
-                    'trans_type_id' => $newInvoice->id,
+                    'invoice_id' => $newInvoice->id,
                     'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
                     'date' => $this->validateDate($t->date),
                     'remarks' => $remarks,
                     'created_at' => $this->validateDate($t->created_at),
                     'updated_at' => $this->validateDate($t->updated_at),
+                    'created_by' => $t->created_by ?? null,
+                    'updated_by' => $t->updated_by ?? null,
                 ]);
 
                 // Update Invoice-Level Relation if receipt exists
@@ -2355,6 +2343,19 @@ class DataMigrationController extends Controller
         }
     }
 
+    private function updateInvoiceStatus($invoice)
+    {
+        $totalPaid = \App\Models\TransactionRelation::where('invoice_id', $invoice->id)->sum('amount');
+
+        if ($totalPaid >= $invoice->total_price) {
+            $invoice->update(['status' => 'paid']);
+        } elseif ($totalPaid > 0) {
+            $invoice->update(['status' => 'partial']);
+        } else {
+            $invoice->update(['status' => 'unpaid']);
+        }
+    }
+
     private function migrateSingleReceipt($old, $knownPayerType = null, $knownPayerId = null, $createTransaction = true)
     {
         // 1. Resolve Payer
@@ -2419,7 +2420,7 @@ class DataMigrationController extends Controller
 
         $receiptData = [
             // 'id' => $old->id, // REMOVED: User requested auto-increment
-            'receipt_no' => $old->invoice_no,  // finance_cash_receipts.invoice_no is the receipt #
+            'receipt_no' => $old->id,  // finance_cash_receipts.invoice_no is the receipt #
             'amount' => $old->total ?? 0,
             'payment_method' => $paymentMethod,
             'receipt_date' => $this->validateDate($old->invoice_date),
@@ -2438,6 +2439,7 @@ class DataMigrationController extends Controller
             'created_at' => $this->validateDate($old->created_at),
             'updated_at' => $this->validateDate($old->updated_at),
             'deleted_at' => $old->deleted_at ? $this->validateDate($old->deleted_at) : null,
+            'deleted_by' => $old->deleted_by ?? null,
         ];
 
         $newId = \App\Models\FinancialReceipt::insertGetId($receiptData);
