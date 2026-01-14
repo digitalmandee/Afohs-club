@@ -86,8 +86,9 @@ const EditVoucher = ({ voucher }) => {
                 >
                     <BackIcon />
                 </IconButton>
-                <Typography sx={{color:'#063455', fontSize:'30px', fontWeight:'700'}}>
-                    Edit Voucher - {voucher.voucher_code}
+                <Typography sx={{ color: '#063455', fontSize: '30px', fontWeight: '700' }}>
+                    Edit Voucher
+                    {/* - {voucher.voucher_code} */}
                 </Typography>
             </Box>
 
@@ -96,23 +97,23 @@ const EditVoucher = ({ voucher }) => {
                 <Grid item xs={12} md={4}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>
+                            <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '24px' }}>
                                 Voucher Information
                             </Typography>
                             <Divider sx={{ mb: 2 }} />
 
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Voucher Code
+                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                    Voucher Code:
                                 </Typography>
-                                <Typography variant="body1" fontWeight="bold">
+                                <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '16px' }}>
                                     {voucher.voucher_code}
                                 </Typography>
                             </Box>
 
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Type
+                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                    Type:
                                 </Typography>
                                 <Chip
                                     label={voucher.voucher_type}
@@ -122,9 +123,9 @@ const EditVoucher = ({ voucher }) => {
                                 />
                             </Box>
 
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Current Status
+                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                    Current Status:
                                 </Typography>
                                 <Chip
                                     label={voucher.status}
@@ -134,14 +135,14 @@ const EditVoucher = ({ voucher }) => {
                                 />
                             </Box>
 
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Recipient
+                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                    Recipient:
                                 </Typography>
-                                <Typography variant="body1" fontWeight="medium">
+                                <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '16px' }}>
                                     {voucher.recipient}
                                 </Typography>
-                                <Typography variant="caption" color="textSecondary">
+                                <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '16px' }}>
                                     {voucher.voucher_type === 'member' && voucher.member
                                         ? `Membership: ${voucher.member.membership_no || 'N/A'}`
                                         : voucher.voucher_type === 'employee' && voucher.employee
@@ -151,24 +152,24 @@ const EditVoucher = ({ voucher }) => {
                                 </Typography>
                             </Box>
 
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="body2" color="text.secondary">
-                                    Created By
+                            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                    Created By:
                                 </Typography>
-                                <Typography variant="body1">
+                                <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '16px' }}>
                                     {voucher.created_by ? voucher.created_by.name : 'System'}
                                 </Typography>
-                                <Typography variant="caption" color="textSecondary">
+                                <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '16px' }}>
                                     {formatDate(voucher.created_at)}
                                 </Typography>
                             </Box>
 
                             {voucher.is_used && (
-                                <Box>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Used At
+                                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                        Used At:
                                     </Typography>
-                                    <Typography variant="body1" color="info.main">
+                                    <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '16px' }}>
                                         {formatDate(voucher.used_at)}
                                     </Typography>
                                 </Box>
@@ -181,7 +182,7 @@ const EditVoucher = ({ voucher }) => {
                 <Grid item xs={12} md={8}>
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>
+                            <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '24px' }}>
                                 Edit Voucher Details
                             </Typography>
                             <Divider sx={{ mb: 3 }} />
@@ -300,32 +301,88 @@ const EditVoucher = ({ voucher }) => {
 
                                     {/* Preview */}
                                     {data.voucher_name && data.amount && (
+                                        // <Grid item xs={12}>
+                                        //     <Card variant="outlined" sx={{ backgroundColor: '#f8f9fa', mt: 2 }}>
+                                        //         <CardContent>
+                                        //             <Typography sx={{ color: '#063455', fontWeight: 600, fontSize: '16px' }}>
+                                        //                 Updated Voucher Preview
+                                        //             </Typography>
+                                        //             <Grid container spacing={2}>
+                                        //                 <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        //                     <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                        //                         Voucher Name:
+                                        //                     </Typography>
+                                        //                     <Typography variant="body1" fontWeight="bold">
+                                        //                         {data.voucher_name}
+                                        //                     </Typography>
+                                        //                 </Grid>
+                                        //                 <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        //                     <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                        //                         Amount:
+                                        //                     </Typography>
+                                        //                     <Typography variant="body1" fontWeight="bold" color="primary">
+                                        //                         Rs {parseFloat(data.amount || 0).toFixed(2)}
+                                        //                     </Typography>
+                                        //                 </Grid>
+                                        //                 <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        //                     <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                        //                         Status:
+                                        //                     </Typography>
+                                        //                     <Chip
+                                        //                         label={data.status}
+                                        //                         color={getStatusColor(data.status)}
+                                        //                         size="small"
+                                        //                         sx={{ textTransform: 'capitalize' }}
+                                        //                     />
+                                        //                 </Grid>
+                                        //                 <Grid item xs={6} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        //                     <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                        //                         Valid Period:
+                                        //                     </Typography>
+                                        //                     <Typography variant="body1">
+                                        //                         {data.valid_from && data.valid_to
+                                        //                             ? `${data.valid_from} to ${data.valid_to}`
+                                        //                             : 'Not set'
+                                        //                         }
+                                        //                     </Typography>
+                                        //                 </Grid>
+                                        //             </Grid>
+                                        //         </CardContent>
+                                        //     </Card>
+                                        // </Grid>
                                         <Grid item xs={12}>
                                             <Card variant="outlined" sx={{ backgroundColor: '#f8f9fa', mt: 2 }}>
                                                 <CardContent>
-                                                    <Typography variant="subtitle1" gutterBottom>
+                                                    <Typography sx={{ color: '#063455', fontWeight: 600, fontSize: '16px' }}>
                                                         Updated Voucher Preview
                                                     </Typography>
-                                                    <Grid container spacing={2}>
-                                                        <Grid item xs={6}>
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                Voucher Name
+
+                                                    {/* Row 1: Voucher Name | Divider | Amount */}
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, my: 2 }}>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                                                            <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                                                Voucher Name:
                                                             </Typography>
                                                             <Typography variant="body1" fontWeight="bold">
                                                                 {data.voucher_name}
                                                             </Typography>
-                                                        </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                Amount
+                                                        </Box>
+                                                        <Divider orientation="vertical" flexItem sx={{ height: 24 }} />
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                                                            <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                                                Amount:
                                                             </Typography>
                                                             <Typography variant="body1" fontWeight="bold" color="primary">
                                                                 Rs {parseFloat(data.amount || 0).toFixed(2)}
                                                             </Typography>
-                                                        </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                Status
+                                                        </Box>
+                                                    </Box>
+
+                                                    {/* Row 2: Status | Divider | Valid Period */}
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                                                            <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                                                Status:
                                                             </Typography>
                                                             <Chip
                                                                 label={data.status}
@@ -333,10 +390,11 @@ const EditVoucher = ({ voucher }) => {
                                                                 size="small"
                                                                 sx={{ textTransform: 'capitalize' }}
                                                             />
-                                                        </Grid>
-                                                        <Grid item xs={6}>
-                                                            <Typography variant="body2" color="text.secondary">
-                                                                Valid Period
+                                                        </Box>
+                                                        <Divider orientation="vertical" flexItem sx={{ height: 24 }} />
+                                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flex: 1 }}>
+                                                            <Typography sx={{ color: '#4b4949', fontSize: '16px' }}>
+                                                                Valid Period:
                                                             </Typography>
                                                             <Typography variant="body1">
                                                                 {data.valid_from && data.valid_to
@@ -344,20 +402,20 @@ const EditVoucher = ({ voucher }) => {
                                                                     : 'Not set'
                                                                 }
                                                             </Typography>
-                                                        </Grid>
-                                                    </Grid>
+                                                        </Box>
+                                                    </Box>
                                                 </CardContent>
                                             </Card>
                                         </Grid>
                                     )}
-
                                     {/* Action Buttons */}
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-                                            <Button variant="outlined" onClick={() => router.visit(route('vouchers.dashboard'))} disabled={processing}>
+                                            <Button variant="outlined" onClick={() => router.visit(route('vouchers.dashboard'))} disabled={processing}
+                                                sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
                                                 Cancel
                                             </Button>
-                                            <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={processing} sx={{ backgroundColor: '#063455' }}>
+                                            <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={processing} sx={{ backgroundColor: '#063455', textTransform: 'none' }}>
                                                 {processing ? 'Updating...' : 'Update Voucher'}
                                             </Button>
                                         </Box>

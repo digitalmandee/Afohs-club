@@ -202,7 +202,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                             Invoice Items
                         </Typography>
                     </Box>
-                    <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
+                    <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: '16px', textTransform: 'none', bgcolor:'#063455', color:'#fff'}}>
                         Add Another Item
                     </Button>
                 </Box>

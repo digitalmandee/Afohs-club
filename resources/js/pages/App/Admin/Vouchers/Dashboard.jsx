@@ -144,7 +144,7 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                                 Total Value
                             </Typography>
                             <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
-                                {formatCurrency(stats.total_value)}
+                                {formatCurrency(stats.total_value).replace(/\.00$/, '')}
                             </Typography>
                         </CardContent>
                     </Card>
@@ -196,7 +196,7 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                                 Active Value
                             </Typography>
                             <Typography sx={{ fontWeight: '600', fontSize: '24px' }}>
-                                {formatCurrency(stats.active_value)}
+                                {formatCurrency(stats.active_value).replace(/\.00$/, '')}
                             </Typography>
                         </CardContent>
                     </Card>
