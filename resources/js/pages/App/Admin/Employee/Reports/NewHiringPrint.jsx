@@ -1,10 +1,35 @@
-import { useEffect } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, CircularProgress } from '@mui/material';
+import axios from 'axios';
 
-const NewHiringPrint = ({ employees = [], filters = {}, generatedAt = '' }) => {
+const NewHiringPrint = ({ filters = {}, generatedAt = '' }) => {
+    const [employees, setEmployees] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        setTimeout(() => window.print(), 500);
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(route('employees.reports.api.new-hiring', filters));
+                // API returns { data: { employees: [...] } }
+                setEmployees(response.data.data.employees || []);
+                setLoading(false);
+                setTimeout(() => window.print(), 500);
+            } catch (error) {
+                console.error('Error fetching report data', error);
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+                <Typography sx={{ ml: 2 }}>Generating Report...</Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ p: 3, backgroundColor: '#fff' }}>
@@ -63,3 +88,5 @@ const NewHiringPrint = ({ employees = [], filters = {}, generatedAt = '' }) => {
 };
 
 export default NewHiringPrint;
+
+NewHiringPrint.layout = (page) => page;

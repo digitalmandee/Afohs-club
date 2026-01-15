@@ -1,13 +1,36 @@
-import { useEffect } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip } from '@mui/material';
-import { TrendingUp as TrendingUpIcon } from '@mui/icons-material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
+import axios from 'axios';
 
 const formatCurrency = (amount) => `Rs ${parseFloat(amount || 0).toLocaleString()}`;
 
-const IncrementsPrint = ({ increments = [], filters = {}, generatedAt = '' }) => {
+const IncrementsPrint = ({ filters = {}, generatedAt = '' }) => {
+    const [increments, setIncrements] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        setTimeout(() => window.print(), 500);
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(route('employees.reports.api.increments', filters));
+                setIncrements(response.data.data.increments || []);
+                setLoading(false);
+                setTimeout(() => window.print(), 500);
+            } catch (error) {
+                console.error('Error fetching report data', error);
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+                <Typography sx={{ ml: 2 }}>Generating Increments Report...</Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ p: 3, backgroundColor: '#fff' }}>

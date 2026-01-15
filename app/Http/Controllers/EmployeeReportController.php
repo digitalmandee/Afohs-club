@@ -157,21 +157,7 @@ class EmployeeReportController extends Controller
 
     public function employeeDetailsPrint(Request $request)
     {
-        $query = Employee::with(['department', 'subdepartment', 'salaryStructure'])
-            ->select('employees.*');
-
-        if ($request->department_id) {
-            $query->where('department_id', $request->department_id);
-        }
-
-        if ($request->employment_type) {
-            $query->where('employment_type', $request->employment_type);
-        }
-
-        $employees = $query->orderBy('name')->get();
-
         return Inertia::render('App/Admin/Employee/Reports/EmployeeDetailsPrint', [
-            'employees' => $employees,
             'filters' => $request->only(['department_id', 'status', 'employment_type']),
             'generatedAt' => now()->format('d M Y, h:i A')
         ]);
@@ -217,13 +203,7 @@ class EmployeeReportController extends Controller
         $dateFrom = $request->date_from ?? Carbon::now()->subMonths(3)->format('Y-m-d');
         $dateTo = $request->date_to ?? Carbon::now()->format('Y-m-d');
 
-        $employees = Employee::with(['department', 'subdepartment'])
-            ->whereBetween('joining_date', [$dateFrom, $dateTo])
-            ->orderBy('joining_date', 'desc')
-            ->get();
-
         return Inertia::render('App/Admin/Employee/Reports/NewHiringPrint', [
-            'employees' => $employees,
             'filters' => [
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo
@@ -271,23 +251,9 @@ class EmployeeReportController extends Controller
         $periodId = $request->period_id;
         $period = PayrollPeriod::find($periodId);
 
-        $payslips = Payslip::with(['employee', 'employee.department'])
-            ->where('payroll_period_id', $periodId)
-            ->orderBy('employee_name')
-            ->get();
-
-        $totals = [
-            'total_basic' => $payslips->sum('basic_salary'),
-            'total_allowances' => $payslips->sum('total_allowances'),
-            'total_deductions' => $payslips->sum('total_deductions'),
-            'total_gross' => $payslips->sum('gross_salary'),
-            'total_net' => $payslips->sum('net_salary'),
-        ];
-
         return Inertia::render('App/Admin/Employee/Reports/SalarySheetPrint', [
-            'payslips' => $payslips,
             'period' => $period,
-            'totals' => $totals,
+            'filters' => ['period_id' => $periodId],
             'generatedAt' => now()->format('d M Y, h:i A')
         ]);
     }
@@ -340,23 +306,9 @@ class EmployeeReportController extends Controller
         $periodId = $request->period_id;
         $period = PayrollPeriod::find($periodId);
 
-        $deductions = DB::table('payslip_deductions')
-            ->join('payslips', 'payslip_deductions.payslip_id', '=', 'payslips.id')
-            ->join('employees', 'payslips.employee_id', '=', 'employees.id')
-            ->leftJoin('departments', 'employees.department_id', '=', 'departments.id')
-            ->where('payslips.payroll_period_id', $periodId)
-            ->select(
-                'payslip_deductions.*',
-                'payslips.employee_name',
-                'payslips.employee_id_number',
-                'departments.name as department_name'
-            )
-            ->orderBy('payslips.employee_name')
-            ->get();
-
         return Inertia::render('App/Admin/Employee/Reports/DeductionsPrint', [
-            'deductions' => $deductions,
             'period' => $period,
+            'filters' => ['period_id' => $periodId],
             'generatedAt' => now()->format('d M Y, h:i A')
         ]);
     }
@@ -412,6 +364,14 @@ class EmployeeReportController extends Controller
         ]);
     }
 
+    public function advancesPrint(Request $request)
+    {
+        return Inertia::render('App/Admin/Employee/Reports/AdvancesPrint', [
+            'filters' => $request->only(['employee_id', 'status', 'date_from', 'date_to']),
+            'generatedAt' => now()->format('d M Y, h:i A')
+        ]);
+    }
+
     /**
      * Loans Report - Employee loans and recovery status
      */
@@ -463,6 +423,14 @@ class EmployeeReportController extends Controller
         ]);
     }
 
+    public function loansPrint(Request $request)
+    {
+        return Inertia::render('App/Admin/Employee/Reports/LoansPrint', [
+            'filters' => $request->only(['employee_id', 'status', 'date_from', 'date_to']),
+            'generatedAt' => now()->format('d M Y, h:i A')
+        ]);
+    }
+
     /**
      * Increments Report - Salary history changes
      */
@@ -510,28 +478,7 @@ class EmployeeReportController extends Controller
         $dateFrom = $request->date_from ?? Carbon::now()->subYear()->format('Y-m-d');
         $dateTo = $request->date_to ?? Carbon::now()->format('Y-m-d');
 
-        $increments = EmployeeSalaryStructure::with(['employee', 'employee.department'])
-            ->whereBetween('effective_date', [$dateFrom, $dateTo])
-            ->orderBy('effective_date', 'desc')
-            ->get()
-            ->map(function ($structure) {
-                $previous = EmployeeSalaryStructure::where('employee_id', $structure->employee_id)
-                    ->where('effective_date', '<', $structure->effective_date)
-                    ->orderBy('effective_date', 'desc')
-                    ->first();
-
-                return [
-                    'id' => $structure->id,
-                    'employee' => $structure->employee,
-                    'effective_date' => $structure->effective_date,
-                    'current_salary' => $structure->basic_salary,
-                    'previous_salary' => $previous?->basic_salary ?? 0,
-                    'increment' => $structure->basic_salary - ($previous?->basic_salary ?? 0),
-                ];
-            });
-
         return Inertia::render('App/Admin/Employee/Reports/IncrementsPrint', [
-            'increments' => $increments,
             'filters' => [
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo
@@ -587,30 +534,9 @@ class EmployeeReportController extends Controller
         $periodId = $request->period_id;
         $period = PayrollPeriod::find($periodId);
 
-        $employees = Payslip::with(['employee'])
-            ->where('payroll_period_id', $periodId)
-            ->get()
-            ->map(function ($payslip) {
-                return [
-                    'employee_name' => $payslip->employee_name,
-                    'employee_id_number' => $payslip->employee_id_number,
-                    'department' => $payslip->department,
-                    'bank_name' => $payslip->employee->bank_name ?? '-',
-                    'account_no' => $payslip->employee->account_no ?? '-',
-                    'branch_code' => $payslip->employee->branch_code ?? '-',
-                    'net_salary' => $payslip->net_salary,
-                ];
-            });
-
-        $totals = [
-            'total_employees' => $employees->count(),
-            'total_amount' => $employees->sum('net_salary')
-        ];
-
         return Inertia::render('App/Admin/Employee/Reports/BankTransferPrint', [
-            'employees' => $employees,
             'period' => $period,
-            'totals' => $totals,
+            'filters' => ['period_id' => $periodId],
             'generatedAt' => now()->format('d M Y, h:i A')
         ]);
     }

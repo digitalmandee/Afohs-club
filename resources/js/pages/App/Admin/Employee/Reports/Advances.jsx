@@ -72,8 +72,31 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                         <Button variant="contained" startIcon={<OpenInNewIcon />} onClick={() => router.visit(route('employees.advances.index'))} sx={{ backgroundColor: '#28a745' }}>
                             Manage Advances
                         </Button>
-                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<PrintIcon />}
+                            href={route('employees.reports.advances.print', {
+                                employee_id: selectedEmployee || undefined,
+                                status: selectedStatus || undefined,
+                                date_from: dateFrom || undefined,
+                                date_to: dateTo || undefined,
+                            })}
+                            target="_blank"
+                            sx={{ borderColor: '#063455', color: '#063455' }}
+                        >
                             Print
+                        </Button>
+                        <Button
+                            variant="contained"
+                            href={route('employees.reports.api.advances.export', {
+                                employee_id: selectedEmployee || undefined,
+                                status: selectedStatus || undefined,
+                                date_from: dateFrom || undefined,
+                                date_to: dateTo || undefined,
+                            })}
+                            sx={{ backgroundColor: '#008f3d', color: '#fff', '&:hover': { backgroundColor: '#00642b' } }}
+                        >
+                            Export Excel
                         </Button>
                     </Box>
                 </Box>

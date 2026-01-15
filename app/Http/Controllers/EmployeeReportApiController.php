@@ -554,4 +554,163 @@ class EmployeeReportApiController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    /**
+     * Loans Report - JSON API
+     */
+    public function loans(Request $request)
+    {
+        $hasLoansTable = Schema::hasTable('employee_loans');
+        $loans = collect();
+        $summary = null;
+
+        if ($hasLoansTable) {
+            $query = \App\Models\EmployeeLoan::with(['employee', 'employee.department', 'approver']);
+
+            if ($request->employee_id) {
+                $query->where('employee_id', $request->employee_id);
+            }
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+            if ($request->date_from) {
+                $query->whereDate('loan_date', '>=', $request->date_from);
+            }
+            if ($request->date_to) {
+                $query->whereDate('loan_date', '<=', $request->date_to);
+            }
+
+            $loans = $query->orderBy('loan_date', 'desc')->get();
+
+            $summary = [
+                'total_amount' => $loans->sum('amount'),
+                'total_remaining' => $loans->sum('remaining_amount'),
+                'total_recovered' => $loans->sum('total_paid'),
+                'count' => $loans->count(),
+                'pending_count' => $loans->where('status', 'pending')->count(),
+                'active_count' => $loans->where('status', 'disbursed')->where('remaining_amount', '>', 0)->count(),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'loans' => $loans,
+                'summary' => $summary,
+                'hasLoansTable' => $hasLoansTable,
+                'message' => !$hasLoansTable ? 'Loans module not configured.' : null
+            ]
+        ]);
+    }
+
+    /**
+     * Export Advances to Excel
+     */
+    public function exportAdvancesExcel(Request $request)
+    {
+        $hasAdvancesTable = Schema::hasTable('employee_advances');
+        $advances = collect();
+
+        if ($hasAdvancesTable) {
+            $query = \App\Models\EmployeeAdvance::with(['employee', 'employee.department']);
+
+            if ($request->employee_id) {
+                $query->where('employee_id', $request->employee_id);
+            }
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+            if ($request->date_from) {
+                $query->whereDate('advance_date', '>=', $request->date_from);
+            }
+            if ($request->date_to) {
+                $query->whereDate('advance_date', '<=', $request->date_to);
+            }
+
+            $advances = $query->orderBy('advance_date', 'desc')->get();
+        }
+
+        $filename = 'advances_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($advances) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Employee ID', 'Name', 'Department', 'Amount', 'Remaining', 'Detailed Reason', 'Date', 'Status']);
+
+            foreach ($advances as $adv) {
+                fputcsv($file, [
+                    $adv->employee?->employee_id ?? $adv->employee_id,
+                    $adv->employee?->name ?? '-',
+                    $adv->employee?->department?->name ?? '-',
+                    $adv->amount,
+                    $adv->remaining_amount,
+                    $adv->reason,
+                    $adv->advance_date,
+                    $adv->status
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Export Loans to Excel
+     */
+    public function exportLoansExcel(Request $request)
+    {
+        $hasLoansTable = Schema::hasTable('employee_loans');
+        $loans = collect();
+
+        if ($hasLoansTable) {
+            $query = \App\Models\EmployeeLoan::with(['employee', 'employee.department']);
+
+            if ($request->employee_id) {
+                $query->where('employee_id', $request->employee_id);
+            }
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+            if ($request->date_from) {
+                $query->whereDate('loan_date', '>=', $request->date_from);
+            }
+            if ($request->date_to) {
+                $query->whereDate('loan_date', '<=', $request->date_to);
+            }
+
+            $loans = $query->orderBy('loan_date', 'desc')->get();
+        }
+
+        $filename = 'loans_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($loans) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Employee ID', 'Name', 'Department', 'Amount', 'Remaining', 'Paid', 'Reason', 'Date', 'Status']);
+
+            foreach ($loans as $loan) {
+                fputcsv($file, [
+                    $loan->employee?->employee_id ?? $loan->employee_id,
+                    $loan->employee?->name ?? '-',
+                    $loan->employee?->department?->name ?? '-',
+                    $loan->amount,
+                    $loan->remaining_amount,
+                    $loan->total_paid,
+                    $loan->reason,
+                    $loan->loan_date,
+                    $loan->status
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

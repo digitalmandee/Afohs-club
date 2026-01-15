@@ -193,10 +193,14 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             // Deductions Report
             Route::get('deductions', [EmployeeReportController::class, 'deductions'])->name('employees.reports.deductions');
             Route::get('deductions/print', [EmployeeReportController::class, 'deductionsPrint'])->name('employees.reports.deductions.print');
-            Route::get('loans', [\App\Http\Controllers\EmployeeReportController::class, 'loans'])->name('employees.reports.loans');
+
+            // Loans Report
+            Route::get('loans', [EmployeeReportController::class, 'loans'])->name('employees.reports.loans');
+            Route::get('loans/print', [EmployeeReportController::class, 'loansPrint'])->name('employees.reports.loans.print');
 
             // Advances Report
             Route::get('advances', [EmployeeReportController::class, 'advances'])->name('employees.reports.advances');
+            Route::get('advances/print', [EmployeeReportController::class, 'advancesPrint'])->name('employees.reports.advances.print');
 
             // Increments Report
             Route::get('increments', [EmployeeReportController::class, 'increments'])->name('employees.reports.increments');
@@ -214,6 +218,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
                 Route::get('salary-sheet', [\App\Http\Controllers\EmployeeReportApiController::class, 'salarySheet'])->name('employees.reports.api.salary-sheet');
                 Route::get('deductions', [\App\Http\Controllers\EmployeeReportApiController::class, 'deductions'])->name('employees.reports.api.deductions');
                 Route::get('advances', [\App\Http\Controllers\EmployeeReportApiController::class, 'advances'])->name('employees.reports.api.advances');
+                Route::get('loans', [\App\Http\Controllers\EmployeeReportApiController::class, 'loans'])->name('employees.reports.api.loans');
                 Route::get('increments', [\App\Http\Controllers\EmployeeReportApiController::class, 'increments'])->name('employees.reports.api.increments');
                 Route::get('bank-transfer', [\App\Http\Controllers\EmployeeReportApiController::class, 'bankTransfer'])->name('employees.reports.api.bank-transfer');
 
@@ -224,6 +229,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
                 Route::get('deductions/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportDeductionsExcel'])->name('employees.reports.api.deductions.export');
                 Route::get('increments/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportIncrementsExcel'])->name('employees.reports.api.increments.export');
                 Route::get('bank-transfer/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportBankTransferExcel'])->name('employees.reports.api.bank-transfer.export');
+                Route::get('advances/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportAdvancesExcel'])->name('employees.reports.api.advances.export');
+                Route::get('loans/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportLoansExcel'])->name('employees.reports.api.loans.export');
             });
         });
     });

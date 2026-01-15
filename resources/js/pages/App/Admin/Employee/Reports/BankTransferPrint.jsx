@@ -1,12 +1,38 @@
-import { useEffect } from 'react';
-import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
+import axios from 'axios';
 
 const formatCurrency = (amount) => `Rs ${parseFloat(amount || 0).toLocaleString()}`;
 
-const BankTransferPrint = ({ employees = [], period = null, totals = null, generatedAt = '' }) => {
+const BankTransferPrint = ({ period = null, filters = {}, generatedAt = '' }) => {
+    const [employees, setEmployees] = useState([]);
+    const [totals, setTotals] = useState(null);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        setTimeout(() => window.print(), 500);
+        const fetchData = async () => {
+            try {
+                const response = await axios.get(route('employees.reports.api.bank-transfer', filters));
+                setEmployees(response.data.data.employees || []);
+                setTotals(response.data.data.totals || null);
+                setLoading(false);
+                setTimeout(() => window.print(), 500);
+            } catch (error) {
+                console.error('Error fetching report data', error);
+                setLoading(false);
+            }
+        };
+        fetchData();
     }, []);
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+                <Typography sx={{ ml: 2 }}>Generating Bank Transfer Report...</Typography>
+            </Box>
+        );
+    }
 
     return (
         <Box sx={{ p: 3, backgroundColor: '#fff' }}>
@@ -18,7 +44,7 @@ const BankTransferPrint = ({ employees = [], period = null, totals = null, gener
                 </Typography>
                 {period && (
                     <Typography variant="body2" color="textSecondary">
-                        Period: {period.name}
+                        Period: {period.period_name || period.name}
                     </Typography>
                 )}
                 <Typography variant="body2" color="textSecondary">

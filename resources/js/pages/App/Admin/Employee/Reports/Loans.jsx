@@ -65,9 +65,34 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                 </Typography>
                             </Box>
                         </Box>
-                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
-                            Print Report
-                        </Button>
+                        <Box>
+                            <Button
+                                variant="outlined"
+                                startIcon={<PrintIcon />}
+                                href={route('employees.reports.loans.print', {
+                                    employee_id: selectedEmployee || undefined,
+                                    status: selectedStatus || undefined,
+                                    date_from: dateFrom || undefined,
+                                    date_to: dateTo || undefined,
+                                })}
+                                target="_blank"
+                                sx={{ borderColor: '#063455', color: '#063455', mr: 1 }}
+                            >
+                                Print Report
+                            </Button>
+                            <Button
+                                variant="contained"
+                                href={route('employees.reports.api.loans.export', {
+                                    employee_id: selectedEmployee || undefined,
+                                    status: selectedStatus || undefined,
+                                    date_from: dateFrom || undefined,
+                                    date_to: dateTo || undefined,
+                                })}
+                                sx={{ backgroundColor: '#008f3d', color: '#fff', '&:hover': { backgroundColor: '#00642b' } }}
+                            >
+                                Export Excel
+                            </Button>
+                        </Box>
                     </Box>
 
                     {/* Filters */}
