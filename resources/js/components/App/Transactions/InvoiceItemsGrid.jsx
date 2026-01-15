@@ -8,7 +8,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useSnackbar } from 'notistack';
 
-export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [] }) {
+export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '' }) {
     const { enqueueSnackbar } = useSnackbar();
     const [openPickers, setOpenPickers] = useState({});
 
@@ -252,7 +252,8 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                     <Grid item xs={12} md={4}>
                                         <TextField select fullWidth size="small" label="Fee Type" value={item.fee_type || ''} onChange={(e) => handleChange(index, 'fee_type', e.target.value)} sx={{ bgcolor: 'white' }}>
                                             {[
-                                                ...(membershipCharges.length > 0
+                                                // Show Membership Charges ONLY if NOT Guest
+                                                ...(!String(bookingType).startsWith('guest') && membershipCharges.length > 0
                                                     ? [
                                                           <ListSubheader key="hdr-mem" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
                                                               Membership Charges
@@ -264,7 +265,9 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                           )),
                                                       ]
                                                     : []),
-                                                ...(maintenanceCharges.length > 0
+
+                                                // Show Maintenance Charges ONLY if NOT Guest
+                                                ...(!String(bookingType).startsWith('guest') && maintenanceCharges.length > 0
                                                     ? [
                                                           <Divider key="div-maint" />,
                                                           <ListSubheader key="hdr-maint" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
@@ -277,6 +280,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                           )),
                                                       ]
                                                     : []),
+
                                                 ...(subscriptionCharges.length > 0
                                                     ? [
                                                           <Divider key="div-sub" />,
