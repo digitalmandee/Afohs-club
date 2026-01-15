@@ -174,7 +174,7 @@ class MemberTransactionController extends Controller
             }
 
             $transactions = FinancialInvoice::where('corporate_member_id', $memberId)
-                ->with(['items'])
+                ->with(['items.transactions'])
                 ->orderBy('created_at', 'desc')
                 ->get();
         } else {
@@ -190,10 +190,20 @@ class MemberTransactionController extends Controller
             }
 
             $transactions = FinancialInvoice::where('member_id', $memberId)
-                ->with(['items'])
+                ->with(['items.transactions'])
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
+
+        // Calculate Paid Amount for each item
+        $transactions->each(function ($invoice) {
+            $invoice->items->each(function ($item) {
+                $item->paid_amount = $item
+                    ->transactions
+                    ->where('type', 'credit')
+                    ->sum('amount');
+            });
+        });
 
         $membershipFeePaid = $transactions
             ->where('fee_type', 'membership_fee')
@@ -239,12 +249,12 @@ class MemberTransactionController extends Controller
 
             $rules = [
                 // 'booking_type' => 'required|in:member,corporate,guest', // Removed strict in check
-                'action' => 'required|in:save,save_print,save_receive',
+                'action' => 'required|in:save,save_print,save_receive,pay_existing_invoice',
                 'items' => 'required|array|min:1',
                 'items.*.fee_type' => 'required|string',
                 'items.*.financial_charge_type_id' => 'nullable|integer|exists:financial_charge_types,id',
                 'items.*.amount' => 'required|numeric|min:0',
-                'payment_method' => 'required_if:action,save_receive|in:cash,cheque,online,credit_card,bank_transfer',
+                'payment_method' => 'required_if:action,save_receive|in:cash,cheque,online,credit_card,debit_card,bank_transfer',
             ];
 
             if ($bookingType === 'corporate') {
@@ -265,6 +275,11 @@ class MemberTransactionController extends Controller
             }
 
             DB::beginTransaction();
+
+            // Handle Existing Invoice Payment
+            if ($request->action === 'pay_existing_invoice' && $request->has('invoice_id')) {
+                return $this->payExistingInvoice($request);
+            }
 
             // 2. Resolve Member / Payer
             if ($request->booking_type === 'corporate') {
@@ -444,6 +459,8 @@ class MemberTransactionController extends Controller
             ]);
 
             // 5. Process Items
+            $createdItems = [];  // Track created items for payment processing
+
             foreach ($request->items as $itemData) {
                 $qty = $itemData['qty'] ?? 1;
                 $rate = $itemData['amount'];
@@ -486,14 +503,25 @@ class MemberTransactionController extends Controller
                     'financial_charge_type_id' => $itemData['financial_charge_type_id'] ?? null,
                 ]);
                 $invoiceItem->save();
+                $createdItems[] = $invoiceItem;
+
+                // 6. Ledger: Debit the Member (Charge Created) - PER ITEM
+                \App\Models\Transaction::create([
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'type' => 'debit',
+                    'amount' => $lineTotal,
+                    'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                    'reference_id' => $invoiceItem->id,
+                    'invoice_id' => $invoice->id,
+                    'description' => "Invoice #{$invoiceNo} - " . ($invoiceItem->description ?? 'Item Charge'),
+                    'date' => now(),
+                ]);
 
                 // Side Effects (Subscription/Maintenance creation) logic here...
-                // (kept minimal for brevity, but should be added back for full feature parity)
                 if ($itemData['fee_type'] === 'subscription_fee') {
                     $this->createSubscriptionRecord($itemData, $invoice, $member, $request->booking_type);
                 }
-                // Maintenance Fee: We no longer create separate maintenance records.
-                // We rely on financial_invoice_items which stores valid_from/valid_to ranges.
             }
 
             // Update Invoice Totals
@@ -502,20 +530,6 @@ class MemberTransactionController extends Controller
             $invoice->discount_amount = $totalDiscount;
             $invoice->total_price = $finalTotal;
             $invoice->save();
-
-            // 6. Ledger: Debit the Member (Invoice Created)
-            \App\Models\Transaction::create([
-                // 'user_id' => $payerId,  // Removed: Column does not exist, using polymorphic payable instead
-                'payable_type' => $payerType,
-                'payable_id' => $payerId,
-                'type' => 'debit',
-                'amount' => $finalTotal,
-                'reference_type' => FinancialInvoice::class,
-                'reference_id' => $invoice->id,
-                'description' => "Invoice #{$invoiceNo}",
-                'date' => now(),
-                // 'balance' => calculation logic needed or Observer
-            ]);
 
             // 7. Handle Payment (Save & Receive)
             if ($request->action === 'save_receive') {
@@ -534,19 +548,25 @@ class MemberTransactionController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                // B. Ledger: Credit the Member (Payment Received)
-                \App\Models\Transaction::create([
-                    'payable_type' => $payerType,
-                    'payable_id' => $payerId,
-                    'type' => 'credit',
-                    'amount' => $paidAmount,
-                    'reference_type' => \App\Models\FinancialReceipt::class,
-                    'reference_id' => $receipt->id,
-                    'description' => "Payment Received (Rec #{$receipt->receipt_no})",
-                    'date' => now(),
-                ]);
+                // B. Ledger: Credit the Member (Payment Received) - PER ITEM
+                // In "Deep Migration" logic, payments track specific items.
+                // Since this is a full payment, we credit against EACH item.
+                foreach ($createdItems as $item) {
+                    \App\Models\Transaction::create([
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        'type' => 'credit',
+                        'amount' => $item->total,  // Full amount of the item
+                        'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                        'reference_id' => $item->id,
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,
+                        'description' => "Payment Received (Rec #{$receipt->receipt_no})",
+                        'date' => now(),
+                    ]);
+                }
 
-                // C. Relation: Link Receipt to Invoice
+                // C. Relation: Link Receipt to Invoice (Keeping this for Invoice-Level Lookup)
                 \App\Models\TransactionRelation::create([
                     'invoice_id' => $invoice->id,
                     'receipt_id' => $receipt->id,
@@ -1273,5 +1293,147 @@ class MemberTransactionController extends Controller
     {
         $types = TransactionType::where('status', 'active')->get();
         return response()->json($types);
+    }
+
+    public function payInvoiceView($id)
+    {
+        $invoice = FinancialInvoice::with(['items.transactions', 'member', 'corporateMember', 'customer'])
+            ->findOrFail($id);
+
+        // Calculate paid_amount for items (same logic as getMemberTransactions)
+        $invoice->items->each(function ($item) {
+            $item->paid_amount = $item
+                ->transactions
+                ->where('type', 'credit')
+                ->sum('amount');
+        });
+
+        // Attach Ledger Balance to the relevant member entity
+        $memberEntity = $invoice->member ?? $invoice->corporateMember ?? $invoice->customer;
+        if ($memberEntity) {
+            $debits = \App\Models\Transaction::where('payable_type', get_class($memberEntity))
+                ->where('payable_id', $memberEntity->id)
+                ->where('type', 'debit')
+                ->sum('amount');
+
+            $credits = \App\Models\Transaction::where('payable_type', get_class($memberEntity))
+                ->where('payable_id', $memberEntity->id)
+                ->where('type', 'credit')
+                ->sum('amount');
+
+            $memberEntity->ledger_balance = $debits - $credits;
+        }
+
+        // Also attach member info to props if needed, but Create.jsx might fetch it.
+        // Deep linking requires us to pass initial data so we don't need to search.
+
+        return Inertia::render('App/Admin/Membership/Transactions/Create', [
+            'invoice' => $invoice,
+            'subscriptionTypes' => \App\Models\SubscriptionType::all(),
+            'subscriptionCategories' => \App\Models\SubscriptionCategory::where('status', 'active')->with('subscriptionType')->get(),
+            'membershipCharges' => \App\Models\FinancialChargeType::all(),  // Type column missing, passing all
+            'maintenanceCharges' => \App\Models\FinancialChargeType::all(),
+            'subscriptionCharges' => \App\Models\FinancialChargeType::all(),
+            'otherCharges' => \App\Models\FinancialChargeType::all(),
+            'financialChargeTypes' => \App\Models\FinancialChargeType::all(),
+        ]);
+    }
+
+    private function payExistingInvoice(Request $request)
+    {
+        try {
+            $invoice = FinancialInvoice::findOrFail($request->invoice_id);
+
+            // Calculate total payment
+            $totalPayment = 0;
+            $itemsToPay = [];
+
+            foreach ($request->items as $itemData) {
+                // Front end sends 'payment_amount'
+                $amount = isset($itemData['payment_amount']) ? (float) $itemData['payment_amount'] : 0;
+
+                if ($amount > 0) {
+                    $totalPayment += $amount;
+                    $itemsToPay[] = [
+                        'id' => $itemData['id'],
+                        'amount' => $amount
+                    ];
+                }
+            }
+
+            if ($totalPayment <= 0) {
+                return response()->json(['error' => 'No payment amount specified.'], 422);
+            }
+
+            // Create Receipt
+            // Resolve Payer from Invoice
+            $payerType = $invoice->invoiceable_type ?: Member::class;
+            $payerId = $invoice->invoiceable_id ?: $invoice->member_id;
+
+            if ($invoice->corporate_member_id) {
+                $payerType = CorporateMember::class;
+                $payerId = $invoice->corporate_member_id;
+            } elseif ($invoice->customer_id) {
+                $payerType = \App\Models\Customer::class;
+                $payerId = $invoice->customer_id;
+            } elseif ($invoice->member_id) {
+                $payerType = Member::class;
+                $payerId = $invoice->member_id;
+            }
+
+            $receipt = \App\Models\FinancialReceipt::create([
+                'receipt_no' => 'REC-' . time(),
+                'payer_type' => $payerType,
+                'payer_id' => $payerId,
+                'amount' => $totalPayment,
+                'payment_method' => $request->payment_method,
+                'payment_details' => $request->payment_mode_details,
+                'receipt_date' => now(),
+                'remarks' => $request->remarks ?? ('Partial Payment for Invoice #' . $invoice->invoice_no),
+                'created_by' => Auth::id(),
+            ]);
+
+            // Create Credit Transactions per Item
+            foreach ($itemsToPay as $payItem) {
+                $invoiceItem = \App\Models\FinancialInvoiceItem::findOrFail($payItem['id']);
+
+                \App\Models\Transaction::create([
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'type' => 'credit',
+                    'amount' => $payItem['amount'],
+                    'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                    'reference_id' => $invoiceItem->id,
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'description' => "Partial Payment (Rec #{$receipt->receipt_no})",
+                    'date' => now(),
+                ]);
+            }
+
+            // Update Invoice Status
+            $totalPaid = \App\Models\Transaction::where('invoice_id', $invoice->id)
+                ->where('type', 'credit')
+                ->sum('amount');
+
+            $invoice->paid_amount = $totalPaid;
+            // Use 5 rupee tolerance for rounding issues
+            if ($totalPaid >= ($invoice->total_price - 5)) {
+                $invoice->status = 'paid';
+            } else {
+                $invoice->status = 'unpaid';
+            }
+            $invoice->save();
+
+            DB::commit();
+            // Reload for response
+            $invoice->load(['items', 'member', 'corporateMember', 'customer']);
+
+            return response()->json(['success' => true, 'message' => 'Payment recorded successfully.', 'invoice' => $invoice]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Payment failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Payment failed: ' . $e->getMessage()], 500);
+        }
     }
 }

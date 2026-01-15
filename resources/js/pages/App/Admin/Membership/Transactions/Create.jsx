@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import CreateTransaction from '@/components/App/Transactions/Create';
 
-export default function TransactionCreate({ subscriptionTypes = [], subscriptionCategories = [], membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [] }) {
+export default function TransactionCreate({ subscriptionTypes = [], subscriptionCategories = [], membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], invoice = null }) {
     return (
         <>
             <Head title="Create Transaction" />
@@ -12,7 +12,7 @@ export default function TransactionCreate({ subscriptionTypes = [], subscription
                     minHeight: '100vh',
                 }}
             >
-                <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} allowedFeeTypes={['subscription_fee']} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} />
+                <CreateTransaction subscriptionTypes={subscriptionTypes} subscriptionCategories={subscriptionCategories} allowedFeeTypes={['subscription_fee']} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} invoice={invoice} />
             </div>
         </>
     );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head, router, useForm } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton, Divider, Tooltip, Accordion, AccordionSummary, AccordionDetails, ThemeProvider, createTheme } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, FormControl, Select, MenuItem, Autocomplete, Chip, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormHelperText, Pagination, InputAdornment, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, FormLabel, RadioGroup, Radio, FormControlLabel, Checkbox, IconButton, Divider, Tooltip, Accordion, AccordionSummary, AccordionDetails, ThemeProvider, createTheme, InputLabel } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -12,7 +12,7 @@ import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
 import PaymentDialog from './PaymentDialog';
 import InvoiceItemsGrid from './InvoiceItemsGrid';
 
-export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [] }) {
+export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], ...props }) {
     // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
@@ -29,6 +29,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [createdMemberId, setCreatedMemberId] = useState(null);
     const [paymentConfirmationOpen, setPaymentConfirmationOpen] = useState(false);
     const [transactionToPay, setTransactionToPay] = useState(null);
+    const [paymentMode, setPaymentMode] = useState(false);
+    const [activeInvoice, setActiveInvoice] = useState(null);
 
     // New State for Invoice Grid
     const [transactionTypes, setTransactionTypes] = useState([]);
@@ -86,6 +88,31 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         credit_card_type: '',
         receipt_file: null,
     });
+
+    // Initial Load for Deep Link Invoice
+    useEffect(() => {
+        if (props.invoice) {
+            const invoice = props.invoice;
+            // 1. Set Member
+            const member = invoice.member || invoice.corporate_member || invoice.customer;
+            if (member) {
+                // Normalize info if needed
+                setSelectedMember(member);
+                if (member.ledger_balance !== undefined) {
+                    setLedgerBalance(member.ledger_balance);
+                }
+                // setPreSelectedMember(member); // Locks the search - this is a prop, cannot be set directly
+                // Set booking type for UI
+                if (invoice.invoiceable_type === 'App\\Models\\CorporateMember') setBookingType('2');
+                else if (invoice.invoiceable_type === 'App\\Models\\Customer')
+                    setBookingType('guest'); // Simplify guest
+                else setBookingType('0');
+            }
+
+            // 2. Trigger Payment Mode
+            handlePayClick(invoice);
+        }
+    }, [props.invoice]);
 
     // Fetch Transaction Types
     useEffect(() => {
@@ -789,31 +816,52 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
     };
 
-    const handleSubmit = async (e, targetStatus = 'paid', shouldPrint = false) => {
-        if (e) e.preventDefault();
+    const handleSubmit = (e, status = 'unpaid', print = false) => {
+        e.preventDefault();
 
         // Validate items
-        if (!invoiceItems || invoiceItems.length === 0) {
+        if (invoiceItems.length === 0) {
             enqueueSnackbar('Please add at least one item to the invoice', { variant: 'error' });
             return;
         }
 
-        // If paying, open the dialog first (unless already confirmed)
-        if (targetStatus === 'paid') {
-            setTransactionToPay({
-                isNew: true,
-                invoice_no: 'NEW', // Placeholder
-                total_price: calculateTotal(),
-                member: selectedMember,
-                fee_type: invoiceItems.length === 1 ? invoiceItems[0].fee_type_name || invoiceItems[0].fee_type : 'Multiple Items', // For display
+        // Validate payment amounts in Payment Mode
+        if (paymentMode) {
+            const hasInvalidAmount = invoiceItems.some((item) => {
+                const amount = parseFloat(item.payment_amount || 0);
+                const balance = parseFloat(item.balance || 0);
+                return amount < 0 || amount > balance; // Allow 0, but maybe warn?
             });
-            setPaymentConfirmationOpen(true);
+            // Actually, backend handles validation, but basic check is good.
+        }
+
+        if (status === 'paid') {
+            // Check if payment method details are required and present (simple validation)
+            if ((data.payment_method === 'credit_card' || data.payment_method === 'debit_card') && !data.credit_card_type) {
+                enqueueSnackbar('Please select a Card Type', { variant: 'error' });
+                return;
+            }
+
+            // In Payment Mode or Direct Create, if we have payment details, just submit
+            // Open confirmation checks? User said "add same liek ahs n popup" so no popup needed?
+            // "also after grand total need to add paymen method all all thigns need o add same liek ahs n popup"
+            // I'll assume they want to "Save & Receive" directly.
+
+            // Confirm? Maybe a browser confirm or just go.
+            // Let's use the existing processSubmit but pass the data.
+
+            const paymentData = {
+                payment_method: data.payment_method,
+                credit_card_type: data.credit_card_type,
+                receipt_file: data.receipt_file,
+                payment_mode_details: data.payment_mode_details,
+            };
+
+            processSubmit('paid', paymentData);
             return;
         }
 
-        // For Unpaid, check basic validation but no payment details needed
-        // Pass shouldPrint to processSubmit
-        processSubmit(targetStatus, null, shouldPrint);
+        processSubmit(status, null, print);
     };
 
     const processSubmit = async (targetStatus, paymentDetails, shouldPrint = false) => {
@@ -853,7 +901,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
             // Determine Action string for backend validation
             let action = 'save';
-            if (targetStatus === 'paid') {
+            if (paymentMode && activeInvoice) {
+                action = 'pay_existing_invoice';
+                formData.append('invoice_id', activeInvoice.id);
+            } else if (targetStatus === 'paid') {
                 action = 'save_receive';
             } else if (shouldPrint) {
                 action = 'save_print';
@@ -873,7 +924,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     formData.append('payment_mode_details', paymentDetails.payment_mode_details);
                 }
 
-                if (paymentDetails.payment_method === 'credit_card') {
+                if (paymentDetails.payment_method === 'credit_card' || paymentDetails.payment_method === 'debit_card') {
                     formData.append('credit_card_type', paymentDetails.credit_card_type);
                 }
 
@@ -939,13 +990,23 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                 setSubmitting(false);
 
                 // Reset form
-                setData({
-                    ...data,
-                    payment_method: 'cash',
-                    credit_card_type: '',
-                    receipt_file: null,
-                    remarks: '',
-                });
+                if (paymentMode) {
+                    handleCancelPaymentMode();
+                } else {
+                    setData({
+                        ...data,
+                        payment_method: 'cash',
+                        credit_card_type: '',
+                        receipt_file: null,
+                        remarks: '',
+                    });
+                    setInvoiceItems([]);
+                    setPreSelectedMember(null);
+                    setSearchResult([]);
+                    if (!preSelectedMember) {
+                        setSelectedMember(null);
+                    }
+                }
 
                 // Clear items
                 setInvoiceItems([]);
@@ -1043,8 +1104,35 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     const [submittingPayment, setSubmittingPayment] = useState(false);
 
     const handlePayClick = (transaction) => {
-        setTransactionToPay(transaction);
-        setPaymentConfirmationOpen(true);
+        // Activate Payment Mode
+        setPaymentMode(true);
+        setActiveInvoice(transaction);
+
+        // Populate items with balance info
+        const itemsToPay = transaction.items.map((item) => {
+            const total = parseFloat(String(item.total || 0).replace(/,/g, ''));
+            const paid = parseFloat(String(item.paid_amount || 0).replace(/,/g, ''));
+            return {
+                ...item, // Keep existing ID, etc.
+                transaction_type_id: item.fee_type, // Map for grid if needed
+                total: total, // Ensure numeric
+                amount: parseFloat(String(item.amount || 0).replace(/,/g, '')), // Ensure numeric
+                payment_amount: 0, // Default to 0 input
+                balance: total - paid,
+                paid_amount: paid,
+            };
+        });
+        setInvoiceItems(itemsToPay);
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleCancelPaymentMode = () => {
+        setPaymentMode(false);
+        setActiveInvoice(null);
+        setInvoiceItems([]);
+        resetForm();
     };
 
     const handleConfirmPayment = async (paymentData) => {
@@ -1068,7 +1156,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
             formData.append('payment_mode_details', paymentData.payment_mode_details);
         }
 
-        if (paymentData.payment_method === 'credit_card') {
+        if (paymentData.payment_method === 'credit_card' || paymentData.payment_method === 'debit_card') {
             formData.append('credit_card_type', paymentData.credit_card_type);
         }
 
@@ -1150,176 +1238,175 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                 <Grid container spacing={2}>
                     {/* Step 1: Member Search */}
-                    {!preSelectedMember && (
-                        <Grid item xs={12}>
-                            <Card sx={{ mb: 2, boxShadow: '0 2px 4px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                                <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                        <Box
-                                            sx={{
-                                                bgcolor: '#0a3d62',
-                                                color: 'white',
-                                                borderRadius: '50%',
-                                                width: 24,
-                                                height: 24,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                mr: 1.5,
-                                                fontSize: '12px',
-                                                fontWeight: 600,
-                                            }}
-                                        >
-                                            1
-                                        </Box>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                                            Booking Type
-                                        </Typography>
+                    <Grid item xs={12}>
+                        <Card sx={{ mb: 2, boxShadow: '0 2px 4px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Box
+                                        sx={{
+                                            bgcolor: '#0a3d62',
+                                            color: 'white',
+                                            borderRadius: '50%',
+                                            width: 24,
+                                            height: 24,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            mr: 1.5,
+                                            fontSize: '12px',
+                                            fontWeight: 600,
+                                        }}
+                                    >
+                                        1
                                     </Box>
-                                    <Grid item xs={12} mb={1}>
-                                        <RadioGroup row name="bookingType" value={bookingType} onChange={handleBookingTypeChange}>
-                                            <FormControlLabel value="0" control={<Radio />} label="Member" />
-                                            <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
-                                            {guestTypes.map((type) => (
-                                                <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
-                                            ))}
-                                        </RadioGroup>
-                                    </Grid>
+                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                        Booking Type
+                                    </Typography>
+                                </Box>
+                                <Grid item xs={12} mb={1}>
+                                    <RadioGroup row name="bookingType" value={bookingType} onChange={handleBookingTypeChange} disabled={paymentMode || !!preSelectedMember}>
+                                        <FormControlLabel value="0" control={<Radio />} label="Member" disabled={paymentMode || !!preSelectedMember} />
+                                        <FormControlLabel value="2" control={<Radio />} label="Corporate Member" disabled={paymentMode || !!preSelectedMember} />
+                                        {guestTypes.map((type) => (
+                                            <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} disabled={paymentMode || !!preSelectedMember} />
+                                        ))}
+                                    </RadioGroup>
+                                </Grid>
 
-                                    <Autocomplete
-                                        key={bookingType}
-                                        size="small"
-                                        value={selectedMember}
-                                        isOptionEqualToValue={(option, value) => option.id === value.id}
-                                        options={searchResults}
-                                        getOptionLabel={(option) => `${option.full_name} (${option.membership_no})`}
-                                        loading={searchLoading}
-                                        onInputChange={(event, value) => {
-                                            searchMembers(value);
-                                        }}
-                                        onChange={(event, value) => {
-                                            if (value) handleMemberSelect(value);
-                                        }}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                size="small"
-                                                {...params}
-                                                label="Search by name, membership no, CNIC, or phone"
-                                                variant="outlined"
-                                                fullWidth
-                                                sx={{ mb: 2 }}
-                                                InputProps={{
-                                                    ...params.InputProps,
-                                                    startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
-                                                    endAdornment: (
-                                                        <>
-                                                            {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                            {params.InputProps.endAdornment}
-                                                        </>
-                                                    ),
-                                                }}
-                                            />
-                                        )}
-                                        renderOption={(props, option) => (
-                                            <li {...props} key={option.id}>
-                                                <Box sx={{ width: '100%' }}>
-                                                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                        <Typography variant="body2" fontWeight="bold">
-                                                            {option.membership_no || option.customer_no || option.employee_id}
+                                <Autocomplete
+                                    key={bookingType}
+                                    size="small"
+                                    disabled={paymentMode || !!preSelectedMember}
+                                    value={selectedMember}
+                                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                                    options={searchResults}
+                                    getOptionLabel={(option) => `${option.full_name} (${option.membership_no})`}
+                                    loading={searchLoading}
+                                    onInputChange={(event, value) => {
+                                        searchMembers(value);
+                                    }}
+                                    onChange={(event, value) => {
+                                        if (value) handleMemberSelect(value);
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            size="small"
+                                            {...params}
+                                            label="Search by name, membership no, CNIC, or phone"
+                                            variant="outlined"
+                                            fullWidth
+                                            sx={{ mb: 2 }}
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
+                                                endAdornment: (
+                                                    <>
+                                                        {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                        />
+                                    )}
+                                    renderOption={(props, option) => (
+                                        <li {...props} key={option.id}>
+                                            <Box sx={{ width: '100%' }}>
+                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {option.membership_no || option.customer_no || option.employee_id}
+                                                    </Typography>
+                                                    {option.status && <Chip label={option.status} size="small" color={option.status === 'active' ? 'success' : option.status === 'expired' ? 'warning' : 'error'} sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                                </Box>
+                                                <Typography variant="body2">{option.full_name || option.name}</Typography>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {option.cnic_no || option.cnic} • {option.mobile_number_a || option.contact}
+                                                </Typography>
+                                            </Box>
+                                        </li>
+                                    )}
+                                />
+                                {selectedMember && (
+                                    <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+                                            {/* Member Info */}
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Person sx={{ fontSize: 18, color: '#64748b' }} />
+                                                <Box>
+                                                    <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 1.1 }}>
+                                                        {selectedMember.full_name}{' '}
+                                                        <Typography component="span" variant="caption" color="text.secondary">
+                                                            ({selectedMember.membership_no || 'No #'})
                                                         </Typography>
-                                                        {option.status && <Chip label={option.status} size="small" color={option.status === 'active' ? 'success' : option.status === 'expired' ? 'warning' : 'error'} sx={{ height: 20, fontSize: '0.7rem' }} />}
-                                                    </Box>
-                                                    <Typography variant="body2">{option.full_name || option.name}</Typography>
-                                                    <Typography variant="caption" color="text.secondary">
-                                                        {option.cnic_no || option.cnic} • {option.mobile_number_a || option.contact}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                        {formatStatus(selectedMember.status)} • {selectedMember.cnic_no || selectedMember.cnic || 'No CNIC'}
                                                     </Typography>
                                                 </Box>
-                                            </li>
-                                        )}
-                                    />
-                                    {selectedMember && (
-                                        <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
-                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
-                                                {/* Member Info */}
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    <Person sx={{ fontSize: 18, color: '#64748b' }} />
-                                                    <Box>
-                                                        <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 1.1 }}>
-                                                            {selectedMember.full_name}{' '}
-                                                            <Typography component="span" variant="caption" color="text.secondary">
-                                                                ({selectedMember.membership_no || 'No #'})
-                                                            </Typography>
-                                                        </Typography>
-                                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                            {formatStatus(selectedMember.status)} • {selectedMember.cnic_no || selectedMember.cnic || 'No CNIC'}
-                                                        </Typography>
-                                                    </Box>
+                                            </Box>
+
+                                            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
+
+                                            {/* Fees Summary Strip */}
+                                            <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, flexWrap: 'wrap' }}>
+                                                <Box>
+                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                        Membership
+                                                    </Typography>
+                                                    <Typography variant="body2" fontWeight={600} color="primary.main">
+                                                        {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}
+                                                    </Typography>
                                                 </Box>
-
-                                                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
-
-                                                {/* Fees Summary Strip */}
-                                                <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, flexWrap: 'wrap' }}>
-                                                    <Box>
-                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                            Membership
-                                                        </Typography>
-                                                        <Typography variant="body2" fontWeight={600} color="primary.main">
-                                                            {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                            Monthly
-                                                        </Typography>
-                                                        <Typography variant="body2" fontWeight={600} color="error.main">
-                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                            Quarterly
-                                                        </Typography>
-                                                        <Typography variant="body2" fontWeight={600} color="secondary.main">
-                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                            Joined
-                                                        </Typography>
-                                                        <Typography variant="body2" fontWeight={600}>
-                                                            {formatDate(selectedMember.membership_date)}
-                                                        </Typography>
-                                                    </Box>
-                                                    <Box>
-                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                            Ledger Balance
-                                                        </Typography>
-                                                        <Typography variant="body2" fontWeight={600} sx={{ color: (ledgerBalance || 0) > 0 ? 'error.main' : 'success.main' }}>
+                                                <Box>
+                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                        Monthly
+                                                    </Typography>
+                                                    <Typography variant="body2" fontWeight={600} color="error.main">
+                                                        Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
+                                                    </Typography>
+                                                </Box>
+                                                <Box>
+                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                        Quarterly
+                                                    </Typography>
+                                                    <Typography variant="body2" fontWeight={600} color="secondary.main">
+                                                        Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
+                                                    </Typography>
+                                                </Box>
+                                                <Box>
+                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                        Joined
+                                                    </Typography>
+                                                    <Typography variant="body2" fontWeight={600}>
+                                                        {formatDate(selectedMember.membership_date)}
+                                                    </Typography>
+                                                </Box>
+                                                <Box>
+                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                        Ledger Balance
+                                                    </Typography>
+                                                    <Box display="flex" alignItems="center">
+                                                        <Typography variant="h6" fontWeight="bold" sx={{ color: '#0a3d62' }}>
                                                             {formatCurrency(Math.max(0, ledgerBalance || 0))}
-                                                            <IconButton
-                                                                size="small"
-                                                                onClick={() => {
-                                                                    // Navigate to ledger details or scroll to history
-                                                                    const historySection = document.getElementById('transaction-history-section');
-                                                                    if (historySection) historySection.scrollIntoView({ behavior: 'smooth' });
-                                                                }}
-                                                                sx={{ ml: 0.5, p: 0 }}
-                                                            >
-                                                                <Visibility fontSize="inherit" />
-                                                            </IconButton>
                                                         </Typography>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => {
+                                                                const historySection = document.getElementById('transaction-history-section');
+                                                                if (historySection) historySection.scrollIntoView({ behavior: 'smooth' });
+                                                            }}
+                                                            sx={{ ml: 0.5, p: 0 }}
+                                                        >
+                                                            <Visibility fontSize="small" />
+                                                        </IconButton>
                                                     </Box>
                                                 </Box>
                                             </Box>
                                         </Box>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    )}
-
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
                     {/* Step 2: Transaction Form and Member Details */}
                     <Grid item xs={12}>
                         <Grid container spacing={3}>
@@ -1397,7 +1484,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                     {/* Invoice Items Grid */}
                                                     <Grid item xs={12}>
-                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} onQuickSelectMaintenance={suggestMaintenancePeriod} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} bookingType={bookingType} />
+                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} onQuickSelectMaintenance={suggestMaintenancePeriod} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} bookingType={bookingType} paymentMode={paymentMode} />
                                                     </Grid>
 
                                                     {/* Remarks Section */}
@@ -1420,40 +1507,98 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         />
                                                     </Grid>
 
+                                                    {/* Payment Details Section */}
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                            <Payment fontSize="small" /> Payment Details
+                                                        </Typography>
+                                                        <Grid container spacing={2}>
+                                                            <Grid item xs={12} md={4}>
+                                                                <FormControl fullWidth size="small">
+                                                                    <InputLabel>Payment Method</InputLabel>
+                                                                    <Select value={data.payment_method} label="Payment Method" onChange={(e) => setData('payment_method', e.target.value)}>
+                                                                        <MenuItem value="cash">Cash</MenuItem>
+                                                                        <MenuItem value="credit_card">Credit Card</MenuItem>
+                                                                        <MenuItem value="debit_card">Debit Card</MenuItem>
+                                                                        <MenuItem value="cheque">Cheque</MenuItem>
+                                                                        <MenuItem value="online">Online Transfer</MenuItem>
+                                                                    </Select>
+                                                                </FormControl>
+                                                            </Grid>
+
+                                                            {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card') && (
+                                                                <Grid item xs={12} md={4}>
+                                                                    <FormControl fullWidth size="small">
+                                                                        <InputLabel>Card Type</InputLabel>
+                                                                        <Select value={data.credit_card_type} label="Card Type" onChange={(e) => setData('credit_card_type', e.target.value)}>
+                                                                            <MenuItem value="visa">Visa</MenuItem>
+                                                                            <MenuItem value="mastercard">MasterCard</MenuItem>
+                                                                        </Select>
+                                                                    </FormControl>
+                                                                </Grid>
+                                                            )}
+
+                                                            {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card' || data.payment_method === 'cheque' || data.payment_method === 'online') && (
+                                                                <Grid item xs={12} md={4}>
+                                                                    <TextField fullWidth size="small" label={data.payment_method === 'cheque' ? 'Cheque No' : data.payment_method === 'online' ? 'Transaction ID/Ref' : 'Card No (Last 4) / Ref'} value={data.payment_mode_details || ''} onChange={(e) => setData('payment_mode_details', e.target.value)} />
+                                                                </Grid>
+                                                            )}
+
+                                                            {/* Receipt Upload - Optional */}
+                                                            {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card' || data.payment_method === 'cheque' || data.payment_method === 'online') && (
+                                                                <Grid item xs={12} md={6}>
+                                                                    <Button variant="outlined" component="label" fullWidth sx={{ height: '40px', justifyContent: 'flex-start' }}>
+                                                                        {data.receipt_file ? `Selected: ${data.receipt_file.name}` : 'Upload Receipt (Optional)'}
+                                                                        <input type="file" hidden accept="image/*,.pdf" onChange={(e) => setData('receipt_file', e.target.files[0])} />
+                                                                    </Button>
+                                                                </Grid>
+                                                            )}
+                                                        </Grid>
+                                                    </Grid>
+
                                                     {/* Action Buttons */}
                                                     <Grid item xs={12}>
                                                         <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
-                                                            <Button
-                                                                onClick={(e) => handleSubmit(e, 'unpaid', false)}
-                                                                variant="outlined"
-                                                                size="large"
-                                                                disabled={submitting || invoiceItems.length === 0}
-                                                                sx={{
-                                                                    py: 1.5,
-                                                                    borderRadius: 2,
-                                                                    textTransform: 'none',
-                                                                    fontWeight: 600,
-                                                                }}
-                                                            >
-                                                                Save
-                                                            </Button>
-                                                            <Button
-                                                                onClick={(e) => handleSubmit(e, 'unpaid', true)}
-                                                                variant="outlined"
-                                                                size="large"
-                                                                disabled={submitting || invoiceItems.length === 0}
-                                                                sx={{
-                                                                    py: 1.5,
-                                                                    borderRadius: 2,
-                                                                    color: '#0a3d62',
-                                                                    borderColor: '#0a3d62',
-                                                                    textTransform: 'none',
-                                                                    fontWeight: 600,
-                                                                }}
-                                                            >
-                                                                {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
-                                                                Save & Print
-                                                            </Button>
+                                                            {paymentMode && (
+                                                                <Button onClick={handleCancelPaymentMode} variant="text" size="large" color="error" sx={{ mr: 'auto' }}>
+                                                                    Cancel Payment Mode
+                                                                </Button>
+                                                            )}
+                                                            {!paymentMode && (
+                                                                <>
+                                                                    <Button
+                                                                        onClick={(e) => handleSubmit(e, 'unpaid', false)}
+                                                                        variant="outlined"
+                                                                        size="large"
+                                                                        disabled={submitting || invoiceItems.length === 0}
+                                                                        sx={{
+                                                                            py: 1.5,
+                                                                            borderRadius: 2,
+                                                                            textTransform: 'none',
+                                                                            fontWeight: 600,
+                                                                        }}
+                                                                    >
+                                                                        Save
+                                                                    </Button>
+                                                                    <Button
+                                                                        onClick={(e) => handleSubmit(e, 'unpaid', true)}
+                                                                        variant="outlined"
+                                                                        size="large"
+                                                                        disabled={submitting || invoiceItems.length === 0}
+                                                                        sx={{
+                                                                            py: 1.5,
+                                                                            borderRadius: 2,
+                                                                            color: '#0a3d62',
+                                                                            borderColor: '#0a3d62',
+                                                                            textTransform: 'none',
+                                                                            fontWeight: 600,
+                                                                        }}
+                                                                    >
+                                                                        {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
+                                                                        Save & Print
+                                                                    </Button>
+                                                                </>
+                                                            )}
                                                             <Button
                                                                 onClick={(e) => handleSubmit(e, 'paid')}
                                                                 variant="contained"
@@ -1484,9 +1629,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                             {/* Right Column Removed - Merged into simplified top bar above */}
                         </Grid>
                     </Grid>
-
                     {/* Step 3: Transaction History */}
-                    {selectedMember && (
+                    {selectedMember && !paymentMode && (
                         <Grid item xs={12} id="transaction-history-section">
                             <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
                                 <CardContent sx={{ p: 3 }}>
@@ -1643,8 +1787,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         {transaction.status === 'unpaid' && (
-                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
-                                                                                Pay Now
+                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => router.visit(route('finance.invoice.pay', transaction.id))} sx={{ py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
+                                                                                Pay
                                                                             </Button>
                                                                         )}
                                                                         {transaction.status !== 'cancelled' && (

@@ -8,7 +8,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useSnackbar } from 'notistack';
 
-export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '' }) {
+export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '', paymentMode = false }) {
     const { enqueueSnackbar } = useSnackbar();
     const [openPickers, setOpenPickers] = useState({});
 
@@ -220,9 +220,11 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                             Invoice Items
                         </Typography>
                     </Box>
-                    <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
-                        Add Another Item
-                    </Button>
+                    {!paymentMode && (
+                        <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
+                            Add Another Item
+                        </Button>
+                    )}
                 </Box>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -240,7 +242,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                     <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
                                         Item #{index + 1}
                                     </Typography>
-                                    {items.length > 1 && (
+                                    {items.length > 1 && !paymentMode && (
                                         <IconButton size="small" color="error" onClick={() => handleRemoveItem(index)}>
                                             <Delete fontSize="small" />
                                         </IconButton>
@@ -250,7 +252,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                 <Grid container spacing={1}>
                                     {/* Row 1: Fee Type, Description, Dates */}
                                     <Grid item xs={12} md={4}>
-                                        <TextField select fullWidth size="small" label="Fee Type" value={item.fee_type || ''} onChange={(e) => handleChange(index, 'fee_type', e.target.value)} sx={{ bgcolor: 'white' }}>
+                                        <TextField select fullWidth size="small" label="Fee Type" value={item.fee_type || ''} onChange={(e) => handleChange(index, 'fee_type', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
                                             {[
                                                 // Show Membership Charges ONLY if NOT Guest
                                                 ...(!String(bookingType).startsWith('guest') && membershipCharges.length > 0
@@ -380,7 +382,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                         })()}
                                     </Grid>
                                     <Grid item xs={6} md={1}>
-                                        <TextField type="number" fullWidth size="small" label="Qty" value={item.qty} onChange={(e) => handleChange(index, 'qty', e.target.value)} sx={{ bgcolor: 'white' }} />
+                                        <TextField type="number" fullWidth size="small" label="Qty" value={item.qty} onChange={(e) => handleChange(index, 'qty', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode} />
                                     </Grid>
                                     <Grid item xs={6} md={3}>
                                         <TextField
@@ -392,7 +394,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
                                                 readOnly: item.is_fixed, // Lock if fixed
                                             }}
-                                            disabled={item.is_fixed} // Visual disable
+                                            disabled={item.is_fixed || paymentMode} // Visual disable
                                             value={item.amount}
                                             onChange={(e) => handleChange(index, 'amount', e.target.value)}
                                             sx={{ bgcolor: item.is_fixed ? '#f1f5f9' : 'white' }}
@@ -409,7 +411,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             typeId === 5 && (
                                                 <>
                                                     <Grid item xs={12} md={3}>
-                                                        <TextField select fullWidth size="small" label="Sub Type" value={item.subscription_type_id} onChange={(e) => handleChange(index, 'subscription_type_id', e.target.value)} sx={{ bgcolor: 'white' }}>
+                                                        <TextField select fullWidth size="small" label="Sub Type" value={item.subscription_type_id} onChange={(e) => handleChange(index, 'subscription_type_id', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
                                                             {subscriptionTypes.map((t) => (
                                                                 <MenuItem key={t.id} value={t.id}>
                                                                     {t.name}
@@ -418,7 +420,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                         </TextField>
                                                     </Grid>
                                                     <Grid item xs={12} md={3}>
-                                                        <TextField select fullWidth size="small" label="Sub Category" value={item.subscription_category_id} onChange={(e) => handleChange(index, 'subscription_category_id', e.target.value)} sx={{ bgcolor: 'white' }}>
+                                                        <TextField select fullWidth size="small" label="Sub Category" value={item.subscription_category_id} onChange={(e) => handleChange(index, 'subscription_category_id', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
                                                             {(item.subscription_type_id ? subscriptionCategories.filter((c) => c.subscription_type_id == item.subscription_type_id) : subscriptionCategories).map((c) => (
                                                                 <MenuItem key={c.id} value={c.id}>
                                                                     {c.name}
@@ -427,7 +429,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                         </TextField>
                                                     </Grid>
                                                     <Grid item xs={12} md={3}>
-                                                        <TextField select fullWidth size="small" label="Member/Family" value={item.family_member_id} onChange={(e) => handleChange(index, 'family_member_id', e.target.value)} sx={{ bgcolor: 'white' }}>
+                                                        <TextField select fullWidth size="small" label="Member/Family" value={item.family_member_id} onChange={(e) => handleChange(index, 'family_member_id', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
                                                             <MenuItem value="">Self ({selectedMember?.full_name})</MenuItem>
                                                             {selectedMember?.family_members?.map((fm) => (
                                                                 <MenuItem key={fm.id} value={fm.id}>
@@ -450,7 +452,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                         return (
                                             typeId === 6 && (
                                                 <Grid item xs={12} md={4}>
-                                                    <TextField select fullWidth size="small" label="Financial Charge Type" value={item.financial_charge_type_id || ''} onChange={(e) => handleChange(index, 'financial_charge_type_id', e.target.value)} sx={{ bgcolor: 'white' }} helperText="Select specific financial charge type">
+                                                    <TextField select fullWidth size="small" label="Financial Charge Type" value={item.financial_charge_type_id || ''} onChange={(e) => handleChange(index, 'financial_charge_type_id', e.target.value)} sx={{ bgcolor: 'white' }} helperText="Select specific financial charge type" disabled={paymentMode}>
                                                         {financialChargeTypes.map((type) => (
                                                             <MenuItem key={type.id} value={type.id}>
                                                                 {type.name}
@@ -464,18 +466,18 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
 
                                     {/* Row 3: Financials & Calculator */}
                                     <Grid item xs={6} md={3}>
-                                        <TextField type="number" fullWidth size="small" label="Add. Chrgs" value={item.additional_charges} onChange={(e) => handleChange(index, 'additional_charges', e.target.value)} sx={{ bgcolor: 'white' }} />
+                                        <TextField type="number" fullWidth size="small" label="Add. Chrgs" value={item.additional_charges} onChange={(e) => handleChange(index, 'additional_charges', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode} />
                                     </Grid>
                                     <Grid item xs={6} md={2}>
-                                        <TextField type="number" fullWidth size="small" label="Tax%" value={item.tax_percentage} onChange={(e) => handleChange(index, 'tax_percentage', e.target.value)} sx={{ bgcolor: 'white' }} />
+                                        <TextField type="number" fullWidth size="small" label="Tax%" value={item.tax_percentage} onChange={(e) => handleChange(index, 'tax_percentage', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode} />
                                     </Grid>
                                     <Grid item xs={6} md={4}>
                                         <Box display="flex" gap={1}>
-                                            <TextField select size="small" label="Disc Type" value={item.discount_type} onChange={(e) => handleChange(index, 'discount_type', e.target.value)} sx={{ bgcolor: 'white', width: '40%' }}>
+                                            <TextField select size="small" label="Disc Type" value={item.discount_type} onChange={(e) => handleChange(index, 'discount_type', e.target.value)} sx={{ bgcolor: 'white', width: '40%' }} disabled={paymentMode}>
                                                 <MenuItem value="fixed">Fixed</MenuItem>
                                                 <MenuItem value="percent">%</MenuItem>
                                             </TextField>
-                                            <TextField type="number" size="small" label="Disc Val" value={item.discount_value} onChange={(e) => handleChange(index, 'discount_value', e.target.value)} sx={{ bgcolor: 'white', width: '60%' }} />
+                                            <TextField type="number" size="small" label="Disc Val" value={item.discount_value} onChange={(e) => handleChange(index, 'discount_value', e.target.value)} sx={{ bgcolor: 'white', width: '60%' }} disabled={paymentMode} />
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6} md={3}>
@@ -485,6 +487,35 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             </Typography>
                                         </Box>
                                     </Grid>
+
+                                    {/* Payment Mode Columns */}
+                                    {paymentMode && (
+                                        <>
+                                            <Grid item xs={12} md={12}>
+                                                <Divider sx={{ my: 1 }} />
+                                            </Grid>
+                                            <Grid item xs={6} md={3}>
+                                                <TextField size="small" fullWidth label="Already Paid" value={new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(item.paid_amount || 0)} disabled sx={{ bgcolor: '#f1f5f9' }} />
+                                            </Grid>
+                                            <Grid item xs={6} md={3}>
+                                                <TextField size="small" fullWidth label="Balance" value={new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(item.balance || 0)} disabled sx={{ bgcolor: '#f1f5f9', '& .MuiInputBase-input': { color: 'error.main', fontWeight: 'bold' } }} />
+                                            </Grid>
+                                            <Grid item xs={12} md={6}>
+                                                <TextField
+                                                    type="number"
+                                                    fullWidth
+                                                    size="small"
+                                                    label="Payment Amount (Now)"
+                                                    value={item.payment_amount}
+                                                    onChange={(e) => handleChange(index, 'payment_amount', e.target.value)}
+                                                    sx={{ bgcolor: '#ecfdf5', '& .MuiOutlinedInput-root': { borderColor: 'success.main', borderWidth: 2 } }}
+                                                    InputProps={{
+                                                        startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                                    }}
+                                                />
+                                            </Grid>
+                                        </>
+                                    )}
 
                                     {/* Row 3: Remarks */}
                                     <Grid item xs={12}>

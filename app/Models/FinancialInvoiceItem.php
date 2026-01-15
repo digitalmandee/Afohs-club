@@ -50,4 +50,9 @@ class FinancialInvoiceItem extends Model
     {
         return $this->belongsTo(FinancialInvoice::class, 'invoice_id');
     }
+
+    public function transactions()
+    {
+        return $this->morphMany(Transaction::class, 'reference');
+    }
 }

@@ -575,6 +575,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             return Inertia::render('App/Admin/Membership/Finance');
         })->name('membership.finance');
 
+        Route::get('finance/invoice/{id}/pay', [MemberTransactionController::class, 'payInvoiceView'])->name('finance.invoice.pay');
+
         // Family Member Expiry Management (integrated with Family Members Archive)
         Route::group(['prefix' => 'family-members-archive', 'middleware' => 'role:super-admin'], function () {
             Route::get('member/{member}/extend', [FamilyMembersArchiveConroller::class, 'show'])->name('membership.family-expiry.show');
