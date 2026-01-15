@@ -29,7 +29,13 @@ class EmployeeReportApiController extends Controller
             $query->where('employment_type', $request->employment_type);
         }
 
-        $employees = $query->orderBy('name')->get();
+        $employees = $query
+            ->orderBy('name')
+            ->get()
+            ->map(function ($employee) {
+                $employee->joining_date = $employee->joining_date ? Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                return $employee;
+            });
         $departments = Department::orderBy('name')->get();
 
         return response()->json([
@@ -54,7 +60,11 @@ class EmployeeReportApiController extends Controller
         $employees = Employee::with(['department', 'subdepartment'])
             ->whereBetween('joining_date', [$dateFrom, $dateTo])
             ->orderBy('joining_date', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($employee) {
+                $employee->joining_date = $employee->joining_date ? Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                return $employee;
+            });
 
         $stats = [
             'total_new_hires' => $employees->count(),
@@ -78,7 +88,13 @@ class EmployeeReportApiController extends Controller
     public function salarySheet(Request $request)
     {
         $periodId = $request->period_id;
-        $periods = PayrollPeriod::orderBy('start_date', 'desc')->get();
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')
+            ->get()
+            ->map(function ($period) {
+                $period->start_date = $period->start_date ? Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+                $period->end_date = $period->end_date ? Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+                return $period;
+            });
 
         $payslips = collect();
         $totals = null;
@@ -114,7 +130,13 @@ class EmployeeReportApiController extends Controller
     public function deductions(Request $request)
     {
         $periodId = $request->period_id;
-        $periods = PayrollPeriod::orderBy('start_date', 'desc')->get();
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')
+            ->get()
+            ->map(function ($period) {
+                $period->start_date = $period->start_date ? Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+                $period->end_date = $period->end_date ? Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+                return $period;
+            });
 
         $deductions = collect();
         $summary = null;
@@ -172,7 +194,13 @@ class EmployeeReportApiController extends Controller
                 $query->where('status', $request->status);
             }
 
-            $advances = $query->orderBy('advance_date', 'desc')->get();
+            $advances = $query
+                ->orderBy('advance_date', 'desc')
+                ->get()
+                ->map(function ($advance) {
+                    $advance->advance_date = $advance->advance_date ? Carbon::parse($advance->advance_date)->format('d/m/Y') : '-';
+                    return $advance;
+                });
 
             $summary = [
                 'total_amount' => $advances->sum('amount'),
@@ -213,7 +241,7 @@ class EmployeeReportApiController extends Controller
                 return [
                     'id' => $structure->id,
                     'employee' => $structure->employee,
-                    'effective_date' => $structure->effective_from,
+                    'effective_date' => $structure->effective_from ? Carbon::parse($structure->effective_from)->format('d/m/Y') : '-',
                     'current_salary' => $structure->basic_salary,
                     'previous_salary' => $previous?->basic_salary ?? 0,
                     'increment' => $structure->basic_salary - ($previous?->basic_salary ?? 0),
@@ -238,7 +266,13 @@ class EmployeeReportApiController extends Controller
     public function bankTransfer(Request $request)
     {
         $periodId = $request->period_id;
-        $periods = PayrollPeriod::orderBy('start_date', 'desc')->get();
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')
+            ->get()
+            ->map(function ($period) {
+                $period->start_date = $period->start_date ? Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+                $period->end_date = $period->end_date ? Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+                return $period;
+            });
 
         $employees = collect();
         $totals = null;
@@ -440,7 +474,7 @@ class EmployeeReportApiController extends Controller
                     $emp->name,
                     $emp->department?->name ?? '-',
                     $emp->designation ?? '-',
-                    $emp->joining_date,
+                    $emp->joining_date ? Carbon::parse($emp->joining_date)->format('d/m/Y') : '-',
                     $emp->employment_type ?? 'full_time',
                     $emp->email ?? '-',
                     $emp->phone ?? '-'
@@ -543,7 +577,7 @@ class EmployeeReportApiController extends Controller
                 fputcsv($file, [
                     $inc['employee_name'],
                     $inc['department'],
-                    $inc['effective_date'],
+                    $inc['effective_date'] ? Carbon::parse($inc['effective_date'])->format('d/m/Y') : '-',
                     $inc['previous_salary'],
                     $inc['current_salary'],
                     $inc['increment']
@@ -580,7 +614,13 @@ class EmployeeReportApiController extends Controller
                 $query->whereDate('loan_date', '<=', $request->date_to);
             }
 
-            $loans = $query->orderBy('loan_date', 'desc')->get();
+            $loans = $query
+                ->orderBy('loan_date', 'desc')
+                ->get()
+                ->map(function ($loan) {
+                    $loan->loan_date = $loan->loan_date ? Carbon::parse($loan->loan_date)->format('d/m/Y') : '-';
+                    return $loan;
+                });
 
             $summary = [
                 'total_amount' => $loans->sum('amount'),

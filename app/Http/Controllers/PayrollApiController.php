@@ -476,7 +476,13 @@ class PayrollApiController extends Controller
     public function getPayrollPeriods(Request $request)
     {
         $periods = PayrollPeriod::orderBy('start_date', 'desc')
-            ->paginate($request->get('per_page', 15));
+            ->paginate($request->get('per_page', 15))
+            ->through(function ($period) {
+                $period->start_date = $period->start_date ? Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+                $period->end_date = $period->end_date ? Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+                $period->pay_date = $period->pay_date ? Carbon::parse($period->pay_date)->format('d/m/Y') : null;
+                return $period;
+            });
 
         return response()->json(['success' => true, 'periods' => $periods]);
     }

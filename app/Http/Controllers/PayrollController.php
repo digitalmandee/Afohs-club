@@ -248,6 +248,11 @@ class PayrollController extends Controller
                 ->sum(DB::raw('COALESCE(total_price, 0)'));
 
             $period->total_order_deductions = (float) $totalOrderDeductions;
+
+            // Format dates for display
+            $period->start_date = $period->start_date ? Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+            $period->end_date = $period->end_date ? Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+
             return $period;
         });
 
@@ -262,6 +267,8 @@ class PayrollController extends Controller
     public function periodPayslips($periodId)
     {
         $period = PayrollPeriod::findOrFail($periodId);
+        $period->start_date = $period->start_date ? Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+        $period->end_date = $period->end_date ? Carbon::parse($period->end_date)->format('d/m/Y') : '-';
         $payslips = Payslip::with(['employee:id,name,employee_id'])
             ->where('payroll_period_id', $periodId)
             ->paginate(20);
@@ -329,6 +336,11 @@ class PayrollController extends Controller
             ];
         })->values();
         $payslip->total_order_deductions = $payslip->order_deductions->sum('amount');
+
+        if ($payslip->payrollPeriod) {
+            $payslip->payrollPeriod->start_date = $payslip->payrollPeriod->start_date ? Carbon::parse($payslip->payrollPeriod->start_date)->format('d/m/Y') : '-';
+            $payslip->payrollPeriod->end_date = $payslip->payrollPeriod->end_date ? Carbon::parse($payslip->payrollPeriod->end_date)->format('d/m/Y') : '-';
+        }
 
         return Inertia::render('App/Admin/Employee/Payroll/ViewPayslip', [
             'payslip' => $payslip
@@ -464,6 +476,11 @@ class PayrollController extends Controller
             ];
         })->values();
         $payslip->total_order_deductions = $payslip->order_deductions->sum('amount');
+
+        if ($payslip->payrollPeriod) {
+            $payslip->payrollPeriod->start_date = $payslip->payrollPeriod->start_date ? Carbon::parse($payslip->payrollPeriod->start_date)->format('d/m/Y') : '-';
+            $payslip->payrollPeriod->end_date = $payslip->payrollPeriod->end_date ? Carbon::parse($payslip->payrollPeriod->end_date)->format('d/m/Y') : '-';
+        }
 
         return Inertia::render('App/Admin/Employee/Payroll/PrintPayslip', [
             'payslip' => $payslip

@@ -145,7 +145,13 @@ class EmployeeReportController extends Controller
             $query->where('employment_type', $request->employment_type);
         }
 
-        $employees = $query->orderBy('name')->get();
+        $employees = $query
+            ->orderBy('name')
+            ->get()
+            ->map(function ($employee) {
+                $employee->joining_date = $employee->joining_date ? Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                return $employee;
+            });
         $departments = Department::orderBy('name')->get();
 
         return Inertia::render('App/Admin/Employee/Reports/EmployeeDetails', [
@@ -175,7 +181,11 @@ class EmployeeReportController extends Controller
         $employees = Employee::with(['department', 'subdepartment'])
             ->whereBetween('joining_date', [$dateFrom, $dateTo])
             ->orderBy('joining_date', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($employee) {
+                $employee->joining_date = $employee->joining_date ? Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                return $employee;
+            });
 
         $departments = Department::orderBy('name')->get();
 
@@ -218,7 +228,13 @@ class EmployeeReportController extends Controller
     public function salarySheet(Request $request)
     {
         $periodId = $request->period_id;
-        $periods = PayrollPeriod::orderBy('start_date', 'desc')->get();
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')
+            ->get()
+            ->map(function ($period) {
+                $period->start_date = $period->start_date ? \Carbon\Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+                $period->end_date = $period->end_date ? \Carbon\Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+                return $period;
+            });
 
         $payslips = collect();
         $totals = null;
@@ -264,7 +280,13 @@ class EmployeeReportController extends Controller
     public function deductions(Request $request)
     {
         $periodId = $request->period_id;
-        $periods = PayrollPeriod::orderBy('start_date', 'desc')->get();
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')
+            ->get()
+            ->map(function ($period) {
+                $period->start_date = $period->start_date ? \Carbon\Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+                $period->end_date = $period->end_date ? \Carbon\Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+                return $period;
+            });
 
         $deductions = collect();
         $summary = null;
@@ -341,7 +363,13 @@ class EmployeeReportController extends Controller
                 $query->whereDate('advance_date', '<=', $request->date_to);
             }
 
-            $advances = $query->orderBy('advance_date', 'desc')->get();
+            $advances = $query
+                ->orderBy('advance_date', 'desc')
+                ->get()
+                ->map(function ($advance) {
+                    $advance->advance_date = $advance->advance_date ? Carbon::parse($advance->advance_date)->format('d/m/Y') : '-';
+                    return $advance;
+                });
 
             $summary = [
                 'total_amount' => $advances->sum('amount'),
@@ -400,7 +428,13 @@ class EmployeeReportController extends Controller
                 $query->whereDate('loan_date', '<=', $request->date_to);
             }
 
-            $loans = $query->orderBy('loan_date', 'desc')->get();
+            $loans = $query
+                ->orderBy('loan_date', 'desc')
+                ->get()
+                ->map(function ($loan) {
+                    $loan->loan_date = $loan->loan_date ? Carbon::parse($loan->loan_date)->format('d/m/Y') : '-';
+                    return $loan;
+                });
 
             $summary = [
                 'total_amount' => $loans->sum('amount'),
@@ -454,7 +488,7 @@ class EmployeeReportController extends Controller
                 return [
                     'id' => $structure->id,
                     'employee' => $structure->employee,
-                    'effective_date' => $structure->effective_from,
+                    'effective_date' => $structure->effective_from ? Carbon::parse($structure->effective_from)->format('d/m/Y') : '-',
                     'current_salary' => $structure->basic_salary,
                     'previous_salary' => $previous?->basic_salary ?? 0,
                     'increment' => $structure->basic_salary - ($previous?->basic_salary ?? 0),
@@ -493,7 +527,13 @@ class EmployeeReportController extends Controller
     public function bankTransfer(Request $request)
     {
         $periodId = $request->period_id;
-        $periods = PayrollPeriod::orderBy('start_date', 'desc')->get();
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')
+            ->get()
+            ->map(function ($period) {
+                $period->start_date = $period->start_date ? \Carbon\Carbon::parse($period->start_date)->format('d/m/Y') : '-';
+                $period->end_date = $period->end_date ? \Carbon\Carbon::parse($period->end_date)->format('d/m/Y') : '-';
+                return $period;
+            });
 
         $employees = collect();
         $totals = null;

@@ -64,7 +64,13 @@ class EmployeeController extends Controller
             $employeesQuery->whereIn('department_id', $departmentFilters);
         }
 
-        $employees = $employeesQuery->paginate($limit)->withQueryString();
+        $employees = $employeesQuery
+            ->paginate($limit)
+            ->withQueryString()
+            ->through(function ($employee) {
+                $employee->joining_date = $employee->joining_date ? \Carbon\Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                return $employee;
+            });
 
         // Get filter options
         $departments = Department::select('id', 'name')->get();
