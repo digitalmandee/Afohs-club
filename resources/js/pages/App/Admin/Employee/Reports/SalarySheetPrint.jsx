@@ -1,0 +1,103 @@
+import { useEffect } from 'react';
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+
+const formatCurrency = (amount) => `Rs ${parseFloat(amount || 0).toLocaleString()}`;
+
+const SalarySheetPrint = ({ payslips = [], period = null, totals = null, generatedAt = '' }) => {
+    useEffect(() => {
+        setTimeout(() => window.print(), 500);
+    }, []);
+
+    return (
+        <Box sx={{ p: 3, backgroundColor: '#fff' }}>
+            <style>{`@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
+
+            <Box sx={{ textAlign: 'center', mb: 3 }}>
+                <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                    Salary Sheet
+                </Typography>
+                {period && (
+                    <Typography variant="body2" color="textSecondary">
+                        Period: {period.name} ({period.start_date} to {period.end_date})
+                    </Typography>
+                )}
+                <Typography variant="body2" color="textSecondary">
+                    Generated: {generatedAt}
+                </Typography>
+            </Box>
+
+            <TableContainer component={Paper} sx={{ boxShadow: 'none', border: '1px solid #ddd' }}>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                            <TableCell sx={{ fontWeight: 600 }}>#</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Employee ID</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">
+                                Basic
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">
+                                Allowances
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">
+                                Deductions
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">
+                                Gross
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }} align="right">
+                                Net Salary
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {payslips.map((payslip, index) => (
+                            <TableRow key={payslip.id}>
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>{payslip.employee_id_number}</TableCell>
+                                <TableCell>{payslip.employee_name}</TableCell>
+                                <TableCell>{payslip.department || '-'}</TableCell>
+                                <TableCell align="right">{formatCurrency(payslip.basic_salary)}</TableCell>
+                                <TableCell align="right" sx={{ color: 'green' }}>
+                                    {formatCurrency(payslip.total_allowances)}
+                                </TableCell>
+                                <TableCell align="right" sx={{ color: 'red' }}>
+                                    {formatCurrency(payslip.total_deductions)}
+                                </TableCell>
+                                <TableCell align="right">{formatCurrency(payslip.gross_salary)}</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                    {formatCurrency(payslip.net_salary)}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {totals && (
+                            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                                <TableCell colSpan={4} sx={{ fontWeight: 600 }}>
+                                    TOTAL
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                    {formatCurrency(totals.total_basic)}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600, color: 'green' }}>
+                                    {formatCurrency(totals.total_allowances)}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600, color: 'red' }}>
+                                    {formatCurrency(totals.total_deductions)}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                    {formatCurrency(totals.total_gross)}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 700 }}>
+                                    {formatCurrency(totals.total_net)}
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Box>
+    );
+};
+
+export default SalarySheetPrint;

@@ -517,6 +517,39 @@ class PayrollProcessingService
         // Add attendance-based deductions to total
         $totalDeductions += $absentDeduction + $lateDeduction;
 
+        // Calculate Salary Advance Deductions
+        $advanceDeduction = 0;
+        if (\Illuminate\Support\Facades\Schema::hasTable('employee_advances')) {
+            $activeAdvances = \App\Models\EmployeeAdvance::where('employee_id', $employee->id)
+                ->where('status', 'paid')
+                ->where('remaining_amount', '>', 0)
+                ->get();
+
+            foreach ($activeAdvances as $advance) {
+                $monthlyDeduction = min($advance->monthly_deduction, $advance->remaining_amount);
+
+                if ($monthlyDeduction > 0) {
+                    $advanceDeduction += $monthlyDeduction;
+
+                    // Add to deductions array
+                    $deductions[] = [
+                        'type_id' => null,
+                        'name' => 'Salary Advance (ID: ' . $advance->id . ')',
+                        'amount' => $monthlyDeduction
+                    ];
+
+                    // Update remaining amount
+                    $newRemaining = $advance->remaining_amount - $monthlyDeduction;
+                    $advance->update([
+                        'remaining_amount' => $newRemaining,
+                        'status' => $newRemaining <= 0 ? 'deducted' : 'paid'
+                    ]);
+                }
+            }
+
+            $totalDeductions += $advanceDeduction;
+        }
+
         // Note: Overtime was already added to totalAllowances above
 
         $netSalary = $grossSalary - $totalDeductions;
