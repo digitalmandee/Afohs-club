@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormControl, InputLabel, Select, MenuItem, TextField, IconButton } from '@mui/material';
+import { Box, Card, CardContent, Typography, Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormControl, InputLabel, Select, MenuItem, TextField, IconButton, Autocomplete } from '@mui/material';
 import { Print as PrintIcon, ArrowBack as ArrowBackIcon, AccountBalance as LoanIcon } from '@mui/icons-material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 
 const formatCurrency = (amount) => `Rs ${parseFloat(amount || 0).toLocaleString()}`;
 
@@ -45,71 +49,94 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
 
     return (
         <AdminLayout>
-            <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, '@media print': { display: 'none' } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton onClick={() => window.history.back()} sx={{ mr: 1 }}>
-                            <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton>
-                        <Box>
-                            <Typography variant="h4" sx={{ fontWeight: 600, color: '#063455' }}>
-                                Employee Loans Report
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary">
-                                Track loan disbursements and recovery
-                            </Typography>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, '@media print': { display: 'none' } }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton onClick={() => window.history.back()} sx={{ mr: 1 }}>
+                                <ArrowBackIcon sx={{ color: '#063455' }} />
+                            </IconButton>
+                            <Box>
+                                <Typography variant="h4" sx={{ fontWeight: 600, color: '#063455' }}>
+                                    Employee Loans Report
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                    Track loan disbursements and recovery
+                                </Typography>
+                            </Box>
                         </Box>
+                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
+                            Print Report
+                        </Button>
                     </Box>
-                    <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
-                        Print Report
-                    </Button>
-                </Box>
 
-                {/* Filters */}
-                <Card sx={{ mb: 4, '@media print': { display: 'none' }, borderRadius: '12px' }}>
-                    <CardContent>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={3}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Employee</InputLabel>
-                                    <Select value={selectedEmployee} label="Employee" onChange={(e) => setSelectedEmployee(e.target.value)}>
-                                        <MenuItem value="">All Employees</MenuItem>
-                                        {employees.map((emp) => (
-                                            <MenuItem key={emp.id} value={emp.id}>
-                                                {emp.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                    {/* Filters */}
+                    <Card sx={{ mb: 4, '@media print': { display: 'none' }, borderRadius: '12px' }}>
+                        <CardContent>
+                            <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={12} sm={3}>
+                                    <Autocomplete
+                                        options={employees}
+                                        getOptionLabel={(option) => `${option.name} (${option.employee_id || option.id})`}
+                                        value={employees.find((e) => e.id === selectedEmployee) || null}
+                                        onChange={(event, newValue) => {
+                                            setSelectedEmployee(newValue ? newValue.id : '');
+                                        }}
+                                        renderInput={(params) => <TextField {...params} label="Employee" size="small" />}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                    <FormControl fullWidth size="small">
+                                        <InputLabel>Status</InputLabel>
+                                        <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+                                            <MenuItem value="">All Status</MenuItem>
+                                            <MenuItem value="pending">Pending</MenuItem>
+                                            <MenuItem value="disbursed">Disbursed (Active)</MenuItem>
+                                            <MenuItem value="completed">Completed</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={2.5}>
+                                    <DatePicker
+                                        label="From Date"
+                                        value={dateFrom ? dayjs(dateFrom) : null}
+                                        onChange={(newValue) => setDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                fullWidth: true,
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={2.5}>
+                                    <DatePicker
+                                        label="To Date"
+                                        value={dateTo ? dayjs(dateTo) : null}
+                                        onChange={(newValue) => setDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                fullWidth: true,
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={2} sx={{ display: 'flex', gap: 1 }}>
+                                    <Button fullWidth variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455' }}>
+                                        Apply
+                                    </Button>
+                                    <Button fullWidth variant="outlined" onClick={() => router.visit(route('employees.reports.loans'))} sx={{ borderColor: '#d3d3d3', color: '#666' }}>
+                                        Reset
+                                    </Button>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} sm={2}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Status</InputLabel>
-                                    <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
-                                        <MenuItem value="">All Status</MenuItem>
-                                        <MenuItem value="pending">Pending</MenuItem>
-                                        <MenuItem value="disbursed">Disbursed (Active)</MenuItem>
-                                        <MenuItem value="completed">Completed</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} sm={2.5}>
-                                <TextField fullWidth size="small" type="date" label="From Date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
-                            </Grid>
-                            <Grid item xs={12} sm={2.5}>
-                                <TextField fullWidth size="small" type="date" label="To Date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
-                            </Grid>
-                            <Grid item xs={12} sm={2} sx={{ display: 'flex', gap: 1 }}>
-                                <Button fullWidth variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455' }}>
-                                    Apply
-                                </Button>
-                                <Button fullWidth variant="outlined" onClick={() => router.visit(route('employees.reports.loans'))} sx={{ borderColor: '#d3d3d3', color: '#666' }}>
-                                    Reset
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
 
                 {/* Summary Cards */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
