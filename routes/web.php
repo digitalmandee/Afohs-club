@@ -94,6 +94,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('application/edit/{id}', [LeaveApplicationController::class, 'edit'])->name('employees.leaves.application.edit');
 
             Route::get('report', [LeaveApplicationController::class, 'leaveReportPage'])->name('employees.leaves.application.report');
+            Route::get('report/print', [LeaveApplicationController::class, 'leaveReportPrint'])->name('employees.leaves.application.report.print');
         });
 
         // Employee Advances
@@ -131,7 +132,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('dashboard', [AttendanceController::class, 'dashboard'])->name('employees.attendances.dashboard');
             Route::get('management', [AttendanceController::class, 'managementPage'])->name('employees.attendances.management');
             Route::get('report', [AttendanceController::class, 'reportPage'])->name('employees.attendances.report');
+            Route::get('report/print', [AttendanceController::class, 'attendanceReportPrint'])->name('employees.attendances.report.print');
             Route::get('monthly/report', [AttendanceController::class, 'monthlyReportPage'])->name('employees.attendances.monthly.report');
+            Route::get('monthly/report/print', [AttendanceController::class, 'monthlyReportPrint'])->name('employees.attendances.monthly.report.print');
         });
 
         Route::prefix('payroll')->group(function () {
@@ -858,16 +861,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Leave Report API route
         Route::get('employees/leaves/reports', [LeaveApplicationController::class, 'leaveReport'])->name('api.leave-reports');
+        Route::get('employees/leaves/reports/export', [LeaveApplicationController::class, 'exportLeaveReport'])->name('api.leave-reports.export');
 
         // Attendance API routes
         Route::prefix('attendances')->group(function () {
             Route::get('/', [AttendanceController::class, 'index'])->name('api.attendances.index');
             Route::get('reports', [AttendanceController::class, 'attendanceReport'])->name('api.attendances.reports');
+            Route::get('reports/export', [AttendanceController::class, 'exportAttendanceReport'])->name('api.attendances.reports.export');
             Route::put('{attendanceId}', [AttendanceController::class, 'updateAttendance'])->name('api.attendances.update');
             Route::get('profile/report/{employeeId}', [AttendanceController::class, 'profileReport'])->name('api.attendances.profile.report');
             Route::post('all/report', [AttendanceController::class, 'allEmployeesReport'])->name('api.attendances.all.report');
 
-            Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly']);
+            Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly'])->name('api.attendances.leaves.reports.monthly');
+            Route::get('leaves/reports/monthly/export', [LeaveApplicationController::class, 'exportMonthlyReport'])->name('api.attendances.leaves.reports.monthly.export');
         });
 
         // Voucher API routes
