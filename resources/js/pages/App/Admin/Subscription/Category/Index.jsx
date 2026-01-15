@@ -92,13 +92,15 @@ const SubscriptionCategories = ({ subscriptionCategories }) => {
                                         alignItems: 'center',
                                         p: 2,
                                         borderBottom: '1px solid #eee',
+                                        bgcolor:'#063455',
+                                        color:'#fff'
                                     }}
                                 >
                                     <Typography fontWeight={600}>
                                         {category.name} ({category.subscription_type?.name})
                                     </Typography>
                                     <IconButton onClick={(e) => handleMenuOpen(e, category)}>
-                                        <MoreVertIcon />
+                                        <MoreVertIcon style={{color:'#fff'}} />
                                     </IconButton>
                                 </Box>
                                 <CardContent>

@@ -127,7 +127,7 @@ export const handlePrintMembershipCard = (member) => {
 
         .label {
             margin-top: 15px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             padding-left: 80px;
             color: #000;
@@ -135,10 +135,10 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .value {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             color: #000;
-            padding-left: 20px
+            padding-left: 30px
         }
 
         /* RIGHT COLUMN - Perfect MUI replica */
@@ -168,7 +168,7 @@ export const handlePrintMembershipCard = (member) => {
 
         .label-valid-until {
             margin-top: 10px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 700;
             color: #000;
         }
@@ -276,7 +276,7 @@ export const MembershipCardContent = ({ member, id }) => {
                                     }}
                                 />
                             </Box>
-                            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', textTransform: 'capitalize', pt: 0.5 }} color="#000">
+                            <Typography sx={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'capitalize', pt: 0.5 }} color="#000">
                                 {member?.full_name || 'N/A'}
                             </Typography>
                         </Box>
@@ -289,7 +289,7 @@ export const MembershipCardContent = ({ member, id }) => {
                             <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 7, pl: 10, whiteSpace: 'nowrap', color:'#000' }}>
                                 Membership No
                             </Typography>
-                            <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{pl:5}}>
+                            <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{ml:7}}>
                                 {member?.membership_no || 'N/A'}
                             </Typography>
                         </Box>

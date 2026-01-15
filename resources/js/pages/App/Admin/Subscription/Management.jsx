@@ -103,7 +103,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                         justifyContent: 'space-between',
                         gap: '1rem',
                         marginBottom: '24px',
-                        marginTop:'24px'
+                        marginTop: '24px'
                     }}
                 >
                     {[
@@ -220,7 +220,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                     </div>
 
                     {/* Members Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '12px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
@@ -241,22 +241,77 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                     subscriptions.data.length > 0 &&
                                     subscriptions.data.map((subscription) => (
                                         <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{subscription.invoice_no}</TableCell>
+                                            <TableCell sx={{
+                                                color: '#000', fontWeight: 600, fontSize: '14px', maxWidth: '80px',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap'
+                                            }}>
+                                                <Tooltip title={subscription.invoice_no} arrow>
+                                                    {subscription.invoice_no}
+                                                </Tooltip>
+                                            </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                 <div>
-                                                    <div style={{ fontWeight: 500 }}>{subscription.member?.full_name}</div>
-                                                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{subscription.member?.membership_no}</div>
+                                                    <div
+                                                        style={{
+                                                            color: '#7f7f7f',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            maxWidth: '120px',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
+                                                        <Tooltip title={subscription.member?.full_name || 'N/A'} arrow>
+                                                            {subscription.member?.full_name || 'N/A'}
+                                                        </Tooltip>
+                                                    </div>
+                                                    <div style={{ fontSize: '14px', color: '#7f7f7f' }}>{subscription.member?.membership_no}</div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.subscription_type?.name || '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                {subscription.subscription_type?.name || '-'}
+                                            </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                 <div>
-                                                    <div style={{ fontWeight: 500 }}>{subscription.subscription_category?.name}</div>
-                                                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>Rs. {subscription.subscription_category?.fee}</div>
+                                                    <div style={{
+                                                        color: '#7f7f7f',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '120px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={subscription.subscription_category?.name} arrow>
+                                                            {subscription.subscription_category?.name}
+                                                        </Tooltip>
+                                                    </div>
+                                                    <div style={{
+                                                        color: '#7f7f7f',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '100px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={subscription.subscription_category?.fee} arrow>
+                                                            Rs. {subscription.subscription_category?.fee}
+                                                        </Tooltip>
+                                                    </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                <span style={{ fontWeight: 600, color: '#059669' }}>Rs. {subscription.total_price?.toLocaleString()}</span>
+                                            <TableCell sx={{
+                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap'
+                                            }}>
+                                                <Tooltip title={subscription.total_price?.toLocaleString()} arrow>
+                                                    Rs. {subscription.total_price?.toLocaleString()}
+                                                </Tooltip>
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.valid_from ? new Date(subscription.valid_from).toLocaleDateString() : '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.valid_to ? new Date(subscription.valid_to).toLocaleDateString() : 'Unlimited'}</TableCell>
@@ -282,9 +337,11 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                                     variant='contained'
                                                     // startIcon={<ReceiptIcon />}
                                                     sx={{
+                                                        bgcolor: 'transparent',
                                                         color: '#063455',
-                                                        textTransform: 'none',
                                                         border: '1px solid #063455',
+                                                        textTransform: 'none',
+                                                        boxShadow: 'none',
                                                         '&:hover': {
                                                             backgroundColor: 'transparent',
                                                         },
