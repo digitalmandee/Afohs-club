@@ -25,6 +25,7 @@ use App\Http\Controllers\EventMenuController;
 use App\Http\Controllers\EventMenuTypeController;
 use App\Http\Controllers\EventVenueController;
 use App\Http\Controllers\FamilyMembersArchiveConroller;
+use App\Http\Controllers\FinancialChargeTypeController;
 use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\GuestTypeController;
 use App\Http\Controllers\LeaveApplicationController;
@@ -371,10 +372,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
 
         // Charge Types Management (CRUD)
-        Route::get('charge-types/trashed', [TransactionTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
-        Route::post('charge-types/restore/{id}', [TransactionTypeController::class, 'restore'])->name('finance.charge-types.restore');
-        Route::delete('charge-types/force-delete/{id}', [TransactionTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
-        Route::resource('charge-types', TransactionTypeController::class)->names('finance.charge-types');
+        Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
+        Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore');
+        Route::delete('charge-types/force-delete/{id}', [FinancialChargeTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
+        Route::resource('charge-types', FinancialChargeTypeController::class)->names('finance.charge-types');
     });
 
     // Route for business developers, outside the 'admin/finance' group as per user's snippet structure
@@ -574,6 +575,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             return Inertia::render('App/Admin/Membership/Finance');
         })->name('membership.finance');
 
+        Route::get('finance/invoice/{id}/pay', [MemberTransactionController::class, 'payInvoiceView'])->name('finance.invoice.pay');
+
         // Family Member Expiry Management (integrated with Family Members Archive)
         Route::group(['prefix' => 'family-members-archive', 'middleware' => 'role:super-admin'], function () {
             Route::get('member/{member}/extend', [FamilyMembersArchiveConroller::class, 'show'])->name('membership.family-expiry.show');
@@ -645,7 +648,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-subscription-types', [DataMigrationController::class, 'migrateSubscriptionTypesPublic'])->name('data-migration.migrate-subscription-types');
         // Removed duplicate/incorrect lines and referencing correct public method
         // Route::post('/data-migration/migrate-invoices', ...); // Removed duplicate
-        Route::post('/data-migration/migrate-financials', [App\Http\Controllers\DataMigrationController::class, 'migrateFinancials'])->name('data-migration.migrate-financials');  // Added this route
+        Route::post('/data-migration/migrate-financials', [DataMigrationController::class, 'migrateFinancials'])->name('data-migration.migrate-financials');  // Added this route
 
         // Atomic Financial Migration Routes
         Route::get('/old-transaction-types', [DataMigrationController::class, 'getOldTransactionTypesPublic'])->name('data-migration.old-transaction-types');

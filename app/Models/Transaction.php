@@ -11,35 +11,36 @@ class Transaction extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id',  // Member, Customer, or Corporate Member ID (Can be polymorphic or handled via separate cols if strict)
-        // Ideally, we might want 'payable_type' and 'payable_id' for Member/Corporate/Customer
+        'user_id',
         'payable_type',
         'payable_id',
-        'type',  // 'debit' or 'credit'
+        'type',
         'amount',
-        'balance',  // Running balance snapshot
-        'reference_type',  // FinancialInvoice, RoomBooking, FinancialReceipt
+        'balance',
+        'reference_type',
         'reference_id',
-        'trans_type_id',  // Link to TransactionType
+        'invoice_id',
         'description',
         'date',
-        'remarks'
+        'remarks',
+        'receipt_id',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
-    // Polymorphic relation to the entity (Member, Customer, CorporateMember)
     public function payable()
     {
         return $this->morphTo();
     }
 
-    // Polymorphic relation to the source (Invoice, Receipt, RoomBooking)
     public function reference()
     {
         return $this->morphTo();
     }
 
-    public function transactionType()
+    public function invoice()
     {
-        return $this->belongsTo(TransactionType::class, 'trans_type_id');
+        return $this->belongsTo(FinancialInvoice::class);
     }
 }

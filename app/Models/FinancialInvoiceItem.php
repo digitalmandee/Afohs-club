@@ -35,6 +35,9 @@ class FinancialInvoiceItem extends Model
         'extra_percentage',
         'remarks',
         'data',  // JSON for extra data
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     protected $casts = [
@@ -46,5 +49,10 @@ class FinancialInvoiceItem extends Model
     public function invoice()
     {
         return $this->belongsTo(FinancialInvoice::class, 'invoice_id');
+    }
+
+    public function transactions()
+    {
+        return $this->morphMany(Transaction::class, 'reference');
     }
 }

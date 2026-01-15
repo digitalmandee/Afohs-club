@@ -8,9 +8,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useSnackbar } from 'notistack';
 
-export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance }) {
+export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '', paymentMode = false }) {
     const { enqueueSnackbar } = useSnackbar();
-    // State to control DatePicker open status for each item field
     const [openPickers, setOpenPickers] = useState({});
 
     const togglePicker = (index, field, isOpen) => {
@@ -19,12 +18,12 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
             [`${index}_${field}`]: isOpen,
         }));
     };
-    // Add a new empty row
+
     const handleAddItem = () => {
         setItems([
             ...items,
             {
-                id: Date.now(), // Temporary ID
+                id: Date.now(),
                 fee_type: '',
                 fee_type_name: '',
                 description: '',
@@ -32,17 +31,17 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 amount: '',
                 tax_percentage: 0,
                 overdue_percentage: 0,
-                discount_type: 'fixed', // 'percent' or 'fixed'
+                discount_type: 'fixed',
                 discount_value: 0,
                 discount_amount: 0,
                 additional_charges: 0,
                 valid_from: null,
                 valid_to: null,
                 remarks: '',
-                // Subscription specific
                 subscription_type_id: '',
                 subscription_category_id: '',
                 family_member_id: '',
+                financial_charge_type_id: '', // New field
                 total: 0,
             },
         ]);
@@ -62,49 +61,75 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
 
         // Handle Fee Type Change special logic
         if (field === 'fee_type') {
-            if (value === 'maintenance_fee') {
-                const hasMaintenance = newItems.some((i, iIdx) => i.fee_type === 'maintenance_fee' && iIdx !== index);
+            const allTypes = [...membershipCharges, ...maintenanceCharges, ...subscriptionCharges, ...otherCharges, ...transactionTypes];
+            const selectedType = allTypes.find((t) => t.id == value);
+            const typeId = selectedType ? parseInt(selectedType.type) : null; // 3: Mem, 4: Maint, 5: Sub, 6: Other
+
+            if (typeId === 4) {
+                // Maintenance
+                // Check if any OTHER item is also Maintenance (Type 4)
+                const hasMaintenance = newItems.some((i, iIdx) => {
+                    if (iIdx === index) return false;
+                    const iType = allTypes.find((t) => t.id == i.fee_type);
+                    return iType && parseInt(iType.type) === 4;
+                });
+
                 if (hasMaintenance) {
                     enqueueSnackbar('Only one Maintenance Fee item is allowed per invoice.', { variant: 'warning' });
                     return; // Prevent change
                 }
             }
 
-            const selectedType = transactionTypes.find((t) => t.id == value);
-
-            // Auto-fill logic for System Fees
+            // Auto-fill logic
             let autoAmount = '';
-            let isFixed = false; // Default editable
+            let isFixed = false;
+            let feeName = selectedType ? selectedType.name : '';
 
-            if (value === 'membership_fee' && selectedMember) {
-                // Prioritize total_membership_fee, then membership_fee
-                autoAmount = selectedMember.total_membership_fee || selectedMember.membership_fee || selectedMember.member_category?.fee || '';
-                // Keep editable or fixed? Let's make it editable but pre-filled.
-                isFixed = false;
-            } else if (value === 'maintenance_fee' && selectedMember) {
-                // Prioritize total_maintenance_fee, then maintenance_fee
-                autoAmount = selectedMember.total_maintenance_fee || selectedMember.maintenance_fee || '';
-                // Maintenance fee is usually per month rate, kept editable.
-                isFixed = false;
-            } else if (selectedType) {
-                autoAmount = selectedType.default_amount;
+            if (selectedType) {
+                // Default from Type
+                autoAmount = selectedType.default_amount || selectedType.amount || '';
                 isFixed = !!selectedType.is_fixed;
             }
 
-            // logic for fee name
-            const feeName = value === 'membership_fee' ? 'Membership Fee' : value === 'maintenance_fee' ? 'Maintenance Fee' : value === 'subscription_fee' ? 'Subscription Fee' : selectedType ? selectedType.name : '';
+            if (typeId === 3 && selectedMember) {
+                // Membership
+                autoAmount = selectedMember.total_membership_fee || selectedMember.membership_fee || selectedMember.member_category?.fee || '';
+                isFixed = false;
+            } else if (typeId === 4 && selectedMember) {
+                // Maintenance
+                autoAmount = selectedMember.total_maintenance_fee || selectedMember.maintenance_fee || '';
+                isFixed = false;
+            } else if (typeId === 5) {
+                // Subscription
+                autoAmount = ''; // Reset
+            }
 
-            // Update local item variable (which is used for calculations and saved at the end)
+            // Update local item variable
             item.fee_type = value;
             item.fee_type_name = feeName;
             item.amount = autoAmount !== '' ? autoAmount : '';
             item.is_fixed = isFixed;
-            item.description = feeName; // Set description to match fee name
+            item.description = feeName;
+
+            // Cleanup fields based on type
+            if (typeId !== 6) {
+                item.financial_charge_type_id = '';
+            }
+            if (typeId !== 5) {
+                item.subscription_type_id = '';
+                item.subscription_category_id = '';
+                item.family_member_id = '';
+            }
         } else if (field === 'valid_from' || field === 'valid_to') {
             item[field] = value ? dayjs(value).format('YYYY-MM-DD') : null;
 
-            // Auto-calc maintenance amount if dates are set
-            if (item.fee_type === 'maintenance_fee' && item.valid_from && item.valid_to && selectedMember) {
+            // Auto-calc logic
+            const allTypes = [...membershipCharges, ...maintenanceCharges, ...subscriptionCharges, ...otherCharges, ...transactionTypes];
+            const currentType = allTypes.find((t) => t.id == item.fee_type);
+            const typeId = currentType ? parseInt(currentType.type) : null;
+
+            // Maintenance Logic (Type 4)
+            if (typeId === 4 && item.valid_from && item.valid_to && selectedMember) {
                 const from = dayjs(item.valid_from);
                 const to = dayjs(item.valid_to);
                 if (to.isAfter(from) || to.isSame(from)) {
@@ -118,23 +143,16 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
 
                     item.amount = totalAmount;
                     item.qty = 1;
-                    item.description = `Maintenance Fee (${from.format('MMM YYYY')} - ${to.format('MMM YYYY')})`;
+                    item.description = `${item.fee_type_name} (${from.format('MMM YYYY')} - ${to.format('MMM YYYY')})`;
                 }
-            } else if (item.fee_type === 'subscription_fee' && item.valid_from && item.valid_to && item.subscription_category_id) {
-                // Logic for subscription calc if category is selected
+            } else if (typeId === 5 && item.valid_from && item.valid_to && item.subscription_category_id) {
+                // Subscription Logic (Type 5)
                 const cat = subscriptionCategories.find((c) => c.id === item.subscription_category_id);
                 if (cat && cat.fee) {
                     const from = dayjs(item.valid_from);
                     const to = dayjs(item.valid_to);
-
-                    // Logic: (YearDiff * 12) + MonthDiff + 1 (inclusive basis)
-                    // If the user selects e.g. Jan 1 to Jan 31, that's 1 month. Jan 1 to Feb 1 is 2 months?
-                    // Let's use the same logic as Maintenance for consistency.
-                    // If to >= from:
                     if (to.isAfter(from) || to.isSame(from)) {
                         const monthsDiff = (to.year() - from.year()) * 12 + (to.month() - from.month()) + 1;
-
-                        // User Request: Qty should be 1, Rate should be Total Amount
                         item.amount = cat.fee * (monthsDiff > 0 ? monthsDiff : 1);
                         item.qty = 1;
                         item.description = `${item.fee_type_name} - ${monthsDiff} Months`;
@@ -202,9 +220,11 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                             Invoice Items
                         </Typography>
                     </Box>
-                    <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: '16px', textTransform: 'none', bgcolor:'#063455', color:'#fff'}}>
-                        Add Another Item
-                    </Button>
+                    {!paymentMode && (
+                        <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
+                            Add Another Item
+                        </Button>
+                    )}
                 </Box>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -222,7 +242,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                     <Typography variant="subtitle2" fontWeight="bold" color="text.secondary">
                                         Item #{index + 1}
                                     </Typography>
-                                    {items.length > 1 && (
+                                    {items.length > 1 && !paymentMode && (
                                         <IconButton size="small" color="error" onClick={() => handleRemoveItem(index)}>
                                             <Delete fontSize="small" />
                                         </IconButton>
@@ -232,19 +252,64 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                 <Grid container spacing={1}>
                                     {/* Row 1: Fee Type, Description, Dates */}
                                     <Grid item xs={12} md={4}>
-                                        <TextField select fullWidth size="small" label="Fee Type" value={item.fee_type} onChange={(e) => handleChange(index, 'fee_type', e.target.value)} sx={{ bgcolor: 'white' }}>
-                                            <ListSubheader sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>System Fees</ListSubheader>
-                                            <MenuItem value="membership_fee">Membership Fee</MenuItem>
-                                            <MenuItem value="maintenance_fee">Maintenance Fee</MenuItem>
-                                            <MenuItem value="subscription_fee">Subscription Fee</MenuItem>
+                                        <TextField select fullWidth size="small" label="Fee Type" value={item.fee_type || ''} onChange={(e) => handleChange(index, 'fee_type', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
+                                            {[
+                                                // Show Membership Charges ONLY if NOT Guest
+                                                ...(!String(bookingType).startsWith('guest') && membershipCharges.length > 0
+                                                    ? [
+                                                          <ListSubheader key="hdr-mem" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                              Membership Charges
+                                                          </ListSubheader>,
+                                                          ...membershipCharges.map((type) => (
+                                                              <MenuItem key={type.id} value={type.id}>
+                                                                  {type.name}
+                                                              </MenuItem>
+                                                          )),
+                                                      ]
+                                                    : []),
 
-                                            <Divider />
-                                            <ListSubheader sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>Charge Types</ListSubheader>
-                                            {transactionTypes.map((type) => (
-                                                <MenuItem key={type.id} value={type.id}>
-                                                    {type.name}
-                                                </MenuItem>
-                                            ))}
+                                                // Show Maintenance Charges ONLY if NOT Guest
+                                                ...(!String(bookingType).startsWith('guest') && maintenanceCharges.length > 0
+                                                    ? [
+                                                          <Divider key="div-maint" />,
+                                                          <ListSubheader key="hdr-maint" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                              Maintenance Charges
+                                                          </ListSubheader>,
+                                                          ...maintenanceCharges.map((type) => (
+                                                              <MenuItem key={type.id} value={type.id}>
+                                                                  {type.name}
+                                                              </MenuItem>
+                                                          )),
+                                                      ]
+                                                    : []),
+
+                                                ...(subscriptionCharges.length > 0
+                                                    ? [
+                                                          <Divider key="div-sub" />,
+                                                          <ListSubheader key="hdr-sub" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                              Subscription Charges
+                                                          </ListSubheader>,
+                                                          ...subscriptionCharges.map((type) => (
+                                                              <MenuItem key={type.id} value={type.id}>
+                                                                  {type.name}
+                                                              </MenuItem>
+                                                          )),
+                                                      ]
+                                                    : []),
+                                                ...(otherCharges.length > 0
+                                                    ? [
+                                                          <Divider key="div-other" />,
+                                                          <ListSubheader key="hdr-other" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                              Other Charges
+                                                          </ListSubheader>,
+                                                          ...otherCharges.map((type) => (
+                                                              <MenuItem key={type.id} value={type.id}>
+                                                                  {type.name}
+                                                              </MenuItem>
+                                                          )),
+                                                      ]
+                                                    : []),
+                                            ]}
                                         </TextField>
                                     </Grid>
                                     <Grid item xs={12} md={4}>
@@ -291,25 +356,33 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             />
                                         </Box>
                                         {/* Quick Select Buttons */}
-                                        {item.fee_type === 'maintenance_fee' && onQuickSelectMaintenance && (
-                                            <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
-                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('monthly', index)}>
-                                                    1 Mo
-                                                </Button>
-                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('quarterly', index)}>
-                                                    1 Qtr
-                                                </Button>
-                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('half_yearly', index)}>
-                                                    6 Mo
-                                                </Button>
-                                                <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('annually', index)}>
-                                                    1 Yr
-                                                </Button>
-                                            </Box>
-                                        )}
+                                        {(() => {
+                                            const allTypes = [...membershipCharges, ...maintenanceCharges, ...subscriptionCharges, ...otherCharges, ...transactionTypes];
+                                            const currentType = allTypes.find((t) => t.id == item.fee_type);
+                                            const typeId = currentType ? parseInt(currentType.type) : null;
+                                            return (
+                                                typeId === 4 &&
+                                                onQuickSelectMaintenance && (
+                                                    <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
+                                                        <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('monthly', index)}>
+                                                            1 Mo
+                                                        </Button>
+                                                        <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('quarterly', index)}>
+                                                            1 Qtr
+                                                        </Button>
+                                                        <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('half_yearly', index)}>
+                                                            6 Mo
+                                                        </Button>
+                                                        <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('annually', index)}>
+                                                            1 Yr
+                                                        </Button>
+                                                    </Box>
+                                                )
+                                            );
+                                        })()}
                                     </Grid>
                                     <Grid item xs={6} md={1}>
-                                        <TextField type="number" fullWidth size="small" label="Qty" value={item.qty} onChange={(e) => handleChange(index, 'qty', e.target.value)} sx={{ bgcolor: 'white' }} />
+                                        <TextField type="number" fullWidth size="small" label="Qty" value={item.qty} onChange={(e) => handleChange(index, 'qty', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode} />
                                     </Grid>
                                     <Grid item xs={6} md={3}>
                                         <TextField
@@ -321,7 +394,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
                                                 readOnly: item.is_fixed, // Lock if fixed
                                             }}
-                                            disabled={item.is_fixed} // Visual disable
+                                            disabled={item.is_fixed || paymentMode} // Visual disable
                                             value={item.amount}
                                             onChange={(e) => handleChange(index, 'amount', e.target.value)}
                                             sx={{ bgcolor: item.is_fixed ? '#f1f5f9' : 'white' }}
@@ -329,54 +402,82 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                     </Grid>
 
                                     {/* Row 1b: Subscription Details */}
-                                    {item.fee_type === 'subscription_fee' && (
-                                        <>
-                                            <Grid item xs={12} md={3}>
-                                                <TextField select fullWidth size="small" label="Sub Type" value={item.subscription_type_id} onChange={(e) => handleChange(index, 'subscription_type_id', e.target.value)} sx={{ bgcolor: 'white' }}>
-                                                    {subscriptionTypes.map((t) => (
-                                                        <MenuItem key={t.id} value={t.id}>
-                                                            {t.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </TextField>
-                                            </Grid>
-                                            <Grid item xs={12} md={3}>
-                                                <TextField select fullWidth size="small" label="Sub Category" value={item.subscription_category_id} onChange={(e) => handleChange(index, 'subscription_category_id', e.target.value)} sx={{ bgcolor: 'white' }}>
-                                                    {(item.subscription_type_id ? subscriptionCategories.filter((c) => c.subscription_type_id == item.subscription_type_id) : subscriptionCategories).map((c) => (
-                                                        <MenuItem key={c.id} value={c.id}>
-                                                            {c.name}
-                                                        </MenuItem>
-                                                    ))}
-                                                </TextField>
-                                            </Grid>
-                                            <Grid item xs={12} md={3}>
-                                                <TextField select fullWidth size="small" label="Member/Family" value={item.family_member_id} onChange={(e) => handleChange(index, 'family_member_id', e.target.value)} sx={{ bgcolor: 'white' }}>
-                                                    <MenuItem value="">Self ({selectedMember?.full_name})</MenuItem>
-                                                    {selectedMember?.family_members?.map((fm) => (
-                                                        <MenuItem key={fm.id} value={fm.id}>
-                                                            {fm.full_name} ({fm.relation})
-                                                        </MenuItem>
-                                                    ))}
-                                                </TextField>
-                                            </Grid>
-                                            <Grid item xs={12} md={3} />
-                                        </>
-                                    )}
+                                    {/* Row 1b: Subscription Details */}
+                                    {(() => {
+                                        const allTypes = [...membershipCharges, ...maintenanceCharges, ...subscriptionCharges, ...otherCharges, ...transactionTypes];
+                                        const currentType = allTypes.find((t) => t.id == item.fee_type);
+                                        const typeId = currentType ? parseInt(currentType.type) : null;
+                                        return (
+                                            typeId === 5 && (
+                                                <>
+                                                    <Grid item xs={12} md={3}>
+                                                        <TextField select fullWidth size="small" label="Sub Type" value={item.subscription_type_id} onChange={(e) => handleChange(index, 'subscription_type_id', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
+                                                            {subscriptionTypes.map((t) => (
+                                                                <MenuItem key={t.id} value={t.id}>
+                                                                    {t.name}
+                                                                </MenuItem>
+                                                            ))}
+                                                        </TextField>
+                                                    </Grid>
+                                                    <Grid item xs={12} md={3}>
+                                                        <TextField select fullWidth size="small" label="Sub Category" value={item.subscription_category_id} onChange={(e) => handleChange(index, 'subscription_category_id', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
+                                                            {(item.subscription_type_id ? subscriptionCategories.filter((c) => c.subscription_type_id == item.subscription_type_id) : subscriptionCategories).map((c) => (
+                                                                <MenuItem key={c.id} value={c.id}>
+                                                                    {c.name}
+                                                                </MenuItem>
+                                                            ))}
+                                                        </TextField>
+                                                    </Grid>
+                                                    <Grid item xs={12} md={3}>
+                                                        <TextField select fullWidth size="small" label="Member/Family" value={item.family_member_id} onChange={(e) => handleChange(index, 'family_member_id', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
+                                                            <MenuItem value="">Self ({selectedMember?.full_name})</MenuItem>
+                                                            {selectedMember?.family_members?.map((fm) => (
+                                                                <MenuItem key={fm.id} value={fm.id}>
+                                                                    {fm.full_name} ({fm.relation})
+                                                                </MenuItem>
+                                                            ))}
+                                                        </TextField>
+                                                    </Grid>
+                                                    <Grid item xs={12} md={3} />
+                                                </>
+                                            )
+                                        );
+                                    })()}
+
+                                    {/* Financial Charge Type Dropdown for Other Charges */}
+                                    {(() => {
+                                        const allTypes = [...membershipCharges, ...maintenanceCharges, ...subscriptionCharges, ...otherCharges, ...transactionTypes];
+                                        const currentType = allTypes.find((t) => t.id == item.fee_type);
+                                        const typeId = currentType ? parseInt(currentType.type) : null;
+                                        return (
+                                            typeId === 6 && (
+                                                <Grid item xs={12} md={4}>
+                                                    <TextField select fullWidth size="small" label="Financial Charge Type" value={item.financial_charge_type_id || ''} onChange={(e) => handleChange(index, 'financial_charge_type_id', e.target.value)} sx={{ bgcolor: 'white' }} helperText="Select specific financial charge type" disabled={paymentMode}>
+                                                        {financialChargeTypes.map((type) => (
+                                                            <MenuItem key={type.id} value={type.id}>
+                                                                {type.name}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </TextField>
+                                                </Grid>
+                                            )
+                                        );
+                                    })()}
 
                                     {/* Row 3: Financials & Calculator */}
                                     <Grid item xs={6} md={3}>
-                                        <TextField type="number" fullWidth size="small" label="Add. Chrgs" value={item.additional_charges} onChange={(e) => handleChange(index, 'additional_charges', e.target.value)} sx={{ bgcolor: 'white' }} />
+                                        <TextField type="number" fullWidth size="small" label="Add. Chrgs" value={item.additional_charges} onChange={(e) => handleChange(index, 'additional_charges', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode} />
                                     </Grid>
                                     <Grid item xs={6} md={2}>
-                                        <TextField type="number" fullWidth size="small" label="Tax%" value={item.tax_percentage} onChange={(e) => handleChange(index, 'tax_percentage', e.target.value)} sx={{ bgcolor: 'white' }} />
+                                        <TextField type="number" fullWidth size="small" label="Tax%" value={item.tax_percentage} onChange={(e) => handleChange(index, 'tax_percentage', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode} />
                                     </Grid>
                                     <Grid item xs={6} md={4}>
                                         <Box display="flex" gap={1}>
-                                            <TextField select size="small" label="Disc Type" value={item.discount_type} onChange={(e) => handleChange(index, 'discount_type', e.target.value)} sx={{ bgcolor: 'white', width: '40%' }}>
+                                            <TextField select size="small" label="Disc Type" value={item.discount_type} onChange={(e) => handleChange(index, 'discount_type', e.target.value)} sx={{ bgcolor: 'white', width: '40%' }} disabled={paymentMode}>
                                                 <MenuItem value="fixed">Fixed</MenuItem>
                                                 <MenuItem value="percent">%</MenuItem>
                                             </TextField>
-                                            <TextField type="number" size="small" label="Disc Val" value={item.discount_value} onChange={(e) => handleChange(index, 'discount_value', e.target.value)} sx={{ bgcolor: 'white', width: '60%' }} />
+                                            <TextField type="number" size="small" label="Disc Val" value={item.discount_value} onChange={(e) => handleChange(index, 'discount_value', e.target.value)} sx={{ bgcolor: 'white', width: '60%' }} disabled={paymentMode} />
                                         </Box>
                                     </Grid>
                                     <Grid item xs={6} md={3}>
@@ -386,6 +487,35 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             </Typography>
                                         </Box>
                                     </Grid>
+
+                                    {/* Payment Mode Columns */}
+                                    {paymentMode && (
+                                        <>
+                                            <Grid item xs={12} md={12}>
+                                                <Divider sx={{ my: 1 }} />
+                                            </Grid>
+                                            <Grid item xs={6} md={3}>
+                                                <TextField size="small" fullWidth label="Already Paid" value={new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(item.paid_amount || 0)} disabled sx={{ bgcolor: '#f1f5f9' }} />
+                                            </Grid>
+                                            <Grid item xs={6} md={3}>
+                                                <TextField size="small" fullWidth label="Balance" value={new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(item.balance || 0)} disabled sx={{ bgcolor: '#f1f5f9', '& .MuiInputBase-input': { color: 'error.main', fontWeight: 'bold' } }} />
+                                            </Grid>
+                                            <Grid item xs={12} md={6}>
+                                                <TextField
+                                                    type="number"
+                                                    fullWidth
+                                                    size="small"
+                                                    label="Payment Amount (Now)"
+                                                    value={item.payment_amount}
+                                                    onChange={(e) => handleChange(index, 'payment_amount', e.target.value)}
+                                                    sx={{ bgcolor: '#ecfdf5', '& .MuiOutlinedInput-root': { borderColor: 'success.main', borderWidth: 2 } }}
+                                                    InputProps={{
+                                                        startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                                    }}
+                                                />
+                                            </Grid>
+                                        </>
+                                    )}
 
                                     {/* Row 3: Remarks */}
                                     <Grid item xs={12}>

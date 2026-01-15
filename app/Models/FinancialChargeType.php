@@ -6,18 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class TransactionType extends Model
+class FinancialChargeType extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'name',
-        'type',
         'status',  // 'active', 'inactive'
-        'table_name',
-        'details',
-        'account',
-        'cashrec_due',
-        'mod_id'
+        'default_amount',
+        'is_fixed',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
 }

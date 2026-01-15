@@ -9,11 +9,13 @@ use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
 use App\Models\SubscriptionType;
+use App\Models\Transaction;
 use App\Models\TransactionType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -1601,7 +1603,7 @@ class DataMigrationController extends Controller
 
             \App\Models\FinancialReceipt::create([
                 'id' => $old->id,  // Preserve ID
-                'receipt_no' => $old->receipt_no,
+                'receipt_no' => $old->id,
                 'amount' => $old->total ?? 0,
                 'payment_method' => $old->account == 1 ? 'Cash' : ($old->account == 2 ? 'Bank' : 'Other'),
                 'receipt_date' => $this->validateDate($old->invoice_date),
@@ -1910,7 +1912,7 @@ class DataMigrationController extends Controller
                         }
                     }
 
-                    \App\Models\Transaction::create([
+                    Transaction::create([
                         'amount' => $t->trans_amount,
                         'type' => $t->debit_or_credit == 0 ? 'credit' : 'debit',
                         'payable_type' => $payable ? get_class($payable) : null,
@@ -2026,14 +2028,35 @@ class DataMigrationController extends Controller
 
                     $first = $groupRows->first();
 
-                    // --- A. Migrate Invoice Header & Items ---
-                    $invoice = $this->createInvoiceFromLegacy($first, $groupRows, $oldTransTypeId);
+                    // --- A. Migrate Invoice Header & Items (and return Items map) ---
+                    // Modified to return invoice AND items array
+                    $result = $this->createInvoiceFromLegacy($first, $groupRows, $oldTransTypeId);
+                    $invoice = $result['invoice'];
+                    $itemsMap = $result['items_map'];  // [ legacy_id => new_item_object ]
 
-                    // --- B. Migrate Debit Transaction ---
-                    $this->migrateDebitTransaction($invoiceNo, $first->id, $invoice);
+                    // --- B. Migrate Transactions Per Item ---
+                    foreach ($groupRows as $legacyRow) {
+                        if (isset($itemsMap[$legacyRow->id])) {
+                            $this->migrateInvoiceTransactions($invoice, $itemsMap[$legacyRow->id], $legacyRow);
+                        }
+                    }
 
                     // --- C. Atomic Receipt & Relation Migration ---
+                    // Relations handled in B, but check if we need this separately or if B covers it.
+                    // Legacy system: payments linked to 'invoice' usually via trans_relations.
+                    // But user also mentioned 'transactions' table has credit/receipt links.
+                    // Let's keep migrateRelatedReceipts as a fallback for pure invoice-level payments not in transactions table?
+                    // Or purely rely on transactions?
+                    // Current code: migrateRelatedReceipts uses trans_relations table.
+                    // User request implies using 'transactions' table for debit/credit structure.
+                    // However, payments are often in 'trans_relations' too.
+                    // Strategy: Keep migrateRelatedReceipts for safety (it creates Invoice-level relations),
+                    // IF B doesn't find credits.
+                    // But wait, user said "old system ... transaction has reciept_id ... link with reciepts".
+                    // So we should prioritize B for credits too.
+                    // Let's run migrateRelatedReceipts at the end to catch any payments NOT in transactions table (if any).
                     $this->migrateRelatedReceipts($invoice);
+                    $this->updateInvoiceStatus($invoice);
 
                     $migratedCount++;
                 } catch (\Exception $e) {
@@ -2080,9 +2103,11 @@ class DataMigrationController extends Controller
         $subTypeId = null;
 
         if ($typeId == 3) {
-            $feeType = 'membership_fee';
+            $generic = TransactionType::where('name', 'Membership Fee')->first();
+            $feeType = $generic ? $generic->id : null;
         } elseif ($typeId == 4) {
-            $feeType = 'maintenance_fee';
+            $generic = TransactionType::where('name', 'Monthly Maintenance Fee')->first();
+            $feeType = $generic ? $generic->id : null;
         } else {
             // Lookup Legacy Definition to decide strategy
             $legacyDef = DB::connection('old_afohs')->table('trans_types')->where('id', $typeId)->first();
@@ -2091,20 +2116,20 @@ class DataMigrationController extends Controller
                 if ($legacyDef->type == 3) {
                     // --- SUBSCRIPTION STRATEGY ---
                     // Link to "Monthly Subscription" Generic TransactionType AND Specific SubscriptionType
-                    $feeType = 'subscription_fee';
 
-                    $generic = TransactionType::where('name', 'Monthly Subscription')->first();
-                    $finChargeTypeId = $generic ? $generic->id : null;
+                    $generic = TransactionType::where('name', 'Subscription Fee')->first();
+                    $feeType = $generic ? $generic->id : null;
 
                     $subTypeModel = \App\Models\SubscriptionType::where('title', $legacyDef->name)->first();
                     $subTypeId = $subTypeModel ? $subTypeModel->id : null;
-                } else {
+                } elseif ($legacyDef->type == 2) {
                     // --- AD-HOC / CHARGES STRATEGY ---
                     // Link directly to specific TransactionType
-                    $feeType = 'custom';
+                    $generic = TransactionType::where('name', 'Charges Fee')->first();
+                    $feeType = $generic ? $generic->id : null;
 
-                    $tt = TransactionType::where('name', $legacyDef->name)->first();
-                    $finChargeTypeId = $tt ? $tt->id : null;
+                    $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
+                    $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
                 }
             }
         }
@@ -2121,11 +2146,15 @@ class DataMigrationController extends Controller
             'status' => 'unpaid',  // Will update later
             'created_at' => $this->validateDate($first->created_at),
             'updated_at' => $this->validateDate($first->updated_at),
+            'created_by' => $first->created_by ?? null,
+            'updated_by' => $first->updated_by ?? null,
         ]);
+
+        $itemsMap = [];
 
         // Items
         foreach ($groupRows as $row) {
-            \App\Models\FinancialInvoiceItem::create([
+            $item = \App\Models\FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'fee_type' => $feeType,
                 'financial_charge_type_id' => $finChargeTypeId,
@@ -2138,35 +2167,102 @@ class DataMigrationController extends Controller
                 'tax_amount' => ($row->sub_total * ($row->tax_percentage ?? 0)) / 100,
                 'start_date' => $this->validateDate($row->start_date),
                 'end_date' => $this->validateDate($row->end_date),
+                'created_by' => $row->created_by ?? null,
+                'updated_by' => $row->updated_by ?? null,
             ]);
+            $itemsMap[$row->id] = $item;
         }
 
-        return $invoice;
+        return ['invoice' => $invoice, 'items_map' => $itemsMap];
     }
 
-    private function migrateDebitTransaction($invoiceNo, $legacyInvoiceId, $newInvoice)
+    private function migrateInvoiceTransactions($newInvoice, $newItem, $legacyRow)
     {
-        // In old system, transactions table had trans_type_id pointing to invoice ID (or sometimes invoice_no, need check)
-        // Usually trans_type_id = finance_invoices.id when trans_type is invoice.
-
-        $oldTrans = DB::connection('old_afohs')
+        // Find legacy transactions linked to this specific row/item
+        // Legacy Link: transactions.trans_type_id == finance_invoices.id (legacyRow->id)
+        $legacyTrans = DB::connection('old_afohs')
             ->table('transactions')
-            ->where('trans_type_id', $legacyInvoiceId)  // Assuming ID linkage
-            ->where('debit_or_credit', 0)  // Debit
-            ->first();
+            ->where('trans_type_id', $legacyRow->id)
+            ->where('debit_or_credit', '>=', 0)  // Getting both debit(0) and credit(1)
+            // User mentioned "is_active" on transactions or invoices?
+            // "transaction with item... trans_type_id... also here has key date, is_Active... so i think we need to only migrate active one"
+            // So transactions table likely has is_active too.
+            ->where('is_active', 1)
+            ->get();
 
-        if ($oldTrans) {
-            \App\Models\Transaction::create([
-                'amount' => $oldTrans->trans_amount,
-                'type' => 'debit',
-                'payable_type' => $this->getPayableType($newInvoice),
-                'payable_id' => $this->getPayableId($newInvoice),
-                'reference_type' => FinancialInvoice::class,
-                'reference_id' => $newInvoice->id,
-                'date' => $newInvoice->issue_date,
-                'created_at' => $this->validateDate($oldTrans->created_at),
-                'updated_at' => $this->validateDate($oldTrans->updated_at),
-            ]);
+        foreach ($legacyTrans as $t) {
+            $payableType = $this->getPayableType($newInvoice);
+            $payableId = $this->getPayableId($newInvoice);
+
+            if ($t->debit_or_credit == 0) {
+                // DEBIT (Charge)
+                \App\Models\Transaction::create([
+                    'amount' => $t->trans_amount,
+                    'type' => 'debit',
+                    'payable_type' => $payableType,
+                    'payable_id' => $payableId,
+                    'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                    'reference_id' => $newItem->id,
+                    'invoice_id' => $newInvoice->id,
+                    'date' => $this->validateDate($t->date),
+                    'created_at' => $this->validateDate($t->created_at),
+                    'updated_at' => $this->validateDate($t->updated_at),
+                    'created_by' => $t->created_by ?? null,
+                    'updated_by' => $t->updated_by ?? null,
+                ]);
+            } else {
+                // CREDIT (Payment)
+                // Try to find Receipt (for metadata/linking if possible, or just to verify existence)
+                $receipt = null;
+                if ($t->receipt_id) {
+                    $receipt = \App\Models\FinancialReceipt::where('legacy_id', $t->receipt_id)->first();
+                    if (!$receipt) {
+                        $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $t->receipt_id)->first();
+                        if ($oldReceipt) {
+                            $receipt = $this->migrateSingleReceipt($oldReceipt, $payableType, $payableId, false);
+                        }
+                    }
+                }
+
+                // Reference: We link to InvoiceItem as requested ("attach it with our new invocie items")
+                // We will store the legacy receipt ID in remarks or data if needed, or rely on Invoice-level relations for the hard link.
+                // But CRITICALLY, we must create the transaction row regardless of receipt finding to preserve the balance.
+
+                $remarks = $t->remarks ?? 'Legacy Credit';
+                if ($receipt) {
+                    $remarks .= " (Receipt #{$receipt->receipt_no})";
+                } elseif ($t->receipt_id) {
+                    $remarks .= " (Legacy Receipt ID: {$t->receipt_id} - Not Found)";
+                }
+
+                \App\Models\Transaction::create([
+                    'amount' => $t->trans_amount,
+                    'type' => 'credit',
+                    'payable_type' => $payableType,
+                    'payable_id' => $payableId,
+                    'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                    'reference_id' => $newItem->id,
+                    'invoice_id' => $newInvoice->id,
+                    'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
+                    'date' => $this->validateDate($t->date),
+                    'remarks' => $remarks,
+                    'created_at' => $this->validateDate($t->created_at),
+                    'updated_at' => $this->validateDate($t->updated_at),
+                    'created_by' => $t->created_by ?? null,
+                    'updated_by' => $t->updated_by ?? null,
+                ]);
+
+                // Update Invoice-Level Relation if receipt exists
+                if ($receipt) {
+                    \App\Models\TransactionRelation::updateOrCreate([
+                        'invoice_id' => $newInvoice->id,
+                        'receipt_id' => $receipt->id
+                    ], [
+                        'amount' => $t->trans_amount,
+                        'legacy_transaction_id' => $t->id
+                    ]);
+                }
+            }
         }
     }
 
@@ -2179,37 +2275,63 @@ class DataMigrationController extends Controller
         if (!$oldInvoice)
             return;
 
+        // 2. The 'invoice' column in trans_relations likely points to 'transactions.id' (Legacy Items), not 'finance_invoices.id'.
+        // So we get all transaction IDs for this invoice and query relations for them.
+        $transIds = DB::connection('old_afohs')
+            ->table('transactions')
+            ->where('trans_type_id', $oldInvoice->id)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($transIds)) {
+            return;
+        }
+
         $relations = DB::connection('old_afohs')
             ->table('trans_relations')
-            ->where('invoice', $oldInvoice->id)
+            ->whereIn('invoice', $transIds)
             ->get();
 
         $totalPaid = 0;
 
         foreach ($relations as $rel) {
-            // Receipt ID
-            $receiptId = $rel->receipt;
+            // The 'receipt' column in trans_relations points to a Transaction ID (Type 2), NOT the Receipt ID directly.
+            $legacyTransId = $rel->receipt;
+            $legacyTrans = DB::connection('old_afohs')->table('transactions')->where('id', $legacyTransId)->first();
+
+            if (!$legacyTrans) {
+                continue;
+            }
+
+            $legacyReceiptId = $legacyTrans->receipt_id;
 
             // Check existence
-            $receipt = \App\Models\FinancialReceipt::find($receiptId);
+            $receipt = \App\Models\FinancialReceipt::where('legacy_id', $legacyReceiptId)->first();
 
             if (!$receipt) {
                 // Must migrate NOW
-                $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $receiptId)->first();
+                $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $legacyReceiptId)->first();
                 if ($oldReceipt) {
                     $receipt = $this->migrateSingleReceipt($oldReceipt);
                 }
             }
 
             if ($receipt) {
+                // Fetch the specific credit transaction to get the exact allocated amount
+                $creditTransId = $rel->account;
+                $creditTrans = DB::connection('old_afohs')->table('transactions')->where('id', $creditTransId)->first();
+                $allocatedAmount = $creditTrans ? $creditTrans->trans_amount : $receipt->amount;
+
                 // Create Relation
-                \App\Models\TransactionRelation::firstOrCreate([
+                // We use updateOrCreate to ensure we capture the legacy ID and amount if the relation was created by the other method with 0 amount.
+                \App\Models\TransactionRelation::updateOrCreate([
                     'invoice_id' => $invoice->id,
                     'receipt_id' => $receipt->id
                 ], [
-                    'amount' => $rel->amount
+                    'amount' => $allocatedAmount,
+                    'legacy_transaction_id' => $creditTransId
                 ]);
-                $totalPaid += $rel->amount;
+                $totalPaid += $allocatedAmount;
             }
         }
 
@@ -2221,67 +2343,103 @@ class DataMigrationController extends Controller
         }
     }
 
-    private function migrateSingleReceipt($old)
+    private function updateInvoiceStatus($invoice)
+    {
+        $totalPaid = \App\Models\TransactionRelation::where('invoice_id', $invoice->id)->sum('amount');
+
+        if ($totalPaid >= $invoice->total_price) {
+            $invoice->update(['status' => 'paid']);
+        } elseif ($totalPaid > 0) {
+            $invoice->update(['status' => 'partial']);
+        } else {
+            $invoice->update(['status' => 'unpaid']);
+        }
+    }
+
+    private function migrateSingleReceipt($old, $knownPayerType = null, $knownPayerId = null, $createTransaction = true)
     {
         // 1. Resolve Payer
-        $payerType = null;
-        $payerId = null;
+        $payerType = $knownPayerType;
+        $payerId = $knownPayerId;
 
-        // "mem_number" -> Member
-        if (!empty($old->mem_number)) {
-            $m = Member::where('membership_no', $old->mem_number)->first();
-            $payerType = Member::class;
-            $payerId = $m ? $m->id : null;
-        }
-        // "corporate_id" -> Corporate
-        elseif (!empty($old->corporate_id)) {
-            // CAREFUL: corporate_id might be ID or some code. Assuming old_member_id map.
-            // If corporate_id is integer from corporate_memberships.id logic:
-            $c = CorporateMember::where('old_member_id', $old->corporate_id)->first();
-            $payerType = CorporateMember::class;
-            $payerId = $c ? $c->id : null;
-        }
-        // "customer_id" -> Customer
-        elseif (!empty($old->customer_id)) {
-            $cu = \App\Models\Customer::where('old_customer_id', $old->customer_id)->first();
-            $payerType = \App\Models\Customer::class;
-            $payerId = $cu ? $cu->id : null;
-        }
-
-        // 2. Resolve Employee (Created By)
-        // Map old employee_id -> Employee -> User -> created_by
-        $createdBy = null;
-        if (!empty($old->employee_id)) {
-            // Find employee by old_employee_id
-            $emp = \App\Models\Employee::where('old_employee_id', $old->employee_id)->first();
-            if ($emp && $emp->user_id) {
-                $createdBy = $emp->user_id;
+        if (!$payerType || !$payerId) {
+            // "mem_number" -> Member
+            if (!empty($old->mem_number)) {
+                $m = Member::where('old_member_id', $old->mem_number)->first();
+                $payerType = Member::class;
+                $payerId = $m ? $m->id : null;
+            }
+            // "corporate_id" -> Corporate
+            elseif (!empty($old->corporate_id)) {
+                // CAREFUL: corporate_id might be ID or some code. Assuming old_member_id map.
+                // If corporate_id is integer from corporate_memberships.id logic:
+                $c = CorporateMember::where('old_member_id', $old->corporate_id)->first();
+                $payerType = CorporateMember::class;
+                $payerId = $c ? $c->id : null;
+            }
+            // "customer_id" -> Customer
+            elseif (!empty($old->customer_id)) {
+                $cu = \App\Models\Customer::where('old_customer_id', $old->customer_id)->first();
+                $payerType = \App\Models\Customer::class;
+                $payerId = $cu ? $cu->id : null;
             }
         }
-        // Fallback: use current user/system if needed, or null.
-        // If old data has valid employee, we used it. If not, maybe use receipt creator?
-        // Fallback logic removed.
-        // Priority given to employee_id as requested.
 
-        // 3. Create Receipt
+        // 2. Resolve Employee (Created By) - Handled below via direct map as requested/kept
+
+        // 3. Map Payment Method
+        // User requested: 22 -> Cash, 23 -> Cheque, 24 -> Online
+        // Old Logic: ($old->account == 1) ? 'cash' : 'bank'
+        $paymentMethod = 'cash';  // Default
+        if ($old->account == 22) {
+            $paymentMethod = 'cash';
+        } elseif ($old->account == 23) {
+            $paymentMethod = 'cheque';
+        } elseif ($old->account == 24) {
+            $paymentMethod = 'online';
+        } elseif ($old->account == 1) {
+            // Keep legacy fallback for old rows if any
+            $paymentMethod = 'cash';
+        } else {
+            $paymentMethod = 'bank';  // Fallback for others
+        }
+
+        // 4. Map Advance
+        // Maps directly to advance_amount below.
+
+        // 5. Create Receipt
+        // Map NTN/CTS (Legacy field 'entertainment': 1=ntn, 2=cts, 0/null=null)
+        $ntnValue = null;
+        if (isset($old->entertainment)) {
+            if ($old->entertainment == 1) {
+                $ntnValue = 'ntn';
+            } elseif ($old->entertainment == 2) {
+                $ntnValue = 'cts';
+            }
+        }
+
         $receiptData = [
             // 'id' => $old->id, // REMOVED: User requested auto-increment
-            'receipt_no' => $old->invoice_no,  // finance_cash_receipts.invoice_no is the receipt #
+            'receipt_no' => $old->id,  // finance_cash_receipts.invoice_no is the receipt #
             'amount' => $old->total ?? 0,
-            'payment_method' => ($old->account == 1) ? 'cash' : 'bank',  // Simple map
+            'payment_method' => $paymentMethod,
             'receipt_date' => $this->validateDate($old->invoice_date),
             'payer_type' => $payerType,
             'payer_id' => $payerId,
             'remarks' => $old->remarks,
-            'created_by' => $createdBy,  // Set the mapped user ID
+            'created_by' => $old->created_by,  // Mapped directly
+            'updated_by' => $old->updated_by ?? null,
             // New Fields
-            'employee_id' => $old->employee_id,  // Legacy HR Employee ID string
+            'employee_id' => \App\Models\Employee::where('old_employee_id', $old->employee_id)->value('id'),  // Lookup new ID
             'guest_name' => $old->guest_name,
             'guest_contact' => $old->guest_contact,
             'legacy_id' => $old->id,
+            'advance_amount' => $old->advance ?? 0,
+            'ntn' => $ntnValue,
             'created_at' => $this->validateDate($old->created_at),
             'updated_at' => $this->validateDate($old->updated_at),
             'deleted_at' => $old->deleted_at ? $this->validateDate($old->deleted_at) : null,
+            'deleted_by' => $old->deleted_by ?? null,
         ];
 
         $newId = \App\Models\FinancialReceipt::insertGetId($receiptData);
@@ -2291,18 +2449,20 @@ class DataMigrationController extends Controller
         $receipt = new \App\Models\FinancialReceipt($receiptData);
         $receipt->exists = true;  // Mark as existing to avoid issues if used later
 
-        // 4. Create Credit Transaction
-        \App\Models\Transaction::create([
-            'amount' => $old->total ?? 0,
-            'type' => 'credit',
-            'payable_type' => $payerType,
-            'payable_id' => $payerId,
-            'reference_type' => \App\Models\FinancialReceipt::class,
-            'reference_id' => $receipt->id,
-            'date' => $receipt->receipt_date,
-            'created_at' => $this->validateDate($old->created_at),
-            'updated_at' => $this->validateDate($old->updated_at),
-        ]);
+        if ($createTransaction) {
+            // 6. Create Credit Transaction
+            \App\Models\Transaction::create([
+                'amount' => $old->total ?? 0,
+                'type' => 'credit',
+                'payable_type' => $payerType,
+                'payable_id' => $payerId,
+                'reference_type' => \App\Models\FinancialReceipt::class,
+                'reference_id' => $receipt->id,
+                'date' => $receipt->receipt_date,
+                'created_at' => $this->validateDate($old->created_at),
+                'updated_at' => $this->validateDate($old->updated_at),
+            ]);
+        }
 
         return $receipt;
     }
