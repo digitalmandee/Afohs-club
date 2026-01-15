@@ -30,7 +30,7 @@ class LeaveCategoryController extends Controller
     public function edit($id)
     {
         $leaveCategory = LeaveCategory::findOrFail($id);
-        
+
         return Inertia::render('App/Admin/Employee/Attendance/LeaveCategory/Edit', [
             'leaveCategory' => $leaveCategory
         ]);
@@ -38,7 +38,7 @@ class LeaveCategoryController extends Controller
 
     public function getAll(Request $request)
     {
-        $leaveCategories = LeaveCategory::where('status', 'published')->select('id','color', 'name')->orderByDesc('created_at')->get();
+        $leaveCategories = LeaveCategory::where('status', 'published')->select('id', 'color', 'name')->orderByDesc('created_at')->get();
 
         return response()->json(['success' => true, 'categories' => $leaveCategories]);
     }
@@ -55,7 +55,7 @@ class LeaveCategoryController extends Controller
             'name' => 'required|string',
             'color' => 'required|string',
             'description' => 'required|string',
-            'short_code' => 'required|string',
+            'short_code' => 'required|string|max:50',
         ]);
 
         try {
@@ -98,7 +98,7 @@ class LeaveCategoryController extends Controller
             'name' => 'required|string',
             'color' => 'required|string',
             'description' => 'required|string',
-            'short_code' => 'required|string',
+            'short_code' => 'required|string|max:50',
             'status' => 'required|in:published,draft',
         ]);
 
