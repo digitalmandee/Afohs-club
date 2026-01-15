@@ -74,3 +74,5 @@ const BankTransferPrint = ({ employees = [], period = null, totals = null, gener
 };
 
 export default BankTransferPrint;
+
+BankTransferPrint.layout = (page) => page;

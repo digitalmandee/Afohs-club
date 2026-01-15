@@ -42,7 +42,9 @@ class PayrollProcessingService
             'deductions' => function ($query) {
                 $query->where('is_active', true);
             },
-            'department:id,name'
+            'department:id,name',
+            'activeLoans',
+            'activeAdvances'
         ]);
 
         if ($employeeIds) {
@@ -153,12 +155,55 @@ class PayrollProcessingService
         // Calculate salary components
         $salaryComponents = $this->calculateSalaryComponents($employee, $attendanceData, $salaryStructure);
 
+        // --- Calculate Loan Deductions ---
+        $loanDeductions = [];
+        $totalLoanDeductions = 0;
+        $periodEnd = Carbon::parse($period->end_date);
+
+        if ($employee->activeLoans) {
+            foreach ($employee->activeLoans as $loan) {
+                // Check if next deduction date is on or before period end date
+                // Or if it's null (start immediately?) - Assuming next_deduction_date is set upon approval/disbursement
+                if ($loan->next_deduction_date && Carbon::parse($loan->next_deduction_date)->lte($periodEnd)) {
+                    $amount = min($loan->monthly_deduction, $loan->remaining_amount);
+                    if ($amount > 0) {
+                        $loanDeductions[] = [
+                            'employee_loan_id' => $loan->id,
+                            'amount' => $amount,
+                            'name' => 'Loan Repayment'
+                        ];
+                        $totalLoanDeductions += $amount;
+                    }
+                }
+            }
+        }
+
+        // --- Calculate Advance Deductions ---
+        $advanceDeductions = [];
+        $totalAdvanceDeductions = 0;
+
+        if ($employee->activeAdvances) {
+            foreach ($employee->activeAdvances as $advance) {
+                // Check if deduction start date is on or before period end date
+                if ($advance->deduction_start_date && Carbon::parse($advance->deduction_start_date)->lte($periodEnd)) {
+                    $amount = min($advance->monthly_deduction, $advance->remaining_amount);
+                    if ($amount > 0) {
+                        $advanceDeductions[] = [
+                            'employee_advance_id' => $advance->id,
+                            'amount' => $amount,
+                            'name' => 'Advance Repayment'
+                        ];
+                        $totalAdvanceDeductions += $amount;
+                    }
+                }
+            }
+        }
+
         // Use employeeOrders (passed from batch fetch) as CTS orders for this employee
         $totalOrderDeductions = 0;
         $orderDeductions = [];
         try {
             $ctsOrders = $employeeOrders instanceof \Illuminate\Support\Collection ? $employeeOrders : collect();
-            Log::info("CTS Orders (batched) for Employee {$employee->id}: " . $ctsOrders->count());
 
             foreach ($ctsOrders as $order) {
                 // defensive: skip orders already marked as deducted
@@ -180,8 +225,8 @@ class PayrollProcessingService
             $orderDeductions = [];
         }
 
-        // Adjust totals to include order deductions
-        $totalDeductionsWithOrders = $salaryComponents['total_deductions'] + $totalOrderDeductions;
+        // Adjust totals to include all additional deductions
+        $totalDeductionsWithOrders = $salaryComponents['total_deductions'] + $totalOrderDeductions + $totalLoanDeductions + $totalAdvanceDeductions;
         $netSalaryWithOrders = ($salaryComponents['gross_salary']) - $totalDeductionsWithOrders;
 
         // Create payslip
@@ -232,6 +277,54 @@ class PayrollProcessingService
             ]);
         }
 
+        // Create Loan Deductions
+        if (!empty($loanDeductions)) {
+            $loanDeductionType = DeductionType::firstOrCreate(
+                ['name' => 'Loan Repayment'],
+                [
+                    'type' => 'fixed',
+                    'is_mandatory' => false,
+                    'calculation_base' => 'basic_salary',
+                    'is_active' => true,
+                    'description' => 'Automatic deduction for loan repayment'
+                ]
+            );
+
+            foreach ($loanDeductions as $ld) {
+                PayslipDeduction::create([
+                    'payslip_id' => $payslip->id,
+                    'employee_loan_id' => $ld['employee_loan_id'],
+                    'deduction_type_id' => $loanDeductionType->id,
+                    'deduction_name' => 'Loan Repayment',
+                    'amount' => $ld['amount']
+                ]);
+            }
+        }
+
+        // Create Advance Deductions
+        if (!empty($advanceDeductions)) {
+            $advanceDeductionType = DeductionType::firstOrCreate(
+                ['name' => 'Advance Repayment'],
+                [
+                    'type' => 'fixed',
+                    'is_mandatory' => false,
+                    'calculation_base' => 'basic_salary',
+                    'is_active' => true,
+                    'description' => 'Automatic deduction for advance repayment'
+                ]
+            );
+
+            foreach ($advanceDeductions as $ad) {
+                PayslipDeduction::create([
+                    'payslip_id' => $payslip->id,
+                    'employee_advance_id' => $ad['employee_advance_id'],
+                    'deduction_type_id' => $advanceDeductionType->id,
+                    'deduction_name' => 'Advance Repayment',
+                    'amount' => $ad['amount']
+                ]);
+            }
+        }
+
         // Create CTS order-based deductions (if any) and map to a DeductionType
         if (!empty($orderDeductions)) {
             // Try to find an existing deduction type for CTS orders
@@ -249,7 +342,7 @@ class PayrollProcessingService
             }
 
             foreach ($orderDeductions as $od) {
-                $pd = PayslipDeduction::create([
+                PayslipDeduction::create([
                     'payslip_id' => $payslip->id,
                     'order_id' => $od['order_id'] ?? null,
                     'deduction_type_id' => $ctsDeductionType->id,
@@ -516,76 +609,6 @@ class PayrollProcessingService
 
         // Add attendance-based deductions to total
         $totalDeductions += $absentDeduction + $lateDeduction;
-
-        // Calculate Salary Advance Deductions
-        $advanceDeduction = 0;
-        if (\Illuminate\Support\Facades\Schema::hasTable('employee_advances')) {
-            $activeAdvances = \App\Models\EmployeeAdvance::where('employee_id', $employee->id)
-                ->where('status', 'paid')
-                ->where('remaining_amount', '>', 0)
-                ->get();
-
-            foreach ($activeAdvances as $advance) {
-                $monthlyDeduction = min($advance->monthly_deduction, $advance->remaining_amount);
-
-                if ($monthlyDeduction > 0) {
-                    $advanceDeduction += $monthlyDeduction;
-
-                    // Add to deductions array
-                    $deductions[] = [
-                        'type_id' => null,
-                        'name' => 'Salary Advance (ID: ' . $advance->id . ')',
-                        'amount' => $monthlyDeduction
-                    ];
-
-                    // Update remaining amount
-                    $newRemaining = $advance->remaining_amount - $monthlyDeduction;
-                    $advance->update([
-                        'remaining_amount' => $newRemaining,
-                        'status' => $newRemaining <= 0 ? 'deducted' : 'paid'
-                    ]);
-                }
-            }
-
-            $totalDeductions += $advanceDeduction;
-        }
-
-        // ========================================
-        // LOAN DEDUCTIONS (Auto from disbursed loans)
-        // ========================================
-        $loanDeduction = 0;
-        if (\Illuminate\Support\Facades\Schema::hasTable('employee_loans')) {
-            $activeLoans = \App\Models\EmployeeLoan::where('employee_id', $employee->id)
-                ->where('status', 'disbursed')
-                ->where('remaining_amount', '>', 0)
-                ->get();
-
-            foreach ($activeLoans as $loan) {
-                $deductAmount = min($loan->monthly_deduction, $loan->remaining_amount);
-                $loanDeduction += $deductAmount;
-
-                $deductions[] = [
-                    'deduction_name' => 'Loan Installment (ID: ' . $loan->id . ')',
-                    'deduction_type' => 'fixed',
-                    'amount' => $deductAmount,
-                ];
-
-                // Update loan
-                $newPaid = $loan->total_paid + $deductAmount;
-                $newRemaining = $loan->remaining_amount - $deductAmount;
-                $newInstallmentsPaid = $loan->installments_paid + 1;
-
-                $loan->update([
-                    'total_paid' => $newPaid,
-                    'remaining_amount' => max(0, $newRemaining),
-                    'installments_paid' => $newInstallmentsPaid,
-                    'next_deduction_date' => now()->addMonth()->startOfMonth(),
-                    'status' => $newRemaining <= 0 ? 'completed' : 'disbursed'
-                ]);
-            }
-
-            $totalDeductions += $loanDeduction;
-        }
 
         // Note: Overtime was already added to totalAllowances above
 

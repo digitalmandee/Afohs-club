@@ -347,6 +347,8 @@ class PayrollApiController extends Controller
             'allowances.allowanceType',
             'deductions.deductionType',
             'department',
+            'activeLoans',
+            'activeAdvances'
         ])->findOrFail($employeeId);
 
         return response()->json(['success' => true, 'employee' => $employee]);
@@ -590,17 +592,77 @@ class PayrollApiController extends Controller
             ], 422);
         }
 
-        // Mark period as paid
-        $period->update(['status' => 'paid']);
+        DB::beginTransaction();
 
-        // Optionally mark all payslips as paid too
-        $period->payslips()->update(['status' => 'paid']);
+        try {
+            // Update Loan and Advance Ledgers
+            $payslips = $period->payslips()->with(['deductions.employeeLoan', 'deductions.employeeAdvance'])->get();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Period marked as paid successfully',
-            'period' => $period
-        ]);
+            foreach ($payslips as $payslip) {
+                foreach ($payslip->deductions as $deduction) {
+                    // Handle Loan Repayment
+                    if ($deduction->employee_loan_id && $deduction->employeeLoan) {
+                        $loan = $deduction->employeeLoan;
+                        $amount = $deduction->amount;
+
+                        $loan->remaining_amount -= $amount;
+                        $loan->total_paid += $amount;
+                        $loan->installments_paid += 1;
+
+                        // Set next deduction date to same day next month
+                        if ($loan->next_deduction_date) {
+                            $loan->next_deduction_date = Carbon::parse($loan->next_deduction_date)->addMonth();
+                        }
+
+                        // Complete loan if fully paid
+                        if ($loan->remaining_amount <= 0) {
+                            $loan->status = 'completed';
+                            $loan->remaining_amount = 0;  // ensure non-negative
+                            $loan->next_deduction_date = null;
+                        }
+
+                        $loan->save();
+                    }
+
+                    // Handle Advance Repayment
+                    if ($deduction->employee_advance_id && $deduction->employeeAdvance) {
+                        $advance = $deduction->employeeAdvance;
+                        $amount = $deduction->amount;
+
+                        $advance->remaining_amount -= $amount;
+                        // Advance model doesn't track total_paid or installments_paid explicitly in the shown code,
+                        // but updating remaining_amount is critical.
+
+                        if ($advance->remaining_amount <= 0) {
+                            $advance->status = 'paid';  // 'paid' in Advance indicates completion
+                            $advance->remaining_amount = 0;
+                        }
+
+                        $advance->save();
+                    }
+                }
+            }
+
+            // Mark period as paid
+            $period->update(['status' => 'paid']);
+
+            // Optionally mark all payslips as paid too
+            $period->payslips()->update(['status' => 'paid']);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Period marked as paid successfully',
+                'period' => $period
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error marking period as paid: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // Payroll Processing
@@ -676,7 +738,7 @@ class PayrollApiController extends Controller
             }
         }
 
-        $query = Employee::with(['salaryStructure', 'allowances', 'deductions', 'department']);
+        $query = Employee::with(['salaryStructure', 'allowances', 'deductions', 'department', 'activeLoans', 'activeAdvances']);
 
         if ($employeeIds) {
             $query->whereIn('id', $employeeIds);
@@ -719,6 +781,49 @@ class PayrollApiController extends Controller
                 return $deduction->calculateAmount($basicSalary);
             });
 
+            // Calculate Loan Deductions
+            $loanDeductions = [];
+            $totalLoanDeductions = 0;
+            $periodEnd = Carbon::parse($period->end_date);
+
+            if ($employee->activeLoans) {
+                foreach ($employee->activeLoans as $loan) {
+                    if ($loan->next_deduction_date && Carbon::parse($loan->next_deduction_date)->lte($periodEnd)) {
+                        $amount = min($loan->monthly_deduction, $loan->remaining_amount);
+                        if ($amount > 0) {
+                            $loanDeductions[] = [
+                                'id' => 'loan-' . $loan->id,
+                                'type' => 'loan',
+                                'amount' => $amount,
+                                'name' => 'Loan Repayment'
+                            ];
+                            $totalLoanDeductions += $amount;
+                        }
+                    }
+                }
+            }
+
+            // Calculate Advance Deductions
+            $advanceDeductions = [];
+            $totalAdvanceDeductions = 0;
+
+            if ($employee->activeAdvances) {
+                foreach ($employee->activeAdvances as $advance) {
+                    if ($advance->deduction_start_date && Carbon::parse($advance->deduction_start_date)->lte($periodEnd)) {
+                        $amount = min($advance->monthly_deduction, $advance->remaining_amount);
+                        if ($amount > 0) {
+                            $advanceDeductions[] = [
+                                'id' => 'advance-' . $advance->id,
+                                'type' => 'advance',
+                                'amount' => $amount,
+                                'name' => 'Advance Repayment'
+                            ];
+                            $totalAdvanceDeductions += $amount;
+                        }
+                    }
+                }
+            }
+
             // Include CTS orders (paid within the payroll period) as additional deductions (from batched result)
             $orderDeductions = [];
             $totalOrderDeductions = 0;
@@ -738,7 +843,7 @@ class PayrollApiController extends Controller
             }
 
             // Add order-based deductions to total deductions
-            $totalDeductionsWithOrders = $totalDeductions + $totalOrderDeductions;
+            $totalDeductionsWithOrders = $totalDeductions + $totalOrderDeductions + $totalLoanDeductions + $totalAdvanceDeductions;
 
             $preview[] = [
                 'employee_id' => $employee->id,
@@ -749,7 +854,11 @@ class PayrollApiController extends Controller
                 'total_allowances' => $totalAllowances,
                 'total_deductions' => $totalDeductions,
                 'total_order_deductions' => $totalOrderDeductions,
+                'total_loan_deductions' => $totalLoanDeductions,
+                'total_advance_deductions' => $totalAdvanceDeductions,
                 'order_deductions' => $orderDeductions,
+                'loan_deductions' => $loanDeductions,
+                'advance_deductions' => $advanceDeductions,
                 'gross_salary' => $basicSalary + $totalAllowances,
                 'net_salary' => $basicSalary + $totalAllowances - $totalDeductionsWithOrders
             ];

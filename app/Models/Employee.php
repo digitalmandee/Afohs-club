@@ -110,6 +110,26 @@ class Employee extends BaseModel
         return $this->hasOne(Payslip::class)->latest();
     }
 
+    public function loans()
+    {
+        return $this->hasMany(EmployeeLoan::class);
+    }
+
+    public function activeLoans()
+    {
+        return $this->loans()->active();
+    }
+
+    public function advances()
+    {
+        return $this->hasMany(EmployeeAdvance::class);
+    }
+
+    public function activeAdvances()
+    {
+        return $this->advances()->active();
+    }
+
     /**
      * Check if employee has active salary structure
      */

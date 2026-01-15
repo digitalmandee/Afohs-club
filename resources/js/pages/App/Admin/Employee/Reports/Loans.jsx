@@ -138,147 +138,148 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                         </CardContent>
                     </Card>
 
-                {/* Summary Cards */}
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={3}>
-                        <Card sx={{ borderRadius: '12px', bgcolor: '#e3f2fd' }}>
-                            <CardContent sx={{ textAlign: 'center' }}>
-                                <LoanIcon sx={{ fontSize: 40, color: '#1976d2', mb: 1 }} />
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#063455' }}>
-                                    {formatCurrency(summary?.total_amount)}
-                                </Typography>
-                                <Typography variant="body2" color="textSecondary">
-                                    Total Loaned Amount
-                                </Typography>
-                            </CardContent>
-                        </Card>
+                    {/* Summary Cards */}
+                    <Grid container spacing={3} sx={{ mb: 4 }}>
+                        <Grid item xs={12} sm={3}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#e3f2fd' }}>
+                                <CardContent sx={{ textAlign: 'center' }}>
+                                    <LoanIcon sx={{ fontSize: 40, color: '#1976d2', mb: 1 }} />
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#063455' }}>
+                                        {formatCurrency(summary?.total_amount)}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        Total Loaned Amount
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#e8f5e9' }}>
+                                <CardContent sx={{ textAlign: 'center' }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#2e7d32' }}>
+                                        {formatCurrency(summary?.total_recovered)}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        Total Recovered
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#ffebee' }}>
+                                <CardContent sx={{ textAlign: 'center' }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#c62828' }}>
+                                        {formatCurrency(summary?.total_remaining)}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        Outstanding Balance
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#fff3e0' }}>
+                                <CardContent sx={{ textAlign: 'center' }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#ef6c00' }}>
+                                        {summary?.active_count || 0}
+                                    </Typography>
+                                    <Typography variant="body2" color="textSecondary">
+                                        Active Loans
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <Card sx={{ borderRadius: '12px', bgcolor: '#e8f5e9' }}>
-                            <CardContent sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#2e7d32' }}>
-                                    {formatCurrency(summary?.total_recovered)}
-                                </Typography>
-                                <Typography variant="body2" color="textSecondary">
-                                    Total Recovered
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <Card sx={{ borderRadius: '12px', bgcolor: '#ffebee' }}>
-                            <CardContent sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#c62828' }}>
-                                    {formatCurrency(summary?.total_remaining)}
-                                </Typography>
-                                <Typography variant="body2" color="textSecondary">
-                                    Outstanding Balance
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <Card sx={{ borderRadius: '12px', bgcolor: '#fff3e0' }}>
-                            <CardContent sx={{ textAlign: 'center' }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#ef6c00' }}>
-                                    {summary?.active_count || 0}
-                                </Typography>
-                                <Typography variant="body2" color="textSecondary">
-                                    Active Loans
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
 
-                {/* Printable Header */}
-                <Box sx={{ display: 'none', '@media print': { display: 'block', mb: 4, textAlign: 'center' } }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                        Employee Loans Report
-                    </Typography>
-                    <Typography variant="body2">Generated on: {new Date().toLocaleDateString()}</Typography>
-                </Box>
+                    {/* Printable Header */}
+                    <Box sx={{ display: 'none', '@media print': { display: 'block', mb: 4, textAlign: 'center' } }}>
+                        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+                            Employee Loans Report
+                        </Typography>
+                        <Typography variant="body2">Generated on: {new Date().toLocaleDateString()}</Typography>
+                    </Box>
 
-                {/* Table */}
-                <Card sx={{ borderRadius: '12px', overflow: 'hidden' }}>
-                    <TableContainer>
-                        <Table size="small">
-                            <TableHead>
-                                <TableRow sx={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Employee</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Department</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
-                                        Amount
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="center">
-                                        Installments
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
-                                        Paid
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
-                                        Balance
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {loans.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
-                                            No loans found matching the criteria
+                    {/* Table */}
+                    <Card sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+                        <TableContainer>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow sx={{ backgroundColor: '#063455' }}>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Employee</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Department</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
+                                            Amount
                                         </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="center">
+                                            Installments
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
+                                            Paid
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
+                                            Balance
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
                                     </TableRow>
-                                ) : (
-                                    loans.map((loan) => (
-                                        <TableRow key={loan.id} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
-                                            <TableCell>{new Date(loan.loan_date).toLocaleDateString()}</TableCell>
-                                            <TableCell sx={{ fontWeight: 500 }}>
-                                                {loan.employee?.name}
-                                                <Typography variant="caption" display="block" color="textSecondary">
-                                                    {loan.employee?.employee_id}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell>{loan.employee?.department?.name || '-'}</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                                {formatCurrency(loan.amount)}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                {loan.installments_paid}/{loan.installments}
-                                                <br />
-                                                <Typography variant="caption">{formatCurrency(loan.monthly_deduction)}/mo</Typography>
-                                            </TableCell>
-                                            <TableCell align="right" sx={{ color: 'success.main' }}>
-                                                {formatCurrency(loan.total_paid)}
-                                            </TableCell>
-                                            <TableCell align="right" sx={{ color: 'error.main', fontWeight: 600 }}>
-                                                {formatCurrency(loan.remaining_amount)}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box
-                                                    sx={{
-                                                        display: 'inline-block',
-                                                        px: 1,
-                                                        py: 0.5,
-                                                        borderRadius: 1,
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 600,
-                                                        bgcolor: loan.status === 'disbursed' ? '#e3f2fd' : loan.status === 'completed' ? '#e8f5e9' : '#fff3e0',
-                                                        color: loan.status === 'disbursed' ? '#1976d2' : loan.status === 'completed' ? '#2e7d32' : '#ef6c00',
-                                                    }}
-                                                >
-                                                    {loan.status.toUpperCase()}
-                                                </Box>
+                                </TableHead>
+                                <TableBody>
+                                    {loans.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                                                No loans found matching the criteria
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </Card>
-            </Box>
+                                    ) : (
+                                        loans.map((loan) => (
+                                            <TableRow key={loan.id} sx={{ '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' } }}>
+                                                <TableCell>{new Date(loan.loan_date).toLocaleDateString()}</TableCell>
+                                                <TableCell sx={{ fontWeight: 500 }}>
+                                                    {loan.employee?.name}
+                                                    <Typography variant="caption" display="block" color="textSecondary">
+                                                        {loan.employee?.employee_id}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>{loan.employee?.department?.name || '-'}</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                                    {formatCurrency(loan.amount)}
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    {loan.installments_paid}/{loan.installments}
+                                                    <br />
+                                                    <Typography variant="caption">{formatCurrency(loan.monthly_deduction)}/mo</Typography>
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ color: 'success.main' }}>
+                                                    {formatCurrency(loan.total_paid)}
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ color: 'error.main', fontWeight: 600 }}>
+                                                    {formatCurrency(loan.remaining_amount)}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Box
+                                                        sx={{
+                                                            display: 'inline-block',
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            borderRadius: 1,
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 600,
+                                                            bgcolor: loan.status === 'disbursed' ? '#e3f2fd' : loan.status === 'completed' ? '#e8f5e9' : '#fff3e0',
+                                                            color: loan.status === 'disbursed' ? '#1976d2' : loan.status === 'completed' ? '#2e7d32' : '#ef6c00',
+                                                        }}
+                                                    >
+                                                        {loan.status.toUpperCase()}
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Card>
+                </Box>
+            </LocalizationProvider>
         </AdminLayout>
     );
 };

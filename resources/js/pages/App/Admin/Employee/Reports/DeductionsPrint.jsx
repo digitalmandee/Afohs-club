@@ -67,3 +67,5 @@ const DeductionsPrint = ({ deductions = [], period = null, generatedAt = '' }) =
 };
 
 export default DeductionsPrint;
+
+DeductionsPrint.layout = (page) => page;

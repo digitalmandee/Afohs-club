@@ -138,175 +138,178 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                     </Grid>
 
                     {/* Filters */}
-                    <Card sx={{ mb: 3, p: 2, borderRadius: '12px' }}>
-                        <Grid container spacing={2} alignItems="center">
-                            <Grid item xs={12} sm={2.5}>
-                                <Autocomplete
-                                    options={employees}
-                                    getOptionLabel={(option) => `${option.name} (${option.employee_id || option.id})`}
-                                    value={employees.find((e) => e.id === selectedEmployee) || null}
-                                    onChange={(event, newValue) => {
-                                        setSelectedEmployee(newValue ? newValue.id : '');
-                                    }}
-                                    renderInput={(params) => <TextField {...params} label="Employee" size="small" />}
-                                />
+                    <Card sx={{ mb: 3, borderRadius: '12px' }}>
+                        <CardContent>
+                            <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={12} sm={2.5}>
+                                    <Autocomplete
+                                        options={employees}
+                                        getOptionLabel={(option) => `${option.name} (${option.employee_id || option.id})`}
+                                        value={employees.find((e) => e.id === selectedEmployee) || null}
+                                        onChange={(event, newValue) => {
+                                            setSelectedEmployee(newValue ? newValue.id : '');
+                                        }}
+                                        renderInput={(params) => <TextField {...params} label="Employee" size="small" />}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                    <FormControl fullWidth size="small">
+                                        <InputLabel>Status</InputLabel>
+                                        <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+                                            <MenuItem value="">All Status</MenuItem>
+                                            <MenuItem value="pending">Pending</MenuItem>
+                                            <MenuItem value="approved">Approved</MenuItem>
+                                            <MenuItem value="rejected">Rejected</MenuItem>
+                                            <MenuItem value="disbursed">Disbursed</MenuItem>
+                                            <MenuItem value="completed">Completed</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                    <DatePicker
+                                        label="From"
+                                        value={dateFrom ? dayjs(dateFrom) : null}
+                                        onChange={(newValue) => setDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                fullWidth: true,
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={2}>
+                                    <DatePicker
+                                        label="To"
+                                        value={dateTo ? dayjs(dateTo) : null}
+                                        onChange={(newValue) => setDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                fullWidth: true,
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        }}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} sm={3.5} sx={{ display: 'flex', gap: 1 }}>
+                                    <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', flex: 1 }}>
+                                        Apply
+                                    </Button>
+                                    <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ borderColor: '#d3d3d3', color: '#666' }}>
+                                        Reset
+                                    </Button>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} sm={2}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Status</InputLabel>
-                                    <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
-                                        <MenuItem value="">All Status</MenuItem>
-                                        <MenuItem value="pending">Pending</MenuItem>
-                                        <MenuItem value="approved">Approved</MenuItem>
-                                        <MenuItem value="rejected">Rejected</MenuItem>
-                                        <MenuItem value="disbursed">Disbursed</MenuItem>
-                                        <MenuItem value="completed">Completed</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} sm={2}>
-                                <DatePicker
-                                    label="From"
-                                    value={dateFrom ? dayjs(dateFrom) : null}
-                                    onChange={(newValue) => setDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    slotProps={{
-                                        textField: {
-                                            size: 'small',
-                                            fullWidth: true,
-                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                        },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={2}>
-                                <DatePicker
-                                    label="To"
-                                    value={dateTo ? dayjs(dateTo) : null}
-                                    onChange={(newValue) => setDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                    slotProps={{
-                                        textField: {
-                                            size: 'small',
-                                            fullWidth: true,
-                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                        },
-                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                    }}
-                                />
-                            </Grid>
-                            <Grid item xs={12} sm={3.5} sx={{ display: 'flex', gap: 1 }}>
-                                <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', flex: 1 }}>
-                                    Apply
-                                </Button>
-                                <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ borderColor: '#d3d3d3', color: '#666' }}>
-                                    Reset
-                                </Button>
-                            </Grid>
-                        </Grid>
-                    </CardContent>
+                        </CardContent>
+                    </Card>
 
-                {/* Table */}
-                <Card sx={{ borderRadius: '12px' }}>
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow sx={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>#</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Employee</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
-                                        Amount
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="center">
-                                        Installments
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
-                                        Paid
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
-                                        Pending
-                                    </TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Progress</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="center">
-                                        Actions
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {loans.data?.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                                            <Typography color="textSecondary">No loans found</Typography>
+                    {/* Table */}
+                    <Card sx={{ borderRadius: '12px' }}>
+                        <TableContainer component={Paper}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow sx={{ backgroundColor: '#063455' }}>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>#</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Employee</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
+                                            Amount
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="center">
+                                            Installments
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
+                                            Paid
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="right">
+                                            Pending
+                                        </TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Progress</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600 }} align="center">
+                                            Actions
                                         </TableCell>
                                     </TableRow>
-                                ) : (
-                                    loans.data?.map((loan, index) => (
-                                        <TableRow key={loan.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                            <TableCell>{index + 1}</TableCell>
-                                            <TableCell sx={{ fontWeight: 500 }}>{loan.employee?.name}</TableCell>
-                                            <TableCell>{loan.loan_date}</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                                {formatCurrency(loan.amount)}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                {loan.installments_paid || 0}/{loan.installments}
-                                            </TableCell>
-                                            <TableCell align="right" sx={{ color: '#4caf50' }}>
-                                                {formatCurrency(loan.total_paid)}
-                                            </TableCell>
-                                            <TableCell align="right" sx={{ color: '#d32f2f' }}>
-                                                {formatCurrency(loan.remaining_amount)}
-                                            </TableCell>
-                                            <TableCell sx={{ minWidth: 120 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    <LinearProgress variant="determinate" value={(loan.total_paid / loan.amount) * 100 || 0} sx={{ flex: 1, height: 8, borderRadius: 4 }} />
-                                                    <Typography variant="caption">{Math.round((loan.total_paid / loan.amount) * 100) || 0}%</Typography>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip label={loan.status} size="small" color={getStatusColor(loan.status)} />
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                                                    {loan.status === 'pending' && (
-                                                        <>
-                                                            <IconButton size="small" color="success" onClick={() => handleApprove(loan.id)} title="Approve">
-                                                                <CheckIcon fontSize="small" />
-                                                            </IconButton>
-                                                            <IconButton size="small" color="error" onClick={() => handleReject(loan.id)} title="Reject">
-                                                                <CloseIcon fontSize="small" />
-                                                            </IconButton>
-                                                            <IconButton size="small" onClick={() => router.visit(route('employees.loans.edit', loan.id))} title="Edit">
-                                                                <EditIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </>
-                                                    )}
-                                                    {loan.status === 'approved' && (
-                                                        <IconButton size="small" color="primary" onClick={() => handleDisburse(loan.id)} title="Mark Disbursed">
-                                                            <DisbursedIcon fontSize="small" />
-                                                        </IconButton>
-                                                    )}
-                                                    {['pending', 'rejected'].includes(loan.status) && (
-                                                        <IconButton size="small" color="error" onClick={() => handleDelete(loan.id)} title="Delete">
-                                                            <DeleteIcon fontSize="small" />
-                                                        </IconButton>
-                                                    )}
-                                                </Box>
+                                </TableHead>
+                                <TableBody>
+                                    {loans.data?.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
+                                                <Typography color="textSecondary">No loans found</Typography>
                                             </TableCell>
                                         </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    {loans.last_page > 1 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                            <Pagination count={loans.last_page} page={loans.current_page} onChange={(e, page) => router.get(route('employees.loans.index'), { ...filters, page })} />
-                        </Box>
-                    )}
-                </Card>
-            </Box>
+                                    ) : (
+                                        loans.data?.map((loan, index) => (
+                                            <TableRow key={loan.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
+                                                <TableCell>{index + 1}</TableCell>
+                                                <TableCell sx={{ fontWeight: 500 }}>{loan.employee?.name}</TableCell>
+                                                <TableCell>{loan.loan_date}</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                                    {formatCurrency(loan.amount)}
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    {loan.installments_paid || 0}/{loan.installments}
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ color: '#4caf50' }}>
+                                                    {formatCurrency(loan.total_paid)}
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ color: '#d32f2f' }}>
+                                                    {formatCurrency(loan.remaining_amount)}
+                                                </TableCell>
+                                                <TableCell sx={{ minWidth: 120 }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <LinearProgress variant="determinate" value={(loan.total_paid / loan.amount) * 100 || 0} sx={{ flex: 1, height: 8, borderRadius: 4 }} />
+                                                        <Typography variant="caption">{Math.round((loan.total_paid / loan.amount) * 100) || 0}%</Typography>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip label={loan.status} size="small" color={getStatusColor(loan.status)} />
+                                                </TableCell>
+                                                <TableCell align="center">
+                                                    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                                                        {loan.status === 'pending' && (
+                                                            <>
+                                                                <IconButton size="small" color="success" onClick={() => handleApprove(loan.id)} title="Approve">
+                                                                    <CheckIcon fontSize="small" />
+                                                                </IconButton>
+                                                                <IconButton size="small" color="error" onClick={() => handleReject(loan.id)} title="Reject">
+                                                                    <CloseIcon fontSize="small" />
+                                                                </IconButton>
+                                                                <IconButton size="small" onClick={() => router.visit(route('employees.loans.edit', loan.id))} title="Edit">
+                                                                    <EditIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </>
+                                                        )}
+                                                        {loan.status === 'approved' && (
+                                                            <IconButton size="small" color="primary" onClick={() => handleDisburse(loan.id)} title="Mark Disbursed">
+                                                                <DisbursedIcon fontSize="small" />
+                                                            </IconButton>
+                                                        )}
+                                                        {['pending', 'rejected'].includes(loan.status) && (
+                                                            <IconButton size="small" color="error" onClick={() => handleDelete(loan.id)} title="Delete">
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        {loans.last_page > 1 && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                                <Pagination count={loans.last_page} page={loans.current_page} onChange={(e, page) => router.get(route('employees.loans.index'), { ...filters, page })} />
+                            </Box>
+                        )}
+                    </Card>
+                </Box>
+            </LocalizationProvider>
         </AdminLayout>
     );
 };

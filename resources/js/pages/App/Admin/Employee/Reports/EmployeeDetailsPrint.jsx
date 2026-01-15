@@ -67,3 +67,5 @@ const EmployeeDetailsPrint = ({ employees = [], filters = {}, generatedAt = '' }
 };
 
 export default EmployeeDetailsPrint;
+
+EmployeeDetailsPrint.layout = (page) => page;

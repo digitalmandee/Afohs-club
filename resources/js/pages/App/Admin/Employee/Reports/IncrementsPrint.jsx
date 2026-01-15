@@ -73,3 +73,5 @@ const IncrementsPrint = ({ increments = [], filters = {}, generatedAt = '' }) =>
 };
 
 export default IncrementsPrint;
+
+IncrementsPrint.layout = (page) => page;

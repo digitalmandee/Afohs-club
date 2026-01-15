@@ -298,6 +298,83 @@ const EditSalaryStructure = ({ employee, allowanceTypes = [], deductionTypes = [
                                 </CardContent>
                             </Card>
 
+                            {/* Financial Status Summary */}
+                            <Card sx={{ mt: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600, mb: 3 }}>
+                                        Financial Obligations
+                                    </Typography>
+
+                                    {employee?.active_loans && employee.active_loans.length > 0 ? (
+                                        <Box sx={{ mb: 3 }}>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#d32f2f' }}>
+                                                Active Loans ({employee.active_loans.length})
+                                            </Typography>
+                                            {employee.active_loans.map((loan, idx) => (
+                                                <Box key={loan.id} sx={{ mb: 1, p: 1, bgcolor: '#fff5f5', borderRadius: 1 }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="caption">Total</Typography>
+                                                        <Typography variant="caption" fontWeight="bold">
+                                                            {formatCurrency(loan.amount)}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="caption">Remaining</Typography>
+                                                        <Typography variant="caption" fontWeight="bold">
+                                                            {formatCurrency(loan.remaining_amount)}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="caption">Monthly</Typography>
+                                                        <Typography variant="caption" fontWeight="bold">
+                                                            {formatCurrency(loan.monthly_deduction)}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    ) : (
+                                        <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                                            No active loans
+                                        </Typography>
+                                    )}
+
+                                    {employee?.active_advances && employee.active_advances.length > 0 ? (
+                                        <Box>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1, color: '#ed6c02' }}>
+                                                Active Advances ({employee.active_advances.length})
+                                            </Typography>
+                                            {employee.active_advances.map((advance, idx) => (
+                                                <Box key={advance.id} sx={{ mb: 1, p: 1, bgcolor: '#fff8e1', borderRadius: 1 }}>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="caption">Total</Typography>
+                                                        <Typography variant="caption" fontWeight="bold">
+                                                            {formatCurrency(advance.amount)}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="caption">Remaining</Typography>
+                                                        <Typography variant="caption" fontWeight="bold">
+                                                            {formatCurrency(advance.remaining_amount)}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                        <Typography variant="caption">Monthly</Typography>
+                                                        <Typography variant="caption" fontWeight="bold">
+                                                            {formatCurrency(advance.monthly_deduction)}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            ))}
+                                        </Box>
+                                    ) : (
+                                        <Typography variant="body2" color="textSecondary">
+                                            No active advances
+                                        </Typography>
+                                    )}
+                                </CardContent>
+                            </Card>
+
                             {/* Salary Summary */}
                             <Card sx={{ mt: 3 }}>
                                 <CardContent>

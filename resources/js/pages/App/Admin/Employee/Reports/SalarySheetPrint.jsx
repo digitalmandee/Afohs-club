@@ -101,3 +101,5 @@ const SalarySheetPrint = ({ payslips = [], period = null, totals = null, generat
 };
 
 export default SalarySheetPrint;
+
+SalarySheetPrint.layout = (page) => page;
