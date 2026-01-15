@@ -108,6 +108,22 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeAdvanceController::class, 'reject'])->name('employees.advances.reject');
             Route::post('/{id}/mark-paid', [\App\Http\Controllers\EmployeeAdvanceController::class, 'markPaid'])->name('employees.advances.mark-paid');
             Route::get('/employee/{employeeId}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeAdvances'])->name('employees.advances.employee');
+            Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeSalary'])->name('employees.advances.salary');
+        });
+
+        // Employee Loans
+        Route::prefix('loans')->group(function () {
+            Route::get('/', [\App\Http\Controllers\EmployeeLoanController::class, 'index'])->name('employees.loans.index');
+            Route::get('/create', [\App\Http\Controllers\EmployeeLoanController::class, 'create'])->name('employees.loans.create');
+            Route::post('/', [\App\Http\Controllers\EmployeeLoanController::class, 'store'])->name('employees.loans.store');
+            Route::get('/edit/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'edit'])->name('employees.loans.edit');
+            Route::put('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'update'])->name('employees.loans.update');
+            Route::delete('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'destroy'])->name('employees.loans.destroy');
+            Route::post('/{id}/approve', [\App\Http\Controllers\EmployeeLoanController::class, 'approve'])->name('employees.loans.approve');
+            Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeLoanController::class, 'reject'])->name('employees.loans.reject');
+            Route::post('/{id}/disburse', [\App\Http\Controllers\EmployeeLoanController::class, 'disburse'])->name('employees.loans.disburse');
+            Route::get('/employee/{employeeId}', [\App\Http\Controllers\EmployeeLoanController::class, 'getEmployeeLoans'])->name('employees.loans.employee');
+            Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeLoanController::class, 'getEmployeeSalary'])->name('employees.loans.salary');
         });
 
         Route::prefix('attendances')->group(function () {
@@ -177,6 +193,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             // Deductions Report
             Route::get('deductions', [EmployeeReportController::class, 'deductions'])->name('employees.reports.deductions');
             Route::get('deductions/print', [EmployeeReportController::class, 'deductionsPrint'])->name('employees.reports.deductions.print');
+            Route::get('loans', [\App\Http\Controllers\EmployeeReportController::class, 'loans'])->name('employees.reports.loans');
 
             // Advances Report
             Route::get('advances', [EmployeeReportController::class, 'advances'])->name('employees.reports.advances');

@@ -55,8 +55,7 @@ class EmployeeAdvanceController extends Controller
      */
     public function create()
     {
-        $employees = Employee::where('status', 'active')
-            ->orderBy('name')
+        $employees = Employee::orderBy('name')
             ->get(['id', 'name', 'employee_id']);
 
         return Inertia::render('App/Admin/Employee/Advances/Create', [
@@ -71,7 +70,20 @@ class EmployeeAdvanceController extends Controller
     {
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'amount' => 'required|numeric|min:1',
+            'amount' => [
+                'required',
+                'numeric',
+                'min:1',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->employee_id) {
+                        $employee = \App\Models\Employee::with('salaryStructure')->find($request->employee_id);
+                        $basicSalary = $employee->salaryStructure?->basic_salary ?? 0;
+                        if ($value > $basicSalary) {
+                            $fail("Advance amount cannot exceed basic salary ({$basicSalary}).");
+                        }
+                    }
+                },
+            ],
             'advance_date' => 'required|date',
             'reason' => 'nullable|string|max:255',
             'deduction_months' => 'required|integer|min:1|max:24',
@@ -221,6 +233,21 @@ class EmployeeAdvanceController extends Controller
         return response()->json([
             'success' => true,
             'advances' => $advances,
+        ]);
+    }
+
+    /**
+     * Get employee's salary for validation (API).
+     */
+    public function getEmployeeSalary($employeeId)
+    {
+        $employee = Employee::with('salaryStructure')->findOrFail($employeeId);
+        $salary = $employee->salaryStructure?->basic_salary ?? 0;
+
+        return response()->json([
+            'success' => true,
+            'salary' => $salary,
+            'employee_name' => $employee->name,
         ]);
     }
 }

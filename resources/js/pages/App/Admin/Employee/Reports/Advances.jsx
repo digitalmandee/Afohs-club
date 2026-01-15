@@ -168,9 +168,12 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                         <Grid item xs={12} sm={2}>
                             <TextField fullWidth size="small" type="date" label="To" value={dateTo} onChange={(e) => setDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
                         </Grid>
-                        <Grid item xs={12} sm={3}>
-                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455' }}>
-                                Apply Filters
+                        <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
+                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', flex: 1 }}>
+                                Apply
+                            </Button>
+                            <Button variant="outlined" onClick={() => router.visit(route('employees.reports.advances'))} sx={{ borderColor: '#d3d3d3', color: '#666' }}>
+                                Reset
                             </Button>
                         </Grid>
                     </Grid>

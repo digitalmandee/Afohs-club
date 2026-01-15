@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
+import axios from 'axios';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, Button, TextField, FormControl, InputLabel, Select, MenuItem, Grid, IconButton } from '@mui/material';
+import { Box, Card, CardContent, Typography, Button, TextField, FormControl, InputLabel, Select, MenuItem, Grid, IconButton, Alert } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
+
+const formatCurrency = (amount) => `Rs ${parseFloat(amount || 0).toLocaleString()}`;
 
 const Create = ({ employees = [] }) => {
     const [formData, setFormData] = useState({
@@ -16,6 +19,26 @@ const Create = ({ employees = [] }) => {
         notes: '',
     });
     const [errors, setErrors] = useState({});
+    const [employeeSalary, setEmployeeSalary] = useState(0);
+
+    const fetchEmployeeSalary = async (empId) => {
+        if (!empId) {
+            setEmployeeSalary(0);
+            return;
+        }
+        try {
+            const response = await axios.get(route('employees.advances.salary', empId));
+            if (response.data.success) {
+                setEmployeeSalary(response.data.salary);
+            }
+        } catch (error) {
+            console.error('Error fetching salary:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchEmployeeSalary(formData.employee_id);
+    }, [formData.employee_id]);
 
     const handleChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -66,7 +89,7 @@ const Create = ({ employees = [] }) => {
                                 </FormControl>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField fullWidth type="number" label="Advance Amount *" value={formData.amount} onChange={(e) => handleChange('amount', e.target.value)} error={!!errors.amount} helperText={errors.amount} InputProps={{ inputProps: { min: 1 } }} />
+                                <TextField fullWidth type="number" label="Advance Amount *" value={formData.amount} onChange={(e) => handleChange('amount', e.target.value)} error={!!errors.amount || (employeeSalary > 0 && parseFloat(formData.amount) > employeeSalary)} helperText={errors.amount || (employeeSalary > 0 ? (parseFloat(formData.amount) > employeeSalary ? `Error: Exceeds salary (${formatCurrency(employeeSalary)})` : `Max allowed: ${formatCurrency(employeeSalary)}`) : '')} InputProps={{ inputProps: { min: 1 } }} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField fullWidth type="date" label="Advance Date *" value={formData.advance_date} onChange={(e) => handleChange('advance_date', e.target.value)} error={!!errors.advance_date} helperText={errors.advance_date} InputLabelProps={{ shrink: true }} />

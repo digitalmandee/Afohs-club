@@ -25,9 +25,6 @@ class EmployeeReportApiController extends Controller
         if ($request->department_id) {
             $query->where('department_id', $request->department_id);
         }
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
         if ($request->employment_type) {
             $query->where('employment_type', $request->employment_type);
         }

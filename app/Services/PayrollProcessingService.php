@@ -550,6 +550,43 @@ class PayrollProcessingService
             $totalDeductions += $advanceDeduction;
         }
 
+        // ========================================
+        // LOAN DEDUCTIONS (Auto from disbursed loans)
+        // ========================================
+        $loanDeduction = 0;
+        if (\Illuminate\Support\Facades\Schema::hasTable('employee_loans')) {
+            $activeLoans = \App\Models\EmployeeLoan::where('employee_id', $employee->id)
+                ->where('status', 'disbursed')
+                ->where('remaining_amount', '>', 0)
+                ->get();
+
+            foreach ($activeLoans as $loan) {
+                $deductAmount = min($loan->monthly_deduction, $loan->remaining_amount);
+                $loanDeduction += $deductAmount;
+
+                $deductions[] = [
+                    'deduction_name' => 'Loan Installment (ID: ' . $loan->id . ')',
+                    'deduction_type' => 'fixed',
+                    'amount' => $deductAmount,
+                ];
+
+                // Update loan
+                $newPaid = $loan->total_paid + $deductAmount;
+                $newRemaining = $loan->remaining_amount - $deductAmount;
+                $newInstallmentsPaid = $loan->installments_paid + 1;
+
+                $loan->update([
+                    'total_paid' => $newPaid,
+                    'remaining_amount' => max(0, $newRemaining),
+                    'installments_paid' => $newInstallmentsPaid,
+                    'next_deduction_date' => now()->addMonth()->startOfMonth(),
+                    'status' => $newRemaining <= 0 ? 'completed' : 'disbursed'
+                ]);
+            }
+
+            $totalDeductions += $loanDeduction;
+        }
+
         // Note: Overtime was already added to totalAllowances above
 
         $netSalary = $grossSalary - $totalDeductions;

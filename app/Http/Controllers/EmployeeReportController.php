@@ -106,6 +106,15 @@ class EmployeeReportController extends Controller
             ],
             [
                 'id' => 10,
+                'title' => 'Employee Loans Report',
+                'description' => 'Disbursed loans, repayments, and outstanding balances',
+                'icon' => 'AccountBalance',
+                'color' => '#063455',
+                'route' => 'employees.reports.loans',
+                'stats' => 'Loan Recovery'
+            ],
+            [
+                'id' => 11,
                 'title' => 'Bank Transfer Report',
                 'description' => 'Bank account details for salary transfers',
                 'icon' => 'AccountBalanceWallet',
@@ -132,9 +141,6 @@ class EmployeeReportController extends Controller
         if ($request->department_id) {
             $query->where('department_id', $request->department_id);
         }
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
         if ($request->employment_type) {
             $query->where('employment_type', $request->employment_type);
         }
@@ -157,9 +163,7 @@ class EmployeeReportController extends Controller
         if ($request->department_id) {
             $query->where('department_id', $request->department_id);
         }
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
+
         if ($request->employment_type) {
             $query->where('employment_type', $request->employment_type);
         }
@@ -405,6 +409,57 @@ class EmployeeReportController extends Controller
             'hasAdvancesTable' => $hasAdvancesTable,
             'filters' => $filters,
             'message' => !$hasAdvancesTable ? 'Advances module not configured. Please set up employee advances first.' : null
+        ]);
+    }
+
+    /**
+     * Loans Report - Employee loans and recovery status
+     */
+    public function loans(Request $request)
+    {
+        // Check if employee_loans table exists
+        $hasLoansTable = \Illuminate\Support\Facades\Schema::hasTable('employee_loans');
+
+        $loans = collect();
+        $summary = null;
+        $filters = $request->only(['employee_id', 'status', 'date_from', 'date_to']);
+
+        if ($hasLoansTable) {
+            $query = \App\Models\EmployeeLoan::with(['employee', 'employee.department', 'approver']);
+
+            if ($request->employee_id) {
+                $query->where('employee_id', $request->employee_id);
+            }
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+            if ($request->date_from) {
+                $query->whereDate('loan_date', '>=', $request->date_from);
+            }
+            if ($request->date_to) {
+                $query->whereDate('loan_date', '<=', $request->date_to);
+            }
+
+            $loans = $query->orderBy('loan_date', 'desc')->get();
+
+            $summary = [
+                'total_amount' => $loans->sum('amount'),
+                'total_remaining' => $loans->sum('remaining_amount'),
+                'total_recovered' => $loans->sum('total_paid'),
+                'count' => $loans->count(),
+                'pending_count' => $loans->where('status', 'pending')->count(),
+                'active_count' => $loans->where('status', 'disbursed')->where('remaining_amount', '>', 0)->count(),
+            ];
+        }
+
+        $employees = Employee::orderBy('name')->get(['id', 'name', 'employee_id']);
+
+        return Inertia::render('App/Admin/Employee/Reports/Loans', [
+            'loans' => $loans,
+            'employees' => $employees,
+            'summary' => $summary,
+            'filters' => $filters,
+            'hasLoansTable' => $hasLoansTable
         ]);
     }
 
