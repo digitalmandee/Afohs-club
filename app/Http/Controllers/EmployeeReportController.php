@@ -441,20 +441,20 @@ class EmployeeReportController extends Controller
 
         // Get salary structure changes
         $increments = EmployeeSalaryStructure::with(['employee', 'employee.department'])
-            ->whereBetween('effective_date', [$dateFrom, $dateTo])
-            ->orderBy('effective_date', 'desc')
+            ->whereBetween('effective_from', [$dateFrom, $dateTo])
+            ->orderBy('effective_from', 'desc')
             ->get()
             ->map(function ($structure) {
                 // Get previous salary structure for this employee
                 $previous = EmployeeSalaryStructure::where('employee_id', $structure->employee_id)
-                    ->where('effective_date', '<', $structure->effective_date)
-                    ->orderBy('effective_date', 'desc')
+                    ->where('effective_from', '<', $structure->effective_from)
+                    ->orderBy('effective_from', 'desc')
                     ->first();
 
                 return [
                     'id' => $structure->id,
                     'employee' => $structure->employee,
-                    'effective_date' => $structure->effective_date,
+                    'effective_date' => $structure->effective_from,
                     'current_salary' => $structure->basic_salary,
                     'previous_salary' => $previous?->basic_salary ?? 0,
                     'increment' => $structure->basic_salary - ($previous?->basic_salary ?? 0),
