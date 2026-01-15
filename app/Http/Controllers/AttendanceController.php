@@ -26,6 +26,29 @@ class AttendanceController extends Controller
         ])
             ->where('date', $date);
 
+        // Lazy Backfilling: Create missing attendance records for eligible employees
+        $eligibleEmployees = Employee::where('joining_date', '<=', $date)
+            ->whereDoesntHave('attendances', function ($query) use ($date) {
+                $query->where('date', $date);
+            })
+            ->get();
+
+        $insertData = [];
+        $now = now();
+        foreach ($eligibleEmployees as $employee) {
+            $insertData[] = [
+                'employee_id' => $employee->id,
+                'date' => $date,
+                'status' => 'absent',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if (!empty($insertData)) {
+            Attendance::insert($insertData);
+        }
+
         // Apply search filter if provided
         if (!empty($search)) {
             $attendanceQuery->whereHas('employee', function ($query) use ($search) {
