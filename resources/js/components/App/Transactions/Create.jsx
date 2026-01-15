@@ -989,6 +989,12 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                 setSubmitting(false);
 
+                // If coming from deep link (invoice prop), go back
+                if (props.invoice) {
+                    window.history.back();
+                    return;
+                }
+
                 // Reset form
                 if (paymentMode) {
                     handleCancelPaymentMode();
@@ -1001,8 +1007,8 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                         remarks: '',
                     });
                     setInvoiceItems([]);
-                    setPreSelectedMember(null);
-                    setSearchResult([]);
+                    // preSelectedMember is a prop, cannot set it.
+                    setSearchResults([]);
                     if (!preSelectedMember) {
                         setSelectedMember(null);
                     }
@@ -1129,6 +1135,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     };
 
     const handleCancelPaymentMode = () => {
+        if (props.invoice) {
+            window.history.back();
+            return;
+        }
         setPaymentMode(false);
         setActiveInvoice(null);
         setInvoiceItems([]);
@@ -1561,7 +1571,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
                                                             {paymentMode && (
                                                                 <Button onClick={handleCancelPaymentMode} variant="text" size="large" color="error" sx={{ mr: 'auto' }}>
-                                                                    Cancel Payment Mode
+                                                                    {props.invoice ? 'Back' : 'Cancel Payment Mode'}
                                                                 </Button>
                                                             )}
                                                             {!paymentMode && (

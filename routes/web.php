@@ -365,6 +365,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Transaction Management Routes
         Route::get('create', [MemberTransactionController::class, 'create'])->name('finance.transaction.create')->middleware('permission:financial.create');
+        Route::get('invoice/{id}/pay', [MemberTransactionController::class, 'payInvoiceView'])->name('finance.invoice.pay');
         Route::post('store', [MemberTransactionController::class, 'store'])->name('finance.transaction.store')->middleware('permission:financial.create');
         Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('finance.transaction.search')->middleware('permission:financial.create');
         Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('finance.transaction.member')->middleware('permission:financial.create');
@@ -574,8 +575,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('finance', function () {
             return Inertia::render('App/Admin/Membership/Finance');
         })->name('membership.finance');
-
-        Route::get('finance/invoice/{id}/pay', [MemberTransactionController::class, 'payInvoiceView'])->name('finance.invoice.pay');
 
         // Family Member Expiry Management (integrated with Family Members Archive)
         Route::group(['prefix' => 'family-members-archive', 'middleware' => 'role:super-admin'], function () {
