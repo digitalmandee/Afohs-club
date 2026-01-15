@@ -344,6 +344,32 @@ class PayrollProcessingService
             $totalAllowances += $amount;
         }
 
+        // Apply global allowances (is_global = true)
+        $existingAllowanceTypeIds = collect($allowances)->pluck('type_id')->toArray();
+        $globalAllowanceTypes = \App\Models\AllowanceType::where('is_active', true)
+            ->where('is_global', true)
+            ->whereNotIn('id', $existingAllowanceTypeIds)  // Avoid duplicates
+            ->get();
+
+        foreach ($globalAllowanceTypes as $globalType) {
+            $amount = 0;
+            if ($globalType->type === 'fixed') {
+                $amount = $globalType->default_amount ?? 0;
+            } elseif ($globalType->type === 'percentage') {
+                $amount = ($basicSalary * ($globalType->percentage ?? 0)) / 100;
+            }
+
+            if ($amount > 0) {
+                $allowances[] = [
+                    'type_id' => $globalType->id,
+                    'name' => $globalType->name . ' (Global)',
+                    'amount' => $amount,
+                    'is_taxable' => $globalType->is_taxable
+                ];
+                $totalAllowances += $amount;
+            }
+        }
+
         // Calculate deductions
         $deductions = [];
         $totalDeductions = 0;
@@ -367,6 +393,35 @@ class PayrollProcessingService
             ];
 
             $totalDeductions += $amount;
+        }
+
+        // Apply global deductions (is_global = true)
+        $existingDeductionTypeIds = collect($deductions)->pluck('type_id')->toArray();
+        $globalDeductionTypes = \App\Models\DeductionType::where('is_active', true)
+            ->where('is_global', true)
+            ->whereNotIn('id', $existingDeductionTypeIds)
+            ->get();
+
+        foreach ($globalDeductionTypes as $globalType) {
+            $calculationBase = ($globalType->calculation_base ?? 'basic_salary') === 'basic_salary'
+                ? $basicSalary
+                : ($basicSalary + $totalAllowances);
+
+            $amount = 0;
+            if ($globalType->type === 'fixed') {
+                $amount = $globalType->default_amount ?? 0;
+            } elseif ($globalType->type === 'percentage') {
+                $amount = ($calculationBase * ($globalType->percentage ?? 0)) / 100;
+            }
+
+            if ($amount > 0) {
+                $deductions[] = [
+                    'type_id' => $globalType->id,
+                    'name' => $globalType->name . ' (Global)',
+                    'amount' => $amount
+                ];
+                $totalDeductions += $amount;
+            }
         }
 
         // Calculate overtime amount

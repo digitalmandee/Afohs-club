@@ -16,12 +16,18 @@ class DeductionType extends Model
         'is_mandatory',
         'calculation_base',
         'is_active',
+        'is_global',
+        'default_amount',
+        'percentage',
         'description'
     ];
 
     protected $casts = [
         'is_mandatory' => 'boolean',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'is_global' => 'boolean',
+        'default_amount' => 'decimal:2',
+        'percentage' => 'decimal:2'
     ];
 
     /**

@@ -15,12 +15,18 @@ class AllowanceType extends Model
         'type',
         'is_taxable',
         'is_active',
+        'is_global',
+        'default_amount',
+        'percentage',
         'description'
     ];
 
     protected $casts = [
         'is_taxable' => 'boolean',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'is_global' => 'boolean',
+        'default_amount' => 'decimal:2',
+        'percentage' => 'decimal:2'
     ];
 
     /**

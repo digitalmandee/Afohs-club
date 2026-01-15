@@ -87,6 +87,9 @@ class PayrollApiController extends Controller
             'name' => 'required|string|max:255|unique:allowance_types,name',
             'type' => 'required|in:fixed,percentage,conditional',
             'is_taxable' => 'boolean',
+            'is_global' => 'boolean',
+            'default_amount' => 'nullable|numeric|min:0',
+            'percentage' => 'nullable|numeric|min:0|max:100',
             'description' => 'nullable|string'
         ]);
 
@@ -107,6 +110,9 @@ class PayrollApiController extends Controller
             'type' => 'required|in:fixed,percentage,conditional',
             'is_taxable' => 'boolean',
             'is_active' => 'boolean',
+            'is_global' => 'boolean',
+            'default_amount' => 'nullable|numeric|min:0',
+            'percentage' => 'nullable|numeric|min:0|max:100',
             'description' => 'nullable|string'
         ]);
 
@@ -141,6 +147,9 @@ class PayrollApiController extends Controller
             'is_mandatory' => 'boolean',
             'calculation_base' => 'required|in:basic_salary,gross_salary',
             'is_active' => 'boolean',
+            'is_global' => 'boolean',
+            'default_amount' => 'nullable|numeric|min:0',
+            'percentage' => 'nullable|numeric|min:0|max:100',
             'description' => 'nullable|string'
         ]);
 
@@ -162,6 +171,9 @@ class PayrollApiController extends Controller
             'is_mandatory' => 'boolean',
             'calculation_base' => 'required|in:basic_salary,gross_salary',
             'is_active' => 'boolean',
+            'is_global' => 'boolean',
+            'default_amount' => 'nullable|numeric|min:0',
+            'percentage' => 'nullable|numeric|min:0|max:100',
             'description' => 'nullable|string'
         ]);
 

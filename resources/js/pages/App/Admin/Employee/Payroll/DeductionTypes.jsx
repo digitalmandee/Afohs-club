@@ -20,6 +20,9 @@ const DeductionTypes = () => {
         is_mandatory: false,
         is_active: true,
         calculation_base: 'basic_salary',
+        is_global: false,
+        default_amount: '',
+        percentage: '',
     });
 
     useEffect(() => {
@@ -75,6 +78,9 @@ const DeductionTypes = () => {
             is_mandatory: deductionType.is_mandatory,
             is_active: deductionType.is_active,
             calculation_base: deductionType.calculation_base || 'basic_salary',
+            is_global: deductionType.is_global || false,
+            default_amount: deductionType.default_amount || '',
+            percentage: deductionType.percentage || '',
         });
         setShowDialog(true);
     };
@@ -104,6 +110,9 @@ const DeductionTypes = () => {
             is_mandatory: false,
             is_active: true,
             calculation_base: 'basic_salary',
+            is_global: false,
+            default_amount: '',
+            percentage: '',
         });
     };
 
@@ -134,12 +143,12 @@ const DeductionTypes = () => {
 
     return (
         <AdminLayout>
-            <Box sx={{bgcolor:'#f5f5f5', p: 2 }}>
+            <Box sx={{ bgcolor: '#f5f5f5', p: 2 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton onClick={() => window.history.back()}>
-                            <ArrowBackIcon sx={{color: '#063455'}} />
+                            <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
                             Deduction Types
@@ -166,7 +175,8 @@ const DeductionTypes = () => {
                                 <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
                                     <TableCell sx={{ fontWeight: 600, color: '#000' }}>Name</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#000' }}>Type</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Description</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Amount/Rate</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Global</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#000' }}>Mandatory</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
@@ -175,13 +185,13 @@ const DeductionTypes = () => {
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                                             Loading...
                                         </TableCell>
                                     </TableRow>
                                 ) : deductionTypes.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                                             <Box sx={{ textAlign: 'center' }}>
                                                 <TrendingDownIcon sx={{ fontSize: 64, color: '#ccc', mb: 2 }} />
                                                 <Typography color="textSecondary">No deduction types found</Typography>
@@ -199,10 +209,9 @@ const DeductionTypes = () => {
                                             <TableCell>
                                                 <Chip label={deductionType.type} size="small" color={getTypeColor(deductionType.type)} />
                                             </TableCell>
+                                            <TableCell>{deductionType.type === 'fixed' ? (deductionType.default_amount ? `Rs ${parseFloat(deductionType.default_amount).toLocaleString()}` : '-') : deductionType.percentage ? `${deductionType.percentage}%` : '-'}</TableCell>
                                             <TableCell>
-                                                <Typography variant="body2" color="textSecondary">
-                                                    {deductionType.description || 'No description'}
-                                                </Typography>
+                                                <Chip label={deductionType.is_global ? 'Yes' : 'No'} size="small" color={deductionType.is_global ? 'info' : 'default'} />
                                             </TableCell>
                                             <TableCell>
                                                 <Chip label={deductionType.is_mandatory ? 'Yes' : 'No'} size="small" color={deductionType.is_mandatory ? 'error' : 'default'} />
@@ -284,6 +293,25 @@ const DeductionTypes = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Apply Globally</InputLabel>
+                                    <Select value={formData.is_global} label="Apply Globally" onChange={(e) => setFormData({ ...formData, is_global: e.target.value })}>
+                                        <MenuItem value={false}>No (Per Employee)</MenuItem>
+                                        <MenuItem value={true}>Yes (All Employees)</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            {formData.type === 'fixed' && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField fullWidth label="Default Amount" type="number" value={formData.default_amount} onChange={(e) => setFormData({ ...formData, default_amount: e.target.value })} helperText="Fixed amount to deduct" />
+                                </Grid>
+                            )}
+                            {formData.type === 'percentage' && (
+                                <Grid item xs={12} sm={6}>
+                                    <TextField fullWidth label="Percentage" type="number" value={formData.percentage} onChange={(e) => setFormData({ ...formData, percentage: e.target.value })} helperText="Percentage of calculation base" inputProps={{ min: 0, max: 100, step: 0.01 }} />
+                                </Grid>
+                            )}
                         </Grid>
                     </DialogContent>
                     <DialogActions>
