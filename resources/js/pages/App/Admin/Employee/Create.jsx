@@ -234,9 +234,9 @@ const EmployeeCreate = () => {
             });
 
             if (isEdit) {
+                formDataToSend.append('_method', 'PUT');
                 await axios.post(route('api.employees.update', employee.employee_id), formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' },
-                    _method: 'PUT',
                 });
                 enqueueSnackbar('Employee updated successfully!', { variant: 'success' });
             } else {
