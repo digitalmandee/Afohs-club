@@ -157,22 +157,80 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                                     recent_subscriptions.length > 0 &&
                                     recent_subscriptions.map((subscription) => (
                                         <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>{subscription.invoice_no}</TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    color: '#000',
+                                                    fontWeight: 600,
+                                                    fontSize: '14px',
+                                                    maxWidth: '80px',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap'
+                                                }}
+                                            >
+                                                <Tooltip title={subscription.invoice_no} arrow>
+                                                    {subscription.invoice_no}
+                                                </Tooltip>
+                                            </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                 <div>
-                                                    <div>{subscription.member?.full_name}</div>
+                                                    <div style={{
+                                                        color: '#7f7f7f',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '120px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={subscription.member?.full_name || 'N/A'} arrow>
+                                                            {subscription.member?.full_name || 'N/A'}
+                                                        </Tooltip>
+                                                    </div>
                                                     <div>{subscription.member?.membership_no}</div>
                                                 </div>
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{subscription.subscription_type?.name || '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                 <div>
-                                                    <div>{subscription.subscription_category?.name}</div>
-                                                    <div>Rs. {subscription.subscription_category?.fee}</div>
+                                                    <div style={{
+                                                        color: '#7f7f7f',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '120px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={subscription.subscription_category?.name} arrow>
+                                                            {subscription.subscription_category?.name}
+                                                        </Tooltip>
+                                                    </div>
+                                                    <div style={{
+                                                        color: '#7f7f7f',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '100px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={subscription.subscription_category?.fee} arrow>
+                                                            Rs. {subscription.subscription_category?.fee}
+                                                        </Tooltip>
+
+                                                    </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                <span style={{ fontWeight: 600, color: '#059669' }}>Rs. {subscription.total_price?.toLocaleString()}</span>
+                                            <TableCell sx={{
+                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap'
+                                            }}>
+                                                <Tooltip title={subscription.total_price?.toLocaleString()} arrow>
+                                                    Rs. {subscription.total_price?.toLocaleString()}
+                                                </Tooltip>
                                             </TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{subscription.valid_from ? new Date(subscription.valid_from).toLocaleDateString() : '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{subscription.valid_to ? new Date(subscription.valid_to).toLocaleDateString() : 'Unlimited'}</TableCell>
@@ -202,6 +260,7 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                                                         color: '#063455',
                                                         border: '1px solid #063455',
                                                         textTransform: 'none',
+                                                        boxShadow: 'none',
                                                         '&:hover': {
                                                             backgroundColor: 'transparent',
                                                         },
@@ -243,7 +302,7 @@ const SubscriptionDashboard = ({ statistics, recent_subscriptions }) => {
                     invoiceNo={selectedMemberUserId}
                     invoiceId={selectedInvoiceId}
                 />
-            </div>
+            </div >
             {/* </div> */}
         </>
     );
