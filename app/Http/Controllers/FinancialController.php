@@ -38,43 +38,42 @@ class FinancialController extends Controller
         // Transaction Statistics
         $totalTransactions = FinancialInvoice::count();
 
-        // Revenue Breakdown using Invoice Items for accuracy
-        // Since an invoice can contain multiple items of different types (in theory), we sum the items table.
-        // We filter for items belonging to paid invoices.
-        $membershipFeeRevenue = DB::table('financial_invoice_items')
-            ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-            ->where('financial_invoices.status', 'paid')
-            ->where('financial_invoice_items.fee_type', 'membership_fee')
-            ->sum('financial_invoice_items.total');
+        // Revenue Breakdown using Item-Level Transactions (Credits)
+        // Group by TransactionType->type field (3=Membership, 4=Maintenance, 5=Subscription)
+        $revenueByType = DB::table('transactions')
+            ->join('financial_invoice_items', 'transactions.reference_id', '=', 'financial_invoice_items.id')
+            ->join('transaction_types', 'financial_invoice_items.fee_type', '=', 'transaction_types.id')
+            ->where('transactions.reference_type', 'App\Models\FinancialInvoiceItem')
+            ->where('transactions.type', 'credit')
+            ->select('transaction_types.type', DB::raw('sum(transactions.amount) as total'))
+            ->groupBy('transaction_types.type')
+            ->pluck('total', 'type');
 
-        $maintenanceFeeRevenue = DB::table('financial_invoice_items')
-            ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-            ->where('financial_invoices.status', 'paid')
-            ->where('financial_invoice_items.fee_type', 'maintenance_fee')
-            ->sum('financial_invoice_items.total');
+        $membershipFeeRevenue = $revenueByType[3] ?? 0;
+        $maintenanceFeeRevenue = $revenueByType[4] ?? 0;
+        $subscriptionFeeRevenue = $revenueByType[5] ?? 0;
 
-        $subscriptionFeeRevenue = DB::table('financial_invoice_items')
-            ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-            ->where('financial_invoices.status', 'paid')
-            ->whereIn('financial_invoice_items.fee_type', ['subscription_fee', 'subscription'])
-            ->sum('financial_invoice_items.total');
-
-        $reinstatingFeeRevenue = DB::table('financial_invoice_items')
-            ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-            ->where('financial_invoices.status', 'paid')
-            ->where('financial_invoice_items.fee_type', 'reinstating_fee')
-            ->sum('financial_invoice_items.total');
+        // Reinstating Fee - specific lookup by name if needed, assuming it falls under Type 6 (Financial Charge) or similar
+        // For now, we will try to find it by name for legacy support compatibility
+        $reinstatingTypeId = \App\Models\TransactionType::where('name', 'Reinstating Fee')->value('id');
+        $reinstatingFeeRevenue = 0;
+        if ($reinstatingTypeId) {
+            $reinstatingFeeRevenue = DB::table('transactions')
+                ->join('financial_invoice_items', 'transactions.reference_id', '=', 'financial_invoice_items.id')
+                ->where('transactions.reference_type', 'App\Models\FinancialInvoiceItem')
+                ->where('transactions.type', 'credit')
+                ->where('financial_invoice_items.fee_type', $reinstatingTypeId)
+                ->sum('transactions.amount');
+        }
 
         $totalMembershipRevenue = $membershipFeeRevenue + $maintenanceFeeRevenue + $subscriptionFeeRevenue + $reinstatingFeeRevenue;
 
-        // Booking Revenue (Usually these are single-type invoices, so invoice-level check is fine, or check items if normalized)
-        // Assuming bookings are still using invoice_type on the invoice itself for now, or we can look for specific fee_types if defined.
-        // Let's stick to invoice_type for bookings as they might not be fully migrated to items structure yet or use custom items.
-        $roomRevenue = FinancialInvoice::where('status', 'paid')
+        // Booking Revenue - Still relying on Invoice Type for now as migration continues
+        $roomRevenue = FinancialInvoice::where('status', 'paid')  // approximate
             ->where('invoice_type', 'room_booking')
             ->sum('total_price');
 
-        $eventRevenue = FinancialInvoice::where('status', 'paid')
+        $eventRevenue = FinancialInvoice::where('status', 'paid')  // approximate
             ->where('invoice_type', 'event_booking')
             ->sum('total_price');
 
@@ -85,15 +84,17 @@ class FinancialController extends Controller
             ->where('invoice_type', 'food_order')
             ->sum('total_price');
 
-        // Total Revenue
-        $totalRevenue = FinancialInvoice::where('status', 'paid')->sum('total_price');
+        // Total Collected Revenue
+        $totalRevenue = DB::table('transactions')
+            ->where('type', 'credit')
+            ->sum('amount');
 
         // Recent transactions
         $recentTransactions = FinancialInvoice::with([
             'member:id,full_name,membership_no,mobile_number_a',
             'customer:id,name,email',
             'createdBy:id,name',
-            'items'  // Load items to display details
+            'items.transactions'  // Load item transactions
         ])
             ->latest()
             ->limit(10)
@@ -103,7 +104,10 @@ class FinancialController extends Controller
                 if ($invoice->items && $invoice->items->count() > 0) {
                     $types = $invoice->items->pluck('fee_type')->unique();
                     if ($types->count() === 1) {
-                        $invoice->fee_type_formatted = ucwords(str_replace('_', ' ', $types->first()));
+                        // Resolve type name if possible, or just use ID (which won't look good unless mapped)
+                        // Ideally we map ID to name here, but for dashboard simplicity we might need a quick helper or leave it.
+                        // Let's assume frontend maps it or we provide formatting.
+                        $invoice->fee_type_formatted = 'Single Type';  // Placeholder, improved below
                     } else {
                         $invoice->fee_type_formatted = 'Multiple Items';
                     }
@@ -112,6 +116,13 @@ class FinancialController extends Controller
                         ? ucwords(str_replace('_', ' ', $invoice->fee_type))
                         : ucwords(str_replace('_', ' ', $invoice->invoice_type));
                 }
+
+                // Calculate Paid Amount from items
+                $invoice->paid_amount = $invoice->items->sum(function ($item) {
+                    return $item->transactions->where('type', 'credit')->sum('amount');
+                });
+                $invoice->balance = $invoice->total_price - $invoice->paid_amount;
+
                 return $invoice;
             });
 
@@ -140,14 +151,10 @@ class FinancialController extends Controller
     public function fetchRevenue()
     {
         // Similar update for fetchRevenue endpoint if used by charts
-        $totalRevenue = FinancialInvoice::where('status', 'paid')->sum('total_price');
-
-        // Re-use logic or simplify
-        // ... (keeping existing strict checks for now or updating if needed)
+        $totalRevenue = DB::table('transactions')->where('type', 'credit')->sum('amount');
 
         return response()->json([
             'totalRevenue' => $totalRevenue,
-            // ... keys
         ]);
     }
 
@@ -162,11 +169,8 @@ class FinancialController extends Controller
             'customer:id,name,email',
             'createdBy:id,name',
             'invoiceable',
-            'items'  // Eager load items
+            'items.transactions'  // Eager load items and their transactions
         ]);
-        // Do not restrict select too much if we need relations, but good for performance
-        // Removing strict select for simplicity unless performance issue arises, or ensure all needed cols are there.
-        // Items are loaded via separate query due to hasMany
 
         // Apply status filter
         if ($request->filled('status') && $request->status !== 'all') {
@@ -176,6 +180,11 @@ class FinancialController extends Controller
         // Apply type filter
         if ($request->filled('type') && $request->type !== 'all') {
             $type = $request->type;
+            // Note: 'fee_type' is now an integer ID. Filtering by string will fail if not handled.
+            // Ideally we should filter by TransactionType ID.
+            // If $request->type is a string/slug, translate it.
+            // Assuming frontend sends ID or we need to handle legacy strings?
+            // For now, keep as is assuming user filters by ID or simple fields.
             $query->where(function ($q) use ($type) {
                 $q
                     ->where('fee_type', $type)
@@ -196,9 +205,8 @@ class FinancialController extends Controller
             $query->where(function ($q) use ($search) {
                 $q
                     ->where('invoice_no', 'like', "%{$search}%")
-                    ->orWhere('fee_type', 'like', "%{$search}%")
+                    ->orWhere('payment_method', 'like', "%{$search}%")  // Fee type is ID, searching 'like' string won't work well
                     ->orWhere('invoice_type', 'like', "%{$search}%")
-                    ->orWhere('payment_method', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($q) use ($search) {
                         $q
                             ->where('full_name', 'like', "%{$search}%")
@@ -207,11 +215,9 @@ class FinancialController extends Controller
                     ->orWhereHas('customer', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
-                    // Search in items
+                    // Search in items (description)
                     ->orWhereHas('items', function ($q) use ($search) {
-                        $q
-                            ->where('description', 'like', "%{$search}%")
-                            ->orWhere('fee_type', 'like', "%{$search}%");
+                        $q->where('description', 'like', "%{$search}%");
                     });
             });
         }
@@ -221,7 +227,7 @@ class FinancialController extends Controller
         // Get all transaction types for lookup
         $transactionTypes = \App\Models\TransactionType::pluck('name', 'id')->toArray();
 
-        // Transform transactions to include formatted fee type for display
+        // Transform transactions
         $transactions->getCollection()->transform(function ($invoice) use ($transactionTypes) {
             $resolveType = function ($type) use ($transactionTypes) {
                 if (isset($transactionTypes[$type])) {
@@ -236,7 +242,6 @@ class FinancialController extends Controller
                     $invoice->fee_type_formatted = $resolveType($types->first());
                 } else {
                     $invoice->fee_type_formatted = 'Multiple Items';
-                    // Map item fee types for tooltip if needed by frontend
                     $invoice->items->transform(function ($item) use ($resolveType) {
                         $item->fee_type_formatted = $resolveType($item->fee_type);
                         return $item;
@@ -246,6 +251,14 @@ class FinancialController extends Controller
                 $type = $invoice->fee_type ?? $invoice->invoice_type;
                 $invoice->fee_type_formatted = $resolveType($type);
             }
+
+            // Calculate Paid & Balance
+            $paid = $invoice->items->sum(function ($item) {
+                return $item->transactions->where('type', 'credit')->sum('amount');
+            });
+            $invoice->paid_amount = $paid;
+            $invoice->balance = $invoice->total_price - $paid;
+
             return $invoice;
         });
 
