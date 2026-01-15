@@ -12,6 +12,7 @@ class TransactionType extends Model
 
     protected $fillable = [
         'name',
+        'type',
         'status',  // 'active', 'inactive'
         'table_name',
         'details',

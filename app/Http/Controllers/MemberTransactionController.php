@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\FileHelper;
 use App\Models\CorporateMember;
+use App\Models\FinancialChargeType;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
 use App\Models\FinancialReceipt;
@@ -83,15 +84,24 @@ class MemberTransactionController extends Controller
             ->with('subscriptionType:id,name')
             ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
 
-        // Fetch Main Charges (Type 1) and Custom Charges (Type 2)
-        $mainCharges = TransactionType::where('type', 1)->get();
-        $chargeTypes = TransactionType::where('type', 2)->where('status', 'active')->get();
+        // Fetch Transaction Types based on new mapping
+        // 3: Membership, 4: Maintenance, 5: Subscription, 6: Other
+        $membershipCharges = TransactionType::where('type', 3)->get();
+        $maintenanceCharges = TransactionType::where('type', 4)->get();
+        $subscriptionCharges = TransactionType::where('type', 5)->get();
+        $otherCharges = TransactionType::where('type', 6)->get();
+
+        // Fetch Financial Charge Types for the additional dropdown
+        $financialChargeTypes = FinancialChargeType::where('status', 'active')->get();
 
         return Inertia::render('App/Admin/Membership/Transactions/Create', [
             'subscriptionTypes' => $subscriptionTypes,
             'subscriptionCategories' => $subscriptionCategories,
-            'mainCharges' => $mainCharges,
-            'chargeTypes' => $chargeTypes,
+            'membershipCharges' => $membershipCharges,
+            'maintenanceCharges' => $maintenanceCharges,
+            'subscriptionCharges' => $subscriptionCharges,
+            'otherCharges' => $otherCharges,
+            'financialChargeTypes' => $financialChargeTypes,
         ]);
     }
 
@@ -232,6 +242,7 @@ class MemberTransactionController extends Controller
                 'action' => 'required|in:save,save_print,save_receive',
                 'items' => 'required|array|min:1',
                 'items.*.fee_type' => 'required|string',
+                'items.*.financial_charge_type_id' => 'nullable|integer|exists:financial_charge_types,id',
                 'items.*.amount' => 'required|numeric|min:0',
                 'payment_method' => 'required_if:action,save_receive|in:cash,cheque,online,credit_card,bank_transfer',
             ];
@@ -472,6 +483,7 @@ class MemberTransactionController extends Controller
                     'subscription_type_id' => $itemData['subscription_type_id'] ?? null,
                     'subscription_category_id' => $itemData['subscription_category_id'] ?? null,
                     'family_member_id' => $itemData['family_member_id'] ?? null,
+                    'financial_charge_type_id' => $itemData['financial_charge_type_id'] ?? null,
                 ]);
                 $invoiceItem->save();
 

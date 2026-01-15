@@ -12,7 +12,7 @@ import MembershipInvoiceSlip from '@/pages/App/Admin/Membership/Invoice';
 import PaymentDialog from './PaymentDialog';
 import InvoiceItemsGrid from './InvoiceItemsGrid';
 
-export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null }) {
+export default function CreateTransaction({ subscriptionTypes = [], subscriptionCategories = [], preSelectedMember = null, allowedFeeTypes = null, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [] }) {
     // const [open, setOpen] = useState(true);
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberTransactions, setMemberTransactions] = useState([]);
@@ -1141,23 +1141,196 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
     return (
         <>
             {/* <ThemeProvider theme={theme}> */}
-                <Box sx={{ p: 2 }}>
-                    {/* Header */}
-                    <Box sx={{ mb: 2 }}>
-                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Invoice Generation</Typography>
-                        <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '15px' }}>Search for a member and create a new transaction</Typography>
-                    </Box>
+            <Box sx={{ p: 2 }}>
+                {/* Header */}
+                <Box sx={{ mb: 2 }}>
+                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>Invoice Generation</Typography>
+                    <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '15px' }}>Search for a member and create a new transaction</Typography>
+                </Box>
 
-                    <Grid container spacing={2}>
-                        {/* Step 1: Member Search */}
-                        {!preSelectedMember && (
+                <Grid container spacing={2}>
+                    {/* Step 1: Member Search */}
+                    {!preSelectedMember && (
+                        <Grid item xs={12}>
+                            <Card sx={{ mb: 2, boxShadow: '0 2px 4px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                                <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: '#0a3d62',
+                                                color: 'white',
+                                                borderRadius: '50%',
+                                                width: 24,
+                                                height: 24,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                mr: 1.5,
+                                                fontSize: '12px',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            1
+                                        </Box>
+                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                            Booking Type
+                                        </Typography>
+                                    </Box>
+                                    <Grid item xs={12} mb={1}>
+                                        <RadioGroup row name="bookingType" value={bookingType} onChange={handleBookingTypeChange}>
+                                            <FormControlLabel value="0" control={<Radio />} label="Member" />
+                                            <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
+                                            {guestTypes.map((type) => (
+                                                <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
+                                            ))}
+                                        </RadioGroup>
+                                    </Grid>
+
+                                    <Autocomplete
+                                        key={bookingType}
+                                        size="small"
+                                        value={selectedMember}
+                                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                                        options={searchResults}
+                                        getOptionLabel={(option) => `${option.full_name} (${option.membership_no})`}
+                                        loading={searchLoading}
+                                        onInputChange={(event, value) => {
+                                            searchMembers(value);
+                                        }}
+                                        onChange={(event, value) => {
+                                            if (value) handleMemberSelect(value);
+                                        }}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                size="small"
+                                                {...params}
+                                                label="Search by name, membership no, CNIC, or phone"
+                                                variant="outlined"
+                                                fullWidth
+                                                sx={{ mb: 2 }}
+                                                InputProps={{
+                                                    ...params.InputProps,
+                                                    startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
+                                                    endAdornment: (
+                                                        <>
+                                                            {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                            {params.InputProps.endAdornment}
+                                                        </>
+                                                    ),
+                                                }}
+                                            />
+                                        )}
+                                        renderOption={(props, option) => (
+                                            <li {...props} key={option.id}>
+                                                <Box sx={{ width: '100%' }}>
+                                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                        <Typography variant="body2" fontWeight="bold">
+                                                            {option.membership_no || option.customer_no || option.employee_id}
+                                                        </Typography>
+                                                        {option.status && <Chip label={option.status} size="small" color={option.status === 'active' ? 'success' : option.status === 'expired' ? 'warning' : 'error'} sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                                    </Box>
+                                                    <Typography variant="body2">{option.full_name || option.name}</Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {option.cnic_no || option.cnic} • {option.mobile_number_a || option.contact}
+                                                    </Typography>
+                                                </Box>
+                                            </li>
+                                        )}
+                                    />
+                                    {selectedMember && (
+                                        <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+                                                {/* Member Info */}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Person sx={{ fontSize: 18, color: '#64748b' }} />
+                                                    <Box>
+                                                        <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 1.1 }}>
+                                                            {selectedMember.full_name}{' '}
+                                                            <Typography component="span" variant="caption" color="text.secondary">
+                                                                ({selectedMember.membership_no || 'No #'})
+                                                            </Typography>
+                                                        </Typography>
+                                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                            {formatStatus(selectedMember.status)} • {selectedMember.cnic_no || selectedMember.cnic || 'No CNIC'}
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+
+                                                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
+
+                                                {/* Fees Summary Strip */}
+                                                <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, flexWrap: 'wrap' }}>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Membership
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} color="primary.main">
+                                                            {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Monthly
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} color="error.main">
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Quarterly
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} color="secondary.main">
+                                                            Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Joined
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600}>
+                                                            {formatDate(selectedMember.membership_date)}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                            Ledger Balance
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight={600} sx={{ color: (ledgerBalance || 0) > 0 ? 'error.main' : 'success.main' }}>
+                                                            {formatCurrency(Math.max(0, ledgerBalance || 0))}
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => {
+                                                                    // Navigate to ledger details or scroll to history
+                                                                    const historySection = document.getElementById('transaction-history-section');
+                                                                    if (historySection) historySection.scrollIntoView({ behavior: 'smooth' });
+                                                                }}
+                                                                sx={{ ml: 0.5, p: 0 }}
+                                                            >
+                                                                <Visibility fontSize="inherit" />
+                                                            </IconButton>
+                                                        </Typography>
+                                                    </Box>
+                                                </Box>
+                                            </Box>
+                                        </Box>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    )}
+
+                    {/* Step 2: Transaction Form and Member Details */}
+                    <Grid item xs={12}>
+                        <Grid container spacing={3}>
+                            {/* Left Column: Transaction Form */}
                             <Grid item xs={12}>
                                 <Card sx={{ mb: 2, boxShadow: '0 2px 4px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
                                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                             <Box
                                                 sx={{
-                                                    bgcolor: '#0a3d62',
+                                                    bgcolor: selectedMember ? '#0a3d62' : 'grey.300',
                                                     color: 'white',
                                                     borderRadius: '50%',
                                                     width: 24,
@@ -1170,539 +1343,366 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     fontWeight: 600,
                                                 }}
                                             >
-                                                1
+                                                2
                                             </Box>
                                             <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                                                Booking Type
+                                                Transaction Details
                                             </Typography>
                                         </Box>
-                                        <Grid item xs={12} mb={1}>
-                                            <RadioGroup row name="bookingType" value={bookingType} onChange={handleBookingTypeChange}>
-                                                <FormControlLabel value="0" control={<Radio />} label="Member" />
-                                                <FormControlLabel value="2" control={<Radio />} label="Corporate Member" />
-                                                {guestTypes.map((type) => (
-                                                    <FormControlLabel key={type.id} value={`guest-${type.id}`} control={<Radio />} label={type.name} />
-                                                ))}
-                                            </RadioGroup>
-                                        </Grid>
-
-                                        <Autocomplete
-                                            key={bookingType}
-                                            size="small"
-                                            value={selectedMember}
-                                            isOptionEqualToValue={(option, value) => option.id === value.id}
-                                            options={searchResults}
-                                            getOptionLabel={(option) => `${option.full_name} (${option.membership_no})`}
-                                            loading={searchLoading}
-                                            onInputChange={(event, value) => {
-                                                searchMembers(value);
-                                            }}
-                                            onChange={(event, value) => {
-                                                if (value) handleMemberSelect(value);
-                                            }}
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    size="small"
-                                                    {...params}
-                                                    label="Search by name, membership no, CNIC, or phone"
-                                                    variant="outlined"
-                                                    fullWidth
-                                                    sx={{ mb: 2 }}
-                                                    InputProps={{
-                                                        ...params.InputProps,
-                                                        startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
-                                                        endAdornment: (
-                                                            <>
-                                                                {searchLoading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                                {params.InputProps.endAdornment}
-                                                            </>
-                                                        ),
-                                                    }}
-                                                />
-                                            )}
-                                            renderOption={(props, option) => (
-                                                <li {...props} key={option.id}>
-                                                    <Box sx={{ width: '100%' }}>
-                                                        <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                            <Typography variant="body2" fontWeight="bold">
-                                                                {option.membership_no || option.customer_no || option.employee_id}
-                                                            </Typography>
-                                                            {option.status && <Chip label={option.status} size="small" color={option.status === 'active' ? 'success' : option.status === 'expired' ? 'warning' : 'error'} sx={{ height: 20, fontSize: '0.7rem' }} />}
-                                                        </Box>
-                                                        <Typography variant="body2">{option.full_name || option.name}</Typography>
-                                                        <Typography variant="caption" color="text.secondary">
-                                                            {option.cnic_no || option.cnic} • {option.mobile_number_a || option.contact}
-                                                        </Typography>
-                                                    </Box>
-                                                </li>
-                                            )}
-                                        />
-                                        {selectedMember && (
-                                            <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
-                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
-                                                    {/* Member Info */}
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                        <Person sx={{ fontSize: 18, color: '#64748b' }} />
-                                                        <Box>
-                                                            <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 1.1 }}>
-                                                                {selectedMember.full_name}{' '}
-                                                                <Typography component="span" variant="caption" color="text.secondary">
-                                                                    ({selectedMember.membership_no || 'No #'})
-                                                                </Typography>
-                                                            </Typography>
-                                                            <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                                {formatStatus(selectedMember.status)} • {selectedMember.cnic_no || selectedMember.cnic || 'No CNIC'}
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
-
-                                                    <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
-
-                                                    {/* Fees Summary Strip */}
-                                                    <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, flexWrap: 'wrap' }}>
-                                                        <Box>
-                                                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                                Membership
-                                                            </Typography>
-                                                            <Typography variant="body2" fontWeight={600} color="primary.main">
-                                                                {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box>
-                                                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                                Monthly
-                                                            </Typography>
-                                                            <Typography variant="body2" fontWeight={600} color="error.main">
-                                                                Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box>
-                                                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                                Quarterly
-                                                            </Typography>
-                                                            <Typography variant="body2" fontWeight={600} color="secondary.main">
-                                                                Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box>
-                                                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                                Joined
-                                                            </Typography>
-                                                            <Typography variant="body2" fontWeight={600}>
-                                                                {formatDate(selectedMember.membership_date)}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box>
-                                                            <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
-                                                                Ledger Balance
-                                                            </Typography>
-                                                            <Typography variant="body2" fontWeight={600} sx={{ color: (ledgerBalance || 0) > 0 ? 'error.main' : 'success.main' }}>
-                                                                {formatCurrency(Math.max(0, ledgerBalance || 0))}
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() => {
-                                                                        // Navigate to ledger details or scroll to history
-                                                                        const historySection = document.getElementById('transaction-history-section');
-                                                                        if (historySection) historySection.scrollIntoView({ behavior: 'smooth' });
-                                                                    }}
-                                                                    sx={{ ml: 0.5, p: 0 }}
-                                                                >
-                                                                    <Visibility fontSize="inherit" />
-                                                                </IconButton>
-                                                            </Typography>
-                                                        </Box>
-                                                    </Box>
-                                                </Box>
-                                            </Box>
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        )}
-
-                        {/* Step 2: Transaction Form and Member Details */}
-                        <Grid item xs={12}>
-                            <Grid container spacing={3}>
-                                {/* Left Column: Transaction Form */}
-                                <Grid item xs={12}>
-                                    <Card sx={{ mb: 2, boxShadow: '0 2px 4px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                                <Box
-                                                    sx={{
-                                                        bgcolor: selectedMember ? '#0a3d62' : 'grey.300',
-                                                        color: 'white',
-                                                        borderRadius: '50%',
-                                                        width: 24,
-                                                        height: 24,
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        mr: 1.5,
-                                                        fontSize: '12px',
-                                                        fontWeight: 600,
-                                                    }}
-                                                >
-                                                    2
-                                                </Box>
-                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                                                    Transaction Details
-                                                </Typography>
-                                            </Box>
-                                            {selectedMember ? (
-                                                <form onSubmit={(e) => handleSubmit(e)}>
-                                                    <Grid container spacing={3}>
-                                                        {/* Maintenance Status Accordion */}
-                                                        {selectedMember && (bookingType === '0' || bookingType === '2') && (
-                                                            <Grid item xs={12}>
-                                                                <Accordion sx={{ background: '#f8fafc', border: '1px solid #e2e8f0', boxShadow: 'none' }}>
-                                                                    <AccordionSummary expandIcon={<ExpandMore />}>
-                                                                        <Typography sx={{ fontWeight: 600, color: '#0f172a' }}>Quarter Payment Status</Typography>
-                                                                    </AccordionSummary>
-                                                                    <AccordionDetails>
-                                                                        <Box sx={{ mb: 2 }}>
-                                                                            {(() => {
-                                                                                const membershipDate = new Date(selectedMember.membership_date);
-                                                                                const membershipYear = membershipDate.getFullYear();
-                                                                                const firstYearEnd = new Date(membershipYear, 11, 31);
-                                                                                const isFirstYear = (!quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd) && membershipDate.getMonth() < 11;
-
-                                                                                return (
-                                                                                    <>
-                                                                                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                                                                                            {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
-                                                                                        </Typography>
-
-                                                                                        {!isFirstYear && (
-                                                                                            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                                                                                                {[1, 2, 3, 4].map((quarter) => (
-                                                                                                    <Chip key={quarter} label={`Q${quarter}`} color={quarterStatus.paidQuarters.includes(quarter) ? 'success' : 'default'} variant={quarterStatus.paidQuarters.includes(quarter) ? 'filled' : 'outlined'} size="medium" sx={{ minWidth: 50, fontWeight: 600 }} />
-                                                                                                ))}
-                                                                                            </Box>
-                                                                                        )}
-
-                                                                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                                                            <strong>Next payment:</strong> {isFirstYear ? 'Monthly payment' : `Q${quarterStatus.nextAvailableQuarter}`}
-                                                                                            {quarterStatus.latestEndDate && <span> (Last paid until: {formatDate(quarterStatus.latestEndDate)})</span>}
-                                                                                            {!quarterStatus.latestEndDate && <span> (No maintenance history)</span>}
-                                                                                        </Typography>
-                                                                                    </>
-                                                                                );
-                                                                            })()}
-                                                                        </Box>
-                                                                    </AccordionDetails>
-                                                                </Accordion>
-                                                            </Grid>
-                                                        )}
-
-                                                        {/* Invoice Items Grid */}
+                                        {selectedMember ? (
+                                            <form onSubmit={(e) => handleSubmit(e)}>
+                                                <Grid container spacing={3}>
+                                                    {/* Maintenance Status Accordion */}
+                                                    {selectedMember && (bookingType === '0' || bookingType === '2') && (
                                                         <Grid item xs={12}>
-                                                            <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} onQuickSelectMaintenance={suggestMaintenancePeriod} />
-                                                        </Grid>
+                                                            <Accordion sx={{ background: '#f8fafc', border: '1px solid #e2e8f0', boxShadow: 'none' }}>
+                                                                <AccordionSummary expandIcon={<ExpandMore />}>
+                                                                    <Typography sx={{ fontWeight: 600, color: '#0f172a' }}>Quarter Payment Status</Typography>
+                                                                </AccordionSummary>
+                                                                <AccordionDetails>
+                                                                    <Box sx={{ mb: 2 }}>
+                                                                        {(() => {
+                                                                            const membershipDate = new Date(selectedMember.membership_date);
+                                                                            const membershipYear = membershipDate.getFullYear();
+                                                                            const firstYearEnd = new Date(membershipYear, 11, 31);
+                                                                            const isFirstYear = (!quarterStatus.latestEndDate || new Date(quarterStatus.latestEndDate) <= firstYearEnd) && membershipDate.getMonth() < 11;
 
-                                                        {/* Remarks Section */}
-                                                        <Grid item xs={12}>
-                                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                                                                Remarks
-                                                            </Typography>
-                                                            <TextField
-                                                                size="small"
-                                                                fullWidth
-                                                                label="Comments / Remarks"
-                                                                multiline
-                                                                rows={3}
-                                                                value={data.remarks}
-                                                                onChange={(e) => setData('remarks', e.target.value)}
-                                                                placeholder="Enter any additional notes or comments here..."
-                                                                sx={{
-                                                                    '& .MuiOutlinedInput-root': { borderRadius: 2 },
-                                                                }}
-                                                            />
-                                                        </Grid>
+                                                                            return (
+                                                                                <>
+                                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                                                                                        {isFirstYear ? 'First Year (Monthly Payment)' : 'Quarterly Payment System'}
+                                                                                    </Typography>
 
-                                                        {/* Action Buttons */}
-                                                        <Grid item xs={12}>
-                                                            <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
-                                                                <Button
-                                                                    onClick={(e) => handleSubmit(e, 'unpaid', false)}
-                                                                    variant="outlined"
-                                                                    size="large"
-                                                                    disabled={submitting || invoiceItems.length === 0}
-                                                                    sx={{
-                                                                        py: 1.5,
-                                                                        borderRadius: 2,
-                                                                        textTransform: 'none',
-                                                                        fontWeight: 600,
-                                                                    }}
-                                                                >
-                                                                    Save
-                                                                </Button>
-                                                                <Button
-                                                                    onClick={(e) => handleSubmit(e, 'unpaid', true)}
-                                                                    variant="outlined"
-                                                                    size="large"
-                                                                    disabled={submitting || invoiceItems.length === 0}
-                                                                    sx={{
-                                                                        py: 1.5,
-                                                                        borderRadius: 2,
-                                                                        color: '#0a3d62',
-                                                                        borderColor: '#0a3d62',
-                                                                        textTransform: 'none',
-                                                                        fontWeight: 600,
-                                                                    }}
-                                                                >
-                                                                    {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
-                                                                    Save & Print
-                                                                </Button>
-                                                                <Button
-                                                                    onClick={(e) => handleSubmit(e, 'paid')}
-                                                                    variant="contained"
-                                                                    size="large"
-                                                                    disabled={submitting || invoiceItems.length === 0}
-                                                                    sx={{
-                                                                        py: 1.5,
-                                                                        bgcolor: '#0a3d62',
-                                                                        borderRadius: 2,
-                                                                        textTransform: 'none',
-                                                                        fontWeight: 600,
-                                                                    }}
-                                                                >
-                                                                    {submitting ? <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} /> : <Save sx={{ mr: 1 }} />}
-                                                                    Save & Receive
-                                                                </Button>
-                                                            </Box>
-                                                        </Grid>
-                                                    </Grid>
-                                                </form>
-                                            ) : (
-                                                <Alert severity="info">Please search and select a member to create a transaction.</Alert>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-
-                                {/* Right Column Removed - Merged into simplified top bar above */}
-                            </Grid>
-                        </Grid>
-
-                        {/* Step 3: Transaction History */}
-                        {selectedMember && (
-                            <Grid item xs={12} id="transaction-history-section">
-                                <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
-                                    <CardContent sx={{ p: 3 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                                            <Box
-                                                sx={{
-                                                    bgcolor: 'secondary.main',
-                                                    color: 'white',
-                                                    borderRadius: '50%',
-                                                    width: 32,
-                                                    height: 32,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    mr: 2,
-                                                    fontSize: '14px',
-                                                    fontWeight: 600,
-                                                }}
-                                            >
-                                                3
-                                            </Box>
-                                            <Typography sx={{ fontWeight: 600, color: '#063455' }}>Transaction History - {selectedMember.full_name}</Typography>
-                                        </Box>
-
-                                        {/* Search Bar */}
-                                        <Box sx={{ mb: 3 }}>
-                                            <TextField
-                                                size="small"
-                                                fullWidth
-                                                placeholder="Search by invoice number..."
-                                                value={searchInvoice}
-                                                onChange={(e) => handleSearchInvoice(e.target.value)}
-                                                InputProps={{
-                                                    startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <Search sx={{ color: 'action.active' }} />
-                                                        </InputAdornment>
-                                                    ),
-                                                }}
-                                                sx={{
-                                                    width: '200px',
-                                                    '& .MuiOutlinedInput-root': {
-                                                        borderRadius: 2,
-                                                        bgcolor: 'transparent',
-                                                    },
-                                                }}
-                                            />
-                                        </Box>
-
-                                        {loadingTransactions ? (
-                                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                                                <CircularProgress />
-                                            </Box>
-                                        ) : (
-                                            <>
-                                                <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '16px' }}>
-                                                    <Table>
-                                                        <TableHead sx={{ bgcolor: '#063455' }}>
-                                                            <TableRow>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Invoice No</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Fee Type</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Details</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Amount</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Payment Method</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Invoice</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Action</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Status</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Payment Date</TableCell>
-                                                                <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Period</TableCell>
-                                                            </TableRow>
-                                                        </TableHead>
-                                                        <TableBody>
-                                                            {currentTransactions.length > 0 ? (
-                                                                currentTransactions.map((transaction) => (
-                                                                    <TableRow key={transaction.id}>
-                                                                        <TableCell sx={{ color: '#000', fontWeight: '600', whiteSpace: 'nowrap' }}>{transaction.invoice_no}</TableCell>
-                                                                        <TableCell>
-                                                                            {transaction.items && transaction.items.length > 0 ? (
-                                                                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                                                                    {transaction.items.map((item, idx) => {
-                                                                                        let label = item.fee_type || item.invoice_type || 'Item';
-                                                                                        // Check if it's a numeric ID
-                                                                                        const typeObj = transactionTypes.find((t) => t.id == label || t.id == item.fee_type);
-                                                                                        if (typeObj) {
-                                                                                            label = typeObj.name;
-                                                                                        }
-                                                                                        return <Chip key={idx} label={label.toString().replace('_', ' ')} color="primary" size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize', maxWidth: 'fit-content' }} />;
-                                                                                    })}
-                                                                                </Box>
-                                                                            ) : (
-                                                                                <Chip label={transaction.fee_type?.replace('_', ' ')} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize' }} />
-                                                                            )}
-                                                                        </TableCell>
-                                                                        <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
-                                                                            {transaction.items && transaction.items.length > 0 ? (
-                                                                                <Box>
-                                                                                    {transaction.items.map((item, idx) => (
-                                                                                        <Box key={idx} sx={{ mb: 0.5 }}>
-                                                                                            <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', textTransform: 'capitalize' }}>
-                                                                                                {item.description || item.fee_type?.replace('_', ' ')}
-                                                                                            </Typography>
-                                                                                            {item.fee_type === 'subscription_fee' && item.subscription_type_id && (
-                                                                                                <Typography variant="caption" color="text.secondary">
-                                                                                                    {/* Ideally load names, but might need ID lookup or specific resource loading if not joined */}
-                                                                                                    {/* Fallback to legacy structure if present or generic */}
-                                                                                                    Subscription
-                                                                                                </Typography>
-                                                                                            )}
+                                                                                    {!isFirstYear && (
+                                                                                        <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                                                                            {[1, 2, 3, 4].map((quarter) => (
+                                                                                                <Chip key={quarter} label={`Q${quarter}`} color={quarterStatus.paidQuarters.includes(quarter) ? 'success' : 'default'} variant={quarterStatus.paidQuarters.includes(quarter) ? 'filled' : 'outlined'} size="medium" sx={{ minWidth: 50, fontWeight: 600 }} />
+                                                                                            ))}
                                                                                         </Box>
-                                                                                    ))}
-                                                                                </Box>
-                                                                            ) : transaction.fee_type === 'subscription_fee' ? (
-                                                                                <Box>
-                                                                                    <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-                                                                                        {transaction.data?.subscription_type_name || 'Subscription'}
-                                                                                    </Typography>
-                                                                                    <Typography variant="caption" color="text.secondary">
-                                                                                        {transaction.data?.subscription_category_name || 'Category'}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            ) : transaction.fee_type === 'maintenance_fee' ? (
-                                                                                <Box>
-                                                                                    <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
-                                                                                        {transaction.payment_frequency?.toUpperCase() || 'QUARTERLY'}
-                                                                                    </Typography>
-                                                                                    <Typography variant="caption" color="text.secondary">
-                                                                                        Q{transaction.quarter_number || 1}
-                                                                                    </Typography>
-                                                                                </Box>
-                                                                            ) : (
-                                                                                <Typography variant="caption" color="text.secondary">
-                                                                                    {transaction.remarks || 'Lifetime Membership'}
-                                                                                </Typography>
-                                                                            )}
-                                                                        </TableCell>
-                                                                        <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{formatCurrency(transaction.total_price)}</TableCell>
-                                                                        <TableCell>
-                                                                            <Chip label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} size="small" />
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            <Button
-                                                                                size="small"
-                                                                                variant="outlined"
-                                                                                // startIcon={<Visibility />}
-                                                                                onClick={() => {
-                                                                                    setCreatedInvoiceId(transaction.id);
-                                                                                    setCreatedMemberId(transaction.invoice_no);
-                                                                                    setShowInvoiceModal(true);
-                                                                                }}
-                                                                                sx={{ py: 0.5, px: 1, color: '#063455', bgcolor: 'transparent', border: '1px solid #063455' }}
-                                                                            >
-                                                                                View
-                                                                            </Button>
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            {transaction.status === 'unpaid' && (
-                                                                                <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
-                                                                                    Pay Now
-                                                                                </Button>
-                                                                            )}
-                                                                            {transaction.status !== 'cancelled' && (
-                                                                                <Tooltip title="Cancel Invoice">
-                                                                                    <IconButton size="small" color="error" onClick={() => handleCancelClick(transaction)} sx={{ ml: 1 }}>
-                                                                                        <CancelIcon />
-                                                                                    </IconButton>
-                                                                                </Tooltip>
-                                                                            )}
-                                                                        </TableCell>
-                                                                        <TableCell>
-                                                                            <Chip label={transaction.status?.toUpperCase()} color={getStatusColor(transaction.status)} size="small" />
-                                                                        </TableCell>
-                                                                        <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{transaction.payment_date ? formatDate(transaction.payment_date) : '-'}</TableCell>
-                                                                        <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{transaction.valid_from && transaction.valid_to ? `${formatDate(transaction.valid_from)} - ${formatDate(transaction.valid_to)}` : '-'}</TableCell>
-                                                                    </TableRow>
-                                                                ))
-                                                            ) : (
-                                                                <TableRow>
-                                                                    <TableCell colSpan={9} align="center">
-                                                                        <Typography color="textSecondary">{searchInvoice ? `No transactions found matching "${searchInvoice}"` : 'No transactions found for this member'}</Typography>
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            )}
-                                                        </TableBody>
-                                                    </Table>
-                                                </TableContainer>
+                                                                                    )}
 
-                                                {/* Pagination */}
-                                                {filteredTransactions.length > transactionsPerPage && (
-                                                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 3, gap: 2 }}>
-                                                        <Typography variant="body2" color="text.secondary">
-                                                            Showing {indexOfFirstTransaction + 1}-{Math.min(indexOfLastTransaction, filteredTransactions.length)} of {filteredTransactions.length} transactions
+                                                                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                                                        <strong>Next payment:</strong> {isFirstYear ? 'Monthly payment' : `Q${quarterStatus.nextAvailableQuarter}`}
+                                                                                        {quarterStatus.latestEndDate && <span> (Last paid until: {formatDate(quarterStatus.latestEndDate)})</span>}
+                                                                                        {!quarterStatus.latestEndDate && <span> (No maintenance history)</span>}
+                                                                                    </Typography>
+                                                                                </>
+                                                                            );
+                                                                        })()}
+                                                                    </Box>
+                                                                </AccordionDetails>
+                                                            </Accordion>
+                                                        </Grid>
+                                                    )}
+
+                                                    {/* Invoice Items Grid */}
+                                                    <Grid item xs={12}>
+                                                        <InvoiceItemsGrid items={invoiceItems} setItems={setInvoiceItems} transactionTypes={transactionTypes} selectedMember={selectedMember} subscriptionCategories={subscriptionCategories} subscriptionTypes={subscriptionTypes} onQuickSelectMaintenance={suggestMaintenancePeriod} membershipCharges={membershipCharges} maintenanceCharges={maintenanceCharges} subscriptionCharges={subscriptionCharges} otherCharges={otherCharges} financialChargeTypes={financialChargeTypes} bookingType={bookingType} />
+                                                    </Grid>
+
+                                                    {/* Remarks Section */}
+                                                    <Grid item xs={12}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                            Remarks
                                                         </Typography>
-                                                        <Pagination
-                                                            count={totalPages}
-                                                            page={currentPage}
-                                                            onChange={handlePageChange}
-                                                            color="primary"
-                                                            size="medium"
-                                                            showFirstButton
-                                                            showLastButton
+                                                        <TextField
+                                                            size="small"
+                                                            fullWidth
+                                                            label="Comments / Remarks"
+                                                            multiline
+                                                            rows={3}
+                                                            value={data.remarks}
+                                                            onChange={(e) => setData('remarks', e.target.value)}
+                                                            placeholder="Enter any additional notes or comments here..."
                                                             sx={{
-                                                                '& .MuiPaginationItem-root': {
-                                                                    borderRadius: 2,
-                                                                },
+                                                                '& .MuiOutlinedInput-root': { borderRadius: 2 },
                                                             }}
                                                         />
-                                                    </Box>
-                                                )}
-                                            </>
+                                                    </Grid>
+
+                                                    {/* Action Buttons */}
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-end' }}>
+                                                            <Button
+                                                                onClick={(e) => handleSubmit(e, 'unpaid', false)}
+                                                                variant="outlined"
+                                                                size="large"
+                                                                disabled={submitting || invoiceItems.length === 0}
+                                                                sx={{
+                                                                    py: 1.5,
+                                                                    borderRadius: 2,
+                                                                    textTransform: 'none',
+                                                                    fontWeight: 600,
+                                                                }}
+                                                            >
+                                                                Save
+                                                            </Button>
+                                                            <Button
+                                                                onClick={(e) => handleSubmit(e, 'unpaid', true)}
+                                                                variant="outlined"
+                                                                size="large"
+                                                                disabled={submitting || invoiceItems.length === 0}
+                                                                sx={{
+                                                                    py: 1.5,
+                                                                    borderRadius: 2,
+                                                                    color: '#0a3d62',
+                                                                    borderColor: '#0a3d62',
+                                                                    textTransform: 'none',
+                                                                    fontWeight: 600,
+                                                                }}
+                                                            >
+                                                                {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
+                                                                Save & Print
+                                                            </Button>
+                                                            <Button
+                                                                onClick={(e) => handleSubmit(e, 'paid')}
+                                                                variant="contained"
+                                                                size="large"
+                                                                disabled={submitting || invoiceItems.length === 0}
+                                                                sx={{
+                                                                    py: 1.5,
+                                                                    bgcolor: '#0a3d62',
+                                                                    borderRadius: 2,
+                                                                    textTransform: 'none',
+                                                                    fontWeight: 600,
+                                                                }}
+                                                            >
+                                                                {submitting ? <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} /> : <Save sx={{ mr: 1 }} />}
+                                                                Save & Receive
+                                                            </Button>
+                                                        </Box>
+                                                    </Grid>
+                                                </Grid>
+                                            </form>
+                                        ) : (
+                                            <Alert severity="info">Please search and select a member to create a transaction.</Alert>
                                         )}
                                     </CardContent>
                                 </Card>
                             </Grid>
-                        )}
+
+                            {/* Right Column Removed - Merged into simplified top bar above */}
+                        </Grid>
                     </Grid>
-                </Box>
+
+                    {/* Step 3: Transaction History */}
+                    {selectedMember && (
+                        <Grid item xs={12} id="transaction-history-section">
+                            <Card sx={{ mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                                        <Box
+                                            sx={{
+                                                bgcolor: 'secondary.main',
+                                                color: 'white',
+                                                borderRadius: '50%',
+                                                width: 32,
+                                                height: 32,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                mr: 2,
+                                                fontSize: '14px',
+                                                fontWeight: 600,
+                                            }}
+                                        >
+                                            3
+                                        </Box>
+                                        <Typography sx={{ fontWeight: 600, color: '#063455' }}>Transaction History - {selectedMember.full_name}</Typography>
+                                    </Box>
+
+                                    {/* Search Bar */}
+                                    <Box sx={{ mb: 3 }}>
+                                        <TextField
+                                            size="small"
+                                            fullWidth
+                                            placeholder="Search by invoice number..."
+                                            value={searchInvoice}
+                                            onChange={(e) => handleSearchInvoice(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <Search sx={{ color: 'action.active' }} />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                            sx={{
+                                                width: '200px',
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: 2,
+                                                    bgcolor: 'transparent',
+                                                },
+                                            }}
+                                        />
+                                    </Box>
+
+                                    {loadingTransactions ? (
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                                            <CircularProgress />
+                                        </Box>
+                                    ) : (
+                                        <>
+                                            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '16px' }}>
+                                                <Table>
+                                                    <TableHead sx={{ bgcolor: '#063455' }}>
+                                                        <TableRow>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Invoice No</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Fee Type</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Details</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Amount</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Payment Method</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Invoice</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Action</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Status</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Payment Date</TableCell>
+                                                            <TableCell sx={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Period</TableCell>
+                                                        </TableRow>
+                                                    </TableHead>
+                                                    <TableBody>
+                                                        {currentTransactions.length > 0 ? (
+                                                            currentTransactions.map((transaction) => (
+                                                                <TableRow key={transaction.id}>
+                                                                    <TableCell sx={{ color: '#000', fontWeight: '600', whiteSpace: 'nowrap' }}>{transaction.invoice_no}</TableCell>
+                                                                    <TableCell>
+                                                                        {transaction.items && transaction.items.length > 0 ? (
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                {transaction.items.map((item, idx) => {
+                                                                                    let label = item.fee_type || item.invoice_type || 'Item';
+                                                                                    // Check if it's a numeric ID
+                                                                                    const typeObj = transactionTypes.find((t) => t.id == label || t.id == item.fee_type);
+                                                                                    if (typeObj) {
+                                                                                        label = typeObj.name;
+                                                                                    }
+                                                                                    return <Chip key={idx} label={label.toString().replace('_', ' ')} color="primary" size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize', maxWidth: 'fit-content' }} />;
+                                                                                })}
+                                                                            </Box>
+                                                                        ) : (
+                                                                            <Chip label={transaction.fee_type?.replace('_', ' ')} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize' }} />
+                                                                        )}
+                                                                    </TableCell>
+                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
+                                                                        {transaction.items && transaction.items.length > 0 ? (
+                                                                            <Box>
+                                                                                {transaction.items.map((item, idx) => (
+                                                                                    <Box key={idx} sx={{ mb: 0.5 }}>
+                                                                                        <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', textTransform: 'capitalize' }}>
+                                                                                            {item.description || item.fee_type?.replace('_', ' ')}
+                                                                                        </Typography>
+                                                                                        {item.fee_type === 'subscription_fee' && item.subscription_type_id && (
+                                                                                            <Typography variant="caption" color="text.secondary">
+                                                                                                {/* Ideally load names, but might need ID lookup or specific resource loading if not joined */}
+                                                                                                {/* Fallback to legacy structure if present or generic */}
+                                                                                                Subscription
+                                                                                            </Typography>
+                                                                                        )}
+                                                                                    </Box>
+                                                                                ))}
+                                                                            </Box>
+                                                                        ) : transaction.fee_type === 'subscription_fee' ? (
+                                                                            <Box>
+                                                                                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                                                                    {transaction.data?.subscription_type_name || 'Subscription'}
+                                                                                </Typography>
+                                                                                <Typography variant="caption" color="text.secondary">
+                                                                                    {transaction.data?.subscription_category_name || 'Category'}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        ) : transaction.fee_type === 'maintenance_fee' ? (
+                                                                            <Box>
+                                                                                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block' }}>
+                                                                                    {transaction.payment_frequency?.toUpperCase() || 'QUARTERLY'}
+                                                                                </Typography>
+                                                                                <Typography variant="caption" color="text.secondary">
+                                                                                    Q{transaction.quarter_number || 1}
+                                                                                </Typography>
+                                                                            </Box>
+                                                                        ) : (
+                                                                            <Typography variant="caption" color="text.secondary">
+                                                                                {transaction.remarks || 'Lifetime Membership'}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </TableCell>
+                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{formatCurrency(transaction.total_price)}</TableCell>
+                                                                    <TableCell>
+                                                                        <Chip label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} size="small" />
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <Button
+                                                                            size="small"
+                                                                            variant="outlined"
+                                                                            // startIcon={<Visibility />}
+                                                                            onClick={() => {
+                                                                                setCreatedInvoiceId(transaction.id);
+                                                                                setCreatedMemberId(transaction.invoice_no);
+                                                                                setShowInvoiceModal(true);
+                                                                            }}
+                                                                            sx={{ py: 0.5, px: 1, color: '#063455', bgcolor: 'transparent', border: '1px solid #063455' }}
+                                                                        >
+                                                                            View
+                                                                        </Button>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        {transaction.status === 'unpaid' && (
+                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
+                                                                                Pay Now
+                                                                            </Button>
+                                                                        )}
+                                                                        {transaction.status !== 'cancelled' && (
+                                                                            <Tooltip title="Cancel Invoice">
+                                                                                <IconButton size="small" color="error" onClick={() => handleCancelClick(transaction)} sx={{ ml: 1 }}>
+                                                                                    <CancelIcon />
+                                                                                </IconButton>
+                                                                            </Tooltip>
+                                                                        )}
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <Chip label={transaction.status?.toUpperCase()} color={getStatusColor(transaction.status)} size="small" />
+                                                                    </TableCell>
+                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{transaction.payment_date ? formatDate(transaction.payment_date) : '-'}</TableCell>
+                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{transaction.valid_from && transaction.valid_to ? `${formatDate(transaction.valid_from)} - ${formatDate(transaction.valid_to)}` : '-'}</TableCell>
+                                                                </TableRow>
+                                                            ))
+                                                        ) : (
+                                                            <TableRow>
+                                                                <TableCell colSpan={9} align="center">
+                                                                    <Typography color="textSecondary">{searchInvoice ? `No transactions found matching "${searchInvoice}"` : 'No transactions found for this member'}</Typography>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </TableContainer>
+
+                                            {/* Pagination */}
+                                            {filteredTransactions.length > transactionsPerPage && (
+                                                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 3, gap: 2 }}>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Showing {indexOfFirstTransaction + 1}-{Math.min(indexOfLastTransaction, filteredTransactions.length)} of {filteredTransactions.length} transactions
+                                                    </Typography>
+                                                    <Pagination
+                                                        count={totalPages}
+                                                        page={currentPage}
+                                                        onChange={handlePageChange}
+                                                        color="primary"
+                                                        size="medium"
+                                                        showFirstButton
+                                                        showLastButton
+                                                        sx={{
+                                                            '& .MuiPaginationItem-root': {
+                                                                borderRadius: 2,
+                                                            },
+                                                        }}
+                                                    />
+                                                </Box>
+                                            )}
+                                        </>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    )}
+                </Grid>
+            </Box>
             {/* </ThemeProvider> */}
 
             {/* Invoice Modal */}
