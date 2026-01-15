@@ -477,10 +477,17 @@ class MemberTransactionController extends Controller
                 $totalTax += $taxAmt;
                 $totalDiscount += $discAmt;
 
+                // Resolve Fee Type from ID if possible
+                $transactionType = \App\Models\TransactionType::find($itemData['fee_type']);
+
+                // Determine if it is a subscription fee based on the TransactionType 'type' column
+                // 3: Membership, 4: Maintenance, 5: Subscription, 6: Financial Charge
+                $isSubscription = $transactionType && $transactionType->type == 5;
+
                 $invoiceItem = new \App\Models\FinancialInvoiceItem([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => $itemData['fee_type'],  // Store raw ID or Key
-                    'description' => $itemData['description'] ?? ($itemData['fee_type_name'] ?? $itemData['fee_type']),
+                    'fee_type' => $itemData['fee_type'],  // Storing the ID as requested
+                    'description' => $itemData['description'] ?? ($transactionType ? $transactionType->name : ($itemData['fee_type_name'] ?? $itemData['fee_type'])),
                     'qty' => $qty,
                     'amount' => $rate,
                     'additional_charges' => $itemData['additional_charges'] ?? 0,
@@ -519,7 +526,7 @@ class MemberTransactionController extends Controller
                 ]);
 
                 // Side Effects (Subscription/Maintenance creation) logic here...
-                if ($itemData['fee_type'] === 'subscription_fee') {
+                if ($isSubscription) {
                     $this->createSubscriptionRecord($itemData, $invoice, $member, $request->booking_type);
                 }
             }
