@@ -238,7 +238,11 @@ const RoomCheckOut = ({ bookings, filters }) => {
                 </ThemeProvider>
             </div>
 
-            <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
+            <BookingInvoiceModal 
+            open={showInvoiceModal} 
+            onClose={() => setShowInvoiceModal(false)} 
+            bookingId={selectedBooking?.id}
+            type="CHECK_OUT" />
 
             {/* View Documents Modal */}
             <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />

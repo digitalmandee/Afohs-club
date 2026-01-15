@@ -7,7 +7,6 @@ import { enqueueSnackbar } from 'notistack';
 import { generateInvoiceContent, JSONParse } from '@/helpers/generateTemplate';
 import RoomCheckInModal from './CheckInModal';
 import { router, usePage } from '@inertiajs/react';
-
 import dayjs from 'dayjs';
 
 // Create Material-UI theme to ensure consistent styling
@@ -22,7 +21,7 @@ const theme = createTheme({
     },
 });
 
-const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeView = false }) => {
+const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeView, type = false }) => {
     const props = usePage().props;
     const auth = props.auth;
 
@@ -101,7 +100,7 @@ const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeVie
                         <>
                             {selectedBooking && (
                                 <>
-                                    <div dangerouslySetInnerHTML={{ __html: selectedBooking ? generateInvoiceContent(selectedBooking) : '' }} />
+                                    <div dangerouslySetInnerHTML={{ __html: selectedBooking ? generateInvoiceContent(selectedBooking, type) : '' }} />
                                     {/* ✅ Documents Preview */}
                                     {JSONParse(selectedBooking?.booking_docs) && JSONParse(selectedBooking?.booking_docs).length > 0 && (
                                         <div style={{ marginTop: '20px' }}>
@@ -209,7 +208,7 @@ const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeVie
                         style={{ backgroundColor: '#063455', color: 'white' }}
                         onClick={() => {
                             const printWindow = window.open('', '_blank');
-                            printWindow.document.write(`${generateInvoiceContent(selectedBooking)}`);
+                            printWindow.document.write(`${generateInvoiceContent(selectedBooking, type)}`);
                             printWindow.document.close();
                             printWindow.focus();
                             setTimeout(() => {

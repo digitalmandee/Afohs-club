@@ -226,7 +226,13 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                 </LocalizationProvider>
             </ThemeProvider>
 
-            <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
+            <BookingInvoiceModal 
+            open={showInvoiceModal} 
+            onClose={() => 
+            setShowInvoiceModal(false)} 
+            bookingId={selectedBooking?.id} 
+            type="CANCELLATION"
+            />
 
             <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
         </div>

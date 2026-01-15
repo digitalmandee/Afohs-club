@@ -43,6 +43,7 @@ const RoomCheckIn = ({ bookings, filters }) => {
     // Order History Modal state
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     const [selectedBookingForHistory, setSelectedBookingForHistory] = useState(null);
+    const [invoiceType, setInvoiceType] = useState('STANDARD');
 
     const handleShowHistory = (booking) => {
         setSelectedBookingForHistory(booking);
@@ -203,7 +204,8 @@ const RoomCheckIn = ({ bookings, filters }) => {
                                                             <Button variant="outlined" size="small" color="#063455" style={{ marginRight: '8px', width: 100, textTransform: 'none', color: '#063455' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
                                                                 Check Out
                                                             </Button>
-                                                            <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
+                                                            <Button variant="outlined" size="small" color="#063455" 
+                                                            onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
                                                                 View
                                                             </Button>
                                                             <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ textTransform: 'none', color: '#063455' }}>
@@ -249,7 +251,11 @@ const RoomCheckIn = ({ bookings, filters }) => {
                 </ThemeProvider>
             </div>
 
-            <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} />
+            <BookingInvoiceModal 
+            open={showInvoiceModal} 
+            onClose={() => setShowInvoiceModal(false)} 
+            bookingId={selectedBooking?.id}
+            type="CHECK_IN" />
 
             {/* View Documents Modal */}
             <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
