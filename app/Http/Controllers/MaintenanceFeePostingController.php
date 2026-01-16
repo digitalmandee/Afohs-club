@@ -279,7 +279,7 @@ class MaintenanceFeePostingController extends Controller
                     'overdue_percentage' => $request->overdue_is_percent ? $request->overdue_amount : 0,
                     'additional_charges' => $overdue,  // Mapping overdue to additional_charges
                     'discount_type' => $request->discount_is_percent ? 'percentage' : 'fixed',
-                    'discount_value' => $request->discount_amount,
+                    'discount_value' => $request->discount_amount ?? 0,
                     'discount_amount' => $discount,
                     'total' => $finalTotal,
                     'start_date' => $startDate,
@@ -334,12 +334,22 @@ class MaintenanceFeePostingController extends Controller
 
     private function generateInvoiceNumber()
     {
-        // Simple generator, ideally should be a global helper or trait to avoid collision/duplication logic
-        // reusing logic from MemberTransactionController implies copying it or moving it to a trait.
-        // For now, I'll implement a safe unique check.
-        $prefix = 'INV-';
-        $latest = FinancialInvoice::latest('id')->first();
-        $nextId = $latest ? $latest->id + 1 : 1;
-        return $prefix . str_pad($nextId . mt_rand(100, 999), 8, '0', STR_PAD_LEFT);
+        // Get the highest invoice_no from all financial_invoices
+        $lastInvoice = FinancialInvoice::withTrashed()
+            ->orderBy('invoice_no', 'desc')
+            ->whereNotNull('invoice_no')
+            ->first();
+
+        $nextNumber = 1;
+        if ($lastInvoice && $lastInvoice->invoice_no) {
+            $nextNumber = $lastInvoice->invoice_no + 1;
+        }
+
+        // Double-check that this number doesn't exist (safety check)
+        while (FinancialInvoice::withTrashed()->where('invoice_no', $nextNumber)->exists()) {
+            $nextNumber++;
+        }
+
+        return $nextNumber;
     }
 }

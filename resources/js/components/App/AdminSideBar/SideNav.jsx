@@ -433,6 +433,10 @@ export default function SideNav({ open, setOpen }) {
                         path: route('finance.transaction'),
                     },
                     {
+                        text: 'Maintenance Fee Posting',
+                        path: route('finance.maintenance.create'),
+                    },
+                    {
                         text: 'Charge Types',
                         path: route('finance.charge-types.index'),
                     },
