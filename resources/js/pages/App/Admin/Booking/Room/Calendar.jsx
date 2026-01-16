@@ -25,10 +25,29 @@ const RoomCalendar = () => {
     const [actionModalOpen, setActionModalOpen] = useState(false);
     const [selectedActionBooking, setSelectedActionBooking] = useState(null);
 
+    // Calculate dynamic days: Default to rolling 30 days from today
+    // Logic:
+    // If the selected month/year matches the current month/year, start from TODAY.
+    // If the user selects a FUTURE or PAST month, start from the 1st of that month.
+
+    const currentMonth = moment().format('MM');
+    const currentYear = moment().format('YYYY');
+    const isCurrentMonth = month === currentMonth && year === currentYear;
+
+    const startDate = isCurrentMonth ? moment() : moment(`${year}-${month}-01`);
+    const totalDays = 30; // Fixed 30 days view as requested
+
+    // Update fetchData to use 'from' and 'to'
     const fetchData = async () => {
         try {
+            const startStr = startDate.format('YYYY-MM-DD');
+            const endStr = startDate.clone().add(totalDays, 'days').format('YYYY-MM-DD');
+
             const { data } = await axios.get(route('api.bookings.calendar'), {
-                params: { month, year },
+                params: {
+                    from: startStr,
+                    to: endStr,
+                },
             });
 
             setResources(data.rooms);
@@ -131,15 +150,9 @@ const RoomCalendar = () => {
         return colors[status] || '#6c757d';
     };
 
-    // Calculate dynamic days based on month and next month
-    const startDate = moment(`${year}-${month}-01`);
-    const daysInMonth = startDate.daysInMonth(); // current month
-    // const nextMonthDays = startDate.clone().add(1, 'month').daysInMonth(); // next month
-    const totalDays = daysInMonth; // show current + next month
-
     const dpConfig = {
         startDate: startDate.format('YYYY-MM-DD'),
-        days: totalDays, // dynamic total days
+        days: totalDays,
         scale: 'Day',
         treeEnabled: true,
         treePreventParentUsage: true,

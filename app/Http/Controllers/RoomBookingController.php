@@ -709,18 +709,23 @@ class RoomBookingController extends Controller
 
     public function getCalendar(Request $req)
     {
-        $monthStart = Carbon::createFromDate($req->year, $req->month, 1)->startOfMonth();
-        $monthEnd = (clone $monthStart)->endOfMonth();
+        if ($req->has('from') && $req->has('to')) {
+            $startDate = Carbon::parse($req->from)->startOfDay();
+            $endDate = Carbon::parse($req->to)->endOfDay();
+        } else {
+            $startDate = Carbon::createFromDate($req->year, $req->month, 1)->startOfMonth();
+            $endDate = (clone $startDate)->endOfMonth();
+        }
 
-        $bookings = RoomBooking::where(function ($query) use ($monthStart, $monthEnd) {
+        $bookings = RoomBooking::where(function ($query) use ($startDate, $endDate) {
             $query
-                ->whereBetween('check_in_date', [$monthStart, $monthEnd])
-                ->orWhereBetween('check_out_date', [$monthStart, $monthEnd])
-                ->orWhere(function ($q) use ($monthStart, $monthEnd) {
-                    // Booking starts before month and ends after month
+                ->whereBetween('check_in_date', [$startDate, $endDate])
+                ->orWhereBetween('check_out_date', [$startDate, $endDate])
+                ->orWhere(function ($q) use ($startDate, $endDate) {
+                    // Booking starts before range and ends after range
                     $q
-                        ->where('check_in_date', '<', $monthStart)
-                        ->where('check_out_date', '>', $monthEnd);
+                        ->where('check_in_date', '<', $startDate)
+                        ->where('check_out_date', '>', $endDate);
                 });
         })
             ->whereNotIn('status', ['cancelled', 'refunded'])
