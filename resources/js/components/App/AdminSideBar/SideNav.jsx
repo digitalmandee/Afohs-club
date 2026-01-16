@@ -373,6 +373,10 @@ export default function SideNav({ open, setOpen }) {
                         path: route('employee.payroll'),
                     },
                     {
+                        text: 'Salary Sheet',
+                        path: route('employees.payroll.salary-sheet'),
+                    },
+                    {
                         text: 'Assets Inventory',
                         path: route('employees.assets.index'),
                     },

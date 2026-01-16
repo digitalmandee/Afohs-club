@@ -742,4 +742,64 @@ class PayrollProcessingService
         }
         return $summary;
     }
+
+    /**
+     * Post payroll to financials (Create/Update Transaction)
+     */
+    public function postToFinancials(PayrollPeriod $period)
+    {
+        DB::beginTransaction();
+        try {
+            // 1. Ensure Transaction Type exists
+            $transType = \App\Models\TransactionType::firstOrCreate(
+                ['name' => 'Payroll Expense'],
+                [
+                    'type' => 'debit',
+                    'status' => 'active',
+                    'details' => 'Monthly Payroll Expense'
+                ]
+            );
+
+            // 2. data preparation
+            $description = 'Payroll Expense for ' . $period->formatted_period_name;
+            $amount = $period->total_net_amount;  // Using Net Amount as the cash outflow
+
+            // 3. Find existing transaction (via reference)
+            $existingTransaction = \App\Models\Transaction::where('reference_type', \App\Models\PayrollPeriod::class)
+                ->where('reference_id', $period->id)
+                ->first();
+
+            if ($existingTransaction) {
+                // Update existing
+                $existingTransaction->update([
+                    'amount' => $amount,
+                    'description' => $description,  // Update description in case period name changed
+                    'updated_by' => Auth::id()
+                ]);
+            } else {
+                // Create new
+                \App\Models\Transaction::create([
+                    'trans_type_id' => $transType->id,
+                    'type' => 'debit',
+                    'amount' => $amount,
+                    'date' => now(),
+                    'description' => $description,
+                    'reference_type' => \App\Models\PayrollPeriod::class,
+                    'reference_id' => $period->id,
+                    'created_by' => Auth::id()
+                ]);
+            }
+
+            // 4. Update Period Status
+            $period->status = 'posted';
+            $period->save();
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Payroll posted to financials successfully'];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Financial Posting Error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to post to financials: ' . $e->getMessage()];
+        }
+    }
 }
