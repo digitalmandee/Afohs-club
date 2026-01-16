@@ -372,6 +372,18 @@ export default function SideNav({ open, setOpen }) {
                         text: 'Payroll',
                         path: route('employee.payroll'),
                     },
+                    {
+                        text: 'Salary Sheet',
+                        path: route('employees.payroll.salary-sheet'),
+                    },
+                    {
+                        text: 'Assets Inventory',
+                        path: route('employees.assets.index'),
+                    },
+                    {
+                        text: 'Asset Assignments',
+                        path: route('employees.asset-attachments.index'),
+                    },
                 ],
             },
             {
@@ -423,6 +435,10 @@ export default function SideNav({ open, setOpen }) {
                     {
                         text: 'Transaction',
                         path: route('finance.transaction'),
+                    },
+                    {
+                        text: 'Maintenance Fee Posting',
+                        path: route('finance.maintenance.create'),
                     },
                     {
                         text: 'Charge Types',

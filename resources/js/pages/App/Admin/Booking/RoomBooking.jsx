@@ -357,6 +357,7 @@ const BookingDetails = ({ formData, handleChange, errors, guestTypes, onAddGuest
                         <DatePicker
                             label="Booking Date"
                             format="DD-MM-YYYY"
+                            disablePast
                             value={formData.bookingDate ? dayjs(formData.bookingDate) : null}
                             onChange={(newValue) => handleChange({ target: { name: 'bookingDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
                             slotProps={{
@@ -371,6 +372,7 @@ const BookingDetails = ({ formData, handleChange, errors, guestTypes, onAddGuest
                         <DatePicker
                             label="Check-In Date"
                             format="DD-MM-YYYY"
+                            disablePast
                             value={formData.checkInDate ? dayjs(formData.checkInDate) : null}
                             onChange={(newValue) => handleChange({ target: { name: 'checkInDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
                             slotProps={{
@@ -385,7 +387,9 @@ const BookingDetails = ({ formData, handleChange, errors, guestTypes, onAddGuest
                         <DatePicker
                             label="Check-Out Date"
                             format="DD-MM-YYYY"
+                            disablePast
                             value={formData.checkOutDate ? dayjs(formData.checkOutDate) : null}
+                            minDate={formData.checkInDate ? dayjs(formData.checkInDate).add(1, 'day') : null}
                             onChange={(newValue) => handleChange({ target: { name: 'checkOutDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
                             slotProps={{
                                 textField: { fullWidth: true, name: 'checkOutDate', onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
@@ -584,7 +588,8 @@ const RoomSelection = ({ formData, handleChange, errors }) => {
     const { props } = usePage();
 
     // Automatically calculate nights between check-in and check-out
-    const nights = formData.checkInDate && formData.checkOutDate ? Math.max(1, dayjs(formData.checkOutDate).diff(dayjs(formData.checkInDate), 'day') + 1) : 0;
+    // Automatically calculate nights between check-in and check-out
+    const nights = formData.checkInDate && formData.checkOutDate ? Math.max(1, dayjs(formData.checkOutDate).diff(dayjs(formData.checkInDate), 'day')) : 0;
 
     // Find charge by selected booking category
     const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);

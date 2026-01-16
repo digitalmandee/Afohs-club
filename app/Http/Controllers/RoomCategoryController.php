@@ -15,6 +15,7 @@ class RoomCategoryController extends Controller
         $this->middleware('super.admin:rooms.categories.edit')->only('edit', 'update');
         $this->middleware('permission:rooms.categories.delete')->only('destroy');
     }
+
     public function index()
     {
         $roomCategoriesData = RoomCategory::orderBy('created_at', 'desc')->get();
@@ -59,5 +60,38 @@ class RoomCategoryController extends Controller
         $roomCategory->delete();
 
         return response()->json(['message' => 'Room Category deleted successfully.']);
+    }
+
+    public function trashed(Request $request)
+    {
+        $query = RoomCategory::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $roomCategories = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Rooms/Categories/Trashed', [
+            'roomCategories' => $roomCategories,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $roomCategory = RoomCategory::withTrashed()->findOrFail($id);
+        $roomCategory->restore();
+
+        return redirect()->back()->with('success', 'Room Category restored successfully.');
+    }
+
+    public function forceDelete($id)
+    {
+        $roomCategory = RoomCategory::withTrashed()->findOrFail($id);
+        $roomCategory->forceDelete();
+
+        return redirect()->back()->with('success', 'Room Category deleted permanently.');
     }
 }

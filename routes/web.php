@@ -14,6 +14,8 @@ use App\Http\Controllers\CorporateCompanyController;
 use App\Http\Controllers\CorporateMembershipController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
+use App\Http\Controllers\EmployeeAssetAttachmentController;
+use App\Http\Controllers\EmployeeAssetController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDepartmentController;
 use App\Http\Controllers\EmployeeReportController;
@@ -31,6 +33,7 @@ use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\GuestTypeController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCategoryController;
+use App\Http\Controllers\MaintenanceFeePostingController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
@@ -112,6 +115,41 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeSalary'])->name('employees.advances.salary');
         });
 
+        // Employee Assets (Inventory)
+        Route::prefix('assets')->group(function () {
+            Route::get('/', [EmployeeAssetController::class, 'index'])->name('employees.assets.index');
+            Route::get('/list', [EmployeeAssetController::class, 'getAssets'])->name('employees.assets.list');
+            Route::get('/options', [EmployeeAssetController::class, 'getOptions'])->name('employees.assets.options');
+            Route::get('/trashed', [EmployeeAssetController::class, 'trashed'])->name('employees.assets.trashed');  // Moved up
+            Route::post('/', [EmployeeAssetController::class, 'store'])->name('employees.assets.store');
+
+            // Routes with {id} must come last or after specific routes
+            Route::delete('/media/{id}', [EmployeeAssetController::class, 'deleteMedia'])->name('employees.assets.media.delete');  // Specific delete
+            Route::post('/{id}/restore', [EmployeeAssetController::class, 'restore'])->name('employees.assets.restore');
+            Route::delete('/{id}/force-delete', [EmployeeAssetController::class, 'forceDelete'])->name('employees.assets.force-delete');
+
+            Route::get('/{id}', [EmployeeAssetController::class, 'show'])->name('employees.assets.show');
+            Route::put('/{id}', [EmployeeAssetController::class, 'update'])->name('employees.assets.update');
+            Route::delete('/{id}', [EmployeeAssetController::class, 'destroy'])->name('employees.assets.destroy');
+        });
+
+        // Employee Asset Attachments (Assignments)
+        Route::prefix('asset-attachments')->group(function () {
+            Route::get('/', [EmployeeAssetAttachmentController::class, 'index'])->name('employees.asset-attachments.index');
+            Route::get('/list', [EmployeeAssetAttachmentController::class, 'getAttachments'])->name('employees.asset-attachments.list');
+            Route::get('/form-data', [EmployeeAssetAttachmentController::class, 'getFormData'])->name('employees.asset-attachments.form-data');
+            Route::get('/trashed', [EmployeeAssetAttachmentController::class, 'trashed'])->name('employees.asset-attachments.trashed');  // Moved up
+            Route::post('/', [EmployeeAssetAttachmentController::class, 'store'])->name('employees.asset-attachments.store');
+
+            // Routes with {id} need care
+            Route::delete('/media/{id}', [EmployeeAssetAttachmentController::class, 'deleteMedia'])->name('employees.asset-attachments.media.delete');
+            Route::post('/{id}/restore', [EmployeeAssetAttachmentController::class, 'restore'])->name('employees.asset-attachments.restore');
+            Route::delete('/{id}/force-delete', [EmployeeAssetAttachmentController::class, 'forceDelete'])->name('employees.asset-attachments.force-delete');
+
+            Route::put('/{id}', [EmployeeAssetAttachmentController::class, 'update'])->name('employees.asset-attachments.update');
+            Route::delete('/{id}', [EmployeeAssetAttachmentController::class, 'destroy'])->name('employees.asset-attachments.destroy');
+        });
+
         // Employee Loans
         Route::prefix('loans')->group(function () {
             Route::get('/', [\App\Http\Controllers\EmployeeLoanController::class, 'index'])->name('employees.loans.index');
@@ -168,6 +206,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('payslips/{periodId}', [PayrollController::class, 'periodPayslips'])->name('employees.payroll.payslips.period');
             Route::get('payslip/{payslipId}', [PayrollController::class, 'viewPayslip'])->name('employees.payroll.payslip.view');
             Route::get('payslips/{payslipId}/print', [PayrollController::class, 'printPayslip'])->name('employees.payroll.payslips.print');
+
+            // Salary Sheet (Editor)
+            Route::get('salary-sheet', [PayrollController::class, 'salarySheet'])->name('employees.payroll.salary-sheet');
 
             // Reports
             Route::get('reports', [PayrollController::class, 'reports'])->name('employees.payroll.reports');
@@ -259,20 +300,27 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
             Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
             Route::get('check-out', [RoomController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
-            Route::post('store', [RoomController::class, 'store'])->name('rooms.store')->middleware('permission:rooms.create');
-            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
-            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
-            Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
-            Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit')->middleware('super.admin:rooms.edit');
-            Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update')->middleware('permission:rooms.edit');
-            Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:rooms.delete');
-            // Room Calendar
-            Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
             // Cancelled Bookings
             Route::get('booking/cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');  // Add middleware permission later if needed
             Route::put('booking/refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund');
             Route::put('booking/cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel');
             Route::put('booking/undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel');
+            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
+            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
+
+            // Room Calendar
+            Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
+
+            // Rooms Trashed Module
+            Route::get('trashed', [RoomController::class, 'trashed'])->name('rooms.trashed')->middleware('permission:rooms.delete');
+            Route::post('restore/{id}', [RoomController::class, 'restore'])->name('rooms.restore')->middleware('permission:rooms.delete');
+            Route::delete('force-delete/{id}', [RoomController::class, 'forceDelete'])->name('rooms.force-delete')->middleware('permission:rooms.delete');
+
+            Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
+            Route::post('store', [RoomController::class, 'store'])->name('rooms.store')->middleware('permission:rooms.create');
+            Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit')->middleware('super.admin:rooms.edit');
+            Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update')->middleware('permission:rooms.edit');
+            Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:rooms.delete');
 
             // get room booking data
             Route::get('api/bookings/{id}', [RoomBookingController::class, 'showRoomBooking'])->name('api.room.booking.show')->middleware('permission:rooms.bookings.view');
@@ -289,9 +337,28 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             });
         });
 
+        // Room Types Trashed Module
+        Route::get('room-types/trashed', [RoomTypeController::class, 'trashed'])->name('room-types.trashed');
+        Route::post('room-types/restore/{id}', [RoomTypeController::class, 'restore'])->name('room-types.restore');
+        Route::delete('room-types/force-delete/{id}', [RoomTypeController::class, 'forceDelete'])->name('room-types.force-delete');
         Route::resource('room-types', RoomTypeController::class)->except(['create', 'edit', 'show']);
+
+        // Room Categories Trashed Module
+        Route::get('room-categories/trashed', [RoomCategoryController::class, 'trashed'])->name('room-categories.trashed');
+        Route::post('room-categories/restore/{id}', [RoomCategoryController::class, 'restore'])->name('room-categories.restore');
+        Route::delete('room-categories/force-delete/{id}', [RoomCategoryController::class, 'forceDelete'])->name('room-categories.force-delete');
         Route::resource('room-categories', RoomCategoryController::class)->except(['create', 'edit', 'show']);
+
+        // Room Charges Types Trashed Module
+        Route::get('room-charges-type/trashed', [RoomChargesTypeController::class, 'trashed'])->name('room-charges-type.trashed');
+        Route::post('room-charges-type/restore/{id}', [RoomChargesTypeController::class, 'restore'])->name('room-charges-type.restore');
+        Route::delete('room-charges-type/force-delete/{id}', [RoomChargesTypeController::class, 'forceDelete'])->name('room-charges-type.force-delete');
         Route::resource('room-charges-type', RoomChargesTypeController::class)->except(['create', 'edit', 'show']);
+
+        // Room MiniBar Trashed Module
+        Route::get('room-minibar/trashed', [RoomMiniBarController::class, 'trashed'])->name('room-minibar.trashed');
+        Route::post('room-minibar/restore/{id}', [RoomMiniBarController::class, 'restore'])->name('room-minibar.restore');
+        Route::delete('room-minibar/force-delete/{id}', [RoomMiniBarController::class, 'forceDelete'])->name('room-minibar.force-delete');
         Route::resource('room-minibar', RoomMiniBarController::class)->except(['create', 'edit', 'show']);
 
         // Event Routes
@@ -471,6 +538,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore');
         Route::delete('charge-types/force-delete/{id}', [FinancialChargeTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
         Route::resource('charge-types', FinancialChargeTypeController::class)->names('finance.charge-types');
+
+        // Maintenance Fee Posting Routes
+        Route::get('maintenance-posting', [MaintenanceFeePostingController::class, 'create'])->name('finance.maintenance.create')->middleware('permission:financial.create');
+        Route::post('maintenance-posting/preview', [MaintenanceFeePostingController::class, 'preview'])->name('finance.maintenance.preview')->middleware('permission:financial.create');
+        Route::post('maintenance-posting', [MaintenanceFeePostingController::class, 'store'])->name('finance.maintenance.store')->middleware('permission:financial.create');
     });
 
     // Route for business developers, outside the 'admin/finance' group as per user's snippet structure
@@ -527,9 +599,18 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/payslips/bulk-approve', [PayrollApiController::class, 'bulkApprovePayslips'])->name('api.payroll.payslips.bulk-approve');
 
         // Reports
+        // Reports
         Route::get('/reports/summary/{periodId}', [PayrollApiController::class, 'getSummaryReport'])->name('api.payroll.reports.summary');
         Route::get('/reports/detailed/{periodId}', [PayrollApiController::class, 'getDetailedReport'])->name('api.payroll.reports.detailed');
         Route::get('/reports/employee/{employeeId}', [PayrollApiController::class, 'getEmployeePayrollHistory'])->name('api.payroll.reports.employee');
+
+        // Salary Sheet Management
+        Route::get('/salary-sheet', [PayrollApiController::class, 'getSalarySheetData'])->name('api.payroll.salary-sheet');
+        Route::post('/salary-sheet/update', [PayrollApiController::class, 'updateSalarySheet'])->name('api.payroll.salary-sheet.update');
+        Route::get('/salary-sheet/export', [PayrollApiController::class, 'exportSalarySheet'])->name('payroll.salary-sheet.export');
+        Route::get('/salary-sheet/template', [PayrollApiController::class, 'downloadImportTemplate'])->name('payroll.salary-sheet.template');
+        Route::post('/salary-sheet/import', [PayrollApiController::class, 'importSalarySheet'])->name('api.payroll.salary-sheet.import');
+        Route::post('/salary-sheet/post', [PayrollApiController::class, 'postPayroll'])->name('api.payroll.salary-sheet.post');
     });
 
     // Route::get('/admin/subscription/sports/category', function () {

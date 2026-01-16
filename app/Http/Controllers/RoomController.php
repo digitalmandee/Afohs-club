@@ -486,11 +486,51 @@ class RoomController extends Controller
             $booking->cancellation_reason = $request->cancellation_reason;
         }
 
-        $booking->save();
-
         return response()->json([
             'message' => 'Booking status updated successfully',
             'booking' => $booking
         ]);
+    }
+
+    /**
+     * Display a listing of trashed rooms.
+     */
+    public function trashed(Request $request)
+    {
+        $query = Room::onlyTrashed()->with('roomType');
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $rooms = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Booking/Room/Trashed', [
+            'rooms' => $rooms,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    /**
+     * Restore the specified trashed room.
+     */
+    public function restore($id)
+    {
+        $room = Room::withTrashed()->findOrFail($id);
+        $room->restore();
+
+        return redirect()->back()->with('success', 'Room restored successfully.');
+    }
+
+    /**
+     * Permanently delete the specified trashed room.
+     */
+    public function forceDelete($id)
+    {
+        $room = Room::withTrashed()->findOrFail($id);
+        $room->forceDelete();
+
+        return redirect()->back()->with('success', 'Room deleted permanently.');
     }
 }

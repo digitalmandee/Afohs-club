@@ -311,7 +311,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         };
     };
 
-    const suggestMaintenancePeriod = (frequency) => {
+    const suggestMaintenancePeriod = (frequency, index = null) => {
         if (!selectedMember) return;
         const membershipDate = new Date(selectedMember.membership_date);
         const membershipYear = membershipDate.getFullYear();
@@ -366,25 +366,53 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         const monthlyFee = parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, ''));
         amount = monthlyFee * exactMonths;
 
-        // Set Invoice Items
-        const newItem = {
-            id: Date.now(),
-            fee_type: 'maintenance_fee',
-            description: `Maintenance Fee (${frequency})`,
-            qty: 1,
-            amount: amount,
-            tax_percentage: 0,
-            overdue_percentage: 0,
-            discount_type: 'fixed',
-            discount_value: 0,
-            additional_charges: 0,
-            valid_from: startDate.toISOString().split('T')[0],
-            valid_to: endDate.toISOString().split('T')[0],
-            remarks: '',
-            total: amount,
-        };
+        // Calculate Days
+        const dStart = dayjs(startDate);
+        const dEnd = dayjs(endDate);
+        const daysCount = dEnd.diff(dStart, 'day') + 1;
 
-        setInvoiceItems([newItem]);
+        const dateFromFn = startDate.toISOString().split('T')[0];
+        const dateToFn = endDate.toISOString().split('T')[0];
+
+        if (index !== null && index >= 0) {
+            // Update specific item
+            setInvoiceItems((prev) => {
+                const newItems = [...prev];
+                newItems[index] = {
+                    ...newItems[index],
+                    // Preserve existing fee_type logic
+                    description: `Maintenance Fee (${frequency})`,
+                    qty: 1,
+                    amount: amount,
+                    valid_from: dateFromFn,
+                    valid_to: dateToFn,
+                    days: daysCount,
+                    total: amount,
+                };
+                return newItems;
+            });
+        } else {
+            // Set Invoice Items (Legacy/Fallback)
+            const newItem = {
+                id: Date.now(),
+                fee_type: 'maintenance_fee',
+                description: `Maintenance Fee (${frequency})`,
+                qty: 1,
+                amount: amount,
+                tax_percentage: 0,
+                overdue_percentage: 0,
+                discount_type: 'fixed',
+                discount_value: 0,
+                additional_charges: 0,
+                valid_from: dateFromFn,
+                valid_to: dateToFn,
+                days: daysCount,
+                remarks: '',
+                total: amount,
+            };
+            setInvoiceItems([newItem]);
+        }
+
         enqueueSnackbar(`Set payment period to ${frequency} (${exactMonths} months)`, { variant: 'info' });
     };
 

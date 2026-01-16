@@ -798,8 +798,7 @@ class PayrollApiController extends Controller
                         $amount = min($loan->monthly_deduction, $loan->remaining_amount);
                         if ($amount > 0) {
                             $loanDeductions[] = [
-                                'id' => 'loan-' . $loan->id,
-                                'type' => 'loan',
+                                'employee_loan_id' => $loan->id,
                                 'amount' => $amount,
                                 'name' => 'Loan Repayment'
                             ];
@@ -809,18 +808,16 @@ class PayrollApiController extends Controller
                 }
             }
 
-            // Calculate Advance Deductions
+            // Calculate Advance Deductions (Simplified)
             $advanceDeductions = [];
             $totalAdvanceDeductions = 0;
-
             if ($employee->activeAdvances) {
                 foreach ($employee->activeAdvances as $advance) {
                     if ($advance->deduction_start_date && Carbon::parse($advance->deduction_start_date)->lte($periodEnd)) {
                         $amount = min($advance->monthly_deduction, $advance->remaining_amount);
                         if ($amount > 0) {
                             $advanceDeductions[] = [
-                                'id' => 'advance-' . $advance->id,
-                                'type' => 'advance',
+                                'employee_advance_id' => $advance->id,
                                 'amount' => $amount,
                                 'name' => 'Advance Repayment'
                             ];
@@ -830,43 +827,30 @@ class PayrollApiController extends Controller
                 }
             }
 
-            // Include CTS orders (paid within the payroll period) as additional deductions (from batched result)
-            $orderDeductions = [];
-            $totalOrderDeductions = 0;
-            $ctsOrdersForEmployee = $ordersByEmployee->get($employee->id, collect());
-            foreach ($ctsOrdersForEmployee as $order) {
-                $amt = $order->total_price ?? 0;
-                $amt = (float) $amt;
-                $orderDeductions[] = [
-                    'id' => $order->id,
-                    'paid_at' => $order->paid_at ? (string) $order->paid_at : null,
-                    'amount' => $amt,
-                    'payment_method' => $order->payment_method,
-                    'note' => $order->payment_note ?? $order->remark ?? null,
-                    'deducted_at' => $order->deducted_at ? (string) $order->deducted_at : null,
+            // CTS Orders (Using the batch fetched collection)
+            $employeeOrders = $ordersByEmployee->get($employee->id, collect());
+            $ctsDeductions = $employeeOrders->map(function ($o) {
+                return [
+                    'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                    'name' => 'CTS Order #' . $o->id
                 ];
-                $totalOrderDeductions += $amt;
-            }
+            });
+            $totalCtsDeductions = $ctsDeductions->sum('amount');
 
-            // Add order-based deductions to total deductions
-            $totalDeductionsWithOrders = $totalDeductions + $totalOrderDeductions + $totalLoanDeductions + $totalAdvanceDeductions;
+            $totalDeductions += $totalLoanDeductions + $totalAdvanceDeductions + $totalCtsDeductions;
+            $netSalary = $basicSalary + $totalAllowances - $totalDeductions;
 
             $preview[] = [
-                'employee_id' => $employee->id,
-                'employee_name' => $employee->name,
-                'employee_number' => $employee->employee_id,
-                'department' => $employee->department->name ?? 'N/A',
+                'employee' => $employee,
                 'basic_salary' => $basicSalary,
-                'total_allowances' => $totalAllowances,
+                'total_allowances' => $totalAllowances + $ctsDeductions->sum('amount') * 0,  // CTS is deduction not allowance
                 'total_deductions' => $totalDeductions,
-                'total_order_deductions' => $totalOrderDeductions,
-                'total_loan_deductions' => $totalLoanDeductions,
-                'total_advance_deductions' => $totalAdvanceDeductions,
-                'order_deductions' => $orderDeductions,
+                'net_salary' => $netSalary,
+                'allowances' => $employee->allowances,
+                'deductions' => $employee->deductions,
                 'loan_deductions' => $loanDeductions,
                 'advance_deductions' => $advanceDeductions,
-                'gross_salary' => $basicSalary + $totalAllowances,
-                'net_salary' => $basicSalary + $totalAllowances - $totalDeductionsWithOrders
+                'cts_deductions' => $ctsDeductions
             ];
         }
 
@@ -886,6 +870,189 @@ class PayrollApiController extends Controller
         );
 
         return response()->json(['success' => true, 'preview' => $paginator]);
+    }
+
+    // Salary Sheet Management
+    // Salary Sheet Management
+    public function getSalarySheetData(Request $request)
+    {
+        $month = $request->get('month');  // YYYY-MM
+        if (!$month) {
+            return response()->json(['success' => false, 'message' => 'Month is required']);
+        }
+
+        $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $endDate = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
+
+        // 1. Find or Create Period
+        $period = PayrollPeriod::firstOrCreate(
+            [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d')
+            ],
+            [
+                'period_name' => PayrollPeriod::generatePeriodName($startDate, $endDate),
+                'status' => 'draft',
+                'created_by' => Auth::id()
+            ]
+        );
+
+        // 2. Fetch existing payslips or Generate Drafts
+        $payslipsCount = Payslip::where('payroll_period_id', $period->id)->count();
+
+        if ($payslipsCount === 0) {
+            // Generate Drafts for ALL active employees
+            $activeEmployees = Employee::pluck('id');
+            $this->payrollService->processPayrollForPeriod($period->id, $activeEmployees->toArray());
+        }
+
+        // 3. Prepare Query for Grid
+        $query = Payslip::with(['allowances', 'deductions', 'employee'])  // Added employee relation for CNIC/Location
+            ->where('payroll_period_id', $period->id);
+
+        // Apply Filters
+        if ($request->get('employee_type') && $request->get('employee_type') !== 'all') {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('employment_type', $request->get('employee_type'));
+            });
+        }
+
+        if ($request->get('designation') && $request->get('designation') !== 'all') {
+            $query->where('designation', $request->get('designation'));
+        }
+
+        if ($request->get('location') && $request->get('location') !== 'all') {
+            $query->whereHas('employee', function ($q) use ($request) {
+                $q->where('cur_city', $request->get('location'));  // Mapping Location to Current City
+            });
+        }
+
+        if ($request->get('department') && $request->get('department') !== 'all') {
+            $query->where('department', $request->get('department'));
+        }
+
+        $payslips = $query->get();
+
+        // 4. Meta Data for Columns
+        $allowanceHeaders = AllowanceType::where('is_active', true)->select('id', 'name')->get();
+        $deductionHeaders = DeductionType::where('is_active', true)->select('id', 'name')->get();
+
+        // 5. Meta Data for Filters
+        // We fetch distinct values from Payslip (snapshot) or Employee (current) depending on need.
+        // For consistency in filtering, we'll try to get distinct values relevant to the current period's data.
+        $designations = Payslip::where('payroll_period_id', $period->id)->distinct()->pluck('designation')->filter()->values();
+
+        // Locations (Cities) - Fetched from Employees associated with these payslips
+        $locations = Employee::whereIn('id', $payslips->pluck('employee_id')->toArray())
+            ->distinct()
+            ->pluck('cur_city')
+            ->filter()
+            ->values();
+
+        // Employee Types
+        $employeeTypes = Employee::whereIn('id', $payslips->pluck('employee_id')->toArray())
+            ->distinct()
+            ->pluck('employment_type')
+            ->filter()
+            ->values();
+
+        return response()->json([
+            'success' => true,
+            'payslips' => $payslips,
+            'allowance_headers' => $allowanceHeaders,
+            'deduction_headers' => $deductionHeaders,
+            'designations' => $designations,
+            'locations' => $locations,
+            'employee_types' => $employeeTypes,
+            'period_status' => $period->status
+        ]);
+    }
+
+    public function updateSalarySheet(Request $request)
+    {
+        $payslipsData = $request->get('payslips');
+
+        DB::beginTransaction();
+        try {
+            foreach ($payslipsData as $data) {
+                $payslip = Payslip::find($data['id']);
+                if (!$payslip)
+                    continue;
+
+                // Update Allowances
+                $totalAllowances = 0;
+                if (isset($data['allowances'])) {
+                    foreach ($data['allowances'] as $allowanceData) {
+                        $pa = \App\Models\PayslipAllowance::where('payslip_id', $payslip->id)
+                            ->where('allowance_type_id', $allowanceData['allowance_type_id'])
+                            ->first();
+
+                        $amount = (float) $allowanceData['amount'];
+
+                        if ($pa) {
+                            $pa->amount = $amount;
+                            $pa->save();
+                        } else {
+                            // Create if didn't exist (e.g. was 0 or not applicable initially but added in grid)
+                            // Need allowance name if creating fresh
+                            $type = AllowanceType::find($allowanceData['allowance_type_id']);
+                            if ($type) {
+                                \App\Models\PayslipAllowance::create([
+                                    'payslip_id' => $payslip->id,
+                                    'allowance_type_id' => $type->id,
+                                    'allowance_name' => $type->name,
+                                    'amount' => $amount,
+                                    'is_taxable' => $type->is_taxable
+                                ]);
+                            }
+                        }
+                        $totalAllowances += $amount;
+                    }
+                }
+
+                // Update Deductions
+                $totalDeductions = 0;
+                if (isset($data['deductions'])) {
+                    foreach ($data['deductions'] as $deductionData) {
+                        $pd = \App\Models\PayslipDeduction::where('payslip_id', $payslip->id)
+                            ->where('deduction_type_id', $deductionData['deduction_type_id'])
+                            ->first();
+
+                        $amount = (float) $deductionData['amount'];
+
+                        if ($pd) {
+                            $pd->amount = $amount;
+                            $pd->save();
+                        } else {
+                            $type = DeductionType::find($deductionData['deduction_type_id']);
+                            if ($type) {
+                                \App\Models\PayslipDeduction::create([
+                                    'payslip_id' => $payslip->id,
+                                    'deduction_type_id' => $type->id,
+                                    'deduction_name' => $type->name,
+                                    'amount' => $amount
+                                    // Special fields like advance_id/loan_id omitted for manual overrides
+                                ]);
+                            }
+                        }
+                        $totalDeductions += $amount;
+                    }
+                }
+
+                // Update Payslip Totals
+                $payslip->basic_salary = $data['basic_salary'] ?? $payslip->basic_salary;  // If basic editable
+                $payslip->total_allowances = $totalAllowances;
+                $payslip->gross_salary = $payslip->basic_salary + $totalAllowances;
+                $payslip->total_deductions = $totalDeductions;
+                $payslip->net_salary = $payslip->gross_salary - $totalDeductions;
+                $payslip->save();
+            }
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Salary sheet updated successfully']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error updating salary sheet: ' . $e->getMessage()], 500);
+        }
     }
 
     // Payslips Management
@@ -1217,5 +1384,268 @@ class PayrollApiController extends Controller
         ];
 
         return response()->json(['success' => true, 'stats' => $stats]);
+    }
+
+    public function importSalarySheet(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt',
+            'month' => 'required'
+        ]);
+
+        $file = $request->file('file');
+        $handle = fopen($file->getPathname(), 'r');
+        $header = fgetcsv($handle);  // Read header
+
+        // Month for fallback
+        $month = $request->get('month');
+        $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $period = PayrollPeriod::whereDate('start_date', $startDate->format('Y-m-d'))->first();
+
+        // Parse Headers to map indices to Types
+        $columnMap = [];
+        foreach ($header as $index => $colName) {
+            if (preg_match('/\(A-(\d+)\)/', $colName, $matches)) {
+                $columnMap[$index] = ['type' => 'allowance', 'id' => $matches[1]];
+            } elseif (preg_match('/\(D-(\d+)\)/', $colName, $matches)) {
+                $columnMap[$index] = ['type' => 'deduction', 'id' => $matches[1]];
+            } elseif ($colName === 'Payslip ID') {
+                $columnMap[$index] = ['type' => 'payslip_id'];
+            } elseif ($colName === 'Employee ID') {
+                $columnMap[$index] = ['type' => 'employee_id'];
+            }
+        }
+
+        // Pre-fetch Types for fast lookup
+        $allowanceTypes = AllowanceType::all()->keyBy('id');
+        $deductionTypes = DeductionType::all()->keyBy('id');
+
+        DB::beginTransaction();
+        try {
+            while (($row = fgetcsv($handle)) !== false) {
+                // Find Payslip
+                $payslip = null;
+
+                // 1. Try Payslip ID
+                $payslipId = null;
+                foreach ($columnMap as $idx => $meta) {
+                    if ($meta['type'] === 'payslip_id') {
+                        $payslipId = $row[$idx] ?? null;
+                        break;
+                    }
+                }
+                if ($payslipId) {
+                    $payslip = Payslip::find($payslipId);
+                }
+
+                // 2. Try Employee ID if Payslip not found (and Period exists)
+                if (!$payslip && $period) {
+                    $employeeIdNum = null;
+                    foreach ($columnMap as $idx => $meta) {
+                        if ($meta['type'] === 'employee_id') {
+                            $employeeIdNum = $row[$idx] ?? null;
+                            break;
+                        }
+                    }
+                    if ($employeeIdNum) {
+                        // Find Employee by custom ID
+                        $employee = Employee::where('employee_id', $employeeIdNum)->first();
+                        if ($employee) {
+                            $payslip = Payslip::where('payroll_period_id', $period->id)
+                                ->where('employee_id', $employee->id)
+                                ->first();
+                        }
+                    }
+                }
+
+                if (!$payslip)
+                    continue;
+
+                foreach ($columnMap as $index => $meta) {
+                    $amount = isset($row[$index]) ? (float) $row[$index] : 0;
+
+                    if ($meta['type'] === 'allowance') {
+                        $type = $allowanceTypes[$meta['id']] ?? null;
+                        if ($type) {
+                            \App\Models\PayslipAllowance::updateOrCreate(
+                                ['payslip_id' => $payslip->id, 'allowance_type_id' => $meta['id']],
+                                [
+                                    'amount' => $amount,
+                                    'allowance_name' => $type->name,
+                                    'is_taxable' => $type->is_taxable
+                                ]
+                            );
+                        }
+                    } elseif ($meta['type'] === 'deduction') {
+                        $type = $deductionTypes[$meta['id']] ?? null;
+                        if ($type) {
+                            \App\Models\PayslipDeduction::updateOrCreate(
+                                ['payslip_id' => $payslip->id, 'deduction_type_id' => $meta['id']],
+                                [
+                                    'amount' => $amount,
+                                    'deduction_name' => $type->name
+                                ]
+                            );
+                        }
+                    }
+                }
+
+                // Recalculate Totals
+                $payslip->refresh();
+                $payslip->total_allowances = $payslip->allowances->sum('amount');
+                $payslip->total_deductions = $payslip->deductions->sum('amount');
+                $payslip->gross_salary = $payslip->basic_salary + $payslip->total_allowances;
+                $payslip->net_salary = $payslip->gross_salary - $payslip->total_deductions;
+                $payslip->save();
+            }
+
+            // Recalculate Period Totals
+            if ($period) {
+                $period->total_gross_amount = Payslip::where('payroll_period_id', $period->id)->sum('gross_salary');
+                $period->total_deductions = Payslip::where('payroll_period_id', $period->id)->sum('total_deductions');
+                $period->total_net_amount = Payslip::where('payroll_period_id', $period->id)->sum('net_salary');
+
+                // If posted, update financials immediately
+                if ($period->status === 'posted') {
+                    $this->payrollService->postToFinancials($period);
+                }
+
+                $period->save();
+            }
+
+            DB::commit();
+            fclose($handle);
+            return response()->json(['success' => true, 'message' => 'Salary sheet imported successfully']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            fclose($handle);
+            return response()->json(['success' => false, 'message' => 'Import failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function postPayroll(Request $request)
+    {
+        $month = $request->get('month');
+        if (!$month)
+            return response()->json(['message' => 'Month required'], 400);
+
+        $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+        $period = PayrollPeriod::whereDate('start_date', $startDate->format('Y-m-d'))->first();
+
+        if (!$period) {
+            return response()->json(['success' => false, 'message' => 'Payroll period not found'], 404);
+        }
+
+        return $this->payrollService->postToFinancials($period);
+    }
+
+    public function downloadImportTemplate()
+    {
+        $allowanceTypes = AllowanceType::where('is_active', true)->orderBy('id')->get();
+        $deductionTypes = DeductionType::where('is_active', true)->orderBy('id')->get();
+
+        $filename = 'salary_import_template.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($allowanceTypes, $deductionTypes) {
+            $file = fopen('php://output', 'w');
+
+            // Header Row
+            $headerRow = ['Payslip ID', 'Employee ID', 'Name'];  // Simplified
+            foreach ($allowanceTypes as $type)
+                $headerRow[] = $type->name . ' (A-' . $type->id . ')';
+            foreach ($deductionTypes as $type)
+                $headerRow[] = $type->name . ' (D-' . $type->id . ')';
+
+            fputcsv($file, $headerRow);
+
+            // Example Row (Optional)
+            // $exampleRow = ['', 'EMP-001', 'John Doe'];
+            // ... zeros ...
+            // fputcsv($file, $exampleRow);
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportSalarySheet(Request $request)
+    {
+        $month = $request->get('month');
+        if (!$month)
+            return response()->json(['message' => 'Month required'], 400);
+
+        $startDate = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+
+        $period = PayrollPeriod::whereDate('start_date', $startDate->format('Y-m-d'))->first();
+        if (!$period)
+            return response()->json(['message' => 'Payroll period not found'], 400);
+
+        // Fetch Payslips with details
+        $payslips = Payslip::with(['allowances', 'deductions', 'employee'])
+            ->where('payroll_period_id', $period->id)
+            ->get();
+
+        // Fetch Types for Headers
+        $allowanceTypes = AllowanceType::where('is_active', true)->orderBy('id')->get();
+        $deductionTypes = DeductionType::where('is_active', true)->orderBy('id')->get();
+
+        $filename = 'salary_sheet_' . $month . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function () use ($payslips, $allowanceTypes, $deductionTypes) {
+            $file = fopen('php://output', 'w');
+
+            // Header Row
+            $headerRow = ['Payslip ID', 'Employee ID', 'Name', 'CNIC', 'Designation', 'Department', 'Basic Salary'];
+            foreach ($allowanceTypes as $type)
+                $headerRow[] = $type->name . ' (A-' . $type->id . ')';
+            $headerRow[] = 'Gross Salary';
+            foreach ($deductionTypes as $type)
+                $headerRow[] = $type->name . ' (D-' . $type->id . ')';
+            $headerRow[] = 'Net Salary';
+
+            fputcsv($file, $headerRow);
+
+            foreach ($payslips as $payslip) {
+                $row = [
+                    $payslip->id,
+                    $payslip->employee_id_number,
+                    $payslip->employee_name,
+                    $payslip->employee->national_id ?? '-',
+                    $payslip->designation,
+                    $payslip->department,
+                    $payslip->basic_salary
+                ];
+
+                // Allowances
+                foreach ($allowanceTypes as $type) {
+                    $amt = $payslip->allowances->where('allowance_type_id', $type->id)->first()?->amount ?? 0;
+                    $row[] = $amt;
+                }
+
+                $row[] = $payslip->gross_salary;
+
+                // Deductions
+                foreach ($deductionTypes as $type) {
+                    $amt = $payslip->deductions->where('deduction_type_id', $type->id)->first()?->amount ?? 0;
+                    $row[] = $amt;
+                }
+
+                $row[] = $payslip->net_salary;
+
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

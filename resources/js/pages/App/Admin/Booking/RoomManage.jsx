@@ -251,6 +251,7 @@ const RoomScreen = ({ bookings }) => {
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking ID</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking Date</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
@@ -291,6 +292,7 @@ const RoomScreen = ({ bookings }) => {
                                                         <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
                                                     </Tooltip>
                                                 </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
@@ -405,12 +407,7 @@ const RoomScreen = ({ bookings }) => {
                     </Box>
 
                     {/* Booking Invoice Modal */}
-                    <BookingInvoiceModal 
-                    open={showInvoiceModal} 
-                    onClose={() => handleCloseInvoice()} 
-                    bookingId={selectedBooking?.id} 
-                    setBookings={setFilteredBookings}
-                    type="ROOM_BOOKING" />
+                    <BookingInvoiceModal open={showInvoiceModal} onClose={() => handleCloseInvoice()} bookingId={selectedBooking?.id} setBookings={setFilteredBookings} type="ROOM_BOOKING" />
 
                     {/* View Documents Modal */}
                     <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />

@@ -12,7 +12,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable, HasRoles;
 
-    protected $guard_name = 'web'; // Default guard for super admin
+    protected $guard_name = 'web';  // Default guard for super admin
 
     /**
      * The attributes that are mass assignable.
@@ -93,14 +93,6 @@ class User extends Authenticatable
         return $this->hasMany(MemberStatusHistory::class);
     }
 
-    /**
-     * Set the password for a new user.
-     *
-     * @param  string  $password
-     * @return $this
-     */
-    public function setPasswordAttribute($password)
-    {
-        $this->attributes['password'] = $password ? $password : Hash::make(1234);
-    }
+    // Password is automatically hashed by the 'hashed' cast in $casts
+    // No need for setPasswordAttribute mutator
 }

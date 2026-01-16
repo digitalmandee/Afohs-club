@@ -8,6 +8,7 @@ use App\Models\BookingEvents;
 use App\Models\CorporateMember;
 use App\Models\EventBooking;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
 use App\Models\FinancialReceipt;
 use App\Models\Member;
 use App\Models\Room;
@@ -274,8 +275,8 @@ class BookingController extends Controller
 
         try {
             $recieptPath = null;
-            if ($request->payment_method == 'credit_card' && $request->has('reciept')) {
-                $recieptPath = FileHelper::saveImage($request->file('reciept'), 'reciepts');
+            if ($request->payment_method == 'credit_card' && $request->has('receipt')) {
+                $recieptPath = FileHelper::saveImage($request->file('receipt'), 'receipts');
             }
 
             // Update orders if we are paying them
@@ -290,14 +291,44 @@ class BookingController extends Controller
                 $invoice->amount += $ordersTotal;
                 $invoice->total_price += $ordersTotal;
 
-                // Add note or data?
-                // $invoice->data = ...
+                // Create Invoice Item for these orders
+                // fee_type '7' for Food Order Fee per Admin Doc
+                $orderItem = FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => '7',
+                    'description' => 'Room Service Orders (Added during payment)',
+                    'qty' => 1,
+                    'amount' => $ordersTotal,
+                    'sub_total' => $ordersTotal,
+                    'total' => $ordersTotal,
+                ]);
+
+                // Create Debit Transaction for the added charge
+                // We need to debit the user for these new charges before we credit the payment
+                // Payer determination logic is needed here or we check invoice relations
+                $payerDetails = $this->getPayerDetails($invoice);
+
+                Transaction::create([
+                    'type' => 'debit',
+                    'amount' => $ordersTotal,
+                    'date' => now(),
+                    'description' => 'Invoice #' . $invoice->invoice_no . ' (Room Orders)',
+                    'payable_type' => $payerDetails['type'],
+                    'payable_id' => $payerDetails['id'],
+                    'reference_type' => FinancialInvoiceItem::class,
+                    'reference_id' => $orderItem->id,
+                    'invoice_id' => $invoice->id,
+                    'created_by' => Auth::id(),
+                ]);
             }
 
             $invoice->payment_date = now();
             $invoice->paid_amount = $invoice->paid_amount + $request->amount;  // ✅ accumulate payments
             $invoice->customer_charges = $request->customer_charges ?? $invoice->customer_charges;
             $invoice->payment_method = $request->payment_method;
+            if ($request->has('credit_card_type')) {
+                $invoice->credit_card_type = $request->credit_card_type;
+            }
             $invoice->receipt = $recieptPath;
 
             // Re-calculate status based on NEW total
@@ -305,16 +336,9 @@ class BookingController extends Controller
             $invoice->save();
 
             // ✅ Determine Payer Details for Ledger
-            $payerId = $invoice->member_id ?? $invoice->corporate_member_id ?? $invoice->customer_id ?? null;
-            $payerType = null;
-
-            if ($invoice->member_id) {
-                $payerType = \App\Models\Member::class;
-            } elseif ($invoice->corporate_member_id) {
-                $payerType = \App\Models\CorporateMember::class;
-            } elseif ($invoice->customer_id) {
-                $payerType = \App\Models\Customer::class;
-            }
+            $payerDetails = $this->getPayerDetails($invoice);
+            $payerType = $payerDetails['type'];
+            $payerId = $payerDetails['id'];
 
             // ✅ 1. Create Financial Receipt
             $receipt = FinancialReceipt::create([
@@ -322,12 +346,7 @@ class BookingController extends Controller
                 'payer_type' => $payerType,
                 'payer_id' => $payerId,
                 'amount' => $request->amount,
-                'payment_method' => match ($request->payment_method) {
-                    'Credit Card' => 'credit_card',
-                    'Bank Transfer' => 'bank',
-                    'Online' => 'bank',
-                    default => 'cash',
-                },
+                'payment_method' => $request->payment_method,  // Trust the frontend values (cash, credit_card, etc.)
                 'payment_details' => $request->paymentAccount ?? null,
                 'receipt_date' => now(),
                 'status' => 'active',
@@ -336,18 +355,53 @@ class BookingController extends Controller
                 'receipt_image' => $recieptPath,
             ]);
 
-            // ✅ 2. Create Ledger Entry (Credit)
-            Transaction::create([
-                'type' => 'credit',
-                'amount' => $request->amount,
-                'date' => now(),
-                'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-                'payable_type' => $payerType,
-                'payable_id' => $payerId,
-                'reference_type' => FinancialReceipt::class,
-                'reference_id' => $receipt->id,
-                'created_by' => Auth::id(),
-            ]);
+            // ✅ 2. Create Ledger Entries (Credit) - Allocated to Items
+            // Distribute the payment amount across items per Finance Architecture
+            $remainingPayment = $request->amount;
+
+            // Ensure items are loaded
+            if (!$invoice->relationLoaded('items')) {
+                $invoice->load('items');
+            }
+            $items = $invoice->items;
+
+            foreach ($items as $item) {
+                if ($remainingPayment <= 0.01)
+                    break;
+
+                // Calculate item balance (Total - Paid Credits for this item)
+                // Use DB aggregation to find how much of THIS item has been paid
+                $itemPaid = Transaction::where('reference_type', FinancialInvoiceItem::class)
+                    ->where('reference_id', $item->id)
+                    ->where('type', 'credit')
+                    ->sum('amount');
+
+                $itemBalance = $item->total - $itemPaid;
+
+                if ($itemBalance > 0.01) {
+                    $toPay = min($remainingPayment, $itemBalance);
+
+                    Transaction::create([
+                        'type' => 'credit',
+                        'amount' => $toPay,
+                        'date' => now(),
+                        'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ') - ' . $item->description,
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        'reference_type' => FinancialInvoiceItem::class,  // Link to Item
+                        'reference_id' => $item->id,  // Link to Item
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,  // Link to Receipt
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    $remainingPayment -= $toPay;
+                }
+            }
+
+            // Note: If anything remains (overpayment), we could potentially create a credit for the invoice generally
+            // or just leave it attached to the last item as overpayment.
+            // For now, strict allocation to items until exhausted.
 
             // ✅ 3. Link Receipt to Invoice
             TransactionRelation::create([
@@ -370,5 +424,17 @@ class BookingController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    private function getPayerDetails($invoice)
+    {
+        if ($invoice->member_id) {
+            return ['type' => \App\Models\Member::class, 'id' => $invoice->member_id];
+        } elseif ($invoice->corporate_member_id) {
+            return ['type' => \App\Models\CorporateMember::class, 'id' => $invoice->corporate_member_id];
+        } elseif ($invoice->customer_id) {
+            return ['type' => \App\Models\Customer::class, 'id' => $invoice->customer_id];
+        }
+        return ['type' => null, 'id' => null];
     }
 }

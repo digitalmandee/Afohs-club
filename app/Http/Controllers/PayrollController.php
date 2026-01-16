@@ -486,4 +486,12 @@ class PayrollController extends Controller
             'payslip' => $payslip
         ]);
     }
+
+    /**
+     * Display salary sheet editor
+     */
+    public function salarySheet()
+    {
+        return Inertia::render('App/Admin/Employee/Payroll/SalarySheet');
+    }
 }

@@ -81,21 +81,21 @@ Stores the high-level invoice details.
 
 Stores individual line items. This is the **Source of Truth** for charges.
 
-| Column                 | Type        | Description                                                                                                                                          |
-| :--------------------- | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                   | BigInt (PK) | Unique Identifier                                                                                                                                    |
-| `invoice_id`           | BigInt (FK) | Link to `financial_invoices`                                                                                                                         |
-| `fee_type`             | String      | Logic ID (e.g., '1' for Room Booking, '2' for Event Booking, '3' for Membership, '4' for Maintenance, '5' for subscription, '6' for Charges) or Name |
-| `description`          | String      | Item Description                                                                                                                                     |
-| `qty`                  | Decimal     | Quantity                                                                                                                                             |
-| `amount`               | BigInt      | Unit Price                                                                                                                                           |
-| `sub_total`            | Decimal     | qty \* amount                                                                                                                                        |
-| `tax_amount`           | Decimal     | Tax value                                                                                                                                            |
-| `discount_amount`      | Decimal     | Discount value                                                                                                                                       |
-| `total`                | Decimal     | Final Line Total                                                                                                                                     |
-| `start_date`           | Date        | Coverage Start (e.g., Jan 1)                                                                                                                         |
-| `end_date`             | Date        | Coverage End (e.g., Jan 31)                                                                                                                          |
-| `subscription_type_id` | BigInt      | Link to `subscription_types` (if applicable)                                                                                                         |
+| Column                 | Type        | Description                                                                                                                                                                  |
+| :--------------------- | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | BigInt (PK) | Unique Identifier                                                                                                                                                            |
+| `invoice_id`           | BigInt (FK) | Link to `financial_invoices`                                                                                                                                                 |
+| `fee_type`             | String      | Logic ID (e.g., '1' for Room Booking, '2' for Event Booking, '3' for Membership, '4' for Maintenance, '5' for subscription, '6' for Charges, '7' for Food Order Fee) or Name |
+| `description`          | String      | Item Description                                                                                                                                                             |
+| `qty`                  | Decimal     | Quantity                                                                                                                                                                     |
+| `amount`               | BigInt      | Unit Price                                                                                                                                                                   |
+| `sub_total`            | Decimal     | qty \* amount                                                                                                                                                                |
+| `tax_amount`           | Decimal     | Tax value                                                                                                                                                                    |
+| `discount_amount`      | Decimal     | Discount value                                                                                                                                                               |
+| `total`                | Decimal     | Final Line Total                                                                                                                                                             |
+| `start_date`           | Date        | Coverage Start (e.g., Jan 1)                                                                                                                                                 |
+| `end_date`             | Date        | Coverage End (e.g., Jan 31)                                                                                                                                                  |
+| `subscription_type_id` | BigInt      | Link to `subscription_types` (if applicable)                                                                                                                                 |
 
 ### 3. `transactions` (Ledger Table)
 
