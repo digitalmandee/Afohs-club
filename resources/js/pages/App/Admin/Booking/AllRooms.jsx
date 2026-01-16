@@ -7,6 +7,7 @@ import Person from '@mui/icons-material/Person';
 import Bathroom from '@mui/icons-material/Bathroom';
 import Edit from '@mui/icons-material/Edit';
 import Delete from '@mui/icons-material/Delete';
+import RestoreFromTrash from '@mui/icons-material/RestoreFromTrash';
 import { enqueueSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
 // const drawerWidthOpen = 240;
@@ -35,17 +36,19 @@ const AllRooms = ({ rooms }) => {
                 }}
             > */}
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {/* <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
-                        <ArrowBack />
-                    </IconButton> */}
-                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                        All Rooms ({rooms.length})
-                    </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        {/* <IconButton sx={{ color: '#063455', mr: 1 }} onClick={() => window.history.back()}>
+                            <ArrowBack />
+                        </IconButton> */}
+                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Rooms ({rooms.length})</Typography>
+                    </Box>
+                    <Button variant="outlined" startIcon={<RestoreFromTrash />} sx={{ color: '#063455', borderColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={() => router.visit(route('rooms.trashed'))}>
+                        View Trash
+                    </Button>
                 </Box>
-                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>
-                    Comprehensive list of every room with filters for type and availability</Typography>
-                <Box sx={{ mb: 2, mt:4 }}>
+                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600', marginLeft: 5 }}>Comprehensive list of every room with filters for type and availability</Typography>
+                <Box sx={{ mb: 2, mt: 4 }}>
                     <Grid container spacing={2}>
                         {rooms.map((room) => (
                             <Grid item xs={12} key={room.id}>

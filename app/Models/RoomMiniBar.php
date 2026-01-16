@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class RoomMiniBar extends Model
+class RoomMiniBar extends BaseModel
 {
     use SoftDeletes;
 

@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class RoomChargesType extends Model
+class RoomChargesType extends BaseModel
 {
     use SoftDeletes;
 

@@ -300,20 +300,27 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
             Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
             Route::get('check-out', [RoomController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
-            Route::post('store', [RoomController::class, 'store'])->name('rooms.store')->middleware('permission:rooms.create');
-            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
-            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
-            Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
-            Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit')->middleware('super.admin:rooms.edit');
-            Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update')->middleware('permission:rooms.edit');
-            Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:rooms.delete');
-            // Room Calendar
-            Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
             // Cancelled Bookings
             Route::get('booking/cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');  // Add middleware permission later if needed
             Route::put('booking/refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund');
             Route::put('booking/cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel');
             Route::put('booking/undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel');
+            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
+            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
+
+            // Room Calendar
+            Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
+
+            // Rooms Trashed Module
+            Route::get('trashed', [RoomController::class, 'trashed'])->name('rooms.trashed')->middleware('permission:rooms.delete');
+            Route::post('restore/{id}', [RoomController::class, 'restore'])->name('rooms.restore')->middleware('permission:rooms.delete');
+            Route::delete('force-delete/{id}', [RoomController::class, 'forceDelete'])->name('rooms.force-delete')->middleware('permission:rooms.delete');
+
+            Route::get('add', [RoomController::class, 'create'])->name('rooms.add')->middleware('super.admin:rooms.create');
+            Route::post('store', [RoomController::class, 'store'])->name('rooms.store')->middleware('permission:rooms.create');
+            Route::get('edit/{id}', [RoomController::class, 'edit'])->name('rooms.edit')->middleware('super.admin:rooms.edit');
+            Route::post('{id}', [RoomController::class, 'update'])->name('rooms.update')->middleware('permission:rooms.edit');
+            Route::delete('{id}', [RoomController::class, 'destroy'])->name('rooms.destroy')->middleware('permission:rooms.delete');
 
             // get room booking data
             Route::get('api/bookings/{id}', [RoomBookingController::class, 'showRoomBooking'])->name('api.room.booking.show')->middleware('permission:rooms.bookings.view');
@@ -330,9 +337,28 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             });
         });
 
+        // Room Types Trashed Module
+        Route::get('room-types/trashed', [RoomTypeController::class, 'trashed'])->name('room-types.trashed');
+        Route::post('room-types/restore/{id}', [RoomTypeController::class, 'restore'])->name('room-types.restore');
+        Route::delete('room-types/force-delete/{id}', [RoomTypeController::class, 'forceDelete'])->name('room-types.force-delete');
         Route::resource('room-types', RoomTypeController::class)->except(['create', 'edit', 'show']);
+
+        // Room Categories Trashed Module
+        Route::get('room-categories/trashed', [RoomCategoryController::class, 'trashed'])->name('room-categories.trashed');
+        Route::post('room-categories/restore/{id}', [RoomCategoryController::class, 'restore'])->name('room-categories.restore');
+        Route::delete('room-categories/force-delete/{id}', [RoomCategoryController::class, 'forceDelete'])->name('room-categories.force-delete');
         Route::resource('room-categories', RoomCategoryController::class)->except(['create', 'edit', 'show']);
+
+        // Room Charges Types Trashed Module
+        Route::get('room-charges-type/trashed', [RoomChargesTypeController::class, 'trashed'])->name('room-charges-type.trashed');
+        Route::post('room-charges-type/restore/{id}', [RoomChargesTypeController::class, 'restore'])->name('room-charges-type.restore');
+        Route::delete('room-charges-type/force-delete/{id}', [RoomChargesTypeController::class, 'forceDelete'])->name('room-charges-type.force-delete');
         Route::resource('room-charges-type', RoomChargesTypeController::class)->except(['create', 'edit', 'show']);
+
+        // Room MiniBar Trashed Module
+        Route::get('room-minibar/trashed', [RoomMiniBarController::class, 'trashed'])->name('room-minibar.trashed');
+        Route::post('room-minibar/restore/{id}', [RoomMiniBarController::class, 'restore'])->name('room-minibar.restore');
+        Route::delete('room-minibar/force-delete/{id}', [RoomMiniBarController::class, 'forceDelete'])->name('room-minibar.force-delete');
         Route::resource('room-minibar', RoomMiniBarController::class)->except(['create', 'edit', 'show']);
 
         // Event Routes

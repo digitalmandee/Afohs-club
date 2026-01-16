@@ -2,17 +2,22 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Room extends Model
+class Room extends BaseModel
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'name',
         'number_of_beds',
         'max_capacity',
         'number_of_bathrooms',
         'photo_path',
-        'room_type_id'
+        'room_type_id',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     public function roomType()

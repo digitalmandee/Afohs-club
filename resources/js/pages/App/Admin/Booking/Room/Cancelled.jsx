@@ -153,6 +153,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                         <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-In</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-Out</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Room</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600 }}>Persons</TableCell>
                                         <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
@@ -172,6 +173,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember?.full_name || 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember ? booking.corporateMember.membership_no : '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
@@ -186,7 +188,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                                                             return match ? <div style={{ fontSize: '11px', color: '#063455', fontWeight: 'bold' }}>Refunded: Rs {match[1]}</div> : null;
                                                         })()}
                                                 </TableCell>
-                                                <TableCell style={{whiteSpace:'nowrap'}}>
+                                                <TableCell style={{ whiteSpace: 'nowrap' }}>
                                                     <Button size="small" variant="outlined" color="#063455" startIcon={<Restore />} onClick={() => handleOpenActionModal(booking, 'undo')} sx={{ textTransform: 'none' }}>
                                                         Undo
                                                     </Button>
@@ -226,13 +228,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                 </LocalizationProvider>
             </ThemeProvider>
 
-            <BookingInvoiceModal 
-            open={showInvoiceModal} 
-            onClose={() => 
-            setShowInvoiceModal(false)} 
-            bookingId={selectedBooking?.id} 
-            type="CANCELLATION"
-            />
+            <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} type="CANCELLATION" />
 
             <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
         </div>
