@@ -37,6 +37,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 additional_charges: 0,
                 valid_from: null,
                 valid_to: null,
+                days: '',
                 remarks: '',
                 subscription_type_id: '',
                 subscription_category_id: '',
@@ -122,6 +123,14 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
             }
         } else if (field === 'valid_from' || field === 'valid_to') {
             item[field] = value ? dayjs(value).format('YYYY-MM-DD') : null;
+
+            // Update 'days' if both dates are present
+            if (item.valid_from && item.valid_to) {
+                const from = dayjs(item.valid_from);
+                const to = dayjs(item.valid_to);
+                const diff = to.diff(from, 'day') + 1;
+                item.days = diff > 0 ? diff : 0;
+            }
 
             // Auto-calc logic
             const allTypes = [...membershipCharges, ...maintenanceCharges, ...subscriptionCharges, ...otherCharges, ...transactionTypes];
@@ -251,7 +260,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
 
                                 <Grid container spacing={1}>
                                     {/* Row 1: Fee Type, Description, Dates */}
-                                    <Grid item xs={12} md={4}>
+                                    <Grid item xs={12} md={3}>
                                         <TextField select fullWidth size="small" label="Fee Type" value={item.fee_type || ''} onChange={(e) => handleChange(index, 'fee_type', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
                                             {[
                                                 // Show Membership Charges ONLY if NOT Guest
@@ -312,7 +321,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             ]}
                                         </TextField>
                                     </Grid>
-                                    <Grid item xs={12} md={4}>
+                                    <Grid item xs={12} md={5}>
                                         <Box display="flex" gap={1}>
                                             <DatePicker
                                                 format="DD-MM-YYYY"
@@ -353,6 +362,14 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 }}
                                                 value={item.valid_to ? dayjs(item.valid_to) : null}
                                                 onChange={(val) => handleChange(index, 'valid_to', val)}
+                                            />
+                                            <TextField
+                                                label="Days"
+                                                size="small"
+                                                value={item.days || ''}
+                                                // onChange={(e) => handleChange(index, 'days', e.target.value)}
+                                                sx={{ bgcolor: '#f1f5f9', width: '80px', flexShrink: 0 }}
+                                                disabled
                                             />
                                         </Box>
                                         {/* Quick Select Buttons */}

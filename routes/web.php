@@ -33,6 +33,7 @@ use App\Http\Controllers\FinancialController;
 use App\Http\Controllers\GuestTypeController;
 use App\Http\Controllers\LeaveApplicationController;
 use App\Http\Controllers\LeaveCategoryController;
+use App\Http\Controllers\MaintenanceFeePostingController;
 use App\Http\Controllers\MemberCategoryController;
 use App\Http\Controllers\MemberFeeRevenueController;
 use App\Http\Controllers\MembershipController;
@@ -508,6 +509,11 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore');
         Route::delete('charge-types/force-delete/{id}', [FinancialChargeTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
         Route::resource('charge-types', FinancialChargeTypeController::class)->names('finance.charge-types');
+
+        // Maintenance Fee Posting Routes
+        Route::get('maintenance-posting', [MaintenanceFeePostingController::class, 'create'])->name('finance.maintenance.create')->middleware('permission:financial.create');
+        Route::post('maintenance-posting/preview', [MaintenanceFeePostingController::class, 'preview'])->name('finance.maintenance.preview')->middleware('permission:financial.create');
+        Route::post('maintenance-posting', [MaintenanceFeePostingController::class, 'store'])->name('finance.maintenance.store')->middleware('permission:financial.create');
     });
 
     // Route for business developers, outside the 'admin/finance' group as per user's snippet structure
