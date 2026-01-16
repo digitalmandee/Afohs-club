@@ -14,6 +14,8 @@ use App\Http\Controllers\CorporateCompanyController;
 use App\Http\Controllers\CorporateMembershipController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
+use App\Http\Controllers\EmployeeAssetAttachmentController;
+use App\Http\Controllers\EmployeeAssetController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDepartmentController;
 use App\Http\Controllers\EmployeeReportController;
@@ -110,6 +112,41 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('/{id}/mark-paid', [\App\Http\Controllers\EmployeeAdvanceController::class, 'markPaid'])->name('employees.advances.mark-paid');
             Route::get('/employee/{employeeId}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeAdvances'])->name('employees.advances.employee');
             Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeSalary'])->name('employees.advances.salary');
+        });
+
+        // Employee Assets (Inventory)
+        Route::prefix('assets')->group(function () {
+            Route::get('/', [EmployeeAssetController::class, 'index'])->name('employees.assets.index');
+            Route::get('/list', [EmployeeAssetController::class, 'getAssets'])->name('employees.assets.list');
+            Route::get('/options', [EmployeeAssetController::class, 'getOptions'])->name('employees.assets.options');
+            Route::get('/trashed', [EmployeeAssetController::class, 'trashed'])->name('employees.assets.trashed');  // Moved up
+            Route::post('/', [EmployeeAssetController::class, 'store'])->name('employees.assets.store');
+
+            // Routes with {id} must come last or after specific routes
+            Route::delete('/media/{id}', [EmployeeAssetController::class, 'deleteMedia'])->name('employees.assets.media.delete');  // Specific delete
+            Route::post('/{id}/restore', [EmployeeAssetController::class, 'restore'])->name('employees.assets.restore');
+            Route::delete('/{id}/force-delete', [EmployeeAssetController::class, 'forceDelete'])->name('employees.assets.force-delete');
+
+            Route::get('/{id}', [EmployeeAssetController::class, 'show'])->name('employees.assets.show');
+            Route::put('/{id}', [EmployeeAssetController::class, 'update'])->name('employees.assets.update');
+            Route::delete('/{id}', [EmployeeAssetController::class, 'destroy'])->name('employees.assets.destroy');
+        });
+
+        // Employee Asset Attachments (Assignments)
+        Route::prefix('asset-attachments')->group(function () {
+            Route::get('/', [EmployeeAssetAttachmentController::class, 'index'])->name('employees.asset-attachments.index');
+            Route::get('/list', [EmployeeAssetAttachmentController::class, 'getAttachments'])->name('employees.asset-attachments.list');
+            Route::get('/form-data', [EmployeeAssetAttachmentController::class, 'getFormData'])->name('employees.asset-attachments.form-data');
+            Route::get('/trashed', [EmployeeAssetAttachmentController::class, 'trashed'])->name('employees.asset-attachments.trashed');  // Moved up
+            Route::post('/', [EmployeeAssetAttachmentController::class, 'store'])->name('employees.asset-attachments.store');
+
+            // Routes with {id} need care
+            Route::delete('/media/{id}', [EmployeeAssetAttachmentController::class, 'deleteMedia'])->name('employees.asset-attachments.media.delete');
+            Route::post('/{id}/restore', [EmployeeAssetAttachmentController::class, 'restore'])->name('employees.asset-attachments.restore');
+            Route::delete('/{id}/force-delete', [EmployeeAssetAttachmentController::class, 'forceDelete'])->name('employees.asset-attachments.force-delete');
+
+            Route::put('/{id}', [EmployeeAssetAttachmentController::class, 'update'])->name('employees.asset-attachments.update');
+            Route::delete('/{id}', [EmployeeAssetAttachmentController::class, 'destroy'])->name('employees.asset-attachments.destroy');
         });
 
         // Employee Loans
