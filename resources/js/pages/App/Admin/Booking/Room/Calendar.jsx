@@ -147,18 +147,11 @@ const RoomCalendar = () => {
             { groupBy: 'Month', format: 'MMMM yyyy' },
             { groupBy: 'Day', format: 'd' },
         ],
-        resources: [
-            {
-                name: 'Rooms',
-                id: 'rooms_group',
-                expanded: true,
-                children: resources.map((r) => ({
-                    id: 'R' + r.room_number,
-                    name: `Room no: ${r.room_number}`,
-                    expanded: true,
-                })),
-            },
-        ],
+        resources: resources.map((r) => ({
+            id: 'R' + r.room_number,
+            name: `Room no: ${r.room_number}`,
+            expanded: true,
+        })),
         events,
         eventHoverHandling: 'Bubble',
         bubble: new DayPilot.Bubble(),
