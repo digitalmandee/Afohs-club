@@ -42,7 +42,9 @@ class PayrollProcessingService
             'deductions' => function ($query) {
                 $query->where('is_active', true);
             },
-            'department:id,name'
+            'department:id,name',
+            'activeLoans',
+            'activeAdvances'
         ]);
 
         if ($employeeIds) {
@@ -153,12 +155,55 @@ class PayrollProcessingService
         // Calculate salary components
         $salaryComponents = $this->calculateSalaryComponents($employee, $attendanceData, $salaryStructure);
 
+        // --- Calculate Loan Deductions ---
+        $loanDeductions = [];
+        $totalLoanDeductions = 0;
+        $periodEnd = Carbon::parse($period->end_date);
+
+        if ($employee->activeLoans) {
+            foreach ($employee->activeLoans as $loan) {
+                // Check if next deduction date is on or before period end date
+                // Or if it's null (start immediately?) - Assuming next_deduction_date is set upon approval/disbursement
+                if ($loan->next_deduction_date && Carbon::parse($loan->next_deduction_date)->lte($periodEnd)) {
+                    $amount = min($loan->monthly_deduction, $loan->remaining_amount);
+                    if ($amount > 0) {
+                        $loanDeductions[] = [
+                            'employee_loan_id' => $loan->id,
+                            'amount' => $amount,
+                            'name' => 'Loan Repayment'
+                        ];
+                        $totalLoanDeductions += $amount;
+                    }
+                }
+            }
+        }
+
+        // --- Calculate Advance Deductions ---
+        $advanceDeductions = [];
+        $totalAdvanceDeductions = 0;
+
+        if ($employee->activeAdvances) {
+            foreach ($employee->activeAdvances as $advance) {
+                // Check if deduction start date is on or before period end date
+                if ($advance->deduction_start_date && Carbon::parse($advance->deduction_start_date)->lte($periodEnd)) {
+                    $amount = min($advance->monthly_deduction, $advance->remaining_amount);
+                    if ($amount > 0) {
+                        $advanceDeductions[] = [
+                            'employee_advance_id' => $advance->id,
+                            'amount' => $amount,
+                            'name' => 'Advance Repayment'
+                        ];
+                        $totalAdvanceDeductions += $amount;
+                    }
+                }
+            }
+        }
+
         // Use employeeOrders (passed from batch fetch) as CTS orders for this employee
         $totalOrderDeductions = 0;
         $orderDeductions = [];
         try {
             $ctsOrders = $employeeOrders instanceof \Illuminate\Support\Collection ? $employeeOrders : collect();
-            Log::info("CTS Orders (batched) for Employee {$employee->id}: " . $ctsOrders->count());
 
             foreach ($ctsOrders as $order) {
                 // defensive: skip orders already marked as deducted
@@ -180,8 +225,8 @@ class PayrollProcessingService
             $orderDeductions = [];
         }
 
-        // Adjust totals to include order deductions
-        $totalDeductionsWithOrders = $salaryComponents['total_deductions'] + $totalOrderDeductions;
+        // Adjust totals to include all additional deductions
+        $totalDeductionsWithOrders = $salaryComponents['total_deductions'] + $totalOrderDeductions + $totalLoanDeductions + $totalAdvanceDeductions;
         $netSalaryWithOrders = ($salaryComponents['gross_salary']) - $totalDeductionsWithOrders;
 
         // Create payslip
@@ -232,6 +277,54 @@ class PayrollProcessingService
             ]);
         }
 
+        // Create Loan Deductions
+        if (!empty($loanDeductions)) {
+            $loanDeductionType = DeductionType::firstOrCreate(
+                ['name' => 'Loan Repayment'],
+                [
+                    'type' => 'fixed',
+                    'is_mandatory' => false,
+                    'calculation_base' => 'basic_salary',
+                    'is_active' => true,
+                    'description' => 'Automatic deduction for loan repayment'
+                ]
+            );
+
+            foreach ($loanDeductions as $ld) {
+                PayslipDeduction::create([
+                    'payslip_id' => $payslip->id,
+                    'employee_loan_id' => $ld['employee_loan_id'],
+                    'deduction_type_id' => $loanDeductionType->id,
+                    'deduction_name' => 'Loan Repayment',
+                    'amount' => $ld['amount']
+                ]);
+            }
+        }
+
+        // Create Advance Deductions
+        if (!empty($advanceDeductions)) {
+            $advanceDeductionType = DeductionType::firstOrCreate(
+                ['name' => 'Advance Repayment'],
+                [
+                    'type' => 'fixed',
+                    'is_mandatory' => false,
+                    'calculation_base' => 'basic_salary',
+                    'is_active' => true,
+                    'description' => 'Automatic deduction for advance repayment'
+                ]
+            );
+
+            foreach ($advanceDeductions as $ad) {
+                PayslipDeduction::create([
+                    'payslip_id' => $payslip->id,
+                    'employee_advance_id' => $ad['employee_advance_id'],
+                    'deduction_type_id' => $advanceDeductionType->id,
+                    'deduction_name' => 'Advance Repayment',
+                    'amount' => $ad['amount']
+                ]);
+            }
+        }
+
         // Create CTS order-based deductions (if any) and map to a DeductionType
         if (!empty($orderDeductions)) {
             // Try to find an existing deduction type for CTS orders
@@ -249,7 +342,7 @@ class PayrollProcessingService
             }
 
             foreach ($orderDeductions as $od) {
-                $pd = PayslipDeduction::create([
+                PayslipDeduction::create([
                     'payslip_id' => $payslip->id,
                     'order_id' => $od['order_id'] ?? null,
                     'deduction_type_id' => $ctsDeductionType->id,
@@ -344,6 +437,32 @@ class PayrollProcessingService
             $totalAllowances += $amount;
         }
 
+        // Apply global allowances (is_global = true)
+        $existingAllowanceTypeIds = collect($allowances)->pluck('type_id')->toArray();
+        $globalAllowanceTypes = \App\Models\AllowanceType::where('is_active', true)
+            ->where('is_global', true)
+            ->whereNotIn('id', $existingAllowanceTypeIds)  // Avoid duplicates
+            ->get();
+
+        foreach ($globalAllowanceTypes as $globalType) {
+            $amount = 0;
+            if ($globalType->type === 'fixed') {
+                $amount = $globalType->default_amount ?? 0;
+            } elseif ($globalType->type === 'percentage') {
+                $amount = ($basicSalary * ($globalType->percentage ?? 0)) / 100;
+            }
+
+            if ($amount > 0) {
+                $allowances[] = [
+                    'type_id' => $globalType->id,
+                    'name' => $globalType->name . ' (Global)',
+                    'amount' => $amount,
+                    'is_taxable' => $globalType->is_taxable
+                ];
+                $totalAllowances += $amount;
+            }
+        }
+
         // Calculate deductions
         $deductions = [];
         $totalDeductions = 0;
@@ -367,6 +486,35 @@ class PayrollProcessingService
             ];
 
             $totalDeductions += $amount;
+        }
+
+        // Apply global deductions (is_global = true)
+        $existingDeductionTypeIds = collect($deductions)->pluck('type_id')->toArray();
+        $globalDeductionTypes = \App\Models\DeductionType::where('is_active', true)
+            ->where('is_global', true)
+            ->whereNotIn('id', $existingDeductionTypeIds)
+            ->get();
+
+        foreach ($globalDeductionTypes as $globalType) {
+            $calculationBase = ($globalType->calculation_base ?? 'basic_salary') === 'basic_salary'
+                ? $basicSalary
+                : ($basicSalary + $totalAllowances);
+
+            $amount = 0;
+            if ($globalType->type === 'fixed') {
+                $amount = $globalType->default_amount ?? 0;
+            } elseif ($globalType->type === 'percentage') {
+                $amount = ($calculationBase * ($globalType->percentage ?? 0)) / 100;
+            }
+
+            if ($amount > 0) {
+                $deductions[] = [
+                    'type_id' => $globalType->id,
+                    'name' => $globalType->name . ' (Global)',
+                    'amount' => $amount
+                ];
+                $totalDeductions += $amount;
+            }
         }
 
         // Calculate overtime amount

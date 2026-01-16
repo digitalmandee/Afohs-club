@@ -60,15 +60,13 @@ const MonthlyReport = () => {
                                 Monthly Attendance Report
                             </Typography>
                         </div>
-                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                           Supports planning, payroll preparation, and management review
-                        </Typography>
-                        <Box sx={{ padding: 3, borderRadius: 2, marginTop:'0.1rem' }}>
+                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Supports planning, payroll preparation, and management review</Typography>
+                        <Box sx={{ padding: 3, borderRadius: 2, marginTop: '0.1rem' }}>
                             {/* Header Section */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                                 <Box sx={{ display: 'flex', gap: 2 }}>{/* Search Input - can be implemented later */}</Box>
                                 <FormControl size="small">
-                                    <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 120 }}>
+                                    <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 120, height: '40px', backgroundColor: 'white' }}>
                                         {months.map((m) => (
                                             <MenuItem key={m.value} value={m.value}>
                                                 {m.label}
@@ -76,6 +74,30 @@ const MonthlyReport = () => {
                                         ))}
                                     </Select>
                                 </FormControl>
+                                <Button
+                                    variant="contained"
+                                    style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', height: '40px' }}
+                                    onClick={() => {
+                                        const url = route('employees.attendances.monthly.report.print', {
+                                            month: month,
+                                        });
+                                        window.open(url, '_blank');
+                                    }}
+                                >
+                                    Print Report
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none', height: '40px' }}
+                                    onClick={() => {
+                                        const url = route('api.attendances.leaves.reports.monthly.export', {
+                                            month: month,
+                                        });
+                                        window.location.href = url;
+                                    }}
+                                >
+                                    Export Excel
+                                </Button>
                                 {/* Employee Cards Grid */}
                             </Box>
                             <div

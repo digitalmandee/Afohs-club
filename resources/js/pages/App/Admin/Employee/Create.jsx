@@ -189,7 +189,30 @@ const EmployeeCreate = () => {
         if (!formData.name) newErrors.name = 'Name is required';
         if (!formData.employee_id) newErrors.employee_id = 'Employee ID is required';
         if (!formData.email) newErrors.email = 'Email is required';
-        if (!formData.phone_no) newErrors.phone_no = 'Phone number is required';
+
+        if (!formData.phone_no) {
+            newErrors.phone_no = 'Phone number is required';
+        } else if (!/^[0-9+\-\(\) ]+$/.test(formData.phone_no)) {
+            newErrors.phone_no = 'Invalid phone number format';
+        }
+
+        if (formData.national_id && !/^[0-9-]+$/.test(formData.national_id)) {
+            newErrors.national_id = 'Invalid National ID format (digits and dashes only)';
+        }
+
+        if (formData.mob_b && !/^[0-9+\-\(\) ]+$/.test(formData.mob_b)) {
+            newErrors.mob_b = 'Invalid format';
+        }
+        if (formData.tel_a && !/^[0-9+\-\(\) ]+$/.test(formData.tel_a)) {
+            newErrors.tel_a = 'Invalid format';
+        }
+        if (formData.tel_b && !/^[0-9+\-\(\) ]+$/.test(formData.tel_b)) {
+            newErrors.tel_b = 'Invalid format';
+        }
+        if (formData.emergency_no && !/^[0-9+\-\(\) ]+$/.test(formData.emergency_no)) {
+            newErrors.emergency_no = 'Invalid format';
+        }
+
         if (!formData.salary) newErrors.salary = 'Salary is required';
         if (!formData.joining_date) newErrors.joining_date = 'Joining date is required';
         if (!formData.department) newErrors.department = 'Department is required';
@@ -234,9 +257,9 @@ const EmployeeCreate = () => {
             });
 
             if (isEdit) {
+                formDataToSend.append('_method', 'PUT');
                 await axios.post(route('api.employees.update', employee.employee_id), formDataToSend, {
                     headers: { 'Content-Type': 'multipart/form-data' },
-                    _method: 'PUT',
                 });
                 enqueueSnackbar('Employee updated successfully!', { variant: 'success' });
             } else {
@@ -263,6 +286,37 @@ const EmployeeCreate = () => {
         },
     };
 
+    const handleRestrictedInput = (e, fieldName) => {
+        const value = e.target.value;
+
+        // Numeric only fields (Salary, Account No) - allow digits only (and maybe decimals for salary if needed, though strictly int usually)
+        if (['salary', 'account_no'].includes(fieldName)) {
+            if (value === '' || /^[0-9.]+$/.test(value)) {
+                setFormData({ ...formData, [fieldName]: value });
+            }
+            return;
+        }
+
+        // Contact fields - allow digits, +, -, (, ), space
+        if (['phone_no', 'mob_b', 'tel_a', 'tel_b', 'emergency_no'].includes(fieldName)) {
+            if (value === '' || /^[0-9+\-\(\) ]+$/.test(value)) {
+                setFormData({ ...formData, [fieldName]: value });
+            }
+            return;
+        }
+
+        // National ID - allow digits and dashes
+        if (fieldName === 'national_id') {
+            if (value === '' || /^[0-9-]+$/.test(value)) {
+                setFormData({ ...formData, [fieldName]: value });
+            }
+            return;
+        }
+
+        // Default behavior for other fields
+        setFormData({ ...formData, [fieldName]: value });
+    };
+
     const renderTextField = (field) => (
         <Box key={field.name}>
             <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000' }} mb={1}>
@@ -272,7 +326,7 @@ const EmployeeCreate = () => {
                 sx={textFieldStyle}
                 name={field.name}
                 value={formData[field.name]}
-                onChange={(e) => setFormData({ ...formData, [e.target.name]: e.target.value })}
+                onChange={(e) => handleRestrictedInput(e, field.name)}
                 placeholder={field.placeholder}
                 variant="outlined"
                 size="small"

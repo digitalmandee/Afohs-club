@@ -535,6 +535,16 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                             <Typography color="text.secondary">Total Items:</Typography>
                             <Typography fontWeight="600">{items.length}</Typography>
                         </Box>
+                        {paymentMode && (
+                            <Box display="flex" justifyContent="space-between" mb={1}>
+                                <Typography color="text.secondary" fontWeight="bold">
+                                    Paid Amount:
+                                </Typography>
+                                <Typography fontWeight="bold" color="success.main">
+                                    {new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', minimumFractionDigits: 0 }).format(items.reduce((sum, item) => sum + (parseFloat(item.payment_amount) || 0), 0))}
+                                </Typography>
+                            </Box>
+                        )}
                         <Box display="flex" justifyContent="space-between" alignItems="center">
                             <Typography variant="h6" fontWeight="bold" color="#0a3d62">
                                 Grand Total:

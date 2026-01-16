@@ -64,7 +64,13 @@ class EmployeeController extends Controller
             $employeesQuery->whereIn('department_id', $departmentFilters);
         }
 
-        $employees = $employeesQuery->paginate($limit)->withQueryString();
+        $employees = $employeesQuery
+            ->paginate($limit)
+            ->withQueryString()
+            ->through(function ($employee) {
+                $employee->joining_date = $employee->joining_date ? \Carbon\Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                return $employee;
+            });
 
         // Get filter options
         $departments = Department::select('id', 'name')->get();
@@ -121,13 +127,13 @@ class EmployeeController extends Controller
             'employee_id' => 'required|unique:employees,employee_id',
             'email' => 'required|email|unique:employees,email',
             'designation' => 'nullable|string',
-            'phone_no' => 'required',
+            'phone_no' => 'required|regex:/^[0-9+\-\(\) ]+$/',
             'gender' => 'required|in:male,female',
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
-            'national_id' => 'nullable|string',
-            'account_no' => 'nullable|string',
+            'national_id' => 'nullable|regex:/^[0-9-]+$/',
+            'account_no' => 'nullable|regex:/^[0-9]+$/',
             'address' => 'nullable|string',
-            'emergency_no' => 'nullable|string',
+            'emergency_no' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
             'department_id' => 'required|exists:departments,id',
             'subdepartment_id' => 'nullable|exists:subdepartments,id',
             'salary' => 'nullable|numeric',
@@ -136,9 +142,9 @@ class EmployeeController extends Controller
             'date_of_birth' => 'nullable|date',
             // Additional fields validation
             'father_name' => 'nullable|string',
-            'mob_b' => 'nullable|string',
-            'tel_a' => 'nullable|string',
-            'tel_b' => 'nullable|string',
+            'mob_b' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
+            'tel_a' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
+            'tel_b' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
             'cur_city' => 'nullable|string',
             'cur_country' => 'nullable|string',
             'per_address' => 'nullable|string',
@@ -304,20 +310,20 @@ class EmployeeController extends Controller
             'employee_id' => 'required',
             'email' => 'required|email',
             'designation' => 'nullable|string',
-            'phone_no' => 'required',
+            'phone_no' => 'required|regex:/^[0-9+\-\(\) ]+$/',
             'gender' => 'required|in:male,female',
             'marital_status' => 'required|in:single,married,divorced,widowed',
-            'national_id' => 'nullable|string',
-            'account_no' => 'nullable|string',
+            'national_id' => 'nullable|regex:/^[0-9-]+$/',
+            'account_no' => 'nullable|regex:/^[0-9]+$/',
             'address' => 'nullable|string',
-            'emergency_no' => 'nullable|string',
+            'emergency_no' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
             'salary' => 'nullable|numeric',
             'joining_date' => 'nullable|date',
             // Additional fields validation
             'father_name' => 'nullable|string',
-            'mob_b' => 'nullable|string',
-            'tel_a' => 'nullable|string',
-            'tel_b' => 'nullable|string',
+            'mob_b' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
+            'tel_a' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
+            'tel_b' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
             'cur_city' => 'nullable|string',
             'cur_country' => 'nullable|string',
             'per_address' => 'nullable|string',

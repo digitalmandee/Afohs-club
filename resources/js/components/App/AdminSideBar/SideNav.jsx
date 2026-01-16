@@ -357,6 +357,18 @@ export default function SideNav({ open, setOpen }) {
                         path: route('employees.attendances.monthly.report'),
                     },
                     {
+                        text: 'Loans',
+                        path: route('employees.loans.index'),
+                    },
+                    {
+                        text: 'Advances',
+                        path: route('employees.advances.index'),
+                    },
+                    {
+                        text: 'Reports',
+                        path: route('employees.reports'),
+                    },
+                    {
                         text: 'Payroll',
                         path: route('employee.payroll'),
                     },

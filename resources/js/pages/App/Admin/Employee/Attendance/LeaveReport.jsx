@@ -101,14 +101,10 @@ const LeaveReport = () => {
             >
                 <div style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
-                            Leave Report
-                        </Typography>
+                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Leave Report</Typography>
                     </div>
-                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        View detailed reports of employee leave history
-                    </Typography>
-                    <Box sx={{ mb: 3, mt:'2rem' }}>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View detailed reports of employee leave history</Typography>
+                    <Box sx={{ mb: 3, mt: '2rem' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <TextField
@@ -167,19 +163,48 @@ const LeaveReport = () => {
                                     </Button>
                                 )}
                             </Box>
-                            <FormControl size="small" sx={{
-                                '& .MuiOutlinedInput-root': {
-                                    borderRadius: '16px',
-                                },
-                            }}>
-                                <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 150 }}>
-                                    {months.map((m) => (
-                                        <MenuItem key={m.value} value={m.value}>
-                                            {m.label}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <FormControl
+                                    size="small"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
+                                >
+                                    <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 150 }}>
+                                        {months.map((m) => (
+                                            <MenuItem key={m.value} value={m.value}>
+                                                {m.label}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                                <Button
+                                    variant="contained"
+                                    style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', borderRadius: '16px' }}
+                                    onClick={() => {
+                                        const url = route('employees.leaves.application.report.print', {
+                                            month: month,
+                                        });
+                                        window.open(url, '_blank');
+                                    }}
+                                >
+                                    Print Report
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none', borderRadius: '16px' }}
+                                    onClick={() => {
+                                        const url = route('api.leave-reports.export', {
+                                            month: month,
+                                        });
+                                        window.location.href = url;
+                                    }}
+                                >
+                                    Export Excel
+                                </Button>
+                            </Box>
                         </Box>
                     </Box>
                     <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
@@ -211,11 +236,7 @@ const LeaveReport = () => {
                                         <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.employee_name}</TableCell>
                                         {leaveCategories.map((category) => {
                                             const categoryKey = category.name.replace(/\s+/g, '_');
-                                            return (
-                                                <TableCell key={category.id}>
-                                                    {employee.leave_categories?.[categoryKey] || 0}
-                                                </TableCell>
-                                            );
+                                            return <TableCell key={category.id}>{employee.leave_categories?.[categoryKey] || 0}</TableCell>;
                                         })}
                                         <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.total_attendance}</TableCell>
                                         <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.total_absence}</TableCell>

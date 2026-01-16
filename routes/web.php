@@ -16,6 +16,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DataMigrationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDepartmentController;
+use App\Http\Controllers\EmployeeReportController;
 use App\Http\Controllers\EmployeeSubdepartmentController;
 use App\Http\Controllers\EventBookingController;
 use App\Http\Controllers\EventChargesTypeController;
@@ -93,6 +94,37 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('application/edit/{id}', [LeaveApplicationController::class, 'edit'])->name('employees.leaves.application.edit');
 
             Route::get('report', [LeaveApplicationController::class, 'leaveReportPage'])->name('employees.leaves.application.report');
+            Route::get('report/print', [LeaveApplicationController::class, 'leaveReportPrint'])->name('employees.leaves.application.report.print');
+        });
+
+        // Employee Advances
+        Route::prefix('advances')->group(function () {
+            Route::get('/', [\App\Http\Controllers\EmployeeAdvanceController::class, 'index'])->name('employees.advances.index');
+            Route::get('/create', [\App\Http\Controllers\EmployeeAdvanceController::class, 'create'])->name('employees.advances.create');
+            Route::post('/', [\App\Http\Controllers\EmployeeAdvanceController::class, 'store'])->name('employees.advances.store');
+            Route::get('/edit/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'edit'])->name('employees.advances.edit');
+            Route::put('/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'update'])->name('employees.advances.update');
+            Route::delete('/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'destroy'])->name('employees.advances.destroy');
+            Route::post('/{id}/approve', [\App\Http\Controllers\EmployeeAdvanceController::class, 'approve'])->name('employees.advances.approve');
+            Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeAdvanceController::class, 'reject'])->name('employees.advances.reject');
+            Route::post('/{id}/mark-paid', [\App\Http\Controllers\EmployeeAdvanceController::class, 'markPaid'])->name('employees.advances.mark-paid');
+            Route::get('/employee/{employeeId}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeAdvances'])->name('employees.advances.employee');
+            Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeSalary'])->name('employees.advances.salary');
+        });
+
+        // Employee Loans
+        Route::prefix('loans')->group(function () {
+            Route::get('/', [\App\Http\Controllers\EmployeeLoanController::class, 'index'])->name('employees.loans.index');
+            Route::get('/create', [\App\Http\Controllers\EmployeeLoanController::class, 'create'])->name('employees.loans.create');
+            Route::post('/', [\App\Http\Controllers\EmployeeLoanController::class, 'store'])->name('employees.loans.store');
+            Route::get('/edit/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'edit'])->name('employees.loans.edit');
+            Route::put('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'update'])->name('employees.loans.update');
+            Route::delete('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'destroy'])->name('employees.loans.destroy');
+            Route::post('/{id}/approve', [\App\Http\Controllers\EmployeeLoanController::class, 'approve'])->name('employees.loans.approve');
+            Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeLoanController::class, 'reject'])->name('employees.loans.reject');
+            Route::post('/{id}/disburse', [\App\Http\Controllers\EmployeeLoanController::class, 'disburse'])->name('employees.loans.disburse');
+            Route::get('/employee/{employeeId}', [\App\Http\Controllers\EmployeeLoanController::class, 'getEmployeeLoans'])->name('employees.loans.employee');
+            Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeLoanController::class, 'getEmployeeSalary'])->name('employees.loans.salary');
         });
 
         Route::prefix('attendances')->group(function () {
@@ -100,7 +132,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('dashboard', [AttendanceController::class, 'dashboard'])->name('employees.attendances.dashboard');
             Route::get('management', [AttendanceController::class, 'managementPage'])->name('employees.attendances.management');
             Route::get('report', [AttendanceController::class, 'reportPage'])->name('employees.attendances.report');
+            Route::get('report/print', [AttendanceController::class, 'attendanceReportPrint'])->name('employees.attendances.report.print');
             Route::get('monthly/report', [AttendanceController::class, 'monthlyReportPage'])->name('employees.attendances.monthly.report');
+            Route::get('monthly/report/print', [AttendanceController::class, 'monthlyReportPrint'])->name('employees.attendances.monthly.report.print');
         });
 
         Route::prefix('payroll')->group(function () {
@@ -141,6 +175,66 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('reports/summary/{periodId}/print', [PayrollController::class, 'summaryReportPrint'])->name('employees.payroll.reports.summary.print');
             Route::get('reports/detailed/{periodId?}', [PayrollController::class, 'detailedReport'])->name('employees.payroll.reports.detailed');
             Route::get('reports/detailed/{periodId}/print', [PayrollController::class, 'detailedReportPrint'])->name('employees.payroll.reports.detailed.print');
+        });
+
+        // Employee Reports
+        Route::prefix('reports')->group(function () {
+            Route::get('/', [EmployeeReportController::class, 'index'])->name('employees.reports');
+
+            // Employee Details Report
+            Route::get('employee-details', [EmployeeReportController::class, 'employeeDetails'])->name('employees.reports.employee-details');
+            Route::get('employee-details/print', [EmployeeReportController::class, 'employeeDetailsPrint'])->name('employees.reports.employee-details.print');
+
+            // New Hiring Report
+            Route::get('new-hiring', [EmployeeReportController::class, 'newHiring'])->name('employees.reports.new-hiring');
+            Route::get('new-hiring/print', [EmployeeReportController::class, 'newHiringPrint'])->name('employees.reports.new-hiring.print');
+
+            // Salary Sheet
+            Route::get('salary-sheet', [EmployeeReportController::class, 'salarySheet'])->name('employees.reports.salary-sheet');
+            Route::get('salary-sheet/print', [EmployeeReportController::class, 'salarySheetPrint'])->name('employees.reports.salary-sheet.print');
+
+            // Deductions Report
+            Route::get('deductions', [EmployeeReportController::class, 'deductions'])->name('employees.reports.deductions');
+            Route::get('deductions/print', [EmployeeReportController::class, 'deductionsPrint'])->name('employees.reports.deductions.print');
+
+            // Loans Report
+            Route::get('loans', [EmployeeReportController::class, 'loans'])->name('employees.reports.loans');
+            Route::get('loans/print', [EmployeeReportController::class, 'loansPrint'])->name('employees.reports.loans.print');
+
+            // Advances Report
+            Route::get('advances', [EmployeeReportController::class, 'advances'])->name('employees.reports.advances');
+            Route::get('advances/print', [EmployeeReportController::class, 'advancesPrint'])->name('employees.reports.advances.print');
+
+            // Increments Report
+            Route::get('increments', [EmployeeReportController::class, 'increments'])->name('employees.reports.increments');
+            Route::get('increments/print', [EmployeeReportController::class, 'incrementsPrint'])->name('employees.reports.increments.print');
+
+            // Bank Transfer Report
+            Route::get('bank-transfer', [EmployeeReportController::class, 'bankTransfer'])->name('employees.reports.bank-transfer');
+            Route::get('bank-transfer/print', [EmployeeReportController::class, 'bankTransferPrint'])->name('employees.reports.bank-transfer.print');
+
+            // API Routes (Data & Export)
+            Route::prefix('api')->group(function () {
+                // Data APIs
+                Route::get('employee-details', [\App\Http\Controllers\EmployeeReportApiController::class, 'employeeDetails'])->name('employees.reports.api.employee-details');
+                Route::get('new-hiring', [\App\Http\Controllers\EmployeeReportApiController::class, 'newHiring'])->name('employees.reports.api.new-hiring');
+                Route::get('salary-sheet', [\App\Http\Controllers\EmployeeReportApiController::class, 'salarySheet'])->name('employees.reports.api.salary-sheet');
+                Route::get('deductions', [\App\Http\Controllers\EmployeeReportApiController::class, 'deductions'])->name('employees.reports.api.deductions');
+                Route::get('advances', [\App\Http\Controllers\EmployeeReportApiController::class, 'advances'])->name('employees.reports.api.advances');
+                Route::get('loans', [\App\Http\Controllers\EmployeeReportApiController::class, 'loans'])->name('employees.reports.api.loans');
+                Route::get('increments', [\App\Http\Controllers\EmployeeReportApiController::class, 'increments'])->name('employees.reports.api.increments');
+                Route::get('bank-transfer', [\App\Http\Controllers\EmployeeReportApiController::class, 'bankTransfer'])->name('employees.reports.api.bank-transfer');
+
+                // Export APIs (Excel/CSV)
+                Route::get('employee-details/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportEmployeeDetailsExcel'])->name('employees.reports.api.employee-details.export');
+                Route::get('new-hiring/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportNewHiringExcel'])->name('employees.reports.api.new-hiring.export');
+                Route::get('salary-sheet/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportSalarySheetExcel'])->name('employees.reports.api.salary-sheet.export');
+                Route::get('deductions/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportDeductionsExcel'])->name('employees.reports.api.deductions.export');
+                Route::get('increments/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportIncrementsExcel'])->name('employees.reports.api.increments.export');
+                Route::get('bank-transfer/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportBankTransferExcel'])->name('employees.reports.api.bank-transfer.export');
+                Route::get('advances/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportAdvancesExcel'])->name('employees.reports.api.advances.export');
+                Route::get('loans/export', [\App\Http\Controllers\EmployeeReportApiController::class, 'exportLoansExcel'])->name('employees.reports.api.loans.export');
+            });
         });
     });
 
@@ -365,6 +459,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Transaction Management Routes
         Route::get('create', [MemberTransactionController::class, 'create'])->name('finance.transaction.create')->middleware('permission:financial.create');
+        Route::get('invoice/{id}/pay', [MemberTransactionController::class, 'payInvoiceView'])->name('finance.invoice.pay');
         Route::post('store', [MemberTransactionController::class, 'store'])->name('finance.transaction.store')->middleware('permission:financial.create');
         Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('finance.transaction.search')->middleware('permission:financial.create');
         Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('finance.transaction.member')->middleware('permission:financial.create');
@@ -575,8 +670,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             return Inertia::render('App/Admin/Membership/Finance');
         })->name('membership.finance');
 
-        Route::get('finance/invoice/{id}/pay', [MemberTransactionController::class, 'payInvoiceView'])->name('finance.invoice.pay');
-
         // Family Member Expiry Management (integrated with Family Members Archive)
         Route::group(['prefix' => 'family-members-archive', 'middleware' => 'role:super-admin'], function () {
             Route::get('member/{member}/extend', [FamilyMembersArchiveConroller::class, 'show'])->name('membership.family-expiry.show');
@@ -768,16 +861,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Leave Report API route
         Route::get('employees/leaves/reports', [LeaveApplicationController::class, 'leaveReport'])->name('api.leave-reports');
+        Route::get('employees/leaves/reports/export', [LeaveApplicationController::class, 'exportLeaveReport'])->name('api.leave-reports.export');
 
         // Attendance API routes
         Route::prefix('attendances')->group(function () {
             Route::get('/', [AttendanceController::class, 'index'])->name('api.attendances.index');
             Route::get('reports', [AttendanceController::class, 'attendanceReport'])->name('api.attendances.reports');
+            Route::get('reports/export', [AttendanceController::class, 'exportAttendanceReport'])->name('api.attendances.reports.export');
             Route::put('{attendanceId}', [AttendanceController::class, 'updateAttendance'])->name('api.attendances.update');
             Route::get('profile/report/{employeeId}', [AttendanceController::class, 'profileReport'])->name('api.attendances.profile.report');
             Route::post('all/report', [AttendanceController::class, 'allEmployeesReport'])->name('api.attendances.all.report');
 
-            Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly']);
+            Route::get('leaves/reports/monthly', [LeaveApplicationController::class, 'leaveReportMonthly'])->name('api.attendances.leaves.reports.monthly');
+            Route::get('leaves/reports/monthly/export', [LeaveApplicationController::class, 'exportMonthlyReport'])->name('api.attendances.leaves.reports.monthly.export');
         });
 
         // Voucher API routes

@@ -26,6 +26,29 @@ class AttendanceController extends Controller
         ])
             ->where('date', $date);
 
+        // Lazy Backfilling: Create missing attendance records for eligible employees
+        $eligibleEmployees = Employee::where('joining_date', '<=', $date)
+            ->whereDoesntHave('attendances', function ($query) use ($date) {
+                $query->where('date', $date);
+            })
+            ->get();
+
+        $insertData = [];
+        $now = now();
+        foreach ($eligibleEmployees as $employee) {
+            $insertData[] = [
+                'employee_id' => $employee->id,
+                'date' => $date,
+                'status' => 'absent',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if (!empty($insertData)) {
+            Attendance::insert($insertData);
+        }
+
         // Apply search filter if provided
         if (!empty($search)) {
             $attendanceQuery->whereHas('employee', function ($query) use ($search) {
@@ -224,6 +247,155 @@ class AttendanceController extends Controller
         ]);
     }
 
+    public function attendanceReportPrint(Request $request)
+    {
+        return Inertia::render('App/Admin/Employee/Attendance/AttendanceReportPrint', [
+            'queryParams' => $request->all()
+        ]);
+    }
+
+    public function exportAttendanceReport(Request $request)
+    {
+        $month = $request->query('month', now()->format('Y-m'));
+
+        // Define start and end date for efficient filtering
+        $startDate = $month . '-01';
+        $endDate = date('Y-m-t', strtotime($startDate));  // Last date of the month
+
+        // Get employees with user details
+        $employees = Employee::with(['department:id,name'])
+            ->select('employees.id', 'employees.employee_id', 'employees.name as employee_name')
+            ->get();
+
+        // Fetch all employee IDs for attendance and leave lookup
+        $employeeIds = $employees->pluck('id')->toArray();
+
+        // Get attendances in a single optimized query
+        $attendances = Attendance::whereIn('employee_id', $employeeIds)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->with('leaveCategory:id,name')
+            ->select('employee_id', 'leave_category_id', 'date', 'status')
+            ->get()
+            ->groupBy('employee_id');  // Grouped by employee ID for quick lookup
+
+        // Get approved leave applications for employees in the selected month
+        $leaves = LeaveApplication::whereIn('employee_id', $employeeIds)
+            ->where('status', 'approved')  // Only approved leaves
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query
+                    ->whereBetween('start_date', [$startDate, $endDate])
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere(function ($q) use ($startDate, $endDate) {
+                        $q->where('start_date', '<', $startDate)->where('end_date', '>', $endDate);
+                    });
+            })
+            ->with('leaveCategory:id,name')
+            ->select('employee_id', 'start_date', 'end_date', 'leave_category_id')
+            ->get();
+
+        // Organize leaves by employee ID for quick lookup
+        $leaveData = [];
+        foreach ($leaves as $leave) {
+            $leaveCategory = optional($leave->leaveCategory)->name;
+            $start = max($leave->start_date, $startDate);
+            $end = min($leave->end_date, $endDate);
+
+            $current = strtotime($start);
+            while ($current <= strtotime($end)) {
+                $date = date('Y-m-d', $current);
+                $dayOfWeek = date('w', $current);  // 0 = Sunday
+
+                if ($dayOfWeek != 0) {  // Exclude Sundays
+                    $leaveData[$leave->employee_id][$date] = [
+                        'date' => $date,
+                        'status' => 'leave',
+                        'leave_category' => $leaveCategory
+                    ];
+                }
+
+                $current = strtotime('+1 day', $current);
+            }
+        }
+
+        // Get all dates in the selected month
+        $allDates = [];
+        $current = strtotime($startDate);
+        $end = strtotime($endDate);
+
+        while ($current <= $end) {
+            $allDates[date('Y-m-d', $current)] = null;
+            $current = strtotime('+1 day', $current);
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="attendance_report_' . $month . '.csv"',
+        ];
+
+        $callback = function () use ($employees, $attendances, $leaveData, $allDates) {
+            $file = fopen('php://output', 'w');
+
+            // Header Row 1
+            $header1 = ['ID', 'Employee Name'];
+            foreach ($allDates as $date => $val) {
+                $header1[] = Carbon::parse($date)->format('d/m/Y');
+            }
+            $header1[] = 'Total Present';
+            fputcsv($file, $header1);
+
+            // Header Row 2 (Day Names)
+            $header2 = ['', ''];
+            foreach ($allDates as $date => $val) {
+                $header2[] = Carbon::parse($date)->format('D');
+            }
+            $header2[] = '';
+            fputcsv($file, $header2);
+
+            foreach ($employees as $employee) {
+                $row = [$employee->employee_id, $employee->employee_name];
+                $presentCount = 0;
+                $employeeAttendances = $attendances[$employee->id] ?? collect();
+
+                // Convert attendance data to date-keyed array
+                $attendanceMap = $employeeAttendances->mapWithKeys(function ($record) {
+                    return [
+                        $record->date => [
+                            'date' => $record->date,
+                            'status' => $record->status,
+                            'leave_category' => optional($record->leaveCategory)->name
+                        ]
+                    ];
+                })->toArray();
+
+                foreach ($allDates as $date => $val) {
+                    $cellValue = '-';
+                    $status = null;
+
+                    if (isset($attendanceMap[$date])) {
+                        $status = $attendanceMap[$date]['status'];
+                        $leaveCat = $attendanceMap[$date]['leave_category'];
+                        $cellValue = ($status === 'leave' && $leaveCat) ? $leaveCat : ucfirst($status);
+                    } elseif (isset($leaveData[$employee->id][$date])) {
+                        $status = 'leave';
+                        $cellValue = $leaveData[$employee->id][$date]['leave_category'];
+                    }
+
+                    if ($status === 'present' || $status === 'late') {
+                        $presentCount++;
+                    }
+
+                    $row[] = $cellValue;
+                }
+
+                $row[] = $presentCount;
+                fputcsv($file, $row);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function updateAttendance(Request $request, $attendanceId)
     {
         // Validate
@@ -345,5 +517,12 @@ class AttendanceController extends Controller
     public function monthlyReportPage()
     {
         return Inertia::render('App/Admin/Employee/Attendance/MonthlyReport');
+    }
+
+    public function monthlyReportPrint(Request $request)
+    {
+        return Inertia::render('App/Admin/Employee/Attendance/MonthlyReportPrint', [
+            'queryParams' => $request->all()
+        ]);
     }
 }

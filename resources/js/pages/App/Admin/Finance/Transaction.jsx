@@ -17,7 +17,6 @@ import dayjs from 'dayjs';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-
 const Transaction = ({ transactions, filters }) => {
     // Modal state
     // const [open, setOpen] = useState(true);
@@ -161,392 +160,317 @@ const Transaction = ({ transactions, filters }) => {
     return (
         <>
             {/* <ThemeProvider theme={theme}> */}
-                <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-                    {/* Recently Joined Section */}
-                    <div className="mx-0">
-                        <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                                <Typography style={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Transactions</Typography>
-                                {/* <Typography style={{ fontSize: '14px', color: '#7F7F7F', marginTop: '5px' }}>
+            <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
+                {/* Recently Joined Section */}
+                <div className="mx-0">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                            <Typography style={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Transactions</Typography>
+                            {/* <Typography style={{ fontSize: '14px', color: '#7F7F7F', marginTop: '5px' }}>
                                 Showing {transactions.from || 0} to {transactions.to || 0} of {transactions.total || 0} transactions
                             </Typography> */}
-                            </div>
-                            <div className="d-flex align-items-center">
-                                <TextField
-                                    placeholder="Search by invoice, name, membership no..."
-                                    variant="outlined"
-                                    size="small"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    sx={{
-                                        width: '300px',
-                                        marginRight: '10px',
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '16px',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderRadius: '16px',
-                                        },
-                                    }}
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <Search />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
-                                <FormControl
-                                    size="small"
-                                    sx={{
-                                        width: '80px',
-                                        marginRight: '10px',
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '16px',
-                                        },
-                                        '& .MuiOutlinedInput-notchedOutline': {
-                                            borderRadius: '16px',
-                                        },
-                                    }}
-                                >
-                                    <Select value={perPage} onChange={handlePerPageChange} displayEmpty>
-                                        <MenuItem value={10}>10</MenuItem>
-                                        <MenuItem value={25}>25</MenuItem>
-                                        <MenuItem value={50}>50</MenuItem>
-                                        <MenuItem value={100}>100</MenuItem>
-                                    </Select>
-                                </FormControl>
-                                <Button
-                                    variant="outlined"
-                                    startIcon={<FilterAlt sx={{ color: '#fff' }} />}
-                                    style={{
-                                        border: '1px solid #063455',
-                                        color: '#fff',
-                                        textTransform: 'none',
-                                        backgroundColor: '#063455',
-                                        marginRight: 10,
-                                        borderRadius: '16px',
-                                    }}
-                                    onClick={() => {
-                                        setOpenFilterModal(true); // open the modal
-                                    }}
-                                >
-                                    Filter
-                                </Button>
-
-                                <Button
-                                    variant="contained"
-                                    startIcon={<PrintIcon />}
-                                    sx={{
-                                        backgroundColor: '#063455',
-                                        textTransform: 'none',
-                                        color: 'white',
-                                        borderRadius: '16px',
-                                    }}
-                                >
-                                    Print
-                                </Button>
-                            </div>
                         </div>
-                        <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage all recorded financial transactions</Typography>
+                        <div className="d-flex align-items-center">
+                            <TextField
+                                placeholder="Search by invoice, name, membership no..."
+                                variant="outlined"
+                                size="small"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                sx={{
+                                    width: '300px',
+                                    marginRight: '10px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <Search />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            <FormControl
+                                size="small"
+                                sx={{
+                                    width: '80px',
+                                    marginRight: '10px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                            >
+                                <Select value={perPage} onChange={handlePerPageChange} displayEmpty>
+                                    <MenuItem value={10}>10</MenuItem>
+                                    <MenuItem value={25}>25</MenuItem>
+                                    <MenuItem value={50}>50</MenuItem>
+                                    <MenuItem value={100}>100</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <Button
+                                variant="outlined"
+                                startIcon={<FilterAlt sx={{ color: '#fff' }} />}
+                                style={{
+                                    border: '1px solid #063455',
+                                    color: '#fff',
+                                    textTransform: 'none',
+                                    backgroundColor: '#063455',
+                                    marginRight: 10,
+                                    borderRadius: '16px',
+                                }}
+                                onClick={() => {
+                                    setOpenFilterModal(true); // open the modal
+                                }}
+                            >
+                                Filter
+                            </Button>
 
-                        {/* Transactions Table */}
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '16px' }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice No</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Type</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Amount</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Method</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Date</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>From</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>To</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Days</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {transactions.data && transactions.data.length > 0 ? (
-                                        transactions.data.map((transaction) => {
-                                            // Format fee type or invoice type for display
-                                            const formatType = (type) => {
-                                                if (!type) return 'N/A';
-                                                return type
-                                                    .replace(/_/g, ' ')
-                                                    .split(' ')
-                                                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                                                    .join(' ');
-                                            };
-
-                                            // Use fee_type if available, otherwise use invoice_type
-                                            const displayType = transaction.fee_type_formatted || transaction.fee_type || transaction.invoice_type;
-
-                                            // Format payment method
-                                            const formatPaymentMethod = (method) => {
-                                                if (!method) return 'N/A';
-                                                return method
-                                                    .replace(/_/g, ' ')
-                                                    .split(' ')
-                                                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                                                    .join(' ');
-                                            };
-
-                                            // Format date
-                                            const formatDate = (date) => {
-                                                if (!date) return 'N/A';
-                                                try {
-                                                    return new Date(date).toLocaleDateString('en-US', {
-                                                        year: 'numeric',
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                    });
-                                                } catch (e) {
-                                                    return 'N/A';
-                                                }
-                                            };
-
-                                            // Get status badge style
-                                            const getStatusBadge = (status) => {
-                                                const formattedText = status ? status.replace(/_/g, ' ') : 'N/A';
-                                                const styles = {
-                                                    paid: { bg: '#d4edda', color: '#155724', text: 'Paid' },
-                                                    unpaid: { bg: '#f8d7da', color: '#721c24', text: 'Unpaid' },
-                                                    partial: { bg: '#fff3cd', color: '#856404', text: 'Partial' },
-                                                    checked_in: { bg: '#cce5ff', color: '#004085', text: 'Checked In' },
-                                                    checked_out: { bg: '#d1ecf1', color: '#0c5460', text: 'Checked Out' },
-                                                    default: { bg: '#e2e3e5', color: '#383d41', text: formattedText },
-                                                };
-                                                return styles[status] || styles.default;
-                                            };
-
-                                            const statusStyle = getStatusBadge(transaction.status);
-
-                                            return (
-
-                                                <TableRow key={transaction.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        <div>
-                                                            <div style={{ fontWeight: 500, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '200px' }}>
-                                                                <Tooltip title={transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'} arrow>
-                                                                    <span>{transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</span>
-                                                                </Tooltip>
-                                                            </div>
-                                                            {(transaction.member?.membership_no || transaction.corporate_member?.membership_no) && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member?.membership_no || transaction.corporate_member?.membership_no}</div>}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        <span
-                                                            style={{
-                                                                backgroundColor: '#e3f2fd',
-                                                                color: '#1976d2',
-                                                                padding: '4px 8px',
-                                                                borderRadius: '4px',
-                                                                fontSize: '12px',
-                                                                fontWeight: 500,
-                                                            }}
-                                                        >
-                                                            {displayType === 'Multiple Items' ? (
-                                                                <Tooltip
-                                                                    title={
-                                                                        transaction.items && transaction.items.length > 0 ? (
-                                                                            <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
-                                                                                {transaction.items.map((item, idx) => (
-                                                                                    <li key={idx}>
-                                                                                        {item.fee_type_formatted || formatType(item.fee_type)} {item.description ? ` - ${item.description}` : ''}
-                                                                                    </li>
-                                                                                ))}
-                                                                            </ul>
-                                                                        ) : (
-                                                                            'Multiple items'
-                                                                        )
-                                                                    }
-                                                                    arrow
-                                                                >
-                                                                    <span>{displayType}</span>
-                                                                </Tooltip>
-                                                            ) : (
-                                                                formatType(displayType)
-                                                            )}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '120px' }}>
-                                                        <Tooltip title={transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0} arrow>
-                                                            <span> Rs {transaction.total_price?.toLocaleString() || transaction.amount?.toLocaleString() || 0}</span>
-                                                        </Tooltip>
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                        <span
-                                                            style={{
-                                                                backgroundColor: statusStyle.bg,
-                                                                color: statusStyle.color,
-                                                                padding: '4px 8px',
-                                                                borderRadius: '4px',
-                                                                fontSize: '12px',
-                                                                fontWeight: 500,
-                                                            }}
-                                                        >
-                                                            {statusStyle.text.toUpperCase()}
-                                                        </span>
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(transaction.payment_date || transaction.created_at)}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        {transaction.valid_from ? (
-                                                            <span
-                                                                style={{
-                                                                    color: new Date(transaction.valid_from) > new Date() ? '#28a745' : '#dc3545',
-                                                                    fontWeight: 500,
-                                                                }}
-                                                            >
-                                                                {formatDate(transaction.valid_from)}
-                                                            </span>
-                                                        ) : (
-                                                            <span style={{ color: '#7F7F7F' }}>-</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        {transaction.valid_to ? (
-                                                            <span
-                                                                style={{
-                                                                    color: new Date(transaction.valid_to) > new Date() ? '#28a745' : '#dc3545',
-                                                                    fontWeight: 500,
-                                                                }}
-                                                            >
-                                                                {formatDate(transaction.valid_to)}
-                                                            </span>
-                                                        ) : (
-                                                            <span style={{ color: '#7F7F7F' }}>-</span>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{transaction.valid_from && transaction.valid_to ? <span>{dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1}</span> : <span style={{ color: '#7F7F7F' }}>-</span>}</TableCell>
-                                                    <TableCell sx={{ display: 'flex', gap: '4px' }}>
-                                                        <Button
-                                                            variant="outlined"
-                                                            size="small"
-                                                            color="#063455"
-                                                            style={{
-                                                                // border: '1px solid #063455',
-                                                                // backgroundColor: 'transparent',
-                                                                textTransform: 'none',
-                                                                color: '#063455',
-                                                            }}
-                                                            onClick={() => {
-                                                                // Check invoice type and open appropriate modal
-                                                                if (transaction.invoice_type === 'room_booking' && transaction.invoiceable_id) {
-                                                                    setSelectedBookingId(transaction.invoiceable_id);
-                                                                    setShowRoomInvoiceModal(true);
-                                                                } else if (transaction.invoice_type === 'event_booking' && transaction.invoiceable_id) {
-                                                                    setSelectedBookingId(transaction.invoiceable_id);
-                                                                    setShowEventInvoiceModal(true);
-                                                                } else if ((transaction.member && transaction.member.id) || (transaction.corporate_member && transaction.corporate_member.id)) {
-                                                                    // Member/Corporate related invoices
-                                                                    if (transaction.fee_type === 'membership_fee') {
-                                                                        // For membership fee, we prefer using the specific invoice ID if available
-                                                                        // But legacy logic used member ID. Let's try to use invoice ID first if we have it (which we do here)
-                                                                        setSelectedInvoiceId(transaction.id);
-                                                                        setSelectedMemberUserId(null);
-                                                                    } else {
-                                                                        // Subscription/Maintenance fees: use invoice ID
-                                                                        setSelectedMemberUserId(null);
-                                                                        setSelectedInvoiceId(transaction.id);
-                                                                    }
-                                                                    setOpenMembershipInvoiceModal(true);
-                                                                } else {
-                                                                    // Fallback
-                                                                    setSelectedInvoice(transaction);
-                                                                    setOpenInvoiceModal(true);
-                                                                }
-                                                            }}
-                                                        >
-                                                            View
-                                                        </Button>
-                                                        {transaction.status === 'unpaid' && (
-                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => handlePayClick(transaction)} sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap', mr: 1, textTransform: 'none' }}>
-                                                                Pay Now
-                                                            </Button>
-                                                        )}
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={9} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
-                                                {searchQuery ? 'No transactions found matching your search' : 'No transactions found'}
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-
-                        {/* Pagination */}
-                        {transactions.last_page > 1 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
-                                <Typography style={{ fontSize: '14px', color: '#7F7F7F' }}>
-                                    Page {transactions.current_page} of {transactions.last_page}
-                                </Typography>
-                                <Pagination count={transactions.last_page} page={transactions.current_page} onChange={handlePageChange} color="primary" showFirstButton showLastButton />
-                            </div>
-                        )}
+                            <Button
+                                variant="contained"
+                                startIcon={<PrintIcon />}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    textTransform: 'none',
+                                    color: 'white',
+                                    borderRadius: '16px',
+                                }}
+                            >
+                                Print
+                            </Button>
+                        </div>
                     </div>
-                    <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} />
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage all recorded financial transactions</Typography>
 
-                    {/* Fallback Invoice Modal (for non-member transactions) */}
-                    <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />
+                    {/* Transactions Table */}
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '16px' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice No</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Amount</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Paid</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Balance</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
+                                    {/* <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Method</TableCell> */}
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Date</TableCell>
+                                    {/* <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>From</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>To</TableCell> */}
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Days</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Action</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {transactions.data && transactions.data.length > 0 ? (
+                                    transactions.data.map((transaction) => {
+                                        // Format fee type
+                                        const formatType = (type) => {
+                                            if (!type) return 'N/A';
+                                            return type
+                                                .replace(/_/g, ' ')
+                                                .split(' ')
+                                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                                .join(' ');
+                                        };
+                                        const displayType = transaction.fee_type_formatted || transaction.fee_type || transaction.invoice_type;
 
-                    {/* Membership Invoice Modal - Used for Membership, Subscription & Maintenance Fees */}
-                    <MembershipInvoiceSlip
-                        open={openMembershipInvoiceModal}
-                        onClose={() => {
-                            setOpenMembershipInvoiceModal(false);
-                            setSelectedMemberUserId(null);
-                            setSelectedInvoiceId(null);
-                        }}
-                        invoiceNo={selectedMemberUserId}
-                        invoiceId={selectedInvoiceId}
-                    />
+                                        // Format date
+                                        const formatDate = (date) => {
+                                            if (!date) return 'N/A';
+                                            try {
+                                                return dayjs(date).format('DD-MM-YYYY');
+                                            } catch (e) {
+                                                return 'N/A';
+                                            }
+                                        };
 
-                    {/* Room Booking Invoice Modal */}
-                    <BookingInvoiceModal
-                        open={showRoomInvoiceModal}
-                        onClose={() => {
-                            setShowRoomInvoiceModal(false);
-                            setSelectedBookingId(null);
-                        }}
-                        bookingId={selectedBookingId}
-                        setBookings={setTransactionList}
-                        financeView={true}
-                    />
+                                        // Status Badge
+                                        const getStatusBadge = (status) => {
+                                            // Adjust status based on balance if needed, but using DB status for badge color
+                                            // Logic: Paid if balance <= 0 (floating point tolerance)
+                                            // Partial if paid > 0 and balance > 0
+                                            // Unpaid if paid == 0
+                                            // We can rely on backend/DB status mostly, but let's trust the calc vals too
+                                            const formattedText = status ? status.replace(/_/g, ' ') : 'N/A';
+                                            const styles = {
+                                                paid: { bg: '#d4edda', color: '#155724' },
+                                                unpaid: { bg: '#f8d7da', color: '#721c24' },
+                                                partial: { bg: '#fff3cd', color: '#856404' },
+                                                default: { bg: '#e2e3e5', color: '#383d41' },
+                                            };
+                                            // Force status display based on balance? Or mostly trust DB?
+                                            // DB status is accurate if updated correctly.
+                                            return styles[status] || styles.default;
+                                        };
+                                        const statusStyle = getStatusBadge(transaction.status);
 
-                    {/* Event Booking Invoice Modal */}
-                    <EventBookingInvoiceModal
-                        open={showEventInvoiceModal}
-                        onClose={() => {
-                            setShowEventInvoiceModal(false);
-                            setSelectedBookingId(null);
-                        }}
-                        bookingId={selectedBookingId}
-                        setBookings={setTransactionList}
-                        financeView={true}
-                    />
+                                        return (
+                                            <TableRow key={transaction.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                    <Tooltip title={transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'} arrow>
+                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '150px' }}>{transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</div>
+                                                    </Tooltip>
+                                                    {(transaction.member?.membership_no || transaction.corporate_member?.membership_no) && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member?.membership_no || transaction.corporate_member?.membership_no}</div>}
+                                                </TableCell>
 
-                    {/* Payment Dialog */}
-                    <PaymentDialog
-                        open={paymentConfirmationOpen}
-                        onClose={() => {
-                            setPaymentConfirmationOpen(false);
-                            setTransactionToPay(null);
-                        }}
-                        transaction={transactionToPay}
-                        onConfirm={handleConfirmPayment}
-                        submitting={submittingPayment}
-                    />
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
+                                                    <span style={{ backgroundColor: '#e3f2fd', color: '#1976d2', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>
+                                                        {displayType === 'Multiple Items' ? (
+                                                            <Tooltip
+                                                                title={
+                                                                    transaction.items && transaction.items.length > 0 ? (
+                                                                        <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
+                                                                            {transaction.items.map((item, idx) => (
+                                                                                <li key={idx}>
+                                                                                    {item.fee_type_formatted || formatType(item.fee_type)} {item.description}
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    ) : (
+                                                                        'Multiple items'
+                                                                    )
+                                                                }
+                                                                arrow
+                                                            >
+                                                                <span>{displayType}</span>
+                                                            </Tooltip>
+                                                        ) : (
+                                                            formatType(displayType)
+                                                        )}
+                                                    </span>
+                                                </TableCell>
+
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>Rs {(transaction.total_price || transaction.amount || 0).toLocaleString()}</TableCell>
+                                                <TableCell sx={{ color: 'success.main', fontWeight: 500, fontSize: '14px' }}>Rs {(transaction.paid_amount || 0).toLocaleString()}</TableCell>
+                                                <TableCell sx={{ color: 'error.main', fontWeight: 500, fontSize: '14px' }}>Rs {(transaction.balance || 0).toLocaleString()}</TableCell>
+
+                                                <TableCell>
+                                                    <span style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{transaction.status ? transaction.status.toUpperCase() : 'N/A'}</span>
+                                                </TableCell>
+
+                                                {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell> */}
+                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(transaction.created_at)}</TableCell>
+
+                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{transaction.valid_from && transaction.valid_to ? dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1 : '-'}</TableCell>
+
+                                                <TableCell sx={{ display: 'flex', gap: '4px' }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        size="small"
+                                                        style={{ textTransform: 'none', color: '#063455', borderColor: '#063455', padding: '2px 8px', fontSize: '12px' }}
+                                                        onClick={() => {
+                                                            // View Logic (Keep existing modal logic if desired, or simplified)
+                                                            if (transaction.invoice_type === 'room_booking' && transaction.invoiceable_id) {
+                                                                setSelectedBookingId(transaction.invoiceable_id);
+                                                                setShowRoomInvoiceModal(true);
+                                                            } else if (transaction.invoice_type === 'event_booking' && transaction.invoiceable_id) {
+                                                                setSelectedBookingId(transaction.invoiceable_id);
+                                                                setShowEventInvoiceModal(true);
+                                                            } else if (transaction.member || transaction.corporate_member) {
+                                                                setSelectedInvoiceId(transaction.id);
+                                                                setSelectedMemberUserId(null);
+                                                                setOpenMembershipInvoiceModal(true);
+                                                            } else {
+                                                                setSelectedInvoice(transaction);
+                                                                setOpenInvoiceModal(true);
+                                                            }
+                                                        }}
+                                                    >
+                                                        View
+                                                    </Button>
+                                                    {(transaction.balance > 0 || transaction.status === 'unpaid' || transaction.status === 'partial') && (
+                                                        <Button size="small" variant="contained" color="success" startIcon={<Payment sx={{ fontSize: '16px' }} />} onClick={() => router.visit(route('finance.invoice.pay', transaction.id))} sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap', textTransform: 'none' }}>
+                                                            Pay
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={10} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                            No transactions found
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    {/* Pagination */}
+                    {transactions.last_page > 1 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
+                            <Typography style={{ fontSize: '14px', color: '#7F7F7F' }}>
+                                Page {transactions.current_page} of {transactions.last_page}
+                            </Typography>
+                            <Pagination count={transactions.last_page} page={transactions.current_page} onChange={handlePageChange} color="primary" showFirstButton showLastButton />
+                        </div>
+                    )}
                 </div>
+                <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} />
+
+                {/* Fallback Invoice Modal (for non-member transactions) */}
+                <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />
+
+                {/* Membership Invoice Modal - Used for Membership, Subscription & Maintenance Fees */}
+                <MembershipInvoiceSlip
+                    open={openMembershipInvoiceModal}
+                    onClose={() => {
+                        setOpenMembershipInvoiceModal(false);
+                        setSelectedMemberUserId(null);
+                        setSelectedInvoiceId(null);
+                    }}
+                    invoiceNo={selectedMemberUserId}
+                    invoiceId={selectedInvoiceId}
+                />
+
+                {/* Room Booking Invoice Modal */}
+                <BookingInvoiceModal
+                    open={showRoomInvoiceModal}
+                    onClose={() => {
+                        setShowRoomInvoiceModal(false);
+                        setSelectedBookingId(null);
+                    }}
+                    bookingId={selectedBookingId}
+                    setBookings={setTransactionList}
+                    financeView={true}
+                />
+
+                {/* Event Booking Invoice Modal */}
+                <EventBookingInvoiceModal
+                    open={showEventInvoiceModal}
+                    onClose={() => {
+                        setShowEventInvoiceModal(false);
+                        setSelectedBookingId(null);
+                    }}
+                    bookingId={selectedBookingId}
+                    setBookings={setTransactionList}
+                    financeView={true}
+                />
+
+                {/* Payment Dialog */}
+                <PaymentDialog
+                    open={paymentConfirmationOpen}
+                    onClose={() => {
+                        setPaymentConfirmationOpen(false);
+                        setTransactionToPay(null);
+                    }}
+                    transaction={transactionToPay}
+                    onConfirm={handleConfirmPayment}
+                    submitting={submittingPayment}
+                />
+            </div>
             {/* </ThemeProvider> */}
             {/* </div> */}
         </>
