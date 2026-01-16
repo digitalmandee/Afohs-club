@@ -269,7 +269,7 @@ class MaintenanceFeePostingController extends Controller
                 // Match MemberTransactionController fields
                 $item = FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => 'maintenance_fee',
+                    'fee_type' => 4,
                     'description' => "Monthly Maintenance Fee ({$startDate->format('M Y')} - {$endDate->format('M Y')})",
                     'qty' => 1,
                     'amount' => $subTotal,  // Using subtotal as the base rate for this calculated period

@@ -275,8 +275,8 @@ class BookingController extends Controller
 
         try {
             $recieptPath = null;
-            if ($request->payment_method == 'credit_card' && $request->has('reciept')) {
-                $recieptPath = FileHelper::saveImage($request->file('reciept'), 'reciepts');
+            if ($request->payment_method == 'credit_card' && $request->has('receipt')) {
+                $recieptPath = FileHelper::saveImage($request->file('receipt'), 'receipts');
             }
 
             // Update orders if we are paying them
@@ -326,6 +326,9 @@ class BookingController extends Controller
             $invoice->paid_amount = $invoice->paid_amount + $request->amount;  // ✅ accumulate payments
             $invoice->customer_charges = $request->customer_charges ?? $invoice->customer_charges;
             $invoice->payment_method = $request->payment_method;
+            if ($request->has('credit_card_type')) {
+                $invoice->credit_card_type = $request->credit_card_type;
+            }
             $invoice->receipt = $recieptPath;
 
             // Re-calculate status based on NEW total
@@ -343,12 +346,7 @@ class BookingController extends Controller
                 'payer_type' => $payerType,
                 'payer_id' => $payerId,
                 'amount' => $request->amount,
-                'payment_method' => match ($request->payment_method) {
-                    'Credit Card' => 'credit_card',
-                    'Bank Transfer' => 'bank',
-                    'Online' => 'bank',
-                    default => 'cash',
-                },
+                'payment_method' => $request->payment_method,  // Trust the frontend values (cash, credit_card, etc.)
                 'payment_details' => $request->paymentAccount ?? null,
                 'receipt_date' => now(),
                 'status' => 'active',

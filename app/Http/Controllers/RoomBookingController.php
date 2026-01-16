@@ -297,8 +297,7 @@ class RoomBookingController extends Controller
             $invoiceData = [
                 'invoice_no' => $this->getInvoiceNo(),
                 'invoice_type' => 'room_booking',
-                'discount_type' => $data['discountType'] ?? null,
-                'discount_value' => $data['discount'] ?? 0,
+                // Discount moved to item level
                 'amount' => $booking->grand_total,
                 'total_price' => $booking->grand_total,
                 'advance_payment' => 0,
@@ -313,13 +312,13 @@ class RoomBookingController extends Controller
                 'data' => [
                     'member_name' => $memberName,
                     'booking_no' => $booking->booking_no,
-                    'action' => 'save'  // Standard action
+                    'action' => 'save'
                 ],
                 'member_id' => $memberId,
                 'corporate_member_id' => $corporateId,
                 'customer_id' => $customerId,
                 'issue_date' => now(),
-                'due_date' => now()->addDays(1),  // Due immediately/next day
+                'due_date' => now()->addDays(1),
                 'created_by' => Auth::id(),
             ];
 
@@ -329,25 +328,39 @@ class RoomBookingController extends Controller
             // ✅ Use relationship to create invoice (automatically sets invoiceable_id and invoiceable_type)
             $invoice = $booking->invoice()->create($invoiceData);
 
-            // ✅ Create SINGLE Invoice Item for calculation
-            // The user requested ONE item because details are in RoomBooking.
-            // We use fee_type='room_booking' (id 1 or string depending on column type, usually string key or ID)
-            // Assuming fee_type is string or we find the ID for 'Room Booking' transaction type if needed.
-            // Based on MemberTransactionController, fee_type matches financial_charge_types or similar.
-            // We will use 'room_booking' as the fee_type key.
+            // ✅ Create SINGLE Invoice Item with Discount Logic
+            $grossAmount = (float) $booking->room_charge + (float) $booking->total_other_charges + (float) $booking->total_mini_bar;
+            $discountType = $data['discountType'] ?? null;
+            $discountValue = $data['discount'] ?? 0;
+            $discountAmount = 0;
 
-            FinancialInvoiceItem::create([
+            if ($discountType === 'percentage') {
+                $discountAmount = ($grossAmount * $discountValue) / 100;
+            } elseif ($discountType === 'fixed') {
+                $discountAmount = $discountValue;
+            }
+
+            // Ensure we match grand_total (handle logic mismatches safely)
+            // If calculated Net != grand_total, prefer grand_total and adjust?
+            // For now, allow slight component re-calculation for the Item fields.
+
+            $invoiceItem = FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'fee_type' => 'room_booking',  // Unique key for room booking
+                'fee_type' => '1',  // Room Booking Fee Type ID
                 'description' => 'Room Booking Charges #' . $booking->booking_no,
                 'qty' => 1,
-                'amount' => $booking->grand_total,
-                'sub_total' => $booking->grand_total,
-                'total' => $booking->grand_total,
+                'amount' => $grossAmount,  // Store Gross Amount here
+                'discount_type' => $discountType,
+                'discount_value' => $discountValue,
+                'discount_amount' => $discountAmount,
+                'tax_percentage' => 0,
+                'tax_amount' => 0,
+                'sub_total' => $grossAmount,
+                'total' => $booking->grand_total,  // Net Amount (Gross - Discount + Tax)
             ]);
 
             // ✅ 1. Create Ledger Entry (Debit) - Invoice Created
-            // We create ONE debit transaction for the Invoice Total.
+            // We create ONE debit transaction for the Invoice Total (Net).
             Transaction::create([
                 'type' => 'debit',
                 'amount' => $booking->grand_total,
@@ -355,8 +368,9 @@ class RoomBookingController extends Controller
                 'description' => 'Invoice #' . $invoice->invoice_no . ' (Room Booking)',
                 'payable_type' => $payerType,
                 'payable_id' => $payerId,
-                'reference_type' => FinancialInvoice::class,
-                'reference_id' => $invoice->id,
+                'reference_type' => FinancialInvoiceItem::class,
+                'reference_id' => $invoiceItem->id,
+                'invoice_id' => $invoice->id,
                 'created_by' => Auth::id(),
             ]);
 

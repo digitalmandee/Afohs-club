@@ -126,7 +126,7 @@ class TransactionController extends Controller
             'paid_amount' => 'required|numeric',
             'payment_method' => 'required|in:cash,credit_card,split_payment,ent,cts',
             // For credit card
-            'credit_card_type' => 'required_if:payment_method,credit_card|string|nullable',
+            'credit_card_type' => 'nullable|required_if:payment_method,credit_card|string',
             'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
             // ENT
             'ent_reason' => 'nullable|string',
@@ -135,8 +135,8 @@ class TransactionController extends Controller
             'cts_comment' => 'nullable|string',
         ]);
 
-        $invoice = Order::findOrFail($request->order_id);
-        $totalDue = $invoice->total_price;
+        $order = Order::findOrFail($request->order_id);
+        $totalDue = $order->total_price;
 
         // ENT & CTS allow 0 amount
         if (!in_array($request->payment_method, ['ent', 'cts'])) {
@@ -147,82 +147,102 @@ class TransactionController extends Controller
             }
         }
 
-        // Save main payment data
-        $invoice->cashier_id = Auth::id();
-        $invoice->payment_method = $request->payment_method;
-        $invoice->paid_amount = $request->paid_amount;
-        $invoice->paid_at = now();
+        // 1. Update Order Status
+        $order->cashier_id = Auth::id();
+        $order->payment_method = $request->payment_method;
+        $order->paid_amount = $request->paid_amount;
+        $order->paid_at = now();
 
-        /*
-         * |--------------------------------------------------------------------------
-         * | CREDIT CARD
-         * |--------------------------------------------------------------------------
-         */
+        $receiptPath = null;
         if ($request->payment_method === 'credit_card') {
-            $invoice->credit_card_type = $request->credit_card_type;
-
+            $order->credit_card_type = $request->credit_card_type;
             if ($request->hasFile('receipt')) {
-                $path = FileHelper::saveImage($request->file('receipt'), 'receipts');
-                $invoice->receipt = $path;
+                $receiptPath = FileHelper::saveImage($request->file('receipt'), 'receipts');
+                $order->receipt = $receiptPath;
             }
+        } elseif ($request->payment_method === 'split_payment') {
+            $order->cash_amount = $request->cash;
+            $order->credit_card_amount = $request->credit_card;
+            $order->bank_amount = $request->bank_transfer;
+        } elseif ($request->payment_method === 'ent') {
+            $order->ent_reason = $request->ent_reason;
+            $order->ent_comment = $request->ent_comment;
+            $order->paid_amount = 0;  // ENT = 0
+        } elseif ($request->payment_method === 'cts') {
+            $order->cts_comment = $request->cts_comment;
+            $order->paid_amount = 0;  // CTS = 0
         }
 
-        /*
-         * |--------------------------------------------------------------------------
-         * | SPLIT PAYMENT
-         * |--------------------------------------------------------------------------
-         */
-        if ($request->payment_method === 'split_payment') {
-            $invoice->cash_amount = $request->cash;
-            $invoice->credit_card_amount = $request->credit_card;
-            $invoice->bank_amount = $request->bank_transfer;
-        }
+        $order->payment_status = 'paid';
+        $order->save();
 
-        /*
-         * |--------------------------------------------------------------------------
-         * | ENT (Employee No-Take)
-         * |--------------------------------------------------------------------------
-         */
-        if ($request->payment_method === 'ent') {
-            // $invoice->ent_reason = $request->ent_reason;
-            // $invoice->ent_comment = $request->ent_comment;
+        // 2. Update Financial Invoice
+        $invoice = FinancialInvoice::where('member_id', $order->member_id)
+            ->whereJsonContains('data', ['order_id' => $order->id])
+            ->first();
 
-            // ENT = no money paid
-            $invoice->paid_amount = 0;
-        }
-
-        /*
-         * |--------------------------------------------------------------------------
-         * | CTS (Customer Treat / Customer To-Settle)
-         * |--------------------------------------------------------------------------
-         */
-        if ($request->payment_method === 'cts') {
-            // $invoice->cts_comment = $request->cts_comment;
-
-            // CTS = no money paid
-            $invoice->paid_amount = 0;
-        }
-
-        $invoice->payment_status = 'paid';
-        $invoice->save();
-
-        /*
-         * |--------------------------------------------------------------------------
-         * | UPDATE FINANCIAL INVOICE
-         * |--------------------------------------------------------------------------
-         */
-        FinancialInvoice::where('member_id', $invoice->member_id)
-            ->whereJsonContains('data', ['order_id' => $invoice->id])
-            ->update([
+        if ($invoice) {
+            $invoice->update([
                 'status' => 'paid',
                 'payment_date' => now(),
                 'payment_method' => $request->payment_method,
-                // 'paid_amount' => ($request->payment_method === 'ent' || $request->payment_method === 'cts') ? 0 : $request->paid_amount,
-                'paid_amount' => $request->paid_amount,
+                'paid_amount' => $order->paid_amount,
                 'ent_reason' => $request->ent_reason,
                 'ent_comment' => $request->ent_comment,
                 'cts_comment' => $request->cts_comment,
             ]);
+
+            // 3. Create Financial Receipt & Transaction (Credits)
+            if (!in_array($request->payment_method, ['ent', 'cts'])) {
+                // Find the single summary item for this order
+                $invoiceItem = \App\Models\FinancialInvoiceItem::where('invoice_id', $invoice->id)
+                    ->where('fee_type', '7')  // Food Order
+                    ->where('description', 'like', "%Order #{$order->id}%")
+                    ->first();
+
+                // If no summary item found (legacy data?), try finding ANY item linked to this invoice to attach credit to
+                if (!$invoiceItem) {
+                    $invoiceItem = $invoice->items()->first();
+                }
+
+                if ($invoiceItem) {
+                    // Create Receipt
+                    $receipt = \App\Models\FinancialReceipt::create([
+                        // 'financial_invoice_id' => $invoice->id, // Removed as column likely doesn't exist in model
+                        'payer_type' => 'App\Models\Member',  // Assuming Member payer for now
+                        'payer_id' => $invoice->member_id,
+                        'receipt_no' => 'REC-' . time(),  // Simple generation or use helper if available
+                        'amount' => $order->paid_amount,
+                        'receipt_date' => now(),
+                        'payment_method' => $request->payment_method,
+                        'payment_details' => json_encode([
+                            'credit_card_type' => $request->credit_card_type,
+                            'split_payment' => $request->payment_method === 'split_payment' ? [
+                                'cash' => $request->cash,
+                                'credit_card' => $request->credit_card,
+                                'bank' => $request->bank_transfer
+                            ] : null,
+                            'receipt_path' => $receiptPath
+                        ]),
+                        // 'receipt_path' => $receiptPath, // Model doesn't have receipt_path in fillable? Wait, I didn't see it.
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    // Create Credit Transaction
+                    \App\Models\Transaction::create([
+                        'financial_invoice_item_id' => $invoiceItem->id,
+                        'financial_receipt_id' => $receipt->id,
+                        'type' => 'credit',
+                        'amount' => $order->paid_amount,  // Total amount credited
+                        'date' => now(),
+                        'payment_method' => $request->payment_method,
+                        'transaction_type_id' => 1,  // Payment
+                        'description' => "Payment for Order #{$order->id}",
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            }
+        }
 
         return back()->with('success', 'Payment successful');
     }

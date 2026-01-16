@@ -54,6 +54,7 @@ class UserController extends Controller
                     'cnic' => $user->cnic_no,
                     'phone' => $user->mobile_number_a,
                     'address' => $user->current_address,
+                    'status' => $user->status ?? 'active',  // Added status
                 ];
             });
 
