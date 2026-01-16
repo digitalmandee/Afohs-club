@@ -58,7 +58,7 @@ class UserManagementController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => $request->password,  // Model's 'hashed' cast handles hashing
         ]);
 
         // Assign role with web guard

@@ -27,7 +27,14 @@ const UserManagement = () => {
                 enqueueSnackbar('Super Admin user created successfully!', { variant: 'success' });
             },
             onError: (errors) => {
-                enqueueSnackbar('Error creating user', { variant: 'error' });
+                // Show specific validation errors
+                if (typeof errors === 'object' && errors !== null) {
+                    Object.values(errors).forEach((error) => {
+                        enqueueSnackbar(error, { variant: 'error' });
+                    });
+                } else {
+                    enqueueSnackbar('Error creating user', { variant: 'error' });
+                }
             },
         });
     };
@@ -40,7 +47,14 @@ const UserManagement = () => {
                 enqueueSnackbar('Employee user created successfully!', { variant: 'success' });
             },
             onError: (errors) => {
-                enqueueSnackbar('Error creating employee user', { variant: 'error' });
+                // Show specific validation errors
+                if (typeof errors === 'object' && errors !== null) {
+                    Object.values(errors).forEach((error) => {
+                        enqueueSnackbar(error, { variant: 'error' });
+                    });
+                } else {
+                    enqueueSnackbar('Error creating employee user', { variant: 'error' });
+                }
             },
         });
     };
