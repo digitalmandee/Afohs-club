@@ -149,6 +149,11 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
             hasError = true;
         }
 
+        if (checkin && checkout && checkin.getTime() === checkout.getTime()) {
+            newErrors.date = 'Check-out date must be after check-in date (minimum 1 night).';
+            hasError = true;
+        }
+
         setErrors(newErrors);
 
         if (hasError) return;
@@ -250,6 +255,7 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
                                                 showSelectionPreview={false}
                                                 showDateDisplay={false}
                                                 direction="horizontal"
+                                                minDate={new Date()}
                                             />
                                         </Box>
                                     </Popper>
