@@ -126,7 +126,7 @@ const CreateRoom = () => {
                     number_of_bathrooms: '',
                 });
                 enqueueSnackbar('Room added successfully', { variant: 'success' });
-                router.visit(route('rooms.manage'));
+                router.visit(route('rooms.all'));
             },
             onError: (serverErrors) => {
                 console.error('Server errors:', serverErrors); // Log errors for debugging
