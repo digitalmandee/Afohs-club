@@ -405,7 +405,12 @@ const RoomScreen = ({ bookings }) => {
                     </Box>
 
                     {/* Booking Invoice Modal */}
-                    <BookingInvoiceModal open={showInvoiceModal} onClose={() => handleCloseInvoice()} bookingId={selectedBooking?.id} setBookings={setFilteredBookings} />
+                    <BookingInvoiceModal 
+                    open={showInvoiceModal} 
+                    onClose={() => handleCloseInvoice()} 
+                    bookingId={selectedBooking?.id} 
+                    setBookings={setFilteredBookings}
+                    type="ROOM_BOOKING" />
 
                     {/* View Documents Modal */}
                     <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />

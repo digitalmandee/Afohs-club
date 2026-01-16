@@ -60,22 +60,25 @@ export const numberToWords = (num) => {
     return word.trim();
 };
 
-export const generateInvoiceContent = (booking) => {
+export const generateInvoiceContent = (booking, type) => {
+    // const data = getInvoiceData(booking);
     if (!booking) return '';
 
-    return `<!doctype html>
+    switch (type) {
+        case 'ROOM_BOOKING':
+            return `<!doctype html>
 <html>
     <head>
         <title>Booking Invoice</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
-                padding: 20px;
+                padding: 0px;
                 max-width: 930px;
-                margin: 0 auto;
+                <!-- margin: 0 auto; -->
             }
             .container {
-                margin-top: 16px;
+                margin-top: 10px;
 
             }
             .paper {
@@ -85,10 +88,10 @@ export const generateInvoiceContent = (booking) => {
             }
             .grid-container {
                 display: flex;
-                flex-wrap: wrap;
-                margin-bottom: 32px;
+                margin-bottom: 20px;
                 padding-bottom: 16px;
                 border-bottom: 1px solid #f0f0f0;
+                // background-color: #063455
             }
             .grid-item-left {
                 flex: 0 0 33.33%;
@@ -98,6 +101,10 @@ export const generateInvoiceContent = (booking) => {
             .grid-item-center {
                 flex: 0 0 33.33%;
                 text-align: center;
+            }
+            .grid-item-right {
+                flex: 0 0 33.33%;
+                text-align: end;
             }
             .logo {
                 height: 60px;
@@ -121,9 +128,13 @@ export const generateInvoiceContent = (booking) => {
                 font-weight: bold;
             }
             .subtitle1 {
-                font-size: 14px;
-                font-weight: bold;
-                margin-bottom: 12px;
+                font-size: 24px;
+            font-weight: bold;
+            display: flex;           
+            justify-content: center; 
+            text-align: center;
+            width: 100%; 
+            color: #7f7f7f
             }
             .summary-container {
                 display: flex;
@@ -165,22 +176,22 @@ export const generateInvoiceContent = (booking) => {
         </style>
     </head>
     <body>
-        <div class="container">
+    <div class="subtitle1">BOOKING DETAILS</div>
+        <div class="container"> 
             <div class="paper">
-                <!-- Header -->
+                <!-- Header -->         
                 <div class="grid-container">
                     <div class="grid-item-left">
                         <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
                     </div>
                     <div class="grid-item-center">
-                        <div class="typography-h6" style="color: #063455">Afohs Club</div>
+                        <div class="typography-h6" style="color: #063455">AFOHS CLUB</div>
                         <div class="typography-body3">
-                            PAF Falcon complex, Gulberg III,<br />
-                            Lahore, Pakistan
+                            PAF Falcon complex, Gulberg III, Lahore, Pakistan Tel: +92-42-35925318-9 
                         </div>
                     </div>
-                    <div class="grid-item-center">
-                        <div class="typography-h6" style="color: #333; margin-top: 20px">
+                    <div class="grid-item-right">
+                        <div class="typography-h6" style="color: #333">
                         ${getBookingTypeLabel(booking.booking_type)}
                         </div>
                         <div style="
@@ -189,121 +200,648 @@ export const generateInvoiceContent = (booking) => {
                             font-weight: bold;
                             display: ${booking.invoice?.status === 'cancelled' ? 'none' : 'block'};
                             color: ${booking.invoice?.status === 'paid' ? '#155724' :
-            booking.invoice?.status === 'refunded' ? '#004085' :
-                booking.invoice?.status === 'unpaid' ? '#721c24' :
-                    '#333'
-        };
+                    booking.invoice?.status === 'refunded' ? '#004085' :
+                        booking.invoice?.status === 'unpaid' ? '#721c24' :
+                            '#333'
+                };
                             background-color: ${booking.invoice?.status === 'paid' ? '#d4edda' :
-            booking.invoice?.status === 'refunded' ? '#cce5ff' :
-                booking.invoice?.status === 'unpaid' ? '#f8d7da' :
-                    '#e2e3e5'
-        };
+                    booking.invoice?.status === 'refunded' ? '#cce5ff' :
+                        booking.invoice?.status === 'unpaid' ? '#f8d7da' :
+                            '#e2e3e5'
+                };
                             text-transform: uppercase;
                             border: 1px solid ${booking.invoice?.status === 'paid' ? '#c3e6cb' :
-            booking.invoice?.status === 'refunded' ? '#b8daff' :
-                booking.invoice?.status === 'unpaid' ? '#f5c6cb' :
-                    '#d6d8db'
-        };
+                    booking.invoice?.status === 'refunded' ? '#b8daff' :
+                        booking.invoice?.status === 'unpaid' ? '#f5c6cb' :
+                            '#d6d8db'
+                };
                             padding: 2px 8px;
                             display: inline-block;
                             border-radius: 4px;
                         ">
                             ${(booking.invoice?.status || 'Unpaid').replace(/_/g, ' ')}
                             ${booking.invoice?.status === 'refunded' ? (() => {
-            const notes = booking.additional_notes || booking.notes;
-            const match = notes && notes.match(/Refund Processed: (\d+)/);
-            return match ? ` (Rs ${match[1]})` : '';
-        })() : ''}
+                    const notes = booking.additional_notes || booking.notes;
+                    const match = notes && notes.match(/Refund Processed: (\d+)/);
+                    return match ? ` (Rs ${match[1]})` : '';
+                })() : ''}
                         </div>
                     </div>
                 </div>
 
                 <!-- Bill To Section -->
-                <div style="margin-bottom: 20px">
-                    <div class="subtitle1">Bill To - #${booking.booking_no || 'N/A'}</div>
-                    <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).full_name : ''}</div>
-                        <div class="typography-body2">
-                          <span style="font-weight: bold">Membership ID: </span>
-                          ${booking.customer ? booking.customer.customer_no : booking.member ? booking.member.membership_no : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).membership_no : 'N/A'}
-                        </div>
-                        <div class="typography-body2">
-                          <span style="font-weight: bold">Phone Number: </span>
-                          ${booking.customer ? booking.customer.contact : booking.member ? booking.member.mobile_number_a : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).mobile_number_a : 'N/A'}
-                        </div>
-                        <div class="typography-body2">
-                          <span style="font-weight: bold">Email: </span>
-                          ${booking.customer ? booking.customer.email : booking.member ? booking.member.personal_email : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).personal_email : 'N/A'}
-                        </div>
-                    </div>
-                </div>
+                <div style="margin-bottom: 10px;">
+  <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+    <tbody>
+      <!-- Row 1 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Guest Name:</strong>
+          ${booking.customer
+                    ? booking.customer.name
+                    : booking.member
+                        ? booking.member.full_name
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).full_name
+                            : 'N/A'}
+        </td>
 
-                <!-- Booking Details Section -->
-                <div style="margin-bottom: 2px">
-                    <div class="subtitle1">Booking Details</div>
-                    <div class="two-column">
-                        <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no ? booking.booking_no : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
-                        <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
-                         <div class="typography-body2"><span style="font-weight: bold">Booking Status: </span>${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
-                        ${booking.cancellation_reason ? `<div class="typography-body2"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>` : ''}
-                    </div>
-                </div>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Membership ID:</strong>
+          ${booking.customer
+                    ? booking.customer.customer_no
+                    : booking.member
+                        ? booking.member.membership_no
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).membership_no
+                            : 'N/A'}
+        </td>
 
-                <!-- Summary and Notes sections remain unchanged -->
-                 <div class="summary-container">
-            <div class="summary-box">
-                <div class="summary-row">
-                    <span class="typography-body2-bold">Total Amount</span>
-                    <span class="typography-body2">Rs ${booking.grand_total || '0'}</span>
-                </div>
-                <div class="summary-row">
-                    <span class="typography-body2-bold">Balance Due</span>
-                    <span class="typography-body2">Rs ${(() => {
-            const total = parseFloat(booking.grand_total || 0);
-            const paid = parseFloat(booking.invoice?.paid_amount || 0);
-            return Math.max(0, total - paid).toFixed(2);
-        })()}</span>
-                </div>
-                <div class="summary-row">
-                    <span class="typography-body2-bold">Amount Paid</span>
-                    <span class="typography-body2">Rs ${(() => {
-            let paid = parseFloat(booking.invoice?.paid_amount || 0);
-            if (booking.invoice?.status === 'refunded') {
-                const notes = booking.additional_notes || booking.notes;
-                const match = notes && notes.match(/Refund Processed: (\d+)/);
-                if (match) {
-                    paid += parseInt(match[1]);
-                }
-            }
-            return paid;
-        })()}</span>
-                </div>
-        </div>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Phone Number:</strong>
+          ${booking.customer
+                    ? booking.customer.contact
+                    : booking.member
+                        ? booking.member.mobile_number_a
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).mobile_number_a
+                            : 'N/A'}
+        </td>
+      </tr>
+
+      <!-- Row 2 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Email:</strong>
+          ${booking.customer
+                    ? booking.customer.email
+                    : booking.member
+                        ? booking.member.personal_email
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).personal_email
+                            : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Booking ID:</strong>
+          ${booking.booking_no ? booking.booking_no : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Booking For:</strong>  
+        ${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}
+        </td>
+      </tr>
+
+      <!-- Row 3 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Issue Date:</strong>
+          ${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Booking Type:</strong>
+          ${getBookingTypeLabel(booking.booking_type)}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Room Name:</strong>  
+        ${booking.room?.name || 'N/A'}
+        </td>
+      </tr>
+
+      <!-- Row 4 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Max Capacity:</strong>
+          ${booking.room?.max_capacity || 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>No of Beds:</strong>
+          ${booking.room?.number_of_beds || 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>No of Bathrooms:</strong>  
+        ${booking.room?.number_of_bathrooms}
+        </td>
+      </tr>
+
+      <!-- Row 5 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Max Capacity:</strong>
+          ${booking.room?.max_capacity || 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>No of Beds:</strong>
+          ${booking.room?.number_of_beds || 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>No of Bathrooms:</strong>  
+        ${booking.room?.number_of_bathrooms}
+        </td>
+      </tr>
+
+      <!-- Row 6 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Check-in:</strong>
+          ${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Check-Out</strong>
+          ${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Guests:</strong>  
+        ${booking.persons || 'N/A'}
+        </td>
+      </tr>
+
+      <!-- Row 7 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Booking Status:</strong>
+          ${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}
+        </td>
+
+        <td colspan="2" style="border: 1px solid #000; padding: 10px;">
+          <strong>Cancellation Reason:</strong>
+          ${booking.cancellation_reason}
+        </td>
+
+      </tr>
+
+      <!-- Row 8 -->
+      <tr>
+        <td colspan="3" style="border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold;">
+        Other Charges Details
+    </td>
+      </tr>
+
+      <!-- Row 9 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Breakfast: </strong>
+           Free for upto 2 persons
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong> Food & Beverages: </strong>
+          As per usage
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        
+          <strong> Mini Bar: </strong>
+           As per usage
+        
+        </td>
+      </tr>
+
+      <!-- Row 10 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Outgoing Calls:  </strong>
+           As per usage
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>  Dry Cleaning / Ironing: </strong>
+          As per usage
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        
+          <strong> Transport: </strong>
+           As per usage
+        
+        </td>
+      </tr>
+
+      <!-- Row 11 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Service Charges:   </strong>
+           Rs. 100 per night
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>   Mattress:  </strong>
+           Rs. 500 per mattress per night
+        </td>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>  Wifi: </strong>
+           Free of cost
+        </td>
+      </tr>
+
+      <!-- Row 12 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Total Payable Amount:   </strong>
+           ${booking.grand_total || '0'}
+        </td>
+
+        <td colspan="2" style="border: 1px solid #000; padding: 10px;">
+    <strong>Advance Amount: </strong>
+    Rs. ${(() => {
+                    let paid = parseFloat(booking.invoice?.paid_amount || 0);
+                    if (booking.invoice?.status === 'refunded') {
+                        const notes = booking.additional_notes || booking.notes;
+                        const match = notes && notes.match(/Refund Processed: (\d+)/);
+                        if (match) {
+                            paid += parseInt(match[1]);
+                        }
+                    }
+                    return paid.toFixed(2);
+                })()}
+</td>
+      </tr>
+
+      <!-- Row 13 -->
+      <tr>
+        <td colspan="3" style="border: 1px solid #000; padding: 10px;">
+        <strong>Remaining Balance:</strong> 
+        Rs. ${(() => {
+                    const total = parseFloat(booking.grand_total || 0);
+                    const paid = parseFloat(booking.invoice?.paid_amount || 0);
+                    return Math.max(0, total - paid).toFixed(2);
+                })()}
+    </td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <table style="width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 15px;">
+    <tbody>
+      <!-- Row 1 -->
+      <tr>
+        <td colspan="3" style="border: 1px solid #000; padding: 10px; font-weight: bold;">
+        <strong>Comments / Special Requirements:</strong>
+        </td>
+        </tr>
+
+        <!-- Row 2 -->
+        <tr>
+        <td style="border: 1px solid #000; padding: 10px; text-align:center;">
+        <strong>Guest Signature</strong>
+        </td>
+        <td style="border: 1px solid #000; padding: 10px; text-align:center;">
+        <strong>FDO Signature</strong>
+        </td>
+        </tr>
+
+        <!-- Row 3 -->
+        <tr>
+        <td style="border: 1px solid #000; padding: 60px; text-align:center;">
+        
+        </td>
+        <td style="border: 1px solid #000; padding: 60px; text-align:center;">
+        
+        </td>
+        </tr>
+        <tbody>
+        </table>
+
+        <div style="page-break-before: always; margin-top: 40px;"></div>
+
+<div style="font-family: Inter; font-size: 12px; line-height: 1; max-width: 800px; margin: 0 auto;">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <strong style="font-size: 18px; font-weight: bold; color: #063455;">TERMS & CONDITIONS</strong>
+    </div>
+    
+    <div>
+        <strong>1.</strong> Any cancellation or amendments must be made before 4pm (Local Time) 1 day prior to the date of arrival. Otherwise a Cancellation fee/ No-Show equivalent to the room rate for the first night will be levied. Standard check in time is 1400 Hours and check-out time is 1200 Hours. Early check-in is subject to availability of the room.<br><br> 
+        <strong>2.</strong> In case of No Show – one night charged shall be deducted.<br><br>
+        <strong>3.</strong> Guest Rooms will be booked on first come first serve basis. Due to any emergent operations/ emergency requirement, AFOHS Club management can cancel the booking. Honorable Member must be informed about the cancellation thorough a phone call/sms.<br><br>
+        
+        <strong>4.</strong> WIFI in rooms and lobby area is available for free of cost.<br><br>
+        
+        <strong>5.</strong> Guest Rooms will be charged as per the Category and eligibility of the occupant.<br><br>
+        
+        <strong>6.</strong> Credentials of guests shall be verified i-e relationship of accompanied guest/s.<br><br>
+        
+        <strong>7.</strong> No immoral activity will be allowed in the Guest Rooms.<br><br>
+        
+        <strong>8.</strong> No alcohol, gambling or any illegal activity will be allowed in the Guest Rooms. Strict actions will be taken against the violators.<br><br>
+        
+        <strong>9.</strong> No strange visitor is allowed in the room. All visitors must register themselves in the reception office before visiting the guest's in the rooms.<br><br>
+        
+        <strong>10.</strong> All rooms of AFOHS Club are non-smoking rooms and smoking inside the rooms is prohibited.<br><br>
+        
+        <strong>11.</strong> No fire arms, narcotics and or other illegal items are allowed in the room or in the club premises. All licensed / service weapons must be declared and handed over to the in-charge security of AFOHS Club.<br><br>
+        
+        <strong>12.</strong> If any suspicious activity is observed in the room or other areas involving the occupants, the AFOHS Club management reserves the right to ask the guest/s to leave the room and premises on immediate basis without prior notice.<br><br>
+        
+        <strong>13.</strong> Absolutely no pets or any other kind of animals are allowed in any part of the club premises.<br><br>
+        
+        <strong>14.</strong> Guest agrees to make sure that all of his visitors will abide by the AFOHS Club and Falcon Complex rules and regulations.<br><br>
+        
+        <strong>15.</strong> Guest/Guarantor assume full responsibility for any damaged caused to the room, facilities, crockery, cutlery, building or any other area / place / items by them, their children and guests and agrees to pay the costs involved without hesitation.<br><br>
+        
+        <strong>16.</strong> All foreigner guests are subject to interview and club management reserves the right to ask the guest to produce security clearance certificate and valid visa to stay in Pakistan if and when needed. And if security clearance or visa is not produced, the club management reserves the right to ask the guest/s to leave the room and club premises.<br><br>
+        
+        <strong>17.</strong> This is the responsibility of the guest to make sure that they do not leave their minor children unattended at all times during their presence in the club premises. The club management, Options International PVT Ltd and AHQ cannot be held accountable in any manner in case any unattended minor child/children gets hurt, injured or any serious mishap happens with the unattended children.<br><br>
+        
+        <strong>18.</strong> Towels, bed sheets, pillows, plants, pots and other furniture and fixture in the room must be left in the condition as it was handed over. Any broken or destroyed item will be charged separately.<br><br>
+        
+        <strong>19.</strong> Guest room supervisor will perform check out inspection and will prepare the final bill after the thorough inspection only.<br><br>
+        
+        <strong>20.</strong> Final bill will also include items used from mini bar, meals, services used during stay and missing/broken/ destroyed items.<br><br>
+        
+        <strong>21.</strong> Guest Rooms will be booked against advance payment only.<br><br>
+        
+        <strong>22.</strong> One extra mattress will be provided as per demand @ Rs. 500/- per night.<br><br>
+        
+        <strong>23.</strong> Maximum 2 adults and 2 kids under the age of 12 can stay in one room.<br><br>
+        
+        <strong>24.</strong> Complimentary breakfast is available for two persons per room. All extra number of breakfasts will be charged separately.<br><br>
+        
+        <strong>25.</strong> All other meals inside the room or in dining areas will be charged separately.<br><br>
+        
+        <strong>26.</strong> Check-in time will be from 1400 hrs onward and check out time will be 1200 hrs.<br><br>
+        
+        <strong>27.</strong> Early check out by guest's own decision doesn't make the guest eligible for any discount.<br><br>
+        
+        <strong>28.</strong> Final Bill must be paid and keys of the room/s must be returned to the guest room supervisor prior to check out.<br><br>
+        
+        <strong>29.</strong> Only cash or own credit cards will be accepted as method of payments. All payments through credit card will be charged by Adding 5% processing fees.<br><br>
+        
+        <strong>30.</strong> Use of iron in the room is strictly prohibited.
     </div>
 
-        <div class="notes-container">
-            <div class="notes-item">
-                <div class="typography-body2-bold" style="margin-bottom: 4px">Note:</div>
-                <div class="typography-body3">This is a computer-generated receipt. It does not require any signature or stamp.</div>
-                <div style="margin-top: 16px">
-                    <div class="typography-body2-bold" style="margin-bottom: 4px">Sent By: Admin</div>
-                </div>
-            </div>
-            <div class="notes-item">
-                <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.grand_total || 0)} RUPEES ONLY</div>
-            </div>
-        </div>
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc;">
+    <strong style="font-size: 14px; color: #063455;">SAFETY OF VALUABLES</strong><br><br>
+    Room Guests are responsible for the safe Guard of their valuables. The Room Cleaning will be accomplished only in the presence of the room occupant. In case the room is to be made / cleaned in the absence of the member / guest, the Guest Rooms Manager is to be informed about the valuables kept in the room.
+</div><br><br>
+    
+    <div style="margin-top: 20px; display: flex; justify-content: space-between; font-size: 12px;">
+        <div><strong>Guest Signature: ____________________</strong></div>
+        <div><strong>FDO Signature: ___________________</strong></div>
+    </div>
+</div>
+</div>
+
+    </div>
         </div>
     </body>
 </html>
 `;
+        case 'CHECK_IN':
+        case 'CHECK_OUT':
+        case 'CANCELLATION':
+        default:
+            return `<!doctype html>
+      <html>
+          <head>
+              <title>Booking Invoice</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      padding: 20px;
+                      max-width: 930px;
+                      margin: 0 auto;
+                  }
+                  .container {
+                      margin-top: 16px;
+      
+                  }
+                  .paper {
+                      border-radius: 4px;
+                      position: relative;
+                      overflow: hidden;
+                  }
+                  .grid-container {
+                      display: flex;
+                      flex-wrap: wrap;
+                      margin-bottom: 32px;
+                      padding-bottom: 16px;
+                      border-bottom: 1px solid #f0f0f0;
+                  }
+                  .grid-item-left {
+                      flex: 0 0 33.33%;
+                      display: flex;
+                      align-items: center;
+                  }
+                  .grid-item-center {
+                      flex: 0 0 33.33%;
+                      text-align: center;
+                  }
+                  .logo {
+                      height: 60px;
+                  }
+                  .typography-h6 {
+                      font-size: 18px;
+                      font-weight: bold;
+                  }
+                  .typography-body3 {
+                      font-size: 12px;
+                      color: #555;
+                      line-height: 1.4;
+                  }
+                  .typography-body2 {
+                      font-size: 12px;
+                      color: #555;
+                      line-height: 0.6;
+                  }
+                  .typography-body2-bold {
+                      font-size: 13px;
+                      font-weight: bold;
+                  }
+                  .subtitle1 {
+                      font-size: 14px;
+                      font-weight: bold;
+                      margin-bottom: 12px;
+                  }
+                  .summary-container {
+                      display: flex;
+                      justify-content: flex-end;
+                      margin-bottom: 24px;
+                  }
+                  .summary-box {
+                      width: 33.33%;
+                      padding-top: 8px;
+                  }
+                  .summary-row {
+                      display: flex;
+                      justify-content: space-between;
+                      margin-bottom: 16px;
+                      border-bottom: 1px solid #eee;
+                  }
+                  .notes-container {
+                      display: flex;
+                      gap: 16px;
+                      margin-bottom: 24px;
+                  }
+                  .notes-item {
+                      flex: 0 0 50%;
+                  }
+                  .amount-in-words {
+                      font-size: 13px;
+                      font-weight: bold;
+                      margin-top: 4px;
+                      text-transform: uppercase;
+                  }
+                  .two-column {
+                      display: flex;
+                      flex-wrap: wrap;
+                      gap: 16px;
+                  }
+                  .two-column > div {
+                      flex: 0 0 48%;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <div class="paper">
+                      <!-- Header -->
+                      <div class="grid-container">
+                          <div class="grid-item-left">
+                              <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c95d02f2c4a986d4f386920c76ff57c18c81985-YeMq5tNsLWF62HBaZY1Gz1HsT7RyLX.png" alt="Afohs Club Logo" class="logo" />
+                          </div>
+                          <div class="grid-item-center">
+                              <div class="typography-h6" style="color: #063455">Afohs Club</div>
+                              <div class="typography-body3">
+                                  PAF Falcon complex, Gulberg III,<br />
+                                  Lahore, Pakistan
+                              </div>
+                          </div>
+                          <div class="grid-item-center">
+                              <div class="typography-h6" style="color: #333; margin-top: 20px">
+                              ${getBookingTypeLabel(booking.booking_type)}
+                              </div>
+                              <div style="
+                                  margin-top: 4px;
+                                  font-size: 14px;
+                                  font-weight: bold;
+                                  display: ${booking.invoice?.status === 'cancelled' ? 'none' : 'block'};
+                                  color: ${booking.invoice?.status === 'paid' ? '#155724' :
+                    booking.invoice?.status === 'refunded' ? '#004085' :
+                        booking.invoice?.status === 'unpaid' ? '#721c24' :
+                            '#333'
+                };
+                                  background-color: ${booking.invoice?.status === 'paid' ? '#d4edda' :
+                    booking.invoice?.status === 'refunded' ? '#cce5ff' :
+                        booking.invoice?.status === 'unpaid' ? '#f8d7da' :
+                            '#e2e3e5'
+                };
+                                  text-transform: uppercase;
+                                  border: 1px solid ${booking.invoice?.status === 'paid' ? '#c3e6cb' :
+                    booking.invoice?.status === 'refunded' ? '#b8daff' :
+                        booking.invoice?.status === 'unpaid' ? '#f5c6cb' :
+                            '#d6d8db'
+                };
+                                  padding: 2px 8px;
+                                  display: inline-block;
+                                  border-radius: 4px;
+                              ">
+                                  ${(booking.invoice?.status || 'Unpaid').replace(/_/g, ' ')}
+                                  ${booking.invoice?.status === 'refunded' ? (() => {
+                    const notes = booking.additional_notes || booking.notes;
+                    const match = notes && notes.match(/Refund Processed: (\d+)/);
+                    return match ? ` (Rs ${match[1]})` : '';
+                })() : ''}
+                              </div>
+                          </div>
+                      </div>
+      
+                      <!-- Bill To Section -->
+                      <div style="margin-bottom: 20px">
+                          <div class="subtitle1">Bill To - #${booking.booking_no || 'N/A'}</div>
+                          <div class="two-column">
+                              <div class="typography-body2"><span style="font-weight: bold">Guest Name: </span>${booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).full_name : ''}</div>
+                              <div class="typography-body2">
+                                <span style="font-weight: bold">Membership ID: </span>
+                                ${booking.customer ? booking.customer.customer_no : booking.member ? booking.member.membership_no : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).membership_no : 'N/A'}
+                              </div>
+                              <div class="typography-body2">
+                                <span style="font-weight: bold">Phone Number: </span>
+                                ${booking.customer ? booking.customer.contact : booking.member ? booking.member.mobile_number_a : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).mobile_number_a : 'N/A'}
+                              </div>
+                              <div class="typography-body2">
+                                <span style="font-weight: bold">Email: </span>
+                                ${booking.customer ? booking.customer.email : booking.member ? booking.member.personal_email : (booking.corporateMember || booking.corporate_member) ? (booking.corporateMember || booking.corporate_member).personal_email : 'N/A'}
+                              </div>
+                          </div>
+                      </div>
+      
+                      <!-- Booking Details Section -->
+                      <div style="margin-bottom: 2px">
+                          <div class="subtitle1">Booking Details</div>
+                          <div class="two-column">
+                              <div class="typography-body2"><span style="font-weight: bold">Booking ID: </span>INV-${booking.booking_no ? booking.booking_no : 'N/A'}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
+                              <div class="typography-body2"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
+                               <div class="typography-body2"><span style="font-weight: bold">Booking Status: </span>${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
+                              ${booking.cancellation_reason ? `<div class="typography-body2"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>` : ''}
+                          </div>
+                      </div>
+      
+                      <!-- Summary and Notes sections remain unchanged -->
+                       <div class="summary-container">
+                  <div class="summary-box">
+                      <div class="summary-row">
+                          <span class="typography-body2-bold">Total Amount</span>
+                          <span class="typography-body2">Rs ${booking.grand_total || '0'}</span>
+                      </div>
+                      <div class="summary-row">
+                          <span class="typography-body2-bold">Balance Due</span>
+                          <span class="typography-body2">Rs ${(() => {
+                    const total = parseFloat(booking.grand_total || 0);
+                    const paid = parseFloat(booking.invoice?.paid_amount || 0);
+                    return Math.max(0, total - paid).toFixed(2);
+                })()}</span>
+                      </div>
+                      <div class="summary-row">
+                          <span class="typography-body2-bold">Amount Paid</span>
+                          <span class="typography-body2">Rs ${(() => {
+                    let paid = parseFloat(booking.invoice?.paid_amount || 0);
+                    if (booking.invoice?.status === 'refunded') {
+                        const notes = booking.additional_notes || booking.notes;
+                        const match = notes && notes.match(/Refund Processed: (\d+)/);
+                        if (match) {
+                            paid += parseInt(match[1]);
+                        }
+                    }
+                    return paid;
+                })()}</span>
+                      </div>
+              </div>
+          </div>
+      
+              <div class="notes-container">
+                  <div class="notes-item">
+                      <div class="typography-body2-bold" style="margin-bottom: 4px">Note:</div>
+                      <div class="typography-body3">This is a computer-generated receipt. It does not require any signature or stamp.</div>
+                      <div style="margin-top: 16px">
+                          <div class="typography-body2-bold" style="margin-bottom: 4px">Sent By: Admin</div>
+                      </div>
+                  </div>
+                  <div class="notes-item">
+                      <div class="amount-in-words">AMOUNT IN WORDS: ${numberToWords(booking.grand_total || 0)} RUPEES ONLY</div>
+                  </div>
+              </div>
+              </div>
+          </body>
+      </html>
+      `;
+    }
 };
