@@ -3,7 +3,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import PrintIcon from '@mui/icons-material/Print';
 import SearchIcon from '@mui/icons-material/Search';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Avatar, Box, InputAdornment, Pagination } from '@mui/material';
+import { Typography, Button, Card, CardContent, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Avatar, Box, InputAdornment, Pagination, Tooltip } from '@mui/material';
 import { ArrowBack, Search, FilterAlt, MoreVert, People, CreditCard, Warning } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router } from '@inertiajs/react';
@@ -91,9 +91,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                         </Typography>
                     </div>
                 </div>
-                <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                    Create, update, and manage subscriber records
-                </Typography>
+                <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Create, update, and manage subscriber records</Typography>
 
                 {/* Stats Cards */}
                 <div
@@ -103,7 +101,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                         justifyContent: 'space-between',
                         gap: '1rem',
                         marginBottom: '24px',
-                        marginTop: '24px'
+                        marginTop: '24px',
                     }}
                 >
                     {[
@@ -210,8 +208,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                     backgroundColor: '#063455',
                                     textTransform: 'none',
                                     color: 'white',
-                                    borderRadius: '16px'
-
+                                    borderRadius: '16px',
                                 }}
                             >
                                 Print
@@ -241,12 +238,17 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                     subscriptions.data.length > 0 &&
                                     subscriptions.data.map((subscription) => (
                                         <TableRow key={subscription.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <TableCell sx={{
-                                                color: '#000', fontWeight: 600, fontSize: '14px', maxWidth: '80px',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
+                                            <TableCell
+                                                sx={{
+                                                    color: '#000',
+                                                    fontWeight: 600,
+                                                    fontSize: '14px',
+                                                    maxWidth: '80px',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
                                                 <Tooltip title={subscription.invoice_no} arrow>
                                                     {subscription.invoice_no}
                                                 </Tooltip>
@@ -261,8 +263,9 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                                             maxWidth: '120px',
                                                             overflow: 'hidden',
                                                             textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap'
-                                                        }}>
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
                                                         <Tooltip title={subscription.member?.full_name || 'N/A'} arrow>
                                                             {subscription.member?.full_name || 'N/A'}
                                                         </Tooltip>
@@ -270,45 +273,52 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                                     <div style={{ fontSize: '14px', color: '#7f7f7f' }}>{subscription.member?.membership_no}</div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                {subscription.subscription_type?.name || '-'}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{subscription.subscription_type?.name || '-'}</TableCell>
                                             <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                 <div>
-                                                    <div style={{
-                                                        color: '#7f7f7f',
-                                                        fontWeight: 400,
-                                                        fontSize: '14px',
-                                                        maxWidth: '120px',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
+                                                    <div
+                                                        style={{
+                                                            color: '#7f7f7f',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            maxWidth: '120px',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
                                                         <Tooltip title={subscription.subscription_category?.name} arrow>
                                                             {subscription.subscription_category?.name}
                                                         </Tooltip>
                                                     </div>
-                                                    <div style={{
-                                                        color: '#7f7f7f',
-                                                        fontWeight: 400,
-                                                        fontSize: '14px',
-                                                        maxWidth: '100px',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
+                                                    <div
+                                                        style={{
+                                                            color: '#7f7f7f',
+                                                            fontWeight: 400,
+                                                            fontSize: '14px',
+                                                            maxWidth: '100px',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
                                                         <Tooltip title={subscription.subscription_category?.fee} arrow>
                                                             Rs. {subscription.subscription_category?.fee}
                                                         </Tooltip>
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell sx={{
-                                                color: '#7F7F7F', fontWeight: 400, fontSize: '14px', maxWidth: '100px',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
-                                            }}>
+                                            <TableCell
+                                                sx={{
+                                                    color: '#7F7F7F',
+                                                    fontWeight: 400,
+                                                    fontSize: '14px',
+                                                    maxWidth: '100px',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
                                                 <Tooltip title={subscription.total_price?.toLocaleString()} arrow>
                                                     Rs. {subscription.total_price?.toLocaleString()}
                                                 </Tooltip>
@@ -334,7 +344,7 @@ const ManagementDashboard = ({ statistics, subscriptions, filters }) => {
                                             <TableCell>
                                                 <Button
                                                     size="small"
-                                                    variant='contained'
+                                                    variant="contained"
                                                     // startIcon={<ReceiptIcon />}
                                                     sx={{
                                                         bgcolor: 'transparent',
