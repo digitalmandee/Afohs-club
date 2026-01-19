@@ -71,6 +71,7 @@ class EmployeeController extends Controller
             'designation',
             'branch',
             'shift',
+            'photo',
         ]);
 
         // Apply search filter if provided
@@ -79,7 +80,8 @@ class EmployeeController extends Controller
                 $query
                     ->where('name', 'like', '%' . $search . '%')
                     ->orWhere('employee_id', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%');
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('national_id', 'like', '%' . $search . '%');
             });
         }
 
@@ -105,6 +107,7 @@ class EmployeeController extends Controller
             ->withQueryString()
             ->through(function ($employee) {
                 $employee->joining_date = $employee->joining_date ? \Carbon\Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                $employee->photo_url = $employee->photo ? asset('storage/' . $employee->photo->file_path) : null;
                 return $employee;
             });
 
@@ -637,5 +640,109 @@ class EmployeeController extends Controller
         $employees = $query->limit(10)->get(['id', 'name', 'employee_id']);
 
         return response()->json($employees);
+    }
+
+    /**
+     * Remove the specified employee from storage (Soft Delete).
+     */
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+            $employee = Employee::find($id);
+
+            if (!$employee) {
+                return response()->json(['success' => false, 'message' => 'Employee not found'], 404);
+            }
+
+            if ($employee->user) {
+                $employee->user->delete();  // Soft delete associated user
+            }
+
+            $employee->delete();  // Soft delete employee
+
+            DB::commit();
+            return back()->with('success', 'Employee deleted successfully');  // Inertia redirect
+            // return response()->json(['success' => true, 'message' => 'Employee deleted successfully'], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->with('error', $th->getMessage());
+        }
+    }
+
+    /**
+     * Display a listing of trashed employees.
+     */
+    public function trashed(Request $request)
+    {
+        $employees = Employee::onlyTrashed()
+            ->with(['branch'])  // Eager load relationships if needed for display
+            ->orderByDesc('deleted_at')
+            ->paginate(10);
+
+        return Inertia::render('App/Admin/Employee/Trashed', [
+            'employees' => $employees,
+        ]);
+    }
+
+    /**
+     * Restore the specified trashed employee.
+     */
+    public function restore($id)
+    {
+        try {
+            DB::beginTransaction();
+            $employee = Employee::onlyTrashed()->find($id);
+
+            if (!$employee) {
+                return back()->with('error', 'Employee not found in trash');
+            }
+
+            if ($employee->user()->withTrashed()->exists()) {
+                $employee->user()->withTrashed()->restore();  // Restore associated user
+            }
+
+            $employee->restore();
+
+            DB::commit();
+            return back()->with('success', 'Employee restored successfully');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->with('error', $th->getMessage());
+        }
+    }
+
+    /**
+     * Permanently remove the specified employee from storage.
+     */
+    public function forceDelete($id)
+    {
+        try {
+            DB::beginTransaction();
+            $employee = Employee::onlyTrashed()->find($id);
+
+            if (!$employee) {
+                return back()->with('error', 'Employee not found in trash');
+            }
+
+            // Permanently delete associated user
+            if ($employee->user()->withTrashed()->exists()) {
+                $employee->user()->withTrashed()->forceDelete();
+            }
+
+            // Delete associated media (photos, documents)
+            foreach ($employee->media as $media) {
+                FileHelper::deleteImage($media->file_path);
+                $media->delete();
+            }
+
+            $employee->forceDelete();
+
+            DB::commit();
+            return back()->with('success', 'Employee permanently deleted');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->with('error', $th->getMessage());
+        }
     }
 }

@@ -86,6 +86,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
         Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
+        Route::get('/trashed', [EmployeeController::class, 'trashed'])->name('employees.trashed');
+        Route::post('/{id}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
+        Route::delete('/{id}/force-delete', [EmployeeController::class, 'forceDelete'])->name('employees.force-delete');
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
 
         // Designations
         Route::get('designations/list', [App\Http\Controllers\DesignationController::class, 'list'])->name('designations.list');

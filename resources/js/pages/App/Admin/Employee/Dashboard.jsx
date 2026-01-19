@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { usePage, router } from '@inertiajs/react';
-import { Autocomplete, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Box, Chip } from '@mui/material';
+import { Autocomplete, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Box, Chip, Avatar } from '@mui/material';
 import EventSeatIcon from '@mui/icons-material/EventSeat';
 import PeopleIcon from '@mui/icons-material/People';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import PrintIcon from '@mui/icons-material/Print';
 import Search from '@mui/icons-material/Search';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import axios from 'axios';
 
 const EmployeeDashboard = () => {
@@ -14,6 +15,18 @@ const EmployeeDashboard = () => {
     const { employees, companyStats, departments: initialDepartments } = props;
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+
+    const handleDeleteClick = (id) => {
+        setDeleteDialog({ open: true, id });
+    };
+
+    const handleConfirmDelete = () => {
+        router.delete(route('employees.destroy', deleteDialog.id), {
+            onSuccess: () => setDeleteDialog({ open: false, id: null }),
+            onError: () => setDeleteDialog({ open: false, id: null }), // Handle error properly if needed
+        });
+    };
 
     // Filter states with Autocomplete
     const [departments, setDepartments] = useState(initialDepartments || []);
@@ -116,9 +129,27 @@ const EmployeeDashboard = () => {
                         {/* Header */}
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography style={{ color: '#063455', fontWeight: '700', fontSize: '30px' }}>Employee Management</Typography>
-                            <Button variant="contained" startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => router.visit(route('employees.create'))}>
-                                Add Employee
-                            </Button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <Button variant="contained" startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => router.visit(route('employees.create'))}>
+                                    Add Employee
+                                </Button>
+                                <Button
+                                    onClick={() => router.visit(route('employees.trashed'))}
+                                    style={{
+                                        color: '#063455',
+                                        backgroundColor: 'white',
+                                        borderRadius: '16px',
+                                        height: 35,
+                                        marginLeft: '10px',
+                                        textTransform: 'none',
+                                        border: '1px solid #063455',
+                                    }}
+                                    variant="outlined"
+                                    startIcon={<FaTrash size={14} />}
+                                >
+                                    Trashed
+                                </Button>
+                            </div>
                         </div>
                         <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Overview of staff strength, attendance status, and pending HR actions</Typography>
 
@@ -163,7 +194,7 @@ const EmployeeDashboard = () => {
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
                                 <TextField
                                     size="small"
-                                    placeholder="Search by name, ID, or email..."
+                                    placeholder="Search by Name, ID, CNIC..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     onKeyPress={(e) => {
@@ -179,13 +210,28 @@ const EmployeeDashboard = () => {
                                 />
                                 <Autocomplete
                                     size="small"
+                                    options={branches}
+                                    getOptionLabel={(option) => option.name || ''}
+                                    value={filters.branch_id}
+                                    onChange={(e, value) => setFilters({ ...filters, branch_id: value })}
+                                    renderInput={(params) => <TextField {...params} placeholder="Company" />}
+                                    sx={{
+                                        minWidth: 160,
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '20px',
+                                            backgroundColor: '#fff',
+                                        },
+                                    }}
+                                />
+                                <Autocomplete
+                                    size="small"
                                     options={departments}
                                     getOptionLabel={(option) => option.name || ''}
                                     value={filters.department_id}
                                     onChange={(e, value) => setFilters({ ...filters, department_id: value, subdepartment_id: null })}
                                     renderInput={(params) => <TextField {...params} placeholder="Department" />}
                                     sx={{
-                                        minWidth: 140,
+                                        minWidth: 160,
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '20px',
                                             backgroundColor: '#fff',
@@ -201,37 +247,7 @@ const EmployeeDashboard = () => {
                                     onChange={(e, value) => setFilters({ ...filters, subdepartment_id: value })}
                                     renderInput={(params) => <TextField {...params} placeholder="SubDept" />}
                                     sx={{
-                                        minWidth: 120,
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
-                                        },
-                                    }}
-                                />
-                                <Autocomplete
-                                    size="small"
-                                    options={branches}
-                                    getOptionLabel={(option) => option.name || ''}
-                                    value={filters.branch_id}
-                                    onChange={(e, value) => setFilters({ ...filters, branch_id: value })}
-                                    renderInput={(params) => <TextField {...params} placeholder="Company" />}
-                                    sx={{
-                                        minWidth: 120,
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
-                                        },
-                                    }}
-                                />
-                                <Autocomplete
-                                    size="small"
-                                    options={shifts}
-                                    getOptionLabel={(option) => option.name || ''}
-                                    value={filters.shift_id}
-                                    onChange={(e, value) => setFilters({ ...filters, shift_id: value })}
-                                    renderInput={(params) => <TextField {...params} placeholder="Shift" />}
-                                    sx={{
-                                        minWidth: 100,
+                                        minWidth: 140,
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '20px',
                                             backgroundColor: '#fff',
@@ -247,6 +263,21 @@ const EmployeeDashboard = () => {
                                     renderInput={(params) => <TextField {...params} placeholder="Designation" />}
                                     sx={{
                                         minWidth: 140,
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '20px',
+                                            backgroundColor: '#fff',
+                                        },
+                                    }}
+                                />
+                                <Autocomplete
+                                    size="small"
+                                    options={shifts}
+                                    getOptionLabel={(option) => option.name || ''}
+                                    value={filters.shift_id}
+                                    onChange={(e, value) => setFilters({ ...filters, shift_id: value })}
+                                    renderInput={(params) => <TextField {...params} placeholder="Shift" />}
+                                    sx={{
+                                        minWidth: 100,
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '20px',
                                             backgroundColor: '#fff',
@@ -325,7 +356,14 @@ const EmployeeDashboard = () => {
                                             return (
                                                 <TableRow key={emp.id} style={rowStyle}>
                                                     <TableCell style={cellStyle}>#{emp.employee_id}</TableCell>
-                                                    <TableCell style={cellStyle}>{emp.name}</TableCell>
+                                                    <TableCell style={cellStyle}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                            <Avatar src={emp.photo_url} alt={emp.name} sx={{ width: 40, height: 40, mr: 2, border: '1px solid #eee' }}>
+                                                                {emp.name.charAt(0)}
+                                                            </Avatar>
+                                                            {emp.name}
+                                                        </Box>
+                                                    </TableCell>
                                                     <TableCell style={cellStyle}>
                                                         {emp.department?.name ? (
                                                             <>
@@ -380,7 +418,17 @@ const EmployeeDashboard = () => {
                                                                 '&:hover': { backgroundColor: '#f5f5f5' },
                                                             }}
                                                         >
-                                                            <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
+                                                            <FaEdit size={18} style={{ color: '#f57c00' }} />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            onClick={() => handleDeleteClick(emp.id)}
+                                                            size="small"
+                                                            sx={{
+                                                                color: '#d32f2f',
+                                                                '&:hover': { backgroundColor: '#ffebee' },
+                                                            }}
+                                                        >
+                                                            <FaTrash size={16} />
                                                         </IconButton>
                                                     </TableCell>
                                                 </TableRow>
@@ -418,6 +466,22 @@ const EmployeeDashboard = () => {
                     </div>
                 </Box>
             </div>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, id: null })} aria-labelledby="alert-dialog-title" aria-describedby="alert-dialog-description">
+                <DialogTitle id="alert-dialog-title">{'Delete Employee?'}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">Are you sure you want to delete this employee? They can be restored later from the Trashed Employees page.</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialog({ open: false, id: null })} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirmDelete} color="error" autoFocus>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };
