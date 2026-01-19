@@ -3,7 +3,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, FormLabel, FormGroup, FormControlLabel, Checkbox, Accordion, AccordionSummary, AccordionDetails, Grid, Pagination } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, ExpandMore as ExpandMoreIcon, Security as SecurityIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-
+import { FaEdit } from 'react-icons/fa';
 
 const RoleManagement = () => {
     const { roles, allPermissions, filters, can } = usePage().props;
@@ -115,7 +115,7 @@ const RoleManagement = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         {/* <SecurityIcon sx={{ mr: 2, color: '#063455', fontSize: '2rem' }} /> */}
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>
                             Role Management
                         </Typography>
                     </Box>
@@ -126,6 +126,8 @@ const RoleManagement = () => {
                             onClick={() => setCreateRoleOpen(true)}
                             sx={{
                                 backgroundColor: '#063455',
+                                textTransform: 'none',
+                                borderRadius: '16px',
                                 '&:hover': { backgroundColor: '#052a44' },
                             }}
                         >
@@ -149,6 +151,7 @@ const RoleManagement = () => {
                                     height: 40,
                                     backgroundColor: "transparent",
                                     paddingRight: 0,
+                                    borderRadius: '16px',
                                 },
                                 "& .MuiOutlinedInput-notchedOutline": {
                                     borderColor: "#999", // optional border color
@@ -166,21 +169,28 @@ const RoleManagement = () => {
                 </Box>
 
                 {/* Roles Table */}
-                <TableContainer component={Paper}>
+                <TableContainer sx={{ borderRadius: '12px' }}>
                     <Table>
-                        <TableHead sx={{bgcolor:'#E5E5EA'}}>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 600 }}>Role Name</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Permissions Count</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Users Count</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Role Name</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Permissions Count</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Users Count</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {roles.data.map((role) => (
                                 <TableRow key={role.id}>
-                                    <TableCell>
+                                    {/* <TableCell>
                                         <Chip label={role.name} color={getRoleColor(role.name)} variant="outlined" />
+                                    </TableCell> */}
+                                    <TableCell>
+                                        <Chip
+                                            label={role.name ? role.name.charAt(0).toUpperCase() + role.name.slice(1) : ''}
+                                            color={getRoleColor(role.name)}
+                                            variant="outlined"
+                                        />
                                     </TableCell>
                                     <TableCell>{role.permissions.length}</TableCell>
                                     <TableCell>{role.users_count || 0}</TableCell>
@@ -193,9 +203,9 @@ const RoleManagement = () => {
                                                         setSelectedRole(role);
                                                         setEditRoleOpen(true);
                                                     }}
-                                                    sx={{ color: '#063455' }}
+                                                    // sx={{ color: '#063455' }}
                                                 >
-                                                    <EditIcon />
+                                                    <FaEdit size={18} style={{ color: '#f57c00' }} />
                                                 </IconButton>
                                             )}
                                             {can.delete && role.name !== 'super-admin' && (
@@ -226,8 +236,8 @@ const RoleManagement = () => {
                 )}
 
                 {/* Create Role Dialog */}
-                <Dialog open={createRoleOpen} onClose={() => setCreateRoleOpen(false)} maxWidth="md" fullWidth>
-                    <DialogTitle>Create New Role</DialogTitle>
+                <Dialog open={createRoleOpen} onClose={() => setCreateRoleOpen(false)} maxWidth="md" fullWidth style={{borderRadius:'16px'}}>
+                    <DialogTitle sx={{color:'#063455', fontSize:'24px', fontWeight:600}}>Create New Role</DialogTitle>
                     <DialogContent>
                         <TextField fullWidth label="Role Name" value={newRole.name} onChange={(e) => setNewRole({ ...newRole, name: e.target.value })} sx={{ mb: 3, mt: 1 }} />
 
@@ -256,8 +266,9 @@ const RoleManagement = () => {
                         ))}
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setCreateRoleOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreateRole} variant="contained">
+                        <Button onClick={() => setCreateRoleOpen(false)}
+                            sx={{color:'#063455', border:'1px solid #063455', textTransform:'none'}}>Cancel</Button>
+                        <Button onClick={handleCreateRole} variant="contained" sx={{textTransform:'none'}}>
                             Create
                         </Button>
                     </DialogActions>
