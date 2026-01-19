@@ -12,11 +12,17 @@ return new class extends Migration {
     {
         $tables = ['room_types', 'room_categories', 'room_charges_types', 'room_mini_bars'];
 
-        foreach ($tables as $table) {
-            Schema::table($table, function (Blueprint $table) {
-                $table->unsignedBigInteger('created_by')->nullable()->after('updated_at');
-                $table->unsignedBigInteger('updated_by')->nullable()->after('created_by');
-                $table->unsignedBigInteger('deleted_by')->nullable()->after('updated_by');
+        foreach ($tables as $tableName) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'created_by')) {
+                    $table->unsignedBigInteger('created_by')->nullable()->after('updated_at');
+                }
+                if (!Schema::hasColumn($tableName, 'updated_by')) {
+                    $table->unsignedBigInteger('updated_by')->nullable()->after('created_by');
+                }
+                if (!Schema::hasColumn($tableName, 'deleted_by')) {
+                    $table->unsignedBigInteger('deleted_by')->nullable()->after('updated_by');
+                }
             });
         }
     }

@@ -11,7 +11,7 @@ class Employee extends BaseModel
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'department_id', 'subdepartment_id', 'employee_id', 'name', 'email', 'designation',
+        'user_id', 'department_id', 'subdepartment_id', 'designation_id', 'employee_id', 'name', 'email', 'designation',
         'phone_no', 'employment_type', 'address', 'emergency_no', 'gender', 'marital_status', 'national_id', 'account_no',
         'salary', 'joining_date', 'created_by', 'updated_by', 'deleted_by',
         // Additional fields from old HR system
@@ -145,5 +145,45 @@ class Employee extends BaseModel
     {
         $salaryStructure = $this->salaryStructure;
         return $salaryStructure ? $salaryStructure->basic_salary : 0;
+    }
+
+    /**
+     * Designation Relation
+     */
+    public function designationRef()
+    {
+        return $this->belongsTo(Designation::class, 'designation_id');
+    }
+
+    /**
+     * Accessor for 'designation' attribute to maintain backward compatibility.
+     * Returns the name from the relation if exists, otherwise the legacy string column.
+     *
+     * @param string|null $value
+     * @return string|null
+     */
+    public function getDesignationAttribute($value)
+    {
+        if ($this->designation_id && $this->relationLoaded('designationRef')) {
+            return $this->designationRef->name;
+        }
+
+        // If relation not loaded but ID exists, we might want to lazy load or just return legacy if it matches?
+        // To avoid N+1, we rely on eager loading 'designationRef' in controllers.
+        // However, if we strictly need the name and legacy column is still there (migrated data), the legacy column HAS the name.
+        // But for NEW records, legacy column might be null.
+        // So:
+        // 1. If designation_id is set:
+        //    a. If relation loaded, return name.
+        //    b. If not loaded, we can try to return $value (legacy char) IF it's populated.
+        //       If $value is null (new record), we force load or return null?
+        // Let's safe-guard:
+
+        if ($this->designation_id && !$value && $this->getAttribute('designation_id')) {
+            // New record, legacy column null. Try to get from relation (might trigger query)
+            return $this->designationRef ? $this->designationRef->name : null;
+        }
+
+        return $value;
     }
 }
