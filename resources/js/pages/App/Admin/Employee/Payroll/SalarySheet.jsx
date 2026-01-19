@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Head, usePage } from '@inertiajs/react';
-import { Box, Card, CardContent, Typography, Grid, TextField, Button, Select, MenuItem, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormControlLabel, Checkbox, LinearProgress, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid, TextField, Button, Select, MenuItem, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormControlLabel, Checkbox, LinearProgress, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Autocomplete } from '@mui/material';
 import { Save, Download, Upload, Refresh, Info, Help, DoneAll } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -38,7 +38,7 @@ export default function SalarySheet() {
         const params = {
             month: month.format('YYYY-MM'),
             employee_type: employeeType,
-            designation: designation,
+            designation: designation, // Passing name here
             location: location,
         };
 
@@ -49,7 +49,7 @@ export default function SalarySheet() {
                     setPayslips(res.data.payslips);
                     setAllowanceHeaders(res.data.allowance_headers || []);
                     setDeductionHeaders(res.data.deduction_headers || []);
-                    setDesignations(res.data.designations || []);
+                    // setDesignations(res.data.designations || []); // Don't overwrite with strings, use master list
                     setLocations(res.data.locations || []);
                     setEmployeeTypes(res.data.employee_types || []);
                     setPeriodStatus(res.data.period_status || 'draft');
@@ -64,6 +64,12 @@ export default function SalarySheet() {
 
     useEffect(() => {
         fetchData();
+        // Fetch Master Usage List
+        axios.get(route('designations.list')).then((res) => {
+            if (res.data.success) {
+                setDesignations(res.data.data);
+            }
+        });
     }, [month]); // Auto fetch on month change
 
     // Handle Edit
@@ -253,17 +259,16 @@ export default function SalarySheet() {
                                     />
                                 </Grid>
                                 <Grid item xs={12} md={2}>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel>Designation</InputLabel>
-                                        <Select value={designation} label="Designation" onChange={(e) => setDesignation(e.target.value)}>
-                                            <MenuItem value="all">All</MenuItem>
-                                            {designations.map((d) => (
-                                                <MenuItem key={d} value={d}>
-                                                    {d}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
+                                    <Autocomplete
+                                        size="small"
+                                        options={[{ id: 'all', name: 'All' }, ...designations]}
+                                        getOptionLabel={(option) => option.name || ''}
+                                        value={designation === 'all' ? { id: 'all', name: 'All' } : designations.find((d) => d.name === designation) || { id: 'all', name: 'All' }}
+                                        onChange={(e, newValue) => {
+                                            setDesignation(newValue ? (newValue.id === 'all' ? 'all' : newValue.name) : 'all');
+                                        }}
+                                        renderInput={(params) => <TextField {...params} label="Designation" />}
+                                    />
                                 </Grid>
                                 <Grid item xs={12} md={2}>
                                     <FormControl fullWidth size="small">

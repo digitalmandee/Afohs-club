@@ -19,6 +19,7 @@ const EmployeeCreate = () => {
         employee_id: employee?.employee_id || '',
         email: employee?.email || '',
         designation: employee?.designation || '',
+        designation_id: employee?.designation_id || null, // Added ID support
         date_of_birth: employee?.date_of_birth || '',
         age: '', // Calculated field
         gender: employee?.gender || '',
@@ -76,8 +77,20 @@ const EmployeeCreate = () => {
     const [errors, setErrors] = useState({});
     const [departments, setDepartments] = useState([]);
     const [subdepartments, setSubdepartments] = useState([]);
+    const [designations, setDesignations] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [subdepartmentSearchTerm, setSubdepartmentSearchTerm] = useState('');
+
+    useEffect(() => {
+        axios
+            .get(route('designations.list'))
+            .then((res) => {
+                if (res.data.success) {
+                    setDesignations(res.data.data);
+                }
+            })
+            .catch((err) => console.error(err));
+    }, []);
 
     // File upload states
     const [photoFile, setPhotoFile] = useState(null);
@@ -398,9 +411,35 @@ const EmployeeCreate = () => {
                             { label: 'Employee ID*', name: 'employee_id', placeholder: '12345', disabled: isEdit },
                             { label: 'National ID (CNIC)', name: 'national_id', placeholder: 'XXXXX-XXXXXXX-X' },
                             { label: 'Email*', name: 'email', placeholder: 'email@example.com' },
-                            { label: 'Designation', name: 'designation', placeholder: 'Job Title' },
-                            { label: 'Barcode', name: 'barcode', placeholder: 'Barcode Number' },
                         ].map(renderTextField)}
+
+                        {/* Designation Autocomplete */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000' }} mb={1}>
+                                Designation
+                            </Typography>
+                            <Autocomplete
+                                size="small"
+                                options={designations}
+                                getOptionLabel={(option) => option.name}
+                                value={designations.find((d) => d.id === formData.designation_id) || (formData.designation ? { name: formData.designation, id: 'temp' } : null)}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                onInputChange={(event, value) => {
+                                    // Optional: Handle free-text if you still want to allow creating new ones via this input,
+                                    // but standard is dropdown. If typing doesn't match, we can just clear or keep search.
+                                }}
+                                onChange={(event, value) => {
+                                    setFormData({
+                                        ...formData,
+                                        designation_id: value ? value.id : null,
+                                        designation: value ? value.name : '', // Keep string for legacy/display
+                                    });
+                                }}
+                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Job Title" />}
+                            />
+                        </Box>
+
+                        {[{ label: 'Barcode', name: 'barcode', placeholder: 'Barcode Number' }].map(renderTextField)}
 
                         {/* Date of Birth with Auto-calculated Age */}
                         <Box>

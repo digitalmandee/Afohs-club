@@ -87,6 +87,21 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
 
+        // Designations
+        Route::get('designations/list', [App\Http\Controllers\DesignationController::class, 'list'])->name('designations.list');
+        Route::get('designations/data', [App\Http\Controllers\DesignationController::class, 'fetchData'])->name('designations.data');
+        Route::get('designations/trashed', [App\Http\Controllers\DesignationController::class, 'trashed'])->name('designations.trashed');
+        Route::post('designations/{id}/restore', [App\Http\Controllers\DesignationController::class, 'restore'])->name('designations.restore');
+        Route::delete('designations/{id}/force-delete', [App\Http\Controllers\DesignationController::class, 'forceDelete'])->name('designations.force-delete');
+        Route::resource('designations', App\Http\Controllers\DesignationController::class);
+
+        // Assets
+        Route::resource('assets', EmployeeAssetController::class);
+        Route::post('assets/{asset}/assign', [EmployeeAssetController::class, 'assign'])->name('assets.assign');
+        Route::post('assets/{asset}/return', [EmployeeAssetController::class, 'returnAsset'])->name('assets.return');
+        Route::post('assets/{asset}/upload-attachment', [EmployeeAssetController::class, 'uploadAttachment'])->name('assets.upload-attachment');
+        Route::delete('asset-attachments/{attachment}', [EmployeeAssetController::class, 'deleteAttachment'])->name('assets.delete-attachment');
+
         Route::prefix('leaves')->group(function () {
             Route::get('category', [LeaveCategoryController::class, 'index'])->name('employees.leaves.category.index');
             Route::get('category/create', [LeaveCategoryController::class, 'create'])->name('employees.leaves.category.create');
@@ -604,13 +619,18 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/reports/detailed/{periodId}', [PayrollApiController::class, 'getDetailedReport'])->name('api.payroll.reports.detailed');
         Route::get('/reports/employee/{employeeId}', [PayrollApiController::class, 'getEmployeePayrollHistory'])->name('api.payroll.reports.employee');
 
-        // Salary Sheet Management
+        // Salary Sheet Editor Endpoints
         Route::get('/salary-sheet', [PayrollApiController::class, 'getSalarySheetData'])->name('api.payroll.salary-sheet');
         Route::post('/salary-sheet/update', [PayrollApiController::class, 'updateSalarySheet'])->name('api.payroll.salary-sheet.update');
-        Route::get('/salary-sheet/export', [PayrollApiController::class, 'exportSalarySheet'])->name('payroll.salary-sheet.export');
-        Route::get('/salary-sheet/template', [PayrollApiController::class, 'downloadImportTemplate'])->name('payroll.salary-sheet.template');
         Route::post('/salary-sheet/import', [PayrollApiController::class, 'importSalarySheet'])->name('api.payroll.salary-sheet.import');
         Route::post('/salary-sheet/post', [PayrollApiController::class, 'postPayroll'])->name('api.payroll.salary-sheet.post');
+    });
+
+    Route::group(['prefix' => 'payroll'], function () {
+        Route::get('/salary-sheet/template', [PayrollApiController::class, 'downloadImportTemplate'])->name('payroll.salary-sheet.template');
+        Route::get('/salary-sheet/export', [PayrollApiController::class, 'exportSalarySheet'])->name('payroll.salary-sheet.export');
+
+        Route::get('/preview/print', [PayrollApiController::class, 'printPreviewPage'])->name('payroll.preview.print');
     });
 
     // Route::get('/admin/subscription/sports/category', function () {
