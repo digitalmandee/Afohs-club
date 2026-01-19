@@ -62,7 +62,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return \Illuminate\Support\Facades\Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 // Route::get('/', function () {
 //     return dd(ini_get('post_max_size'), ini_get('upload_max_filesize'));
@@ -86,6 +86,39 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
         Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
+        Route::get('/trashed', [EmployeeController::class, 'trashed'])->name('employees.trashed');
+        Route::post('/{id}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
+        Route::delete('/{id}/force-delete', [EmployeeController::class, 'forceDelete'])->name('employees.force-delete');
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+
+        // Designations
+        Route::get('designations/list', [App\Http\Controllers\DesignationController::class, 'list'])->name('designations.list');
+        Route::get('designations/data', [App\Http\Controllers\DesignationController::class, 'fetchData'])->name('designations.data');
+        Route::get('designations/trashed', [App\Http\Controllers\DesignationController::class, 'trashed'])->name('designations.trashed');
+        Route::post('designations/{id}/restore', [App\Http\Controllers\DesignationController::class, 'restore'])->name('designations.restore');
+        Route::delete('designations/{id}/force-delete', [App\Http\Controllers\DesignationController::class, 'forceDelete'])->name('designations.force-delete');
+        Route::resource('designations', App\Http\Controllers\DesignationController::class);
+
+        // Assets
+        Route::resource('assets', EmployeeAssetController::class);
+
+        // Shifts
+        Route::get('shifts/list', [App\Http\Controllers\ShiftController::class, 'list'])->name('shifts.list');
+        Route::get('shifts/trashed', [App\Http\Controllers\ShiftController::class, 'trashed'])->name('shifts.trashed');
+        Route::post('shifts/{id}/restore', [App\Http\Controllers\ShiftController::class, 'restore'])->name('shifts.restore');
+        Route::delete('shifts/{id}/force-delete', [App\Http\Controllers\ShiftController::class, 'forceDelete'])->name('shifts.force-delete');
+        Route::resource('shifts', App\Http\Controllers\ShiftController::class);
+
+        // Branches
+        Route::get('branches/list', [App\Http\Controllers\BranchController::class, 'list'])->name('branches.list');
+        Route::get('branches/trashed', [App\Http\Controllers\BranchController::class, 'trashed'])->name('branches.trashed');
+        Route::post('branches/{id}/restore', [App\Http\Controllers\BranchController::class, 'restore'])->name('branches.restore');
+        Route::delete('branches/{id}/force-delete', [App\Http\Controllers\BranchController::class, 'forceDelete'])->name('branches.force-delete');
+        Route::resource('branches', App\Http\Controllers\BranchController::class);
+        Route::post('assets/{asset}/assign', [EmployeeAssetController::class, 'assign'])->name('assets.assign');
+        Route::post('assets/{asset}/return', [EmployeeAssetController::class, 'returnAsset'])->name('assets.return');
+        Route::post('assets/{asset}/upload-attachment', [EmployeeAssetController::class, 'uploadAttachment'])->name('assets.upload-attachment');
+        Route::delete('asset-attachments/{attachment}', [EmployeeAssetController::class, 'deleteAttachment'])->name('assets.delete-attachment');
 
         Route::prefix('leaves')->group(function () {
             Route::get('category', [LeaveCategoryController::class, 'index'])->name('employees.leaves.category.index');
@@ -166,6 +199,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         });
 
         Route::prefix('attendances')->group(function () {
+            // Actions
+            Route::post('apply-standard', [AttendanceController::class, 'applyStandardAttendance'])->name('employees.attendances.apply-standard');
+
             // Inertia.js Pages
             Route::get('dashboard', [AttendanceController::class, 'dashboard'])->name('employees.attendances.dashboard');
             Route::get('management', [AttendanceController::class, 'managementPage'])->name('employees.attendances.management');
@@ -216,6 +252,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('reports/summary/{periodId}/print', [PayrollController::class, 'summaryReportPrint'])->name('employees.payroll.reports.summary.print');
             Route::get('reports/detailed/{periodId?}', [PayrollController::class, 'detailedReport'])->name('employees.payroll.reports.detailed');
             Route::get('reports/detailed/{periodId}/print', [PayrollController::class, 'detailedReportPrint'])->name('employees.payroll.reports.detailed.print');
+
+            // Payroll History
+            Route::get('history', [PayrollController::class, 'history'])->name('employee.payroll.history');
         });
 
         // Employee Reports
@@ -572,6 +611,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::delete('/deduction-types/{id}', [PayrollApiController::class, 'deleteDeductionType'])->name('api.payroll.deduction-types.delete');
 
         // Employee Salaries
+        Route::get('/employees/list', [PayrollApiController::class, 'getEmployeesList'])->name('employees.list');
         Route::get('/employees/salaries', [PayrollApiController::class, 'getEmployeeSalaries'])->name('api.payroll.employees.salaries');
         Route::post('/employees/{employeeId}/salary-structure', [PayrollApiController::class, 'storeSalaryStructure'])->name('api.payroll.employees.salary-structure.store');
         Route::put('/employees/{employeeId}/salary-structure', [PayrollApiController::class, 'updateSalaryStructure'])->name('api.payroll.employees.salary-structure.update');
@@ -603,14 +643,20 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/reports/summary/{periodId}', [PayrollApiController::class, 'getSummaryReport'])->name('api.payroll.reports.summary');
         Route::get('/reports/detailed/{periodId}', [PayrollApiController::class, 'getDetailedReport'])->name('api.payroll.reports.detailed');
         Route::get('/reports/employee/{employeeId}', [PayrollApiController::class, 'getEmployeePayrollHistory'])->name('api.payroll.reports.employee');
+        Route::get('/history/{employeeId}', [PayrollApiController::class, 'getEmployeePayrollHistory'])->name('api.payroll.history');
 
-        // Salary Sheet Management
+        // Salary Sheet Editor Endpoints
         Route::get('/salary-sheet', [PayrollApiController::class, 'getSalarySheetData'])->name('api.payroll.salary-sheet');
         Route::post('/salary-sheet/update', [PayrollApiController::class, 'updateSalarySheet'])->name('api.payroll.salary-sheet.update');
-        Route::get('/salary-sheet/export', [PayrollApiController::class, 'exportSalarySheet'])->name('payroll.salary-sheet.export');
-        Route::get('/salary-sheet/template', [PayrollApiController::class, 'downloadImportTemplate'])->name('payroll.salary-sheet.template');
         Route::post('/salary-sheet/import', [PayrollApiController::class, 'importSalarySheet'])->name('api.payroll.salary-sheet.import');
         Route::post('/salary-sheet/post', [PayrollApiController::class, 'postPayroll'])->name('api.payroll.salary-sheet.post');
+    });
+
+    Route::group(['prefix' => 'payroll'], function () {
+        Route::get('/salary-sheet/template', [PayrollApiController::class, 'downloadImportTemplate'])->name('payroll.salary-sheet.template');
+        Route::get('/salary-sheet/export', [PayrollApiController::class, 'exportSalarySheet'])->name('payroll.salary-sheet.export');
+
+        Route::get('/preview/print', [PayrollApiController::class, 'printPreviewPage'])->name('payroll.preview.print');
     });
 
     // Route::get('/admin/subscription/sports/category', function () {

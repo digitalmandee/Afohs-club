@@ -20,32 +20,58 @@ class EmployeeController extends Controller
 {
     public function dashboard(Request $request)
     {
-        // Get total employees (excluding deleted)
-        $totalEmployees = Employee::whereNull('deleted_at')->count();
-
-        // Attendance stats for today
+        // Branch-wise (Company-wise) Statistics
         $currentDay = now()->format('Y-m-d');
-        $attendanceStats = null;
-        // $attendanceStats = Attendance::where('date', $currentDay)
-        //     ->selectRaw("
-        //     SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent,
-        //     SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
-        //     SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as total_late
-        // ")
-        //     ->first();
+
+        $companyStats = \App\Models\Branch::where('status', true)
+            ->withCount(['employees' => function ($query) {
+                // Count active employees in this branch
+                $query->whereNull('deleted_at');
+            }])
+            ->get()
+            ->map(function ($branch) use ($currentDay) {
+                // Get attendance stats for this branch for today
+                $attendance = \App\Models\Attendance::whereHas('employee', function ($q) use ($branch) {
+                    $q->where('branch_id', $branch->id);
+                })
+                    ->where('date', $currentDay)
+                    ->selectRaw("
+                        SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent,
+                        SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
+                        SUM(CASE WHEN status = 'weekend' THEN 1 ELSE 0 END) as total_weekend
+                    ")
+                    ->first();
+
+                return [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'total_employees' => $branch->employees_count,
+                    'present' => $attendance->total_present ?? 0,
+                    'absent' => $attendance->total_absent ?? 0,
+                    'weekend' => $attendance->total_weekend ?? 0,
+                ];
+            });
 
         $limit = $request->query('limit') ?? 10;
         $search = $request->query('search', '');
-        $departmentFilters = $request->query('department_ids', []);
+        $departmentId = $request->query('department_id');
+        $subdepartmentId = $request->query('subdepartment_id');
+        $branchId = $request->query('branch_id');
+        $shiftId = $request->query('shift_id');
+        $designationId = $request->query('designation_id');
 
-        // Employees with pagination - include deleted departments and subdepartments
+        // Employees with pagination - include relationships
         $employeesQuery = Employee::with([
             'department' => function ($query) {
-                $query->withTrashed();  // Include soft deleted departments
+                $query->withTrashed();
             },
             'subdepartment' => function ($query) {
-                $query->withTrashed();  // Include soft deleted subdepartments
+                $query->withTrashed();
             },
+            'designation',
+            'branch',
+            'shift',
+            'photo',
         ]);
 
         // Apply search filter if provided
@@ -55,13 +81,25 @@ class EmployeeController extends Controller
                     ->where('name', 'like', '%' . $search . '%')
                     ->orWhere('employee_id', 'like', '%' . $search . '%')
                     ->orWhere('email', 'like', '%' . $search . '%')
-                    ->orWhere('designation', 'like', '%' . $search . '%');
+                    ->orWhere('national_id', 'like', '%' . $search . '%');
             });
         }
 
-        // Apply department filters if provided
-        if (!empty($departmentFilters) && is_array($departmentFilters)) {
-            $employeesQuery->whereIn('department_id', $departmentFilters);
+        // Apply individual filters
+        if ($departmentId) {
+            $employeesQuery->where('department_id', $departmentId);
+        }
+        if ($subdepartmentId) {
+            $employeesQuery->where('subdepartment_id', $subdepartmentId);
+        }
+        if ($branchId) {
+            $employeesQuery->where('branch_id', $branchId);
+        }
+        if ($shiftId) {
+            $employeesQuery->where('shift_id', $shiftId);
+        }
+        if ($designationId) {
+            $employeesQuery->where('designation_id', $designationId);
         }
 
         $employees = $employeesQuery
@@ -69,28 +107,18 @@ class EmployeeController extends Controller
             ->withQueryString()
             ->through(function ($employee) {
                 $employee->joining_date = $employee->joining_date ? \Carbon\Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
+                $employee->photo_url = $employee->photo ? asset('storage/' . $employee->photo->file_path) : null;
                 return $employee;
             });
 
         // Get filter options
         $departments = Department::select('id', 'name')->get();
 
-        return Inertia::render('App/Admin/Employee/Dashboard1', [
-            'stats' => [
-                'total_employees' => $totalEmployees,
-                // 'total_present' => $attendanceStats->total_present ?? 0,
-                // 'total_absent' => $attendanceStats->total_absent ?? 0,
-                // 'total_late' => $attendanceStats->total_late ?? 0,
-                'total_present' => $attendanceStats->total_present ?? 0,
-                'total_absent' => $attendanceStats->total_absent ?? 0,
-                'total_late' => $attendanceStats->total_late ?? 0,
-            ],
+        return Inertia::render('App/Admin/Employee/Dashboard', [
+            'companyStats' => $companyStats,
             'employees' => $employees,
+            'filters' => $request->only(['search', 'department_id', 'subdepartment_id', 'branch_id', 'shift_id', 'designation_id']),
             'departments' => $departments,
-            'filters' => [
-                'search' => $search,
-                'department_ids' => $departmentFilters,
-            ],
         ]);
     }
 
@@ -126,6 +154,7 @@ class EmployeeController extends Controller
             'name' => 'required|string',
             'employee_id' => 'required|unique:employees,employee_id',
             'email' => 'required|email|unique:employees,email',
+            'designation_id' => 'nullable|exists:designations,id',
             'designation' => 'nullable|string',
             'phone_no' => 'required|regex:/^[0-9+\-\(\) ]+$/',
             'gender' => 'required|in:male,female',
@@ -136,6 +165,8 @@ class EmployeeController extends Controller
             'emergency_no' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
             'department_id' => 'required|exists:departments,id',
             'subdepartment_id' => 'nullable|exists:subdepartments,id',
+            'shift_id' => 'nullable|exists:shifts,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'salary' => 'nullable|numeric',
             'joining_date' => 'nullable|date',
             'employment_type' => 'required|in:full_time,part_time,contract',
@@ -161,6 +192,18 @@ class EmployeeController extends Controller
             'crime_details' => 'nullable|string',
             'remarks' => 'nullable|string',
             'barcode' => 'nullable|string',
+            // New enhanced fields
+            'nationality' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'payment_method' => 'required|in:cash,bank',
+            'contract_start_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'academic_qualification' => 'nullable|string',
+            'academic_institution' => 'nullable|string',
+            'academic_year' => 'nullable|string',
+            'work_experience_years' => 'nullable|integer',
+            'previous_employer' => 'nullable|string',
+            'previous_position' => 'nullable|string',
         ]);
 
         try {
@@ -181,9 +224,12 @@ class EmployeeController extends Controller
             $employee = Employee::create([
                 'department_id' => $request->department_id,
                 'subdepartment_id' => $request->subdepartment_id,
+                'shift_id' => $request->shift_id,
+                'branch_id' => $request->branch_id,
                 'employee_id' => $request->employee_id,
                 'name' => $request->name,
                 'email' => $request->email,
+                'designation_id' => $request->designation_id,
                 'designation' => $request->designation,
                 'phone_no' => $request->phone_no,
                 'gender' => $request->gender,
@@ -218,6 +264,18 @@ class EmployeeController extends Controller
                 'crime_details' => $request->crime_details,
                 'remarks' => $request->remarks,
                 'barcode' => $request->barcode,
+                // New enhanced fields
+                'nationality' => $request->nationality,
+                'status' => $request->status,
+                'payment_method' => $request->payment_method,
+                'contract_start_date' => $request->contract_start_date,
+                'contract_end_date' => $request->contract_end_date,
+                'academic_qualification' => $request->academic_qualification,
+                'academic_institution' => $request->academic_institution,
+                'academic_year' => $request->academic_year,
+                'work_experience_years' => $request->work_experience_years,
+                'previous_employer' => $request->previous_employer,
+                'previous_position' => $request->previous_position,
             ]);
 
             // Auto-create salary structure if salary is provided
@@ -309,6 +367,7 @@ class EmployeeController extends Controller
             'name' => 'required|string',
             'employee_id' => 'required',
             'email' => 'required|email',
+            'designation_id' => 'nullable|exists:designations,id',
             'designation' => 'nullable|string',
             'phone_no' => 'required|regex:/^[0-9+\-\(\) ]+$/',
             'gender' => 'required|in:male,female',
@@ -317,6 +376,8 @@ class EmployeeController extends Controller
             'account_no' => 'nullable|regex:/^[0-9]+$/',
             'address' => 'nullable|string',
             'emergency_no' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
+            'shift_id' => 'nullable|exists:shifts,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'salary' => 'nullable|numeric',
             'joining_date' => 'nullable|date',
             // Additional fields validation
@@ -340,6 +401,18 @@ class EmployeeController extends Controller
             'crime_details' => 'nullable|string',
             'remarks' => 'nullable|string',
             'barcode' => 'nullable|string',
+            // New enhanced fields
+            'nationality' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'payment_method' => 'required|in:cash,bank',
+            'contract_start_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'academic_qualification' => 'nullable|string',
+            'academic_institution' => 'nullable|string',
+            'academic_year' => 'nullable|string',
+            'work_experience_years' => 'nullable|integer',
+            'previous_employer' => 'nullable|string',
+            'previous_position' => 'nullable|string',
         ]);
 
         try {
@@ -373,8 +446,11 @@ class EmployeeController extends Controller
                 'name',
                 'department_id',
                 'subdepartment_id',
+                'shift_id',
+                'branch_id',
                 'employee_id',
                 'email',
+                'designation_id',
                 'designation',
                 'phone_no',
                 'gender',
@@ -407,6 +483,18 @@ class EmployeeController extends Controller
                 'crime_details',
                 'remarks',
                 'barcode',
+                // New enhanced fields
+                'nationality',
+                'status',
+                'payment_method',
+                'contract_start_date',
+                'contract_end_date',
+                'academic_qualification',
+                'academic_institution',
+                'academic_year',
+                'work_experience_years',
+                'previous_employer',
+                'previous_position',
             ]));
 
             // Update age if date_of_birth was provided
@@ -552,5 +640,109 @@ class EmployeeController extends Controller
         $employees = $query->limit(10)->get(['id', 'name', 'employee_id']);
 
         return response()->json($employees);
+    }
+
+    /**
+     * Remove the specified employee from storage (Soft Delete).
+     */
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+            $employee = Employee::find($id);
+
+            if (!$employee) {
+                return response()->json(['success' => false, 'message' => 'Employee not found'], 404);
+            }
+
+            if ($employee->user) {
+                $employee->user->delete();  // Soft delete associated user
+            }
+
+            $employee->delete();  // Soft delete employee
+
+            DB::commit();
+            return back()->with('success', 'Employee deleted successfully');  // Inertia redirect
+            // return response()->json(['success' => true, 'message' => 'Employee deleted successfully'], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->with('error', $th->getMessage());
+        }
+    }
+
+    /**
+     * Display a listing of trashed employees.
+     */
+    public function trashed(Request $request)
+    {
+        $employees = Employee::onlyTrashed()
+            ->with(['branch'])  // Eager load relationships if needed for display
+            ->orderByDesc('deleted_at')
+            ->paginate(10);
+
+        return Inertia::render('App/Admin/Employee/Trashed', [
+            'employees' => $employees,
+        ]);
+    }
+
+    /**
+     * Restore the specified trashed employee.
+     */
+    public function restore($id)
+    {
+        try {
+            DB::beginTransaction();
+            $employee = Employee::onlyTrashed()->find($id);
+
+            if (!$employee) {
+                return back()->with('error', 'Employee not found in trash');
+            }
+
+            if ($employee->user()->withTrashed()->exists()) {
+                $employee->user()->withTrashed()->restore();  // Restore associated user
+            }
+
+            $employee->restore();
+
+            DB::commit();
+            return back()->with('success', 'Employee restored successfully');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->with('error', $th->getMessage());
+        }
+    }
+
+    /**
+     * Permanently remove the specified employee from storage.
+     */
+    public function forceDelete($id)
+    {
+        try {
+            DB::beginTransaction();
+            $employee = Employee::onlyTrashed()->find($id);
+
+            if (!$employee) {
+                return back()->with('error', 'Employee not found in trash');
+            }
+
+            // Permanently delete associated user
+            if ($employee->user()->withTrashed()->exists()) {
+                $employee->user()->withTrashed()->forceDelete();
+            }
+
+            // Delete associated media (photos, documents)
+            foreach ($employee->media as $media) {
+                FileHelper::deleteImage($media->file_path);
+                $media->delete();
+            }
+
+            $employee->forceDelete();
+
+            DB::commit();
+            return back()->with('success', 'Employee permanently deleted');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return back()->with('error', $th->getMessage());
+        }
     }
 }

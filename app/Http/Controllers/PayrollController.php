@@ -494,4 +494,12 @@ class PayrollController extends Controller
     {
         return Inertia::render('App/Admin/Employee/Payroll/SalarySheet');
     }
+
+    /**
+     * Display payroll history page
+     */
+    public function history()
+    {
+        return Inertia::render('App/Admin/Employee/Payroll/History');
+    }
 }

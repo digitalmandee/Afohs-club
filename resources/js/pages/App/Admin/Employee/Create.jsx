@@ -19,20 +19,27 @@ const EmployeeCreate = () => {
         employee_id: employee?.employee_id || '',
         email: employee?.email || '',
         designation: employee?.designation || '',
+        designation_id: employee?.designation_id || null,
         date_of_birth: employee?.date_of_birth || '',
-        age: '', // Calculated field
+        age: '',
         gender: employee?.gender || '',
         marital_status: employee?.marital_status || '',
         national_id: employee?.national_id || '',
+        nationality: employee?.nationality || '',
 
         // Employment Details
         department: employee?.department || null,
         subdepartment: employee?.subdepartment || null,
         employment_type: employee?.employment_type || 'full_time',
+        status: employee?.status || 'active',
         company: employee?.company || '',
         joining_date: employee?.joining_date || '',
+        contract_start_date: employee?.contract_start_date || '',
+        contract_end_date: employee?.contract_end_date || '',
         salary: employee?.salary || '',
         barcode: employee?.barcode || '',
+        shift_id: employee?.shift_id || null,
+        branch_id: employee?.branch_id || null,
 
         // Contact Information
         phone_no: employee?.phone_no || '',
@@ -59,6 +66,17 @@ const EmployeeCreate = () => {
         // Bank & Financial
         account_no: employee?.account_no || '',
         bank_details: employee?.bank_details || '',
+        payment_method: employee?.payment_method || 'bank',
+
+        // Academic Information
+        academic_qualification: employee?.academic_qualification || '',
+        academic_institution: employee?.academic_institution || '',
+        academic_year: employee?.academic_year || '',
+
+        // Work Experience
+        work_experience_years: employee?.work_experience_years || '',
+        previous_employer: employee?.previous_employer || '',
+        previous_position: employee?.previous_position || '',
 
         // Organizational Background
         learn_of_org: employee?.learn_of_org || '',
@@ -76,8 +94,37 @@ const EmployeeCreate = () => {
     const [errors, setErrors] = useState({});
     const [departments, setDepartments] = useState([]);
     const [subdepartments, setSubdepartments] = useState([]);
+    const [designations, setDesignations] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [shifts, setShifts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [subdepartmentSearchTerm, setSubdepartmentSearchTerm] = useState('');
+
+    useEffect(() => {
+        // Fetch Designations
+        axios
+            .get(route('designations.list'))
+            .then((res) => {
+                if (res.data.success) setDesignations(res.data.data);
+            })
+            .catch((err) => console.error(err));
+
+        // Fetch Branches
+        axios
+            .get(route('branches.list'))
+            .then((res) => {
+                if (res.data.success) setBranches(res.data.branches || []);
+            })
+            .catch((err) => console.error(err));
+
+        // Fetch Shifts
+        axios
+            .get(route('shifts.list'))
+            .then((res) => {
+                if (res.data.success) setShifts(res.data.shifts || []);
+            })
+            .catch((err) => console.error(err));
+    }, []);
 
     // File upload states
     const [photoFile, setPhotoFile] = useState(null);
@@ -384,6 +431,17 @@ const EmployeeCreate = () => {
                                 ))}
                             </RadioGroup>
                         </Box>
+
+                        {/* Employee Status */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Employment Status*
+                            </Typography>
+                            <TextField size="small" sx={textFieldStyle} select name="status" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} fullWidth SelectProps={{ native: true }}>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </TextField>
+                        </Box>
                     </Box>
 
                     {/* Basic Information */}
@@ -397,10 +455,37 @@ const EmployeeCreate = () => {
                             { label: 'Father Name', name: 'father_name', placeholder: 'Father Name' },
                             { label: 'Employee ID*', name: 'employee_id', placeholder: '12345', disabled: isEdit },
                             { label: 'National ID (CNIC)', name: 'national_id', placeholder: 'XXXXX-XXXXXXX-X' },
+                            { label: 'Nationality', name: 'nationality', placeholder: 'e.g., Pakistani' },
                             { label: 'Email*', name: 'email', placeholder: 'email@example.com' },
-                            { label: 'Designation', name: 'designation', placeholder: 'Job Title' },
-                            { label: 'Barcode', name: 'barcode', placeholder: 'Barcode Number' },
                         ].map(renderTextField)}
+
+                        {/* Designation Autocomplete */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, color: '#000000' }} mb={1}>
+                                Designation
+                            </Typography>
+                            <Autocomplete
+                                size="small"
+                                options={designations}
+                                getOptionLabel={(option) => option.name}
+                                value={designations.find((d) => d.id === formData.designation_id) || (formData.designation ? { name: formData.designation, id: 'temp' } : null)}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                onInputChange={(event, value) => {
+                                    // Optional: Handle free-text if you still want to allow creating new ones via this input,
+                                    // but standard is dropdown. If typing doesn't match, we can just clear or keep search.
+                                }}
+                                onChange={(event, value) => {
+                                    setFormData({
+                                        ...formData,
+                                        designation_id: value ? value.id : null,
+                                        designation: value ? value.name : '', // Keep string for legacy/display
+                                    });
+                                }}
+                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Job Title" />}
+                            />
+                        </Box>
+
+                        {[{ label: 'Barcode', name: 'barcode', placeholder: 'Barcode Number' }].map(renderTextField)}
 
                         {/* Date of Birth with Auto-calculated Age */}
                         <Box>
@@ -454,9 +539,9 @@ const EmployeeCreate = () => {
                         </Box>
                     </Box>
 
-                    {/* Department & Employment Details */}
+                    {/* Department, Shift & Employment Details */}
                     <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, mt: 3 }}>
-                        Department & Employment
+                        Department, Shift & Employment
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', mb: 4 }}>
@@ -490,11 +575,64 @@ const EmployeeCreate = () => {
                             <Autocomplete size="small" options={subdepartments} getOptionLabel={(option) => option.name} value={formData.subdepartment} disabled={!formData.department} onInputChange={(event, value) => setSubdepartmentSearchTerm(value)} onChange={(event, value) => setFormData({ ...formData, subdepartment: value })} renderInput={(params) => <TextField {...params} sx={textFieldStyle} label="Search Subdepartment" placeholder={!formData.department ? 'Select department first' : 'Search'} />} />
                         </Box>
 
+                        {/* Company Selection */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Company (Location)
+                            </Typography>
+                            <Autocomplete
+                                size="small"
+                                options={branches}
+                                getOptionLabel={(option) => option.name}
+                                value={branches.find((b) => b.id === formData.branch_id) || null}
+                                onChange={(event, value) => {
+                                    setFormData({ ...formData, branch_id: value ? value.id : null });
+                                }}
+                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Company" />}
+                            />
+                        </Box>
+
+                        {/* Shift Selection */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Shift
+                            </Typography>
+                            <Autocomplete
+                                size="small"
+                                options={shifts}
+                                getOptionLabel={(option) => `${option.name} (${option.start_time}-${option.end_time})`}
+                                value={shifts.find((s) => s.id === formData.shift_id) || null}
+                                onChange={(event, value) => {
+                                    setFormData({ ...formData, shift_id: value ? value.id : null });
+                                }}
+                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Shift" />}
+                            />
+                        </Box>
+
                         {[
-                            { label: 'Company', name: 'company', placeholder: 'Company Name' },
                             { label: 'Joining Date*', name: 'joining_date', type: 'date' },
                             { label: 'Salary*', name: 'salary', placeholder: '30000', type: 'number', min: 0 },
                         ].map(renderTextField)}
+
+                        {/* Contract Dates - Only show for contract employees */}
+                        {formData.employment_type === 'contract' && (
+                            <>
+                                <Box>
+                                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                        Contract Start Date
+                                    </Typography>
+                                    <TextField size="small" sx={textFieldStyle} type="date" name="contract_start_date" value={formData.contract_start_date} onChange={(e) => setFormData({ ...formData, contract_start_date: e.target.value })} fullWidth InputLabelProps={{ shrink: true }} />
+                                </Box>
+                                <Box>
+                                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                        Contract End Date
+                                    </Typography>
+                                    <TextField size="small" sx={textFieldStyle} type="date" name="contract_end_date" value={formData.contract_end_date} onChange={(e) => setFormData({ ...formData, contract_end_date: e.target.value })} fullWidth InputLabelProps={{ shrink: true }} />
+                                </Box>
+                            </>
+                        )}
+
+                        {[].map(renderTextField)}
                     </Box>
 
                     {/* Contact Information */}
@@ -604,6 +742,43 @@ const EmployeeCreate = () => {
                             { label: 'Vehicle Details', name: 'vehicle_details', placeholder: 'Vehicle Information' },
                             { label: 'Account Number', name: 'account_no', placeholder: 'Bank Account Number' },
                             { label: 'Bank Details', name: 'bank_details', placeholder: 'Bank Name & Branch' },
+                        ].map(renderTextField)}
+
+                        {/* Payment Method */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Payment Method
+                            </Typography>
+                            <TextField size="small" sx={textFieldStyle} select name="payment_method" value={formData.payment_method} onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })} fullWidth SelectProps={{ native: true }}>
+                                <option value="bank">Bank Transfer</option>
+                                <option value="cash">Cash</option>
+                            </TextField>
+                        </Box>
+                    </Box>
+
+                    {/* Academic Information */}
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, mt: 3 }}>
+                        Academic Information
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', mb: 4 }}>
+                        {[
+                            { label: 'Highest Qualification', name: 'academic_qualification', placeholder: "e.g., Bachelor's Degree" },
+                            { label: 'Institution Name', name: 'academic_institution', placeholder: 'University/College Name' },
+                            { label: 'Year of Completion', name: 'academic_year', placeholder: '2020' },
+                        ].map(renderTextField)}
+                    </Box>
+
+                    {/* Work Experience */}
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, mt: 3 }}>
+                        Work Experience
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', mb: 4 }}>
+                        {[
+                            { label: 'Years of Experience', name: 'work_experience_years', placeholder: '5', type: 'number', min: 0 },
+                            { label: 'Previous Employer', name: 'previous_employer', placeholder: 'Company Name' },
+                            { label: 'Previous Position', name: 'previous_position', placeholder: 'Job Title' },
                         ].map(renderTextField)}
                     </Box>
 
