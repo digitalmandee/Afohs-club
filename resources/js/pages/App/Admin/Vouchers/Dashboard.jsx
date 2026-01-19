@@ -84,7 +84,6 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
     };
 
     return (
-        // <ThemeProvider theme={theme}>
         <Box sx={{ p: 3, bgcolor: '#f5f5f5' }}>
             {/* Header */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -526,7 +525,6 @@ const VoucherDashboard = ({ vouchers, stats, filters }) => {
                 </Box>
             )}
         </Box>
-        // </ThemeProvider>
     );
 };
 

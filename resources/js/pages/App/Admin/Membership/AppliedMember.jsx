@@ -33,13 +33,6 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
         }
     };
 
-    const theme = createTheme({
-        palette: {
-            primary: { main: '#063455' },
-            secondary: { main: '#063455' },
-        },
-    });
-
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} />
@@ -52,7 +45,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                 }}
             > */}
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-                <ThemeProvider theme={theme}>
+                
                     {mode === 'create' || mode === 'edit' ? (
                         <AppliedMemberForm memberData={memberData} />
                     ) : (
@@ -267,7 +260,7 @@ const AppliedMember = ({ familyGroups = [], memberData = null, mode = 'list' }) 
                         </>
                     )}
                     <AppliedMemberInvoice open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} invoice={selectedInvoice} />
-                </ThemeProvider>
+                
             </div>
             {/* </div> */}
         </>

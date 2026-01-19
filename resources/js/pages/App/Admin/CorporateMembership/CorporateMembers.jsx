@@ -86,17 +86,10 @@ const CorporateMembers = ({ members }) => {
         });
     };
 
-    const theme = createTheme({
-        palette: {
-            primary: { main: '#063455' },
-            secondary: { main: '#063455' },
-        },
-    });
-
     return (
         <>
             <div className="container-fluid p-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-                <ThemeProvider theme={theme}>
+                
                     <div className="mx-3">
                         <div className="d-flex justify-content-between align-items-center">
                             <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>All Corporate Members</Typography>
@@ -394,7 +387,6 @@ const CorporateMembers = ({ members }) => {
                             </Box>
                         </TableContainer>
                     </div>
-                </ThemeProvider>
                 {/* Delete Confirmation Dialog */}
                 <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
                     <DialogTitle>Confirm Deletion</DialogTitle>

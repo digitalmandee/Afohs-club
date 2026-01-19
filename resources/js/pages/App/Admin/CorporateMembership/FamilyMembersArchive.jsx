@@ -112,17 +112,10 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
         return statusMap[status] || { color: '#063455', label: status || 'N/A', };
     };
 
-    const theme = createTheme({
-        palette: {
-            primary: { main: '#063455' },
-            secondary: { main: '#063455' },
-        },
-    });
-
     return (
         <>
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-                <ThemeProvider theme={theme}>
+                
                     {/* Stats Cards */}
                     {stats && (
                         <div className="row mb-3 mt-4">
@@ -482,7 +475,6 @@ const CorporateFamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                             </Box>
                         </TableContainer>
                     </div>
-                </ThemeProvider>
             </div>
 
             {/* Member Details Modal */}

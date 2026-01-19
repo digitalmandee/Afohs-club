@@ -10,7 +10,6 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import { DateRange } from 'react-date-range';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-
 import 'react-date-range/dist/styles.css'; // main css file
 import 'react-date-range/dist/theme/default.css'; // theme css file
 import { addDays, format } from 'date-fns';

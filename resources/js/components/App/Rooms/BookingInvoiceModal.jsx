@@ -9,18 +9,6 @@ import RoomCheckInModal from './CheckInModal';
 import { router, usePage } from '@inertiajs/react';
 import dayjs from 'dayjs';
 
-// Create Material-UI theme to ensure consistent styling
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: '#063455',
-        },
-        secondary: {
-            main: '#063455',
-        },
-    },
-});
-
 const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeView, type = false }) => {
     const props = usePage().props;
     const auth = props.auth;
@@ -235,7 +223,6 @@ const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeVie
             />
 
             {/* Cancel Booking Modal */}
-            <ThemeProvider theme={theme}>
                 <Dialog open={showCancelModal} onClose={() => setShowCancelModal(false)} maxWidth="sm" fullWidth>
                     <DialogTitle>Cancel Room Booking</DialogTitle>
                     <DialogContent>
@@ -304,7 +291,6 @@ const BookingInvoiceModal = ({ open, onClose, bookingId, setBookings, financeVie
                         </MuiButton>
                     </DialogActions>
                 </Dialog>
-            </ThemeProvider>
         </>
     );
 };

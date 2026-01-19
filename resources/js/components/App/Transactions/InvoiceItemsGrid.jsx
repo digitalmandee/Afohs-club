@@ -223,14 +223,14 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Box display="flex" alignItems="center">
                         <Box sx={{ bgcolor: '#e0f2fe', p: 1, borderRadius: 1, mr: 2 }}>
-                            <ReceiptLong sx={{ color: '#0284c7' }} />
+                            <ReceiptLong sx={{ color: '#063455' }} />
                         </Box>
-                        <Typography variant="h6" fontWeight="bold" color="#0f172a">
+                        <Typography variant="h6" fontWeight="bold" color="#063455">
                             Invoice Items
                         </Typography>
                     </Box>
                     {!paymentMode && (
-                        <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
+                        <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: '16px', textTransform: 'none', fontWeight: 600, color:'#fff', bgcolor:'#063455' }}>
                             Add Another Item
                         </Button>
                     )}

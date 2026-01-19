@@ -1121,18 +1121,20 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'paid':
-                return 'success';
-            case 'unpaid':
-                return 'error';
-            case 'partial':
-                return 'warning';
-            default:
-                return 'default';
-        }
+    const getStatusStyle = (status) =>
+        statusStyles[status] || statusStyles.default;
+
+    const statusStyles = {
+        paid: { bg: '#d4edda', color: '#155724' },
+        unpaid: { bg: '#f8d7da', color: '#721c24' },
+        partial: { bg: '#fff3cd', color: '#856404' },
+        default: { bg: '#e2e3e5', color: '#383d41' },
     };
+
+    const toTitleCase = (str = '') =>
+        str
+            .toLowerCase()
+            .replace(/\b\w/g, (char) => char.toUpperCase());
 
     // Payment Confirmation Handlers
     const [submittingPayment, setSubmittingPayment] = useState(false);
@@ -1266,7 +1268,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
     return (
         <>
-            {/* <ThemeProvider theme={theme}> */}
             <Box sx={{ p: 2 }}>
                 {/* Header */}
                 <Box sx={{ mb: 2 }}>
@@ -1365,12 +1366,12 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                 />
                                 {selectedMember && (
                                     <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3 }}>
                                             {/* Member Info */}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                                                 <Person sx={{ fontSize: 18, color: '#64748b' }} />
                                                 <Box>
-                                                    <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 1.1 }}>
+                                                    <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 2 }}>
                                                         {selectedMember.full_name}{' '}
                                                         <Typography component="span" variant="caption" color="text.secondary">
                                                             ({selectedMember.membership_no || 'No #'})
@@ -1385,9 +1386,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
 
                                             {/* Fees Summary Strip */}
-                                            <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, flexWrap: 'wrap' }}>
+                                            <Box sx={{ display: 'flex', gap: 5, flexGrow: 1, flexWrap: 'wrap' }}>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                    <Typography variant="caption" display="block" color="text.secondary">
                                                         Membership
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600} color="primary.main">
@@ -1395,7 +1396,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                    <Typography variant="caption" display="block" color="text.secondary">
                                                         Monthly
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600} color="error.main">
@@ -1403,7 +1404,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                    <Typography variant="caption" display="block" color="text.secondary">
                                                         Quarterly
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600} color="secondary.main">
@@ -1411,7 +1412,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                    <Typography variant="caption" display="block" color="text.secondary">
                                                         Joined
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight={600}>
@@ -1419,7 +1420,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary" sx={{ mb: -0.3 }}>
+                                                    <Typography variant="caption" display="block" color="text.secondary">
                                                         Ledger Balance
                                                     </Typography>
                                                     <Box display="flex" alignItems="center">
@@ -1432,7 +1433,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                 const historySection = document.getElementById('transaction-history-section');
                                                                 if (historySection) historySection.scrollIntoView({ behavior: 'smooth' });
                                                             }}
-                                                            sx={{ ml: 0.5, p: 0 }}
+                                                            sx={{ ml: 5, p: 0 }}
                                                         >
                                                             <Visibility fontSize="small" />
                                                         </IconButton>
@@ -1527,7 +1528,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                     {/* Remarks Section */}
                                                     <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#063455' }}>
                                                             Remarks
                                                         </Typography>
                                                         <TextField
@@ -1547,7 +1548,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
                                                     {/* Payment Details Section */}
                                                     <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#374151', display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#063455', display: 'flex', alignItems: 'center', gap: 1 }}>
                                                             <Payment fontSize="small" /> Payment Details
                                                         </Typography>
                                                         <Grid container spacing={2}>
@@ -1607,13 +1608,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     <Button
                                                                         onClick={(e) => handleSubmit(e, 'unpaid', false)}
                                                                         variant="outlined"
-                                                                        size="large"
+                                                                        size="small"
                                                                         disabled={submitting || invoiceItems.length === 0}
                                                                         sx={{
-                                                                            py: 1.5,
-                                                                            borderRadius: 2,
+                                                                            // py: 1.5,
+                                                                            borderRadius: '16px',
                                                                             textTransform: 'none',
                                                                             fontWeight: 600,
+                                                                            border: '1px solid #063455',
+                                                                            height: 35
                                                                         }}
                                                                     >
                                                                         Save
@@ -1621,15 +1624,17 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     <Button
                                                                         onClick={(e) => handleSubmit(e, 'unpaid', true)}
                                                                         variant="outlined"
-                                                                        size="large"
+                                                                        size="small"
                                                                         disabled={submitting || invoiceItems.length === 0}
                                                                         sx={{
-                                                                            py: 1.5,
-                                                                            borderRadius: 2,
-                                                                            color: '#0a3d62',
-                                                                            borderColor: '#0a3d62',
+                                                                            // py: 1.5,
+                                                                            borderRadius: '16px',
+                                                                            color: '#063455',
+                                                                            // borderColor: '#0a3d62',
                                                                             textTransform: 'none',
                                                                             fontWeight: 600,
+                                                                            border: '1px solid #063455',
+                                                                            height: 35
                                                                         }}
                                                                     >
                                                                         {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
@@ -1640,14 +1645,16 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             <Button
                                                                 onClick={(e) => handleSubmit(e, 'paid')}
                                                                 variant="contained"
-                                                                size="large"
+                                                                size="small"
                                                                 disabled={submitting || invoiceItems.length === 0}
                                                                 sx={{
-                                                                    py: 1.5,
-                                                                    bgcolor: '#0a3d62',
-                                                                    borderRadius: 2,
+                                                                    // py: 1.5,
+                                                                    bgcolor: '#063455',
+                                                                    borderRadius: '16px',
                                                                     textTransform: 'none',
                                                                     fontWeight: 600,
+                                                                    border: '1px solid #063455',
+                                                                    height: 35
                                                                 }}
                                                             >
                                                                 {submitting ? <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} /> : <Save sx={{ mr: 1 }} />}
@@ -1675,16 +1682,16 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                                         <Box
                                             sx={{
-                                                bgcolor: 'secondary.main',
+                                                bgcolor: '#063455',
                                                 color: 'white',
                                                 borderRadius: '50%',
-                                                width: 32,
-                                                height: 32,
+                                                width: 24,
+                                                height: 24,
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',
                                                 mr: 2,
-                                                fontSize: '14px',
+                                                fontSize: '12px',
                                                 fontWeight: 600,
                                             }}
                                         >
@@ -1724,7 +1731,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         </Box>
                                     ) : (
                                         <>
-                                            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '16px' }}>
+                                            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '12px' }}>
                                                 <Table>
                                                     <TableHead sx={{ bgcolor: '#063455' }}>
                                                         <TableRow>
@@ -1745,7 +1752,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             currentTransactions.map((transaction) => (
                                                                 <TableRow key={transaction.id}>
                                                                     <TableCell sx={{ color: '#000', fontWeight: '600', whiteSpace: 'nowrap' }}>{transaction.invoice_no}</TableCell>
-                                                                    <TableCell>
+                                                                    {/* <TableCell>
                                                                         {transaction.items && transaction.items.length > 0 ? (
                                                                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                                                                                 {transaction.items.map((item, idx) => {
@@ -1761,8 +1768,54 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                         ) : (
                                                                             <Chip label={transaction.fee_type?.replace('_', ' ')} color={transaction.fee_type === 'membership_fee' ? 'primary' : transaction.fee_type === 'subscription_fee' ? 'success' : 'secondary'} size="small" sx={{ bgcolor: '#063455', textTransform: 'capitalize' }} />
                                                                         )}
+                                                                    </TableCell> */}
+                                                                    <TableCell>
+                                                                        {transaction.items && transaction.items.length > 0 ? (
+                                                                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                                                                {transaction.items.map((item, idx) => {
+                                                                                    let label = item.fee_type || item.invoice_type || '';
+
+                                                                                    // Map numeric IDs to names
+                                                                                    const typeObj = transactionTypes.find(
+                                                                                        (t) => t.id == label || t.id == item.fee_type
+                                                                                    );
+
+                                                                                    if (typeObj) {
+                                                                                        label = typeObj.name;
+                                                                                    }
+
+                                                                                    // ❗ Do NOT render chip if label is empty
+                                                                                    if (!label || label.toString().trim() === '') return null;
+
+                                                                                    return (
+                                                                                        <Chip
+                                                                                            key={idx}
+                                                                                            label={label.toString().replace('_', ' ')}
+                                                                                            size="small"
+                                                                                            sx={{
+                                                                                                bgcolor: '#063455',
+                                                                                                textTransform: 'capitalize',
+                                                                                                maxWidth: 'fit-content',
+                                                                                                color: '#fff',
+                                                                                            }}
+                                                                                        />
+                                                                                    );
+                                                                                })}
+                                                                            </Box>
+                                                                        ) : transaction.fee_type && transaction.fee_type.trim() !== '' ? (
+                                                                            <Chip
+                                                                                label={transaction.fee_type.replace('_', ' ')}
+                                                                                size="small"
+                                                                                sx={{
+                                                                                    bgcolor: '#063455',
+                                                                                    textTransform: 'capitalize',
+                                                                                    color: '#fff',
+                                                                                    maxWidth: 'fit-content',
+                                                                                }}
+                                                                            />
+                                                                        ) : null}
                                                                     </TableCell>
-                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>
+                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px', whiteSpace: 'nowrap' }}>
                                                                         {transaction.items && transaction.items.length > 0 ? (
                                                                             <Box>
                                                                                 {transaction.items.map((item, idx) => (
@@ -1804,9 +1857,24 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                             </Typography>
                                                                         )}
                                                                     </TableCell>
-                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{formatCurrency(transaction.total_price)}</TableCell>
-                                                                    <TableCell>
+                                                                    <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px', whiteSpace: 'nowrap' }}>
+                                                                        <Tooltip title={formatCurrency(transaction.total_price)} arrow>
+                                                                            {formatCurrency(transaction.total_price)}
+                                                                        </Tooltip>
+                                                                    </TableCell>
+                                                                    {/* <TableCell>
                                                                         <Chip label={transaction.payment_method === 'credit_card' ? `💳 ${transaction.credit_card_type?.toUpperCase() || 'CARD'}` : '💵 CASH'} color={transaction.payment_method === 'credit_card' ? 'info' : 'default'} size="small" />
+                                                                    </TableCell> */}
+                                                                    <TableCell>
+                                                                        <Chip
+                                                                            label={toTitleCase(transaction.status)}
+                                                                            size="small"
+                                                                            sx={{
+                                                                                backgroundColor: getStatusStyle(transaction.status).bg,
+                                                                                color: getStatusStyle(transaction.status).color,
+                                                                                fontWeight: 500,
+                                                                            }}
+                                                                        />
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <Button
@@ -1818,14 +1886,14 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                 setCreatedMemberId(transaction.invoice_no);
                                                                                 setShowInvoiceModal(true);
                                                                             }}
-                                                                            sx={{ py: 0.5, px: 1, color: '#063455', bgcolor: 'transparent', border: '1px solid #063455' }}
+                                                                            sx={{ color: '#063455', bgcolor: 'transparent', border: '1px solid #063455', textTransform: 'none' }}
                                                                         >
                                                                             View
                                                                         </Button>
                                                                     </TableCell>
-                                                                    <TableCell>
+                                                                    <TableCell style={{ whiteSpace: 'nowrap' }}>
                                                                         {transaction.status === 'unpaid' && (
-                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => router.visit(route('finance.invoice.pay', transaction.id))} sx={{ py: 0.5, px: 1, whiteSpace: 'nowrap' }}>
+                                                                            <Button size="small" variant="contained" color="success" startIcon={<Payment />} onClick={() => router.visit(route('finance.invoice.pay', transaction.id))} sx={{ whiteSpace: 'nowrap', textTransform: 'none' }}>
                                                                                 Pay
                                                                             </Button>
                                                                         )}
@@ -1837,8 +1905,22 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                             </Tooltip>
                                                                         )}
                                                                     </TableCell>
+                                                                    {/* <TableCell>
+                                                                        <Chip label={transaction.status} color={getStatusColor(transaction.status)} size="small" />
+                                                                    </TableCell> */}
                                                                     <TableCell>
-                                                                        <Chip label={transaction.status?.toUpperCase()} color={getStatusColor(transaction.status)} size="small" />
+                                                                        <Chip
+                                                                            label={toTitleCase(transaction.status)}
+                                                                            size="small"
+                                                                            sx={{
+                                                                                backgroundColor: getStatusStyle(transaction.status).bg,
+                                                                                color: getStatusStyle(transaction.status).color,
+                                                                                fontWeight: 500,
+                                                                                borderRadius: '12px',
+                                                                                minWidth: '80px',
+                                                                                textAlign: 'center',
+                                                                            }}
+                                                                        />
                                                                     </TableCell>
                                                                     <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{transaction.payment_date ? formatDate(transaction.payment_date) : '-'}</TableCell>
                                                                     <TableCell sx={{ color: '#7f7f7f', fontWeight: '400', whiteSpace: 'nowrap' }}>{transaction.valid_from && transaction.valid_to ? `${formatDate(transaction.valid_from)} - ${formatDate(transaction.valid_to)}` : '-'}</TableCell>
@@ -1885,7 +1967,6 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                     )}
                 </Grid>
             </Box>
-            {/* </ThemeProvider> */}
 
             {/* Invoice Modal */}
             <MembershipInvoiceSlip
