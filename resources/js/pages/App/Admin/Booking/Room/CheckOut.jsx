@@ -14,15 +14,6 @@ import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
 import RoomOrderHistoryModal from '@/components/App/Rooms/RoomOrderHistoryModal';
 import { FaEdit } from 'react-icons/fa';
-// const drawerWidthOpen = 240;
-// const drawerWidthClosed = 110;
-
-const theme = createTheme({
-    palette: {
-        primary: { main: '#063455' },
-        secondary: { main: '#063455' },
-    },
-});
 
 const RoomCheckOut = ({ bookings, filters }) => {
     // const [open, setOpen] = useState(true);
@@ -111,7 +102,6 @@ const RoomCheckOut = ({ bookings, filters }) => {
                     backgroundColor: '#f5f5f5',
                 }}
             >
-                <ThemeProvider theme={theme}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <Box sx={{ p: 3 }}>
                             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -237,7 +227,6 @@ const RoomCheckOut = ({ bookings, filters }) => {
                             </Box>
                         </Box>
                     </LocalizationProvider>
-                </ThemeProvider>
             </div>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} type="CHECK_OUT" />

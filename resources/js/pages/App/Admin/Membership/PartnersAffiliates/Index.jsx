@@ -100,16 +100,9 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
         }
     };
 
-    const theme = createTheme({
-        palette: {
-            primary: { main: '#063455' },
-            secondary: { main: '#063455' },
-        },
-    });
-
     return (
         <div className="container-fluid px-4 pt-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
-            <ThemeProvider theme={theme}>
+           
                 <div>
                     <div className="d-flex justify-content-between align-items-center">
                         <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Partners & Affiliates</Typography>
@@ -473,7 +466,6 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                         </DialogActions>
                     </Dialog>
                 </div>
-            </ThemeProvider>
         </div>
     );
 };

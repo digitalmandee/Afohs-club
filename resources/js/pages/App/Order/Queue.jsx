@@ -5,23 +5,6 @@ import { Avatar, Button, Card, CardContent, IconButton, ThemeProvider, Typograph
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
-
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: '#1976d2',
-        },
-        secondary: {
-            main: '#f50057',
-        },
-    },
-    typography: {
-        fontFamily: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'].join(','),
-    },
-});
-
 const OrderQueue = ({ orders2 }) => {
     const [open, setOpen] = useState(true);
     const [activeTab, setActiveTab] = useState('All Order');
@@ -231,7 +214,6 @@ const OrderQueue = ({ orders2 }) => {
                     // bgcolor: '#f5f7fa'
                 }}
             >
-                <ThemeProvider theme={theme}>
                     <div
                         className="container-fluid p-0"
                         style={{
@@ -723,7 +705,6 @@ const OrderQueue = ({ orders2 }) => {
                             </div>
                         </div>
                     </div>
-                </ThemeProvider>
             </div>
         </>
     );

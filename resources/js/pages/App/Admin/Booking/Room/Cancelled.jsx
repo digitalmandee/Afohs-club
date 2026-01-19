@@ -13,13 +13,6 @@ import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import RoomBookingFilter from '../BookingFilter';
 import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 
-const theme = createTheme({
-    palette: {
-        primary: { main: '#063455' },
-        secondary: { main: '#063455' },
-    },
-});
-
 const RoundedTextField = styled(TextField)({
     '& .MuiOutlinedInput-root': { borderRadius: '16px' },
 });
@@ -130,7 +123,7 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-            <ThemeProvider theme={theme}>
+            
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <Box sx={{ p: 4 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -226,7 +219,6 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
                         )}
                     </Box>
                 </LocalizationProvider>
-            </ThemeProvider>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} type="CANCELLATION" />
 

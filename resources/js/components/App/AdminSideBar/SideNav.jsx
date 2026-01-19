@@ -437,7 +437,7 @@ export default function SideNav({ open, setOpen }) {
                         path: route('finance.transaction'),
                     },
                     {
-                        text: 'Maintenance Fee Posting',
+                        text: 'Bulk Fee',
                         path: route('finance.maintenance.create'),
                     },
                     {

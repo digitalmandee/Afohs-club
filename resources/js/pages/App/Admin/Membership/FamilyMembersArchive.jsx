@@ -144,13 +144,6 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
         return statusMap[status] || { color: '#063455', label: status || 'N/A', };
     };
 
-    const theme = createTheme({
-        palette: {
-            primary: { main: '#063455' },
-            secondary: { main: '#063455' },
-        },
-    });
-
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} />
@@ -173,7 +166,6 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                     </div> */}
 
                 {/* Stats Cards */}
-                <ThemeProvider theme={theme}>
                     {stats && (
                         <div className="row mb-3 mt-4">
                             <div className="col-lg-3 col-md-6 mb-3">
@@ -592,7 +584,6 @@ const FamilyMembersArchive = ({ familyGroups, stats, auth }) => {
                             </Box>
                         </TableContainer>
                     </div>
-                </ThemeProvider>
             </div>
             {/* </div> */}
 

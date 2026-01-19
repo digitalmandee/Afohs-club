@@ -10,23 +10,11 @@ import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
 import PaymentDialog from '@/components/App/Transactions/PaymentDialog';
 import axios from 'axios';
-
 import { DemoContainer } from '@mui/x-date-pickers/internals/demo';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-
-const theme = createTheme({
-    palette: {
-        primary: {
-            main: '#063455',
-        },
-        secondary: {
-            main: '#063455',
-        },
-    },
-});
 
 const Dashboard = ({ statistics, recent_transactions }) => {
     // const [open, setOpen] = useState(true);
@@ -124,7 +112,6 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                     marginTop: '5rem',
                 }}
             > */}
-            {/* <ThemeProvider theme={theme}> */}
             <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
                 <Container fluid>
                     {/* Header */}
@@ -568,16 +555,28 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                             </span>
                                                         </TableCell>
 
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 600 }}>Rs {(transaction.total_price || 0).toLocaleString()}</TableCell>
-                                                        <TableCell sx={{ color: 'success.main', fontWeight: 600 }}>Rs {(transaction.paid_amount || 0).toLocaleString()}</TableCell>
-                                                        <TableCell sx={{ color: 'error.main', fontWeight: 600 }}>Rs {(transaction.balance || 0).toLocaleString()}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px', whiteSpace: 'nowrap' }}>
+                                                            <Tooltip title={(transaction.total_price || 0).toLocaleString()} arrow>
+                                                                Rs {(transaction.total_price || 0).toLocaleString()}
+                                                            </Tooltip>
+                                                        </TableCell>
+                                                        <TableCell sx={{ color: 'success.main', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px', whiteSpace: 'nowrap' }}>
+                                                            <Tooltip title={(transaction.paid_amount || 0).toLocaleString()} arrow>
+                                                                Rs {(transaction.paid_amount || 0).toLocaleString()}
+                                                            </Tooltip>
+                                                        </TableCell>
+                                                        <TableCell sx={{ color: 'error.main', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px', whiteSpace: 'nowrap' }}>
+                                                            <Tooltip title={(transaction.balance || 0).toLocaleString()} arrow>
+                                                                Rs {(transaction.balance || 0).toLocaleString()}
+                                                            </Tooltip>
+                                                        </TableCell>
 
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                             <span style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{statusStyle.text.toUpperCase()}</span>
                                                         </TableCell>
                                                         <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
-                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.valid_from && transaction.valid_to ? dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1 : '-'}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace:'nowrap' }}>{formatDate(transaction.created_at)}</TableCell>
+                                                        <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace:'nowrap' }}>{transaction.valid_from && transaction.valid_to ? dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1 : '-'}</TableCell>
                                                         <TableCell>
                                                             <span
                                                                 style={{
@@ -585,7 +584,7 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                                                                     cursor: 'pointer',
                                                                     fontWeight: 500,
                                                                     border: '1px solid #063455',
-                                                                    padding: 4,
+                                                                    padding: 7,
                                                                 }}
                                                                 onClick={() => {
                                                                     if (transaction.invoice_type === 'room_booking' && transaction.invoiceable_id) {
@@ -674,7 +673,6 @@ const Dashboard = ({ statistics, recent_transactions }) => {
                     submitting={submittingPayment}
                 />
             </div>
-            {/* </ThemeProvider> */}
             {/* </div> */}
         </>
     );

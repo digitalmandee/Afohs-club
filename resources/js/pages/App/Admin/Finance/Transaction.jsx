@@ -159,7 +159,6 @@ const Transaction = ({ transactions, filters }) => {
 
     return (
         <>
-            {/* <ThemeProvider theme={theme}> */}
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
                 {/* Recently Joined Section */}
                 <div className="mx-0">
@@ -250,7 +249,7 @@ const Transaction = ({ transactions, filters }) => {
                     <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage all recorded financial transactions</Typography>
 
                     {/* Transactions Table */}
-                    <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '12px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
@@ -315,16 +314,16 @@ const Transaction = ({ transactions, filters }) => {
 
                                         return (
                                             <TableRow key={transaction.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
+                                                <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '16px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     <Tooltip title={transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'} arrow>
-                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '150px' }}>{transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</div>
+                                                        <div style={{ fontWeight: 500, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '120px' }}>{transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'}</div>
                                                     </Tooltip>
                                                     {(transaction.member?.membership_no || transaction.corporate_member?.membership_no) && <div style={{ fontSize: '12px', color: '#7F7F7F' }}>{transaction.member?.membership_no || transaction.corporate_member?.membership_no}</div>}
                                                 </TableCell>
 
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
-                                                    <span style={{ backgroundColor: '#e3f2fd', color: '#1976d2', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>
+                                                    <span style={{ backgroundColor: '#e3f2fd', color: '#1976d2', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500, whiteSpace: 'nowrap' }}>
                                                         {displayType === 'Multiple Items' ? (
                                                             <Tooltip
                                                                 title={
@@ -350,12 +349,24 @@ const Transaction = ({ transactions, filters }) => {
                                                     </span>
                                                 </TableCell>
 
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px' }}>Rs {(transaction.total_price || transaction.amount || 0).toLocaleString()}</TableCell>
-                                                <TableCell sx={{ color: 'success.main', fontWeight: 500, fontSize: '14px' }}>Rs {(transaction.paid_amount || 0).toLocaleString()}</TableCell>
-                                                <TableCell sx={{ color: 'error.main', fontWeight: 500, fontSize: '14px' }}>Rs {(transaction.balance || 0).toLocaleString()}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 500, fontSize: '14px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px' }}>
+                                                    <Tooltip title={(transaction.total_price || transaction.amount || 0).toLocaleString()} arrow>
+                                                        Rs {(transaction.total_price || transaction.amount || 0).toLocaleString()}
+                                                    </Tooltip>
+                                                </TableCell>
+                                                <TableCell sx={{ color: 'success.main', fontWeight: 500, fontSize: '14px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px' }}>
+                                                    <Tooltip title={(transaction.paid_amount || 0).toLocaleString()} arrow>
+                                                        Rs {(transaction.paid_amount || 0).toLocaleString()}
+                                                    </Tooltip>
+                                                </TableCell>
+                                                <TableCell sx={{ color: 'error.main', fontWeight: 500, fontSize: '14px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: '100px' }}>
+                                                    <Tooltip title={(transaction.balance || 0).toLocaleString()} arrow>
+                                                        Rs {(transaction.balance || 0).toLocaleString()}
+                                                    </Tooltip>
+                                                </TableCell>
 
                                                 <TableCell>
-                                                    <span style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{transaction.status ? transaction.status.toUpperCase() : 'N/A'}</span>
+                                                    <span style={{ backgroundColor: statusStyle.bg, color: statusStyle.color, padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500 }}>{transaction.status ? transaction.status : 'N/A'}</span>
                                                 </TableCell>
 
                                                 {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell> */}
@@ -471,7 +482,6 @@ const Transaction = ({ transactions, filters }) => {
                     submitting={submittingPayment}
                 />
             </div>
-            {/* </ThemeProvider> */}
             {/* </div> */}
         </>
     );
