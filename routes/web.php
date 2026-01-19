@@ -231,6 +231,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('reports/summary/{periodId}/print', [PayrollController::class, 'summaryReportPrint'])->name('employees.payroll.reports.summary.print');
             Route::get('reports/detailed/{periodId?}', [PayrollController::class, 'detailedReport'])->name('employees.payroll.reports.detailed');
             Route::get('reports/detailed/{periodId}/print', [PayrollController::class, 'detailedReportPrint'])->name('employees.payroll.reports.detailed.print');
+
+            // Payroll History
+            Route::get('history', [PayrollController::class, 'history'])->name('employee.payroll');
         });
 
         // Employee Reports
@@ -587,6 +590,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::delete('/deduction-types/{id}', [PayrollApiController::class, 'deleteDeductionType'])->name('api.payroll.deduction-types.delete');
 
         // Employee Salaries
+        Route::get('/employees/list', [PayrollApiController::class, 'getEmployeesList'])->name('employees.list');
         Route::get('/employees/salaries', [PayrollApiController::class, 'getEmployeeSalaries'])->name('api.payroll.employees.salaries');
         Route::post('/employees/{employeeId}/salary-structure', [PayrollApiController::class, 'storeSalaryStructure'])->name('api.payroll.employees.salary-structure.store');
         Route::put('/employees/{employeeId}/salary-structure', [PayrollApiController::class, 'updateSalaryStructure'])->name('api.payroll.employees.salary-structure.update');
@@ -618,6 +622,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/reports/summary/{periodId}', [PayrollApiController::class, 'getSummaryReport'])->name('api.payroll.reports.summary');
         Route::get('/reports/detailed/{periodId}', [PayrollApiController::class, 'getDetailedReport'])->name('api.payroll.reports.detailed');
         Route::get('/reports/employee/{employeeId}', [PayrollApiController::class, 'getEmployeePayrollHistory'])->name('api.payroll.reports.employee');
+        Route::get('/history/{employeeId}', [PayrollApiController::class, 'getEmployeePayrollHistory'])->name('api.payroll.history');
 
         // Salary Sheet Editor Endpoints
         Route::get('/salary-sheet', [PayrollApiController::class, 'getSalarySheetData'])->name('api.payroll.salary-sheet');

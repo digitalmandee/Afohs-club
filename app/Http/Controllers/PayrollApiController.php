@@ -1648,4 +1648,25 @@ class PayrollApiController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+
+    /**
+     * Get list of employees for dropdowns
+     */
+    public function getEmployeesList(Request $request)
+    {
+        $query = Employee::select('id', 'name', 'employee_id');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%");
+            });
+        }
+
+        $employees = $query->limit(50)->get();
+
+        return response()->json(['success' => true, 'employees' => $employees]);
+    }
 }
