@@ -19,19 +19,23 @@ const EmployeeCreate = () => {
         employee_id: employee?.employee_id || '',
         email: employee?.email || '',
         designation: employee?.designation || '',
-        designation_id: employee?.designation_id || null, // Added ID support
+        designation_id: employee?.designation_id || null,
         date_of_birth: employee?.date_of_birth || '',
-        age: '', // Calculated field
+        age: '',
         gender: employee?.gender || '',
         marital_status: employee?.marital_status || '',
         national_id: employee?.national_id || '',
+        nationality: employee?.nationality || '',
 
         // Employment Details
         department: employee?.department || null,
         subdepartment: employee?.subdepartment || null,
         employment_type: employee?.employment_type || 'full_time',
+        status: employee?.status || 'active',
         company: employee?.company || '',
         joining_date: employee?.joining_date || '',
+        contract_start_date: employee?.contract_start_date || '',
+        contract_end_date: employee?.contract_end_date || '',
         salary: employee?.salary || '',
         barcode: employee?.barcode || '',
         shift_id: employee?.shift_id || null,
@@ -62,6 +66,17 @@ const EmployeeCreate = () => {
         // Bank & Financial
         account_no: employee?.account_no || '',
         bank_details: employee?.bank_details || '',
+        payment_method: employee?.payment_method || 'bank',
+
+        // Academic Information
+        academic_qualification: employee?.academic_qualification || '',
+        academic_institution: employee?.academic_institution || '',
+        academic_year: employee?.academic_year || '',
+
+        // Work Experience
+        work_experience_years: employee?.work_experience_years || '',
+        previous_employer: employee?.previous_employer || '',
+        previous_position: employee?.previous_position || '',
 
         // Organizational Background
         learn_of_org: employee?.learn_of_org || '',
@@ -416,6 +431,17 @@ const EmployeeCreate = () => {
                                 ))}
                             </RadioGroup>
                         </Box>
+
+                        {/* Employee Status */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Employment Status*
+                            </Typography>
+                            <TextField size="small" sx={textFieldStyle} select name="status" value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} fullWidth SelectProps={{ native: true }}>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </TextField>
+                        </Box>
                     </Box>
 
                     {/* Basic Information */}
@@ -429,6 +455,7 @@ const EmployeeCreate = () => {
                             { label: 'Father Name', name: 'father_name', placeholder: 'Father Name' },
                             { label: 'Employee ID*', name: 'employee_id', placeholder: '12345', disabled: isEdit },
                             { label: 'National ID (CNIC)', name: 'national_id', placeholder: 'XXXXX-XXXXXXX-X' },
+                            { label: 'Nationality', name: 'nationality', placeholder: 'e.g., Pakistani' },
                             { label: 'Email*', name: 'email', placeholder: 'email@example.com' },
                         ].map(renderTextField)}
 
@@ -587,6 +614,26 @@ const EmployeeCreate = () => {
                             { label: 'Joining Date*', name: 'joining_date', type: 'date' },
                             { label: 'Salary*', name: 'salary', placeholder: '30000', type: 'number', min: 0 },
                         ].map(renderTextField)}
+
+                        {/* Contract Dates - Only show for contract employees */}
+                        {formData.employment_type === 'contract' && (
+                            <>
+                                <Box>
+                                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                        Contract Start Date
+                                    </Typography>
+                                    <TextField size="small" sx={textFieldStyle} type="date" name="contract_start_date" value={formData.contract_start_date} onChange={(e) => setFormData({ ...formData, contract_start_date: e.target.value })} fullWidth InputLabelProps={{ shrink: true }} />
+                                </Box>
+                                <Box>
+                                    <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                        Contract End Date
+                                    </Typography>
+                                    <TextField size="small" sx={textFieldStyle} type="date" name="contract_end_date" value={formData.contract_end_date} onChange={(e) => setFormData({ ...formData, contract_end_date: e.target.value })} fullWidth InputLabelProps={{ shrink: true }} />
+                                </Box>
+                            </>
+                        )}
+
+                        {[].map(renderTextField)}
                     </Box>
 
                     {/* Contact Information */}
@@ -696,6 +743,43 @@ const EmployeeCreate = () => {
                             { label: 'Vehicle Details', name: 'vehicle_details', placeholder: 'Vehicle Information' },
                             { label: 'Account Number', name: 'account_no', placeholder: 'Bank Account Number' },
                             { label: 'Bank Details', name: 'bank_details', placeholder: 'Bank Name & Branch' },
+                        ].map(renderTextField)}
+
+                        {/* Payment Method */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Payment Method
+                            </Typography>
+                            <TextField size="small" sx={textFieldStyle} select name="payment_method" value={formData.payment_method} onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })} fullWidth SelectProps={{ native: true }}>
+                                <option value="bank">Bank Transfer</option>
+                                <option value="cash">Cash</option>
+                            </TextField>
+                        </Box>
+                    </Box>
+
+                    {/* Academic Information */}
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, mt: 3 }}>
+                        Academic Information
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', mb: 4 }}>
+                        {[
+                            { label: 'Highest Qualification', name: 'academic_qualification', placeholder: "e.g., Bachelor's Degree" },
+                            { label: 'Institution Name', name: 'academic_institution', placeholder: 'University/College Name' },
+                            { label: 'Year of Completion', name: 'academic_year', placeholder: '2020' },
+                        ].map(renderTextField)}
+                    </Box>
+
+                    {/* Work Experience */}
+                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, mt: 3 }}>
+                        Work Experience
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', mb: 4 }}>
+                        {[
+                            { label: 'Years of Experience', name: 'work_experience_years', placeholder: '5', type: 'number', min: 0 },
+                            { label: 'Previous Employer', name: 'previous_employer', placeholder: 'Company Name' },
+                            { label: 'Previous Position', name: 'previous_position', placeholder: 'Job Title' },
                         ].map(renderTextField)}
                     </Box>
 

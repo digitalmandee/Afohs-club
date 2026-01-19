@@ -174,6 +174,18 @@ class EmployeeController extends Controller
             'crime_details' => 'nullable|string',
             'remarks' => 'nullable|string',
             'barcode' => 'nullable|string',
+            // New enhanced fields
+            'nationality' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'payment_method' => 'required|in:cash,bank',
+            'contract_start_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'academic_qualification' => 'nullable|string',
+            'academic_institution' => 'nullable|string',
+            'academic_year' => 'nullable|string',
+            'work_experience_years' => 'nullable|integer',
+            'previous_employer' => 'nullable|string',
+            'previous_position' => 'nullable|string',
         ]);
 
         try {
@@ -234,6 +246,18 @@ class EmployeeController extends Controller
                 'crime_details' => $request->crime_details,
                 'remarks' => $request->remarks,
                 'barcode' => $request->barcode,
+                // New enhanced fields
+                'nationality' => $request->nationality,
+                'status' => $request->status,
+                'payment_method' => $request->payment_method,
+                'contract_start_date' => $request->contract_start_date,
+                'contract_end_date' => $request->contract_end_date,
+                'academic_qualification' => $request->academic_qualification,
+                'academic_institution' => $request->academic_institution,
+                'academic_year' => $request->academic_year,
+                'work_experience_years' => $request->work_experience_years,
+                'previous_employer' => $request->previous_employer,
+                'previous_position' => $request->previous_position,
             ]);
 
             // Auto-create salary structure if salary is provided
@@ -359,6 +383,18 @@ class EmployeeController extends Controller
             'crime_details' => 'nullable|string',
             'remarks' => 'nullable|string',
             'barcode' => 'nullable|string',
+            // New enhanced fields
+            'nationality' => 'nullable|string',
+            'status' => 'required|in:active,inactive',
+            'payment_method' => 'required|in:cash,bank',
+            'contract_start_date' => 'nullable|date',
+            'contract_end_date' => 'nullable|date',
+            'academic_qualification' => 'nullable|string',
+            'academic_institution' => 'nullable|string',
+            'academic_year' => 'nullable|string',
+            'work_experience_years' => 'nullable|integer',
+            'previous_employer' => 'nullable|string',
+            'previous_position' => 'nullable|string',
         ]);
 
         try {
@@ -429,6 +465,18 @@ class EmployeeController extends Controller
                 'crime_details',
                 'remarks',
                 'barcode',
+                // New enhanced fields
+                'nationality',
+                'status',
+                'payment_method',
+                'contract_start_date',
+                'contract_end_date',
+                'academic_qualification',
+                'academic_institution',
+                'academic_year',
+                'work_experience_years',
+                'previous_employer',
+                'previous_position',
             ]));
 
             // Update age if date_of_birth was provided
