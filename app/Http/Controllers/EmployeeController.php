@@ -20,18 +20,37 @@ class EmployeeController extends Controller
 {
     public function dashboard(Request $request)
     {
-        // Get total employees (excluding deleted)
-        $totalEmployees = Employee::whereNull('deleted_at')->count();
-
-        // Attendance stats for today
+        // Branch-wise (Company-wise) Statistics
         $currentDay = now()->format('Y-m-d');
-        $attendanceStats = \App\Models\Attendance::where('date', $currentDay)
-            ->selectRaw("
-                SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent,
-                SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
-                SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as total_late
-            ")
-            ->first();
+
+        $companyStats = \App\Models\Branch::where('status', true)
+            ->withCount(['employees' => function ($query) {
+                // Count active employees in this branch
+                $query->whereNull('deleted_at');
+            }])
+            ->get()
+            ->map(function ($branch) use ($currentDay) {
+                // Get attendance stats for this branch for today
+                $attendance = \App\Models\Attendance::whereHas('employee', function ($q) use ($branch) {
+                    $q->where('branch_id', $branch->id);
+                })
+                    ->where('date', $currentDay)
+                    ->selectRaw("
+                        SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent,
+                        SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
+                        SUM(CASE WHEN status = 'weekend' THEN 1 ELSE 0 END) as total_weekend
+                    ")
+                    ->first();
+
+                return [
+                    'id' => $branch->id,
+                    'name' => $branch->name,
+                    'total_employees' => $branch->employees_count,
+                    'present' => $attendance->total_present ?? 0,
+                    'absent' => $attendance->total_absent ?? 0,
+                    'weekend' => $attendance->total_weekend ?? 0,
+                ];
+            });
 
         $limit = $request->query('limit') ?? 10;
         $search = $request->query('search', '');
@@ -93,13 +112,9 @@ class EmployeeController extends Controller
         $departments = Department::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Employee/Dashboard', [
-            'stats' => [
-                'total_employees' => $totalEmployees,
-                'total_present' => $attendanceStats->total_present ?? 0,
-                'total_absent' => $attendanceStats->total_absent ?? 0,
-                'total_late' => $attendanceStats->total_late ?? 0,
-            ],
+            'companyStats' => $companyStats,
             'employees' => $employees,
+            'filters' => $request->only(['search', 'department_id', 'subdepartment_id', 'branch_id', 'shift_id', 'designation_id']),
             'departments' => $departments,
         ]);
     }

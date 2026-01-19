@@ -337,7 +337,7 @@ export default function SideNav({ open, setOpen }) {
                         path: route('shifts.index'),
                     },
                     {
-                        text: 'Branches',
+                        text: 'Companies',
                         path: route('branches.index'),
                     },
                     {

@@ -575,10 +575,10 @@ const EmployeeCreate = () => {
                             <Autocomplete size="small" options={subdepartments} getOptionLabel={(option) => option.name} value={formData.subdepartment} disabled={!formData.department} onInputChange={(event, value) => setSubdepartmentSearchTerm(value)} onChange={(event, value) => setFormData({ ...formData, subdepartment: value })} renderInput={(params) => <TextField {...params} sx={textFieldStyle} label="Search Subdepartment" placeholder={!formData.department ? 'Select department first' : 'Search'} />} />
                         </Box>
 
-                        {/* Branch Selection */}
+                        {/* Company Selection */}
                         <Box>
                             <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                                Branch (Location)
+                                Company (Location)
                             </Typography>
                             <Autocomplete
                                 size="small"
@@ -588,7 +588,7 @@ const EmployeeCreate = () => {
                                 onChange={(event, value) => {
                                     setFormData({ ...formData, branch_id: value ? value.id : null });
                                 }}
-                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Branch" />}
+                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Company" />}
                             />
                         </Box>
 
@@ -610,7 +610,6 @@ const EmployeeCreate = () => {
                         </Box>
 
                         {[
-                            { label: 'Company', name: 'company', placeholder: 'Company Name' },
                             { label: 'Joining Date*', name: 'joining_date', type: 'date' },
                             { label: 'Salary*', name: 'salary', placeholder: '30000', type: 'number', min: 0 },
                         ].map(renderTextField)}

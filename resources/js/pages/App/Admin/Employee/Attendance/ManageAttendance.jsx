@@ -284,7 +284,7 @@ const ManageAttendance = () => {
                                     value={filters.branch_id || ''}
                                     onChange={(e) => setFilters({ ...filters, branch_id: e.target.value })}
                                     renderValue={(selected) => {
-                                        if (!selected) return <span style={{ color: '#aaa' }}>Branch</span>;
+                                        if (!selected) return <span style={{ color: '#aaa' }}>Company</span>;
                                         return selected.name;
                                     }}
                                     sx={{ width: 200, borderRadius: '16px', bgcolor: 'white' }}

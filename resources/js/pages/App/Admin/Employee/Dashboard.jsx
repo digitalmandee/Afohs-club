@@ -11,7 +11,7 @@ import axios from 'axios';
 
 const EmployeeDashboard = () => {
     const { props } = usePage();
-    const { employees, stats, departments: initialDepartments } = props;
+    const { employees, companyStats, departments: initialDepartments } = props;
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -122,31 +122,38 @@ const EmployeeDashboard = () => {
                         </div>
                         <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Overview of staff strength, attendance status, and pending HR actions</Typography>
 
-                        {/* Stats Cards */}
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '24px', marginTop: '24px' }}>
-                            {[
-                                { title: 'Total Employees', value: stats?.total_employees || 0, icon: EventSeatIcon },
-                                { title: 'Total Present', value: stats?.total_present || 0, icon: PeopleIcon },
-                                { title: 'Total Absent', value: stats?.total_absent || 0, icon: AssignmentIcon },
-                                { title: 'Late Arrival', value: stats?.total_late || 0, icon: PrintIcon },
-                            ].map((item, idx) => (
-                                <Card key={idx} style={{ flex: 1, backgroundColor: '#063455', borderRadius: '16px' }}>
-                                    <CardContent>
-                                        <Typography variant="body2" color="#fff">
-                                            {item.title}
-                                        </Typography>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <Typography variant="h5" style={{ fontWeight: 'bold', color: '#fff' }}>
-                                                {item.value}
-                                            </Typography>
-                                            <div style={{ borderRadius: '8px', padding: '0.5rem' }}>
-                                                <item.icon style={{ color: '#fff', width: '40px', height: '40px' }} />
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                        {/* Company Stats Grid */}
+                        <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2, mt: 3 }}>Company Overview</Typography>
+                        <Grid container spacing={3} sx={{ mb: 4 }}>
+                            {companyStats?.map((company) => (
+                                <Grid item xs={12} sm={6} md={3} key={company.id}>
+                                    <Card
+                                        sx={{
+                                            borderRadius: '16px',
+                                            boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.05)',
+                                            border: '1px solid #E9E9E9',
+                                            height: '100%',
+                                            backgroundColor: '#063455',
+                                        }}
+                                    >
+                                        <CardContent>
+                                            <Typography sx={{ color: '#ffffff', fontSize: '16px', fontWeight: 600, mb: 1 }}>{company.name}</Typography>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                <Typography sx={{ color: '#ffffff', fontSize: '14px' }}>Total Employees</Typography>
+                                                <Typography sx={{ color: '#ffffff', fontSize: '18px', fontWeight: 700 }}>{company.total_employees}</Typography>
+                                            </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                                                <Typography sx={{ color: '#81c784', fontSize: '13px' }}>Present: {company.present}</Typography>
+                                                <Typography sx={{ color: '#e57373', fontSize: '13px' }}>Absent: {company.absent}</Typography>
+                                            </Box>
+                                            <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                                <Typography sx={{ color: '#ffb74d', fontSize: '13px' }}>Weekend: {company.weekend}</Typography>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
                             ))}
-                        </div>
+                        </Grid>
 
                         {/* Filter Section */}
                         <Box sx={{ mb: 3 }}>
@@ -207,7 +214,7 @@ const EmployeeDashboard = () => {
                                     getOptionLabel={(option) => option.name || ''}
                                     value={filters.branch_id}
                                     onChange={(e, value) => setFilters({ ...filters, branch_id: value })}
-                                    renderInput={(params) => <TextField {...params} placeholder="Branch" />}
+                                    renderInput={(params) => <TextField {...params} placeholder="Company" />}
                                     sx={{
                                         minWidth: 120,
                                         '& .MuiOutlinedInput-root': {

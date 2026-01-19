@@ -77,7 +77,7 @@ const BranchIndex = ({ branches: initialData }) => {
 
         router[method](url, formData, {
             onSuccess: () => {
-                enqueueSnackbar(editMode ? 'Branch updated successfully' : 'Branch created successfully', { variant: 'success' });
+                enqueueSnackbar(editMode ? 'Company updated successfully' : 'Company created successfully', { variant: 'success' });
                 handleClose();
             },
             onError: (errors) => {
@@ -94,7 +94,7 @@ const BranchIndex = ({ branches: initialData }) => {
     const confirmDelete = () => {
         router.delete(route('branches.destroy', selectedBranch.id), {
             onSuccess: () => {
-                enqueueSnackbar('Branch deleted successfully', { variant: 'success' });
+                enqueueSnackbar('Company deleted successfully', { variant: 'success' });
                 setOpenDeleteModal(false);
             },
             onError: () => {
@@ -107,13 +107,13 @@ const BranchIndex = ({ branches: initialData }) => {
         <Box sx={{ px: 4, py: 2 }}>
             <div style={{ paddingTop: '1rem', backgroundColor: 'transparent' }}>
                 <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Branch Management</Typography>
+                    <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Company Management</Typography>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginLeft: 'auto' }}>
                         <div style={{ width: '350px', backgroundColor: '#FFFFFF' }}>
                             <TextField
                                 fullWidth
-                                placeholder="Search branch..."
+                                placeholder="Search company..."
                                 size="small"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -126,7 +126,7 @@ const BranchIndex = ({ branches: initialData }) => {
                         </div>
 
                         <Button style={{ color: 'white', width: '180px', backgroundColor: '#063455', textTransform: 'none' }} startIcon={<AddIcon />} onClick={handleOpen}>
-                            Add Branch
+                            Add Company
                         </Button>
                         <Button color="error" onClick={() => router.visit(route('branches.trashed'))} sx={{ minWidth: 'auto', p: 1 }}>
                             <RiDeleteBin6Line style={{ width: 20, height: 20 }} />
@@ -181,7 +181,7 @@ const BranchIndex = ({ branches: initialData }) => {
                 <Dialog open={openAddModal} onClose={handleClose} maxWidth="sm" fullWidth>
                     <DialogContent sx={{ pt: 3, pb: 2 }}>
                         <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
-                            {editMode ? 'Edit Branch' : 'Add Branch'}
+                            {editMode ? 'Edit Company' : 'Add Company'}
                         </Typography>
 
                         <Typography variant="body1" sx={{ mb: 1, fontWeight: 500 }}>
@@ -215,7 +215,7 @@ const BranchIndex = ({ branches: initialData }) => {
                 <Dialog open={openDeleteModal} onClose={() => setOpenDeleteModal(false)} maxWidth="xs">
                     <DialogContent sx={{ pt: 3 }}>
                         <Typography variant="h6" align="center" sx={{ mb: 2 }}>
-                            Delete Branch?
+                            Delete Company?
                         </Typography>
                         <Typography variant="body2" align="center" color="textSecondary">
                             This action cannot be undone.

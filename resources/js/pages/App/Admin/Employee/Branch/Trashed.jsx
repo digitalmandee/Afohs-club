@@ -17,8 +17,8 @@ const Trashed = ({ branches }) => {
             route('branches.restore', id),
             {},
             {
-                onSuccess: () => enqueueSnackbar('Branch restored successfully', { variant: 'success' }),
-                onError: () => enqueueSnackbar('Failed to restore branch', { variant: 'error' }),
+                onSuccess: () => enqueueSnackbar('Company restored successfully', { variant: 'success' }),
+                onError: () => enqueueSnackbar('Failed to restore company', { variant: 'error' }),
             },
         );
     };
@@ -26,10 +26,10 @@ const Trashed = ({ branches }) => {
     const handleForceDelete = () => {
         router.delete(route('branches.force-delete', selectedId), {
             onSuccess: () => {
-                enqueueSnackbar('Branch permanently deleted', { variant: 'success' });
+                enqueueSnackbar('Company permanently deleted', { variant: 'success' });
                 setOpenDeleteModal(false);
             },
-            onError: () => enqueueSnackbar('Failed to delete branch', { variant: 'error' }),
+            onError: () => enqueueSnackbar('Failed to delete company', { variant: 'error' }),
         });
     };
 
@@ -37,7 +37,7 @@ const Trashed = ({ branches }) => {
         <Box sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
                 <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
-                    Trashed Branches
+                    Trashed Companies
                 </Typography>
                 <Button variant="outlined" onClick={() => router.visit(route('branches.index'))}>
                     Back to List
@@ -57,7 +57,7 @@ const Trashed = ({ branches }) => {
                         {data.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={3} align="center">
-                                    No trashed branches found
+                                    No trashed companies found
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -91,7 +91,7 @@ const Trashed = ({ branches }) => {
 
             <Dialog open={openDeleteModal} onClose={() => setOpenDeleteModal(false)}>
                 <DialogContent>
-                    <Typography>Are you sure you want to permanently delete this branch?</Typography>
+                    <Typography>Are you sure you want to permanently delete this company?</Typography>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDeleteModal(false)}>Cancel</Button>
