@@ -333,6 +333,14 @@ export default function SideNav({ open, setOpen }) {
                         path: route('designations.index'),
                     },
                     {
+                        text: 'Shifts',
+                        path: route('shifts.index'),
+                    },
+                    {
+                        text: 'Branches',
+                        path: route('branches.index'),
+                    },
+                    {
                         text: 'Leave Category',
                         path: route('employees.leaves.category.index'),
                     },
@@ -375,6 +383,10 @@ export default function SideNav({ open, setOpen }) {
                     {
                         text: 'Payroll',
                         path: route('employee.payroll'),
+                    },
+                    {
+                        text: 'Payroll History',
+                        path: route('employee.payroll.history'),
                     },
                     {
                         text: 'Salary Sheet',

@@ -62,7 +62,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return auth()->check() ? redirect()->route('dashboard') : redirect()->route('login');
+    return \Illuminate\Support\Facades\Auth::check() ? redirect()->route('dashboard') : redirect()->route('login');
 });
 // Route::get('/', function () {
 //     return dd(ini_get('post_max_size'), ini_get('upload_max_filesize'));
@@ -97,6 +97,20 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Assets
         Route::resource('assets', EmployeeAssetController::class);
+
+        // Shifts
+        Route::get('shifts/list', [App\Http\Controllers\ShiftController::class, 'list'])->name('shifts.list');
+        Route::get('shifts/trashed', [App\Http\Controllers\ShiftController::class, 'trashed'])->name('shifts.trashed');
+        Route::post('shifts/{id}/restore', [App\Http\Controllers\ShiftController::class, 'restore'])->name('shifts.restore');
+        Route::delete('shifts/{id}/force-delete', [App\Http\Controllers\ShiftController::class, 'forceDelete'])->name('shifts.force-delete');
+        Route::resource('shifts', App\Http\Controllers\ShiftController::class);
+
+        // Branches
+        Route::get('branches/list', [App\Http\Controllers\BranchController::class, 'list'])->name('branches.list');
+        Route::get('branches/trashed', [App\Http\Controllers\BranchController::class, 'trashed'])->name('branches.trashed');
+        Route::post('branches/{id}/restore', [App\Http\Controllers\BranchController::class, 'restore'])->name('branches.restore');
+        Route::delete('branches/{id}/force-delete', [App\Http\Controllers\BranchController::class, 'forceDelete'])->name('branches.force-delete');
+        Route::resource('branches', App\Http\Controllers\BranchController::class);
         Route::post('assets/{asset}/assign', [EmployeeAssetController::class, 'assign'])->name('assets.assign');
         Route::post('assets/{asset}/return', [EmployeeAssetController::class, 'returnAsset'])->name('assets.return');
         Route::post('assets/{asset}/upload-attachment', [EmployeeAssetController::class, 'uploadAttachment'])->name('assets.upload-attachment');
@@ -181,6 +195,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         });
 
         Route::prefix('attendances')->group(function () {
+            // Actions
+            Route::post('apply-standard', [AttendanceController::class, 'applyStandardAttendance'])->name('employees.attendances.apply-standard');
+
             // Inertia.js Pages
             Route::get('dashboard', [AttendanceController::class, 'dashboard'])->name('employees.attendances.dashboard');
             Route::get('management', [AttendanceController::class, 'managementPage'])->name('employees.attendances.management');
@@ -233,7 +250,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('reports/detailed/{periodId}/print', [PayrollController::class, 'detailedReportPrint'])->name('employees.payroll.reports.detailed.print');
 
             // Payroll History
-            Route::get('history', [PayrollController::class, 'history'])->name('employee.payroll');
+            Route::get('history', [PayrollController::class, 'history'])->name('employee.payroll.history');
         });
 
         // Employee Reports

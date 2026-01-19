@@ -18,6 +18,10 @@ class AttendanceController extends Controller
         $limit = $request->query('limit') ?? 10;
         $date = $request->query('date', now()->format('Y-m-d'));
         $search = $request->query('search', '');
+        $branchId = $request->query('branch_id');
+        $designationId = $request->query('designation_id');
+        $departmentId = $request->query('department_id');
+        $subdepartmentId = $request->query('subdepartment_id');
 
         // Load Employee with User and apply search filter
         $attendanceQuery = Attendance::with([
@@ -28,6 +32,10 @@ class AttendanceController extends Controller
 
         // Lazy Backfilling: Create missing attendance records for eligible employees
         $eligibleEmployees = Employee::where('joining_date', '<=', $date)
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($designationId, fn($q) => $q->where('designation_id', $designationId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->when($subdepartmentId, fn($q) => $q->where('subdepartment_id', $subdepartmentId))
             ->whereDoesntHave('attendances', function ($query) use ($date) {
                 $query->where('date', $date);
             })
@@ -50,13 +58,24 @@ class AttendanceController extends Controller
         }
 
         // Apply search filter if provided
-        if (!empty($search)) {
-            $attendanceQuery->whereHas('employee', function ($query) use ($search) {
-                $query
-                    ->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('employee_id', 'like', '%' . $search . '%');
-            });
-        }
+        // Apply filters
+        $attendanceQuery->whereHas('employee', function ($query) use ($search, $branchId, $designationId, $departmentId, $subdepartmentId) {
+            if ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q
+                        ->where('name', 'like', '%' . $search . '%')
+                        ->orWhere('employee_id', 'like', '%' . $search . '%');
+                });
+            }
+            if ($branchId)
+                $query->where('branch_id', $branchId);
+            if ($designationId)
+                $query->where('designation_id', $designationId);
+            if ($departmentId)
+                $query->where('department_id', $departmentId);
+            if ($subdepartmentId)
+                $query->where('subdepartment_id', $subdepartmentId);
+        });
 
         $attendance = $attendanceQuery->paginate($limit);
 
@@ -438,6 +457,60 @@ class AttendanceController extends Controller
 
         // Return success response
         return response()->json(['success' => true, 'message' => 'Attendance updated successfully'], 200);
+    }
+
+    public function applyStandardAttendance(Request $request)
+    {
+        $date = $request->input('date', now()->format('Y-m-d'));
+        $branchId = $request->input('branch_id');
+        $designationId = $request->input('designation_id');
+        $departmentId = $request->input('department_id');
+        $subdepartmentId = $request->input('subdepartment_id');
+
+        // Fetch eligible employees based on filters
+        $employees = Employee::with('shift')
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->when($designationId, fn($q) => $q->where('designation_id', $designationId))
+            ->when($departmentId, fn($q) => $q->where('department_id', $departmentId))
+            ->when($subdepartmentId, fn($q) => $q->where('subdepartment_id', $subdepartmentId))
+            ->whereNotNull('shift_id')  // Only employees with assigned shifts
+            ->get();
+
+        $count = 0;
+        $dayOfWeek = Carbon::parse($date)->format('l');  // e.g., "Monday"
+
+        foreach ($employees as $employee) {
+            $shift = $employee->shift;
+
+            // Determine status and times
+            $status = 'present';
+            $checkIn = $shift->start_time;
+            $checkOut = $shift->end_time;
+
+            // Check if today is a weekend day for this shift
+            if ($shift->weekend_days && in_array($dayOfWeek, $shift->weekend_days)) {
+                $status = 'weekend';  // Or 'off'
+                $checkIn = null;
+                $checkOut = null;
+            }
+
+            // Create or update attendance record
+            Attendance::updateOrCreate(
+                ['employee_id' => $employee->id, 'date' => $date],
+                [
+                    'check_in' => $checkIn,
+                    'check_out' => $checkOut,
+                    'status' => $status,
+                    'leave_category_id' => null,  // Reset leave if applying standard attendance
+                ]
+            );
+            $count++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Standard attendance applied for {$count} employees."
+        ]);
     }
 
     public function allEmployeesReport(Request $request)

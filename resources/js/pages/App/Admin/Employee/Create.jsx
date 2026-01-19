@@ -34,6 +34,8 @@ const EmployeeCreate = () => {
         joining_date: employee?.joining_date || '',
         salary: employee?.salary || '',
         barcode: employee?.barcode || '',
+        shift_id: employee?.shift_id || null,
+        branch_id: employee?.branch_id || null,
 
         // Contact Information
         phone_no: employee?.phone_no || '',
@@ -78,16 +80,33 @@ const EmployeeCreate = () => {
     const [departments, setDepartments] = useState([]);
     const [subdepartments, setSubdepartments] = useState([]);
     const [designations, setDesignations] = useState([]);
+    const [branches, setBranches] = useState([]);
+    const [shifts, setShifts] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [subdepartmentSearchTerm, setSubdepartmentSearchTerm] = useState('');
 
     useEffect(() => {
+        // Fetch Designations
         axios
             .get(route('designations.list'))
             .then((res) => {
-                if (res.data.success) {
-                    setDesignations(res.data.data);
-                }
+                if (res.data.success) setDesignations(res.data.data);
+            })
+            .catch((err) => console.error(err));
+
+        // Fetch Branches
+        axios
+            .get(route('branches.list'))
+            .then((res) => {
+                if (res.data.success) setBranches(res.data.branches || []);
+            })
+            .catch((err) => console.error(err));
+
+        // Fetch Shifts
+        axios
+            .get(route('shifts.list'))
+            .then((res) => {
+                if (res.data.success) setShifts(res.data.shifts || []);
             })
             .catch((err) => console.error(err));
     }, []);
@@ -493,9 +512,9 @@ const EmployeeCreate = () => {
                         </Box>
                     </Box>
 
-                    {/* Department & Employment Details */}
+                    {/* Department, Shift & Employment Details */}
                     <Typography variant="h6" sx={{ fontWeight: 600, mb: 1, mt: 3 }}>
-                        Department & Employment
+                        Department, Shift & Employment
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', mb: 4 }}>
@@ -527,6 +546,40 @@ const EmployeeCreate = () => {
                                 Subdepartment
                             </Typography>
                             <Autocomplete size="small" options={subdepartments} getOptionLabel={(option) => option.name} value={formData.subdepartment} disabled={!formData.department} onInputChange={(event, value) => setSubdepartmentSearchTerm(value)} onChange={(event, value) => setFormData({ ...formData, subdepartment: value })} renderInput={(params) => <TextField {...params} sx={textFieldStyle} label="Search Subdepartment" placeholder={!formData.department ? 'Select department first' : 'Search'} />} />
+                        </Box>
+
+                        {/* Branch Selection */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Branch (Location)
+                            </Typography>
+                            <Autocomplete
+                                size="small"
+                                options={branches}
+                                getOptionLabel={(option) => option.name}
+                                value={branches.find((b) => b.id === formData.branch_id) || null}
+                                onChange={(event, value) => {
+                                    setFormData({ ...formData, branch_id: value ? value.id : null });
+                                }}
+                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Branch" />}
+                            />
+                        </Box>
+
+                        {/* Shift Selection */}
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Shift
+                            </Typography>
+                            <Autocomplete
+                                size="small"
+                                options={shifts}
+                                getOptionLabel={(option) => `${option.name} (${option.start_time}-${option.end_time})`}
+                                value={shifts.find((s) => s.id === formData.shift_id) || null}
+                                onChange={(event, value) => {
+                                    setFormData({ ...formData, shift_id: value ? value.id : null });
+                                }}
+                                renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Shift" />}
+                            />
                         </Box>
 
                         {[

@@ -11,7 +11,7 @@ class Employee extends BaseModel
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id', 'department_id', 'subdepartment_id', 'designation_id', 'employee_id', 'name', 'email', 'designation',
+        'user_id', 'department_id', 'subdepartment_id', 'designation_id', 'shift_id', 'branch_id', 'employee_id', 'name', 'email', 'designation',
         'phone_no', 'employment_type', 'address', 'emergency_no', 'gender', 'marital_status', 'national_id', 'account_no',
         'salary', 'joining_date', 'created_by', 'updated_by', 'deleted_by',
         // Additional fields from old HR system
@@ -35,6 +35,21 @@ class Employee extends BaseModel
     public function subdepartment()
     {
         return $this->belongsTo(Subdepartment::class);
+    }
+
+    public function shift()
+    {
+        return $this->belongsTo(Shift::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class);
     }
 
     public function media()

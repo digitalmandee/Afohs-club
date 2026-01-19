@@ -25,27 +25,33 @@ class EmployeeController extends Controller
 
         // Attendance stats for today
         $currentDay = now()->format('Y-m-d');
-        $attendanceStats = null;
-        // $attendanceStats = Attendance::where('date', $currentDay)
-        //     ->selectRaw("
-        //     SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent,
-        //     SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
-        //     SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as total_late
-        // ")
-        //     ->first();
+        $attendanceStats = \App\Models\Attendance::where('date', $currentDay)
+            ->selectRaw("
+                SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent,
+                SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
+                SUM(CASE WHEN status = 'late' THEN 1 ELSE 0 END) as total_late
+            ")
+            ->first();
 
         $limit = $request->query('limit') ?? 10;
         $search = $request->query('search', '');
-        $departmentFilters = $request->query('department_ids', []);
+        $departmentId = $request->query('department_id');
+        $subdepartmentId = $request->query('subdepartment_id');
+        $branchId = $request->query('branch_id');
+        $shiftId = $request->query('shift_id');
+        $designationId = $request->query('designation_id');
 
-        // Employees with pagination - include deleted departments and subdepartments
+        // Employees with pagination - include relationships
         $employeesQuery = Employee::with([
             'department' => function ($query) {
-                $query->withTrashed();  // Include soft deleted departments
+                $query->withTrashed();
             },
             'subdepartment' => function ($query) {
-                $query->withTrashed();  // Include soft deleted subdepartments
+                $query->withTrashed();
             },
+            'designation',
+            'branch',
+            'shift',
         ]);
 
         // Apply search filter if provided
@@ -54,14 +60,25 @@ class EmployeeController extends Controller
                 $query
                     ->where('name', 'like', '%' . $search . '%')
                     ->orWhere('employee_id', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%')
-                    ->orWhere('designation', 'like', '%' . $search . '%');
+                    ->orWhere('email', 'like', '%' . $search . '%');
             });
         }
 
-        // Apply department filters if provided
-        if (!empty($departmentFilters) && is_array($departmentFilters)) {
-            $employeesQuery->whereIn('department_id', $departmentFilters);
+        // Apply individual filters
+        if ($departmentId) {
+            $employeesQuery->where('department_id', $departmentId);
+        }
+        if ($subdepartmentId) {
+            $employeesQuery->where('subdepartment_id', $subdepartmentId);
+        }
+        if ($branchId) {
+            $employeesQuery->where('branch_id', $branchId);
+        }
+        if ($shiftId) {
+            $employeesQuery->where('shift_id', $shiftId);
+        }
+        if ($designationId) {
+            $employeesQuery->where('designation_id', $designationId);
         }
 
         $employees = $employeesQuery
@@ -75,22 +92,15 @@ class EmployeeController extends Controller
         // Get filter options
         $departments = Department::select('id', 'name')->get();
 
-        return Inertia::render('App/Admin/Employee/Dashboard1', [
+        return Inertia::render('App/Admin/Employee/Dashboard', [
             'stats' => [
                 'total_employees' => $totalEmployees,
-                // 'total_present' => $attendanceStats->total_present ?? 0,
-                // 'total_absent' => $attendanceStats->total_absent ?? 0,
-                // 'total_late' => $attendanceStats->total_late ?? 0,
                 'total_present' => $attendanceStats->total_present ?? 0,
                 'total_absent' => $attendanceStats->total_absent ?? 0,
                 'total_late' => $attendanceStats->total_late ?? 0,
             ],
             'employees' => $employees,
             'departments' => $departments,
-            'filters' => [
-                'search' => $search,
-                'department_ids' => $departmentFilters,
-            ],
         ]);
     }
 
@@ -137,6 +147,8 @@ class EmployeeController extends Controller
             'emergency_no' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
             'department_id' => 'required|exists:departments,id',
             'subdepartment_id' => 'nullable|exists:subdepartments,id',
+            'shift_id' => 'nullable|exists:shifts,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'salary' => 'nullable|numeric',
             'joining_date' => 'nullable|date',
             'employment_type' => 'required|in:full_time,part_time,contract',
@@ -182,6 +194,8 @@ class EmployeeController extends Controller
             $employee = Employee::create([
                 'department_id' => $request->department_id,
                 'subdepartment_id' => $request->subdepartment_id,
+                'shift_id' => $request->shift_id,
+                'branch_id' => $request->branch_id,
                 'employee_id' => $request->employee_id,
                 'name' => $request->name,
                 'email' => $request->email,
@@ -320,6 +334,8 @@ class EmployeeController extends Controller
             'account_no' => 'nullable|regex:/^[0-9]+$/',
             'address' => 'nullable|string',
             'emergency_no' => 'nullable|regex:/^[0-9+\-\(\) ]+$/',
+            'shift_id' => 'nullable|exists:shifts,id',
+            'branch_id' => 'nullable|exists:branches,id',
             'salary' => 'nullable|numeric',
             'joining_date' => 'nullable|date',
             // Additional fields validation
@@ -376,6 +392,8 @@ class EmployeeController extends Controller
                 'name',
                 'department_id',
                 'subdepartment_id',
+                'shift_id',
+                'branch_id',
                 'employee_id',
                 'email',
                 'designation_id',
