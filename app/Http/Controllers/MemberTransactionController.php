@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\CorporateMember;
 use App\Models\FinancialChargeType;
@@ -84,12 +85,11 @@ class MemberTransactionController extends Controller
             ->with('subscriptionType:id,name')
             ->get(['id', 'name', 'subscription_type_id', 'fee', 'description']);
 
-        // Fetch Transaction Types based on new mapping
-        // 3: Membership, 4: Maintenance, 5: Subscription, 6: Other
-        $membershipCharges = TransactionType::where('type', 3)->get();
-        $maintenanceCharges = TransactionType::where('type', 4)->get();
-        $subscriptionCharges = TransactionType::where('type', 5)->get();
-        $otherCharges = TransactionType::where('type', 6)->get();
+        // Fetch Transaction Types based on constants mapping
+        $membershipCharges = TransactionType::where('type', AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP)->get();
+        $maintenanceCharges = TransactionType::where('type', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE)->get();
+        $subscriptionCharges = TransactionType::where('type', AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION)->get();
+        $otherCharges = TransactionType::where('type', AppConstants::TRANSACTION_TYPE_ID_FINANCIAL_CHARGE)->get();
 
         // Fetch Financial Charge Types for the additional dropdown
         $financialChargeTypes = FinancialChargeType::where('status', 'active')->get();
@@ -481,8 +481,7 @@ class MemberTransactionController extends Controller
                 $transactionType = \App\Models\TransactionType::find($itemData['fee_type']);
 
                 // Determine if it is a subscription fee based on the TransactionType 'type' column
-                // 3: Membership, 4: Maintenance, 5: Subscription, 6: Financial Charge
-                $isSubscription = $transactionType && $transactionType->type == 5;
+                $isSubscription = $transactionType && $transactionType->type == AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION;
 
                 $invoiceItem = new \App\Models\FinancialInvoiceItem([
                     'invoice_id' => $invoice->id,

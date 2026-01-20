@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
 use App\Models\FinancialReceipt;
@@ -39,7 +40,7 @@ class FinancialController extends Controller
         $totalTransactions = FinancialInvoice::count();
 
         // Revenue Breakdown using Item-Level Transactions (Credits)
-        // Group by TransactionType->type field (3=Membership, 4=Maintenance, 5=Subscription)
+        // Group by TransactionType->type field matching AppConstants
         $revenueByType = DB::table('transactions')
             ->join('financial_invoice_items', 'transactions.reference_id', '=', 'financial_invoice_items.id')
             ->join('transaction_types', 'financial_invoice_items.fee_type', '=', 'transaction_types.id')
@@ -49,9 +50,9 @@ class FinancialController extends Controller
             ->groupBy('transaction_types.type')
             ->pluck('total', 'type');
 
-        $membershipFeeRevenue = $revenueByType[3] ?? 0;
-        $maintenanceFeeRevenue = $revenueByType[4] ?? 0;
-        $subscriptionFeeRevenue = $revenueByType[5] ?? 0;
+        $membershipFeeRevenue = $revenueByType[AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP] ?? 0;
+        $maintenanceFeeRevenue = $revenueByType[AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE] ?? 0;
+        $subscriptionFeeRevenue = $revenueByType[AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION] ?? 0;
 
         // Reinstating Fee - specific lookup by name if needed, assuming it falls under Type 6 (Financial Charge) or similar
         // For now, we will try to find it by name for legacy support compatibility
