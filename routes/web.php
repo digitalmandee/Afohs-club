@@ -545,9 +545,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::delete('subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
     });
 
-    Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
-
-    Route::get('api/members/by-user/{user}', [MembersController::class, 'byUser']);
     Route::post('api/check-duplicate-cnic', [MembersController::class, 'checkDuplicateCnic'])->name('api.check-duplicate-cnic');
     Route::post('api/check-duplicate-membership-no', [MembersController::class, 'checkDuplicateMembershipNo'])->name('api.check-duplicate-membership-no');
     Route::post('api/check-duplicate-barcode', [MembersController::class, 'checkDuplicateBarcode'])->name('api.check-duplicate-barcode');
@@ -655,14 +652,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         Route::get('/preview/print', [PayrollApiController::class, 'printPreviewPage'])->name('payroll.preview.print');
     });
-
-    // Route::get('/admin/subscription/sports/category', function () {
-    //     return Inertia::render('App/Admin/Subscription/Sports');
-    // })->name('subscription.sports');
-
-    // Route::get('/admin/subscription/add/sports/category', function () {
-    //     return Inertia::render('App/Admin/Subscription/AddSports');
-    // })->name('subscription.addsports');
 
     // Kitchen Routes
     Route::get('/kitchen/category/dashboard', function () {

@@ -633,7 +633,7 @@ class MembershipController extends Controller
                     "New Member: {$mainMember->full_name}",
                     "Membership #{$mainMember->membership_no} added to {$mainMember->memberCategory->name}",
                     route('member.profile', $mainMember->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
                 Log::info('Notification sent successfully.');
@@ -1012,7 +1012,7 @@ class MembershipController extends Controller
                     "Member Updated: {$member->full_name}",
                     "Profile details updated for Membership #{$member->membership_no}",
                     route('member.profile', $member->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
             } catch (\Exception $e) {
@@ -1245,7 +1245,7 @@ class MembershipController extends Controller
                     "Profession Updated: {$member->full_name}",
                     "Profession details updated for Membership #{$member->membership_no}",
                     route('member.profile', $member->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
             } catch (\Exception $e) {
@@ -1342,7 +1342,7 @@ class MembershipController extends Controller
                     "Profession Updated: {$member->full_name}",
                     "Profession details updated for Membership #{$member->membership_no}",
                     route('member.profile', $member->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
             } catch (\Exception $e) {

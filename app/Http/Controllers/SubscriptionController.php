@@ -206,17 +206,4 @@ class SubscriptionController extends Controller
             'filters' => $request->only(['search'])
         ]);
     }
-
-    public function search(Request $request)
-    {
-        $query = $request->get('q');
-        $customers = User::where('name', 'like', "%$query%")
-            ->role('user')
-            ->whereNull('parent_user_id')
-            ->orWhere('email', 'like', "%$query%")
-            ->limit(10)
-            ->get(['id', 'name', 'email']);
-
-        return response()->json($customers);
-    }
 }
