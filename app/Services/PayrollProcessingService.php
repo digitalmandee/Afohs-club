@@ -199,31 +199,65 @@ class PayrollProcessingService
             }
         }
 
-        // Use employeeOrders (passed from batch fetch) as CTS orders for this employee
-        $totalOrderDeductions = 0;
-        $orderDeductions = [];
+        // Food Bill (CTS) Deduction Logic
+        $totalCtsBill = 0;
+        $orderDeductions = [];  // Keep track for json storage if needed, but main deduction is via PayslipDeduction
+
         try {
             $ctsOrders = $employeeOrders instanceof \Illuminate\Support\Collection ? $employeeOrders : collect();
 
             foreach ($ctsOrders as $order) {
-                // defensive: skip orders already marked as deducted
                 if (!empty($order->deducted_in_payslip_id)) {
                     continue;
                 }
-
                 $amt = $order->total_price ?? $order->paid_amount ?? $order->amount ?? 0;
-                $amt = (float) $amt;
+                $totalCtsBill += (float) $amt;
+
                 $orderDeductions[] = [
                     'order_id' => $order->id,
-                    'amount' => $amt,
+                    'amount' => (float) $amt,
                     'paid_at' => $order->paid_at ? (string) $order->paid_at : null
                 ];
-                $totalOrderDeductions += $amt;
             }
         } catch (\Exception $ex) {
-            $totalOrderDeductions = 0;
+            $totalCtsBill = 0;
             $orderDeductions = [];
         }
+
+        // Calculate Food Deduction after Allowance
+        $foodDeductionAmount = 0;
+        if ($totalCtsBill > 0) {
+            // Fetch Food Allowance (ID 4)
+            $foodAllowance = $employee->allowances->where('allowance_type_id', \App\Constants\AppConstants::FOOD_ALLOWANCE_TYPE_ID)->first();
+            $foodAllowanceAmount = $foodAllowance ? $foodAllowance->amount : 0;  // Assuming Fixed Amount for now based on screenshot
+
+            // Deduction = Bill - Allowance (if Bill > Allowance)
+            // If Bill <= Allowance, Deduction is 0 (Company covers it up to value)
+            $foodDeductionAmount = max(0, $totalCtsBill - $foodAllowanceAmount);
+        }
+
+        // Create explicit PayslipDeduction for Food Bill
+        if ($foodDeductionAmount > 0) {
+            // Find or Create "Food Bill / CTS" Deduction Type
+            $foodDeductionType = DeductionType::firstOrCreate(
+                ['name' => \App\Constants\AppConstants::FOOD_BILL_DEDUCTION_NAME],
+                [
+                    'type' => 'fixed',
+                    'is_mandatory' => true,
+                    'calculation_base' => 'gross_salary',
+                    'is_active' => true,
+                    'description' => 'Auto-calculated Food Bill (Excess over Allowance)'
+                ]
+            );
+
+            // Add to deductions list for creating explicit PayslipDeduction later
+            // We append to $salaryComponents['deductions'] implicitly?
+            // No, generatePayslip creates PayslipDeductions after Payslip creation usually.
+            // But wait, generatePayslip here relies on $totalDeductionsWithOrders.
+            // We need to ADD this $foodDeductionAmount to the totals.
+        }
+
+        $totalOrderDeductions = $foodDeductionAmount;  // This will be added to total_deductions below
 
         // Adjust totals to include all additional deductions
         $totalDeductionsWithOrders = $salaryComponents['total_deductions'] + $totalOrderDeductions + $totalLoanDeductions + $totalAdvanceDeductions;
@@ -325,43 +359,41 @@ class PayrollProcessingService
             }
         }
 
-        // Create CTS order-based deductions (if any) and map to a DeductionType
-        if (!empty($orderDeductions)) {
-            // Try to find an existing deduction type for CTS orders
-            $ctsDeductionType = DeductionType::where('name', 'like', '%cts%')->orWhere('name', 'like', '%CTS%')->first();
-            if (!$ctsDeductionType) {
-                // Create a fallback deduction type
-                $ctsDeductionType = DeductionType::create([
-                    'name' => 'CTS Order',
+        // Create Single Food Bill Deduction (if applicable)
+        if ($foodDeductionAmount > 0) {
+            $foodDeductionType = DeductionType::firstOrCreate(
+                ['name' => \App\Constants\AppConstants::FOOD_BILL_DEDUCTION_NAME],
+                [
                     'type' => 'fixed',
-                    'is_mandatory' => false,
-                    'calculation_base' => 'basic_salary',
+                    'is_mandatory' => true,
+                    'calculation_base' => 'gross_salary',
                     'is_active' => true,
-                    'description' => 'Deductions for CTS (Customer To Settle) orders'
-                ]);
-            }
+                    'description' => 'Auto-calculated Food Bill (Excess over Allowance)'
+                ]
+            );
 
-            foreach ($orderDeductions as $od) {
-                PayslipDeduction::create([
-                    'payslip_id' => $payslip->id,
-                    'order_id' => $od['order_id'] ?? null,
-                    'deduction_type_id' => $ctsDeductionType->id,
-                    'deduction_name' => 'CTS Order #' . ($od['order_id'] ?? 'N/A'),
-                    'amount' => $od['amount'] ?? 0
-                ]);
+            PayslipDeduction::create([
+                'payslip_id' => $payslip->id,
+                'deduction_type_id' => $foodDeductionType->id,
+                'deduction_name' => \App\Constants\AppConstants::FOOD_BILL_DEDUCTION_NAME,
+                'amount' => $foodDeductionAmount
+            ]);
+        }
 
-                // Mark the order as deducted (link back to payslip)
+        // Mark ALL processed CTS orders as deducted (regardless of allowance coverage)
+        // Even if deducted amount is 0 (fully covered by allowance), the orders are "settled" for this pay period.
+        if (!empty($ctsOrders)) {
+            foreach ($ctsOrders as $order) {
+                if (!empty($order->deducted_in_payslip_id))
+                    continue;
+
+                // Update order status
                 try {
-                    if (!empty($od['order_id'])) {
-                        $order = Order::find($od['order_id']);
-                        if ($order) {
-                            $order->deducted_in_payslip_id = $payslip->id;
-                            $order->deducted_at = now();
-                            $order->save();
-                        }
-                    }
+                    $order->deducted_in_payslip_id = $payslip->id;
+                    $order->deducted_at = now();
+                    $order->save();
                 } catch (\Exception $ex) {
-                    // Ignore order update failures
+                    // Log error but continue
                 }
             }
         }

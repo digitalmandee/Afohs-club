@@ -10,13 +10,13 @@ import { countries } from '@/constants/countries';
 
 const EmployeeCreate = () => {
     const { props } = usePage();
-    const { employee, isEdit } = props;
+    const { employee, isEdit, next_employee_id } = props;
 
     const [formData, setFormData] = useState({
         // Basic Information
         name: employee?.name || '',
         father_name: employee?.father_name || '',
-        employee_id: employee?.employee_id || '',
+        employee_id: employee?.employee_id || next_employee_id || '',
         email: employee?.email || '',
         designation: employee?.designation || '',
         designation_id: employee?.designation_id || null,

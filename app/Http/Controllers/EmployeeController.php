@@ -124,7 +124,19 @@ class EmployeeController extends Controller
 
     public function create()
     {
-        return Inertia::render('App/Admin/Employee/Create');
+        // Get dropdown data
+        $shifts = \App\Models\Shift::where('is_active', true)->select('id', 'name', 'start_time', 'end_time')->get();
+        $branches = \App\Models\Branch::where('is_active', true)->select('id', 'name')->get();
+
+        // Calculate next Employee ID
+        $maxId = \App\Models\Employee::max(DB::raw('CAST(employee_id AS UNSIGNED)'));
+        $nextEmployeeId = $maxId ? $maxId + 1 : 1;
+
+        return Inertia::render('App/Admin/Employee/Create', [
+            'shifts' => $shifts,
+            'branches' => $branches,
+            'next_employee_id' => (string) $nextEmployeeId
+        ]);
     }
 
     public function edit($employeeId)
