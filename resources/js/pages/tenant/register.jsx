@@ -82,10 +82,10 @@ const Register = ({ tenant }) => {
                     mb: 2,
                     mt: 2
                 }}>
-                    <IconButton onClick={() => window.history.back()} sx={{ color: '#000' }}>
+                    {/* <IconButton onClick={() => window.history.back()} sx={{ color: '#000' }}>
                         <ArrowBack />
-                    </IconButton>
-                    <Typography variant="h5" style={{ color: '#063455', fontWeight: 500 }}>
+                    </IconButton> */}
+                    <Typography style={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                         Create New Kitchen
                     </Typography>
                 </Box>

@@ -27,7 +27,7 @@ const Profile = ({ mustVerifyEmail, status }) => {
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', paddingTop: "1rem" }}>
-                <Typography variant="h5" style={{ color: '#063455', fontWeight: 600, marginLeft:"30px"}}>
+                <Typography style={{ color: '#063455', fontWeight: 700, marginLeft:"30px", fontSize:'30px'}}>
                     Profile Information
                 </Typography>
                 <div style={{ maxWidth: '500px', margin: '0 auto', paddingTop:'1rem' }}>
@@ -101,7 +101,7 @@ const Profile = ({ mustVerifyEmail, status }) => {
                             )}
 
                             <div className="d-flex align-items-center mt-3 gap-3">
-                                <Button variant="contained" disabled={processing}>
+                                <Button variant="contained" disabled={processing} sx={{textTransform:'none'}}>
                                     Save
                                 </Button>
                                 <Transition

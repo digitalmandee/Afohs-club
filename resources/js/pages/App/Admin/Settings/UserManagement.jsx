@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Divider } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Divider, Tooltip } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
@@ -116,6 +116,9 @@ const UserManagement = () => {
         return <PersonIcon sx={{ color: '#757575' }} />;
     };
 
+    const capitalizeFirstLetter = (text = '') =>
+        text.charAt(0).toUpperCase() + text.slice(1);
+
     return (
         <>
             <Head title="User Management" />
@@ -130,7 +133,7 @@ const UserManagement = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>
                             User Management
                         </Typography>
                     </Box>
@@ -142,6 +145,8 @@ const UserManagement = () => {
                                 onClick={() => setCreateUserOpen(true)}
                                 sx={{
                                     backgroundColor: '#063455',
+                                    textTransform: 'none',
+                                    borderRadius: '16px',
                                     '&:hover': { backgroundColor: '#063455' },
                                 }}
                             >
@@ -153,6 +158,8 @@ const UserManagement = () => {
                                 onClick={() => setCreateEmployeeUserOpen(true)}
                                 sx={{
                                     backgroundColor: '#063455',
+                                    textTransform: 'none',
+                                    borderRadius: '16px',
                                     '&:hover': { borderColor: '#1565c0', backgroundColor: '#063455' },
                                 }}
                             >
@@ -178,6 +185,7 @@ const UserManagement = () => {
                                     height: 40, // 🔥 set height
                                     backgroundColor: 'transparent', // remove white background
                                     paddingRight: 0,
+                                    borderRadius: '16px',
                                 },
 
                                 '& .MuiInputBase-input': {
@@ -200,16 +208,16 @@ const UserManagement = () => {
                 </Box>
 
                 {/* Users Table */}
-                <TableContainer component={Paper}>
+                <TableContainer sx={{ borderRadius: '12px', overflowX: 'auto' }}>
                     <Table>
-                        <TableHead sx={{ bgcolor: '#E5E5EA' }}>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
-                                <TableCell sx={{ fontWeight: 600 }}>User</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Email</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Roles</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Employee Info</TableCell>
-                                <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>User</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Type</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Email</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Roles</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Employee Info</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -218,10 +226,23 @@ const UserManagement = () => {
                                     <TableCell>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             <Avatar sx={{ mr: 2, bgcolor: '#063455' }}>{user.name.charAt(0).toUpperCase()}</Avatar>
-                                            <Box>
-                                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                    {user.name}
-                                                </Typography>
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    fontWeight: 600,
+                                                    textOverflow: 'ellipsis',
+                                                    overflow: 'hidden',
+                                                    maxWidth: '100px',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
+                                                <Tooltip title={user.name} arrow>
+                                                    <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {user.name}
+                                                    </Box>
+                                                </Tooltip>
+
                                                 <Typography variant="caption" color="textSecondary">
                                                     ID: {user.id}
                                                 </Typography>
@@ -231,16 +252,44 @@ const UserManagement = () => {
                                     <TableCell>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             {getUserTypeIcon(user)}
-                                            <Typography variant="body2" sx={{ ml: 1 }}>
+                                            <Typography variant="body2" sx={{
+                                                ml: 1, textOverflow: 'ellipsis',
+                                                overflow: 'hidden',
+                                                maxWidth: '100px',
+                                                whiteSpace: 'nowrap',
+                                            }}>
                                                 {user.roles.some((role) => ['super-admin', 'admin'].includes(role.name)) ? 'Admin User' : user.employee ? 'Employee User' : 'Regular User'}
                                             </Typography>
                                         </Box>
                                     </TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>
+                                    <TableCell sx={{
+                                        textOverflow: 'ellipsis',
+                                        overflow: 'hidden',
+                                        maxWidth: '150px',
+                                        whiteSpace: 'nowrap',
+                                    }}>
+                                        <Tooltip title={user.email} arrow>
+                                            {user.email}
+                                        </Tooltip>
+                                    </TableCell>
+                                    {/* <TableCell>
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                             {user.roles.map((role) => (
                                                 <Chip key={role.id} label={role.name} color={getRoleColor(role.name)} size="small" variant="outlined" onDelete={can.edit ? () => handleRemoveRole(user.id, role.name) : undefined} />
+                                            ))}
+                                        </Box>
+                                    </TableCell> */}
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                            {user.roles.map((role) => (
+                                                <Chip
+                                                    key={role.id}
+                                                    label={capitalizeFirstLetter(role.name)}
+                                                    color={getRoleColor(role.name)}
+                                                    size="small"
+                                                    variant="outlined"
+                                                    onDelete={can.edit ? () => handleRemoveRole(user.id, role.name) : undefined}
+                                                />
                                             ))}
                                         </Box>
                                     </TableCell>
@@ -299,7 +348,7 @@ const UserManagement = () => {
                 {/* Create Super Admin User Dialog */}
                 <Dialog open={createUserOpen} onClose={() => setCreateUserOpen(false)} maxWidth="sm" fullWidth>
                     <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-                        <AdminIcon sx={{ mr: 1, color: '#d32f2f' }} />
+                        <AdminIcon sx={{ mr: 1, color: '#063455' }} />
                         Create Super Admin User
                     </DialogTitle>
                     <DialogContent>
@@ -329,8 +378,9 @@ const UserManagement = () => {
                         </Grid>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setCreateUserOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreateSuperAdminUser} variant="contained" sx={{ bgcolor: '#d32f2f' }}>
+                        <Button onClick={() => setCreateUserOpen(false)}
+                            sx={{border:'1px solid #063455', color:'#063455', textTransform:'none'}}>Cancel</Button>
+                        <Button onClick={handleCreateSuperAdminUser} variant="contained" sx={{ bgcolor: '#063455', textTransform:'none' }}>
                             Create User
                         </Button>
                     </DialogActions>
@@ -339,7 +389,7 @@ const UserManagement = () => {
                 {/* Create Employee User Dialog */}
                 <Dialog open={createEmployeeUserOpen} onClose={() => setCreateEmployeeUserOpen(false)} maxWidth="sm" fullWidth>
                     <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-                        <WorkIcon sx={{ mr: 1, color: '#1976d2' }} />
+                        <WorkIcon sx={{ mr: 1, color: '#063455' }} />
                         Create Employee User Account
                     </DialogTitle>
                     <DialogContent>
@@ -356,8 +406,9 @@ const UserManagement = () => {
                         </Grid>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setCreateEmployeeUserOpen(false)}>Cancel</Button>
-                        <Button onClick={handleCreateEmployeeUser} variant="contained" sx={{ bgcolor: '#1976d2' }}>
+                        <Button onClick={() => setCreateEmployeeUserOpen(false)}
+                            sx={{color:'#063455', border:'1px solid #063455', textTransform:'none'}}>Cancel</Button>
+                        <Button onClick={handleCreateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform:'none' }}>
                             Create Employee User
                         </Button>
                     </DialogActions>

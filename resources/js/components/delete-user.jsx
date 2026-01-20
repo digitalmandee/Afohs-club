@@ -85,7 +85,7 @@ const DeleteUser = () => {
                             <Button onClick={closeModal} color="secondary">
                                 Cancel
                             </Button>
-                            <Button type="submit" variant="contained" color="error" disabled={processing}>
+                            <Button type="submit" variant="contained" color="error" disabled={processing} sx={{textTransform:'none'}}>
                                 Delete account
                             </Button>
                         </DialogActions>
