@@ -107,7 +107,7 @@ class EmployeeController extends Controller
             ->withQueryString()
             ->through(function ($employee) {
                 $employee->joining_date = $employee->joining_date ? \Carbon\Carbon::parse($employee->joining_date)->format('d/m/Y') : '-';
-                $employee->photo_url = $employee->photo ? asset('storage/' . $employee->photo->file_path) : null;
+                $employee->photo_url = $employee->photo ? asset($employee->photo->file_path) : null;
                 return $employee;
             });
 
