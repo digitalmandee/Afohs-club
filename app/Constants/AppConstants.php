@@ -11,6 +11,10 @@ class AppConstants
     const FOOD_BILL_DEDUCTION_NAME = 'Food Bill / CTS';
 
     // Transaction Types (Financial)
+    const TRANSACTION_TYPE_ID_ROOM_BOOKING = 1;
+
+    const TRANSACTION_TYPE_ID_EVENT_BOOKING = 2;  // Standardizing Event Booking
+
     const TRANSACTION_TYPE_ID_MEMBERSHIP = 3;
 
     const TRANSACTION_TYPE_ID_MAINTENANCE = 4;
@@ -18,4 +22,12 @@ class AppConstants
     const TRANSACTION_TYPE_ID_SUBSCRIPTION = 5;
 
     const TRANSACTION_TYPE_ID_FINANCIAL_CHARGE = 6;
+
+    const TRANSACTION_TYPE_ID_FOOD_ORDER = 7;
+
+    const TRANSACTION_TYPE_ID_APPLIED_MEMBER = 8;
+
+    const TRANSACTION_TYPE_ID_MANUAL_INVOICE = 9;
+
+    const TRANSACTION_TYPE_ID_MIXED = 10;
 }

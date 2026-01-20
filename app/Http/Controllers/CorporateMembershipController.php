@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
 use App\Models\MemberCategory;
+use App\Models\Membership;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -184,8 +186,8 @@ class CorporateMembershipController extends Controller
                 'invoice_no' => $this->generateInvoiceNumber(),
                 'member_id' => null,  // Explicitly null for corporate invoice
                 'corporate_member_id' => $mainMember->id,
-                'fee_type' => 'mixed',
-                'invoice_type' => 'invoice',
+                'invoice_type' => 'membership',
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MIXED,
                 'amount' => 0,
                 'additional_charges' => 0,
                 'discount_type' => null,
@@ -202,7 +204,7 @@ class CorporateMembershipController extends Controller
             // 2. Create Invoice Item (Detailed)
             \App\Models\FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'fee_type' => 'membership_fee',
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
                 'description' => 'Corporate Membership Fee',
                 'qty' => 1,
                 'amount' => $request->membership_fee ?? 0,
@@ -221,7 +223,7 @@ class CorporateMembershipController extends Controller
             if (($request->total_maintenance_fee ?? 0) > 0) {
                 FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => 'maintenance_fee',
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
                     'description' => 'Maintenance Fee (Initial)',
                     'qty' => 1,
                     'amount' => $request->total_maintenance_fee,

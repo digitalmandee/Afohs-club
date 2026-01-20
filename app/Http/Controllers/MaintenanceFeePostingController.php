@@ -239,7 +239,7 @@ class MaintenanceFeePostingController extends Controller
                     'invoice_no' => $invoiceNo,
                     'invoiceable_id' => $member->id,
                     'invoiceable_type' => $model,
-                    'fee_type' => 'maintenance_fee',
+                    'fee_type' => \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
                     'invoice_type' => 'invoice',
                     'amount' => $finalTotal - $tax + $discount,  // Net total before charges/discounts usually, but here matches logic
                     'total_price' => $finalTotal,

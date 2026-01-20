@@ -545,16 +545,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::delete('subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
     });
 
-    // Subscription details route (public access for QR code scanning)
-    Route::get('subscription/details/{id}', [SubscriptionController::class, 'showDetails'])->name('subscription.details');
-
     Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
 
-    Route::get('api/customer-invoices/{userId}', [SubscriptionController::class, 'customerInvoices']);
-    Route::get('api/subscriptions/by-user/{user}', [SubscriptionController::class, 'byUser']);
     Route::get('api/members/by-user/{user}', [MembersController::class, 'byUser']);
-    Route::post('api/pay-multiple-invoices', [SubscriptionController::class, 'payMultipleInvoices']);
-    Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPay']);
     Route::post('api/check-duplicate-cnic', [MembersController::class, 'checkDuplicateCnic'])->name('api.check-duplicate-cnic');
     Route::post('api/check-duplicate-membership-no', [MembersController::class, 'checkDuplicateMembershipNo'])->name('api.check-duplicate-membership-no');
     Route::post('api/check-duplicate-barcode', [MembersController::class, 'checkDuplicateBarcode'])->name('api.check-duplicate-barcode');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\CardPayment;
 use App\Models\FinancialInvoice;
@@ -548,7 +549,7 @@ class MembershipController extends Controller
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->generateInvoiceNumber(),
                 'member_id' => $mainMember->id,
-                'fee_type' => 'mixed',
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MIXED,
                 'invoice_type' => 'invoice',
                 'amount' => 0,
                 'additional_charges' => 0,
@@ -568,7 +569,7 @@ class MembershipController extends Controller
             // 2. Create Invoice Item (New System Compatibility)
             \App\Models\FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'fee_type' => 'membership_fee',
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
                 'description' => 'Membership Fee',
                 'qty' => 1,
                 'amount' => $request->membership_fee ?? 0,
@@ -587,7 +588,7 @@ class MembershipController extends Controller
             if (($request->total_maintenance_fee ?? 0) > 0) {
                 \App\Models\FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => 'maintenance_fee',
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
                     'description' => 'Maintenance Fee (Initial)',
                     'qty' => 1,
                     'amount' => $request->total_maintenance_fee,

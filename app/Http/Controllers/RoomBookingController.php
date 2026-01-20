@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
@@ -346,7 +347,7 @@ class RoomBookingController extends Controller
 
             $invoiceItem = FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'fee_type' => '1',  // Room Booking Fee Type ID
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_ROOM_BOOKING,
                 'description' => 'Room Booking Charges #' . $booking->booking_no,
                 'qty' => 1,
                 'amount' => $grossAmount,  // Store Gross Amount here

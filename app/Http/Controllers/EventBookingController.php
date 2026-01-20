@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
@@ -259,7 +260,7 @@ class EventBookingController extends Controller
             if ($request->menuAmount > 0) {
                 FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => 'event_menu',
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                     'description' => 'Event Menu Charges',
                     'qty' => $request->numberOfGuests,
                     'amount' => $request->menuAmount,  // Per person
@@ -279,7 +280,7 @@ class EventBookingController extends Controller
 
                         FinancialInvoiceItem::create([
                             'invoice_id' => $invoice->id,
-                            'fee_type' => 'event_addon',
+                            'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                             'description' => 'Addon: ' . ($addon['type'] ?? 'Addon'),
                             'qty' => $request->numberOfGuests,  // Addons usually per guest? Or lumpsum? Code calculated total add-ons then multiplied by guests in store method line 136?
                             // Line 136: (($request->menuAmount ?? 0) + calculateMenuAddOnsTotal) * Guests. So yes, per guest.
@@ -302,7 +303,7 @@ class EventBookingController extends Controller
 
                         FinancialInvoiceItem::create([
                             'invoice_id' => $invoice->id,
-                            'fee_type' => 'event_other',
+                            'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                             'description' => 'Charge: ' . ($charge['type'] ?? 'Charge'),
                             'qty' => 1,  // Other charges usually lumpsum?
                             'amount' => $chargeAmount,
@@ -773,7 +774,7 @@ class EventBookingController extends Controller
                 if ($request->menuAmount > 0) {
                     FinancialInvoiceItem::create([
                         'invoice_id' => $invoice->id,
-                        'fee_type' => 'event_menu',
+                        'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                         'description' => 'Event Menu Charges',
                         'qty' => $request->numberOfGuests,
                         'amount' => $request->menuAmount,
@@ -793,7 +794,7 @@ class EventBookingController extends Controller
 
                             FinancialInvoiceItem::create([
                                 'invoice_id' => $invoice->id,
-                                'fee_type' => 'event_addon',
+                                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                                 'description' => 'Addon: ' . ($addon['type'] ?? 'Addon'),
                                 'qty' => $request->numberOfGuests,
                                 'amount' => $addonAmount,
@@ -815,7 +816,7 @@ class EventBookingController extends Controller
 
                             FinancialInvoiceItem::create([
                                 'invoice_id' => $invoice->id,
-                                'fee_type' => 'event_other',
+                                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                                 'description' => 'Charge: ' . ($charge['type'] ?? 'Charge'),
                                 'qty' => 1,
                                 'amount' => $chargeAmount,

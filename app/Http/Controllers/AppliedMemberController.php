@@ -168,7 +168,7 @@ class AppliedMemberController extends Controller
             // ✅ Create Invoice Item
             \App\Models\FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'fee_type' => 'applied_member_fee',
+                'fee_type' => \App\Constants\AppConstants::TRANSACTION_TYPE_ID_APPLIED_MEMBER,
                 'description' => 'Applied Member Registration Fee',
                 'qty' => 1,
                 'amount' => $appliedMember->amount_paid,
@@ -318,7 +318,7 @@ class AppliedMemberController extends Controller
                     // ✅ Create Invoice Item
                     \App\Models\FinancialInvoiceItem::create([
                         'invoice_id' => $invoice->id,
-                        'fee_type' => 'applied_member_fee',
+                        'fee_type' => \App\Constants\AppConstants::TRANSACTION_TYPE_ID_APPLIED_MEMBER,
                         'description' => 'Applied Member Registration Fee',
                         'qty' => 1,
                         'amount' => $amountPaid,

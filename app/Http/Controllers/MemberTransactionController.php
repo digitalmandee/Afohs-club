@@ -12,6 +12,7 @@ use App\Models\FinancialReceipt;
 use App\Models\MaintenanceFee;
 use App\Models\Member;
 use App\Models\MemberCategory;
+use App\Models\Membership;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
 use App\Models\SubscriptionType;
@@ -443,7 +444,7 @@ class MemberTransactionController extends Controller
                 'customer_id' => $customerId,
                 'invoiceable_id' => $invoiceableId,
                 'invoiceable_type' => $invoiceableType,
-                'fee_type' => 'mixed',
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MIXED,
                 'invoice_type' => 'invoice',
                 'amount' => 0,  // Will update after processing items
                 'total_price' => 0,

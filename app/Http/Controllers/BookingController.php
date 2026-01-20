@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
@@ -295,7 +296,7 @@ class BookingController extends Controller
                 // fee_type '7' for Food Order Fee per Admin Doc
                 $orderItem = FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => '7',
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,
                     'description' => 'Room Service Orders (Added during payment)',
                     'qty' => 1,
                     'amount' => $ordersTotal,
