@@ -321,6 +321,10 @@ export default function SideNav({ open, setOpen }) {
                         path: route('employees.dashboard'),
                     },
                     {
+                        text: 'Transfers',
+                        path: route('employees.transfers.index'),
+                    },
+                    {
                         text: 'Departments',
                         path: route('employees.departments'),
                     },

@@ -109,6 +109,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::delete('shifts/{id}/force-delete', [App\Http\Controllers\ShiftController::class, 'forceDelete'])->name('shifts.force-delete');
         Route::resource('shifts', App\Http\Controllers\ShiftController::class);
 
+        // Employee Transfers
+        Route::get('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'index'])->name('employees.transfers.index');
+        Route::post('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'store'])->name('employees.transfers.store');
+
         // Branches
         Route::get('branches/list', [App\Http\Controllers\BranchController::class, 'list'])->name('branches.list');
         Route::get('branches/trashed', [App\Http\Controllers\BranchController::class, 'trashed'])->name('branches.trashed');
