@@ -45,7 +45,7 @@ const Password = () => {
                     paddingTop:'1rem'
                 }}
             >
-                <Typography variant="h5" style={{ color: '#063455', fontWeight: 600, marginLeft:'30px' }}>
+                <Typography style={{ color: '#063455', fontWeight: 700, marginLeft:'30px', fontSize:'30px' }}>
                     Password
                 </Typography>
                 <Box style={{ maxWidth: '600px', margin:'0 auto', padding: '2rem' }}>
@@ -113,7 +113,7 @@ const Password = () => {
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <Button type="submit" variant="contained" color="primary" disabled={processing}>
+                                <Button type="submit" variant="contained" color="primary" disabled={processing} sx={{textTransform:'none'}}>
                                     Save Password
                                 </Button>
                                 {recentlySuccessful && (

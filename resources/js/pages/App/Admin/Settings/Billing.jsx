@@ -61,7 +61,7 @@ export default function Billing({ settings }) {
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
             <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455', ml:4, pt:3 }}>
+                <Typography sx={{ fontWeight: 700, color: '#063455', ml:4, pt:3, fontSize:'30px' }}>
                     Billing Settings
                 </Typography>
                 <Paper sx={{ p: 2, maxWidth: "800px", mx: "auto", mt:5 }}>
@@ -97,7 +97,7 @@ export default function Billing({ settings }) {
 
                             <Grid item xs={12} mt={4}>
                                 <Box mt={2} display="flex" justifyContent="flex-end">
-                                    <Button variant="contained" color="primary" type="submit" disabled={processing}>
+                                    <Button variant="contained" color="primary" type="submit" disabled={processing} sx={{textTransform:'none', borderRadius:'16px'}}>
                                         Save Settings
                                     </Button>
                                 </Box>
