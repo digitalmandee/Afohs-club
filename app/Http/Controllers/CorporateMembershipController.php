@@ -187,7 +187,7 @@ class CorporateMembershipController extends Controller
                 'member_id' => null,  // Explicitly null for corporate invoice
                 'corporate_member_id' => $mainMember->id,
                 'invoice_type' => 'membership',
-                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MIXED,
+                'fee_type' => 'mixed',
                 'amount' => 0,
                 'additional_charges' => 0,
                 'discount_type' => null,

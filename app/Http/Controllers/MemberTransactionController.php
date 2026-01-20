@@ -444,7 +444,7 @@ class MemberTransactionController extends Controller
                 'customer_id' => $customerId,
                 'invoiceable_id' => $invoiceableId,
                 'invoiceable_type' => $invoiceableType,
-                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MIXED,
+                'fee_type' => 'mixed',
                 'invoice_type' => 'invoice',
                 'amount' => 0,  // Will update after processing items
                 'total_price' => 0,

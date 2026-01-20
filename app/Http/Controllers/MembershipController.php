@@ -549,7 +549,7 @@ class MembershipController extends Controller
             $invoice = FinancialInvoice::create([
                 'invoice_no' => $this->generateInvoiceNumber(),
                 'member_id' => $mainMember->id,
-                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MIXED,
+                'fee_type' => 'mixed',
                 'invoice_type' => 'invoice',
                 'amount' => 0,
                 'additional_charges' => 0,

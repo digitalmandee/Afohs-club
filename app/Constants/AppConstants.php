@@ -26,6 +26,4 @@ class AppConstants
     const TRANSACTION_TYPE_ID_FOOD_ORDER = 7;
 
     const TRANSACTION_TYPE_ID_APPLIED_MEMBER = 8;
-
-    const TRANSACTION_TYPE_ID_MIXED = 9;
 }
