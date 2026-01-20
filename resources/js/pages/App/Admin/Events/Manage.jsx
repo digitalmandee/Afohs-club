@@ -9,8 +9,10 @@ import { Badge, Container } from 'react-bootstrap';
 import dayjs from 'dayjs';
 import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoiceModal';
 import EventViewDocumentsModal from '@/components/App/Events/EventViewDocumentsModal';
+import EventBookingActionModal from '@/components/App/Events/EventBookingActionModal';
 import axios from 'axios';
 import { FaEdit } from 'react-icons/fa';
+import { Cancel } from '@mui/icons-material';
 import RoomBookingFilter from '../Booking/BookingFilter';
 
 const theme = createTheme({
@@ -65,6 +67,50 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
         setSelectedBookingForDocs(null);
     };
 
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [selectedActionBooking, setSelectedActionBooking] = useState(null);
+
+    const handleOpenActionModal = (booking, type) => {
+        setSelectedActionBooking(booking);
+        setActionType(type);
+        setActionModalOpen(true);
+    };
+
+    const handleConfirmAction = (bookingId, reason, refundData) => {
+        if (actionType === 'cancel') {
+            const data = { cancellation_reason: reason };
+            if (refundData && refundData.amount) {
+                data.refund_amount = refundData.amount;
+                data.refund_mode = refundData.mode;
+                data.refund_account = refundData.account;
+            }
+            router.put(route('events.booking.cancel', bookingId), data, {
+                onSuccess: () => setActionModalOpen(false),
+            });
+        } else if (actionType === 'refund') {
+            const data = {
+                refund_amount: refundData.amount,
+                refund_mode: refundData.mode,
+                refund_account: refundData.account,
+                notes: reason,
+            };
+            router.put(route('events.booking.refund', bookingId), data, {
+                onSuccess: () => setActionModalOpen(false),
+            });
+        } else {
+            // Undo
+            router.put(
+                route('events.booking.undo-cancel', bookingId),
+                {},
+                {
+                    onSuccess: () => setActionModalOpen(false),
+                },
+            );
+        }
+    };
+
     const getStatusBadge = (booking) => {
         const { status, invoice } = booking;
 
@@ -74,6 +120,8 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
             return <Badge bg="primary">Completed</Badge>;
         } else if (status === 'cancelled') {
             return <Badge bg="danger">Cancelled</Badge>;
+        } else if (status === 'refunded') {
+            return <Badge bg="info">Refunded</Badge>;
         } else if (invoice?.status === 'paid') {
             return <Badge bg="success">Paid</Badge>;
         } else if (invoice?.status === 'unpaid') {
@@ -227,19 +275,21 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
                                                                 View
                                                             </Button>
 
-                                                            {/* <Button
-                                                                variant="contained"
-                                                                size="small"
-                                                                onClick={() => router.visit(route('events.booking.edit', booking.id))}
-                                                                sx={{
-                                                                    backgroundColor: '#063455',
-                                                                    border: 'none',
-                                                                    textTransform: 'none',
-                                                                    '&:hover': { backgroundColor: '#002855' },
-                                                                }}
-                                                            >
-                                                                Edit
-                                                            </Button> */}
+                                                            {!['cancelled', 'refunded'].includes(booking.status) && (
+                                                                <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'cancel')} title="Cancel Booking" sx={{ minWidth: 'auto', p: '4px', color: '#d32f2f', borderColor: '#d32f2f' }}>
+                                                                    <Cancel fontSize="small" />
+                                                                </Button>
+                                                            )}
+                                                            {booking.status === 'cancelled' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0 || booking.security_deposit > 0) && (
+                                                                <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ textTransform: 'none' }}>
+                                                                    Refund
+                                                                </Button>
+                                                            )}
+                                                            {['cancelled', 'refunded'].includes(booking.status) && (
+                                                                <Button size="small" variant="outlined" onClick={() => handleOpenActionModal(booking, 'undo')} title="Undo Cancellation" sx={{ textTransform: 'none' }}>
+                                                                    Undo
+                                                                </Button>
+                                                            )}
                                                         </Box>
                                                     </TableCell>
                                                 </TableRow>
@@ -287,6 +337,9 @@ const EventsManage = ({ bookings, filters = {}, aggregates }) => {
 
                         {/* View Documents Modal */}
                         <EventViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+
+                        {/* Action Modal */}
+                        <EventBookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
                     </LocalizationProvider>
                 </ThemeProvider>
             </div>

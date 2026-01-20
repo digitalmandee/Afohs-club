@@ -46,6 +46,7 @@ class EventBooking extends BaseModel
         'reduction_amount',
         'reduction_note',
         'total_price',
+        'security_deposit',
         'advance_amount',
         'paid_amount',
         'booking_docs',

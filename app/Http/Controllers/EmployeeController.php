@@ -125,8 +125,8 @@ class EmployeeController extends Controller
     public function create()
     {
         // Get dropdown data
-        $shifts = \App\Models\Shift::where('is_active', true)->select('id', 'name', 'start_time', 'end_time')->get();
-        $branches = \App\Models\Branch::where('is_active', true)->select('id', 'name')->get();
+        $shifts = \App\Models\Shift::where('status', true)->select('id', 'name', 'start_time', 'end_time')->get();
+        $branches = \App\Models\Branch::where('status', true)->select('id', 'name')->get();
 
         // Calculate next Employee ID
         $maxId = \App\Models\Employee::max(DB::raw('CAST(employee_id AS UNSIGNED)'));

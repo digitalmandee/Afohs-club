@@ -417,6 +417,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('booking', [EventBookingController::class, 'store'])->name('events.booking.store')->middleware('permission:events.bookings.create');
             Route::get('booking/{id}/invoice', [EventBookingController::class, 'showInvoice'])->name('events.booking.invoice')->middleware('permission:events.bookings.view');
             Route::put('booking/{id}/status', [EventBookingController::class, 'updateStatus'])->name('events.booking.update.status')->middleware('permission:events.bookings.edit');
+
+            // Cancellation & Refund Routes
+            Route::put('booking/refund/{id}', [EventBookingController::class, 'processRefund'])->name('events.booking.refund')->middleware('permission:events.bookings.edit');
+            Route::put('booking/cancel/{id}', [EventBookingController::class, 'cancelBooking'])->name('events.booking.cancel')->middleware('permission:events.bookings.edit');
+            Route::put('booking/undo-cancel/{id}', [EventBookingController::class, 'undoBooking'])->name('events.booking.undo-cancel')->middleware('permission:events.bookings.edit');
+
             Route::get('booking/{id}/edit', [EventBookingController::class, 'edit'])->name('events.booking.edit')->middleware('super.admin:events.bookings.edit');
             Route::post('booking/{id}', [EventBookingController::class, 'update'])->name('events.booking.update')->middleware('permission:events.bookings.edit');
         });

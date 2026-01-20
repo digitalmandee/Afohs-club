@@ -11,6 +11,8 @@ import EventBookingInvoiceModal from '@/components/App/Events/EventBookingInvoic
 import EventViewDocumentsModal from '@/components/App/Events/EventViewDocumentsModal';
 import axios from 'axios';
 import { FaEdit } from 'react-icons/fa';
+
+import EventBookingActionModal from '@/components/App/Events/EventBookingActionModal';
 import RoomBookingFilter from '../Booking/BookingFilter';
 
 const theme = createTheme({
@@ -64,6 +66,39 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
     const handleCloseDocs = () => {
         setShowDocsModal(false);
         setSelectedBookingForDocs(null);
+    };
+
+    // Action Modal State
+    const [actionModalOpen, setActionModalOpen] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [selectedActionBooking, setSelectedActionBooking] = useState(null);
+
+    const handleOpenActionModal = (booking, type) => {
+        setSelectedActionBooking(booking);
+        setActionType(type);
+        setActionModalOpen(true);
+    };
+
+    const handleConfirmAction = (bookingId, reason, refundData) => {
+        if (actionType === 'refund') {
+            const data = {
+                refund_amount: refundData.amount,
+                refund_mode: refundData.mode,
+                refund_account: refundData.account,
+                notes: reason,
+            };
+            router.put(route('events.booking.refund', bookingId), data, {
+                onSuccess: () => setActionModalOpen(false),
+            });
+        } else if (actionType === 'undo') {
+            router.put(
+                route('events.booking.undo-cancel', bookingId),
+                {},
+                {
+                    onSuccess: () => setActionModalOpen(false),
+                },
+            );
+        }
     };
 
     // Load venues on component mount
@@ -203,6 +238,16 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
                                                             >
                                                                 View
                                                             </Button>
+                                                            {booking.status === 'cancelled' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0 || booking.security_deposit > 0) && (
+                                                                <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} title="Process Refund" sx={{ textTransform: 'none' }}>
+                                                                    Refund
+                                                                </Button>
+                                                            )}
+                                                            {['cancelled', 'refunded'].includes(booking.status) && (
+                                                                <Button size="small" variant="outlined" onClick={() => handleOpenActionModal(booking, 'undo')} title="Undo Cancellation" sx={{ textTransform: 'none' }}>
+                                                                    Undo
+                                                                </Button>
+                                                            )}
                                                         </Box>
                                                     </TableCell>
                                                 </TableRow>
@@ -250,6 +295,9 @@ const EventsCancelled = ({ bookings, filters = {}, aggregates }) => {
 
                         {/* View Documents Modal */}
                         <EventViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+
+                        {/* Action Modal */}
+                        <EventBookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
                     </LocalizationProvider>
                 </ThemeProvider>
             </div>
