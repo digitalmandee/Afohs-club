@@ -864,28 +864,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
 
         if (status === 'paid') {
-            // Check if payment method details are required and present (simple validation)
-            if ((data.payment_method === 'credit_card' || data.payment_method === 'debit_card') && !data.credit_card_type) {
-                enqueueSnackbar('Please select a Card Type', { variant: 'error' });
-                return;
-            }
-
-            // In Payment Mode or Direct Create, if we have payment details, just submit
-            // Open confirmation checks? User said "add same liek ahs n popup" so no popup needed?
-            // "also after grand total need to add paymen method all all thigns need o add same liek ahs n popup"
-            // I'll assume they want to "Save & Receive" directly.
-
-            // Confirm? Maybe a browser confirm or just go.
-            // Let's use the existing processSubmit but pass the data.
-
-            const paymentData = {
-                payment_method: data.payment_method,
-                credit_card_type: data.credit_card_type,
-                receipt_file: data.receipt_file,
-                payment_mode_details: data.payment_mode_details,
+            const tempTransaction = {
+                isNew: true,
+                invoice_no: 'NEW',
+                amount: data.amount,
+                fee_type: data.fee_type || (invoiceItems.length > 0 ? invoiceItems[0].fee_type : 'Invoice'),
+                member: selectedMember,
             };
-
-            processSubmit('paid', paymentData);
+            setTransactionToPay(tempTransaction);
+            setPaymentConfirmationOpen(true);
             return;
         }
 
@@ -1121,8 +1108,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         }
     };
 
-    const getStatusStyle = (status) =>
-        statusStyles[status] || statusStyles.default;
+    const getStatusStyle = (status) => statusStyles[status] || statusStyles.default;
 
     const statusStyles = {
         paid: { bg: '#d4edda', color: '#155724' },
@@ -1131,10 +1117,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         default: { bg: '#e2e3e5', color: '#383d41' },
     };
 
-    const toTitleCase = (str = '') =>
-        str
-            .toLowerCase()
-            .replace(/\b\w/g, (char) => char.toUpperCase());
+    const toTitleCase = (str = '') => str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 
     // Payment Confirmation Handlers
     const [submittingPayment, setSubmittingPayment] = useState(false);
@@ -1162,6 +1145,17 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
 
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const resetForm = () => {
+        reset();
+        setInvoiceItems([]);
+        setFormErrors({});
+        setSearchResults([]);
+        if (!preSelectedMember) {
+            setSelectedMember(null);
+            setMemberTransactions([]);
+        }
     };
 
     const handleCancelPaymentMode = () => {
@@ -1616,7 +1610,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                             textTransform: 'none',
                                                                             fontWeight: 600,
                                                                             border: '1px solid #063455',
-                                                                            height: 35
+                                                                            height: 35,
                                                                         }}
                                                                     >
                                                                         Save
@@ -1634,7 +1628,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                             textTransform: 'none',
                                                                             fontWeight: 600,
                                                                             border: '1px solid #063455',
-                                                                            height: 35
+                                                                            height: 35,
                                                                         }}
                                                                     >
                                                                         {submitting ? <CircularProgress size={20} sx={{ mr: 1 }} /> : <Print sx={{ mr: 1 }} />}
@@ -1654,7 +1648,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                     textTransform: 'none',
                                                                     fontWeight: 600,
                                                                     border: '1px solid #063455',
-                                                                    height: 35
+                                                                    height: 35,
                                                                 }}
                                                             >
                                                                 {submitting ? <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} /> : <Save sx={{ mr: 1 }} />}
@@ -1776,9 +1770,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                                                     let label = item.fee_type || item.invoice_type || '';
 
                                                                                     // Map numeric IDs to names
-                                                                                    const typeObj = transactionTypes.find(
-                                                                                        (t) => t.id == label || t.id == item.fee_type
-                                                                                    );
+                                                                                    const typeObj = transactionTypes.find((t) => t.id == label || t.id == item.fee_type);
 
                                                                                     if (typeObj) {
                                                                                         label = typeObj.name;

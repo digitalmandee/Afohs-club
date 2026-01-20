@@ -111,7 +111,9 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
                                 Type:
                             </Typography>
                             <Typography variant="body2" fontWeight={500}>
-                                {transaction.fee_type?.replace(/_/g, ' ').toUpperCase() || transaction.invoice_type?.replace(/_/g, ' ').toUpperCase()}
+                                {String(transaction.fee_type || transaction.invoice_type || '')
+                                    .replace(/_/g, ' ')
+                                    .toUpperCase()}
                             </Typography>
                         </Grid>
                         <Grid item xs={12} sx={{ mt: 1, borderTop: '1px dashed #e0e0e0', pt: 1 }}>
