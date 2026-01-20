@@ -14,4 +14,9 @@ class RoomBookingOtherCharge extends Model
     protected $casts = [
         'is_complementary' => 'boolean',
     ];
+
+    public function roomBooking()
+    {
+        return $this->belongsTo(RoomBooking::class);
+    }
 }

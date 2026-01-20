@@ -2,30 +2,26 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, FormControl, InputLabel, TextField, Chip, Grid } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Print as PrintIcon } from '@mui/icons-material';
+import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
+import Pagination from '@/components/Pagination';
 
-const DayWiseReport = ({ bookings = [], filters = {} }) => {
-    const [dateFrom, setDateFrom] = useState(filters.dateFrom || '');
-    const [dateTo, setDateTo] = useState(filters.dateTo || '');
+import RoomBookingFilter from '../../Booking/BookingFilter';
 
-    const handleFilter = () => {
-        router.get(
-            route('rooms.reports.day-wise'),
-            {
-                date_from: dateFrom || undefined,
-                date_to: dateTo || undefined,
-            },
-            { preserveState: true },
-        );
-    };
+const DayWiseReport = ({ bookings = {}, filters = {} }) => {
+    // bookings is now a paginated object { data: [], links: [], ... }
+    const bookingList = bookings.data || [];
 
     const handlePrint = () => {
-        const printUrl = route('rooms.reports.day-wise.print', {
-            date_from: dateFrom || undefined,
-            date_to: dateTo || undefined,
-        });
+        const params = new URLSearchParams(window.location.search);
+        const printUrl = route('rooms.reports.day-wise.print', Object.fromEntries(params));
         window.open(printUrl, '_blank');
+    };
+
+    const handleExport = () => {
+        const params = new URLSearchParams(window.location.search);
+        const exportUrl = route('rooms.reports.day-wise.export', Object.fromEntries(params));
+        window.location.href = exportUrl;
     };
 
     const getStatusColor = (status) => {
@@ -39,6 +35,13 @@ const DayWiseReport = ({ bookings = [], filters = {} }) => {
             pending: 'warning',
         };
         return colors[status] || 'default';
+    };
+
+    const getGuestName = (booking) => {
+        if (booking.customer) return booking.customer.name;
+        if (booking.member) return booking.member.full_name;
+        if (booking.corporateMember) return booking.corporateMember.full_name;
+        return 'Unknown';
     };
 
     return (
@@ -55,8 +58,9 @@ const DayWiseReport = ({ bookings = [], filters = {} }) => {
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        {/* Export Button Placeholder */}
-                        {/* <Button variant="contained" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ backgroundColor: '#28a745' }}>Export Excel</Button> */}
+                        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ borderColor: '#063455', color: '#063455' }}>
+                            Export
+                        </Button>
                         <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
                             Print
                         </Button>
@@ -64,36 +68,20 @@ const DayWiseReport = ({ bookings = [], filters = {} }) => {
                 </Box>
 
                 {/* Filters */}
-                <Card sx={{ mb: 3, p: 2, borderRadius: '12px' }}>
-                    <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={4}>
-                            <TextField type="date" label="From Due Date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} fullWidth size="small" />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField type="date" label="To Date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} InputLabelProps={{ shrink: true }} fullWidth size="small" />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', '&:hover': { backgroundColor: '#052d45' } }}>
-                                Apply Filters
-                            </Button>
-                        </Grid>
-                    </Grid>
-                </Card>
+                <RoomBookingFilter routeName="rooms.reports.day-wise" showStatus={true} showRoomType={true} showDates={{ booking: false, checkIn: true, checkOut: false }} dateLabels={{ checkIn: 'Date Range' }} />
 
                 {/* Results Summary */}
                 <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" color="textSecondary">
-                        Showing {bookings.length} records
-                    </Typography>
+                    <Chip label={`Total Records: ${bookings.total || 0}`} color="primary" variant="outlined" />
                 </Box>
 
                 {/* Table */}
                 <Card sx={{ borderRadius: '12px' }}>
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} elevation={0}>
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking ID</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Guest</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Check In</TableCell>
@@ -103,26 +91,29 @@ const DayWiseReport = ({ bookings = [], filters = {} }) => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {bookings.length === 0 ? (
+                                {bookingList.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    bookings.map((booking) => (
+                                    bookingList.map((booking) => (
                                         <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                            <TableCell>{booking.booking_number || booking.id}</TableCell>
+                                            <TableCell>{booking.booking_no || booking.id}</TableCell>
                                             <TableCell>
-                                                {booking.room?.room_number} - {booking.room?.room_type?.name}
+                                                {booking.room?.name} <br />
+                                                <Typography variant="caption" color="textSecondary">
+                                                    {booking.room?.roomType?.name}
+                                                </Typography>
                                             </TableCell>
-                                            <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporate_member ? booking.corporate_member.name : '-'}</TableCell>
+                                            <TableCell>{getGuestName(booking)}</TableCell>
                                             <TableCell>{booking.check_in_date}</TableCell>
                                             <TableCell>{booking.check_out_date}</TableCell>
                                             <TableCell>
                                                 <Chip label={booking.status} size="small" color={getStatusColor(booking.status)} />
                                             </TableCell>
-                                            <TableCell>{booking.total_amount}</TableCell>
+                                            <TableCell>{booking.grand_total}</TableCell>
                                         </TableRow>
                                     ))
                                 )}
@@ -130,6 +121,8 @@ const DayWiseReport = ({ bookings = [], filters = {} }) => {
                         </Table>
                     </TableContainer>
                 </Card>
+
+                <Pagination data={bookings} />
             </Box>
         </AdminLayout>
     );

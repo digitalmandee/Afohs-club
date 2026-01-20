@@ -385,38 +385,47 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
                 // Day-wise
                 Route::get('day-wise', [\App\Http\Controllers\RoomReportController::class, 'dayWise'])->name('rooms.reports.day-wise');
                 Route::get('day-wise/print', [\App\Http\Controllers\RoomReportController::class, 'dayWisePrint'])->name('rooms.reports.day-wise.print');
+                Route::get('day-wise/export', [\App\Http\Controllers\RoomReportController::class, 'dayWiseExport'])->name('rooms.reports.day-wise.export');
 
                 // Room-wise Payment History
                 Route::get('payment-history', [\App\Http\Controllers\RoomReportController::class, 'paymentHistory'])->name('rooms.reports.payment-history');
                 Route::get('payment-history/print', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryPrint'])->name('rooms.reports.payment-history.print');
+                Route::get('payment-history/export', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryExport'])->name('rooms.reports.payment-history.export');
 
                 // Booking
                 Route::get('booking', [\App\Http\Controllers\RoomReportController::class, 'booking'])->name('rooms.reports.booking');
                 Route::get('booking/print', [\App\Http\Controllers\RoomReportController::class, 'bookingPrint'])->name('rooms.reports.booking.print');
+                Route::get('booking/export', [\App\Http\Controllers\RoomReportController::class, 'bookingExport'])->name('rooms.reports.booking.export');
 
                 // Cancelled
                 Route::get('cancelled', [\App\Http\Controllers\RoomReportController::class, 'cancelled'])->name('rooms.reports.cancelled');
                 Route::get('cancelled/print', [\App\Http\Controllers\RoomReportController::class, 'cancelledPrint'])->name('rooms.reports.cancelled.print');
+                Route::get('cancelled/export', [\App\Http\Controllers\RoomReportController::class, 'cancelledExport'])->name('rooms.reports.cancelled.export');
 
                 // Check-in
                 Route::get('check-in', [\App\Http\Controllers\RoomReportController::class, 'checkIn'])->name('rooms.reports.check-in');
                 Route::get('check-in/print', [\App\Http\Controllers\RoomReportController::class, 'checkInPrint'])->name('rooms.reports.check-in.print');
+                Route::get('check-in/export', [\App\Http\Controllers\RoomReportController::class, 'checkInExport'])->name('rooms.reports.check-in.export');
 
                 // Check-out
                 Route::get('check-out', [\App\Http\Controllers\RoomReportController::class, 'checkOut'])->name('rooms.reports.check-out');
                 Route::get('check-out/print', [\App\Http\Controllers\RoomReportController::class, 'checkOutPrint'])->name('rooms.reports.check-out.print');
+                Route::get('check-out/export', [\App\Http\Controllers\RoomReportController::class, 'checkOutExport'])->name('rooms.reports.check-out.export');
 
                 // Member Wise
                 Route::get('member-wise', [\App\Http\Controllers\RoomReportController::class, 'memberWise'])->name('rooms.reports.member-wise');
                 Route::get('member-wise/print', [\App\Http\Controllers\RoomReportController::class, 'memberWisePrint'])->name('rooms.reports.member-wise.print');
+                Route::get('member-wise/export', [\App\Http\Controllers\RoomReportController::class, 'memberWiseExport'])->name('rooms.reports.member-wise.export');
 
                 // Mini Bar
                 Route::get('mini-bar', [\App\Http\Controllers\RoomReportController::class, 'miniBar'])->name('rooms.reports.mini-bar');
                 Route::get('mini-bar/print', [\App\Http\Controllers\RoomReportController::class, 'miniBarPrint'])->name('rooms.reports.mini-bar.print');
+                Route::get('mini-bar/export', [\App\Http\Controllers\RoomReportController::class, 'miniBarExport'])->name('rooms.reports.mini-bar.export');
 
                 // Complementary
                 Route::get('complementary', [\App\Http\Controllers\RoomReportController::class, 'complementary'])->name('rooms.reports.complementary');
                 Route::get('complementary/print', [\App\Http\Controllers\RoomReportController::class, 'complementaryPrint'])->name('rooms.reports.complementary.print');
+                Route::get('complementary/export', [\App\Http\Controllers\RoomReportController::class, 'complementaryExport'])->name('rooms.reports.complementary.export');
             });
         });
 

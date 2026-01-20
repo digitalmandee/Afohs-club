@@ -2,30 +2,26 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, TextField, Chip, Grid } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Print as PrintIcon } from '@mui/icons-material';
+import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
+import Pagination from '@/components/Pagination';
 
-const PaymentHistoryReport = ({ bookings = [], filters = {} }) => {
-    const [dateFrom, setDateFrom] = useState(filters.dateFrom || '');
-    const [dateTo, setDateTo] = useState(filters.dateTo || '');
+import RoomBookingFilter from '../../Booking/BookingFilter';
 
-    const handleFilter = () => {
-        router.get(
-            route('rooms.reports.payment-history'),
-            {
-                date_from: dateFrom || undefined,
-                date_to: dateTo || undefined,
-            },
-            { preserveState: true },
-        );
-    };
+const PaymentHistoryReport = ({ bookings = {}, filters = {} }) => {
+    // bookings is paginated
+    const bookingList = bookings.data || [];
 
     const handlePrint = () => {
-        const printUrl = route('rooms.reports.payment-history.print', {
-            date_from: dateFrom || undefined,
-            date_to: dateTo || undefined,
-        });
+        const params = new URLSearchParams(window.location.search);
+        const printUrl = route('rooms.reports.payment-history.print', Object.fromEntries(params));
         window.open(printUrl, '_blank');
+    };
+
+    const handleExport = () => {
+        const params = new URLSearchParams(window.location.search);
+        const exportUrl = route('rooms.reports.payment-history.export', Object.fromEntries(params));
+        window.location.href = exportUrl;
     };
 
     const getStatusColor = (status) => {
@@ -35,6 +31,13 @@ const PaymentHistoryReport = ({ bookings = [], filters = {} }) => {
             partial: 'warning',
         };
         return colors[status] || 'default';
+    };
+
+    const getGuestName = (booking) => {
+        if (booking.customer) return booking.customer.name;
+        if (booking.member) return booking.member.full_name;
+        if (booking.corporateMember) return booking.corporateMember.full_name;
+        return 'Unknown';
     };
 
     return (
@@ -51,44 +54,30 @@ const PaymentHistoryReport = ({ bookings = [], filters = {} }) => {
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ borderColor: '#063455', color: '#063455' }}>
+                            Export
+                        </Button>
                         <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
                             Print
                         </Button>
                     </Box>
                 </Box>
 
-                {/* Filters */}
-                <Card sx={{ mb: 3, p: 2, borderRadius: '12px' }}>
-                    <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={4}>
-                            <TextField type="date" label="From Date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} fullWidth size="small" />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <TextField type="date" label="To Date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} InputLabelProps={{ shrink: true }} fullWidth size="small" />
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', '&:hover': { backgroundColor: '#052d45' } }}>
-                                Apply Filters
-                            </Button>
-                        </Grid>
-                    </Grid>
-                </Card>
+                <RoomBookingFilter routeName="rooms.reports.payment-history" showStatus={true} showRoomType={true} showDates={{ booking: false, checkIn: true, checkOut: false }} dateLabels={{ checkIn: 'Check-In Date' }} />
 
                 {/* Results Summary */}
                 <Box sx={{ mb: 2 }}>
-                    <Typography variant="body2" color="textSecondary">
-                        Showing {bookings.length} financial records
-                    </Typography>
+                    <Chip label={`Total Records: ${bookings.total || 0}`} color="primary" variant="outlined" />
                 </Box>
 
                 {/* Table */}
                 <Card sx={{ borderRadius: '12px' }}>
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} elevation={0}>
                         <Table>
                             <TableHead>
                                 <TableRow sx={{ backgroundColor: '#063455' }}>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Invoice No</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking Ref</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Booking No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Room</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Guest</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total Amount</TableCell>
@@ -98,29 +87,30 @@ const PaymentHistoryReport = ({ bookings = [], filters = {} }) => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {bookings.length === 0 ? (
+                                {bookingList.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                                             <Typography color="textSecondary">No data found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    bookings.map((booking) => {
+                                    bookingList.map((booking) => {
                                         const invoice = booking.invoice;
-                                        const total = invoice ? parseFloat(invoice.total_amount) : 0;
-                                        const paid = invoice ? parseFloat(invoice.paid_amount) : 0;
+                                        // Use grand_total from booking if invoice total is not reliable, or use invoice total
+                                        const total = parseFloat(booking.grand_total || 0);
+                                        const paid = parseFloat(invoice ? invoice.paid_amount : 0);
                                         const balance = total - paid;
                                         const status = balance <= 0 ? (total > 0 ? 'paid' : 'unpaid') : paid > 0 ? 'partial' : 'unpaid';
 
                                         return (
                                             <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                                 <TableCell>{invoice ? invoice.invoice_no : '-'}</TableCell>
-                                                <TableCell>{booking.booking_number}</TableCell>
-                                                <TableCell>{booking.room?.room_number}</TableCell>
-                                                <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporate_member ? booking.corporate_member.name : '-'}</TableCell>
+                                                <TableCell>{booking.booking_no || booking.booking_number}</TableCell>
+                                                <TableCell>{booking.room?.name}</TableCell>
+                                                <TableCell>{getGuestName(booking)}</TableCell>
                                                 <TableCell>{total.toFixed(2)}</TableCell>
-                                                <TableCell>{paid.toFixed(2)}</TableCell>
-                                                <TableCell>{balance.toFixed(2)}</TableCell>
+                                                <TableCell sx={{ color: 'success.main' }}>{paid.toFixed(2)}</TableCell>
+                                                <TableCell sx={{ color: 'error.main' }}>{balance.toFixed(2)}</TableCell>
                                                 <TableCell>
                                                     <Chip label={status.toUpperCase()} size="small" color={getStatusColor(status)} />
                                                 </TableCell>
@@ -132,6 +122,8 @@ const PaymentHistoryReport = ({ bookings = [], filters = {} }) => {
                         </Table>
                     </TableContainer>
                 </Card>
+
+                <Pagination data={bookings} />
             </Box>
         </AdminLayout>
     );

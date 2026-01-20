@@ -1208,7 +1208,7 @@ class RoomBookingController extends Controller
                         ->where('full_name', 'like', "%{$query}%")
                         ->orWhere('membership_no', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(30)
                 ->get()
                 ->map(function ($m) {
                     return [
@@ -1231,7 +1231,7 @@ class RoomBookingController extends Controller
                         ->where('full_name', 'like', "%{$query}%")
                         ->orWhere('membership_no', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(30)
                 ->get()
                 ->map(function ($m) {
                     return [
@@ -1254,7 +1254,7 @@ class RoomBookingController extends Controller
                         ->where('name', 'like', "%{$query}%")
                         ->orWhere('customer_no', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(30)
                 ->get()
                 ->map(function ($c) {
                     return [
@@ -1302,7 +1302,7 @@ class RoomBookingController extends Controller
                         ->where('name', 'like', "%{$query}%")
                         ->orWhere('customer_no', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(30)
                 ->get()
                 ->map(function ($c) {
                     return [
