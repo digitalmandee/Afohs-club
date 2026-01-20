@@ -112,11 +112,11 @@ const Management = () => {
                     {/* Header */}
                     <div className="row align-items-center">
                         <div className="col-auto d-flex align-items-center">
-                            <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            {/* <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <IconButton>
                                     <ArrowBack sx={{ color: '#063455' }} />
                                 </IconButton>
-                            </div>
+                            </div> */}
                             <Typography
                                 style={{
                                     fontWeight: '700',
@@ -130,7 +130,7 @@ const Management = () => {
                         <div className="col-auto ms-auto">
                             <Button variant="contained" startIcon={<span style={{
                                 fontSize: '1.5rem', marginBottom: 5
-                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => handleOpen()}>
+                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={() => handleOpen()}>
                                 New Subdepartment
                             </Button>
                         </div>
@@ -140,13 +140,13 @@ const Management = () => {
                     </Typography>
 
                     {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop:'2rem', borderRadius: '16px', }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop: '2rem', borderRadius: '16px', }}>
                         <Table>
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Subdepartment Name</TableCell>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Department</TableCell>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Action</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Subdepartment Name</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Department</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -212,20 +212,18 @@ const Management = () => {
                             onClick={handleClose}
                             color="secondary"
                             sx={{
-                                backgroundColor: '#FFFFFF',
-                                border: '1px solid #000000',
-                                color: '#000000',
-                                '&:hover': {
-                                    backgroundColor: '#f5f5f5',
-                                    border: '1px solid #000000',
-                                },
+                                // backgroundColor: '#FFFFFF',
+                                border: '1px solid #063455',
+                                color: '#063455',
+                                textTransform: 'none',
                             }}
                         >
                             Cancel
                         </Button>
                         <Button
                             sx={{
-                                bgcolor: '#0a3d62',
+                                bgcolor: '#063455',
+                                textTransform:'none'
                             }}
                             onClick={handleSubmit}
                             variant="contained"

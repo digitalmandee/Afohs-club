@@ -170,247 +170,252 @@ export default function SalarySheet() {
 
     return (
         <>
-            <Head title="Salary Sheet" />
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <Box p={3}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-                        <Typography variant="h5" fontWeight="bold">
-                            Salary Sheet Editor
-                        </Typography>
-                        <IconButton onClick={() => setHelpOpen(true)} color="primary">
-                            <Help />
-                        </IconButton>
-                    </Box>
-
-                    {/* Help Dialog */}
-                    <Dialog open={helpOpen} onClose={() => setHelpOpen(false)} maxWidth="md" fullWidth>
-                        <DialogTitle>Import/Export Guide</DialogTitle>
-                        <DialogContent dividers>
-                            <Typography variant="h6" gutterBottom>
-                                How to Import Data
+            {/* <Head title="Salary Sheet" /> */}
+            <div style={{ backgroundColor: '#f5f5f5', height: '100vh' }}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <Box sx={{p:2}}>
+                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
+                            <Typography sx={{fontWeight:700, fontSize:'30px', color:'#063455'}}>
+                                Salary Sheet Editor
                             </Typography>
-                            <Typography variant="body2" paragraph>
-                                You can import allowance and deduction data from an Excel or CSV file. The system uses <b>Employee ID</b> or <b>Payslip ID</b> to match records.
+                            <IconButton onClick={() => setHelpOpen(true)} color="primary">
+                                <Help />
+                            </IconButton>
+                        </Box>
+
+                        {/* Help Dialog */}
+                        <Dialog open={helpOpen} onClose={() => setHelpOpen(false)} maxWidth="md" fullWidth>
+                            <DialogTitle>Import/Export Guide</DialogTitle>
+                            <DialogContent dividers>
+                                <Typography variant="h6" gutterBottom>
+                                    How to Import Data
+                                </Typography>
+                                <Typography variant="body2" paragraph>
+                                    You can import allowance and deduction data from an Excel or CSV file. The system uses <b>Employee ID</b> or <b>Payslip ID</b> to match records.
+                                </Typography>
+
+                                <Typography variant="subtitle1" fontWeight="bold">
+                                    Steps:
+                                </Typography>
+                                <ol>
+                                    <li>
+                                        <Typography variant="body2">
+                                            <b>Download Template:</b> Click the "Template" button to get a blank file with the correct headers (Employee ID, Name, Allowances, Deductions).
+                                        </Typography>
+                                    </li>
+                                    <li>
+                                        <Typography variant="body2">
+                                            <b>Fill Data:</b> Enter the amounts for each employee. You strictly need the <code style={{ backgroundColor: '#e0e0e0', padding: '2px 4px' }}>Employee ID</code> column.
+                                        </Typography>
+                                    </li>
+                                    <li>
+                                        <Typography variant="body2">
+                                            <b>Upload:</b> Click "Import Excel" and select your file.
+                                        </Typography>
+                                    </li>
+                                </ol>
+
+                                <Typography variant="subtitle1" fontWeight="bold" mt={2}>
+                                    Important Notes:
+                                </Typography>
+                                <ul>
+                                    <li>
+                                        <Typography variant="body2">
+                                            Do not rename the column headers (e.g., <code>Medical (A-1)</code>). The system uses the ID in parentheses (e.g., <code>A-1</code>) to identify the allowance type.
+                                        </Typography>
+                                    </li>
+                                    <li>
+                                        <Typography variant="body2">
+                                            You can also <b>Export</b> the current sheet, make changes offline, and re-import it.
+                                        </Typography>
+                                    </li>
+                                </ul>
+                            </DialogContent>
+                            <DialogActions>
+                                <Button onClick={() => setHelpOpen(false)}>Close</Button>
+                            </DialogActions>
+                        </Dialog>
+
+                        {/* Filters */}
+                        <Card sx={{ mb: 3, px:0, boxShadow:'none', bgcolor:'transparent' }}>
+                            <CardContent>
+                                <Grid container spacing={2} alignItems="center">
+                                    <Grid item xs={12} md={3}>
+                                        <DatePicker
+                                            label="Select Month"
+                                            views={['year', 'month']}
+                                            value={month}
+                                            onChange={(val) => setMonth(val)}
+                                            open={datePickerOpen}
+                                            onOpen={() => setDatePickerOpen(true)}
+                                            onClose={() => setDatePickerOpen(false)}
+                                            slotProps={{
+                                                textField: {
+                                                    size: 'small',
+                                                    fullWidth: true,
+                                                    onClick: () => setDatePickerOpen(true),
+                                                    InputProps: { readOnly: true }, // Prevent manual typing to force picker use
+                                                },
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={2}>
+                                        <Autocomplete
+                                            size="small"
+                                            options={[{ id: 'all', name: 'All' }, ...designations]}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            value={designation === 'all' ? { id: 'all', name: 'All' } : designations.find((d) => d.name === designation) || { id: 'all', name: 'All' }}
+                                            onChange={(e, newValue) => {
+                                                setDesignation(newValue ? (newValue.id === 'all' ? 'all' : newValue.name) : 'all');
+                                            }}
+                                            renderInput={(params) => <TextField {...params} label="Designation" />}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={2}>
+                                        <FormControl fullWidth size="small">
+                                            <InputLabel>Employee Type</InputLabel>
+                                            <Select value={employeeType} label="Employee Type" onChange={(e) => setEmployeeType(e.target.value)}>
+                                                <MenuItem value="all">All</MenuItem>
+                                                {employeeTypes.map((t) => (
+                                                    <MenuItem key={t} value={t}>
+                                                        {t}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} md={2}>
+                                        <FormControl fullWidth size="small">
+                                            <InputLabel>Location</InputLabel>
+                                            <Select value={location} label="Location" onChange={(e) => setLocation(e.target.value)}>
+                                                <MenuItem value="all">All</MenuItem>
+                                                {locations.map((l) => (
+                                                    <MenuItem key={l} value={l}>
+                                                        {l}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        {/* Add other filters as needed */}
+                                        <Button variant="contained" onClick={fetchData} startIcon={<Refresh />} sx={{textTransform:'none', borderRadius:'16px',}}>
+                                            Fetch Data
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </CardContent>
+                        </Card>
+
+                        {/* Actions */}
+                        <Box sx={{ mb: 2, display: 'flex', gap: 2, justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <Typography variant="caption" color="textSecondary" sx={{ mr: 2 }}>
+                                To import: Download template or export current sheet, modify values, and re-import.
                             </Typography>
+                            <Button startIcon={<Download />} variant="outlined" onClick={handleDownloadTemplate}
+                            sx={{color:'#063455', border:'1px solid #063455', textTransform:'none', borderRadius:'16px',}}>
+                                Template
+                            </Button>
+                            <Button startIcon={<Upload />} variant="outlined" sx={{color:'#063455', border:'1px solid #063455', whiteSpace:'nowrap', borderRadius:'16px', textTransform:'none'}}>
+                                Import Excel
+                                <input type="file" hidden accept=".csv, .xlsx, .xls" onChange={handleImport} />
+                            </Button>
+                            <Button startIcon={<Download />} variant="outlined" onClick={handleExport}
+                            sx={{color:'#063455', border:'1px solid #063455', whiteSpace:'nowrap', borderRadius:'16px', textTransform:'none'}}>
+                                Export Excel
+                            </Button>
+                            <Button startIcon={<Save />} variant="contained" onClick={handleSave} disabled={loading}
+                            sx={{color:'#fff', whiteSpace:'nowrap', textTransform:'none', borderRadius:'16px',}}>
+                                {loading ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </Box>
 
-                            <Typography variant="subtitle1" fontWeight="bold">
-                                Steps:
-                            </Typography>
-                            <ol>
-                                <li>
-                                    <Typography variant="body2">
-                                        <b>Download Template:</b> Click the "Template" button to get a blank file with the correct headers (Employee ID, Name, Allowances, Deductions).
-                                    </Typography>
-                                </li>
-                                <li>
-                                    <Typography variant="body2">
-                                        <b>Fill Data:</b> Enter the amounts for each employee. You strictly need the <code style={{ backgroundColor: '#e0e0e0', padding: '2px 4px' }}>Employee ID</code> column.
-                                    </Typography>
-                                </li>
-                                <li>
-                                    <Typography variant="body2">
-                                        <b>Upload:</b> Click "Import Excel" and select your file.
-                                    </Typography>
-                                </li>
-                            </ol>
+                        {loading && <LinearProgress sx={{ mb: 2 }} />}
 
-                            <Typography variant="subtitle1" fontWeight="bold" mt={2}>
-                                Important Notes:
-                            </Typography>
-                            <ul>
-                                <li>
-                                    <Typography variant="body2">
-                                        Do not rename the column headers (e.g., <code>Medical (A-1)</code>). The system uses the ID in parentheses (e.g., <code>A-1</code>) to identify the allowance type.
-                                    </Typography>
-                                </li>
-                                <li>
-                                    <Typography variant="body2">
-                                        You can also <b>Export</b> the current sheet, make changes offline, and re-import it.
-                                    </Typography>
-                                </li>
-                            </ul>
-                        </DialogContent>
-                        <DialogActions>
-                            <Button onClick={() => setHelpOpen(false)}>Close</Button>
-                        </DialogActions>
-                    </Dialog>
+                        {/* Grid */}
+                        <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius:'12px' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow sx={{bgcolor:'#063455'}}>
+                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Code</TableCell>
+                                        <TableCell sx={{ fontWeight:600, color:'#fff'}}>Employee</TableCell>
+                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>CNIC</TableCell>
+                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Designation</TableCell>
+                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Basic</TableCell>
 
-                    {/* Filters */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12} md={3}>
-                                    <DatePicker
-                                        label="Select Month"
-                                        views={['year', 'month']}
-                                        value={month}
-                                        onChange={(val) => setMonth(val)}
-                                        open={datePickerOpen}
-                                        onOpen={() => setDatePickerOpen(true)}
-                                        onClose={() => setDatePickerOpen(false)}
-                                        slotProps={{
-                                            textField: {
-                                                size: 'small',
-                                                fullWidth: true,
-                                                onClick: () => setDatePickerOpen(true),
-                                                InputProps: { readOnly: true }, // Prevent manual typing to force picker use
-                                            },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <Autocomplete
-                                        size="small"
-                                        options={[{ id: 'all', name: 'All' }, ...designations]}
-                                        getOptionLabel={(option) => option.name || ''}
-                                        value={designation === 'all' ? { id: 'all', name: 'All' } : designations.find((d) => d.name === designation) || { id: 'all', name: 'All' }}
-                                        onChange={(e, newValue) => {
-                                            setDesignation(newValue ? (newValue.id === 'all' ? 'all' : newValue.name) : 'all');
-                                        }}
-                                        renderInput={(params) => <TextField {...params} label="Designation" />}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel>Employee Type</InputLabel>
-                                        <Select value={employeeType} label="Employee Type" onChange={(e) => setEmployeeType(e.target.value)}>
-                                            <MenuItem value="all">All</MenuItem>
-                                            {employeeTypes.map((t) => (
-                                                <MenuItem key={t} value={t}>
-                                                    {t}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel>Location</InputLabel>
-                                        <Select value={location} label="Location" onChange={(e) => setLocation(e.target.value)}>
-                                            <MenuItem value="all">All</MenuItem>
-                                            {locations.map((l) => (
-                                                <MenuItem key={l} value={l}>
-                                                    {l}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} md={3}>
-                                    {/* Add other filters as needed */}
-                                    <Button variant="contained" onClick={fetchData} startIcon={<Refresh />}>
-                                        Fetch Data
-                                    </Button>
-                                </Grid>
-                            </Grid>
-                        </CardContent>
-                    </Card>
+                                        {/* Dynamic Allowance Headers */}
+                                        {allowanceHeaders.map((h) => (
+                                            <TableCell key={h.id} align="center" sx={{ bgcolor: '#e3f2fd' }}>
+                                                {h.name}
+                                            </TableCell>
+                                        ))}
 
-                    {/* Actions */}
-                    <Box sx={{ mb: 2, display: 'flex', gap: 2, justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <Typography variant="caption" color="textSecondary" sx={{ mr: 2 }}>
-                            To import: Download template or export current sheet, modify values, and re-import.
-                        </Typography>
-                        <Button startIcon={<Download />} variant="outlined" onClick={handleDownloadTemplate}>
-                            Template
-                        </Button>
-                        <Button startIcon={<Upload />} variant="outlined" component="label">
-                            Import Excel
-                            <input type="file" hidden accept=".csv, .xlsx, .xls" onChange={handleImport} />
-                        </Button>
-                        <Button startIcon={<Download />} variant="outlined" onClick={handleExport}>
-                            Export Excel
-                        </Button>
-                        <Button startIcon={<Save />} variant="contained" color="primary" onClick={handleSave} disabled={loading}>
-                            {loading ? 'Saving...' : 'Save Changes'}
-                        </Button>
-                    </Box>
+                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Gross Salary</TableCell>
 
-                    {loading && <LinearProgress sx={{ mb: 2 }} />}
+                                        {/* Dynamic Deduction Headers */}
+                                        {deductionHeaders.map((h) => (
+                                            <TableCell key={h.id} align="center" sx={{ bgcolor: '#ffebee' }}>
+                                                {h.name}
+                                            </TableCell>
+                                        ))}
 
-                    {/* Grid */}
-                    <TableContainer component={Paper} sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-                        <Table stickyHeader size="small">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{ minWidth: 50, position: 'sticky', left: 0, zIndex: 3, bgcolor: '#f5f5f5' }}>Code</TableCell>
-                                    <TableCell sx={{ minWidth: 150, position: 'sticky', left: 50, zIndex: 3, bgcolor: '#f5f5f5' }}>Employee</TableCell>
-                                    <TableCell sx={{ minWidth: 100 }}>CNIC</TableCell>
-                                    <TableCell sx={{ minWidth: 100 }}>Designation</TableCell>
-                                    <TableCell sx={{ minWidth: 100 }}>Basic</TableCell>
-
-                                    {/* Dynamic Allowance Headers */}
-                                    {allowanceHeaders.map((h) => (
-                                        <TableCell key={h.id} align="center" sx={{ bgcolor: '#e3f2fd' }}>
-                                            {h.name}
-                                        </TableCell>
-                                    ))}
-
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Gross Salary</TableCell>
-
-                                    {/* Dynamic Deduction Headers */}
-                                    {deductionHeaders.map((h) => (
-                                        <TableCell key={h.id} align="center" sx={{ bgcolor: '#ffebee' }}>
-                                            {h.name}
-                                        </TableCell>
-                                    ))}
-
-                                    <TableCell sx={{ fontWeight: 'bold' }}>Net Salary</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {payslips.map((row) => (
-                                    <TableRow key={row.id}>
-                                        <TableCell sx={{ position: 'sticky', left: 0, bgcolor: 'white', zIndex: 2 }}>{row.employee_id_number}</TableCell>
-                                        <TableCell sx={{ position: 'sticky', left: 50, bgcolor: 'white', zIndex: 2 }}>
-                                            <Typography variant="body2" fontWeight="bold">
-                                                {row.employee_name}
-                                            </Typography>
-                                            <Typography variant="caption" color="textSecondary">
-                                                {row.department}
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell>{row.employee?.national_id || '-'}</TableCell>
-                                        <TableCell>{row.designation}</TableCell>
-                                        <TableCell>{parseFloat(row.basic_salary).toLocaleString()}</TableCell>
-
-                                        {/* Allowances Inputs */}
-                                        {allowanceHeaders.map((h) => {
-                                            const allowance = row.allowances.find((a) => a.allowance_type_id === h.id);
-                                            return (
-                                                <TableCell key={h.id} sx={{ bgcolor: '#e3f2fd' }} p={0}>
-                                                    <TextField size="small" variant="standard" inputProps={{ style: { textAlign: 'center' } }} value={allowance ? allowance.amount : 0} onChange={(e) => handleValueChange(row.id, 'allowance', h.id, e.target.value)} InputProps={{ disableUnderline: true }} fullWidth />
-                                                </TableCell>
-                                            );
-                                        })}
-
-                                        <TableCell sx={{ fontWeight: 'bold' }}>{row.gross_salary.toLocaleString()}</TableCell>
-
-                                        {/* Deductions Inputs */}
-                                        {deductionHeaders.map((h) => {
-                                            const deduction = row.deductions.find((d) => d.deduction_type_id === h.id);
-                                            return (
-                                                <TableCell key={h.id} sx={{ bgcolor: '#ffebee' }} p={0}>
-                                                    <TextField size="small" variant="standard" inputProps={{ style: { textAlign: 'center' } }} value={deduction ? deduction.amount : 0} onChange={(e) => handleValueChange(row.id, 'deduction', h.id, e.target.value)} InputProps={{ disableUnderline: true }} fullWidth />
-                                                </TableCell>
-                                            );
-                                        })}
-
-                                        <TableCell sx={{ fontWeight: 'bold' }}>{row.net_salary.toLocaleString()}</TableCell>
+                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Net Salary</TableCell>
                                     </TableRow>
-                                ))}
-                                {payslips.length === 0 && !loading && (
-                                    <TableRow>
-                                        <TableCell colSpan={10} align="center">
-                                            No data found or generate payslips first.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </Box>
-            </LocalizationProvider>
+                                </TableHead>
+                                <TableBody>
+                                    {payslips.map((row) => (
+                                        <TableRow key={row.id}>
+                                            <TableCell sx={{ position: 'sticky', left: 0, bgcolor: 'white', zIndex: 2 }}>{row.employee_id_number}</TableCell>
+                                            <TableCell sx={{ position: 'sticky', left: 50, bgcolor: 'white', zIndex: 2 }}>
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {row.employee_name}
+                                                </Typography>
+                                                <Typography variant="caption" color="textSecondary">
+                                                    {row.department}
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell>{row.employee?.national_id || '-'}</TableCell>
+                                            <TableCell>{row.designation}</TableCell>
+                                            <TableCell>{parseFloat(row.basic_salary).toLocaleString()}</TableCell>
+
+                                            {/* Allowances Inputs */}
+                                            {allowanceHeaders.map((h) => {
+                                                const allowance = row.allowances.find((a) => a.allowance_type_id === h.id);
+                                                return (
+                                                    <TableCell key={h.id} sx={{ bgcolor: '#e3f2fd' }} p={0}>
+                                                        <TextField size="small" variant="standard" inputProps={{ style: { textAlign: 'center' } }} value={allowance ? allowance.amount : 0} onChange={(e) => handleValueChange(row.id, 'allowance', h.id, e.target.value)} InputProps={{ disableUnderline: true }} fullWidth />
+                                                    </TableCell>
+                                                );
+                                            })}
+
+                                            <TableCell sx={{ fontWeight: 'bold' }}>{row.gross_salary.toLocaleString()}</TableCell>
+
+                                            {/* Deductions Inputs */}
+                                            {deductionHeaders.map((h) => {
+                                                const deduction = row.deductions.find((d) => d.deduction_type_id === h.id);
+                                                return (
+                                                    <TableCell key={h.id} sx={{ bgcolor: '#ffebee' }} p={0}>
+                                                        <TextField size="small" variant="standard" inputProps={{ style: { textAlign: 'center' } }} value={deduction ? deduction.amount : 0} onChange={(e) => handleValueChange(row.id, 'deduction', h.id, e.target.value)} InputProps={{ disableUnderline: true }} fullWidth />
+                                                    </TableCell>
+                                                );
+                                            })}
+
+                                            <TableCell sx={{ fontWeight: 'bold' }}>{row.net_salary.toLocaleString()}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {payslips.length === 0 && !loading && (
+                                        <TableRow>
+                                            <TableCell colSpan={10} align="center">
+                                                No data found or generate payslips first.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                    </Box>
+                </LocalizationProvider>
+            </div>
         </>
     );
 }

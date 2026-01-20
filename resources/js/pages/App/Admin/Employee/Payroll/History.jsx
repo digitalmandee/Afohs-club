@@ -113,10 +113,10 @@ export default function History() {
                         </Row>
 
                         {/* Filters */}
-                        <Card sx={{ mb: 3, borderRadius: '12px', boxShadow: 'none' }}>
+                        <Card sx={{ mb: 3, borderRadius: '12px', bgcolor:'transparent', boxShadow: 'none' }}>
                             <CardContent>
                                 <Grid container spacing={2} alignItems="center">
-                                    <Grid item xs={12} md={4}>
+                                    <Grid item xs={12} md={3}>
                                         <Autocomplete options={employeesList} getOptionLabel={(option) => `${option.name} (${option.employee_id})`} value={employee} onChange={(event, newValue) => setEmployee(newValue)} renderInput={(params) => <TextField {...params} label="Select Employee" fullWidth size="small" />} />
                                     </Grid>
                                     <Grid item xs={12} md={3}>
@@ -125,9 +125,9 @@ export default function History() {
                                     <Grid item xs={12} md={3}>
                                         <DatePicker label="To Date" value={toDate} onChange={(newValue) => setToDate(newValue)} slotProps={{ textField: { fullWidth: true, size: 'small' } }} format="DD/MM/YYYY" />
                                     </Grid>
-                                    <Grid item xs={12} md={2}>
-                                        <Button variant="contained" startIcon={<Search />} onClick={fetchHistory} fullWidth disabled={loading} sx={{ textTransform: 'none', fontWeight: 'bold' }}>
-                                            {loading ? 'Fetching...' : 'View History'}
+                                    <Grid item xs={12} md={1.5}>
+                                        <Button variant="contained" startIcon={<Search />} onClick={fetchHistory} fullWidth disabled={loading} sx={{ textTransform: 'none !important', fontWeight: 'bold', borderRadius:'16px' }}>
+                                            {loading ? 'Fetching...' : 'Search'}
                                         </Button>
                                     </Grid>
                                 </Grid>

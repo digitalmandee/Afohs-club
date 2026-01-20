@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePage, router } from '@inertiajs/react';
-import { Autocomplete, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Box, Chip, Avatar } from '@mui/material';
+import { Autocomplete, Tooltip, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Box, Chip, Avatar } from '@mui/material';
 import EventSeatIcon from '@mui/icons-material/EventSeat';
 import PeopleIcon from '@mui/icons-material/People';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -121,6 +121,9 @@ const EmployeeDashboard = () => {
         },
     };
 
+    const capitalizeFirst = (text = '') =>
+        text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+
     return (
         <>
             <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
@@ -130,21 +133,22 @@ const EmployeeDashboard = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography style={{ color: '#063455', fontWeight: '700', fontSize: '30px' }}>Employee Management</Typography>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <Button variant="contained" startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => router.visit(route('employees.create'))}>
+                                <Button variant="contained" startIcon={<span style={{ fontSize: '1.5rem', marginBottom: 5 }}>+</span>} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={() => router.visit(route('employees.create'))}>
                                     Add Employee
                                 </Button>
                                 <Button
                                     onClick={() => router.visit(route('employees.trashed'))}
                                     style={{
-                                        color: '#063455',
-                                        backgroundColor: 'white',
+                                        // color: '#063455',
+                                        // backgroundColor: 'white',
                                         borderRadius: '16px',
                                         height: 35,
                                         marginLeft: '10px',
                                         textTransform: 'none',
-                                        border: '1px solid #063455',
+                                        // border: '1px solid #063455',
                                     }}
                                     variant="outlined"
+                                    color='error'
                                     startIcon={<FaTrash size={14} />}
                                 >
                                     Trashed
@@ -201,10 +205,10 @@ const EmployeeDashboard = () => {
                                         if (e.key === 'Enter') handleFilter();
                                     }}
                                     sx={{
-                                        minWidth: 220,
+                                        minWidth: 250,
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
+                                            borderRadius: '16px',
+                                            // backgroundColor: '#fff',
                                         },
                                     }}
                                 />
@@ -216,10 +220,10 @@ const EmployeeDashboard = () => {
                                     onChange={(e, value) => setFilters({ ...filters, branch_id: value })}
                                     renderInput={(params) => <TextField {...params} placeholder="Company" />}
                                     sx={{
-                                        minWidth: 160,
+                                        minWidth: 250,
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
+                                            borderRadius: '16px',
+                                            // backgroundColor: '#fff',
                                         },
                                     }}
                                 />
@@ -231,10 +235,10 @@ const EmployeeDashboard = () => {
                                     onChange={(e, value) => setFilters({ ...filters, department_id: value, subdepartment_id: null })}
                                     renderInput={(params) => <TextField {...params} placeholder="Department" />}
                                     sx={{
-                                        minWidth: 160,
+                                        minWidth: 250,
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
+                                            borderRadius: '16px',
+                                            // backgroundColor: '#fff',
                                         },
                                     }}
                                 />
@@ -247,10 +251,10 @@ const EmployeeDashboard = () => {
                                     onChange={(e, value) => setFilters({ ...filters, subdepartment_id: value })}
                                     renderInput={(params) => <TextField {...params} placeholder="SubDept" />}
                                     sx={{
-                                        minWidth: 140,
+                                        minWidth: 250,
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
+                                            borderRadius: '16px',
+                                            // backgroundColor: '#fff',
                                         },
                                     }}
                                 />
@@ -262,10 +266,10 @@ const EmployeeDashboard = () => {
                                     onChange={(e, value) => setFilters({ ...filters, designation_id: value })}
                                     renderInput={(params) => <TextField {...params} placeholder="Designation" />}
                                     sx={{
-                                        minWidth: 140,
+                                        minWidth: 250,
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
+                                            borderRadius: '16px',
+                                            // backgroundColor: '#fff',
                                         },
                                     }}
                                 />
@@ -277,10 +281,10 @@ const EmployeeDashboard = () => {
                                     onChange={(e, value) => setFilters({ ...filters, shift_id: value })}
                                     renderInput={(params) => <TextField {...params} placeholder="Shift" />}
                                     sx={{
-                                        minWidth: 100,
+                                        minWidth: 250,
                                         '& .MuiOutlinedInput-root': {
-                                            borderRadius: '20px',
-                                            backgroundColor: '#fff',
+                                            borderRadius: '16px',
+                                            // backgroundColor: '#fff',
                                         },
                                     }}
                                 />
@@ -302,7 +306,7 @@ const EmployeeDashboard = () => {
                                 >
                                     {isLoading ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : 'Search'}
                                 </Button>
-                                {(searchTerm || filters.department_id || filters.branch_id || filters.shift_id || filters.designation_id) && (
+                                {/* {(searchTerm || filters.department_id || filters.branch_id || filters.shift_id || filters.designation_id) && ( */}
                                     <Button
                                         variant="outlined"
                                         onClick={handleClearFilters}
@@ -312,29 +316,29 @@ const EmployeeDashboard = () => {
                                             textTransform: 'none',
                                             borderRadius: '20px',
                                             height: '40px',
-                                            px: 2,
+                                            px: 4,
                                             '&:hover': { borderColor: '#052d45', backgroundColor: 'rgba(6,52,85,0.05)' },
                                         }}
                                     >
                                         Reset
                                     </Button>
-                                )}
+                                
                             </Box>
                         </Box>
 
                         {/* Employees Table */}
-                        <TableContainer component={Paper} style={{ borderRadius: '16px', overflowX: 'auto' }}>
+                        <TableContainer component={Paper} style={{ borderRadius: '12px', overflowX: 'auto' }}>
                             <Table>
                                 <TableHead style={{ backgroundColor: '#063455', height: 30 }}>
                                     <TableRow>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>EMP ID</TableCell>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Department</TableCell>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Designation</TableCell>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Joining Date</TableCell>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Email Address</TableCell>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Employee Status</TableCell>
-                                        <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Actions</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>EMP ID</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Name</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Department</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Designation</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Joining Date</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Email Address</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Employee Status</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -347,21 +351,43 @@ const EmployeeDashboard = () => {
 
                                             const rowStyle = needsAttention
                                                 ? {
-                                                      backgroundColor: '#ffebee',
-                                                  }
+                                                    backgroundColor: '#ffebee',
+                                                }
                                                 : {};
 
                                             const cellStyle = needsAttention ? { color: '#d32f2f', fontWeight: 400, fontSize: '14px' } : { color: '#7F7F7F', fontWeight: 400, fontSize: '14px' };
 
                                             return (
                                                 <TableRow key={emp.id} style={rowStyle}>
-                                                    <TableCell style={cellStyle}>#{emp.employee_id}</TableCell>
+                                                    <TableCell
+                                                        style={{
+                                                            color: '#000',
+                                                            fontWeight: '600',
+                                                            fontSize: '14px',
+                                                            textOverflow: 'ellipsis',
+                                                            overflow: 'hidden',
+                                                            maxWidth: '100px',
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
+                                                        <Tooltip title={emp.employee_id} arrow>
+                                                            {emp.employee_id}
+                                                        </Tooltip>
+                                                    </TableCell>
                                                     <TableCell style={cellStyle}>
                                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                             <Avatar src={emp.photo_url} alt={emp.name} sx={{ width: 40, height: 40, mr: 2, border: '1px solid #eee' }}>
                                                                 {emp.name.charAt(0)}
                                                             </Avatar>
-                                                            {emp.name}
+                                                            <div style={{
+                                                                textOverflow: 'ellipsis',
+                                                                overflow: 'hidden',
+                                                                maxWidth: '100px',
+                                                                whiteSpace: 'nowrap'
+                                                            }}>
+                                                                <Tooltip title={emp.name} arrow>
+                                                                    {emp.name}
+                                                                </Tooltip>
+                                                            </div>
                                                         </Box>
                                                     </TableCell>
                                                     <TableCell style={cellStyle}>
@@ -388,10 +414,34 @@ const EmployeeDashboard = () => {
                                                             </Typography>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell style={cellStyle}>{emp.designation?.name || emp.designation || '-'}</TableCell>
+                                                    <TableCell style={{
+                                                        fontSize: '14px',
+                                                        fontWeight: 400,
+                                                        color: '#7f7f7f',
+                                                        textOverflow: 'ellipsis',
+                                                        overflow: 'hidden',
+                                                        maxWidth: '100px',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={emp.designation?.name || emp.designation || '-'} arrow>
+                                                            {emp.designation?.name || emp.designation || '-'}
+                                                        </Tooltip>
+                                                    </TableCell>
                                                     <TableCell style={cellStyle}>{emp.joining_date}</TableCell>
-                                                    <TableCell style={cellStyle}>{emp.email}</TableCell>
-                                                    <TableCell style={cellStyle}>
+                                                    <TableCell style={{
+                                                        fontSize: '14px',
+                                                        fontWeight: 400,
+                                                        color: '#7f7f7f',
+                                                        textOverflow: 'ellipsis',
+                                                        overflow: 'hidden',
+                                                        maxWidth: '150px',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={emp.email} arrow>
+                                                            {emp.email}
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    {/* <TableCell style={cellStyle}>
                                                         {needsAttention ? (
                                                             <Typography
                                                                 variant="caption"
@@ -407,6 +457,42 @@ const EmployeeDashboard = () => {
                                                             </Typography>
                                                         ) : (
                                                             (emp.status ?? 'Active')
+                                                        )}
+                                                    </TableCell> */}
+                                                    <TableCell style={cellStyle}>
+                                                        {needsAttention ? (
+                                                            <Typography
+                                                                variant="caption"
+                                                                sx={{
+                                                                    color: '#d32f2f',
+                                                                    fontWeight: 'bold',
+                                                                    backgroundColor: '#ffcdd2',
+                                                                    px: 2,
+                                                                    py: 0.7,
+                                                                    borderRadius: '16px',
+                                                                    display: 'inline-block',
+                                                                    fontSize:'14px'
+                                                                }}
+                                                            >
+                                                                {hasNoDepartment ? 'No Department' : 'Dept Deleted'}
+                                                            </Typography>
+                                                        ) : (
+                                                            <Typography
+                                                                variant="caption"
+                                                                sx={{
+                                                                    fontWeight: 'bold',
+                                                                    px: 2,
+                                                                    py: 0.7,
+                                                                    borderRadius: '16px',
+                                                                    fontSize:'14px',
+                                                                    display: 'inline-block',
+                                                                    color: emp.status === 'inactive' ? '#d32f2f' : '#2E7D32',
+                                                                    border: `1px solid ${emp.status === 'inactive' ? '#d32f2f' : '#2E7D32'
+                                                                        }`,
+                                                                }}
+                                                            >
+                                                                {capitalizeFirst(emp.status ?? 'active')}
+                                                            </Typography>
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
