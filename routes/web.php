@@ -378,6 +378,46 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
                 Route::get('{id}/edit', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.edit');
                 Route::put('{id}', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.update');
             });
+            // Room Reports
+            Route::prefix('reports')->group(function () {
+                Route::get('/', [\App\Http\Controllers\RoomReportController::class, 'index'])->name('rooms.reports');
+
+                // Day-wise
+                Route::get('day-wise', [\App\Http\Controllers\RoomReportController::class, 'dayWise'])->name('rooms.reports.day-wise');
+                Route::get('day-wise/print', [\App\Http\Controllers\RoomReportController::class, 'dayWisePrint'])->name('rooms.reports.day-wise.print');
+
+                // Room-wise Payment History
+                Route::get('payment-history', [\App\Http\Controllers\RoomReportController::class, 'paymentHistory'])->name('rooms.reports.payment-history');
+                Route::get('payment-history/print', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryPrint'])->name('rooms.reports.payment-history.print');
+
+                // Booking
+                Route::get('booking', [\App\Http\Controllers\RoomReportController::class, 'booking'])->name('rooms.reports.booking');
+                Route::get('booking/print', [\App\Http\Controllers\RoomReportController::class, 'bookingPrint'])->name('rooms.reports.booking.print');
+
+                // Cancelled
+                Route::get('cancelled', [\App\Http\Controllers\RoomReportController::class, 'cancelled'])->name('rooms.reports.cancelled');
+                Route::get('cancelled/print', [\App\Http\Controllers\RoomReportController::class, 'cancelledPrint'])->name('rooms.reports.cancelled.print');
+
+                // Check-in
+                Route::get('check-in', [\App\Http\Controllers\RoomReportController::class, 'checkIn'])->name('rooms.reports.check-in');
+                Route::get('check-in/print', [\App\Http\Controllers\RoomReportController::class, 'checkInPrint'])->name('rooms.reports.check-in.print');
+
+                // Check-out
+                Route::get('check-out', [\App\Http\Controllers\RoomReportController::class, 'checkOut'])->name('rooms.reports.check-out');
+                Route::get('check-out/print', [\App\Http\Controllers\RoomReportController::class, 'checkOutPrint'])->name('rooms.reports.check-out.print');
+
+                // Member Wise
+                Route::get('member-wise', [\App\Http\Controllers\RoomReportController::class, 'memberWise'])->name('rooms.reports.member-wise');
+                Route::get('member-wise/print', [\App\Http\Controllers\RoomReportController::class, 'memberWisePrint'])->name('rooms.reports.member-wise.print');
+
+                // Mini Bar
+                Route::get('mini-bar', [\App\Http\Controllers\RoomReportController::class, 'miniBar'])->name('rooms.reports.mini-bar');
+                Route::get('mini-bar/print', [\App\Http\Controllers\RoomReportController::class, 'miniBarPrint'])->name('rooms.reports.mini-bar.print');
+
+                // Complementary
+                Route::get('complementary', [\App\Http\Controllers\RoomReportController::class, 'complementary'])->name('rooms.reports.complementary');
+                Route::get('complementary/print', [\App\Http\Controllers\RoomReportController::class, 'complementaryPrint'])->name('rooms.reports.complementary.print');
+            });
         });
 
         // Room Types Trashed Module

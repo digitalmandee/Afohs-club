@@ -186,6 +186,10 @@ export default function SideNav({ open, setOpen }) {
                                 text: 'MiniBar',
                                 path: route('room-minibar.index'),
                             },
+                            {
+                                text: 'Reports',
+                                path: route('rooms.reports'),
+                            },
                         ],
                     },
                     {
