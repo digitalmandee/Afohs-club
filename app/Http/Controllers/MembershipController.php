@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\CardPayment;
 use App\Models\FinancialInvoice;
@@ -568,7 +569,7 @@ class MembershipController extends Controller
             // 2. Create Invoice Item (New System Compatibility)
             \App\Models\FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'fee_type' => 'membership_fee',
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
                 'description' => 'Membership Fee',
                 'qty' => 1,
                 'amount' => $request->membership_fee ?? 0,
@@ -587,7 +588,7 @@ class MembershipController extends Controller
             if (($request->total_maintenance_fee ?? 0) > 0) {
                 \App\Models\FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => 'maintenance_fee',
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
                     'description' => 'Maintenance Fee (Initial)',
                     'qty' => 1,
                     'amount' => $request->total_maintenance_fee,
@@ -632,7 +633,7 @@ class MembershipController extends Controller
                     "New Member: {$mainMember->full_name}",
                     "Membership #{$mainMember->membership_no} added to {$mainMember->memberCategory->name}",
                     route('member.profile', $mainMember->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
                 Log::info('Notification sent successfully.');
@@ -1011,7 +1012,7 @@ class MembershipController extends Controller
                     "Member Updated: {$member->full_name}",
                     "Profile details updated for Membership #{$member->membership_no}",
                     route('member.profile', $member->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
             } catch (\Exception $e) {
@@ -1244,7 +1245,7 @@ class MembershipController extends Controller
                     "Profession Updated: {$member->full_name}",
                     "Profession details updated for Membership #{$member->membership_no}",
                     route('member.profile', $member->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
             } catch (\Exception $e) {
@@ -1341,7 +1342,7 @@ class MembershipController extends Controller
                     "Profession Updated: {$member->full_name}",
                     "Profession details updated for Membership #{$member->membership_no}",
                     route('member.profile', $member->id),
-                    auth()->user(),
+                    Auth::user(),
                     'Membership'
                 ));
             } catch (\Exception $e) {

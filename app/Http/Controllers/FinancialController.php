@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
 use App\Models\FinancialReceipt;
@@ -24,7 +25,6 @@ class FinancialController extends Controller
     {
         $this->middleware('permission:financial.dashboard.view')->only('index');
         $this->middleware('permission:financial.view')->only('getAllTransactions', 'fetchRevenue', 'getMemberInvoices');
-        $this->middleware('permission:financial.create')->only('createAndPay');
     }
 
     public function index()
@@ -39,7 +39,7 @@ class FinancialController extends Controller
         $totalTransactions = FinancialInvoice::count();
 
         // Revenue Breakdown using Item-Level Transactions (Credits)
-        // Group by TransactionType->type field (3=Membership, 4=Maintenance, 5=Subscription)
+        // Group by TransactionType->type field matching AppConstants
         $revenueByType = DB::table('transactions')
             ->join('financial_invoice_items', 'transactions.reference_id', '=', 'financial_invoice_items.id')
             ->join('transaction_types', 'financial_invoice_items.fee_type', '=', 'transaction_types.id')
@@ -49,9 +49,9 @@ class FinancialController extends Controller
             ->groupBy('transaction_types.type')
             ->pluck('total', 'type');
 
-        $membershipFeeRevenue = $revenueByType[3] ?? 0;
-        $maintenanceFeeRevenue = $revenueByType[4] ?? 0;
-        $subscriptionFeeRevenue = $revenueByType[5] ?? 0;
+        $membershipFeeRevenue = $revenueByType[AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP] ?? 0;
+        $maintenanceFeeRevenue = $revenueByType[AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE] ?? 0;
+        $subscriptionFeeRevenue = $revenueByType[AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION] ?? 0;
 
         // Reinstating Fee - specific lookup by name if needed, assuming it falls under Type 6 (Financial Charge) or similar
         // For now, we will try to find it by name for legacy support compatibility
@@ -316,169 +316,6 @@ class FinancialController extends Controller
         return response()->json(['invoice' => $invoice]);
     }
 
-    public function createAndPay(Request $request)
-    {
-        $data = $request->validate([
-            'customer_id' => 'required|exists:users,id',
-            'invoice_type' => 'required|in:membership,subscription',
-            'subscription_type' => 'nullable|in:quarter,monthly,yearly,one_time',
-            'amount' => 'required|numeric|min:0',
-            'prepay_quarters' => 'nullable|integer|min:0|max:4',
-            'method' => 'required|in:cash,card',
-            'discount_type' => 'nullable|in:fixed,percentage',
-            'discount_value' => 'nullable|numeric|min:0',
-        ]);
-
-        $amount = $data['amount'];
-        if ($data['discount_type'] && $data['discount_value']) {
-            $discount = $data['discount_type'] === 'percentage'
-                ? ($amount * $data['discount_value']) / 100
-                : $data['discount_value'];
-
-            $amount -= $discount;
-        }
-
-        $invoice = FinancialInvoice::create([
-            'customer_id' => $data['customer_id'],
-            'invoice_type' => $data['invoice_type'],
-            'subscription_type' => $data['subscription_type'],
-            'amount' => $amount,
-            'total_price' => $amount,
-            'discount_type' => $data['discount_type'],
-            'discount_value' => $data['discount_value'],
-            'issue_date' => now(),
-            'due_date' => now()->addDays(7),
-            'paid_for_quarter' => $data['prepay_quarters'] ?? null,
-            'payment_date' => now(),
-            'status' => 'paid',
-        ]);
-
-        // ✅ Create Invoice Item
-        FinancialInvoiceItem::create([
-            'invoice_id' => $invoice->id,
-            'fee_type' => 'manual_invoice',
-            'description' => 'Manual Invoice Charges',
-            'qty' => 1,
-            'amount' => $amount,
-            'sub_total' => $amount,
-            'total' => $amount,
-        ]);
-
-        // ✅ Ledger Logic for Manual Invoice Creation & Payment
-        $payerType = \App\Models\Customer::class;
-        $payerId = $data['customer_id'];
-
-        // Note: User requested to treat customer_id as Customer module always for guest/default.
-        // Removing User lookup to avoid confusion.
-
-        // 1. Debit Transaction (Invoice)
-        Transaction::create([
-            'type' => 'debit',
-            'amount' => $amount,
-            'date' => now(),
-            'description' => 'Manual Invoice #' . $invoice->invoice_no,
-            'payable_type' => $payerType,
-            'payable_id' => $payerId,
-            'reference_type' => FinancialInvoice::class,
-            'reference_id' => $invoice->id,
-            'created_by' => Auth::id(),
-        ]);
-
-        // 2. Receipt
-        $receipt = FinancialReceipt::create([
-            'receipt_no' => time(),
-            'payer_type' => $payerType,
-            'payer_id' => $payerId,
-            'amount' => $amount,
-            'payment_method' => $data['method'],
-            'receipt_date' => now(),
-            'status' => 'active',
-            'remarks' => 'Payment for Manual Invoice #' . $invoice->invoice_no,
-            'created_by' => Auth::id(),
-        ]);
-
-        // 3. Credit Transaction (Payment)
-        Transaction::create([
-            'type' => 'credit',
-            'amount' => $amount,
-            'date' => now(),
-            'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-            'payable_type' => $payerType,
-            'payable_id' => $payerId,
-            'reference_type' => FinancialReceipt::class,
-            'reference_id' => $receipt->id,
-            'created_by' => Auth::id(),
-        ]);
-
-        // 4. Link
-        TransactionRelation::create([
-            'invoice_id' => $invoice->id,
-            'receipt_id' => $receipt->id,
-            'amount' => $amount,
-        ]);
-
-        // ✅ Ledger Logic for Manual Invoice Creation & Payment
-        $user = User::find($data['customer_id']);
-        $payerType = \App\Models\Customer::class;
-        $payerId = $data['customer_id'];
-        if ($user && $user->member) {
-            $payerType = \App\Models\Member::class;
-            $payerId = $user->member->id;
-            // Update invoice to use member_id correctly?
-            // The create method above uses 'customer_id' column, likely as user_id.
-            // We can optionally update it:
-            $invoice->update(['member_id' => $payerId]);
-        }
-
-        // 1. Debit Transaction (Invoice)
-        Transaction::create([
-            'type' => 'debit',
-            'amount' => $amount,  // The create method uses $amount for 'amount' and 'total_price', assuming fully paid
-            'date' => now(),
-            'description' => 'Manual Invoice #' . $invoice->invoice_no,
-            'payable_type' => $payerType,
-            'payable_id' => $payerId,
-            'reference_type' => FinancialInvoice::class,
-            'reference_id' => $invoice->id,
-            'created_by' => Auth::id(),
-        ]);
-
-        // 2. Receipt
-        $receipt = FinancialReceipt::create([
-            'receipt_no' => time(),
-            'payer_type' => $payerType,
-            'payer_id' => $payerId,
-            'amount' => $amount,
-            'payment_method' => $data['method'],
-            'receipt_date' => now(),
-            'status' => 'active',
-            'remarks' => 'Payment for Manual Invoice #' . $invoice->invoice_no,
-            'created_by' => Auth::id(),
-        ]);
-
-        // 3. Credit Transaction (Payment)
-        Transaction::create([
-            'type' => 'credit',
-            'amount' => $amount,
-            'date' => now(),
-            'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-            'payable_type' => $payerType,
-            'payable_id' => $payerId,
-            'reference_type' => FinancialReceipt::class,
-            'reference_id' => $receipt->id,
-            'created_by' => Auth::id(),
-        ]);
-
-        // 4. Link
-        TransactionRelation::create([
-            'invoice_id' => $invoice->id,
-            'receipt_id' => $receipt->id,
-            'amount' => $amount,
-        ]);
-
-        return response()->json(['message' => 'Invoice created and marked as paid', 'invoice' => $invoice]);
-    }
-
     public function status($memberId)
     {
         $year = now()->year;
@@ -573,7 +410,7 @@ class FinancialController extends Controller
             // ✅ Create Invoice Item
             FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
-                'fee_type' => 'membership_quarterly_fee',
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
                 'description' => 'Quarterly Membership Fee (Q' . $q . ')',
                 'qty' => 1,
                 'amount' => 3 * $fee,

@@ -9,6 +9,8 @@ import Search from '@mui/icons-material/Search';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import axios from 'axios';
+import TransferModal from './TransferModal';
+import { FaExchangeAlt } from 'react-icons/fa';
 
 const EmployeeDashboard = () => {
     const { props } = usePage();
@@ -16,6 +18,11 @@ const EmployeeDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+    const [transferModal, setTransferModal] = useState({ open: false, employee: null });
+
+    const handleTransferClick = (employee) => {
+        setTransferModal({ open: true, employee });
+    };
 
     const handleDeleteClick = (id) => {
         setDeleteDialog({ open: true, id });
@@ -516,6 +523,18 @@ const EmployeeDashboard = () => {
                                                         >
                                                             <FaTrash size={16} />
                                                         </IconButton>
+
+                                                        <IconButton
+                                                            onClick={() => handleTransferClick(emp)}
+                                                            size="small"
+                                                            title="Transfer Employee"
+                                                            sx={{
+                                                                color: '#1976d2',
+                                                                '&:hover': { backgroundColor: '#e3f2fd' },
+                                                            }}
+                                                        >
+                                                            <FaExchangeAlt size={16} />
+                                                        </IconButton>
                                                     </TableCell>
                                                 </TableRow>
                                             );
@@ -568,6 +587,19 @@ const EmployeeDashboard = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <TransferModal
+                open={transferModal.open}
+                onClose={() => setTransferModal({ open: false, employee: null })}
+                employee={transferModal.employee}
+                onSuccess={() => {
+                    router.visit(window.location.href, {
+                        preserveScroll: true,
+                        preserveState: true,
+                        only: ['employees', 'companyStats'],
+                    });
+                }}
+            />
         </>
     );
 };

@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             GuestTypeSeeder::class,
             SubscriptionSeeder::class,
             MemberTypeSeeder::class,
+            TransactionTypeSeeder::class,
             PermissionsDatabaseSeeder::class,
             RestuarantDatabaseSeeder::class,
             FloorDatabaseSeeder::class,

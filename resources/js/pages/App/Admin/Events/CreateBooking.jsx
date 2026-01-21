@@ -74,6 +74,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
         previewFiles: [],
         notes: '',
         advanceAmount: '',
+        securityDeposit: '',
         paymentMode: 'Cash',
         paymentAccount: '',
     });
@@ -201,6 +202,7 @@ const EventBooking = ({ bookingNo, editMode = false, bookingData = null }) => {
                 totalMiniBar: '',
                 mini_bar_items: [{ item: '', amount: '', qty: '', total: '' }],
                 advanceAmount: bookingData.advance_amount || '',
+                securityDeposit: bookingData.security_deposit || '',
                 // If we want to show payment info in edit mode we would need it in bookingData
                 // paymentMode: bookingData.payment_mode || 'Cash',
                 // paymentAccount: bookingData.payment_account || '',
@@ -1082,6 +1084,9 @@ const ChargesInfo = ({ formData, handleChange, isCompletionMode }) => {
             </Grid>
             <Grid item xs={2}>
                 <TextField label="Grand Total" value={Math.round(grandTotal)} fullWidth disabled />
+            </Grid>
+            <Grid item xs={3}>
+                <TextField label="Security Deposit" type="number" name="securityDeposit" value={formData.securityDeposit} onChange={handleChange} fullWidth />
             </Grid>
             <Grid item xs={3}>
                 <TextField label="Advance Amount" type="number" name="advanceAmount" value={formData.advanceAmount} onChange={handleChange} fullWidth />

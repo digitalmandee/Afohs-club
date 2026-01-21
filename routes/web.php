@@ -53,7 +53,6 @@ use App\Http\Controllers\SubscriptionCategoryController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\TransactionTypeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\UserMemberController;
@@ -108,6 +107,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('shifts/{id}/restore', [App\Http\Controllers\ShiftController::class, 'restore'])->name('shifts.restore');
         Route::delete('shifts/{id}/force-delete', [App\Http\Controllers\ShiftController::class, 'forceDelete'])->name('shifts.force-delete');
         Route::resource('shifts', App\Http\Controllers\ShiftController::class);
+
+        // Employee Transfers
+        Route::get('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'index'])->name('employees.transfers.index');
+        Route::post('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'store'])->name('employees.transfers.store');
 
         // Branches
         Route::get('branches/list', [App\Http\Controllers\BranchController::class, 'list'])->name('branches.list');
@@ -374,6 +377,55 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
                 Route::get('{id}/edit', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.edit');
                 Route::put('{id}', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.update');
             });
+            // Room Reports
+            Route::prefix('reports')->group(function () {
+                Route::get('/', [\App\Http\Controllers\RoomReportController::class, 'index'])->name('rooms.reports');
+
+                // Day-wise
+                Route::get('day-wise', [\App\Http\Controllers\RoomReportController::class, 'dayWise'])->name('rooms.reports.day-wise');
+                Route::get('day-wise/print', [\App\Http\Controllers\RoomReportController::class, 'dayWisePrint'])->name('rooms.reports.day-wise.print');
+                Route::get('day-wise/export', [\App\Http\Controllers\RoomReportController::class, 'dayWiseExport'])->name('rooms.reports.day-wise.export');
+
+                // Room-wise Payment History
+                Route::get('payment-history', [\App\Http\Controllers\RoomReportController::class, 'paymentHistory'])->name('rooms.reports.payment-history');
+                Route::get('payment-history/print', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryPrint'])->name('rooms.reports.payment-history.print');
+                Route::get('payment-history/export', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryExport'])->name('rooms.reports.payment-history.export');
+
+                // Booking
+                Route::get('booking', [\App\Http\Controllers\RoomReportController::class, 'booking'])->name('rooms.reports.booking');
+                Route::get('booking/print', [\App\Http\Controllers\RoomReportController::class, 'bookingPrint'])->name('rooms.reports.booking.print');
+                Route::get('booking/export', [\App\Http\Controllers\RoomReportController::class, 'bookingExport'])->name('rooms.reports.booking.export');
+
+                // Cancelled
+                Route::get('cancelled', [\App\Http\Controllers\RoomReportController::class, 'cancelled'])->name('rooms.reports.cancelled');
+                Route::get('cancelled/print', [\App\Http\Controllers\RoomReportController::class, 'cancelledPrint'])->name('rooms.reports.cancelled.print');
+                Route::get('cancelled/export', [\App\Http\Controllers\RoomReportController::class, 'cancelledExport'])->name('rooms.reports.cancelled.export');
+
+                // Check-in
+                Route::get('check-in', [\App\Http\Controllers\RoomReportController::class, 'checkIn'])->name('rooms.reports.check-in');
+                Route::get('check-in/print', [\App\Http\Controllers\RoomReportController::class, 'checkInPrint'])->name('rooms.reports.check-in.print');
+                Route::get('check-in/export', [\App\Http\Controllers\RoomReportController::class, 'checkInExport'])->name('rooms.reports.check-in.export');
+
+                // Check-out
+                Route::get('check-out', [\App\Http\Controllers\RoomReportController::class, 'checkOut'])->name('rooms.reports.check-out');
+                Route::get('check-out/print', [\App\Http\Controllers\RoomReportController::class, 'checkOutPrint'])->name('rooms.reports.check-out.print');
+                Route::get('check-out/export', [\App\Http\Controllers\RoomReportController::class, 'checkOutExport'])->name('rooms.reports.check-out.export');
+
+                // Member Wise
+                Route::get('member-wise', [\App\Http\Controllers\RoomReportController::class, 'memberWise'])->name('rooms.reports.member-wise');
+                Route::get('member-wise/print', [\App\Http\Controllers\RoomReportController::class, 'memberWisePrint'])->name('rooms.reports.member-wise.print');
+                Route::get('member-wise/export', [\App\Http\Controllers\RoomReportController::class, 'memberWiseExport'])->name('rooms.reports.member-wise.export');
+
+                // Mini Bar
+                Route::get('mini-bar', [\App\Http\Controllers\RoomReportController::class, 'miniBar'])->name('rooms.reports.mini-bar');
+                Route::get('mini-bar/print', [\App\Http\Controllers\RoomReportController::class, 'miniBarPrint'])->name('rooms.reports.mini-bar.print');
+                Route::get('mini-bar/export', [\App\Http\Controllers\RoomReportController::class, 'miniBarExport'])->name('rooms.reports.mini-bar.export');
+
+                // Complementary
+                Route::get('complementary', [\App\Http\Controllers\RoomReportController::class, 'complementary'])->name('rooms.reports.complementary');
+                Route::get('complementary/print', [\App\Http\Controllers\RoomReportController::class, 'complementaryPrint'])->name('rooms.reports.complementary.print');
+                Route::get('complementary/export', [\App\Http\Controllers\RoomReportController::class, 'complementaryExport'])->name('rooms.reports.complementary.export');
+            });
         });
 
         // Room Types Trashed Module
@@ -413,6 +465,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('booking', [EventBookingController::class, 'store'])->name('events.booking.store')->middleware('permission:events.bookings.create');
             Route::get('booking/{id}/invoice', [EventBookingController::class, 'showInvoice'])->name('events.booking.invoice')->middleware('permission:events.bookings.view');
             Route::put('booking/{id}/status', [EventBookingController::class, 'updateStatus'])->name('events.booking.update.status')->middleware('permission:events.bookings.edit');
+
+            // Cancellation & Refund Routes
+            Route::put('booking/refund/{id}', [EventBookingController::class, 'processRefund'])->name('events.booking.refund')->middleware('permission:events.bookings.edit');
+            Route::put('booking/cancel/{id}', [EventBookingController::class, 'cancelBooking'])->name('events.booking.cancel')->middleware('permission:events.bookings.edit');
+            Route::put('booking/undo-cancel/{id}', [EventBookingController::class, 'undoBooking'])->name('events.booking.undo-cancel')->middleware('permission:events.bookings.edit');
+
             Route::get('booking/{id}/edit', [EventBookingController::class, 'edit'])->name('events.booking.edit')->middleware('super.admin:events.bookings.edit');
             Route::post('booking/{id}', [EventBookingController::class, 'update'])->name('events.booking.update')->middleware('permission:events.bookings.edit');
         });
@@ -541,16 +599,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::delete('subscription-types/{id}/delete', [SubscriptionTypeController::class, 'destroy'])->name('subscription-types.destroy');
     });
 
-    // Subscription details route (public access for QR code scanning)
-    Route::get('subscription/details/{id}', [SubscriptionController::class, 'showDetails'])->name('subscription.details');
-
-    Route::get('/api/customers/search', [SubscriptionController::class, 'search']);
-
-    Route::get('api/customer-invoices/{userId}', [SubscriptionController::class, 'customerInvoices']);
-    Route::get('api/subscriptions/by-user/{user}', [SubscriptionController::class, 'byUser']);
-    Route::get('api/members/by-user/{user}', [MembersController::class, 'byUser']);
-    Route::post('api/pay-multiple-invoices', [SubscriptionController::class, 'payMultipleInvoices']);
-    Route::post('api/create-and-pay-invoice', [SubscriptionController::class, 'createAndPay']);
     Route::post('api/check-duplicate-cnic', [MembersController::class, 'checkDuplicateCnic'])->name('api.check-duplicate-cnic');
     Route::post('api/check-duplicate-membership-no', [MembersController::class, 'checkDuplicateMembershipNo'])->name('api.check-duplicate-membership-no');
     Route::post('api/check-duplicate-barcode', [MembersController::class, 'checkDuplicateBarcode'])->name('api.check-duplicate-barcode');
@@ -658,14 +706,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         Route::get('/preview/print', [PayrollApiController::class, 'printPreviewPage'])->name('payroll.preview.print');
     });
-
-    // Route::get('/admin/subscription/sports/category', function () {
-    //     return Inertia::render('App/Admin/Subscription/Sports');
-    // })->name('subscription.sports');
-
-    // Route::get('/admin/subscription/add/sports/category', function () {
-    //     return Inertia::render('App/Admin/Subscription/AddSports');
-    // })->name('subscription.addsports');
 
     // Kitchen Routes
     Route::get('/kitchen/category/dashboard', function () {

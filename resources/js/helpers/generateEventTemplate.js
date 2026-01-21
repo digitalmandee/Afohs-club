@@ -388,6 +388,12 @@ export const generateEventInvoiceContent = (booking) => {
                             <span class="typography-body2-bold">Amount Paid</span>
                             <span class="typography-body2">Rs ${booking.paid_amount || '0'}</span>
                         </div>
+                        ${booking.security_deposit > 0 ? `
+                        <div class="summary-row">
+                            <span class="typography-body2-bold">Security Deposit</span>
+                            <span class="typography-body2">Rs ${booking.security_deposit}</span>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
 

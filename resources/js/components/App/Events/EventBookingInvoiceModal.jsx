@@ -114,9 +114,9 @@ const EventBookingInvoiceModal = ({ open, onClose, bookingId, setBookings, finan
     const getAvailableActions = (status) => {
         switch (status) {
             case 'pending':
-                return ['confirmed', 'cancelled'];
+                return ['confirmed'];
             case 'confirmed':
-                return ['completed', 'cancelled'];
+                return ['completed'];
             case 'completed':
             case 'cancelled':
                 return [];

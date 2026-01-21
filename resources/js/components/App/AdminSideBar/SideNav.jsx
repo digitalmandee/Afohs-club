@@ -186,6 +186,10 @@ export default function SideNav({ open, setOpen }) {
                                 text: 'MiniBar',
                                 path: route('room-minibar.index'),
                             },
+                            {
+                                text: 'Reports',
+                                path: route('rooms.reports'),
+                            },
                         ],
                     },
                     {
@@ -319,6 +323,10 @@ export default function SideNav({ open, setOpen }) {
                     {
                         text: 'Dashboard',
                         path: route('employees.dashboard'),
+                    },
+                    {
+                        text: 'Transfers',
+                        path: route('employees.transfers.index'),
                     },
                     {
                         text: 'Departments',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Events\OrderCreated;
 use App\Helpers\FileHelper;
 use App\Jobs\PrintOrderJob;
@@ -22,6 +23,7 @@ use App\Models\ProductVariantValue;
 use App\Models\Reservation;
 use App\Models\Room;
 use App\Models\RoomBooking;
+use App\Models\RoomServiceOrder;
 use App\Models\RoomType;
 use App\Models\Table;
 use App\Models\Tenant;
@@ -668,7 +670,7 @@ class OrderController extends Controller
 
                     $invoiceItem = FinancialInvoiceItem::create([
                         'invoice_id' => $invoice->id,
-                        'fee_type' => '7',  // Food Order / Room Service
+                        'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,  // Food Order / Room Service
                         'description' => $item['name'] ?? 'Food Item',
                         'qty' => $qty,
                         'amount' => $price,

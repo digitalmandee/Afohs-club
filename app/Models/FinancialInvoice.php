@@ -142,4 +142,9 @@ class FinancialInvoice extends BaseModel
     {
         return $this->hasMany(FinancialInvoiceItem::class, 'invoice_id');
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'invoice_id');
+    }
 }

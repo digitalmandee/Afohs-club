@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { useSnackbar } from 'notistack';
+import { TRANSACTION_TYPES } from '@/constants';
 
 export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [], selectedMember, subscriptionCategories = [], subscriptionTypes = [], onQuickSelectMaintenance, membershipCharges = [], maintenanceCharges = [], subscriptionCharges = [], otherCharges = [], financialChargeTypes = [], bookingType = '', paymentMode = false }) {
     const { enqueueSnackbar } = useSnackbar();
@@ -66,13 +67,13 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
             const selectedType = allTypes.find((t) => t.id == value);
             const typeId = selectedType ? parseInt(selectedType.type) : null; // 3: Mem, 4: Maint, 5: Sub, 6: Other
 
-            if (typeId === 4) {
+            if (typeId === TRANSACTION_TYPES.MAINTENANCE) {
                 // Maintenance
                 // Check if any OTHER item is also Maintenance (Type 4)
                 const hasMaintenance = newItems.some((i, iIdx) => {
                     if (iIdx === index) return false;
                     const iType = allTypes.find((t) => t.id == i.fee_type);
-                    return iType && parseInt(iType.type) === 4;
+                    return iType && parseInt(iType.type) === TRANSACTION_TYPES.MAINTENANCE;
                 });
 
                 if (hasMaintenance) {
@@ -92,15 +93,15 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 isFixed = !!selectedType.is_fixed;
             }
 
-            if (typeId === 3 && selectedMember) {
+            if (typeId === TRANSACTION_TYPES.MEMBERSHIP && selectedMember) {
                 // Membership
                 autoAmount = selectedMember.total_membership_fee || selectedMember.membership_fee || selectedMember.member_category?.fee || '';
                 isFixed = false;
-            } else if (typeId === 4 && selectedMember) {
+            } else if (typeId === TRANSACTION_TYPES.MAINTENANCE && selectedMember) {
                 // Maintenance
                 autoAmount = selectedMember.total_maintenance_fee || selectedMember.maintenance_fee || '';
                 isFixed = false;
-            } else if (typeId === 5) {
+            } else if (typeId === TRANSACTION_TYPES.SUBSCRIPTION) {
                 // Subscription
                 autoAmount = ''; // Reset
             }
@@ -113,10 +114,10 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
             item.description = feeName;
 
             // Cleanup fields based on type
-            if (typeId !== 6) {
+            if (typeId !== TRANSACTION_TYPES.FINANCIAL_CHARGE) {
                 item.financial_charge_type_id = '';
             }
-            if (typeId !== 5) {
+            if (typeId !== TRANSACTION_TYPES.SUBSCRIPTION) {
                 item.subscription_type_id = '';
                 item.subscription_category_id = '';
                 item.family_member_id = '';
@@ -138,7 +139,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
             const typeId = currentType ? parseInt(currentType.type) : null;
 
             // Maintenance Logic (Type 4)
-            if (typeId === 4 && item.valid_from && item.valid_to && selectedMember) {
+            if (typeId === TRANSACTION_TYPES.MAINTENANCE && item.valid_from && item.valid_to && selectedMember) {
                 const from = dayjs(item.valid_from);
                 const to = dayjs(item.valid_to);
                 if (to.isAfter(from) || to.isSame(from)) {
@@ -154,7 +155,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                     item.qty = 1;
                     item.description = `${item.fee_type_name} (${from.format('MMM YYYY')} - ${to.format('MMM YYYY')})`;
                 }
-            } else if (typeId === 5 && item.valid_from && item.valid_to && item.subscription_category_id) {
+            } else if (typeId === TRANSACTION_TYPES.SUBSCRIPTION && item.valid_from && item.valid_to && item.subscription_category_id) {
                 // Subscription Logic (Type 5)
                 const cat = subscriptionCategories.find((c) => c.id === item.subscription_category_id);
                 if (cat && cat.fee) {
@@ -230,7 +231,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                         </Typography>
                     </Box>
                     {!paymentMode && (
-                        <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: '16px', textTransform: 'none', fontWeight: 600, color:'#fff', bgcolor:'#063455' }}>
+                        <Button startIcon={<Add />} variant="outlined" size="small" onClick={handleAddItem} sx={{ borderRadius: '16px', textTransform: 'none', fontWeight: 600, color: '#fff', bgcolor: '#063455' }}>
                             Add Another Item
                         </Button>
                     )}
@@ -378,7 +379,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                             const currentType = allTypes.find((t) => t.id == item.fee_type);
                                             const typeId = currentType ? parseInt(currentType.type) : null;
                                             return (
-                                                typeId === 4 &&
+                                                typeId === TRANSACTION_TYPES.MAINTENANCE &&
                                                 onQuickSelectMaintenance && (
                                                     <Box sx={{ display: 'flex', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
                                                         <Button size="small" sx={{ fontSize: '0.7rem', px: 1, minWidth: 'auto' }} variant="outlined" onClick={() => onQuickSelectMaintenance('monthly', index)}>
@@ -425,7 +426,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                         const currentType = allTypes.find((t) => t.id == item.fee_type);
                                         const typeId = currentType ? parseInt(currentType.type) : null;
                                         return (
-                                            typeId === 5 && (
+                                            typeId === TRANSACTION_TYPES.SUBSCRIPTION && (
                                                 <>
                                                     <Grid item xs={12} md={3}>
                                                         <TextField select fullWidth size="small" label="Sub Type" value={item.subscription_type_id} onChange={(e) => handleChange(index, 'subscription_type_id', e.target.value)} sx={{ bgcolor: 'white' }} disabled={paymentMode}>
@@ -467,7 +468,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                         const currentType = allTypes.find((t) => t.id == item.fee_type);
                                         const typeId = currentType ? parseInt(currentType.type) : null;
                                         return (
-                                            typeId === 6 && (
+                                            typeId === TRANSACTION_TYPES.FINANCIAL_CHARGE && (
                                                 <Grid item xs={12} md={4}>
                                                     <TextField select fullWidth size="small" label="Financial Charge Type" value={item.financial_charge_type_id || ''} onChange={(e) => handleChange(index, 'financial_charge_type_id', e.target.value)} sx={{ bgcolor: 'white' }} helperText="Select specific financial charge type" disabled={paymentMode}>
                                                         {financialChargeTypes.map((type) => (

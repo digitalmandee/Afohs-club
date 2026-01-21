@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Helpers\FileHelper;
 use App\Models\Booking;
 use App\Models\BookingEvents;
@@ -259,7 +260,7 @@ class EventBookingController extends Controller
             if ($request->menuAmount > 0) {
                 FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => 'event_menu',
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                     'description' => 'Event Menu Charges',
                     'qty' => $request->numberOfGuests,
                     'amount' => $request->menuAmount,  // Per person
@@ -279,7 +280,7 @@ class EventBookingController extends Controller
 
                         FinancialInvoiceItem::create([
                             'invoice_id' => $invoice->id,
-                            'fee_type' => 'event_addon',
+                            'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                             'description' => 'Addon: ' . ($addon['type'] ?? 'Addon'),
                             'qty' => $request->numberOfGuests,  // Addons usually per guest? Or lumpsum? Code calculated total add-ons then multiplied by guests in store method line 136?
                             // Line 136: (($request->menuAmount ?? 0) + calculateMenuAddOnsTotal) * Guests. So yes, per guest.
@@ -302,7 +303,7 @@ class EventBookingController extends Controller
 
                         FinancialInvoiceItem::create([
                             'invoice_id' => $invoice->id,
-                            'fee_type' => 'event_other',
+                            'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                             'description' => 'Charge: ' . ($charge['type'] ?? 'Charge'),
                             'qty' => 1,  // Other charges usually lumpsum?
                             'amount' => $chargeAmount,
@@ -326,26 +327,30 @@ class EventBookingController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            // ✅ Handle Advance Payment
-            if ($request->advanceAmount > 0) {
+            // ✅ Handle Advance Payment & Security Deposit
+            $advanceAmount = floatval($request->advanceAmount ?? 0);
+            $securityDeposit = floatval($request->securityDeposit ?? 0);
+            $totalReceived = $advanceAmount + $securityDeposit;
+
+            if ($totalReceived > 0) {
                 // 1. Create Receipt
                 $receipt = FinancialReceipt::create([
-                    'receipt_no' => 'REC-' . time(),  // Simple generation or use helper
-                    'amount' => $request->advanceAmount,
+                    'receipt_no' => 'REC-' . time(),
+                    'amount' => $totalReceived,
                     'payment_mode' => $request->paymentMode ?? 'Cash',
-                    'payment_account' => $request->paymentAccount,  // Reference/Account details
+                    'payment_account' => $request->paymentAccount,
                     'receipt_date' => now(),
                     'received_from' => $memberName,
-                    'remarks' => 'Advance Payment for Event Booking #' . $bookingNo,
+                    'remarks' => 'Advance (' . $advanceAmount . ') & Security (' . $securityDeposit . ') for Event Booking #' . $bookingNo,
                     'created_by' => Auth::id(),
                 ]);
 
-                // 2. Create Transaction (Credit)
+                // 2. Create Transaction (Credit) for TOTAL Received
                 $transaction = Transaction::create([
                     'type' => 'credit',
-                    'amount' => $request->advanceAmount,
+                    'amount' => $totalReceived,
                     'date' => now(),
-                    'description' => 'Advance Payment for Event Booking #' . $bookingNo,
+                    'description' => 'Payment (Adv+Sec) for Event Booking #' . $bookingNo,
                     'payable_type' => $payerType,
                     'payable_id' => $payerId,
                     'reference_type' => FinancialReceipt::class,
@@ -354,29 +359,27 @@ class EventBookingController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                // 3. Link Payment to Invoice (TransactionRelation)
-                // Actually, typically we link Invoice to Receipt via TransactionRelation if needed,
-                // OR we just update the invoice paid amount.
-                // The system seems to use TransactionRelation to link payments to invoices sometimes.
-                // Checking RoomBookingController (viewed previously) - it does create TransactionRelation.
+                // 3. Link Payment to Invoice (TransactionRelation) - ONLY ADVANCE AMOUNT
+                if ($advanceAmount > 0) {
+                    TransactionRelation::create([
+                        'receipt_id' => $receipt->id,
+                        'invoice_id' => $invoice->id,
+                        'amount' => $advanceAmount,
+                    ]);
+                }
 
-                TransactionRelation::create([
-                    'receipt_id' => $receipt->id,
-                    'invoice_id' => $invoice->id,
-                    'amount' => $request->advanceAmount,
-                ]);
-
-                // 4. Update Invoice
-                $invoice->paid_amount = $request->advanceAmount;
-                $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : ($invoice->paid_amount > 0 ? 'partial' : 'unpaid');
-                // Note: 'partial' might not be a valid ENUM. Migration usually has 'paid', 'unpaid'.
-                // Checking RoomBookingController logic: ($newAdvance >= $booking->grand_total) ? 'paid' : 'unpaid'
-                $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : 'unpaid';
+                // 4. Update Invoice (Only Advance reduces the invoice balance)
+                $invoice->paid_amount = $advanceAmount;
+                $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : ($invoice->paid_amount > 0 ? 'unpaid' : 'unpaid');  // Simplified status logic, partial usually treated as unpaid details or custom
+                if ($invoice->paid_amount >= $invoice->total_price) {
+                    $invoice->status = 'paid';
+                }
                 $invoice->save();
 
-                // 5. Update Booking Advance Amount & Paid Amount
-                $eventBooking->advance_amount = $request->advanceAmount;
-                $eventBooking->paid_amount = $request->advanceAmount;  // Keep in sync
+                // 5. Update Booking Financial Fields
+                $eventBooking->security_deposit = $securityDeposit;
+                $eventBooking->advance_amount = $advanceAmount;
+                $eventBooking->paid_amount = $advanceAmount;
                 $eventBooking->save();
             }
 
@@ -674,33 +677,38 @@ class EventBookingController extends Controller
             // ✅ Update associated invoice using polymorphic relationship
             $invoice = $booking->invoice;
 
-            // Handle Advance Payment Change
+            // Handle Advance Payment & Security Deposit Changes (Only Increases)
             $oldAdvance = $booking->advance_amount ?? 0;
-            $newAdvance = $request->advanceAmount ?? 0;
+            $newAdvance = floatval($request->advanceAmount ?? 0);
 
-            if ($newAdvance > $oldAdvance) {
-                $diff = $newAdvance - $oldAdvance;
+            $oldSecurity = $booking->security_deposit ?? 0;
+            $newSecurity = floatval($request->securityDeposit ?? 0);
 
+            $diffAdvance = max(0, $newAdvance - $oldAdvance);
+            $diffSecurity = max(0, $newSecurity - $oldSecurity);
+
+            $totalDiff = $diffAdvance + $diffSecurity;
+
+            if ($totalDiff > 0) {
                 // 1. Create Receipt for Difference
                 $receipt = FinancialReceipt::create([
                     'receipt_no' => 'REC-' . time(),
-                    'amount' => $diff,
+                    'amount' => $totalDiff,
                     'payment_mode' => $request->paymentMode ?? 'Cash',
                     'payment_account' => $request->paymentAccount,
                     'receipt_date' => now(),
-                    'received_from' => $request->bookedBy,  // or fetch member name again
-                    'remarks' => 'Additional Advance Payment for Event Booking #' . $booking->booking_no,
+                    'received_from' => $request->bookedBy,
+                    'remarks' => 'Additional: Adv (' . $diffAdvance . ') & Sec (' . $diffSecurity . ') for Event #' . $booking->booking_no,
                     'created_by' => Auth::id(),
                 ]);
 
                 // 2. Create Transaction (Credit)
                 $transaction = Transaction::create([
                     'type' => 'credit',
-                    'amount' => $diff,
+                    'amount' => $totalDiff,
                     'date' => now(),
-                    'description' => 'Additional Advance for Event Booking #' . $booking->booking_no,
+                    'description' => 'Additional Payment for Event Booking #' . $booking->booking_no,
                     'payable_type' => $invoice && $invoice->member_id ? \App\Models\Member::class : ($invoice && $invoice->corporate_member_id ? \App\Models\CorporateMember::class : \App\Models\Customer::class),
-                    // Note: Simplification. Ideally retrieve payer from booking again or invoice.
                     'payable_id' => $invoice->member_id ?? ($invoice->corporate_member_id ?? $invoice->customer_id),
                     'reference_type' => FinancialReceipt::class,
                     'reference_id' => $receipt->id,
@@ -708,23 +716,24 @@ class EventBookingController extends Controller
                     'created_by' => Auth::id(),
                 ]);
 
-                // 3. Link to Invoice
-                if ($invoice) {
+                // 3. Link to Invoice (ONLY Advance)
+                if ($diffAdvance > 0 && $invoice) {
                     TransactionRelation::create([
                         'receipt_id' => $receipt->id,
                         'invoice_id' => $invoice->id,
-                        'amount' => $diff,
+                        'amount' => $diffAdvance,
                     ]);
 
                     // Update Invoice Paid Amount
-                    $invoice->paid_amount += $diff;
+                    $invoice->paid_amount += $diffAdvance;
                     $invoice->status = ($invoice->paid_amount >= $invoice->total_price) ? 'paid' : 'unpaid';
                     $invoice->save();
                 }
 
                 // Update Booking
                 $booking->advance_amount = $newAdvance;
-                $booking->paid_amount += $diff;
+                $booking->security_deposit = $newSecurity;
+                $booking->paid_amount += $diffAdvance;  // Update paid_amount to reflect invoice payments
                 $booking->save();
             }
 
@@ -773,7 +782,7 @@ class EventBookingController extends Controller
                 if ($request->menuAmount > 0) {
                     FinancialInvoiceItem::create([
                         'invoice_id' => $invoice->id,
-                        'fee_type' => 'event_menu',
+                        'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                         'description' => 'Event Menu Charges',
                         'qty' => $request->numberOfGuests,
                         'amount' => $request->menuAmount,
@@ -793,7 +802,7 @@ class EventBookingController extends Controller
 
                             FinancialInvoiceItem::create([
                                 'invoice_id' => $invoice->id,
-                                'fee_type' => 'event_addon',
+                                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                                 'description' => 'Addon: ' . ($addon['type'] ?? 'Addon'),
                                 'qty' => $request->numberOfGuests,
                                 'amount' => $addonAmount,
@@ -815,7 +824,7 @@ class EventBookingController extends Controller
 
                             FinancialInvoiceItem::create([
                                 'invoice_id' => $invoice->id,
-                                'fee_type' => 'event_other',
+                                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
                                 'description' => 'Charge: ' . ($charge['type'] ?? 'Charge'),
                                 'qty' => 1,
                                 'amount' => $chargeAmount,
@@ -1014,7 +1023,9 @@ class EventBookingController extends Controller
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
-            'eventVenue:id,name'
+            'corporateMember:id,membership_no,full_name,personal_email',
+            'eventVenue:id,name',
+            'invoice'
         ]);
 
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'status', 'membership_no']);
@@ -1092,7 +1103,9 @@ class EventBookingController extends Controller
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
-            'eventVenue:id,name'
+            'corporateMember:id,membership_no,full_name,personal_email',
+            'eventVenue:id,name',
+            'invoice'
         ])->where('status', 'completed');
 
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'membership_no']);
@@ -1125,8 +1138,10 @@ class EventBookingController extends Controller
             'customer:id,name,email,contact',
             'member:id,membership_no,full_name,personal_email',
             'corporateMember:id,membership_no,full_name,personal_email',
-            'eventVenue:id,name'
-        ])->where('status', 'cancelled');
+            'corporateMember:id,membership_no,full_name,personal_email',
+            'eventVenue:id,name',
+            'invoice'
+        ])->whereIn('status', ['cancelled', 'refunded']);
 
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'venues', 'membership_no']);
         $this->applyFilters($query, $filters);
@@ -1296,5 +1311,189 @@ class EventBookingController extends Controller
         $baseTotal = $totalOtherCharges + $totalMenuCharges;
 
         return $baseTotal;
+    }
+
+    public function cancelBooking(Request $request, $id)
+    {
+        $request->validate([
+            'cancellation_reason' => 'nullable|string|max:500',
+            'refund_amount' => 'nullable|numeric|min:0',
+            'refund_mode' => 'nullable|string|required_with:refund_amount',
+            'refund_account' => 'nullable|string',
+        ]);
+
+        $booking = EventBooking::with('invoice')->findOrFail($id);
+        $booking->status = 'cancelled';
+
+        $notes = "\n[Cancelled: " . now()->toDateTimeString() . ']';
+        if ($request->filled('cancellation_reason')) {
+            $notes .= ' Reason: ' . $request->cancellation_reason;
+        }
+
+        // Handle Refund
+        if ($request->filled('refund_amount') && $request->refund_amount > 0) {
+            $invoice = $booking->invoice;
+            if ($invoice) {
+                // Determine max refundable
+                $maxRefundable = $invoice->paid_amount;
+
+                if ($request->refund_amount > $maxRefundable) {
+                    return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than refundable amount (' . $maxRefundable . ').']);
+                }
+
+                // Update Invoice Paid Amount
+                if ($invoice->paid_amount > 0) {
+                    $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
+                }
+                $invoice->save();
+
+                // Determine Payer Details for Ledger
+                $payerDetails = $this->getPayerDetails($invoice);
+
+                // Find main invoice item to attach refund to (or generic)
+                $invoiceItem = $invoice->items()->first();
+
+                // Create Refund Ledger Entry (Debit)
+                Transaction::create([
+                    'type' => 'debit',
+                    'amount' => $request->refund_amount,
+                    'date' => now(),
+                    'description' => 'Refund processed for Event Booking Cancellation #' . $booking->booking_no,
+                    'payable_type' => $payerDetails['type'],
+                    'payable_id' => $payerDetails['id'],
+                    'reference_type' => $invoiceItem ? FinancialInvoiceItem::class : FinancialInvoice::class,
+                    'reference_id' => $invoiceItem ? $invoiceItem->id : $invoice->id,
+                    'invoice_id' => $invoice->id,
+                    'created_by' => Auth::id(),
+                ]);
+
+                $notes .= "\n[Refund Processed: " . $request->refund_amount . ' via ' . $request->refund_mode . ']';
+                if ($request->filled('refund_account')) {
+                    $notes .= ' Account: ' . $request->refund_account;
+                }
+            }
+        }
+
+        $booking->additional_notes .= $notes;
+        $booking->save();
+
+        if ($booking->invoice) {
+            $invoice = $booking->invoice->refresh();
+            if ($request->filled('refund_amount') && $request->refund_amount > 0) {
+                $invoice->update(['status' => 'refunded']);
+                $booking->status = 'refunded';
+                $booking->save();
+            }
+        }
+
+        return redirect()->back()->with('success', 'Event Booking cancelled successfully');
+    }
+
+    public function processRefund(Request $request, $id)
+    {
+        $request->validate([
+            'refund_amount' => 'required|numeric|min:1',
+            'refund_mode' => 'required|string',
+            'refund_account' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $booking = EventBooking::with('invoice')->findOrFail($id);
+        $invoice = $booking->invoice;
+
+        if (!$invoice || $invoice->paid_amount <= 0) {
+            return redirect()->back()->withErrors(['refund_amount' => 'No refundable amount available.']);
+        }
+
+        $maxRefundable = $invoice->paid_amount;
+
+        if ($request->refund_amount > $maxRefundable) {
+            return redirect()->back()->withErrors(['refund_amount' => 'Refund amount cannot be greater than remaining refundable amount (' . $maxRefundable . ').']);
+        }
+
+        // Deduct from paid_amount
+        $invoice->paid_amount = max(0, $invoice->paid_amount - $request->refund_amount);
+        $invoice->save();
+
+        // Determine Payer Details for Ledger
+        $payerDetails = $this->getPayerDetails($invoice);
+
+        $invoiceItem = $invoice->items()->first();
+
+        // Create Refund Ledger Entry (Debit)
+        Transaction::create([
+            'type' => 'debit',
+            'amount' => $request->refund_amount,
+            'date' => now(),
+            'description' => 'Refund processed (Post-Cancel) for Event Booking #' . $booking->booking_no,
+            'payable_type' => $payerDetails['type'],
+            'payable_id' => $payerDetails['id'],
+            'reference_type' => $invoiceItem ? FinancialInvoiceItem::class : FinancialInvoice::class,
+            'reference_id' => $invoiceItem ? $invoiceItem->id : $invoice->id,
+            'invoice_id' => $invoice->id,
+            'created_by' => Auth::id(),
+        ]);
+
+        $invoice->status = 'refunded';
+        $invoice->save();
+
+        $booking->status = 'refunded';
+
+        $notes = "\n[Refund Processed (Post-Cancel): " . now()->toDateTimeString() . ']';
+        $notes .= ' Amount: ' . $request->refund_amount . ' via ' . $request->refund_mode;
+        if ($request->filled('refund_account')) {
+            $notes .= ' Account: ' . $request->refund_account;
+        }
+        if ($request->filled('notes')) {
+            $notes .= ' Note: ' . $request->notes;
+        }
+
+        $booking->additional_notes .= $notes;
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Refund processed successfully');
+    }
+
+    public function undoBooking($id)
+    {
+        $booking = EventBooking::findOrFail($id);
+        $previousStatus = $booking->status;
+
+        $booking->status = 'confirmed';
+
+        if ($previousStatus === 'refunded' || ($booking->invoice && $booking->invoice->status === 'refunded')) {
+            if ($booking->invoice) {
+                $booking->invoice->status = 'unpaid';
+                $booking->invoice->paid_amount = 0;
+                $booking->invoice->save();
+                $booking->invoice->save();
+            }
+            $booking->security_deposit = 0;
+            $booking->advance_amount = 0;
+            $booking->paid_amount = 0;
+        } elseif ($booking->invoice && $booking->invoice->status === 'cancelled') {
+            // Revert logic
+            $total = $booking->invoice->total_price;
+            $paid = $booking->invoice->paid_amount;
+            $booking->invoice->status = ($paid >= $total && $total > 0) ? 'paid' : 'unpaid';
+            $booking->invoice->save();
+        }
+
+        $booking->additional_notes .= "\n[Undo Cancel: " . now()->toDateTimeString() . ']';
+        $booking->save();
+
+        return redirect()->back()->with('success', 'Booking cancellation undone successfully');
+    }
+
+    private function getPayerDetails($invoice)
+    {
+        if ($invoice->member_id) {
+            return ['type' => \App\Models\Member::class, 'id' => $invoice->member_id];
+        } elseif ($invoice->corporate_member_id) {
+            return ['type' => \App\Models\CorporateMember::class, 'id' => $invoice->corporate_member_id];
+        } elseif ($invoice->customer_id) {
+            return ['type' => \App\Models\Customer::class, 'id' => $invoice->customer_id];
+        }
+        return ['type' => null, 'id' => null];
     }
 }

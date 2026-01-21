@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\AppConstants;
 use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
@@ -19,7 +20,7 @@ class MaintenanceFeePostingController extends Controller
     public function create()
     {
         // Fetch Maintenance Charge Type (ID 4) for default selection
-        $maintenanceType = TransactionType::where('type', 4)->first();
+        $maintenanceType = TransactionType::where('type', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE)->first();
 
         return Inertia::render('App/Admin/Finance/MaintenancePosting/Create', [
             'maintenanceType' => $maintenanceType
@@ -238,7 +239,7 @@ class MaintenanceFeePostingController extends Controller
                     'invoice_no' => $invoiceNo,
                     'invoiceable_id' => $member->id,
                     'invoiceable_type' => $model,
-                    'fee_type' => 'maintenance_fee',
+                    'fee_type' => \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
                     'invoice_type' => 'invoice',
                     'amount' => $finalTotal - $tax + $discount,  // Net total before charges/discounts usually, but here matches logic
                     'total_price' => $finalTotal,
@@ -269,7 +270,7 @@ class MaintenanceFeePostingController extends Controller
                 // Match MemberTransactionController fields
                 $item = FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => 4,
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
                     'description' => "Monthly Maintenance Fee ({$startDate->format('M Y')} - {$endDate->format('M Y')})",
                     'qty' => 1,
                     'amount' => $subTotal,  // Using subtotal as the base rate for this calculated period
