@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { MdArrowBackIos } from 'react-icons/md';
-import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box } from '@mui/material';
+import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box, Switch } from '@mui/material';
 import axios from 'axios';
-import { ArrowBack } from "@mui/icons-material"
+import { ArrowBack } from '@mui/icons-material';
 import { Search, FilterAlt, Visibility, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
@@ -86,6 +86,17 @@ const Management = () => {
         }
     };
 
+    const handleStatusChange = async (id, currentStatus) => {
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        try {
+            await axios.post(route('employees.departments.change-status', id), { status: newStatus });
+            enqueueSnackbar('Status updated successfully!', { variant: 'success' });
+            router.reload({ only: ['departments'] });
+        } catch (error) {
+            enqueueSnackbar('Error updating status!', { variant: 'error' });
+        }
+    };
+
     return (
         <>
             {/* <SideNav open={open} setOpen={setOpen} /> */}
@@ -115,24 +126,39 @@ const Management = () => {
                             </Typography>
                         </div>
                         <div className="col-auto ms-auto">
-                            <Button variant="contained" startIcon={<span style={{
-                                fontSize: '1.5rem', marginBottom: 5
-                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35, textTransform:'none' }} onClick={() => handleOpen()}>
+                            <Button variant="outlined" sx={{ borderRadius: '16px', height: 35, textTransform: 'none', borderColor: '#063455', color: '#063455', marginRight: 2 }} onClick={() => router.visit(route('employees.departments.trashed'))}>
+                                Trashed
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={
+                                    <span
+                                        style={{
+                                            fontSize: '1.5rem',
+                                            marginBottom: 5,
+                                        }}
+                                    >
+                                        +
+                                    </span>
+                                }
+                                sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }}
+                                onClick={() => handleOpen()}
+                            >
                                 New Department
                             </Button>
                         </div>
                     </div>
-                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        Manage all primary departments within the club
-                    </Typography>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Manage all primary departments within the club</Typography>
 
                     {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop:'2rem', overflowX: 'auto', borderRadius: '16px' }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '16px' }}>
                         <Table>
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Name</TableCell>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Action</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Name</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Total Employees</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Status</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -140,6 +166,10 @@ const Management = () => {
                                     departments.data.map((department) => (
                                         <TableRow key={department.id}>
                                             <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{department.name}</TableCell>
+                                            <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{department.employees_count || 0}</TableCell>
+                                            <TableCell>
+                                                <Switch checked={department.status === 'active'} onChange={() => handleStatusChange(department.id, department.status)} color="primary" />
+                                            </TableCell>
                                             <TableCell>
                                                 <IconButton onClick={() => handleOpen(department)} color="primary">
                                                     <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
@@ -193,7 +223,7 @@ const Management = () => {
                                 // backgroundColor: '#FFFFFF',
                                 border: '1px solid #063455',
                                 color: '#063455',
-                                textTransform:'none'
+                                textTransform: 'none',
                             }}
                         >
                             Cancel
@@ -201,7 +231,7 @@ const Management = () => {
                         <Button
                             sx={{
                                 bgcolor: '#063455',
-                                textTransform:'none'
+                                textTransform: 'none',
                             }}
                             onClick={handleSubmit}
                             variant="contained"

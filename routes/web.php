@@ -82,8 +82,17 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('employees.dashboard');
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::get('/edit/{employeeId}', [EmployeeController::class, 'edit'])->name('employees.edit');
+        // Departments
+        Route::get('/departments/trashed', [EmployeeDepartmentController::class, 'trashed'])->name('employees.departments.trashed');
+        Route::post('/departments/{id}/restore', [EmployeeDepartmentController::class, 'restore'])->name('employees.departments.restore');
+        Route::delete('/departments/{id}/force-delete', [EmployeeDepartmentController::class, 'forceDelete'])->name('employees.departments.force-delete');
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
         Route::post('/departments/{id}/change-status', [EmployeeDepartmentController::class, 'changeStatus'])->name('employees.departments.change-status');  // Add status route
+
+        // Subdepartments
+        Route::get('/subdepartments/trashed', [EmployeeSubdepartmentController::class, 'trashed'])->name('employees.subdepartments.trashed');
+        Route::post('/subdepartments/{id}/restore', [EmployeeSubdepartmentController::class, 'restore'])->name('employees.subdepartments.restore');
+        Route::delete('/subdepartments/{id}/force-delete', [EmployeeSubdepartmentController::class, 'forceDelete'])->name('employees.subdepartments.force-delete');
         Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
         Route::post('/subdepartments/{id}/change-status', [EmployeeSubdepartmentController::class, 'changeStatus'])->name('employees.subdepartments.change-status');  // Add status route
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');

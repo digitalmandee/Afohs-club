@@ -12,6 +12,7 @@ class EmployeeDepartmentController extends Controller
     public function index(Request $request)
     {
         $departments = Department::select('id', 'name', 'status')
+            ->withCount('employees')
             ->paginate(10)
             ->withQueryString();
 
@@ -50,7 +51,7 @@ class EmployeeDepartmentController extends Controller
                     $deptQuery->where('status', $status);
                 }
 
-                $departments = $deptQuery->paginate($limit);
+                $departments = $deptQuery->withCount('employees')->paginate($limit);
                 return response()->json(['success' => true, 'message' => 'Departments retrieved successfully', 'deparments' => $departments], 200);
             }
         } catch (\Throwable $th) {
@@ -141,6 +142,51 @@ class EmployeeDepartmentController extends Controller
             return response()->json(['success' => true, 'message' => 'Department deleted successfully'], 200);
         } catch (\Throwable $th) {
             return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Display a listing of trashed departments.
+     */
+    public function trashed(Request $request)
+    {
+        $departments = Department::onlyTrashed()
+            ->select('id', 'name', 'deleted_at')
+            ->orderByDesc('deleted_at')
+            ->paginate(10);
+
+        return Inertia::render('App/Admin/Employee/Department/Trashed', [
+            'departments' => $departments,
+        ]);
+    }
+
+    /**
+     * Restore the specified trashed department.
+     */
+    public function restore($id)
+    {
+        try {
+            $department = Department::onlyTrashed()->findOrFail($id);
+            $department->restore();
+
+            return redirect()->back()->with('success', 'Department restored successfully');
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', $th->getMessage());
+        }
+    }
+
+    /**
+     * Permanently remove the specified department from storage.
+     */
+    public function forceDelete($id)
+    {
+        try {
+            $department = Department::onlyTrashed()->findOrFail($id);
+            $department->forceDelete();
+
+            return redirect()->back()->with('success', 'Department permanently deleted');
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', $th->getMessage());
         }
     }
 }

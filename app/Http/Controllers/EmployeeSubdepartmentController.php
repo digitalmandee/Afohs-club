@@ -13,8 +13,9 @@ class EmployeeSubdepartmentController extends Controller
      */
     public function index(Request $request)
     {
-        $subdepartments = Subdepartment::with('department:id,name')
+        $subdepartments = Subdepartment::with(['department:id,name'])
             ->select('id', 'name', 'department_id', 'status')
+            ->withCount('employees')
             ->paginate(10)
             ->withQueryString();
 
@@ -35,7 +36,8 @@ class EmployeeSubdepartmentController extends Controller
             $status = $request->query('status', 'active');  // Default to active
 
             $subdepartmentsQuery = Subdepartment::with('department:id,name')
-                ->select('id', 'name', 'department_id', 'status');
+                ->select('id', 'name', 'department_id', 'status')
+                ->withCount('employees');
 
             if ($status !== 'all') {
                 $subdepartmentsQuery->where('status', $status);
@@ -138,6 +140,52 @@ class EmployeeSubdepartmentController extends Controller
             return response()->json(['success' => true, 'message' => 'Subdepartment deleted successfully'], 200);
         } catch (\Throwable $th) {
             return response()->json(['success' => false, 'message' => $th->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Display a listing of trashed subdepartments.
+     */
+    public function trashed(Request $request)
+    {
+        $subdepartments = Subdepartment::onlyTrashed()
+            ->with(['department:id,name'])
+            ->select('id', 'name', 'department_id', 'deleted_at')
+            ->orderByDesc('deleted_at')
+            ->paginate(10);
+
+        return Inertia::render('App/Admin/Employee/Subdepartment/Trashed', [
+            'subdepartments' => $subdepartments,
+        ]);
+    }
+
+    /**
+     * Restore the specified trashed subdepartment.
+     */
+    public function restore($id)
+    {
+        try {
+            $subdepartment = Subdepartment::onlyTrashed()->findOrFail($id);
+            $subdepartment->restore();
+
+            return redirect()->back()->with('success', 'Subdepartment restored successfully');
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', $th->getMessage());
+        }
+    }
+
+    /**
+     * Permanently remove the specified subdepartment from storage.
+     */
+    public function forceDelete($id)
+    {
+        try {
+            $subdepartment = Subdepartment::onlyTrashed()->findOrFail($id);
+            $subdepartment->forceDelete();
+
+            return redirect()->back()->with('success', 'Subdepartment permanently deleted');
+        } catch (\Throwable $th) {
+            return redirect()->back()->with('error', $th->getMessage());
         }
     }
 }
