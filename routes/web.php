@@ -53,7 +53,6 @@ use App\Http\Controllers\SubscriptionCategoryController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
 use App\Http\Controllers\TransactionController;
-use App\Http\Controllers\TransactionTypeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\UserMemberController;
