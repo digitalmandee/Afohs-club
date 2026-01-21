@@ -47,11 +47,21 @@ class DataMigrationController extends Controller
             $oldMembersCount = DB::table('memberships')->count();
             $oldFamiliesCount = DB::table('mem_families')->count();
             $oldMediaCount = DB::table('old_media')->count();
+            // Employee Stats
             $oldEmployeesCount = DB::table('old_afohs.hr_employments')->count();
+            $newEmployeesCount = \App\Models\Employee::whereNotNull('old_employee_id')->count();
+
+            // Department Stats
+            $oldDepartmentsCount = DB::connection('old_afohs')->table('hr_departments')->count();
+            $oldSubDepartmentsCount = DB::connection('old_afohs')->table('hr_sub_departments')->count();
+            $newDepartmentsCount = \App\Models\Department::count();
+            $newSubDepartmentsCount = \App\Models\Subdepartment::whereNotNull('department_id')->count();
+
             $newMembersCount = Member::whereNull('parent_id')->count();
             $newFamiliesCount = Member::whereNotNull('parent_id')->count();
             $newMediaCount = Media::count();
-            $newEmployeesCount = \App\Models\Employee::whereNotNull('old_employee_id')->count();
+            // The line below was already present, but the instruction's block included it.
+            // $newEmployeesCount = \App\Models\Employee::whereNotNull('old_employee_id')->count();
 
             // Check migration status
             $migratedMembersCount = Member::whereNull('parent_id')
@@ -111,6 +121,13 @@ class DataMigrationController extends Controller
                 'old_employees_count' => $oldEmployeesCount,
                 'new_employees_count' => $newEmployeesCount,
                 'employees_migration_percentage' => $oldEmployeesCount > 0 ? round(($newEmployeesCount / $oldEmployeesCount) * 100, 2) : 0,
+                // Department Stats
+                'old_departments_count' => $oldDepartmentsCount,
+                'new_departments_count' => $newDepartmentsCount,
+                'departments_migration_percentage' => $oldDepartmentsCount > 0 ? round(($newDepartmentsCount / $oldDepartmentsCount) * 100, 2) : 0,
+                'old_subdepartments_count' => $oldSubDepartmentsCount,
+                'new_subdepartments_count' => $newSubDepartmentsCount,
+                'subdepartments_migration_percentage' => $oldSubDepartmentsCount > 0 ? round(($newSubDepartmentsCount / $oldSubDepartmentsCount) * 100, 2) : 0,
                 // Transaction Types Stats
                 'old_transaction_types_count' => DB::connection('old_afohs')->table('trans_types')->count(),
                 'migrated_transaction_types_count' => \App\Models\TransactionType::withTrashed()->count(),
@@ -156,7 +173,8 @@ class DataMigrationController extends Controller
             DB::beginTransaction();
 
             // Get batch of old members
-            $oldMembers = DB::table('memberships')
+            $oldMembers = DB::connection('old_afohs')
+                ->table('memberships')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -205,29 +223,17 @@ class DataMigrationController extends Controller
 
     private function migrateSingleMember($oldMember)
     {
-        // Check if member already exists using old_member_id first, then other criteria
+        // Check if member already exists using old_member_id (mapped from id) first
         $existingMember = Member::where('old_member_id', $oldMember->id)
             ->whereNull('parent_id')
             ->first();
 
-        // If not found by old_member_id, check by other criteria
+        // If not found by old_member_id, check by membership_no
         if (!$existingMember) {
-            $query = Member::whereNull('parent_id');
-
-            // Fallback: check by membership_no and name if application_no is empty
-            $query
+            $existingMember = Member::whereNull('parent_id')
                 ->where('membership_no', $oldMember->mem_no)
-                ->where('full_name', $oldMember->applicant_name);
-
-            $existingMember = $query->first();
+                ->first();
         }
-
-        if ($existingMember) {
-            Log::info("Skipping member {$oldMember->id} - already exists");
-            return;  // Skip if already migrated
-        }
-
-        Log::info("Migrating member {$oldMember->id}");
 
         // Get member category ID
         $memberCategoryId = $this->getMemberCategoryId($oldMember->mem_category_id);
@@ -237,9 +243,12 @@ class DataMigrationController extends Controller
             'old_member_id' => $oldMember->id,
             'membership_no' => $oldMember->mem_no,
             'membership_date' => $this->validateDate($oldMember->membership_date),
-            'full_name' => trim(preg_replace('/\s+/', ' ', $oldMember->title . ' ' . $oldMember->first_name . ' ' . $oldMember->middle_name)),
+            // Map applicant_name to last_name as requested
+            'last_name' => $oldMember->applicant_name,
+            // Construct full name if possible, otherwise just use applicant_name
+            'full_name' => trim(preg_replace('/\s+/', ' ', ($oldMember->title ?? '') . ' ' . ($oldMember->first_name ?? '') . ' ' . ($oldMember->middle_name ?? '') . ' ' . ($oldMember->applicant_name ?? ''))),
             'member_category_id' => $memberCategoryId,
-            'member_type_id' => 13,
+            'member_type_id' => 13,  // Default to a specific type? Or should this be dynamic? Keeping 13 as per previous code.
             'classification_id' => $oldMember->mem_classification_id ?? null,
             'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
             'guardian_name' => $oldMember->father_name ?? null,
@@ -282,16 +291,44 @@ class DataMigrationController extends Controller
             'kinship' => $oldMember->kinship ?? null,
             'coa_category_id' => $oldMember->coa_category_id ?? null,
             'nationality' => $oldMember->nationality ?? null,
+            // Timestamps handled separately to ensure they are preserved and not overwritten
+            // Fee Fields Mapping
+            'membership_fee' => $oldMember->mem_fee ?? 0,
+            'additional_membership_charges' => $oldMember->additional_mem ?? 0,
+            'membership_fee_additional_remarks' => $oldMember->additional_mem_remarks ?? null,
+            'membership_fee_discount' => $oldMember->mem_discount ?? 0,
+            'membership_fee_discount_remarks' => $oldMember->mem_discount_remarks ?? null,
+            'total_membership_fee' => $oldMember->total ?? 0,
+            'maintenance_fee' => $oldMember->maintenance_amount ?? 0,
+            'additional_maintenance_charges' => $oldMember->additional_mt ?? 0,
+            'maintenance_fee_additional_remarks' => $oldMember->additional_mt_remarks ?? null,
+            'maintenance_fee_discount' => $oldMember->mt_discount ?? 0,
+            'maintenance_fee_discount_remarks' => $oldMember->mt_discount_remarks ?? null,
+            'total_maintenance_fee' => $oldMember->total_maintenance ?? 0,
+            'per_day_maintenance_fee' => $oldMember->maintenance_per_day ?? 0,
+            // Ignoring application_no as requested
+            // 'application_number' => $oldMember->application_no,
+        ];
+
+        $timestamps = [
             'created_at' => $this->validateDate($oldMember->created_at),
             'updated_at' => $this->validateDate($oldMember->updated_at),
             'deleted_at' => $this->validateDate($oldMember->deleted_at),
-            'created_by' => $oldMember->created_by ?? null,
-            'updated_by' => $oldMember->updated_by ?? null,
-            'deleted_by' => $oldMember->deleted_by ?? null,
         ];
 
-        // Create new member
-        Member::create($memberData);
+        // Create or Update
+        if ($existingMember) {
+            $existingMember->fill($memberData);
+            $existingMember->forceFill($timestamps);
+            $existingMember->timestamps = false;  // Prevent auto-update of updated_at
+            $existingMember->save();
+            Log::info("Updated existing member {$existingMember->id} (Old ID: {$oldMember->id})");
+        } else {
+            $member = new Member($memberData);
+            $member->forceFill($timestamps);
+            $member->timestamps = false;  // Prevent auto-set of created_at/updated_at
+            $member->save();
+        }
     }
 
     public function migrateFamilies(Request $request)
@@ -865,18 +902,8 @@ class DataMigrationController extends Controller
         try {
             DB::beginTransaction();
 
-            // Sourcing from legacy memberships table, assuming filtered by category
-            // or if there is a specific table for corporate, use that.
-            // Since user said "same logic... only extra field is corporate company",
-            // I will assume source is same memberships table but we might need to look for company info.
-            // However, typical setup might have them in same table.
-            // CAUTION: If "corporate company" field is in legacy table, we map it.
-            // If not, we might need to defaults or lookups.
-            // Assuming 'company_id' exists in source table 'memberships' or similar.
-            // If not found, it will be null.
-
-            $oldMembers = DB::table('corporate_memberships')
-                // ->where('mem_category_id', 'some_corporate_id') // Optional: Filter if needed
+            $oldMembers = DB::connection('old_afohs')
+                ->table('corporate_memberships')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -894,8 +921,11 @@ class DataMigrationController extends Controller
                         'application_no' => $oldMember->application_no ?? 'N/A',
                         'membership_no' => $oldMember->mem_no ?? 'N/A',
                         'name' => $oldMember->applicant_name ?? 'N/A',
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
+                        'line' => $e->getLine(),
+                        'file' => basename($e->getFile())
                     ];
+                    Log::error("Error migrating corporate member {$oldMember->id}: " . $e->getMessage());
                 }
             }
 
@@ -920,31 +950,34 @@ class DataMigrationController extends Controller
 
     private function migrateSingleCorporateMember($oldMember)
     {
-        // Check if member already exists
+        // Check if member already exists using old_member_id
         $existingMember = CorporateMember::where('old_member_id', $oldMember->id)
             ->whereNull('parent_id')
             ->first();
 
-        if ($existingMember) {
-            return;
+        // If not found by old_member_id, check by membership_no
+        if (!$existingMember) {
+            $existingMember = CorporateMember::whereNull('parent_id')
+                ->where('membership_no', $oldMember->mem_no)
+                ->first();
         }
 
         // Get member category ID
         $memberCategoryId = $this->getMemberCategoryId($oldMember->mem_category_id);
 
         // Map Corporate Company
-        // Adjust column name 'company_id' based on actual legacy table structure
         $corporateCompanyId = isset($oldMember->corporate_company) ? $oldMember->corporate_company : null;
 
         // Prepare member data
         $memberData = [
             'old_member_id' => $oldMember->id,
-            'application_number' => $oldMember->application_no,
+            // 'application_number' => $oldMember->application_no, // Ignored as per request
             'membership_no' => $oldMember->mem_no,
             'membership_date' => $this->validateDate($oldMember->membership_date),
-            'full_name' => trim(preg_replace('/\s+/', ' ', $oldMember->title . ' ' . $oldMember->first_name . ' ' . $oldMember->middle_name)),
+            'last_name' => $oldMember->applicant_name,
+            'full_name' => trim(preg_replace('/\s+/', ' ', ($oldMember->title ?? '') . ' ' . ($oldMember->first_name ?? '') . ' ' . ($oldMember->middle_name ?? '') . ' ' . ($oldMember->applicant_name ?? ''))),
             'member_category_id' => $memberCategoryId,
-            'corporate_company_id' => $corporateCompanyId,  // Mapped field
+            'corporate_company_id' => $corporateCompanyId,
             'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
             'guardian_name' => $oldMember->father_name ?? null,
             'guardian_membership' => $oldMember->father_mem_no ?? null,
@@ -984,16 +1017,42 @@ class DataMigrationController extends Controller
             'middle_name' => $oldMember->middle_name ?? null,
             'name_comments' => $oldMember->name_comment ?? null,
             'kinship' => $oldMember->kinship ?? null,
+            'coa_category_id' => $oldMember->coa_category_id ?? null,
+            'nationality' => $oldMember->nationality ?? null,
+            // Fee Fields Mapping
+            'membership_fee' => $oldMember->mem_fee ?? 0,
+            'additional_membership_charges' => $oldMember->additional_mem ?? 0,
+            'membership_fee_additional_remarks' => $oldMember->additional_mem_remarks ?? null,
+            'membership_fee_discount' => $oldMember->mem_discount ?? 0,
+            'membership_fee_discount_remarks' => $oldMember->mem_discount_remarks ?? null,
+            'total_membership_fee' => $oldMember->total ?? 0,
+            'maintenance_fee' => $oldMember->maintenance_amount ?? 0,
+            'additional_maintenance_charges' => $oldMember->additional_mt ?? 0,
+            'maintenance_fee_additional_remarks' => $oldMember->additional_mt_remarks ?? null,
+            'maintenance_fee_discount' => $oldMember->mt_discount ?? 0,
+            'maintenance_fee_discount_remarks' => $oldMember->mt_discount_remarks ?? null,
+            'total_maintenance_fee' => $oldMember->total_maintenance ?? 0,
+            'per_day_maintenance_fee' => $oldMember->maintenance_per_day ?? 0,
+        ];
+
+        $timestamps = [
             'created_at' => $this->validateDate($oldMember->created_at),
             'updated_at' => $this->validateDate($oldMember->updated_at),
             'deleted_at' => $this->validateDate($oldMember->deleted_at),
-            'created_by' => $oldMember->created_by ?? null,
-            'updated_by' => $oldMember->updated_by ?? null,
-            'deleted_by' => $oldMember->deleted_by ?? null,
         ];
 
-        // Create new corporate member
-        CorporateMember::create($memberData);
+        if ($existingMember) {
+            $existingMember->fill($memberData);
+            $existingMember->forceFill($timestamps);
+            $existingMember->timestamps = false;
+            $existingMember->save();
+            Log::info("Updated existing corporate member {$existingMember->id} (Old ID: {$oldMember->id})");
+        } else {
+            $member = new CorporateMember($memberData);
+            $member->forceFill($timestamps);
+            $member->timestamps = false;
+            $member->save();
+        }
     }
 
     public function migrateCorporateFamilies(Request $request)
@@ -1558,6 +1617,115 @@ class DataMigrationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Migration failed: ' . $e->getMessage() . ' Line: ' . $e->getLine(), 'trace' => $e->getTraceAsString()], 500);
+        }
+    }
+
+    public function migrateDepartmentsAndSubdepartments(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            // 1. Migrate Departments
+            $oldDepartments = DB::connection('old_afohs')->table('hr_departments')->get();
+            $deptMap = [];  // old_id => new_id
+
+            $departmentsMigrated = 0;
+            foreach ($oldDepartments as $oldDept) {
+                // Check if already exists by name (desc) to avoid duplicates
+                $dept = \App\Models\Department::firstOrCreate(
+                    ['name' => $oldDept->desc],  // Mapped from 'desc'
+                    [
+                        'created_by' => $oldDept->created_by ?? null,  // Assuming column exists or null
+                        'updated_by' => $oldDept->updated_by ?? null,
+                        'deleted_by' => $oldDept->deleted_by ?? null,
+                        'created_at' => $this->validateDate($oldDept->created_at),
+                        'updated_at' => $this->validateDate($oldDept->updated_at),
+                        'deleted_at' => $this->validateDate($oldDept->deleted_at),
+                    ]
+                );
+
+                // Map old ID to new ID
+                $deptMap[$oldDept->id] = $dept->id;
+                $departmentsMigrated++;
+            }
+
+            // 2. Migrate Subdepartments
+            $oldSubDepartments = DB::connection('old_afohs')->table('hr_sub_departments')->get();
+            $subDeptMap = [];  // old_id => new_id
+
+            $subDepartmentsMigrated = 0;
+            foreach ($oldSubDepartments as $oldSub) {
+                // 'department' column is the FK in old table
+                $newDeptId = $deptMap[$oldSub->department] ?? null;
+
+                if (!$newDeptId) {
+                    Log::warning("Skipping Subdepartment {$oldSub->desc} (Old ID: {$oldSub->id}) - Parent Old Dept ID {$oldSub->department} not found.");
+                    continue;
+                }
+
+                $subDept = \App\Models\Subdepartment::firstOrCreate(
+                    [
+                        'name' => $oldSub->desc,  // Mapped from 'desc'
+                        'department_id' => $newDeptId
+                    ],
+                    [
+                        'created_by' => $oldSub->created_by ?? null,
+                        'updated_by' => $oldSub->updated_by ?? null,
+                        'deleted_by' => $oldSub->deleted_by ?? null,
+                        'created_at' => $this->validateDate($oldSub->created_at),
+                        'updated_at' => $this->validateDate($oldSub->updated_at),
+                        'deleted_at' => $this->validateDate($oldSub->deleted_at),
+                    ]
+                );
+
+                $subDeptMap[$oldSub->id] = $subDept->id;
+                $subDepartmentsMigrated++;
+            }
+
+            // 3. Link Employees
+            // Fetch employees who have old_department set
+            $employees = \App\Models\Employee::whereNotNull('old_department')->orWhereNotNull('old_subdepartment')->get();
+
+            $employeesLinked = 0;
+            foreach ($employees as $employee) {
+                $updated = false;
+
+                // Link Department
+                if ($employee->old_department && isset($deptMap[$employee->old_department])) {
+                    $employee->department_id = $deptMap[$employee->old_department];
+                    $updated = true;
+                }
+
+                // Link Subdepartment
+                if ($employee->old_subdepartment && isset($subDeptMap[$employee->old_subdepartment])) {
+                    $employee->subdepartment_id = $subDeptMap[$employee->old_subdepartment];
+                    $updated = true;
+                }
+
+                if ($updated) {
+                    $employee->save();
+                    $employeesLinked++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Departments and Subdepartments migrated and employees linked successfully.',
+                'stats' => [
+                    'departments_migrated' => $departmentsMigrated,
+                    'subdepartments_migrated' => $subDepartmentsMigrated,
+                    'employees_linked' => $employeesLinked
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Department migration error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

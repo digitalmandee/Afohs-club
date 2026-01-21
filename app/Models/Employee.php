@@ -64,9 +64,6 @@ class Employee extends BaseModel
         'days',
         'hours',
         'total_deduction_charges',
-        'old_department',
-        'old_subdepartment',
-        // New enhanced fields
         'nationality',
         'status',
         'payment_method',
