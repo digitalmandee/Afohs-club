@@ -83,7 +83,9 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::get('/edit/{employeeId}', [EmployeeController::class, 'edit'])->name('employees.edit');
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
+        Route::post('/departments/{id}/change-status', [EmployeeDepartmentController::class, 'changeStatus'])->name('employees.departments.change-status');  // Add status route
         Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
+        Route::post('/subdepartments/{id}/change-status', [EmployeeSubdepartmentController::class, 'changeStatus'])->name('employees.subdepartments.change-status');  // Add status route
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
         Route::get('/trashed', [EmployeeController::class, 'trashed'])->name('employees.trashed');
         Route::post('/{id}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');

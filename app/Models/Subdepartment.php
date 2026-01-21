@@ -9,7 +9,7 @@ class Subdepartment extends BaseModel
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'department_id', 'created_by', 'updated_by', 'deleted_by'];
+    protected $fillable = ['name', 'status', 'department_id', 'created_by', 'updated_by', 'deleted_by'];
 
     public function department()
     {
