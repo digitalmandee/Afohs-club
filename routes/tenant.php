@@ -26,7 +26,7 @@ Route::group([
     'prefix' => '/{tenant}',
     'middleware' => ['web', InitializeTenancyByPath::class],
 ], function () {
-    Route::get('/', fn() => redirect()->route('tenant.login'));
+    Route::get('/', fn() => redirect()->route('tenant.login', ['tenant' => tenant('id')]));
 
     // Tenant auth-protected routes
     Route::middleware([AuthenticateTenant::class, 'auth:tenant'])->group(function () {

@@ -18,7 +18,7 @@ class UserManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['roles', 'employee']);
+        $query = User::with(['roles', 'employee', 'allowedTenants']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -79,7 +79,7 @@ class UserManagementController extends Controller
     {
         $request->validate([
             'employee_id' => 'required|exists:employees,employee_id',
-            'password' => 'required|min:6',
+            'password' => 'required|min:4',
             'tenant_ids' => 'required|array|min:1',
             'tenant_ids.*' => 'exists:tenants,id',
         ]);
@@ -109,6 +109,34 @@ class UserManagementController extends Controller
         return redirect()
             ->back()
             ->with('success', 'Employee user account created successfully!');
+    }
+
+    /**
+     * Update Employee User (Password & Tenant Access)
+     */
+    public function updateEmployeeUser(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'nullable|min:4',
+            'tenant_ids' => 'required|array',
+            'tenant_ids.*' => 'exists:tenants,id',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        // Update password if provided
+        if ($request->filled('password')) {
+            $user->update([
+                'password' => Hash::make($request->password),
+            ]);
+        }
+
+        // Sync allowed tenants
+        $user->allowedTenants()->sync($request->tenant_ids);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Employee user updated successfully!');
     }
 
     /**

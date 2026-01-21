@@ -11,8 +11,10 @@ const UserManagement = () => {
     const [search, setSearch] = useState(filters.search || '');
     const [createUserOpen, setCreateUserOpen] = useState(false);
     const [createEmployeeUserOpen, setCreateEmployeeUserOpen] = useState(false);
+    const [editEmployeeUserOpen, setEditEmployeeUserOpen] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '' });
     const [employeeUser, setEmployeeUser] = useState({ employee_id: '', password: '', tenant_ids: [] });
+    const [editingUser, setEditingUser] = useState({ id: null, name: '', employee_id: '', password: '', tenant_ids: [] });
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -57,6 +59,43 @@ const UserManagement = () => {
                 }
             },
         });
+    };
+
+    const handleEditEmployeeUserClick = (user) => {
+        setEditingUser({
+            id: user.id,
+            name: user.name,
+            employee_id: user.employee?.employee_id || '',
+            password: '', // Password empty by default to keep existing
+            tenant_ids: user.allowed_tenants?.map((t) => t.id) || [],
+        });
+        setEditEmployeeUserOpen(true);
+    };
+
+    const handleUpdateEmployeeUser = () => {
+        router.post(
+            route('admin.users.update-employee', editingUser.id),
+            {
+                password: editingUser.password,
+                tenant_ids: editingUser.tenant_ids,
+            },
+            {
+                onSuccess: () => {
+                    setEditEmployeeUserOpen(false);
+                    setEditingUser({ id: null, name: '', employee_id: '', password: '', tenant_ids: [] });
+                    enqueueSnackbar('Employee user updated successfully!', { variant: 'success' });
+                },
+                onError: (errors) => {
+                    if (typeof errors === 'object' && errors !== null) {
+                        Object.values(errors).forEach((error) => {
+                            enqueueSnackbar(error, { variant: 'error' });
+                        });
+                    } else {
+                        enqueueSnackbar('Error updating employee user', { variant: 'error' });
+                    }
+                },
+            },
+        );
     };
 
     const handleAssignRole = (userId, roleName) => {
@@ -305,18 +344,27 @@ const UserManagement = () => {
                                     </TableCell>
                                     <TableCell>
                                         {can.edit && (
-                                            <FormControl size="small" sx={{ minWidth: 120 }}>
-                                                <InputLabel>Assign Role</InputLabel>
-                                                <Select label="Assign Role" onChange={(e) => handleAssignRole(user.id, e.target.value)} displayEmpty>
-                                                    {roles
-                                                        .filter((role) => !user.roles.some((userRole) => userRole.name === role.name))
-                                                        .map((role) => (
-                                                            <MenuItem key={role.id} value={role.name}>
-                                                                {role.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                </Select>
-                                            </FormControl>
+                                            <Box sx={{ display: 'flex', gap: 1 }}>
+                                                {user.employee && (
+                                                    <Tooltip title="Edit Employee Access">
+                                                        <IconButton size="small" onClick={() => handleEditEmployeeUserClick(user)} sx={{ color: '#1976d2' }}>
+                                                            <EditIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                )}
+                                                <FormControl size="small" sx={{ minWidth: 120 }}>
+                                                    <InputLabel>Assign Role</InputLabel>
+                                                    <Select label="Assign Role" onChange={(e) => handleAssignRole(user.id, e.target.value)} displayEmpty>
+                                                        {roles
+                                                            .filter((role) => !user.roles.some((userRole) => userRole.name === role.name))
+                                                            .map((role) => (
+                                                                <MenuItem key={role.id} value={role.name}>
+                                                                    {role.name}
+                                                                </MenuItem>
+                                                            ))}
+                                                    </Select>
+                                                </FormControl>
+                                            </Box>
                                         )}
                                     </TableCell>
                                 </TableRow>
@@ -421,6 +469,47 @@ const UserManagement = () => {
                         </Button>
                         <Button onClick={handleCreateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
                             Create Employee User
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Edit Employee User Dialog */}
+                <Dialog open={editEmployeeUserOpen} onClose={() => setEditEmployeeUserOpen(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+                        <EditIcon sx={{ mr: 1, color: '#063455' }} />
+                        Edit Employee User access
+                    </DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                            Update access and password for <strong>{editingUser.name}</strong> ({editingUser.employee_id}).
+                        </Typography>
+                        <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid item xs={12}>
+                                <Autocomplete
+                                    multiple
+                                    options={tenants || []}
+                                    getOptionLabel={(option) => option.name}
+                                    value={(tenants || []).filter((t) => editingUser.tenant_ids.includes(t.id))}
+                                    onChange={(e, values) =>
+                                        setEditingUser({
+                                            ...editingUser,
+                                            tenant_ids: values.map((v) => v.id),
+                                        })
+                                    }
+                                    renderInput={(params) => <TextField {...params} label="Allowed Restaurants" placeholder="Select restaurants this employee can access" helperText="Assigned restaurants" />}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField autoFocus fullWidth label="New Password" type="password" value={editingUser.password} onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })} helperText="Leave empty to keep current password" />
+                            </Grid>
+                        </Grid>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setEditEmployeeUserOpen(false)} sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleUpdateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
+                            Update User
                         </Button>
                     </DialogActions>
                 </Dialog>
