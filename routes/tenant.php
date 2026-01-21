@@ -91,10 +91,6 @@ Route::group([
             return Inertia::render('App/Member/AddInfo');
         });
 
-        // Route::get('/customers/list', function () {
-        //     return Inertia::render('App/Member/Customer');
-        // });
-
         // Floors & Table Routes
         Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');
         Route::post('/floors', [FloorController::class, 'store'])->name('floors.store');

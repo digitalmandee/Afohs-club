@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RoleManagementController extends Controller
 {
@@ -17,7 +17,7 @@ class RoleManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Role::with('permissions');
+        $query = Role::with('permissions')->withCount('users');
 
         // Search functionality
         if ($request->filled('search')) {
@@ -74,7 +74,8 @@ class RoleManagementController extends Controller
             $role->givePermissionTo($request->permissions);
         }
 
-        return redirect()->route('admin.roles.index')
+        return redirect()
+            ->route('admin.roles.index')
             ->with('success', 'Role created successfully!');
     }
 
@@ -96,7 +97,7 @@ class RoleManagementController extends Controller
     public function edit(Role $role)
     {
         $role->load('permissions');
-        
+
         $allPermissions = Permission::all()->groupBy(function ($permission) {
             return explode('.', $permission->name)[0];
         });
@@ -127,7 +128,8 @@ class RoleManagementController extends Controller
             $role->syncPermissions([]);
         }
 
-        return redirect()->route('admin.roles.index')
+        return redirect()
+            ->route('admin.roles.index')
             ->with('success', 'Role updated successfully!');
     }
 
@@ -148,7 +150,8 @@ class RoleManagementController extends Controller
 
         $role->delete();
 
-        return redirect()->route('admin.roles.index')
+        return redirect()
+            ->route('admin.roles.index')
             ->with('success', 'Role deleted successfully!');
     }
 

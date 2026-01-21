@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Divider, Tooltip, Autocomplete } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
+import { Box, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Tooltip, Autocomplete } from '@mui/material';
+import { Edit as EditIcon, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
 const UserManagement = () => {
@@ -500,12 +500,26 @@ const UserManagement = () => {
                                 />
                             </Grid>
                             <Grid item xs={12}>
-                                <TextField autoFocus fullWidth label="New Password" type="password" value={editingUser.password} onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })} helperText="Leave empty to keep current password" />
+                                <TextField
+                                    fullWidth
+                                    label="New Password"
+                                    type="password"
+                                    value={editingUser.password}
+                                    onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
+                                    helperText="Leave empty to keep current password"
+                                    autoComplete="new-password"
+                                    inputProps={{
+                                        autoComplete: 'new-password',
+                                        form: {
+                                            autoComplete: 'off',
+                                        },
+                                    }}
+                                />
                             </Grid>
                         </Grid>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setEditEmployeeUserOpen(false)} sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
+                        <Button onClick={() => setEditEmployeeUserOpen(false)} autoFocus sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
                             Cancel
                         </Button>
                         <Button onClick={handleUpdateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
