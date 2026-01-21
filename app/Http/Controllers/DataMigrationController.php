@@ -293,19 +293,19 @@ class DataMigrationController extends Controller
             'nationality' => $oldMember->nationality ?? null,
             // Timestamps handled separately to ensure they are preserved and not overwritten
             // Fee Fields Mapping
-            'membership_fee' => $oldMember->mem_fee ?? 0,
-            'additional_membership_charges' => $oldMember->additional_mem ?? 0,
+            'membership_fee' => $this->sanitizeCurrency($oldMember->mem_fee),
+            'additional_membership_charges' => $this->sanitizeCurrency($oldMember->additional_mem),
             'membership_fee_additional_remarks' => $oldMember->additional_mem_remarks ?? null,
-            'membership_fee_discount' => $oldMember->mem_discount ?? 0,
+            'membership_fee_discount' => $this->sanitizeCurrency($oldMember->mem_discount),
             'membership_fee_discount_remarks' => $oldMember->mem_discount_remarks ?? null,
-            'total_membership_fee' => $oldMember->total ?? 0,
-            'maintenance_fee' => $oldMember->maintenance_amount ?? 0,
-            'additional_maintenance_charges' => $oldMember->additional_mt ?? 0,
+            'total_membership_fee' => $this->sanitizeCurrency($oldMember->total),
+            'maintenance_fee' => $this->sanitizeCurrency($oldMember->maintenance_amount),
+            'additional_maintenance_charges' => $this->sanitizeCurrency($oldMember->additional_mt),
             'maintenance_fee_additional_remarks' => $oldMember->additional_mt_remarks ?? null,
-            'maintenance_fee_discount' => $oldMember->mt_discount ?? 0,
+            'maintenance_fee_discount' => $this->sanitizeCurrency($oldMember->mt_discount),
             'maintenance_fee_discount_remarks' => $oldMember->mt_discount_remarks ?? null,
-            'total_maintenance_fee' => $oldMember->total_maintenance ?? 0,
-            'per_day_maintenance_fee' => $oldMember->maintenance_per_day ?? 0,
+            'total_maintenance_fee' => $this->sanitizeCurrency($oldMember->total_maintenance),
+            'per_day_maintenance_fee' => $this->sanitizeCurrency($oldMember->maintenance_per_day),
             // Ignoring application_no as requested
             // 'application_number' => $oldMember->application_no,
         ];
@@ -1020,19 +1020,19 @@ class DataMigrationController extends Controller
             'coa_category_id' => $oldMember->coa_category_id ?? null,
             'nationality' => $oldMember->nationality ?? null,
             // Fee Fields Mapping
-            'membership_fee' => $oldMember->mem_fee ?? 0,
-            'additional_membership_charges' => $oldMember->additional_mem ?? 0,
+            'membership_fee' => $this->sanitizeCurrency($oldMember->mem_fee),
+            'additional_membership_charges' => $this->sanitizeCurrency($oldMember->additional_mem),
             'membership_fee_additional_remarks' => $oldMember->additional_mem_remarks ?? null,
-            'membership_fee_discount' => $oldMember->mem_discount ?? 0,
+            'membership_fee_discount' => $this->sanitizeCurrency($oldMember->mem_discount),
             'membership_fee_discount_remarks' => $oldMember->mem_discount_remarks ?? null,
-            'total_membership_fee' => $oldMember->total ?? 0,
-            'maintenance_fee' => $oldMember->maintenance_amount ?? 0,
-            'additional_maintenance_charges' => $oldMember->additional_mt ?? 0,
+            'total_membership_fee' => $this->sanitizeCurrency($oldMember->total),
+            'maintenance_fee' => $this->sanitizeCurrency($oldMember->maintenance_amount),
+            'additional_maintenance_charges' => $this->sanitizeCurrency($oldMember->additional_mt),
             'maintenance_fee_additional_remarks' => $oldMember->additional_mt_remarks ?? null,
-            'maintenance_fee_discount' => $oldMember->mt_discount ?? 0,
+            'maintenance_fee_discount' => $this->sanitizeCurrency($oldMember->mt_discount),
             'maintenance_fee_discount_remarks' => $oldMember->mt_discount_remarks ?? null,
-            'total_maintenance_fee' => $oldMember->total_maintenance ?? 0,
-            'per_day_maintenance_fee' => $oldMember->maintenance_per_day ?? 0,
+            'total_maintenance_fee' => $this->sanitizeCurrency($oldMember->total_maintenance),
+            'per_day_maintenance_fee' => $this->sanitizeCurrency($oldMember->maintenance_per_day),
         ];
 
         $timestamps = [
@@ -1314,6 +1314,15 @@ class DataMigrationController extends Controller
         ];
 
         return $mimeTypes[$extension] ?? 'application/octet-stream';
+    }
+
+    private function sanitizeCurrency($value)
+    {
+        if (is_null($value)) {
+            return 0;
+        }
+        // Remove commas and convert to float
+        return (float) str_replace(',', '', $value);
     }
 
     public function generateQrCodes(Request $request)
