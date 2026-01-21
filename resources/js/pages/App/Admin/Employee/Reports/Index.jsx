@@ -32,10 +32,10 @@ const ReportsIndex = ({ reports = [] }) => {
             <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                    <IconButton onClick={() => window.history.back()} sx={{ mr: 2 }}>
+                    {/* <IconButton onClick={() => window.history.back()} sx={{ mr: 2 }}>
                         <ArrowBackIcon sx={{ color: '#063455' }} />
-                    </IconButton>
-                    <Typography variant="h4" sx={{ color: '#063455', fontWeight: 700 }}>
+                    </IconButton> */}
+                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                         Employee Reports
                     </Typography>
                 </Box>
@@ -52,6 +52,7 @@ const ReportsIndex = ({ reports = [] }) => {
                                         transition: 'all 0.3s ease',
                                         height: '100%',
                                         borderRadius: '16px',
+                                        bgcolor:'#063455',
                                         '&:hover': {
                                             transform: 'translateY(-4px)',
                                             boxShadow: '0 8px 24px rgba(6, 52, 85, 0.15)',
@@ -66,7 +67,7 @@ const ReportsIndex = ({ reports = [] }) => {
                                                     width: 56,
                                                     height: 56,
                                                     borderRadius: '12px',
-                                                    backgroundColor: report.color || '#063455',
+                                                    // backgroundColor: report.color || '#063455',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',
@@ -87,7 +88,7 @@ const ReportsIndex = ({ reports = [] }) => {
                                         <Typography
                                             variant="h6"
                                             sx={{
-                                                color: '#063455',
+                                                color: '#fff',
                                                 fontWeight: 600,
                                                 mb: 1,
                                                 fontSize: '1rem',
@@ -98,7 +99,7 @@ const ReportsIndex = ({ reports = [] }) => {
                                         <Typography
                                             variant="body2"
                                             sx={{
-                                                color: '#666',
+                                                color: '#fff',
                                                 lineHeight: 1.5,
                                             }}
                                         >

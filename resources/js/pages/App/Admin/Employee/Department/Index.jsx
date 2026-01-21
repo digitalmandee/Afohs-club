@@ -99,11 +99,11 @@ const Management = () => {
                     {/* Header */}
                     <div className="row align-items-center">
                         <div className="col-auto d-flex align-items-center">
-                            <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            {/* <div onClick={() => window.history.back()} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <IconButton>
                                     <ArrowBack sx={{ color: '#063455' }} />
                                 </IconButton>
-                            </div>
+                            </div> */}
                             <Typography
                                 style={{
                                     fontWeight: '700',
@@ -117,7 +117,7 @@ const Management = () => {
                         <div className="col-auto ms-auto">
                             <Button variant="contained" startIcon={<span style={{
                                 fontSize: '1.5rem', marginBottom: 5
-                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35 }} onClick={() => handleOpen()}>
+                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35, textTransform:'none' }} onClick={() => handleOpen()}>
                                 New Department
                             </Button>
                         </div>
@@ -131,8 +131,8 @@ const Management = () => {
                         <Table>
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Action</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Name</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -190,20 +190,18 @@ const Management = () => {
                             onClick={handleClose}
                             color="secondary"
                             sx={{
-                                backgroundColor: '#FFFFFF',
-                                border: '1px solid #000000',
-                                color: '#000000', // Ensures text is visible on white
-                                '&:hover': {
-                                    backgroundColor: '#f5f5f5', // Optional: light gray on hover
-                                    border: '1px solid #000000',
-                                },
+                                // backgroundColor: '#FFFFFF',
+                                border: '1px solid #063455',
+                                color: '#063455',
+                                textTransform:'none'
                             }}
                         >
                             Cancel
                         </Button>
                         <Button
                             sx={{
-                                bgcolor: '#0a3d62',
+                                bgcolor: '#063455',
+                                textTransform:'none'
                             }}
                             onClick={handleSubmit}
                             variant="contained"

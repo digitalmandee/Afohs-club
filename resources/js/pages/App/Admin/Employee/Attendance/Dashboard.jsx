@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Box, Chip } from '@mui/material';
+import { Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Pagination, IconButton, FormControl, InputLabel, Select, MenuItem, TextField, Grid, Box, Chip, Tooltip } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import CategoryIcon from '@mui/icons-material/Category';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -101,7 +101,7 @@ const AttendanceDashboard = () => {
                             <Typography style={{ fontWeight: '700', color: '#063455', fontSize: '30px' }}>
                                 Application Dashboard
                             </Typography>
-                            <Button startIcon={<Add style={{ marginBottom: 3 }} />} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px' }} onClick={() => router.visit(route('employees.leaves.application.create'))}>
+                            <Button variant='contained' startIcon={<Add style={{ marginBottom: 3 }} />} style={{ color: 'white', backgroundColor: '#063455', borderRadius: '16px', textTransform: 'none' }} onClick={() => router.visit(route('employees.leaves.application.create'))}>
                                 New Application
                             </Button>
                         </div>
@@ -117,7 +117,7 @@ const AttendanceDashboard = () => {
                                 gap: '50px',
                                 width: '98%',
                                 marginBottom: '24px',
-                                marginTop:'2rem'
+                                marginTop: '2rem'
                             }}
                         >
                             {[
@@ -347,18 +347,18 @@ const AttendanceDashboard = () => {
                                 <div style={{ fontSize: '18px', fontWeight: '500', padding: '0 1rem' }}>Employee List</div>
                             </div>
 
-                            <TableContainer component={Paper} style={{ borderRadius: '16px' }}>
+                            <TableContainer component={Paper} style={{ borderRadius: '12px' }}>
                                 <Table>
                                     <TableHead style={{ backgroundColor: '#063455', height: 30 }}>
                                         <TableRow>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>EMP ID</TableCell>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Name</TableCell>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Department</TableCell>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Designation</TableCell>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Joining Date</TableCell>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Email Address</TableCell>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Employee Status</TableCell>
-                                            <TableCell style={{ color: '#fff', fontWeight: '600', fontSize: '16px' }}>Actions</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', }}>EMP ID</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', }}>Name</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', }}>Department</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', }}>Designation</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Joining Date</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Email Address</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Employee Status</TableCell>
+                                            <TableCell style={{ color: '#fff', fontWeight: '600', }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -378,8 +378,30 @@ const AttendanceDashboard = () => {
 
                                                 return (
                                                     <TableRow key={emp.id} style={rowStyle}>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>#{emp.employee_id}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.name}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {
+                                                            color: '#000', fontWeight: '600',
+                                                            fontSize: '14px',
+                                                            textOverflow: 'ellipsis',
+                                                            overflow: 'hidden',
+                                                            maxWidth: '100px',
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
+                                                            <Tooltip title={emp.employee_id} arrow>
+                                                                {emp.employee_id}
+                                                            </Tooltip>
+                                                        </TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {
+                                                            color: '#7f7f7f', fontWeight: '400',
+                                                            fontSize: '14px',
+                                                            textOverflow: 'ellipsis',
+                                                            overflow: 'hidden',
+                                                            maxWidth: '120px',
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
+                                                            <Tooltip title={emp.name} arrow>
+                                                                {emp.name}
+                                                            </Tooltip>
+                                                        </TableCell>
                                                         <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>
                                                             {emp.department?.name ? (
                                                                 <>
@@ -406,7 +428,18 @@ const AttendanceDashboard = () => {
                                                         </TableCell>
                                                         <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.designation}</TableCell>
                                                         <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.joining_date}</TableCell>
-                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{emp.email}</TableCell>
+                                                        <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : {
+                                                            color: '#7f7f7f', fontWeight: '400',
+                                                            fontSize: '14px',
+                                                            textOverflow: 'ellipsis',
+                                                            overflow: 'hidden',
+                                                            maxWidth: '120px',
+                                                            whiteSpace: 'nowrap'
+                                                        }}>
+                                                            <Tooltip title={emp.email} arrow>
+                                                                {emp.email}
+                                                            </Tooltip>
+                                                        </TableCell>
                                                         <TableCell style={hasDeletedRelation ? { color: '#d32f2f' } : { color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>
                                                             {hasDeletedRelation ? (
                                                                 <Typography

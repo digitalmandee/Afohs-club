@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { Alert, CircularProgress, InputAdornment, Snackbar, Button } from '@mui/material';
 import { Search, Add } from '@mui/icons-material';
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, IconButton, TextField, Box, Typography } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Pagination, IconButton, TextField, Box, Typography, Tooltip } from '@mui/material';
 import { Edit as EditIcon } from '@mui/icons-material';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -130,7 +130,7 @@ const LeaveApplication = () => {
                             style={{
                                 backgroundColor: '#063455',
                                 color: 'white',
-                                // textTransform: 'none',
+                                textTransform: 'none',
                                 borderRadius: '16px'
                             }}
                         >
@@ -140,7 +140,7 @@ const LeaveApplication = () => {
                     <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
                         Approve, reject, or hold applications with proper tracking
                     </Typography>
-                    <Box sx={{ mb: 2, mt:'2rem' }}>
+                    <Box sx={{ mb: 2, mt: '2rem' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                 <TextField
@@ -259,19 +259,19 @@ const LeaveApplication = () => {
                         </Box>
                     </Box>
 
-                    <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
+                    <TableContainer component={Paper} sx={{ borderRadius: '12px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: 30 }}>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>#</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Employee Name</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Start Date</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>End Date</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Leave Days</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Leave Category</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Created At</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Action</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>ID</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Employee Name</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Start Date</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>End Date</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Leave Days</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Leave Category</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Created At</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -284,8 +284,21 @@ const LeaveApplication = () => {
                                 ) : applications.length > 0 ? (
                                     applications.map((application) => (
                                         <TableRow key={application.id}>
-                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.id}</TableCell>
-                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.employee?.name}</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#000', fontSize: '14px' }}>{application.id}</TableCell>
+                                            <TableCell
+                                                sx={{
+                                                    fontWeight: '400',
+                                                    color: '#7f7f7f',
+                                                    fontSize: '14px',
+                                                    textOverflow: 'ellipsis',
+                                                    overflow: 'hidden',
+                                                    maxWidth: '150px',
+                                                    whiteSpace: 'nowrap'
+                                                }}>
+                                                <Tooltip title={application.employee?.name} arrow>
+                                                    {application.employee?.name}
+                                                </Tooltip>
+                                            </TableCell>
                                             <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.start_date}</TableCell>
                                             <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.end_date}</TableCell>
                                             <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.number_of_days}</TableCell>

@@ -144,7 +144,7 @@ const LeaveReport = () => {
                                 >
                                     Search
                                 </Button>
-                                {searchTerm && (
+                                {/* {searchTerm && ( */}
                                     <Button
                                         variant="outlined"
                                         onClick={handleClearSearch}
@@ -153,6 +153,7 @@ const LeaveReport = () => {
                                             borderColor: '#063455',
                                             textTransform: 'none',
                                             borderRadius: '16px',
+                                            px:4,
                                             '&:hover': {
                                                 borderColor: '#052d45',
                                                 // backgroundColor: 'rgba(6, 52, 85, 0.04)',
@@ -161,7 +162,7 @@ const LeaveReport = () => {
                                     >
                                         Reset
                                     </Button>
-                                )}
+                                
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                 <FormControl
@@ -211,16 +212,16 @@ const LeaveReport = () => {
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>#</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Employee Name</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>ID</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Employee Name</TableCell>
                                     {leaveCategories.map((category) => (
-                                        <TableCell key={category.id} sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>
+                                        <TableCell key={category.id} sx={{ fontWeight: '600', color: '#fff', }}>
                                             {category.name}
                                         </TableCell>
                                     ))}
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Total Attendance</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Total Absence</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Total Leave</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Total Attendance</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Total Absence</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Total Leave</TableCell>
                                 </TableRow>
                             </TableHead>
                             {isLoading ? (
@@ -232,7 +233,7 @@ const LeaveReport = () => {
                             ) : employees.length > 0 ? (
                                 employees.map((employee, index) => (
                                     <TableRow key={employee.employee_id}>
-                                        <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.employee_id}</TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#000', fontSize: '14px' }}>{employee.employee_id}</TableCell>
                                         <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{employee.employee_name}</TableCell>
                                         {leaveCategories.map((category) => {
                                             const categoryKey = category.name.replace(/\s+/g, '_');

@@ -283,12 +283,12 @@ const PayrollDashboard = ({ stats: initialStats }) => {
                                 <Table>
                                     <TableHead>
                                         <TableRow sx={{ backgroundColor: '#063455' }}>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Period Name</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Date Range</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Employees</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Net Amount</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', fontSize: '16px' }}>Actions</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Period Name</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Date Range</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Status</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Employees</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Net Amount</TableCell>
+                                            <TableCell sx={{ fontWeight: 600, color: '#fff', }}>Actions</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>

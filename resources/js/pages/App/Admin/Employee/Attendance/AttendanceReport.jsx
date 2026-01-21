@@ -163,7 +163,7 @@ const AttendanceReport = () => {
                             <TextField type="number" label="Year" value={year} onChange={handleYearChange} size="small" style={{ backgroundColor: 'transparent', width: '10%' }} />
                             <Button
                                 variant="contained"
-                                style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none' }}
+                                style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', borderRadius:'16px' }}
                                 onClick={() => {
                                     const url = route('employees.attendances.report.print', {
                                         month: `${year}-${month.toString().padStart(2, '0')}`,
@@ -175,7 +175,7 @@ const AttendanceReport = () => {
                             </Button>
                             <Button
                                 variant="contained"
-                                style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none' }}
+                                style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none', borderRadius:'16px' }}
                                 onClick={() => {
                                     const url = route('api.attendances.reports.export', {
                                         month: `${year}-${month.toString().padStart(2, '0')}`,

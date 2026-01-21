@@ -56,10 +56,11 @@ const Index = ({ advances, employees = [], stats = {}, filters = {} }) => {
             <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" sx={{ color: '#063455', fontWeight: 700 }}>
+                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                         Employee Salary Advances
                     </Typography>
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('employees.advances.create'))} sx={{ backgroundColor: '#063455' }}>
+                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('employees.advances.create'))} 
+                    sx={{ backgroundColor: '#063455', textTransform:'none', borderRadius:'16px' }}>
                         New Advance Request
                     </Button>
                 </Box>
@@ -67,41 +68,41 @@ const Index = ({ advances, employees = [], stats = {}, filters = {} }) => {
                 {/* Stats Cards */}
                 <Grid container spacing={2} sx={{ mb: 3 }}>
                     <Grid item xs={6} sm={3}>
-                        <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2 }}>
-                            <Typography variant="body2" color="textSecondary">
+                        <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor:'#063455' }}>
+                            <Typography sx={{color:'#fff', fontSize:'14px'}}>
                                 Pending Requests
                             </Typography>
-                            <Typography variant="h5" sx={{ fontWeight: 600, color: '#ff9800' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize:'18px', color: '#fff' }}>
                                 {stats.pending_count || 0}
                             </Typography>
                         </Card>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                        <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2 }}>
-                            <Typography variant="body2" color="textSecondary">
+                        <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor:'#063455' }}>
+                            <Typography sx={{color:'#fff', fontSize:'14px'}}>
                                 Pending Amount
                             </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#ff9800' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize:'18px', color: '#fff' }}>
                                 {formatCurrency(stats.total_pending)}
                             </Typography>
                         </Card>
                     </Grid>
                     <Grid item xs={6} sm={3}>
-                        <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2 }}>
-                            <Typography variant="body2" color="textSecondary">
+                        <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor:'#063455' }}>
+                            <Typography sx={{color:'#fff', fontSize:'14px'}}>
                                 Approved Amount
                             </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 600, color: '#2196f3' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize:'18px', color: '#fff' }}>
                                 {formatCurrency(stats.total_approved)}
                             </Typography>
                         </Card>
                     </Grid>
                     <Grid item xs={6} sm={3}>
                         <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, backgroundColor: '#063455' }}>
-                            <Typography variant="body2" sx={{ color: '#ccc' }}>
+                            <Typography sx={{color:'#fff', fontSize:'14px'}}>
                                 Outstanding Balance
                             </Typography>
-                            <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize:'18px', color: '#fff' }}>
                                 {formatCurrency(stats.total_outstanding)}
                             </Typography>
                         </Card>
@@ -109,9 +110,9 @@ const Index = ({ advances, employees = [], stats = {}, filters = {} }) => {
                 </Grid>
 
                 {/* Filters */}
-                <Card sx={{ mb: 3, p: 2, borderRadius: '12px' }}>
+                <Card sx={{ mb: 3, bgcolor:'transparent', boxShadow:'none' }}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={3}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Employee</InputLabel>
                                 <Select value={selectedEmployee} label="Employee" onChange={(e) => setSelectedEmployee(e.target.value)}>
@@ -124,7 +125,7 @@ const Index = ({ advances, employees = [], stats = {}, filters = {} }) => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={3}>
                             <FormControl fullWidth size="small">
                                 <InputLabel>Status</InputLabel>
                                 <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
@@ -137,9 +138,9 @@ const Index = ({ advances, employees = [], stats = {}, filters = {} }) => {
                                 </Select>
                             </FormControl>
                         </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455' }}>
-                                Apply Filters
+                        <Grid item xs={12} sm={3}>
+                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', borderRadius:'16px', textTransform:'none' }}>
+                                Search
                             </Button>
                         </Grid>
                     </Grid>

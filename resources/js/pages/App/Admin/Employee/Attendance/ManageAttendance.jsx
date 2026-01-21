@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
-import { Button, TextField, Checkbox, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Select, MenuItem, Snackbar, Alert, Box, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { Button, TextField, Checkbox, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Select, MenuItem, Snackbar, Alert, Box, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Tooltip } from '@mui/material';
 import axios from 'axios';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -218,7 +218,7 @@ const ManageAttendance = () => {
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor: '#F6F6F6',
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ px: 2, py: 2 }}>
@@ -254,7 +254,7 @@ const ManageAttendance = () => {
                                         shrink: true,
                                     }}
                                     sx={{
-                                        width: 180,
+                                        width: 250,
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '16px',
                                         },
@@ -274,10 +274,7 @@ const ManageAttendance = () => {
                                     The original imports: `import { Button, TextField, Checkbox, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress, Select, MenuItem, Snackbar, Alert, Box, Typography } from '@mui/material';`
                                     I need to add Autocomplete to imports.
                                 */}
-                            </Box>
 
-                            {/* Filters Row 2 */}
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mt: 2 }}>
                                 <Select
                                     size="small"
                                     displayEmpty
@@ -287,10 +284,10 @@ const ManageAttendance = () => {
                                         if (!selected) return <span style={{ color: '#aaa' }}>Company</span>;
                                         return selected.name;
                                     }}
-                                    sx={{ width: 200, borderRadius: '16px', bgcolor: 'white' }}
+                                    sx={{ width: 250, borderRadius: '16px' }}
                                 >
                                     <MenuItem value="">
-                                        <em>None</em>
+                                        None
                                     </MenuItem>
                                     {branches.map((b) => (
                                         <MenuItem key={b.id} value={b}>
@@ -308,10 +305,10 @@ const ManageAttendance = () => {
                                         if (!selected) return <span style={{ color: '#aaa' }}>Designation</span>;
                                         return selected.name;
                                     }}
-                                    sx={{ width: 200, borderRadius: '16px', bgcolor: 'white' }}
+                                    sx={{ width: 250, borderRadius: '16px' }}
                                 >
                                     <MenuItem value="">
-                                        <em>None</em>
+                                        None
                                     </MenuItem>
                                     {designations.map((d) => (
                                         <MenuItem key={d.id} value={d}>
@@ -329,10 +326,10 @@ const ManageAttendance = () => {
                                         if (!selected) return <span style={{ color: '#aaa' }}>Department</span>;
                                         return selected.name;
                                     }}
-                                    sx={{ width: 200, borderRadius: '16px', bgcolor: 'white' }}
+                                    sx={{ width: 250, borderRadius: '16px' }}
                                 >
                                     <MenuItem value="">
-                                        <em>None</em>
+                                        None
                                     </MenuItem>
                                     {departments.map((d) => (
                                         <MenuItem key={d.id} value={d}>
@@ -351,10 +348,10 @@ const ManageAttendance = () => {
                                         return selected.name;
                                     }}
                                     disabled={!filters.department_id}
-                                    sx={{ width: 200, borderRadius: '16px', bgcolor: 'white' }}
+                                    sx={{ width: 250, borderRadius: '16px', }}
                                 >
                                     <MenuItem value="">
-                                        <em>None</em>
+                                        None
                                     </MenuItem>
                                     {subdepartments.map((d) => (
                                         <MenuItem key={d.id} value={d}>
@@ -362,10 +359,7 @@ const ManageAttendance = () => {
                                         </MenuItem>
                                     ))}
                                 </Select>
-                            </Box>
 
-                            {/* Actions Row */}
-                            <Box sx={{ display: 'flex', gap: 2, mt: 2, alignItems: 'center' }}>
                                 <Button
                                     variant="contained"
                                     startIcon={<Search />}
@@ -375,10 +369,11 @@ const ManageAttendance = () => {
                                         color: 'white',
                                         textTransform: 'none',
                                         borderRadius: '16px',
+                                        px: 4,
                                         '&:hover': { backgroundColor: '#063455' },
                                     }}
                                 >
-                                    Filter
+                                    Search
                                 </Button>
                                 <Button
                                     variant="outlined"
@@ -388,13 +383,14 @@ const ManageAttendance = () => {
                                         borderColor: '#063455',
                                         textTransform: 'none',
                                         borderRadius: '16px',
+                                        px: 4,
                                         '&:hover': { borderColor: '#052d45' },
                                     }}
                                 >
-                                    Reset Filters
+                                    Reset
                                 </Button>
 
-                                <Box sx={{ flexGrow: 1 }} />
+                                {/* <Box sx={{ flexGrow: 1 }} /> */}
 
                                 <Button
                                     variant="contained"
@@ -414,18 +410,18 @@ const ManageAttendance = () => {
                         </Box>
 
                         <Box>
-                            <TableContainer component={Paper} sx={{ borderRadius: '16px', overflowX: 'auto' }}>
+                            <TableContainer component={Paper} sx={{ borderRadius: '12px', overflowX: 'auto' }}>
                                 <Table>
                                     <TableHead style={{ backgroundColor: '#063455' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>#</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Employee Name</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Designation</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Attendance</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Leave Category</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Check-In</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Check-Out</TableCell>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '16px' }}>Action</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', }}>ID</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Employee Name</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Designation</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Attendance</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Leave Category</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Action</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -438,8 +434,18 @@ const ManageAttendance = () => {
                                         ) : attendances.length > 0 ? (
                                             attendances.map((row, index) => (
                                                 <TableRow key={row.id}>
-                                                    <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{(currentPage - 1) * limit + index + 1}</TableCell>
-                                                    <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{row.employee.name}</TableCell>
+                                                    <TableCell sx={{ fontWeight: '600', color: '#000', fontSize: '14px' }}>{(currentPage - 1) * limit + index + 1}</TableCell>
+                                                    <TableCell sx={{
+                                                        fontWeight: '400', color: '#7f7f7f', fontSize: '14px',
+                                                        textOverflow: 'ellipsis',
+                                                        overflow: 'hidden',
+                                                        maxWidth: '120px',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        <Tooltip title={row.employee.name} arrow>
+                                                            {row.employee.name}
+                                                        </Tooltip>
+                                                    </TableCell>
                                                     <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{row.employee.designation}</TableCell>
                                                     <TableCell>
                                                         {row.status === 'weekend' ? (
