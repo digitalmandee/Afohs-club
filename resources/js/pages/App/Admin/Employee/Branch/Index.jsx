@@ -6,6 +6,9 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, IconButton, TextField, DialogActions, Dialog, DialogContent, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, MenuItem, Select, FormControl, InputLabel, TablePagination } from '@mui/material';
 import { useState } from 'react';
 import { useSnackbar } from 'notistack';
+import { FaTrash } from 'react-icons/fa';
+import { FaEdit } from 'react-icons/fa';
+import { Delete } from '@mui/icons-material';
 
 const BranchIndex = ({ branches: initialData }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -104,44 +107,63 @@ const BranchIndex = ({ branches: initialData }) => {
     };
 
     return (
-        <Box sx={{ px: 4, py: 2 }}>
+        <Box sx={{ p: 2, height: '100vh', bgcolor: '#f5f5f5' }}>
             <div style={{ paddingTop: '1rem', backgroundColor: 'transparent' }}>
-                <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                    <Typography sx={{ fontWeight: 500, fontSize: '30px', color: '#063455' }}>Company Management</Typography>
+                <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Company Management</Typography>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginLeft: 'auto' }}>
-                        <div style={{ width: '350px', backgroundColor: '#FFFFFF' }}>
-                            <TextField
-                                fullWidth
-                                placeholder="Search company..."
-                                size="small"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                onKeyDown={handleSearch}
-                                InputProps={{
-                                    startAdornment: <SearchIcon style={{ color: '#121212', marginRight: '8px' }} />,
-                                    style: { backgroundColor: '#FFFFFF' },
-                                }}
-                            />
-                        </div>
-
-                        <Button style={{ color: 'white', width: '180px', backgroundColor: '#063455', textTransform: 'none' }} startIcon={<AddIcon />} onClick={handleOpen}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.1rem', marginLeft: 'auto' }}>
+                        <Button variant='contained' style={{ color: '#fff', backgroundColor: '#063455', borderRadius: '16px', textTransform: 'none' }} startIcon={<AddIcon />} onClick={handleOpen}>
                             Add Company
                         </Button>
-                        <Button color="error" onClick={() => router.visit(route('branches.trashed'))} sx={{ minWidth: 'auto', p: 1 }}>
-                            <RiDeleteBin6Line style={{ width: 20, height: 20 }} />
+                        <Button
+                            onClick={() => router.visit(route('branches.trashed'))}
+                            style={{
+                                // color: '#063455',
+                                // backgroundColor: 'white',
+                                borderRadius: '16px',
+                                height: 35,
+                                marginLeft: '10px',
+                                textTransform: 'none',
+                                // border: '1px solid #063455',
+                            }}
+                            variant="outlined"
+                            color='error'
+                            startIcon={<FaTrash size={14} />}
+                        >
+                            Trashed
                         </Button>
                     </div>
                 </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <TextField
+                        fullWidth
+                        placeholder="Search company..."
+                        size="small"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onKeyDown={handleSearch}
+                        sx={{
+                            width: '280px',
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '16px',
+                            },
+                        }}
+                        InputProps={{
+                            startAdornment: <SearchIcon style={{ color: '#7f7f7f', marginRight: '1px' }} />,
+                            style: { backgroundColor: 'transparent' },
+                        }}
+                    />
+                </div>
 
-                <TableContainer component={Paper} style={{ width: '100%', backgroundColor: '#FFFFFF', borderRadius: '1rem', boxShadow: 'none', border: '1px solid #ccc', marginBottom: '24px' }}>
+                <TableContainer component={Paper} style={{ width: '100%', borderRadius: '12px', boxShadow: 'none', marginTop: '24px' }}>
                     <Table>
-                        <TableHead style={{ backgroundColor: '#E5E5EA' }}>
+                        <TableHead style={{ backgroundColor: '#063455' }}>
                             <TableRow>
-                                <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '18px' }}>Name</TableCell>
-                                <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '18px' }}>Address</TableCell>
-                                <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '18px' }}>Status</TableCell>
-                                <TableCell style={{ color: '#000000', fontWeight: '500', fontSize: '18px' }} align="right">
+                                <TableCell style={{ color: '#fff', fontWeight: '600', }}>Name</TableCell>
+                                <TableCell style={{ color: '#fff', fontWeight: '600', }}>Address</TableCell>
+                                <TableCell style={{ color: '#fff', fontWeight: '600', }}>Status</TableCell>
+                                <TableCell style={{ color: '#fff', fontWeight: '600', }} >
                                     Action
                                 </TableCell>
                             </TableRow>
@@ -157,16 +179,17 @@ const BranchIndex = ({ branches: initialData }) => {
                             ) : (
                                 branchesData.map((item, index) => (
                                     <TableRow key={index}>
-                                        <TableCell style={{ fontSize: '16px', color: '#6C6C6C' }}>{item.name}</TableCell>
-                                        <TableCell style={{ fontSize: '16px', color: '#6C6C6C' }}>{item.address || '-'}</TableCell>
-                                        <TableCell style={{ fontSize: '16px', color: item.status ? 'green' : 'red' }}>{item.status ? 'Active' : 'Inactive'}</TableCell>
-                                        <TableCell align="right">
-                                            <IconButton onClick={() => handleEdit(item)}>
-                                                <FaRegEdit style={{ width: 15, height: 15 }} />
+                                        <TableCell style={{ fontSize: '14px', color: '#7f7f7f' }}>{item.name}</TableCell>
+                                        <TableCell style={{ fontSize: '14px', color: '#7f7f7f' }}>{item.address || '-'}</TableCell>
+                                        <TableCell style={{ fontSize: '14px', color: item.status ? 'green' : 'red' }}>{item.status ? 'Active' : 'Inactive'}</TableCell>
+                                        <TableCell>
+                                            <IconButton onClick={() => handleEdit(item)}
+                                            >
+                                                <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
                                             </IconButton>
-                                            <IconButton onClick={() => handleDeleteClick(item)}>
-                                                <RiDeleteBin6Line style={{ width: 15, height: 15 }} />
-                                            </IconButton>
+                                            <Button startIcon={<Delete />}
+                                                onClick={() => handleDeleteClick(item)}
+                                                color="error" />
                                         </TableCell>
                                     </TableRow>
                                 ))
