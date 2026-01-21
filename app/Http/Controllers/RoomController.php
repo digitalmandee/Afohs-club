@@ -42,7 +42,7 @@ class RoomController extends Controller
         $query->with('invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data');
 
         // ✅ Paginate results and keep query string
-        $bookings = $query->paginate(10)->withQueryString();
+        $bookings = $query->paginate(50)->withQueryString();
 
         // ✅ Transform invoice data for frontend
         $bookings->getCollection()->transform(function ($booking) {
@@ -300,7 +300,7 @@ class RoomController extends Controller
         $bookings = $query
             ->orderBy('check_in_date', 'desc')
             ->latest()
-            ->paginate(10)
+            ->paginate(50)
             ->withQueryString();
 
         $bookings->getCollection()->transform(function ($booking) {
@@ -504,7 +504,7 @@ class RoomController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        $rooms = $query->orderBy('deleted_at', 'desc')->paginate(10);
+        $rooms = $query->orderBy('deleted_at', 'desc')->paginate(50);
 
         return Inertia::render('App/Admin/Booking/Room/Trashed', [
             'rooms' => $rooms,

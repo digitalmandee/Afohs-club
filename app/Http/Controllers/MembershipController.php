@@ -284,7 +284,7 @@ class MembershipController extends Controller
             $query->orderBy('id', $sortDirection);
         }
 
-        $members = $query->paginate(10)->withQueryString();
+        $members = $query->paginate(50)->withQueryString();
 
         return Inertia::render('App/Admin/Membership/Members', [
             'members' => $members,

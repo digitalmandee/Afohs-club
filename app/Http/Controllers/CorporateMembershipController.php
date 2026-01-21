@@ -393,7 +393,7 @@ class CorporateMembershipController extends Controller
             $query->orderBy('id', $sortDirection);
         }
 
-        $members = $query->paginate(10)->withQueryString();
+        $members = $query->paginate(50)->withQueryString();
 
         // Get Member Categories for filter
         $memberCategories = \App\Models\MemberCategory::select('id', 'name')->get();

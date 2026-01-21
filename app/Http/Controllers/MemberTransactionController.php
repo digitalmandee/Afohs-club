@@ -117,7 +117,7 @@ class MemberTransactionController extends Controller
                 ->orWhere('cnic_no', 'like', "%{$query}%")
                 ->orWhere('mobile_number_a', 'like', "%{$query}%")
                 ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'current_address as address', 'total_membership_fee', 'membership_fee', 'total_maintenance_fee', 'maintenance_fee')
-                ->limit(10)
+                ->limit(50)
                 ->get();
         } elseif ($type === 'guest') {
             $members = \App\Models\Customer::where('name', 'like', "%{$query}%")
@@ -125,7 +125,7 @@ class MemberTransactionController extends Controller
                 ->orWhere('cnic', 'like', "%{$query}%")
                 ->orWhere('contact', 'like', "%{$query}%")
                 ->select('id', 'name as full_name', 'customer_no as membership_no', 'cnic as cnic_no', 'contact as mobile_number_a', 'address')
-                ->limit(10)
+                ->limit(50)
                 ->get();
         } elseif (str_starts_with($type, 'guest-')) {
             $guestTypeId = str_replace('guest-', '', $type);
@@ -138,7 +138,7 @@ class MemberTransactionController extends Controller
                         ->orWhere('contact', 'like', "%{$query}%");
                 })
                 ->select('id', 'name as full_name', 'customer_no as membership_no', 'cnic as cnic_no', 'contact as mobile_number_a', 'address')
-                ->limit(10)
+                ->limit(50)
                 ->get();
         } else {
             $members = Member::whereNull('parent_id')
@@ -151,7 +151,7 @@ class MemberTransactionController extends Controller
                 })
                 ->with(['memberCategory:id,name,fee,subscription_fee'])
                 ->select('id', 'full_name', 'membership_no', 'cnic_no', 'mobile_number_a', 'membership_date', 'member_category_id', 'status', 'total_membership_fee', 'membership_fee', 'total_maintenance_fee', 'maintenance_fee')
-                ->limit(10)
+                ->limit(50)
                 ->get();
         }
 
