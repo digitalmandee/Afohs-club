@@ -128,8 +128,10 @@ class EmployeeController extends Controller
         $shifts = \App\Models\Shift::where('status', true)->select('id', 'name', 'start_time', 'end_time')->get();
         $branches = \App\Models\Branch::where('status', true)->select('id', 'name')->get();
 
-        // Calculate next Employee ID
-        $maxId = \App\Models\Employee::max(DB::raw('CAST(employee_id AS UNSIGNED)'));
+        // Calculate next Employee ID - only consider numeric employee_ids
+        $maxId = \App\Models\Employee::whereRaw("employee_id REGEXP '^[0-9]+\$'")
+            ->selectRaw('MAX(CAST(employee_id AS UNSIGNED)) as max_id')
+            ->value('max_id');
         $nextEmployeeId = $maxId ? $maxId + 1 : 1;
 
         return Inertia::render('App/Admin/Employee/Create', [

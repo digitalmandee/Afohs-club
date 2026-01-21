@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Card, CardContent, Grid, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Divider } from '@mui/material';
-import { ArrowBack as BackIcon, Edit as EditIcon, Add as AddIcon } from '@mui/icons-material';
+import { Box, Typography, Button, Card, CardContent, Grid, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Divider, IconButton } from '@mui/material';
+import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Add as AddIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/SideBar/SideNav';
 
@@ -40,7 +40,7 @@ const ShowIngredient = ({ ingredient }) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
         });
     };
 
@@ -52,7 +52,7 @@ const ShowIngredient = ({ ingredient }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
-                    backgroundColor: '#f5f5f5'
+                    backgroundColor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ p: 3 }}>
@@ -62,7 +62,7 @@ const ShowIngredient = ({ ingredient }) => {
                             <IconButton onClick={() => window.history.back()}>
                                 <ArrowBackIcon sx={{ color: '#063455' }} />
                             </IconButton>
-                            <Typography variant="h5" sx={{fontWeight:'600'}}>
+                            <Typography variant="h5" sx={{ fontWeight: '600' }}>
                                 {ingredient.name}
                             </Typography>
                         </Box>
@@ -100,21 +100,14 @@ const ShowIngredient = ({ ingredient }) => {
                                             <Typography variant="body2" color="text.secondary">
                                                 Status
                                             </Typography>
-                                            <Chip
-                                                label={ingredient.status}
-                                                color={getStatusColor(ingredient.status)}
-                                                size="small"
-                                                sx={{ mt: 0.5 }}
-                                            />
+                                            <Chip label={ingredient.status} color={getStatusColor(ingredient.status)} size="small" sx={{ mt: 0.5 }} />
                                         </Grid>
 
                                         <Grid item xs={12}>
                                             <Typography variant="body2" color="text.secondary">
                                                 Description
                                             </Typography>
-                                            <Typography variant="body1">
-                                                {ingredient.description || 'No description provided'}
-                                            </Typography>
+                                            <Typography variant="body1">{ingredient.description || 'No description provided'}</Typography>
                                         </Grid>
                                     </Grid>
                                 </CardContent>
@@ -161,9 +154,7 @@ const ShowIngredient = ({ ingredient }) => {
                                         <Typography variant="body2" color="text.secondary">
                                             Expiry Date
                                         </Typography>
-                                        <Typography variant="body1">
-                                            {formatDate(ingredient.expiry_date)}
-                                        </Typography>
+                                        <Typography variant="body1">{formatDate(ingredient.expiry_date)}</Typography>
                                     </Box>
                                 </CardContent>
                             </Card>
@@ -183,9 +174,15 @@ const ShowIngredient = ({ ingredient }) => {
                                             <Table>
                                                 <TableHead>
                                                     <TableRow>
-                                                        <TableCell><strong>Product Name</strong></TableCell>
-                                                        <TableCell><strong>Quantity Used</strong></TableCell>
-                                                        <TableCell><strong>Cost</strong></TableCell>
+                                                        <TableCell>
+                                                            <strong>Product Name</strong>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <strong>Quantity Used</strong>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <strong>Cost</strong>
+                                                        </TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
@@ -195,9 +192,7 @@ const ShowIngredient = ({ ingredient }) => {
                                                             <TableCell>
                                                                 {product.pivot.quantity_used} {ingredient.unit}
                                                             </TableCell>
-                                                            <TableCell>
-                                                                {formatCurrency(product.pivot.cost)}
-                                                            </TableCell>
+                                                            <TableCell>{formatCurrency(product.pivot.cost)}</TableCell>
                                                         </TableRow>
                                                     ))}
                                                 </TableBody>
