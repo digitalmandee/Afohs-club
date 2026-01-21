@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Divider, Tooltip } from '@mui/material';
+import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, IconButton, TextField, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Grid, Pagination, Avatar, Divider, Tooltip, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, Person as PersonIcon, AdminPanelSettings as AdminIcon, Work as WorkIcon } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 
 const UserManagement = () => {
-    const { users, roles, filters, can } = usePage().props;
+    const { users, roles, tenants, filters, can } = usePage().props;
     const { enqueueSnackbar } = useSnackbar();
     // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [createUserOpen, setCreateUserOpen] = useState(false);
     const [createEmployeeUserOpen, setCreateEmployeeUserOpen] = useState(false);
     const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: '' });
-    const [employeeUser, setEmployeeUser] = useState({ employee_id: '', password: '' });
+    const [employeeUser, setEmployeeUser] = useState({ employee_id: '', password: '', tenant_ids: [] });
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -43,7 +43,7 @@ const UserManagement = () => {
         router.post(route('admin.users.create-employee'), employeeUser, {
             onSuccess: () => {
                 setCreateEmployeeUserOpen(false);
-                setEmployeeUser({ employee_id: '', password: '' });
+                setEmployeeUser({ employee_id: '', password: '', tenant_ids: [] });
                 enqueueSnackbar('Employee user created successfully!', { variant: 'success' });
             },
             onError: (errors) => {
@@ -116,8 +116,7 @@ const UserManagement = () => {
         return <PersonIcon sx={{ color: '#757575' }} />;
     };
 
-    const capitalizeFirstLetter = (text = '') =>
-        text.charAt(0).toUpperCase() + text.slice(1);
+    const capitalizeFirstLetter = (text = '') => text.charAt(0).toUpperCase() + text.slice(1);
 
     return (
         <>
@@ -133,9 +132,7 @@ const UserManagement = () => {
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>
-                            User Management
-                        </Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>User Management</Typography>
                     </Box>
                     {can.create && (
                         <Box sx={{ display: 'flex', gap: 2 }}>
@@ -238,9 +235,7 @@ const UserManagement = () => {
                                                 }}
                                             >
                                                 <Tooltip title={user.name} arrow>
-                                                    <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                        {user.name}
-                                                    </Box>
+                                                    <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</Box>
                                                 </Tooltip>
 
                                                 <Typography variant="caption" color="textSecondary">
@@ -252,22 +247,28 @@ const UserManagement = () => {
                                     <TableCell>
                                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                             {getUserTypeIcon(user)}
-                                            <Typography variant="body2" sx={{
-                                                ml: 1, textOverflow: 'ellipsis',
-                                                overflow: 'hidden',
-                                                maxWidth: '100px',
-                                                whiteSpace: 'nowrap',
-                                            }}>
+                                            <Typography
+                                                variant="body2"
+                                                sx={{
+                                                    ml: 1,
+                                                    textOverflow: 'ellipsis',
+                                                    overflow: 'hidden',
+                                                    maxWidth: '100px',
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
                                                 {user.roles.some((role) => ['super-admin', 'admin'].includes(role.name)) ? 'Admin User' : user.employee ? 'Employee User' : 'Regular User'}
                                             </Typography>
                                         </Box>
                                     </TableCell>
-                                    <TableCell sx={{
-                                        textOverflow: 'ellipsis',
-                                        overflow: 'hidden',
-                                        maxWidth: '150px',
-                                        whiteSpace: 'nowrap',
-                                    }}>
+                                    <TableCell
+                                        sx={{
+                                            textOverflow: 'ellipsis',
+                                            overflow: 'hidden',
+                                            maxWidth: '150px',
+                                            whiteSpace: 'nowrap',
+                                        }}
+                                    >
                                         <Tooltip title={user.email} arrow>
                                             {user.email}
                                         </Tooltip>
@@ -282,14 +283,7 @@ const UserManagement = () => {
                                     <TableCell>
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                             {user.roles.map((role) => (
-                                                <Chip
-                                                    key={role.id}
-                                                    label={capitalizeFirstLetter(role.name)}
-                                                    color={getRoleColor(role.name)}
-                                                    size="small"
-                                                    variant="outlined"
-                                                    onDelete={can.edit ? () => handleRemoveRole(user.id, role.name) : undefined}
-                                                />
+                                                <Chip key={role.id} label={capitalizeFirstLetter(role.name)} color={getRoleColor(role.name)} size="small" variant="outlined" onDelete={can.edit ? () => handleRemoveRole(user.id, role.name) : undefined} />
                                             ))}
                                         </Box>
                                     </TableCell>
@@ -378,9 +372,10 @@ const UserManagement = () => {
                         </Grid>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setCreateUserOpen(false)}
-                            sx={{border:'1px solid #063455', color:'#063455', textTransform:'none'}}>Cancel</Button>
-                        <Button onClick={handleCreateSuperAdminUser} variant="contained" sx={{ bgcolor: '#063455', textTransform:'none' }}>
+                        <Button onClick={() => setCreateUserOpen(false)} sx={{ border: '1px solid #063455', color: '#063455', textTransform: 'none' }}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCreateSuperAdminUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
                             Create User
                         </Button>
                     </DialogActions>
@@ -403,12 +398,28 @@ const UserManagement = () => {
                             <Grid item xs={12}>
                                 <TextField fullWidth label="Password" type="password" value={employeeUser.password} onChange={(e) => setEmployeeUser({ ...employeeUser, password: e.target.value })} helperText="Password for the employee to login to POS system" />
                             </Grid>
+                            <Grid item xs={12}>
+                                <Autocomplete
+                                    multiple
+                                    options={tenants || []}
+                                    getOptionLabel={(option) => option.name}
+                                    value={(tenants || []).filter((t) => employeeUser.tenant_ids.includes(t.id))}
+                                    onChange={(e, values) =>
+                                        setEmployeeUser({
+                                            ...employeeUser,
+                                            tenant_ids: values.map((v) => v.id),
+                                        })
+                                    }
+                                    renderInput={(params) => <TextField {...params} label="Allowed Restaurants" placeholder="Select restaurants this employee can access" helperText="Select which restaurants this cashier can punch orders for" />}
+                                />
+                            </Grid>
                         </Grid>
                     </DialogContent>
                     <DialogActions>
-                        <Button onClick={() => setCreateEmployeeUserOpen(false)}
-                            sx={{color:'#063455', border:'1px solid #063455', textTransform:'none'}}>Cancel</Button>
-                        <Button onClick={handleCreateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform:'none' }}>
+                        <Button onClick={() => setCreateEmployeeUserOpen(false)} sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none' }}>
+                            Cancel
+                        </Button>
+                        <Button onClick={handleCreateEmployeeUser} variant="contained" sx={{ bgcolor: '#063455', textTransform: 'none' }}>
                             Create Employee User
                         </Button>
                     </DialogActions>
