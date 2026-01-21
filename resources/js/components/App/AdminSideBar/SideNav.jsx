@@ -470,7 +470,7 @@ export default function SideNav({ open, setOpen }) {
                     },
                     {
                         text: 'Vouchers',
-                        icon: <ConfirmationNumberIcon />,
+                        // icon: <ConfirmationNumberIcon />,
                         path: route('vouchers.dashboard'),
                     },
                 ],

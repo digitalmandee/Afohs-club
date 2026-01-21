@@ -58,7 +58,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .membership-card {
-            width: 500px;
+            width: 400px;
             border: 1px solid #e3e3e3;
             border-radius: 12px;
             box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
@@ -89,8 +89,8 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .avatar-wrapper {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border: 2px solid #063455;
             border-radius: 4px;
             display: flex;
@@ -102,12 +102,10 @@ export const handlePrintMembershipCard = (member) => {
         .avatar-img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            object-position: center;
         }
 
         .name {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
             color: #000;
             margin-top: 10px;
@@ -122,12 +120,12 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .logo {
-            height: 150px;
+            height: 120px;
         }
 
         .label {
-            margin-top: 15px;
-            font-size: 14px;
+            margin-top: 30px;
+            font-size: 12px;
             font-weight: 700;
             padding-left: 80px;
             color: #000;
@@ -135,7 +133,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .value {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
             color: #000;
             padding-left: 30px
@@ -149,8 +147,8 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .qr-wrapper {
-            width: 70px;
-            height: 70px;
+            width: 50px;
+            height: 50px;
             border: 2px solid #000;
             border-radius: 4px;
             padding: 4px;
@@ -168,7 +166,7 @@ export const handlePrintMembershipCard = (member) => {
 
         .label-valid-until {
             margin-top: 10px;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
             color: #000;
         }
