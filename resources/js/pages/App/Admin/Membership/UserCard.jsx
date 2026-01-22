@@ -58,7 +58,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .membership-card {
-            width: 400px;
+            width: 350px;
             border: 1px solid #e3e3e3;
             border-radius: 12px;
             box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
@@ -67,7 +67,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .content {
-            padding: 16px 0;
+            padding: 10px 0;
         }
 
         .row {
@@ -83,14 +83,14 @@ export const handlePrintMembershipCard = (member) => {
 
         /* LEFT COLUMN - Perfect MUI replica */
         .left {
-            padding-left: 20px;
-            padding-top: 60px;
+            padding-left: 15px;
+            padding-top: 30px;
             align-items: flex-start;
         }
 
         .avatar-wrapper {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border: 2px solid #063455;
             border-radius: 4px;
             display: flex;
@@ -114,20 +114,20 @@ export const handlePrintMembershipCard = (member) => {
 
         /* CENTER COLUMN - Perfect MUI replica */
         .center {
-            padding-top: -5px;
             align-items: center;
             justify-content: center;
         }
 
         .logo {
-            height: 120px;
+        margin-top:-20px;
+            height: 100px;
         }
 
         .label {
-            margin-top: 30px;
+            margin-top: 17px;
             font-size: 12px;
             font-weight: 700;
-            padding-left: 80px;
+            padding-left: 70px;
             color: #000;
             white-space: nowrap;
         }
@@ -136,19 +136,19 @@ export const handlePrintMembershipCard = (member) => {
             font-size: 12px;
             font-weight: 700;
             color: #000;
-            padding-left: 30px
+            padding-left: 50px
         }
 
         /* RIGHT COLUMN - Perfect MUI replica */
         .right {
-            padding-right: 20px;
-            padding-top: 80px;
+            padding-right: 15px;
+            padding-top: 45px;
             align-items: flex-end;
         }
 
         .qr-wrapper {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border: 2px solid #000;
             border-radius: 4px;
             padding: 4px;
@@ -172,11 +172,11 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .footer {
-            background-color: #0a3d62;
+            background-color: #063455;
             color: white;
-            padding: 16px;
+            padding: 10px;
             text-align: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             text-transform: Uppercase;
         }
