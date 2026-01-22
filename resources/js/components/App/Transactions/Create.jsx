@@ -1274,7 +1274,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                     <Box
                                         sx={{
-                                            bgcolor: '#0a3d62',
+                                            bgcolor: '#063455',
                                             color: 'white',
                                             borderRadius: '50%',
                                             width: 24,
@@ -1289,7 +1289,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                     >
                                         1
                                     </Box>
-                                    <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                    <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455' }}>
                                         Booking Type
                                     </Typography>
                                 </Box>
@@ -1345,7 +1345,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     <Typography variant="body2" fontWeight="bold">
                                                         {option.membership_no || option.customer_no || option.employee_id}
                                                     </Typography>
-                                                    {option.status && <Chip label={option.status} size="small" color={option.status === 'active' ? 'success' : option.status === 'expired' ? 'warning' : 'error'} sx={{ height: 20, fontSize: '0.7rem' }} />}
+                                                    {option.status && <Chip label={option.status} size="small" color={option.status === 'active' ? 'success' : option.status === 'expired' ? 'warning' : 'error'} sx={{ height: 20, fontSize: '0.7rem', textTransform: 'capitalize' }} />}
                                                 </Box>
                                                 <Typography variant="body2">{option.full_name || option.name}</Typography>
                                                 <Typography variant="caption" color="text.secondary">
@@ -1357,16 +1357,29 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                 />
                                 {selectedMember && (
                                     <Box sx={{ mt: 1, p: 1.5, bgcolor: '#f1f5f9', borderRadius: 2, border: '1px solid', borderColor: '#e2e8f0' }}>
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 3 }}>
+                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
                                             {/* Member Info */}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                                                <Person sx={{ fontSize: 18, color: '#64748b' }} />
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                <Box
+                                                    sx={{
+                                                        width: 32,
+                                                        height: 32,
+                                                        borderRadius: '50%',
+                                                        border: '1px solid #063455',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        backgroundColor: 'transparent', // or '#063455' if you want
+                                                    }}
+                                                >
+                                                    <Person sx={{ fontSize: 18, color: '#063455' }} />
+                                                </Box>
                                                 <Box>
-                                                    <Typography variant="subtitle2" fontWeight={700} sx={{ color: '#1e293b', lineHeight: 2 }}>
+                                                    <Typography sx={{ color: '#1e293b', fontWeight: 700, fontSize: '14px', mb: -1 }}>
                                                         {selectedMember.full_name}{' '}
-                                                        <Typography component="span" variant="caption" color="text.secondary">
-                                                            ({selectedMember.membership_no || 'No #'})
-                                                        </Typography>
+                                                    </Typography>
+                                                    <Typography component="span" variant="caption" color="text.secondary">
+                                                        ({selectedMember.membership_no || 'No #'})
                                                     </Typography>
                                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                         {formatStatus(selectedMember.status)} • {selectedMember.cnic_no || selectedMember.cnic || 'No CNIC'}
@@ -1374,51 +1387,51 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 </Box>
                                             </Box>
 
-                                            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 24, alignSelf: 'center' }} />
+                                            <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 38, alignSelf: 'center', fontWeight: 'bold', bgcolor: '#063455' }} />
 
                                             {/* Fees Summary Strip */}
                                             <Box sx={{ display: 'flex', gap: 5, flexGrow: 1, flexWrap: 'wrap' }}>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary">
-                                                        Membership
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
+                                                        Membership Fee
                                                     </Typography>
-                                                    <Typography variant="body2" fontWeight={600} color="primary.main">
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
                                                         {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary">
-                                                        Monthly
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
+                                                        Monthly Fee
                                                     </Typography>
-                                                    <Typography variant="body2" fontWeight={600} color="error.main">
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
                                                         Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary">
-                                                        Quarterly
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
+                                                        Quarterly Fee
                                                     </Typography>
-                                                    <Typography variant="body2" fontWeight={600} color="secondary.main">
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
                                                         Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary">
-                                                        Joined
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
+                                                        Joined Date
                                                     </Typography>
-                                                    <Typography variant="body2" fontWeight={600}>
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
                                                         {formatDate(selectedMember.membership_date)}
                                                     </Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography variant="caption" display="block" color="text.secondary">
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
                                                         Ledger Balance
                                                     </Typography>
                                                     <Box display="flex" alignItems="center">
-                                                        <Typography variant="h6" fontWeight="bold" sx={{ color: '#0a3d62' }}>
+                                                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
                                                             {formatCurrency(Math.max(0, ledgerBalance || 0))}
                                                         </Typography>
-                                                        <IconButton
+                                                        {/* <IconButton
                                                             size="small"
                                                             onClick={() => {
                                                                 const historySection = document.getElementById('transaction-history-section');
@@ -1427,7 +1440,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                             sx={{ ml: 5, p: 0 }}
                                                         >
                                                             <Visibility fontSize="small" />
-                                                        </IconButton>
+                                                        </IconButton> */}
                                                     </Box>
                                                 </Box>
                                             </Box>
@@ -1447,7 +1460,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                             <Box
                                                 sx={{
-                                                    bgcolor: selectedMember ? '#0a3d62' : 'grey.300',
+                                                    bgcolor: selectedMember ? '#063455' : 'grey.300',
                                                     color: 'white',
                                                     borderRadius: '50%',
                                                     width: 24,
@@ -1462,7 +1475,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             >
                                                 2
                                             </Box>
-                                            <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                                            <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455' }}>
                                                 Transaction Details
                                             </Typography>
                                         </Box>
@@ -1544,7 +1557,11 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Typography>
                                                         <Grid container spacing={2}>
                                                             <Grid item xs={12} md={4}>
-                                                                <FormControl fullWidth size="small">
+                                                                <FormControl fullWidth size="small" sx={{
+                                                                    '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                                        borderRadius: '16px !important',
+                                                                    },
+                                                                }}>
                                                                     <InputLabel>Payment Method</InputLabel>
                                                                     <Select value={data.payment_method} label="Payment Method" onChange={(e) => setData('payment_method', e.target.value)}>
                                                                         <MenuItem value="cash">Cash</MenuItem>
@@ -1688,7 +1705,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         >
                                             3
                                         </Box>
-                                        <Typography sx={{ fontWeight: 600, color: '#063455' }}>Transaction History - {selectedMember.full_name}</Typography>
+                                        <Typography sx={{ fontWeight: 600, color: '#063455', fontSize:'18px' }}>Transaction History - {selectedMember.full_name}</Typography>
                                     </Box>
 
                                     {/* Search Bar */}
@@ -1707,9 +1724,9 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                 ),
                                             }}
                                             sx={{
-                                                width: '200px',
+                                                width: '250px',
                                                 '& .MuiOutlinedInput-root': {
-                                                    borderRadius: 2,
+                                                    borderRadius: '16px',
                                                     bgcolor: 'transparent',
                                                 },
                                             }}
