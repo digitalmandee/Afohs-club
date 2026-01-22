@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { MdArrowBackIos } from 'react-icons/md';
-import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box, Autocomplete } from '@mui/material';
+import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box, Autocomplete, Switch } from '@mui/material';
 import axios from 'axios';
 import { ArrowBack, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -100,6 +100,17 @@ const Management = () => {
         }
     };
 
+    const handleStatusChange = async (id, currentStatus) => {
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        try {
+            await axios.post(route('employees.subdepartments.change-status', id), { status: newStatus });
+            enqueueSnackbar('Status updated successfully!', { variant: 'success' });
+            router.reload({ only: ['subdepartments'] });
+        } catch (error) {
+            enqueueSnackbar('Error updating status!', { variant: 'error' });
+        }
+    };
+
     return (
         <>
             <div
@@ -128,25 +139,40 @@ const Management = () => {
                             </Typography>
                         </div>
                         <div className="col-auto ms-auto">
-                            <Button variant="contained" startIcon={<span style={{
-                                fontSize: '1.5rem', marginBottom: 5
-                            }}>+</span>} sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }} onClick={() => handleOpen()}>
+                            <Button variant="outlined" sx={{ borderRadius: '16px', height: 35, textTransform: 'none', borderColor: '#063455', color: '#063455', marginRight: 2 }} onClick={() => router.visit(route('employees.subdepartments.trashed'))}>
+                                Trashed
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={
+                                    <span
+                                        style={{
+                                            fontSize: '1.5rem',
+                                            marginBottom: 5,
+                                        }}
+                                    >
+                                        +
+                                    </span>
+                                }
+                                sx={{ bgcolor: '#063455', borderRadius: '16px', height: 35, textTransform: 'none' }}
+                                onClick={() => handleOpen()}
+                            >
                                 New Subdepartment
                             </Button>
                         </div>
                     </div>
-                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        Define and manage sub-units under main departments
-                    </Typography>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Define and manage sub-units under main departments</Typography>
 
                     {/* Table */}
-                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop: '2rem', borderRadius: '16px', }}>
+                    <TableContainer component={Paper} sx={{ boxShadow: 'none', marginTop: '2rem', borderRadius: '16px' }}>
                         <Table>
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Subdepartment Name</TableCell>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Department</TableCell>
-                                    <TableCell style={{ color: '#fff', fontWeight: '600', }}>Action</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Subdepartment Name</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Total Employees</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Department</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Status</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -154,7 +180,11 @@ const Management = () => {
                                     subdepartments.data.map((subdepartment) => (
                                         <TableRow key={subdepartment.id}>
                                             <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{subdepartment.name}</TableCell>
+                                            <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{subdepartment.employees_count || 0}</TableCell>
                                             <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{subdepartment.department?.name || 'N/A'}</TableCell>
+                                            <TableCell>
+                                                <Switch checked={subdepartment.status === 'active'} onChange={() => handleStatusChange(subdepartment.id, subdepartment.status)} color="primary" />
+                                            </TableCell>
                                             <TableCell>
                                                 <IconButton onClick={() => handleOpen(subdepartment)} color="primary">
                                                     <FaEdit size={18} style={{ marginRight: 10, color: '#f57c00' }} />
@@ -223,7 +253,7 @@ const Management = () => {
                         <Button
                             sx={{
                                 bgcolor: '#063455',
-                                textTransform:'none'
+                                textTransform: 'none',
                             }}
                             onClick={handleSubmit}
                             variant="contained"

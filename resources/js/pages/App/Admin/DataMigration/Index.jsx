@@ -22,6 +22,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         corporate_qr_codes: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         financials: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add financials state
         deep_migration: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Deep migration state
+        departments: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add departments state
     });
     const [transactionTypes, setTransactionTypes] = useState([]);
     const [selectedTransactionType, setSelectedTransactionType] = useState('');
@@ -31,7 +32,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false });
 
     useEffect(() => {
         refreshStats();
@@ -312,6 +313,21 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         await processMigrationBatch('corporate_families', 0);
     };
 
+    const startDepartmentsMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current.departments = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            departments: { ...prev.departments, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('departments', 0);
+    };
+
     const startFinancialsMigration = async () => {
         if (!stats.old_tables_exist) {
             alert('Old tables not found in database');
@@ -348,6 +364,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 financials: '/admin/data-migration/migrate-financials', // Add endpoint
                 transaction_types: '/admin/data-migration/migrate-transaction-types',
                 subscription_types: '/admin/data-migration/migrate-subscription-types',
+                departments: '/admin/data-migration/migrate-departments', // Add departments endpoint
             };
             const endpoint = endpointMap[type];
             const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : type === 'invoices' || type === 'financials' ? 80 : 100;
@@ -356,8 +373,8 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 offset: offset,
             });
 
-            const { migrated, processed, errors, has_more } = response.data;
-            const recordsProcessed = migrated || processed || 0;
+            const { migrated, processed, errors, has_more, stats: responseStats } = response.data;
+            const recordsProcessed = migrated || processed || responseStats?.departments_migrated + responseStats?.subdepartments_migrated || 0;
 
             const totalCountMap = {
                 members: stats.old_members_count,
@@ -373,6 +390,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 financials: stats.old_financial_invoices_count, // Use invoice count as proxy for total work
                 transaction_types: 15, // Approx count
                 subscription_types: 10, // Approx count
+                departments: (stats.old_departments_count || 0) + (stats.old_subdepartments_count || 0), // Total departments + subdepartments
             };
 
             setMigrationStatus((prev) => ({
@@ -381,7 +399,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                     ...prev[type],
                     migrated: prev[type].migrated + recordsProcessed,
                     errors: [...prev[type].errors, ...(errors || [])],
-                    progress: ((offset + recordsProcessed) / totalCountMap[type]) * 100,
+                    progress: totalCountMap[type] > 0 ? ((offset + recordsProcessed) / totalCountMap[type]) * 100 : 0,
                 },
             }));
 
@@ -835,15 +853,6 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                     Migrates Invoices + Receipts + Transactions specifically for one Charge Type.
                                 </Typography>
 
-                                <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                                    <Button variant="outlined" size="small" onClick={() => startGenericMigration('transaction_types')} disabled={migrationStatus.transaction_types.running}>
-                                        {migrationStatus.transaction_types.running ? 'Syncing Types...' : 'Sync Trans. Types'}
-                                    </Button>
-                                    <Button variant="outlined" size="small" onClick={() => startGenericMigration('subscription_types')} disabled={migrationStatus.subscription_types.running}>
-                                        {migrationStatus.subscription_types.running ? 'Syncing Subs...' : 'Sync Sub. Types'}
-                                    </Button>
-                                </Box>
-
                                 <Box sx={{ mb: 3 }}>
                                     <TextField select label="Select Transaction Type" fullWidth value={selectedTransactionType} onChange={handleTypeChange} disabled={migrationStatus.deep_migration.running} size="small">
                                         <MenuItem value="">
@@ -1237,6 +1246,62 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                                     <Typography variant="caption" component="div">
                                                         <strong>ID:</strong> {error.old_id}
                                                         <br />
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Departments Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Departments & Subdepartments
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Progress: {stats.departments_migration_percentage || 0}%
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.departments.running ? migrationStatus.departments.progress : stats.departments_migration_percentage || 0} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {stats.new_departments_count || 0} / {stats.old_departments_count || 0} (Depts)
+                                    <br />
+                                    Migrated: {stats.new_subdepartments_count || 0} / {stats.old_subdepartments_count || 0} (SubDepts)
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                                    Also links existing employees to the new departments.
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" startIcon={migrationStatus.departments.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startDepartmentsMigration} disabled={migrationStatus.departments.running}>
+                                        {migrationStatus.departments.running ? 'Migrating...' : 'Start Migration'}
+                                    </Button>
+
+                                    {migrationStatus.departments.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('departments')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.departments.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.departments.errors.length} errors occurred during migration
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.departments.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
                                                         <strong>Error:</strong> {error.error}
                                                     </Typography>
                                                 </Alert>

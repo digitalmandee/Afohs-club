@@ -9,7 +9,7 @@ class Department extends BaseModel
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'created_by', 'updated_by', 'deleted_by'];
+    protected $fillable = ['name', 'status', 'created_by', 'updated_by', 'deleted_by'];
 
     public function employees()
     {

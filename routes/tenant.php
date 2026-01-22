@@ -26,7 +26,7 @@ Route::group([
     'prefix' => '/{tenant}',
     'middleware' => ['web', InitializeTenancyByPath::class],
 ], function () {
-    Route::get('/', fn() => redirect()->route('tenant.login'));
+    Route::get('/', fn() => redirect()->route('tenant.login', ['tenant' => tenant('id')]));
 
     // Tenant auth-protected routes
     Route::middleware([AuthenticateTenant::class, 'auth:tenant'])->group(function () {
@@ -90,10 +90,6 @@ Route::group([
         Route::get('/add/information', function () {
             return Inertia::render('App/Member/AddInfo');
         });
-
-        // Route::get('/customers/list', function () {
-        //     return Inertia::render('App/Member/Customer');
-        // });
 
         // Floors & Table Routes
         Route::get('/floors', [FloorController::class, 'index'])->name('floors.index');

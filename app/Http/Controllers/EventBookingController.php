@@ -996,7 +996,7 @@ class EventBookingController extends Controller
         $filters = $request->only(['search', 'search_id', 'customer_type', 'booking_date_from', 'booking_date_to', 'event_date_from', 'event_date_to', 'membership_no']);
         $this->applyFilters($query, $filters);
 
-        $bookings = $query->orderBy('created_at', 'desc')->limit(20)->get();
+        $bookings = $query->orderBy('created_at', 'desc')->limit(50)->get();
 
         $data = [
             'bookingsData' => $bookings,
@@ -1088,7 +1088,7 @@ class EventBookingController extends Controller
             COALESCE(SUM(total_price - paid_amount), 0) as total_balance
         ')->first();
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
 
         return inertia('App/Admin/Events/Manage', [
             'bookings' => $bookings,
@@ -1123,7 +1123,7 @@ class EventBookingController extends Controller
             COALESCE(SUM(total_price - paid_amount), 0) as total_balance
         ')->first();
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
 
         return inertia('App/Admin/Events/Completed', [
             'bookings' => $bookings,
@@ -1158,7 +1158,7 @@ class EventBookingController extends Controller
             COALESCE(SUM(total_price - paid_amount), 0) as total_balance
         ')->first();
 
-        $bookings = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
 
         return inertia('App/Admin/Events/Cancelled', [
             'bookings' => $bookings,

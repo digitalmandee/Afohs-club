@@ -286,7 +286,20 @@ class OrderController extends Controller
     public function orderMenu(Request $request)
     {
         $totalSavedOrders = Order::where('status', 'saved')->count();
-        $allrestaurants = Tenant::select('id', 'name')->get();
+
+        // Filter restaurants based on user's allowed tenants
+        $user = Auth::user();
+        $allowedTenantIds = $user->allowedTenants()->pluck('tenants.id');
+
+        if ($allowedTenantIds->isNotEmpty()) {
+            // User has specific tenant access - filter restaurants
+            $allrestaurants = Tenant::whereIn('id', $allowedTenantIds)
+                ->select('id', 'name')
+                ->get();
+        } else {
+            // Admin or unrestricted user - show all restaurants
+            $allrestaurants = Tenant::select('id', 'name')->get();
+        }
         $activeTenantId = tenant()->id;
         $latestCategory = Category::where('tenant_id', $activeTenantId)->latest()->first();
         $firstCategoryId = $latestCategory->id ?? null;

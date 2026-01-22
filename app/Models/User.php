@@ -93,6 +93,29 @@ class User extends Authenticatable
         return $this->hasMany(MemberStatusHistory::class);
     }
 
+    /**
+     * Get the tenants (restaurants) this user is allowed to access for order punching.
+     * Uses central database connection since user_tenant_access is in the main/central DB.
+     */
+    public function allowedTenants()
+    {
+        return $this
+            ->belongsToMany(Tenant::class, 'user_tenant_access', 'user_id', 'tenant_id')
+            ->using(\Illuminate\Database\Eloquent\Relations\Pivot::class);
+    }
+
+    /**
+     * Get allowed tenant IDs from the central database (works in tenant context).
+     */
+    public function getAllowedTenantIds(): array
+    {
+        return \Illuminate\Support\Facades\DB::connection('mysql')
+            ->table('user_tenant_access')
+            ->where('user_id', $this->id)
+            ->pluck('tenant_id')
+            ->toArray();
+    }
+
     // Password is automatically hashed by the 'hashed' cast in $casts
     // No need for setPasswordAttribute mutator
 }

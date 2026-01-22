@@ -82,7 +82,7 @@ class FamilyMembersArchiveConroller extends Controller
             $query->whereDate('date_of_birth', '>=', Carbon::now()->subYears($request->max_age + 1)->addDay()->toDateString());
         }
 
-        $familyGroups = $query->latest()->paginate(10)->withQueryString();
+        $familyGroups = $query->latest()->paginate(50)->withQueryString();
 
         // Add calculated age and expiry info to each member
         $familyGroups->getCollection()->transform(function ($member) {
@@ -263,7 +263,7 @@ class FamilyMembersArchiveConroller extends Controller
                     ->orWhere('cnic_no', 'like', "%{$query}%");
             })
             ->select('id', 'full_name', 'membership_no', 'cnic_no', 'status', 'mobile_number_a')
-            ->limit(10)
+            ->limit(50)
             ->get();
 
         return response()->json(['members' => $members]);

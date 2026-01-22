@@ -48,7 +48,9 @@ const EmployeeSignIn = ({ setActiveTab, data, setData, post, processing, errors,
                 router.visit(route('tenant.dashboard'));
             },
             onError: (errors) => {
-                enqueueSnackbar('Login failed. Please check your credentials and try again.', { variant: 'error' });
+                // Show specific backend error if available
+                const message = errors.employee_id || errors.password || 'Login failed. Please check your credentials and try again.';
+                enqueueSnackbar(message, { variant: 'error' });
             },
         });
     };

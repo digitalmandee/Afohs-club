@@ -38,25 +38,58 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::guard('tenant')->user();
 
-        // ✅ Only cashier can proceed
-        if ($user->hasRole('cashier')) {
+        // 🔹 Super Admin Bypass
+        if ($user->hasRole('super-admin')) {
+            return redirect()->intended(route('tenant.dashboard', absolute: false));
+        }
+
+        // ✅ Only cashier/employee can proceed if not super admin
+        if ($user->hasRole('cashier') || $user->employee) {
+            // 🔹 1. Check Employee Status
+            if ($user->employee && $user->employee->status !== 'active') {
+                Auth::guard('tenant')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('tenant.login', ['tenant' => tenant('id')])->withErrors([
+                    'employee_id' => 'Access denied. Your account is not active.',
+                ]);
+            }
+
+            // 🔹 2. Check Tenant Access
+            $currentTenant = tenant('id');
+            $allowedTenants = $user->getAllowedTenantIds();
+
+            // If no tenants assigned OR current tenant not in allowed list
+            if (empty($allowedTenants) || !in_array($currentTenant, $allowedTenants)) {
+                Auth::guard('tenant')->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return redirect()->route('tenant.login', ['tenant' => tenant('id')])->withErrors([
+                    'employee_id' => 'Access denied. You do not have access to this restaurant.',
+                ]);
+            }
+
             // 🔹 Save login log
-            EmployeeLog::create([
-                'employee_id' => $user->employee->id,
-                'type' => 'login',  // or 'shift_start' if you want shift naming
-                'logged_at' => now(),
-            ]);
+            if ($user->employee) {
+                EmployeeLog::create([
+                    'employee_id' => $user->employee->id,
+                    'type' => 'login',
+                    'logged_at' => now(),
+                ]);
+            }
 
             return redirect()->intended(route('tenant.dashboard', absolute: false));
         }
 
-        // ❌ Not cashier → logout & send back error
+        // ❌ Not authorized
         Auth::guard('tenant')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return back()->withErrors([
-            'employee_id' => 'Access denied. Only cashier can log in.',
+        return redirect()->route('tenant.login', ['tenant' => tenant('id')])->withErrors([
+            'employee_id' => 'Access denied. Only authorized employees can log in.',
         ]);
     }
 

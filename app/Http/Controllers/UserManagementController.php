@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,7 @@ class UserManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with(['roles', 'employee']);
+        $query = User::with(['roles', 'employee', 'allowedTenants']);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -30,10 +31,12 @@ class UserManagementController extends Controller
 
         $users = $query->paginate(10)->withQueryString();
         $roles = Role::all();
+        $tenants = Tenant::select('id', 'name')->get();
 
         return Inertia::render('App/Admin/Settings/UserManagement', [
             'users' => $users,
             'roles' => $roles,
+            'tenants' => $tenants,
             'filters' => $request->only(['search']),
             'can' => [
                 'create' => Auth::guard('web')->user()->can('users.create'),
@@ -76,6 +79,9 @@ class UserManagementController extends Controller
     {
         $request->validate([
             'employee_id' => 'required|exists:employees,employee_id',
+            'password' => 'required|min:4',
+            'tenant_ids' => 'required|array|min:1',
+            'tenant_ids.*' => 'exists:tenants,id',
         ]);
 
         $employee = Employee::where('employee_id', $request->employee_id)->first();
@@ -97,9 +103,40 @@ class UserManagementController extends Controller
         // Assign default role for POS system (you can customize this)
         $user->assignRole('cashier');  // or whatever role you want for POS users
 
+        // Sync allowed tenants (restaurants) for order punching
+        $user->allowedTenants()->sync($request->tenant_ids);
+
         return redirect()
             ->back()
             ->with('success', 'Employee user account created successfully!');
+    }
+
+    /**
+     * Update Employee User (Password & Tenant Access)
+     */
+    public function updateEmployeeUser(Request $request, $id)
+    {
+        $request->validate([
+            'password' => 'nullable|min:4',
+            'tenant_ids' => 'required|array',
+            'tenant_ids.*' => 'exists:tenants,id',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        // Update password if provided
+        if ($request->filled('password')) {
+            $user->update([
+                'password' => Hash::make($request->password),
+            ]);
+        }
+
+        // Sync allowed tenants
+        $user->allowedTenants()->sync($request->tenant_ids);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Employee user updated successfully!');
     }
 
     /**

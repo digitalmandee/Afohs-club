@@ -82,8 +82,19 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('employees.dashboard');
         Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
         Route::get('/edit/{employeeId}', [EmployeeController::class, 'edit'])->name('employees.edit');
+        // Departments
+        Route::get('/departments/trashed', [EmployeeDepartmentController::class, 'trashed'])->name('employees.departments.trashed');
+        Route::post('/departments/{id}/restore', [EmployeeDepartmentController::class, 'restore'])->name('employees.departments.restore');
+        Route::delete('/departments/{id}/force-delete', [EmployeeDepartmentController::class, 'forceDelete'])->name('employees.departments.force-delete');
         Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
+        Route::post('/departments/{id}/change-status', [EmployeeDepartmentController::class, 'changeStatus'])->name('employees.departments.change-status');  // Add status route
+
+        // Subdepartments
+        Route::get('/subdepartments/trashed', [EmployeeSubdepartmentController::class, 'trashed'])->name('employees.subdepartments.trashed');
+        Route::post('/subdepartments/{id}/restore', [EmployeeSubdepartmentController::class, 'restore'])->name('employees.subdepartments.restore');
+        Route::delete('/subdepartments/{id}/force-delete', [EmployeeSubdepartmentController::class, 'forceDelete'])->name('employees.subdepartments.force-delete');
         Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
+        Route::post('/subdepartments/{id}/change-status', [EmployeeSubdepartmentController::class, 'changeStatus'])->name('employees.subdepartments.change-status');  // Add status route
         Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
         Route::get('/trashed', [EmployeeController::class, 'trashed'])->name('employees.trashed');
         Route::post('/{id}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
@@ -906,6 +917,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoicesPublic'])->name('data-migration.migrate-invoices');
         Route::post('/migrate-transaction-types', [DataMigrationController::class, 'migrateTransactionTypesPublic'])->name('data-migration.migrate-transaction-types');
         Route::post('/migrate-subscription-types', [DataMigrationController::class, 'migrateSubscriptionTypesPublic'])->name('data-migration.migrate-subscription-types');
+        Route::post('/migrate-departments', [DataMigrationController::class, 'migrateDepartmentsAndSubdepartments'])->name('data-migration.migrate-departments');
         // Removed duplicate/incorrect lines and referencing correct public method
         // Route::post('/data-migration/migrate-invoices', ...); // Removed duplicate
         Route::post('/data-migration/migrate-financials', [DataMigrationController::class, 'migrateFinancials'])->name('data-migration.migrate-financials');  // Added this route
@@ -947,6 +959,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])->name('admin.users.index');
         Route::post('/create-super-admin', [UserManagementController::class, 'createSuperAdminUser'])->name('admin.users.create-super-admin')->middleware('super.admin:users.create');
         Route::post('/create-employee-user', [UserManagementController::class, 'createEmployeeUser'])->name('admin.users.create-employee');
+        Route::post('/update-employee-user/{id}', [UserManagementController::class, 'updateEmployeeUser'])->name('admin.users.update-employee');
         Route::post('/assign-role', [UserManagementController::class, 'assignRole'])->name('admin.users.assign-role')->middleware('super.admin:users.edit');
         Route::post('/remove-role', [UserManagementController::class, 'removeRole'])->name('admin.users.remove-role')->middleware('super.admin:users.edit');
     });
