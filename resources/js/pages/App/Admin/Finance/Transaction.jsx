@@ -17,10 +17,9 @@ import dayjs from 'dayjs';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const Transaction = ({ transactions, filters }) => {
+const Transaction = ({ transactions, filters, users, transactionTypes }) => {
     // Modal state
     // const [open, setOpen] = useState(true);
-    const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openMembershipInvoiceModal, setOpenMembershipInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -30,36 +29,21 @@ const Transaction = ({ transactions, filters }) => {
     const [showEventInvoiceModal, setShowEventInvoiceModal] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState(null);
     const [transactionList, setTransactionList] = useState(transactions);
-    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    // const [searchQuery, setSearchQuery] = useState(filters?.search || ''); // Search handled by Filter component now
     const [perPage, setPerPage] = useState(filters?.per_page || 10);
-
-    // Handle search with debounce
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            router.get(
-                route('finance.transaction'),
-                { search: searchQuery, per_page: perPage },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                },
-            );
-        }, 500);
-
-        return () => clearTimeout(timeoutId);
-    }, [searchQuery]);
 
     // Handle per page change
     const handlePerPageChange = (event) => {
         const newPerPage = event.target.value;
         setPerPage(newPerPage);
+        // Preserve other filters when changing per_page
         router.get(
             route('finance.transaction'),
-            { search: searchQuery, per_page: newPerPage },
+            { ...filters, per_page: newPerPage },
             {
                 preserveState: true,
                 preserveScroll: true,
+                replace: true,
             },
         );
     };
@@ -140,23 +124,6 @@ const Transaction = ({ transactions, filters }) => {
         }
     };
 
-    // Handle filter application
-    const handleFilterApply = (newFilters) => {
-        router.get(
-            route('finance.transaction'),
-            {
-                search: searchQuery,
-                per_page: perPage,
-                ...newFilters,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
-    };
-
     return (
         <>
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -165,35 +132,8 @@ const Transaction = ({ transactions, filters }) => {
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <Typography style={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Transactions</Typography>
-                            {/* <Typography style={{ fontSize: '14px', color: '#7F7F7F', marginTop: '5px' }}>
-                                Showing {transactions.from || 0} to {transactions.to || 0} of {transactions.total || 0} transactions
-                            </Typography> */}
                         </div>
                         <div className="d-flex align-items-center">
-                            <TextField
-                                placeholder="Search by invoice, name, membership no..."
-                                variant="outlined"
-                                size="small"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                sx={{
-                                    width: '300px',
-                                    marginRight: '10px',
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '16px',
-                                    },
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderRadius: '16px',
-                                    },
-                                }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Search />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
                             <FormControl
                                 size="small"
                                 sx={{
@@ -214,23 +154,6 @@ const Transaction = ({ transactions, filters }) => {
                                     <MenuItem value={100}>100</MenuItem>
                                 </Select>
                             </FormControl>
-                            <Button
-                                variant="outlined"
-                                startIcon={<FilterAlt sx={{ color: '#fff' }} />}
-                                style={{
-                                    border: '1px solid #063455',
-                                    color: '#fff',
-                                    textTransform: 'none',
-                                    backgroundColor: '#063455',
-                                    marginRight: 10,
-                                    borderRadius: '16px',
-                                }}
-                                onClick={() => {
-                                    setOpenFilterModal(true); // open the modal
-                                }}
-                            >
-                                Filter
-                            </Button>
 
                             <Button
                                 variant="contained"
@@ -247,6 +170,9 @@ const Transaction = ({ transactions, filters }) => {
                         </div>
                     </div>
                     <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage all recorded financial transactions</Typography>
+
+                    {/* Inline Filter */}
+                    <TransactionFilter transactionTypes={transactionTypes} users={users} />
 
                     {/* Transactions Table */}
                     <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '12px' }}>
@@ -429,7 +355,7 @@ const Transaction = ({ transactions, filters }) => {
                         </div>
                     )}
                 </div>
-                <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} />
+                {/* <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} /> */}
 
                 {/* Fallback Invoice Modal (for non-member transactions) */}
                 <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />

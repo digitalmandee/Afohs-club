@@ -163,6 +163,9 @@ class FinancialController extends Controller
         $perPage = $request->input('per_page', 10);
         $search = $request->input('search', '');
 
+        // Capture new filters for passing back to view
+        $filters = $request->only(['status', 'type', 'start_date', 'end_date', 'created_by', 'customer_type', 'membership_no', 'invoice_no']);
+
         $query = FinancialInvoice::with([
             'member:id,full_name,membership_no,mobile_number_a',
             'corporateMember:id,full_name,membership_no',
@@ -172,23 +175,62 @@ class FinancialController extends Controller
             'items.transactions'  // Eager load items and their transactions
         ]);
 
-        // Apply status filter
+        // Apply Status Filter (supports comma-separated)
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            $statuses = explode(',', $request->status);
+            $query->whereIn('status', $statuses);
         }
 
-        // Apply type filter
+        // Apply Fee Type Filter (supports comma-separated)
         if ($request->filled('type') && $request->type !== 'all') {
-            $type = $request->type;
-            // Note: 'fee_type' is now an integer ID. Filtering by string will fail if not handled.
-            // Ideally we should filter by TransactionType ID.
-            // If $request->type is a string/slug, translate it.
-            // Assuming frontend sends ID or we need to handle legacy strings?
-            // For now, keep as is assuming user filters by ID or simple fields.
-            $query->where(function ($q) use ($type) {
+            $types = explode(',', $request->type);
+            $query->where(function ($q) use ($types) {
                 $q
-                    ->where('fee_type', $type)
-                    ->orWhere('invoice_type', $type);
+                    ->whereIn('fee_type', $types)
+                    ->orWhereIn('invoice_type', $types);
+            });
+        }
+
+        // Apply Created By Filter
+        if ($request->filled('created_by') && $request->created_by !== 'all') {
+            $creators = explode(',', $request->created_by);
+            $query->whereIn('created_by', $creators);
+        }
+
+        // Apply Invoice No Filter
+        if ($request->filled('invoice_no')) {
+            $query->where('invoice_no', 'like', "%{$request->invoice_no}%");
+        }
+
+        // Apply Customer Type & Membership No Filter
+        $customerType = $request->input('customer_type', 'all');
+        $membershipNo = trim($request->input('membership_no'));
+
+        if ($customerType !== 'all') {
+            if ($customerType === 'member') {
+                $query->whereNotNull('member_id');
+            } elseif ($customerType === 'corporate') {
+                $query->whereNotNull('corporate_member_id');
+            } elseif ($customerType === 'guest') {
+                $query->whereNotNull('customer_id');
+            }
+        }
+
+        if ($membershipNo) {
+            $query->where(function ($q) use ($membershipNo) {
+                $q->whereHas('member', function ($m) use ($membershipNo) {
+                    $m
+                        ->where('membership_no', 'like', "%{$membershipNo}%")
+                        ->orWhere('full_name', 'like', "%{$membershipNo}%");
+                })->orWhereHas('corporateMember', function ($cm) use ($membershipNo) {
+                    $cm
+                        ->where('membership_no', 'like', "%{$membershipNo}%")
+                        ->orWhere('full_name', 'like', "%{$membershipNo}%");
+                })->orWhereHas('customer', function ($c) use ($membershipNo) {
+                    $c
+                        ->where('customer_no', 'like', "%{$membershipNo}%")
+                        ->orWhere('name', 'like', "%{$membershipNo}%");
+                });
             });
         }
 
@@ -200,12 +242,12 @@ class FinancialController extends Controller
             $query->whereDate('issue_date', '<=', $request->end_date);
         }
 
-        // Apply search filter
+        // Apply general search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q
                     ->where('invoice_no', 'like', "%{$search}%")
-                    ->orWhere('payment_method', 'like', "%{$search}%")  // Fee type is ID, searching 'like' string won't work well
+                    ->orWhere('payment_method', 'like', "%{$search}%")
                     ->orWhere('invoice_type', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($q) use ($search) {
                         $q
@@ -215,7 +257,6 @@ class FinancialController extends Controller
                     ->orWhereHas('customer', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
-                    // Search in items (description)
                     ->orWhereHas('items', function ($q) use ($search) {
                         $q->where('description', 'like', "%{$search}%");
                     });
@@ -264,14 +305,16 @@ class FinancialController extends Controller
 
         return Inertia::render('App/Admin/Finance/Transaction', [
             'transactions' => $transactions,
-            'filters' => [
+            'filters' => array_merge([
                 'search' => $search,
                 'per_page' => $perPage,
                 'status' => $request->input('status', 'all'),
                 'type' => $request->input('type', 'all'),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
-            ],
+            ], $filters),
+            'users' => \App\Models\User::select('id', 'name')->orderBy('name')->get(),
+            'transactionTypes' => $transactionTypes,
         ]);
     }
 
