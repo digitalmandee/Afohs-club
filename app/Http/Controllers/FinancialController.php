@@ -181,15 +181,63 @@ class FinancialController extends Controller
             $query->whereIn('status', $statuses);
         }
 
-        // Apply Fee Type Filter (supports comma-separated)
+        // Apply Mixed Fee Type Filter
         if ($request->filled('type') && $request->type !== 'all') {
-            $types = explode(',', $request->type);
-            $query->where(function ($q) use ($types) {
-                $q
-                    ->whereIn('fee_type', $types)
-                    ->orWhereIn('invoice_type', $types);
+            $selectedValues = explode(',', $request->type);
+
+            $typeIds = [];
+            $subIds = [];
+            $chargeIds = [];
+
+            foreach ($selectedValues as $val) {
+                if (str_starts_with($val, 'sub_')) {
+                    $subIds[] = substr($val, 4);
+                } elseif (str_starts_with($val, 'charge_')) {
+                    $chargeIds[] = substr($val, 7);
+                } elseif (str_starts_with($val, 'type_')) {
+                    $typeIds[] = substr($val, 5);
+                } else {
+                    // Fallback for legacy simple IDs (though frontend should send prefixes)
+                    // If it's just a number, assume it's a type ID
+                    if (is_numeric($val)) {
+                        $typeIds[] = $val;
+                    }
+                }
+            }
+
+            $query->where(function ($q) use ($typeIds, $subIds, $chargeIds) {
+                // Main Transaction Types
+                if (!empty($typeIds)) {
+                    $q->orWhere(function ($subQ) use ($typeIds) {
+                        $subQ
+                            ->whereIn('fee_type', $typeIds)
+                            ->orWhereIn('invoice_type', $typeIds)
+                            ->orWhereHas('items', function ($itemQ) use ($typeIds) {
+                                $itemQ->whereIn('fee_type', $typeIds);
+                            });
+                    });
+                }
+
+                // Subscription Categories
+                if (!empty($subIds)) {
+                    $q->orWhereHas('items', function ($itemQ) use ($subIds) {
+                        $itemQ->whereIn('subscription_type_id', $subIds);
+                    });
+                }
+
+                // Financial Charges
+                if (!empty($chargeIds)) {
+                    $q->orWhereHas('items', function ($itemQ) use ($chargeIds) {
+                        $itemQ->whereIn('financial_charge_type_id', $chargeIds);
+                    });
+                }
             });
         }
+
+        /*
+         * Removed separate 'subscription_category_id' and 'financial_charge_type_id' filters
+         * as they are now merged into the main 'type' filter.
+         */
 
         // Apply Created By Filter
         if ($request->filled('created_by') && $request->created_by !== 'all') {
@@ -258,15 +306,30 @@ class FinancialController extends Controller
                         $q->where('name', 'like', "%{$search}%");
                     })
                     ->orWhereHas('items', function ($q) use ($search) {
-                        $q->where('description', 'like', "%{$search}%");
+                        $q
+                            ->where('fee_type', 'like', "%{$search}%")  // User mentioned fee_type in items, adding this check
+                            ->orWhere('description', 'like', "%{$search}%");
                     });
             });
         }
 
         $transactions = $query->latest()->paginate($perPage)->withQueryString();
 
-        // Get all transaction types for lookup
-        $transactionTypes = \App\Models\TransactionType::pluck('name', 'id')->toArray();
+        // Get limited transaction types (IDs 1-7)
+        $mainTypeIds = [
+            AppConstants::TRANSACTION_TYPE_ID_ROOM_BOOKING,
+            AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
+            AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
+            AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
+            AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION,
+            AppConstants::TRANSACTION_TYPE_ID_FINANCIAL_CHARGE,
+            AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER
+        ];
+        $transactionTypes = \App\Models\TransactionType::whereIn('id', $mainTypeIds)->pluck('name', 'id')->toArray();
+
+        // Fetch Subtables for Filters
+        $subscriptionCategories = \App\Models\SubscriptionCategory::where('status', 'active')->select('id', 'name')->get();
+        $financialChargeTypes = \App\Models\FinancialChargeType::where('status', 'active')->select('id', 'name')->get();
 
         // Transform transactions
         $transactions->getCollection()->transform(function ($invoice) use ($transactionTypes) {
@@ -310,11 +373,15 @@ class FinancialController extends Controller
                 'per_page' => $perPage,
                 'status' => $request->input('status', 'all'),
                 'type' => $request->input('type', 'all'),
+                'subscription_category_id' => $request->input('subscription_category_id'),
+                'financial_charge_type_id' => $request->input('financial_charge_type_id'),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
             ], $filters),
             'users' => \App\Models\User::select('id', 'name')->orderBy('name')->get(),
             'transactionTypes' => $transactionTypes,
+            'subscriptionCategories' => $subscriptionCategories,
+            'financialChargeTypes' => $financialChargeTypes,
         ]);
     }
 
@@ -489,6 +556,57 @@ class FinancialController extends Controller
         }
 
         return response()->json(['success' => true]);
+    }
+
+    public function searchInvoices(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $invoices = FinancialInvoice::with(['member', 'corporateMember', 'customer'])
+            ->where('invoice_no', 'like', "%{$query}%")
+            // Or search by payer name
+            ->orWhereHas('member', function ($q) use ($query) {
+                $q->where('full_name', 'like', "%{$query}%");
+            })
+            ->orWhereHas('corporateMember', function ($q) use ($query) {
+                $q->where('full_name', 'like', "%{$query}%");
+            })
+            ->orWhereHas('customer', function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%");
+            })
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(function ($inv) {
+                $name = 'Guest';
+                $type = 'Guest';
+                if ($inv->member) {
+                    $name = $inv->member->full_name;
+                    $type = 'Member';
+                } elseif ($inv->corporateMember) {
+                    $name = $inv->corporateMember->full_name;
+                    $type = 'Corporate';
+                } elseif ($inv->customer) {
+                    $name = $inv->customer->name;
+                    $type = 'Guest';
+                } elseif (!empty($inv->data['member_name'])) {
+                    $name = $inv->data['member_name'];
+                }
+
+                return [
+                    'label' => "{$inv->invoice_no} - {$name} ($type)",
+                    'value' => $inv->invoice_no,
+                    'id' => $inv->id,
+                    'name' => $name,
+                    'type' => $type
+                ];
+            });
+
+        return response()->json($invoices);
     }
 
     private function getInvoiceNo()

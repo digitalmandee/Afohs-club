@@ -17,7 +17,7 @@ import dayjs from 'dayjs';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const Transaction = ({ transactions, filters, users, transactionTypes }) => {
+const Transaction = ({ transactions, filters, users, transactionTypes, subscriptionCategories, financialChargeTypes }) => {
     // Modal state
     // const [open, setOpen] = useState(true);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
@@ -172,7 +172,7 @@ const Transaction = ({ transactions, filters, users, transactionTypes }) => {
                     <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage all recorded financial transactions</Typography>
 
                     {/* Inline Filter */}
-                    <TransactionFilter transactionTypes={transactionTypes} users={users} />
+                    <TransactionFilter transactionTypes={transactionTypes} users={users} subscriptionCategories={subscriptionCategories} financialChargeTypes={financialChargeTypes} />
 
                     {/* Transactions Table */}
                     <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '12px' }}>

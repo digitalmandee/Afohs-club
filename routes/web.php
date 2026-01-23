@@ -630,6 +630,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('finance.transaction.member')->middleware('permission:financial.create');
         Route::post('/finance/transaction/update-status/{id}', [MemberTransactionController::class, 'updateStatus'])->name('finance.transaction.update-status');
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
+        Route::get('search-invoices', [FinancialController::class, 'searchInvoices'])->name('finance.transaction.search-invoices');
 
         // Charge Types Management (CRUD)
         Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed');

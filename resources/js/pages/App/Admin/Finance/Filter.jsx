@@ -17,7 +17,7 @@ const RoundedTextField = styled(TextField)({
     },
 });
 
-const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
+const TransactionFilter = ({ transactionTypes = [], users = [], subscriptionCategories = [], financialChargeTypes = [] }) => {
     const { props } = usePage();
     const { filters } = props;
 
@@ -32,13 +32,18 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
     const [selectedMinisters, setSelectedMinisters] = useState(filters.created_by && filters.created_by !== 'all' ? filters.created_by.split(',') : []);
     const [selectedStatus, setSelectedStatus] = useState(filters.status && filters.status !== 'all' ? filters.status.split(',') : []);
 
+    // Sub-filters (Merged into Main Type)
+    // const [subscriptionCategoryId, setSubscriptionCategoryId] = useState(filters.subscription_category_id || '');
+    // const [financialChargeTypeId, setFinancialChargeTypeId] = useState(filters.financial_charge_type_id || '');
+
     // Date Map
     const [startDate, setStartDate] = useState(filters.start_date ? dayjs(filters.start_date) : null);
     const [endDate, setEndDate] = useState(filters.end_date ? dayjs(filters.end_date) : null);
 
-    // Suggestions State
+    // Suggestion States
     const [suggestions, setSuggestions] = useState([]);
     const [membershipSuggestions, setMembershipSuggestions] = useState([]);
+    const [invoiceSuggestions, setInvoiceSuggestions] = useState([]);
 
     // Fetch Suggestions (Name)
     const fetchSuggestions = useMemo(
@@ -80,6 +85,26 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
         [],
     );
 
+    // Fetch Invoice Suggestions
+    const fetchInvoiceSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query) {
+                    setInvoiceSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(route('finance.transaction.search-invoices'), {
+                        params: { query },
+                    });
+                    setInvoiceSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching invoice suggestions:', error);
+                }
+            }, 300),
+        [],
+    );
+
     useEffect(() => {
         if (membershipNo) {
             fetchMembershipSuggestions(membershipNo);
@@ -87,14 +112,18 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
     }, [membershipNo]);
 
     useEffect(() => {
+        if (invoiceNo) {
+            fetchInvoiceSuggestions(invoiceNo);
+        }
+    }, [invoiceNo]);
+
+    useEffect(() => {
         if (searchTerm) {
-            // Only fetch name suggestions if using specific name search
-            // But here we use 'searchTerm' for generic search in controller,
-            // The UI might use it for a specific "Guest Name" autocomplete if we want.
-            // Given the requirement "Member/Guest search", we can use this.
             fetchSuggestions(searchTerm, customerType);
         }
     }, [searchTerm, customerType]);
+
+    // ... (rest of handleApply and handleReset)
 
     const handleApply = () => {
         const filterParams = {};
@@ -149,8 +178,8 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
                                             borderRadius: '16px',
                                             boxShadow: 'none !important',
                                             marginTop: '4px',
-                                            maxHeight: '180px', // Limits height after 4+ rooms
-                                            overflowY: 'auto', // Adds scroll when needed
+                                            maxHeight: '180px',
+                                            overflowY: 'auto',
                                         },
                                         '& .MuiMenuItem-root': {
                                             borderRadius: '16px',
@@ -217,32 +246,75 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
 
                     {/* Invoice No */}
                     <Grid item xs={12} md={2}>
-                        <TextField fullWidth size="small" label="Invoice No" value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        <Autocomplete
+                            freeSolo
+                            disablePortal
+                            options={invoiceSuggestions}
+                            getOptionLabel={(option) => (option.value ? String(option.value) : String(option))}
+                            inputValue={invoiceNo}
+                            onInputChange={(event, newInputValue) => setInvoiceNo(newInputValue)}
+                            renderInput={(params) => <TextField {...params} fullWidth size="small" label="Invoice No / Name" placeholder="Search Invoice..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id}>
+                                    <Box sx={{ width: '100%' }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" fontWeight="bold">
+                                                #{option.value}
+                                            </Typography>
+                                            <Chip label={option.type} size="small" sx={{ height: '20px', fontSize: '10px', backgroundColor: '#e3f2fd', color: '#0d47a1' }} />
+                                        </Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {option.name}
+                                        </Typography>
+                                    </Box>
+                                </li>
+                            )}
+                        />
                     </Grid>
 
                     {/* Fee Type Filter */}
                     <Grid item xs={12} md={3}>
-                        <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                            <Select
-                                multiple
-                                value={selectedTypes}
-                                onChange={(e) => setSelectedTypes(e.target.value)}
-                                displayEmpty
-                                renderValue={(selected) => {
-                                    if (selected.length === 0) return <Typography color="text.secondary">Fee Type</Typography>;
-                                    return <Typography noWrap>{selected.length} Selected</Typography>;
-                                }}
-                            >
-                                {Object.entries(transactionTypes).map(([id, name]) => (
-                                    <MenuItem key={id} value={String(id)}>
-                                        {name}
-                                    </MenuItem>
-                                ))}
-                                {/* Add manual static types if needed like 'room_booking' if not in transactionTypes */}
-                                <MenuItem value="room_booking">Room Booking</MenuItem>
-                                <MenuItem value="event_booking">Event Booking</MenuItem>
-                            </Select>
-                        </FormControl>
+                        <Autocomplete
+                            multiple
+                            disableCloseOnSelect
+                            limitTags={1}
+                            options={[
+                                ...Object.entries(transactionTypes)
+                                    .filter(([id]) => id !== '5' && id !== '6')
+                                    .map(([id, name]) => ({ label: name, value: `type_${id}`, group: 'Standard Types' })),
+                                ...subscriptionCategories.map((cat) => ({ label: cat.name, value: `sub_${cat.id}`, group: 'Subscriptions' })),
+                                ...financialChargeTypes.map((type) => ({ label: type.name, value: `charge_${type.id}`, group: 'Financial Charges' })),
+                            ]}
+                            groupBy={(option) => option.group}
+                            getOptionLabel={(option) => option.label}
+                            value={[
+                                ...Object.entries(transactionTypes)
+                                    .filter(([id]) => id !== '5' && id !== '6')
+                                    .map(([id, name]) => ({ label: name, value: `type_${id}`, group: 'Standard Types' })),
+                                ...subscriptionCategories.map((cat) => ({ label: cat.name, value: `sub_${cat.id}`, group: 'Subscriptions' })),
+                                ...financialChargeTypes.map((type) => ({ label: type.name, value: `charge_${type.id}`, group: 'Financial Charges' })),
+                            ].filter((opt) => selectedTypes.includes(opt.value))}
+                            onChange={(event, newValue) => {
+                                setSelectedTypes(newValue.map((v) => v.value));
+                            }}
+                            renderInput={(params) => <TextField {...params} label={selectedTypes.length === 0 ? 'Fee Type (All Selected)' : 'Fee Type'} placeholder={selectedTypes.length === 0 ? 'All Types' : 'Select...'} size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                            renderOption={(props, option, { selected }) => (
+                                <li {...props} key={option.value}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                        <Typography variant="body2" sx={{ fontWeight: selected ? 'bold' : 'normal', color: selected ? '#063455' : 'inherit' }}>
+                                            {option.label}
+                                        </Typography>
+                                    </Box>
+                                </li>
+                            )}
+                            sx={{
+                                '& .MuiAutocomplete-tag': {
+                                    backgroundColor: '#063455',
+                                    color: '#fff',
+                                    height: '24px',
+                                },
+                            }}
+                        />
                     </Grid>
 
                     {/* Created By (Cashier) */}
