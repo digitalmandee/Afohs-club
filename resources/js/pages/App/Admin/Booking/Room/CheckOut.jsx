@@ -231,7 +231,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                 </TableBody>
                                 <TableFooter>
                                     <TableRow style={{ backgroundColor: '#f0f0f0' }}>
-                                        <TableCell colSpan={6} sx={{ fontWeight: 'bold' }}>
+                                        <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>
                                             Grand Total
                                         </TableCell>
                                         {/* Nights Total */}

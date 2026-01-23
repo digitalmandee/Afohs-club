@@ -10,8 +10,6 @@ import Delete from '@mui/icons-material/Delete';
 import RestoreFromTrash from '@mui/icons-material/RestoreFromTrash';
 import { enqueueSnackbar } from 'notistack';
 import { FaEdit } from 'react-icons/fa';
-// const drawerWidthOpen = 240;
-// const drawerWidthClosed = 110;
 
 const AllRooms = ({ rooms }) => {
     // const [open, setOpen] = React.useState(true);
