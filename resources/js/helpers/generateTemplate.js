@@ -778,11 +778,15 @@ export const generateInvoiceContent = (booking, type) => {
                             : 'N/A'}
         </div>
         <!-- Removed Beds and Baths -->
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Name: </span>${booking.guest_first_name || ''} ${booking.guest_last_name || ''}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booked By: </span>${booking.booked_by || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Category: </span>${booking.category || getBookingTypeLabel(booking.booking_type)}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Name: </span>${booking.guest_first_name || ''} ${booking.guest_last_name || ''}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking Status: </span>${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>
+        ${['cancelled', 'no_show', 'refunded'].includes(booking.status) ? `
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason || 'N/A'}</div>
+        ` : ''}
     </div>
 
 </div>
@@ -828,7 +832,7 @@ export const generateInvoiceContent = (booking, type) => {
                 </td>
 
                 <td style="padding: 8px 4px; text-align: right;">
-                    ${Math.round(booking.grand_total || 0)}
+                    ${Math.round(booking.room_charge || 0)}
                 </td>
             </tr>
         </tbody>
@@ -897,7 +901,24 @@ export const generateInvoiceContent = (booking, type) => {
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">TOTAL PAYABLE AMOUNT</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${Math.round(booking.grand_total || 0)}
+                    ${(() => {
+                    const roomCharge = parseFloat(booking.room_charge || 0);
+
+                    // Calculate sums from arrays to be safe
+                    const otherChargesList = booking.other_charges || booking.otherCharges || [];
+                    const otherCharges = otherChargesList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
+
+                    const miniBarList = booking.mini_bar_items || booking.miniBarItems || [];
+                    const miniBar = miniBarList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
+
+                    const orders = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total || order.grand_total || 0), 0);
+
+                    const discount = parseFloat(booking.discount_value || 0);
+
+                    // Sum everything
+                    const total = roomCharge + otherCharges + miniBar + orders - discount;
+                    return Math.round(total);
+                })()}
                 </td>
             </tr>
 
