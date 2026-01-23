@@ -14,7 +14,7 @@ import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
 const RoomCalendar = () => {
     const schedulerRef = useRef();
     // const [open, setOpen] = useState(true);
-    const [month, setMonth] = useState(moment().format('MM'));
+    const [month, setMonth] = useState(''); // Default to 'Rolling 30 Days' view
     const [year, setYear] = useState(moment().format('YYYY'));
     const [resources, setResources] = useState([]);
     const [events, setEvents] = useState([]);
@@ -25,17 +25,14 @@ const RoomCalendar = () => {
     const [actionModalOpen, setActionModalOpen] = useState(false);
     const [selectedActionBooking, setSelectedActionBooking] = useState(null);
 
-    // Calculate dynamic days: Default to rolling 30 days from today
-    // Logic:
-    // If the selected month/year matches the current month/year, start from TODAY.
-    // If the user selects a FUTURE or PAST month, start from the 1st of that month.
+    // Determine View Mode
+    const isDefaultView = month === '';
 
-    const currentMonth = moment().format('MM');
-    const currentYear = moment().format('YYYY');
-    const isCurrentMonth = month === currentMonth && year === currentYear;
-
-    const startDate = isCurrentMonth ? moment() : moment(`${year}-${month}-01`);
-    const totalDays = 30; // Fixed 30 days view as requested
+    // Calculate dynamic days
+    // Default View: Start from Today, Show 30 days
+    // Month View: Start from 1st of selected month, Show full month
+    const startDate = isDefaultView ? moment() : moment(`${year}-${month}-01`);
+    const totalDays = isDefaultView ? 30 : startDate.daysInMonth();
 
     // Update fetchData to use 'from' and 'to'
     const fetchData = async () => {
@@ -132,7 +129,7 @@ const RoomCalendar = () => {
         };
     }, [events]);
 
-    const statusBack = (s) => ({ booked: 'purple', checked_in: 'yellow', checked_out: 'blue', confirmed: 'green', refund: 'green', cancelled: 'red' })[s] || 'gray';
+    const statusBack = (s) => ({ booked: 'purple', checked_in: 'yellow', checked_out: '#5bc0de', confirmed: 'green', refund: 'green', cancelled: 'red' })[s] || 'gray';
 
     const statusBar = (s) => ({ booked: 'white', checked_in: 'black', checked_out: 'white', confirmed: 'white', refund: 'white', cancelled: 'white' })[s] || 'black';
 
@@ -143,7 +140,7 @@ const RoomCalendar = () => {
             booked: '#6f42c1', // Purple (Waiting for Check-in)
             confirmed: '#28a745', // Green (Advance Paid)
             checked_in: '#ffc107', // Yellow
-            checked_out: '#007bff', // Blue
+            checked_out: '#5bc0de', // Light Blue (Info)
             cancelled: '#dc3545',
             refund: '#17a2b8',
         };
@@ -211,11 +208,13 @@ const RoomCalendar = () => {
                             sx={{
                                 '& .MuiOutlinedInput-root': {
                                     borderRadius: '16px',
+                                    minWidth: '120px',
                                 },
                             }}
                         >
                             <InputLabel id="month-label">Month</InputLabel>
                             <Select labelId="month-label" value={month} onChange={(e) => setMonth(e.target.value)} label="Month">
+                                <MenuItem value="">Rolling 30 Days</MenuItem>
                                 {moment.months().map((m, i) => (
                                     <MenuItem key={i} value={String(i + 1).padStart(2, '0')}>
                                         {m}

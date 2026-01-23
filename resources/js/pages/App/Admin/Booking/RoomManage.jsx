@@ -241,7 +241,7 @@ const RoomScreen = ({ bookings }) => {
                     </Row>
 
                     {/* Inline Filter */}
-                    <RoomBookingFilter />
+                    <RoomBookingFilter showStatus={false} />
 
                     {/* TODO: Updated to use filteredBookings from data.bookings */}
 
@@ -252,6 +252,7 @@ const RoomScreen = ({ bookings }) => {
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking ID</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Occupied By</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking Date</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
                                     <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
@@ -293,6 +294,7 @@ const RoomScreen = ({ bookings }) => {
                                                     </Tooltip>
                                                 </TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booked_by || '-'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
