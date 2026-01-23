@@ -5,7 +5,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { usePage, router } from '@inertiajs/react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, Tooltip, TableContainer, TableHead, TableRow, Button, TextField, InputAdornment, createTheme, ThemeProvider } from '@mui/material';
+import { Box, Typography, Paper, Table, TableBody, TableCell, Tooltip, TableContainer, TableHead, TableRow, TableFooter, Button, TextField, InputAdornment, createTheme, ThemeProvider } from '@mui/material';
 import { Search, Visibility, Edit } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { styled } from '@mui/material/styles';
@@ -127,83 +127,164 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>ID</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Date</TableCell>
+                                        {/* <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell> */}
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Membership No</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Occupied By</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Persons</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Advance Paid</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Account</TableCell>
-                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Status</TableCell>
+
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Rent</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Nights</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room Charges</TableCell>
+
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Other Charges</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Food Bill</TableCell>
+
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Advance</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Discount</TableCell>
+
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Inv Total</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Paid</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Balance</TableCell>
+
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {bookings.data && bookings.data.length > 0 ? (
-                                        bookings.data.map((booking) => (
-                                            <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell> */}
-                                                <TableCell
-                                                    sx={{
-                                                        color: '#7F7F7F',
-                                                        fontWeight: 400,
-                                                        fontSize: '14px',
-                                                        maxWidth: '120px',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap',
-                                                    }}
-                                                >
-                                                    <Tooltip title={booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''} arrow>
-                                                        <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
-                                                    </Tooltip>
-                                                </TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booked_by || '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.security_deposit || '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.advance_amount || '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
-                                                <TableCell>
-                                                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                                        <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color: '#063455' }}>
-                                                            <Visibility fontSize="small" />
-                                                        </Button>
-                                                        <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', color: '#f57c00' }}>
-                                                            <FaEdit size={18} />
-                                                        </Button>
-                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
-                                                            View
-                                                        </Button>
-                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ textTransform: 'none', color: '#063455' }}>
-                                                            Orders
-                                                        </Button>
-                                                    </Box>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
+                                        bookings.data.map((booking) => {
+                                            const roomCharge = parseFloat(booking.room_charge || 0);
+                                            const otherCharges = parseFloat(booking.other_charges_sum_amount || 0) + parseFloat(booking.mini_bar_items_sum_amount || 0);
+                                            const foodBill = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+                                            const advance = parseFloat(booking.advance_amount || 0);
+                                            const discount = parseFloat(booking.discount_value || 0);
+                                            const paidOrdersSum = (booking.orders || []).filter((o) => o.payment_status === 'paid').reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
+
+                                            const invoiceTotal = roomCharge + otherCharges + foodBill - discount;
+                                            const paid = parseFloat(booking.invoice?.paid_amount || 0) + paidOrdersSum;
+                                            const balance = Math.max(0, invoiceTotal - paid);
+
+                                            return (
+                                                <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                    <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM') : ''}</TableCell>
+                                                    {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell> */}
+
+                                                    <TableCell
+                                                        sx={{
+                                                            color: '#7F7F7F',
+                                                            fontWeight: 400,
+                                                            fontSize: '13px',
+                                                            maxWidth: '120px',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
+                                                        <Tooltip title={booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''} arrow>
+                                                            <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
+
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(booking.per_day_charge)}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.nights || 1}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(roomCharge)}</TableCell>
+
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(otherCharges)}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(foodBill)}</TableCell>
+
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(advance)}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(discount)}</TableCell>
+
+                                                    <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(invoiceTotal)}</TableCell>
+                                                    <TableCell sx={{ color: 'green', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(paid)}</TableCell>
+                                                    <TableCell sx={{ color: 'red', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(balance)}</TableCell>
+
+                                                    <TableCell>
+                                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                                            <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', color: '#063455' }}>
+                                                                <Visibility fontSize="small" />
+                                                            </Button>
+                                                            <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', color: '#f57c00' }}>
+                                                                <FaEdit size={18} />
+                                                            </Button>
+                                                            <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
+                                                                View
+                                                            </Button>
+                                                            <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ textTransform: 'none', color: '#063455' }}>
+                                                                Orders
+                                                            </Button>
+                                                        </Box>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={10} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                            <TableCell colSpan={14} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
                                                 No bookings found
                                             </TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
+                                <TableFooter>
+                                    <TableRow style={{ backgroundColor: '#f0f0f0' }}>
+                                        <TableCell colSpan={6} sx={{ fontWeight: 'bold' }}>
+                                            Grand Total
+                                        </TableCell>
+                                        {/* Nights Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + (b.nights || 1), 0))}</TableCell>
+                                        {/* Room Charges Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.room_charge || 0), 0))}</TableCell>
+                                        {/* Other Charges Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + (parseFloat(b.other_charges_sum_amount || 0) + parseFloat(b.mini_bar_items_sum_amount || 0)), 0))}</TableCell>
+                                        {/* Food Bill Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0), 0))}</TableCell>
+                                        {/* Advance Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.advance_amount || 0), 0))}</TableCell>
+                                        {/* Discount Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{Math.round(bookings.data.reduce((sum, b) => sum + parseFloat(b.discount_value || 0), 0))}</TableCell>
+                                        {/* Inv Total Total */}
+                                        <TableCell sx={{ fontWeight: 'bold' }}>
+                                            {Math.round(
+                                                bookings.data.reduce((sum, b) => {
+                                                    const rc = parseFloat(b.room_charge || 0);
+                                                    const oc = parseFloat(b.other_charges_sum_amount || 0) + parseFloat(b.mini_bar_items_sum_amount || 0);
+                                                    const fb = (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+                                                    const d = parseFloat(b.discount_value || 0);
+                                                    return sum + (rc + oc + fb - d);
+                                                }, 0),
+                                            )}
+                                        </TableCell>
+                                        {/* Paid Total */}
+                                        <TableCell sx={{ fontWeight: 'bold', color: 'green' }}>
+                                            {Math.round(
+                                                bookings.data.reduce((sum, b) => {
+                                                    const paidOrders = (b.orders || []).filter((o) => o.payment_status === 'paid').reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+                                                    return sum + parseFloat(b.invoice?.paid_amount || 0) + paidOrders;
+                                                }, 0),
+                                            )}
+                                        </TableCell>
+                                        {/* Balance Total */}
+                                        <TableCell sx={{ fontWeight: 'bold', color: 'red' }}>
+                                            {Math.round(
+                                                bookings.data.reduce((sum, b) => {
+                                                    const rc = parseFloat(b.room_charge || 0);
+                                                    const oc = parseFloat(b.other_charges_sum_amount || 0) + parseFloat(b.mini_bar_items_sum_amount || 0);
+                                                    const fb = (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+                                                    const d = parseFloat(b.discount_value || 0);
+                                                    const tot = rc + oc + fb - d;
+                                                    const paidOrdersSum = (b.orders || []).filter((o) => o.payment_status === 'paid').reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+                                                    const pd = parseFloat(b.invoice?.paid_amount || 0) + paidOrdersSum;
+                                                    return sum + Math.max(0, tot - pd);
+                                                }, 0),
+                                            )}
+                                        </TableCell>
+                                        <TableCell />
+                                    </TableRow>
+                                </TableFooter>
                             </Table>
                         </TableContainer>
 

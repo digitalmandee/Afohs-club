@@ -339,6 +339,9 @@ class RoomController extends Controller
             'corporateMember:id,membership_no,full_name',
             'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
         ])
+            ->withSum('miniBarItems', 'amount')
+            ->withSum('otherCharges', 'amount')
+            ->with('orders')
             ->where('status', 'checked_out');
 
         $this->applyFilters($query, $filters);
