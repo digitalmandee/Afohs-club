@@ -28,6 +28,17 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
     const urlParams = new URLSearchParams(url.split('?')[1] || '');
     const isCheckout = urlParams.get('type') === 'checkout';
 
+    // Get current time in HH:mm format for checkout
+    const getCurrentTime = () => {
+        const now = new Date();
+        return now.toTimeString().slice(0, 5); // Returns "HH:mm"
+    };
+
+    // Get current date in YYYY-MM-DD format for checkout
+    const getCurrentDate = () => {
+        return dayjs().format('YYYY-MM-DD');
+    };
+
     // Order History Modal
     const [showHistoryModal, setShowHistoryModal] = useState(false);
     // Action Modal State
@@ -43,8 +54,8 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
         bookingDate: booking.bookingDate,
         checkInDate: booking.checkInDate,
         checkInTime: booking.checkInTime,
-        checkOutDate: booking.checkOutDate,
-        checkOutTime: booking.checkOutTime,
+        checkOutDate: isCheckout && !booking.checkOutDate ? getCurrentDate() : booking.checkOutDate,
+        checkOutTime: isCheckout && !booking.checkOutTime ? getCurrentTime() : booking.checkOutTime,
         arrivalDetails: booking.arrivalDetails,
         departureDetails: booking.departureDetails,
         bookingType: booking.bookingType,

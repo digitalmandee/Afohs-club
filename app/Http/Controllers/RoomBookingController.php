@@ -522,7 +522,9 @@ class RoomBookingController extends Controller
             $booking->update([
                 // 'booking_date' => $data['bookingDate'] ?? null,
                 'check_in_date' => $data['checkInDate'] ?? null,
+                'check_in_time' => $data['checkInTime'] ?? $booking->check_in_time,
                 'check_out_date' => $data['checkOutDate'] ?? null,
+                'check_out_time' => $data['checkOutTime'] ?? $booking->check_out_time,
                 'arrival_details' => $data['arrivalDetails'] ?? null,
                 'departure_details' => $data['departureDetails'] ?? null,
                 'booking_type' => $data['bookingType'] ?? null,

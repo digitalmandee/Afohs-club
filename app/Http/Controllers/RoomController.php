@@ -75,6 +75,8 @@ class RoomController extends Controller
             'customer',
             'member',
             'corporateMember',
+            'miniBarItems',
+            'otherCharges',
             'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment'
         ])->findOrFail($id);
 
