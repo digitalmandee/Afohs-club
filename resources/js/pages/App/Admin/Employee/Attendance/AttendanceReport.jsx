@@ -142,7 +142,7 @@ const AttendanceReport = () => {
                                 onChange={handleMonthChange}
                                 size="small"
                                 SelectProps={{ native: true }}
-                                style={{
+                                sx={{
                                     backgroundColor: 'transparent',
                                     minWidth: '120px',
                                     '& .MuiOutlinedInput-root': {
@@ -160,10 +160,22 @@ const AttendanceReport = () => {
                                 ))}
                             </TextField>
 
-                            <TextField type="number" label="Year" value={year} onChange={handleYearChange} size="small" style={{ backgroundColor: 'transparent', width: '10%' }} />
+                            <TextField
+                                type="number"
+                                label="Year"
+                                value={year}
+                                onChange={handleYearChange}
+                                size="small"
+                                sx={{
+                                    backgroundColor: 'transparent',
+                                    width: '10%',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }} />
                             <Button
                                 variant="contained"
-                                style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', borderRadius:'16px' }}
+                                style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', borderRadius: '16px' }}
                                 onClick={() => {
                                     const url = route('employees.attendances.report.print', {
                                         month: `${year}-${month.toString().padStart(2, '0')}`,
@@ -175,7 +187,7 @@ const AttendanceReport = () => {
                             </Button>
                             <Button
                                 variant="contained"
-                                style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none', borderRadius:'16px' }}
+                                style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none', borderRadius: '16px' }}
                                 onClick={() => {
                                     const url = route('api.attendances.reports.export', {
                                         month: `${year}-${month.toString().padStart(2, '0')}`,

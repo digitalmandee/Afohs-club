@@ -741,7 +741,7 @@ export const generateInvoiceContent = (booking, type) => {
                             ? (booking.corporateMember || booking.corporate_member).mobile_number_a
                             : 'N/A'}
         </div>
-        <div class="typography-body2" style="margin-bottom: 6px;>
+        <div class="typography-body2" style="margin-bottom: 6px;">
         <span style="font-weight: bold">Booking ID: </span>
         ${booking.booking_no ? booking.booking_no : 'N/A'}
         </div>

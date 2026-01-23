@@ -65,11 +65,11 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                 <Box sx={{ bgcolor: '#f5f5f5', minHeight: '100vh', p: 3 }}>
                     {/* Header */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                             Employee Loans
                         </Typography>
-                        <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('employees.loans.create'))} 
-                        sx={{ backgroundColor: '#063455', textTransform:'none', borderRadius:'16px' }}>
+                        <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('employees.loans.create'))}
+                            sx={{ backgroundColor: '#063455', textTransform: 'none', borderRadius: '16px' }}>
                             New Loan Application
                         </Button>
                     </Box>
@@ -77,18 +77,18 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                     {/* Stats Cards */}
                     <Grid container spacing={2}>
                         <Grid item xs={6} sm={2}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor:"#063455" }}>
-                                <Typography sx={{color:'#fff', fontSize:'14px'}}>
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: "#063455" }}>
+                                <Typography sx={{ color: '#fff', fontSize: '14px' }}>
                                     Total Loans
                                 </Typography>
-                                <Typography variant="h5" sx={{ fontWeight: 600, color:'#fff' }}>
+                                <Typography variant="h5" sx={{ fontWeight: 600, color: '#fff' }}>
                                     {stats.total_loans || 0}
                                 </Typography>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor:"#063455" }}>
-                                <Typography sx={{color:'#fff', fontSize:'14px'}}>
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: "#063455" }}>
+                                <Typography sx={{ color: '#fff', fontSize: '14px' }}>
                                     Pending
                                 </Typography>
                                 <Typography variant="h5" sx={{ fontWeight: 600, color: '#fff' }}>
@@ -97,8 +97,8 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor:"#063455" }}>
-                                <Typography sx={{color:'#fff', fontSize:'14px'}}>
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: "#063455" }}>
+                                <Typography sx={{ color: '#fff', fontSize: '14px' }}>
                                     Active
                                 </Typography>
                                 <Typography variant="h5" sx={{ fontWeight: 600, color: '#fff' }}>
@@ -107,8 +107,8 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor:"#063455" }}>
-                                <Typography sx={{color:'#fff', fontSize:'14px'}}>
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: "#063455" }}>
+                                <Typography sx={{ color: '#fff', fontSize: '14px' }}>
                                     Disbursed
                                 </Typography>
                                 <Typography variant="h6" sx={{ fontWeight: 600, color: '#fff' }}>
@@ -117,7 +117,7 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, backgroundColor: '#d32f2f' }}>
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, backgroundColor: '#063455' }}>
                                 <Typography variant="body2" sx={{ color: '#fff' }}>
                                     Outstanding
                                 </Typography>
@@ -139,72 +139,100 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                     </Grid>
 
                     {/* Filters */}
-                    <Card sx={{ mb: 3, pt:5, borderRadius: '12px', bgcolor:'transparent', boxShadow:'none' }}>
+                    <Card sx={{ mb: 3, pt: 5, borderRadius: '12px', bgcolor: 'transparent', boxShadow: 'none' }}>
                         {/* <CardContent> */}
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid item xs={12} sm={2.5}>
-                                    <Autocomplete
-                                        options={employees}
-                                        getOptionLabel={(option) => `${option.name} (${option.employee_id || option.id})`}
-                                        value={employees.find((e) => e.id === selectedEmployee) || null}
-                                        onChange={(event, newValue) => {
-                                            setSelectedEmployee(newValue ? newValue.id : '');
-                                        }}
-                                        renderInput={(params) => <TextField {...params} label="Employee" size="small" />}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={2.5}>
-                                    <FormControl fullWidth size="small">
-                                        <InputLabel>Status</InputLabel>
-                                        <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
-                                            <MenuItem value="">All Status</MenuItem>
-                                            <MenuItem value="pending">Pending</MenuItem>
-                                            <MenuItem value="approved">Approved</MenuItem>
-                                            <MenuItem value="rejected">Rejected</MenuItem>
-                                            <MenuItem value="disbursed">Disbursed</MenuItem>
-                                            <MenuItem value="completed">Completed</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-                                <Grid item xs={12} sm={2}>
-                                    <DatePicker
-                                        label="From"
-                                        value={dateFrom ? dayjs(dateFrom) : null}
-                                        onChange={(newValue) => setDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                        slotProps={{
-                                            textField: {
-                                                size: 'small',
-                                                fullWidth: true,
-                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                        <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={12} sm={2.5}>
+                                <Autocomplete
+                                    options={employees}
+                                    getOptionLabel={(option) => `${option.name} (${option.employee_id || option.id})`}
+                                    value={employees.find((e) => e.id === selectedEmployee) || null}
+                                    onChange={(event, newValue) => {
+                                        setSelectedEmployee(newValue ? newValue.id : '');
+                                    }}
+                                    renderInput={(params) => <TextField {...params} label="Employee" size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+
+                                                '& fieldset': {
+                                                    borderRadius: '16px',
+                                                },
                                             },
-                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={2}>
-                                    <DatePicker
-                                        label="To"
-                                        value={dateTo ? dayjs(dateTo) : null}
-                                        onChange={(newValue) => setDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
-                                        slotProps={{
-                                            textField: {
-                                                size: 'small',
-                                                fullWidth: true,
-                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
-                                            },
-                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid item xs={12} sm={2.5} sx={{ display: 'flex', gap: 1 }}>
-                                    <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', borderRadius:'16px', px:4, textTransform:'none' }}>
-                                        Search
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ border: '1px solid #063455', color: '#063455', borderRadius:'16px', px:4, textTransform:'none' }}>
-                                        Reset
-                                    </Button>
-                                </Grid>
+                                        }} />}
+                                />
                             </Grid>
+                            <Grid item xs={12} sm={2.5}>
+                                <FormControl fullWidth size="small"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+
+                                            '& fieldset': {
+                                                borderRadius: '16px',
+                                            },
+                                        },
+                                    }}>
+                                    <InputLabel>Status</InputLabel>
+                                    <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+                                        <MenuItem value="">All Status</MenuItem>
+                                        <MenuItem value="pending">Pending</MenuItem>
+                                        <MenuItem value="approved">Approved</MenuItem>
+                                        <MenuItem value="rejected">Rejected</MenuItem>
+                                        <MenuItem value="disbursed">Disbursed</MenuItem>
+                                        <MenuItem value="completed">Completed</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                                <DatePicker
+                                    label="From"
+                                    value={dateFrom ? dayjs(dateFrom) : null}
+                                    onChange={(newValue) => setDateFrom(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: true,
+                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                        },
+                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    }}
+                                    sx={{
+                                        '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                            borderRadius: '16px !important',
+                                        },
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={2}>
+                                <DatePicker
+                                    label="To"
+                                    value={dateTo ? dayjs(dateTo) : null}
+                                    onChange={(newValue) => setDateTo(newValue ? newValue.format('YYYY-MM-DD') : '')}
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: true,
+                                            onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                        },
+                                        actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                    }}
+                                    sx={{
+                                        '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                            borderRadius: '16px !important',
+                                        },
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={2.5} sx={{ display: 'flex', gap: 1 }}>
+                                <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', borderRadius: '16px', px: 4, textTransform: 'none' }}>
+                                    Search
+                                </Button>
+                                <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ border: '1px solid #063455', color: '#063455', borderRadius: '16px', px: 4, textTransform: 'none' }}>
+                                    Reset
+                                </Button>
+                            </Grid>
+                        </Grid>
                         {/* </CardContent> */}
                     </Card>
 

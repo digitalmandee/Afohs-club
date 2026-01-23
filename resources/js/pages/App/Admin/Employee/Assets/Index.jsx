@@ -100,7 +100,7 @@ const Index = () => {
                                     backgroundColor: '#063455',
                                     textTransform: 'none',
                                     borderRadius: '16px',
-                                    height:35
+                                    height: 35
                                 }}
                             >
                                 Add New Asset
@@ -143,9 +143,15 @@ const Index = () => {
                                 ),
                             }}
                             sx={{
-                                // backgroundColor: 'white',
-                                borderRadius: '16px !important',
                                 width: '300px',
+
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+
+                                    '& fieldset': {
+                                        borderRadius: '16px',
+                                    },
+                                },
                             }}
                         />
                     </Box>
