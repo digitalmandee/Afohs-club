@@ -247,24 +247,31 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
 
                     {/* Created By (Cashier) */}
                     <Grid item xs={12} md={2}>
-                        <FormControl fullWidth size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                            <Select
-                                multiple
-                                value={selectedMinisters}
-                                onChange={(e) => setSelectedMinisters(e.target.value)}
-                                displayEmpty
-                                renderValue={(selected) => {
-                                    if (selected.length === 0) return <Typography color="text.secondary">Cashier/User</Typography>;
-                                    return <Typography noWrap>{selected.length} Selected</Typography>;
-                                }}
-                            >
-                                {users.map((user) => (
-                                    <MenuItem key={user.id} value={String(user.id)}>
-                                        {user.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                        <Autocomplete
+                            multiple
+                            limitTags={1}
+                            options={users}
+                            getOptionLabel={(option) => option.name}
+                            value={users.filter((user) => selectedMinisters.includes(String(user.id)))}
+                            onChange={(event, newValue) => {
+                                setSelectedMinisters(newValue.map((user) => String(user.id)));
+                            }}
+                            renderInput={(params) => <TextField {...params} label="Cashier/User" placeholder="Select..." size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                            renderOption={(props, option, { selected }) => (
+                                <li {...props} key={option.id}>
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                        <Typography variant="body2">{option.name}</Typography>
+                                    </Box>
+                                </li>
+                            )}
+                            sx={{
+                                '& .MuiAutocomplete-tag': {
+                                    backgroundColor: '#063455',
+                                    color: '#fff',
+                                    height: '24px',
+                                },
+                            }}
+                        />
                     </Grid>
 
                     {/* Status */}
@@ -286,7 +293,7 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
                                     );
                                 }}
                             >
-                                {['paid', 'unpaid', 'partial', 'cancelled', 'advance'].map((status) => (
+                                {['paid', 'unpaid', 'cancelled', 'advance'].map((status) => (
                                     <MenuItem key={status} value={status}>
                                         {status.charAt(0).toUpperCase() + status.slice(1)}
                                     </MenuItem>
@@ -297,12 +304,36 @@ const TransactionFilter = ({ transactionTypes = [], users = [] }) => {
 
                     {/* Start Date */}
                     <Grid item xs={12} md={2}>
-                        <DatePicker label="Start Date" format="DD-MM-YYYY" value={startDate} onChange={(newValue) => setStartDate(newValue)} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true } }} enableAccessibleFieldDOMStructure={false} />
+                        <DatePicker
+                            label="Start Date"
+                            format="DD-MM-YYYY"
+                            value={startDate}
+                            onChange={(newValue) => setStartDate(newValue)}
+                            slots={{ textField: RoundedTextField }}
+                            slotProps={{
+                                textField: { size: 'small', fullWidth: true, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                popper: { sx: { '& .MuiPaper-root': { borderRadius: '16px', boxShadow: 'none' } } },
+                            }}
+                            enableAccessibleFieldDOMStructure={false}
+                        />
                     </Grid>
 
                     {/* End Date */}
                     <Grid item xs={12} md={2}>
-                        <DatePicker label="End Date" format="DD-MM-YYYY" value={endDate} onChange={(newValue) => setEndDate(newValue)} slots={{ textField: RoundedTextField }} slotProps={{ textField: { size: 'small', fullWidth: true } }} enableAccessibleFieldDOMStructure={false} />
+                        <DatePicker
+                            label="End Date"
+                            format="DD-MM-YYYY"
+                            value={endDate}
+                            onChange={(newValue) => setEndDate(newValue)}
+                            slots={{ textField: RoundedTextField }}
+                            slotProps={{
+                                textField: { size: 'small', fullWidth: true, onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click() },
+                                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                popper: { sx: { '& .MuiPaper-root': { borderRadius: '16px', boxShadow: 'none' } } },
+                            }}
+                            enableAccessibleFieldDOMStructure={false}
+                        />
                     </Grid>
 
                     {/* Actions */}

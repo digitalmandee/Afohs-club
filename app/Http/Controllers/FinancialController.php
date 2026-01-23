@@ -160,7 +160,7 @@ class FinancialController extends Controller
 
     public function getAllTransactions(Request $request)
     {
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 40);
         $search = $request->input('search', '');
 
         // Capture new filters for passing back to view
