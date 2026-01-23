@@ -32,11 +32,13 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
+    const [globalMigrationStats, setGlobalMigrationStats] = useState({ migrated: 0, distinct_total: 0, remaining: 0 });
     const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false });
 
     useEffect(() => {
         refreshStats();
         fetchTransactionTypes();
+        // Initial fetch of pending invoices (optional, could be part of stats)
     }, []);
 
     const fetchTransactionTypes = async () => {
@@ -48,28 +50,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         }
     };
 
-    const handleTypeChange = async (e) => {
-        const typeId = e.target.value;
-        setSelectedTransactionType(typeId);
-        if (typeId) {
-            try {
-                const response = await axios.get(`/admin/data-migration/pending-invoices-count?type_id=${typeId}`);
-                setPendingTxCount(response.data.count);
-            } catch (error) {
-                console.error('Error fetching pending count:', error);
-                setPendingTxCount(0);
-            }
-        } else {
-            setPendingTxCount(0);
-        }
-    };
+    // Removed handleTypeChange as we are going global
 
     const startDeepMigration = async () => {
-        if (!selectedTransactionType) {
-            alert('Please select a transaction type');
-            return;
-        }
-
         migrationRunning.current.deep_migration = true;
         setMigrationStatus((prev) => ({
             ...prev,
@@ -81,49 +64,55 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
 
     const processDeepMigrationBatch = async (offset) => {
         try {
-            // Use 50 as batch size for deep migration since it does more work per item
             const batchSize = 50;
-            const response = await axios.post('/admin/data-migration/migrate-invoices-deep', {
+            // Use the new Global Route
+            const response = await axios.post('/admin/data-migration/migrate-invoices-global', {
                 batch_size: batchSize,
-                offset: offset,
-                old_trans_type_id: selectedTransactionType,
             });
 
-            const { migrated, success, errors, has_more } = response.data;
+            const { migrated, success, errors, has_more, remaining } = response.data;
 
-            // For Deep Migration, "stats.total" isn't fixed, we rely on pending count or just migrated count
-            // Let's use pendingTxCount as approx total
-            const total = pendingTxCount || 1000;
+            // Calculate total based on migrated + remaining
+            // We store this in a ref or state because 'total' changes as we migrate?
+            // Actually, we can just use "migrated + remaining" as the dynamic total.
+            const currentTotal = (globalMigrationStats.migrated || 0) + (remaining || 0) + (migrated || 0);
 
-            setMigrationStatus((prev) => ({
-                ...prev,
-                deep_migration: {
-                    ...prev.deep_migration,
-                    migrated: prev.deep_migration.migrated + (migrated || 0),
-                    errors: [...prev.deep_migration.errors, ...(errors || [])],
-                    progress: Math.min(100, ((prev.deep_migration.migrated + (migrated || 0)) / total) * 100),
-                },
+            setGlobalMigrationStats((prev) => ({
+                migrated: (prev.migrated || 0) + migrated,
+                remaining: remaining,
             }));
 
+            setMigrationStatus((prev) => {
+                const newMigrated = prev.deep_migration.migrated + (migrated || 0);
+                // Estimate progress: The backend returns "remaining".
+                // Progress = 100 * (Total - Remaining) / Total?
+                // Or just trust the loop.
+                // Let's use has_more to keep running, and a simple progress bar if we knew the start total.
+                // For now, let's just increment migrated count.
+                return {
+                    ...prev,
+                    deep_migration: {
+                        ...prev.deep_migration,
+                        migrated: newMigrated,
+                        errors: [...prev.deep_migration.errors, ...(errors || [])],
+                        // If we really want a progress bar, we need the initial count of unmigrated invoices.
+                        // But for now, just showing activity is improved.
+                        progress: has_more ? 50 : 100,
+                    },
+                };
+            });
+
             if (has_more && migrationRunning.current.deep_migration) {
-                // For "offset" based loop:
-                // The backend uses offset to skip. However, if backend implementation of deep migration
-                // skips checks 'if exists continue' but STILL counts them in offset, we are fine.
-                // BUT, if we want to process ALL, we usually increment offset.
-                // Wait, if I migrate 50, next time I should ask for 50 at offset 50?
-                // Yes, SQL offset works that way.
                 setTimeout(() => {
-                    processDeepMigrationBatch(offset + batchSize);
+                    processDeepMigrationBatch(0); // Offset is irrelevant now as we query "migrated IS NULL"
                 }, 500);
             } else {
                 migrationRunning.current.deep_migration = false;
                 setMigrationStatus((prev) => ({
                     ...prev,
-                    deep_migration: { ...prev.deep_migration, running: false },
+                    deep_migration: { ...prev.deep_migration, running: false, progress: 100 },
                 }));
                 refreshStats();
-                // Refresh pending count
-                handleTypeChange({ target: { value: selectedTransactionType } });
             }
         } catch (error) {
             console.error('Error in deep migration:', error);
@@ -143,6 +132,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         try {
             const response = await axios.get('/admin/data-migration/stats');
             setStats(response.data);
+            // We could also ask for "pending invoices" global count here if we updated the API
         } catch (error) {
             console.error('Error refreshing stats:', error);
         }
@@ -333,17 +323,20 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             alert('Old tables not found in database');
             return;
         }
+        // Redirect to Deep/Global migration instead of bulk
+        // But user kept the "Financial Data Migration" block.
+        // We will repurpose that block to call startDeepMigration.
 
-        // For now, let's just run transaction types, then invoices batched.
-        // We will switch this button to just run Invoices for now based on user request "run every invocei one time i want btach type".
-        // The user can run Types separately. All later steps (Receipts/Transactions) can be added later or run manually.
+        // This function was originally for the bulk generic migration.
+        // We can leave it as legacy or just point it to the same thing if needed.
+        // For now, let's allow it to run the Old Bulk if explicitly clicked, but
+        // the UI below will be changed to call startDeepMigration.
 
         migrationRunning.current.invoices = true;
         setMigrationStatus((prev) => ({
             ...prev,
             invoices: { ...prev.invoices, running: true, progress: 0, migrated: 0, errors: [] },
         }));
-
         await processMigrationBatch('invoices', 0);
     };
 
@@ -354,17 +347,16 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 families: '/admin/data-migration/migrate-families',
                 media: '/admin/data-migration/migrate-media',
                 invoices: '/admin/data-migration/migrate-invoices',
-                invoices: '/admin/data-migration/migrate-invoices',
                 customers: '/admin/data-migration/migrate-customers',
                 employees: '/admin/data-migration/migrate-employees',
                 corporate_members: '/admin/data-migration/migrate-corporate-members',
                 corporate_families: '/admin/data-migration/migrate-corporate-families',
                 qr_codes: '/admin/data-migration/generate-qr-codes',
                 corporate_qr_codes: '/admin/data-migration/generate-corporate-qr-codes',
-                financials: '/admin/data-migration/migrate-financials', // Add endpoint
+                financials: '/admin/data-migration/migrate-financials',
                 transaction_types: '/admin/data-migration/migrate-transaction-types',
                 subscription_types: '/admin/data-migration/migrate-subscription-types',
-                departments: '/admin/data-migration/migrate-departments', // Add departments endpoint
+                departments: '/admin/data-migration/migrate-departments',
             };
             const endpoint = endpointMap[type];
             const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : type === 'invoices' || type === 'financials' ? 80 : 100;
@@ -387,10 +379,10 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 corporate_families: stats.old_corporate_families_count,
                 qr_codes: stats.pending_qr_codes_count,
                 corporate_qr_codes: stats.pending_corporate_qr_codes_count,
-                financials: stats.old_financial_invoices_count, // Use invoice count as proxy for total work
-                transaction_types: 15, // Approx count
-                subscription_types: 10, // Approx count
-                departments: (stats.old_departments_count || 0) + (stats.old_subdepartments_count || 0), // Total departments + subdepartments
+                financials: stats.old_financial_invoices_count,
+                transaction_types: 15,
+                subscription_types: 10,
+                departments: (stats.old_departments_count || 0) + (stats.old_subdepartments_count || 0),
             };
 
             setMigrationStatus((prev) => ({
@@ -404,12 +396,10 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
             }));
 
             if (has_more && migrationRunning.current[type]) {
-                // Process next batch
                 setTimeout(() => {
                     processMigrationBatch(type, offset + batchSize);
-                }, 500); // Small delay to prevent overwhelming the server
+                }, 500);
             } else {
-                // Migration complete
                 migrationRunning.current[type] = false;
                 setMigrationStatus((prev) => ({
                     ...prev,
@@ -786,6 +776,31 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         </Card>
                     </Grid>
 
+                    {/* Subscription Types Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Receipt sx={{ mr: 1, color: 'secondary.main' }} />
+                                    <Typography variant="h6">Subscription Types</Typography>
+                                </Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Migrates Subscription Categories & Types from Legacy DB.
+                                    <br />
+                                    Run this before migrating Financials or Members.
+                                </Typography>
+                                {migrationStatus.subscription_types.migrated > 0 && (
+                                    <Alert severity="success" sx={{ mb: 2 }}>
+                                        Migrated {migrationStatus.subscription_types.migrated} categories/types.
+                                    </Alert>
+                                )}
+                                <Button variant="contained" color="secondary" startIcon={migrationStatus.subscription_types.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={() => startGenericMigration('subscription_types')} disabled={migrationStatus.subscription_types.running}>
+                                    {migrationStatus.subscription_types.running ? 'Migrating...' : 'Migrate Subs'}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
                     {/* Financials Migration */}
                     <Grid item xs={12} md={6}>
                         <Card>
@@ -842,49 +857,35 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         </Card>
                     </Grid>
 
-                    {/* Selective Deep Migration */}
+                    {/* Global Invoice Migration */}
                     <Grid item xs={12} md={6}>
                         <Card>
                             <CardContent>
                                 <Typography variant="h6" gutterBottom>
-                                    Selective Finance Migration
+                                    Global Invoice Migration
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    Migrates Invoices + Receipts + Transactions specifically for one Charge Type.
+                                    Migrates ALL Pending Invoices using the 'migrated' flag in Legacy DB.
+                                    <br />
+                                    This checks each invoice atomically, creates Items, Receipts & Ledger Entries.
                                 </Typography>
-
-                                <Box sx={{ mb: 3 }}>
-                                    <TextField select label="Select Transaction Type" fullWidth value={selectedTransactionType} onChange={handleTypeChange} disabled={migrationStatus.deep_migration.running} size="small">
-                                        <MenuItem value="">
-                                            <em>Select Type</em>
-                                        </MenuItem>
-                                        {transactionTypes.map((type) => (
-                                            <MenuItem key={type.id} value={type.id}>
-                                                {type.name} (ID: {type.id})
-                                            </MenuItem>
-                                        ))}
-                                    </TextField>
-                                    {selectedTransactionType && (
-                                        <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
-                                            Total Records (Old): {pendingTxCount}
-                                        </Typography>
-                                    )}
-                                </Box>
 
                                 <Box sx={{ mb: 2 }}>
                                     <Typography variant="body2" color="text.secondary">
-                                        Progress: {migrationStatus.deep_migration.progress > 0 ? migrationStatus.deep_migration.progress.toFixed(2) : 0}%
+                                        Status: {migrationStatus.deep_migration.running ? 'Running...' : 'Ready'}
                                     </Typography>
-                                    <LinearProgress variant="determinate" value={migrationStatus.deep_migration.progress} sx={{ mt: 1 }} />
+                                    {migrationStatus.deep_migration.running && <LinearProgress sx={{ mt: 1 }} />}
                                 </Box>
 
                                 <Typography variant="body2" sx={{ mb: 2 }}>
-                                    Migrated: {migrationStatus.deep_migration.migrated}
+                                    Migrated this session: {globalMigrationStats.migrated || 0}
+                                    <br />
+                                    Remaining (Approx via Batch): {globalMigrationStats.remaining || 'Unknown'}
                                 </Typography>
 
                                 <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                                    <Button variant="contained" color="secondary" startIcon={migrationStatus.deep_migration.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={startDeepMigration} disabled={migrationStatus.deep_migration.running || !selectedTransactionType}>
-                                        {migrationStatus.deep_migration.running ? 'Migrating...' : 'Start Atomic Migration'}
+                                    <Button variant="contained" color="secondary" startIcon={migrationStatus.deep_migration.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={startDeepMigration} disabled={migrationStatus.deep_migration.running}>
+                                        {migrationStatus.deep_migration.running ? 'Migrating...' : 'Start Global Migration'}
                                     </Button>
 
                                     {migrationStatus.deep_migration.running && (

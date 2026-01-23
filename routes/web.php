@@ -621,6 +621,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         // Main Finance Dashboard & Manage
         Route::get('dashboard', [FinancialController::class, 'index'])->name('finance.dashboard')->middleware('permission:financial.dashboard.view');
         Route::get('manage', [FinancialController::class, 'getAllTransactions'])->name('finance.transaction')->middleware('permission:financial.view');
+        Route::post('bulk-discount', [FinancialController::class, 'bulkApplyDiscount'])->name('finance.transaction.bulk-discount')->middleware('permission:financial.edit');
+        Route::post('bulk-overdue', [FinancialController::class, 'bulkApplyOverdue'])->name('finance.transaction.bulk-overdue')->middleware('permission:financial.edit');
 
         // Transaction Management Routes
         Route::get('create', [MemberTransactionController::class, 'create'])->name('finance.transaction.create')->middleware('permission:financial.create');
@@ -916,6 +918,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-customers', [DataMigrationController::class, 'migrateCustomers'])->name('data-migration.customers');
         Route::post('/migrate-employees', [DataMigrationController::class, 'migrateEmployees'])->name('data-migration.employees');
         Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoicesPublic'])->name('data-migration.migrate-invoices');
+        Route::post('/migrate-invoices-global', [DataMigrationController::class, 'migrateInvoicesGlobal'])->name('data-migration.migrate-invoices-global');
         Route::post('/migrate-transaction-types', [DataMigrationController::class, 'migrateTransactionTypesPublic'])->name('data-migration.migrate-transaction-types');
         Route::post('/migrate-subscription-types', [DataMigrationController::class, 'migrateSubscriptionTypesPublic'])->name('data-migration.migrate-subscription-types');
         Route::post('/migrate-departments', [DataMigrationController::class, 'migrateDepartmentsAndSubdepartments'])->name('data-migration.migrate-departments');

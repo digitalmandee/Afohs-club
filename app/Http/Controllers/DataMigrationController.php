@@ -2297,7 +2297,7 @@ class DataMigrationController extends Controller
                     $generic = TransactionType::where('name', 'Subscription Fee')->first();
                     $feeType = $generic ? $generic->id : null;
 
-                    $subTypeModel = \App\Models\SubscriptionType::where('title', $legacyDef->name)->first();
+                    $subTypeModel = \App\Models\SubscriptionCategory::where('name', $legacyDef->name)->first();
                     $subTypeId = $subTypeModel ? $subTypeModel->id : null;
                 } elseif ($legacyDef->type == 2) {
                     // --- AD-HOC / CHARGES STRATEGY ---
@@ -2718,13 +2718,13 @@ class DataMigrationController extends Controller
 
         foreach ($types as $t) {
             // Check existence
-            $exists = \App\Models\SubscriptionCategory::where('title', $t->name)->exists();
+            $exists = \App\Models\SubscriptionCategory::where('name', $t->desc)->exists();
             if (!$exists) {
                 \App\Models\SubscriptionCategory::create([
                     'subscription_type_id' => 1,
-                    'title' => $t->name,
+                    'name' => $t->desc,
                     'status' => 'active',
-                    'fee' => 0,  // We don't know the default fee from trans_types
+                    'fee' => $t->charges,
                 ]);
                 $count++;
             }
@@ -2750,6 +2750,119 @@ class DataMigrationController extends Controller
                 'migrated' => $count,
                 'total' => $total,
                 'message' => 'Subscription Types migrated successfully'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function migrateInvoicesGlobal(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 50);
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Fetch Batch of Unmigrated Invoices
+            // We use the "migrated" flag in the OLD database to track progress.
+            // "migrated" = 0 or NULL means not yet migrated.
+            $invoiceNos = DB::connection('old_afohs')
+                ->table('finance_invoices')
+                ->where(function ($q) {
+                    $q
+                        ->whereNull('migrated')
+                        ->orWhere('migrated', 0);
+                })
+                ->select('invoice_no')
+                ->distinct()
+                ->orderBy('invoice_no')  // Deterministic order
+                ->limit($batchSize)
+                ->pluck('invoice_no')
+                ->toArray();
+
+            if (empty($invoiceNos)) {
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'migrated' => 0,
+                    'has_more' => false,
+                    'message' => 'No more unmigrated invoices found.'
+                ]);
+            }
+
+            $rows = DB::connection('old_afohs')
+                ->table('finance_invoices')
+                ->whereIn('invoice_no', $invoiceNos)
+                ->get();
+
+            $grouped = $rows->groupBy('invoice_no');
+            $migratedCount = 0;
+            $errors = [];
+
+            foreach ($grouped as $invoiceNo => $groupRows) {
+                try {
+                    $first = $groupRows->first();
+                    $typeId = $first->charges_type;
+
+                    // Check if exists locally
+                    if (FinancialInvoice::where('invoice_no', $invoiceNo)->exists()) {
+                        // Already exists, just mark as migrated in legacy to fix state
+                        DB::connection('old_afohs')
+                            ->table('finance_invoices')
+                            ->where('invoice_no', $invoiceNo)
+                            ->update(['migrated' => 1]);
+                        continue;
+                    }
+
+                    // --- A. Migrate Invoice Header & Items ---
+                    $result = $this->createInvoiceFromLegacy($first, $groupRows, $typeId);
+                    $invoice = $result['invoice'];
+                    $itemsMap = $result['items_map'];
+
+                    // --- B. Migrate Transactions Per Item ---
+                    foreach ($groupRows as $legacyRow) {
+                        if (isset($itemsMap[$legacyRow->id])) {
+                            $this->migrateInvoiceTransactions($invoice, $itemsMap[$legacyRow->id], $legacyRow);
+                        }
+                    }
+
+                    // --- C. Related Receipts ---
+                    $this->migrateRelatedReceipts($invoice);
+                    $this->updateInvoiceStatus($invoice);
+
+                    // --- D. Mark as Migrated in Legacy DB ---
+                    DB::connection('old_afohs')
+                        ->table('finance_invoices')
+                        ->where('invoice_no', $invoiceNo)
+                        ->update(['migrated' => 1]);
+
+                    $migratedCount++;
+                } catch (\Exception $e) {
+                    $errors[] = ['invoice_no' => $invoiceNo, 'error' => $e->getMessage()];
+                    Log::error("Global migration error for invoice $invoiceNo: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            // Check if there are more
+            $remaining = DB::connection('old_afohs')
+                ->table('finance_invoices')
+                ->where(function ($q) {
+                    $q
+                        ->whereNull('migrated')
+                        ->orWhere('migrated', 0);
+                })
+                ->distinct('invoice_no')
+                ->count('invoice_no');
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $migratedCount,
+                'errors' => $errors,
+                'has_more' => $remaining > 0,
+                'remaining' => $remaining
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

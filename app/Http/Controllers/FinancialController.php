@@ -615,4 +615,168 @@ class FinancialController extends Controller
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
     }
+
+    public function bulkApplyDiscount(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:financial_invoices,id',
+            'amount' => 'required|numeric|min:0',
+            'is_percent' => 'boolean'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $updatedCount = 0;
+            $invoices = FinancialInvoice::whereIn('id', $request->ids)
+                ->whereIn('status', ['unpaid', 'partial'])  // Only allow modifying unpaid/partial
+                ->get();
+
+            foreach ($invoices as $invoice) {
+                // Calculate original net amount (excluding discount/overdue for safe recalc? Or just modify final total?)
+                // Strategy: We adjust the CURRENT total_price.
+                // But wait, if we apply discount multiple times, it stacks?
+                // User requirement: "one time add discount".
+                // Let's assume we are ADJUSTING the discount.
+                // Actually safer to calculate discount based on (Items Total + Tax + Overdue).
+
+                // Let's use the current 'amount' (subtotal usually) logic if possible, or total_price.
+                // If usage is simple: Total = (Old Total + Old Discount) - New Discount.
+                // But let's look at how MaintenanceFeePosting calculated it: Final = SubTotal + Tax + Overdue - Discount.
+
+                // Reverse engineering current basics:
+                // Base Amount = $invoice->total_price + $invoice->discount_amount - $invoice->tax_amount - $invoice->overdue_amount?
+                // Depending on data integrity this might be risky.
+
+                // Alternative: Just ADD to the current discount?
+                // "Apply Bulk Discount" usually implies "Give 10% off".
+                // Let's calculate the NEW discount value.
+
+                // Calculate base for discount:
+                $base = $invoice->items->sum('sub_total');  // Safer to sum items
+
+                $newDiscount = 0;
+                if ($request->is_percent) {
+                    $newDiscount = ($base * $request->amount / 100);
+                } else {
+                    $newDiscount = $request->amount;
+                }
+
+                // If we want to ADD to existing discount:
+                // $totalDiscount = $invoice->discount_amount + $newDiscount;
+                // But usually bulk action overrides or adds. Let's ADD for now?
+                // Or simply SET? "One time add" suggests adding.
+                // However, if I run it twice, do I get 20%?
+                // Let's assume SET is safer for "Apply 10% discount".
+                // If they want another 10%, they should likely do it manually or we warn.
+                // But "Bulk Discount" often means "Set Discount to X".
+
+                // Actually, let's go with ADDING to existing discount if any, to support "Extra Discount".
+                // $invoice->discount_amount += $newDiscount;
+                // $invoice->total_price -= $newDiscount;
+
+                // Update Invoice
+                $invoice->discount_amount = ($invoice->discount_amount ?? 0) + $newDiscount;
+                $invoice->total_price = $invoice->total_price - $newDiscount;
+
+                // Verify not negative
+                if ($invoice->total_price < 0) {
+                    // Cap discount? Or error?
+                    // Let's cap at 0.
+                    $diff = 0 - $invoice->total_price;  // Amount we went under
+                    $invoice->total_price = 0;
+                    $invoice->discount_amount -= $diff;  // Reduce discount to match 0
+                }
+
+                $invoice->save();
+
+                // Update Ledger Transaction (Debit)
+                // We need to find the main debit transaction for this invoice.
+                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
+                    ->where('reference_id', $invoice->id)
+                    ->where('type', 'debit')
+                    ->first();
+
+                if ($transaction) {
+                    $transaction->amount = $invoice->total_price;
+                    $transaction->save();
+                }
+
+                // If paid_amount > total_price (due to discount), status becomes Paid?
+                // Or is there a "Credit" balance?
+                // Logic:
+                $paid = $invoice->transactions()->where('type', 'credit')->sum('amount');
+                if ($paid >= $invoice->total_price) {
+                    $invoice->status = 'paid';
+                    $invoice->save();
+                }
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => "Discount applied to {$updatedCount} invoices."]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function bulkApplyOverdue(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:financial_invoices,id',
+            'amount' => 'required|numeric|min:0',
+            'is_percent' => 'boolean'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $updatedCount = 0;
+            $invoices = FinancialInvoice::whereIn('id', $request->ids)
+                ->whereIn('status', ['unpaid', 'partial'])
+                ->get();
+
+            foreach ($invoices as $invoice) {
+                // Calculate Overdue
+                $base = $invoice->items->sum('sub_total');
+
+                $newOverdue = 0;
+                if ($request->is_percent) {
+                    $newOverdue = ($base * $request->amount / 100);
+                } else {
+                    $newOverdue = $request->amount;
+                }
+
+                // Add to existing Overdue
+                // Use 'additional_charges' field if 'overdue_amount' is not consistent?
+                // Model has 'overdue_amount'.
+
+                $invoice->overdue_amount = ($invoice->overdue_amount ?? 0) + $newOverdue;
+                $invoice->total_price = $invoice->total_price + $newOverdue;
+
+                $invoice->save();
+
+                // Update Ledger
+                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
+                    ->where('reference_id', $invoice->id)
+                    ->where('type', 'debit')
+                    ->first();
+
+                if ($transaction) {
+                    $transaction->amount = $invoice->total_price;
+                    $transaction->save();
+                }
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => "Overdue charges applied to {$updatedCount} invoices."]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }
