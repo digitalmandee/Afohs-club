@@ -104,141 +104,143 @@ const RoomCheckIn = ({ bookings, filters }) => {
                     overflowX: 'hidden',
                 }}
             >
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <Box sx={{ p: 3 }}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center">
-                                <Typography
-                                    sx={{
-                                        // marginLeft: '10px',
-                                        fontWeight: 700,
-                                        color: '#063455',
-                                        fontSize: '30px',
-                                    }}
-                                >
-                                    Room CheckIn
-                                </Typography>
-                            </Box>
-                            <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Register an arriving guest into an allocated room</Typography>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <Box sx={{ p: 3 }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Typography
+                                sx={{
+                                    // marginLeft: '10px',
+                                    fontWeight: 700,
+                                    color: '#063455',
+                                    fontSize: '30px',
+                                }}
+                            >
+                                Room CheckIn
+                            </Typography>
+                        </Box>
+                        <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Register an arriving guest into an allocated room</Typography>
 
-                            {/* Filter Section */}
-                            {/* Filter Section */}
-                            <RoomBookingFilter routeName="rooms.checkin" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} />
+                        {/* Filter Section */}
+                        {/* Filter Section */}
+                        <RoomBookingFilter routeName="rooms.checkin" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} />
 
-                            <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
-                                <Table>
-                                    <TableHead>
-                                        <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff' }}>ID</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking Date</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Membership No</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Persons</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Advance Paid</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Account</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
-                                            <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
-                                        </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                        {bookings.data && bookings.data.length > 0 ? (
-                                            bookings.data.map((booking) => (
-                                                <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
-                                                    <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                    {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell> */}
-                                                    <TableCell
+                        <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', overflowX: 'auto', borderRadius: '16px' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>ID</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Booking Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Occupied By</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Persons</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Advance Paid</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Account</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {bookings.data && bookings.data.length > 0 ? (
+                                        bookings.data.map((booking) => (
+                                            <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
+                                                <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                                {/* <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</TableCell> */}
+                                                <TableCell
+                                                    sx={{
+                                                        color: '#7F7F7F',
+                                                        fontWeight: 400,
+                                                        fontSize: '14px',
+                                                        maxWidth: '120px',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis',
+                                                        whiteSpace: 'nowrap',
+                                                    }}
+                                                >
+                                                    <Tooltip title={booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''} arrow>
+                                                        <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
+                                                    </Tooltip>
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booked_by || '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.security_deposit || '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.advance_amount || '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
+                                                <TableCell>
+                                                    <Box
                                                         sx={{
-                                                            color: '#7F7F7F',
-                                                            fontWeight: 400,
-                                                            fontSize: '14px',
-                                                            maxWidth: '120px',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 1, // adds space between buttons
+                                                            flexWrap: 'nowrap', // ensures they stay on the same line
                                                         }}
                                                     >
-                                                        <Tooltip title={booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''} arrow>
-                                                            <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
-                                                        </Tooltip>
-                                                    </TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).membership_no : '-'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.security_deposit || '-'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.advance_amount || '-'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.status.replace(/_/g, ' ')}</TableCell>
-                                                    <TableCell>
-                                                        <Box
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: 1, // adds space between buttons
-                                                                flexWrap: 'nowrap', // ensures they stay on the same line
-                                                            }}
-                                                        >
-                                                            <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1, color: '#063455' }}>
-                                                                <Visibility fontSize="small" />
-                                                            </Button>
-                                                            <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', mr: 1, color: '#f57c00' }}>
-                                                                <FaEdit size={18} />
-                                                            </Button>
-                                                            <Button variant="outlined" size="small" color="#063455" style={{ marginRight: '8px', width: 100, textTransform: 'none', color: '#063455' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
-                                                                Check Out
-                                                            </Button>
-                                                            <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
-                                                                View
-                                                            </Button>
-                                                            <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ textTransform: 'none', color: '#063455' }}>
-                                                                Orders
-                                                            </Button>
-                                                        </Box>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow>
-                                                <TableCell colSpan={10} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
-                                                    No bookings found
+                                                        <Button size="small" onClick={() => handleShowDocs(booking)} title="View Documents" sx={{ minWidth: 'auto', p: '4px', mr: 1, color: '#063455' }}>
+                                                            <Visibility fontSize="small" />
+                                                        </Button>
+                                                        <Button size="small" onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id }))} title="Edit Booking" sx={{ minWidth: 'auto', mr: 1, color: '#f57c00' }}>
+                                                            <FaEdit size={18} />
+                                                        </Button>
+                                                        <Button variant="outlined" size="small" color="#063455" style={{ marginRight: '8px', width: 100, textTransform: 'none', color: '#063455' }} onClick={() => router.visit(route('rooms.edit.booking', { id: booking.id, type: 'checkout' }))}>
+                                                            Check Out
+                                                        </Button>
+                                                        {/* <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455' }}>
+                                                            View
+                                                        </Button> */}
+                                                        <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowHistory(booking)} title="Order History" sx={{ textTransform: 'none', color: '#063455' }}>
+                                                            Orders
+                                                        </Button>
+                                                    </Box>
                                                 </TableCell>
                                             </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
-                            </TableContainer>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={10} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                                No bookings found
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
 
-                            <Box display="flex" justifyContent="center" mt={2}>
-                                {bookings.links?.map((link, index) => (
-                                    <Button
-                                        key={index}
-                                        onClick={() => link.url && router.visit(link.url)}
-                                        disabled={!link.url}
-                                        variant={link.active ? 'contained' : 'outlined'}
-                                        size="small"
-                                        style={{
-                                            margin: '0 5px',
-                                            minWidth: '36px',
-                                            padding: '6px 10px',
-                                            fontWeight: link.active ? 'bold' : 'normal',
-                                            backgroundColor: link.active ? '#333' : '#fff',
-                                        }}
-                                    >
-                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                    </Button>
-                                ))}
-                            </Box>
+                        <Box display="flex" justifyContent="center" mt={2}>
+                            {bookings.links?.map((link, index) => (
+                                <Button
+                                    key={index}
+                                    onClick={() => link.url && router.visit(link.url)}
+                                    disabled={!link.url}
+                                    variant={link.active ? 'contained' : 'outlined'}
+                                    size="small"
+                                    style={{
+                                        margin: '0 5px',
+                                        minWidth: '36px',
+                                        padding: '6px 10px',
+                                        fontWeight: link.active ? 'bold' : 'normal',
+                                        backgroundColor: link.active ? '#333' : '#fff',
+                                    }}
+                                >
+                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                </Button>
+                            ))}
                         </Box>
-                    </LocalizationProvider>
+                    </Box>
+                </LocalizationProvider>
             </div>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} type="CHECK_IN" />

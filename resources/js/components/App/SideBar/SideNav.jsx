@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { router, usePage, Link } from '@inertiajs/react';
 import HomeIcon from '@mui/icons-material/Home';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import { RiSofaLine } from 'react-icons/ri';
@@ -31,8 +31,8 @@ import EmployeeProfileScreen from './Profile';
 import { Modal, Slide } from '@mui/material';
 import CategoryIcon from '@mui/icons-material/Category';
 import { MdManageHistory } from 'react-icons/md';
-import { MdRestaurantMenu } from "react-icons/md";
-import { MdMenuBook } from "react-icons/md";
+import { MdRestaurantMenu } from 'react-icons/md';
+import { MdMenuBook } from 'react-icons/md';
 import { useEffect } from 'react';
 
 const drawerWidthOpen = 240; // Set open width to 240px
@@ -420,7 +420,8 @@ export default function SideNav({ open, setOpen }) {
                                 return (
                                     <ListItem key={text} disablePadding sx={{ display: 'block', py: 0.2 }}>
                                         <ListItemButton
-                                            onClick={() => router.visit(path)}
+                                            component={Link}
+                                            href={path}
                                             sx={{
                                                 minHeight: 50,
                                                 justifyContent: open ? 'initial' : 'center',

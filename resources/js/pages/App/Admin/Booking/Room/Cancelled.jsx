@@ -123,102 +123,103 @@ const RoomCancelled = ({ bookings, filters = {} }) => {
 
     return (
         <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-            
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <Box sx={{ p: 4 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            {/* <IconButton onClick={() => router.visit(route('rooms.dashboard'))} sx={{ color: '#063455' }}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <Box sx={{ p: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        {/* <IconButton onClick={() => router.visit(route('rooms.dashboard'))} sx={{ color: '#063455' }}>
                                 <ArrowBack />
                             </IconButton> */}
-                            <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Cancelled & Refunded Room Bookings</Typography>
-                        </Box>
+                        <Typography style={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>Cancelled & Refunded Room Bookings</Typography>
+                    </Box>
 
-                        {/* Filters */}
-                        {/* Filters */}
-                        <RoomBookingFilter routeName="rooms.booking.cancelled" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} />
+                    {/* Filters */}
+                    {/* Filters */}
+                    <RoomBookingFilter routeName="rooms.booking.cancelled" showStatus={false} showRoomType={true} showDates={{ booking: true, checkIn: true, checkOut: true }} />
 
-                        <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>ID</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-In</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-Out</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Room</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Persons</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Account</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Status</TableCell>
-                                        <TableCell sx={{ color: 'white', fontWeight: 600 }}>Actions</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredBookings.length > 0 ? (
-                                        filteredBookings.map((booking) => (
-                                            <TableRow key={booking.id} hover style={{ borderBottom: '1px solid #eee' }}>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember?.full_name || 'N/A'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember ? booking.corporateMember.membership_no : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name || 'N/A'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.advance_payment : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
-                                                <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                    {booking.status.replace(/_/g, ' ')}
-                                                    {booking.status === 'refunded' &&
-                                                        (() => {
-                                                            const match = booking.notes && booking.notes.match(/Refund Processed: (\d+)/);
-                                                            return match ? <div style={{ fontSize: '11px', color: '#063455', fontWeight: 'bold' }}>Refunded: Rs {match[1]}</div> : null;
-                                                        })()}
-                                                </TableCell>
-                                                <TableCell style={{ whiteSpace: 'nowrap' }}>
-                                                    <Button size="small" variant="outlined" color="#063455" startIcon={<Restore />} onClick={() => handleOpenActionModal(booking, 'undo')} sx={{ textTransform: 'none' }}>
-                                                        Undo
+                    <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
+                        <Table>
+                            <TableHead>
+                                <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600 }}>ID</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Booking Date</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-In</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Check-Out</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Occupied By</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Room</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600 }}>Persons</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Per Day Charge</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Security Deposit</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Mode</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600, whiteSpace: 'nowrap' }}>Account</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600 }}>Status</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 600 }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredBookings.length > 0 ? (
+                                    filteredBookings.map((booking) => (
+                                        <TableRow key={booking.id} hover style={{ borderBottom: '1px solid #eee' }}>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booking_date ? dayjs(booking.booking_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : ''}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember?.full_name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.member ? booking.member.membership_no : booking.corporateMember ? booking.corporateMember.membership_no : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.booked_by || '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.room?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.persons}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.per_day_charge}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.advance_payment : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice ? booking.invoice.payment_method : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{booking.invoice && booking.invoice.data ? booking.invoice.data.payment_account : '-'}</TableCell>
+                                            <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                                                {booking.status.replace(/_/g, ' ')}
+                                                {booking.status === 'refunded' &&
+                                                    (() => {
+                                                        const match = booking.notes && booking.notes.match(/Refund Processed: (\d+)/);
+                                                        return match ? <div style={{ fontSize: '11px', color: '#063455', fontWeight: 'bold' }}>Refunded: Rs {match[1]}</div> : null;
+                                                    })()}
+                                            </TableCell>
+                                            <TableCell style={{ whiteSpace: 'nowrap' }}>
+                                                <Button size="small" variant="outlined" color="#063455" startIcon={<Restore />} onClick={() => handleOpenActionModal(booking, 'undo')} sx={{ textTransform: 'none' }}>
+                                                    Undo
+                                                </Button>
+                                                {booking.status !== 'refunded' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
+                                                    <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} sx={{ textTransform: 'none', ml: 1, color: '#d32f2f' }}>
+                                                        Refund
                                                     </Button>
-                                                    {booking.status !== 'refunded' && (booking.invoice?.paid_amount > 0 || booking.invoice?.advance_payment > 0) && (
-                                                        <Button size="small" variant="outlined" color="error" onClick={() => handleOpenActionModal(booking, 'refund')} sx={{ textTransform: 'none', ml: 1, color: '#d32f2f' }}>
-                                                            Refund
-                                                        </Button>
-                                                    )}
-                                                    <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455', ml: 1 }}>
-                                                        View
-                                                    </Button>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={10} align="center">
-                                                No cancelled bookings found
+                                                )}
+                                                <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenInvoice(booking)} sx={{ textTransform: 'none', color: '#063455', ml: 1 }}>
+                                                    View
+                                                </Button>
                                             </TableCell>
                                         </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={10} align="center">
+                                            No cancelled bookings found
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-                        {/* Pagination */}
-                        {bookings.links && (
-                            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-                                {bookings.links.map((link, index) => (
-                                    <Button key={index} variant={link.active ? 'contained' : 'outlined'} size="small" onClick={() => link.url && router.visit(link.url)} disabled={!link.url} sx={{ mx: 0.5 }}>
-                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                    </Button>
-                                ))}
-                            </Box>
-                        )}
-                    </Box>
-                </LocalizationProvider>
+                    {/* Pagination */}
+                    {bookings.links && (
+                        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                            {bookings.links.map((link, index) => (
+                                <Button key={index} variant={link.active ? 'contained' : 'outlined'} size="small" onClick={() => link.url && router.visit(link.url)} disabled={!link.url} sx={{ mx: 0.5 }}>
+                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                </Button>
+                            ))}
+                        </Box>
+                    )}
+                </Box>
+            </LocalizationProvider>
 
             <BookingInvoiceModal open={showInvoiceModal} onClose={() => setShowInvoiceModal(false)} bookingId={selectedBooking?.id} type="CANCELLATION" />
 

@@ -18,117 +18,6 @@ use Inertia\Inertia;
 
 class RoomController extends Controller
 {
-    public function index(Request $request)
-    {
-        // ✅ Collect filters
-        $filters = $request->only(['room_type', 'booking_status', 'booking_date_from', 'booking_date_to', 'check_in_from', 'check_in_to', 'check_out_from', 'check_out_to', 'search', 'customer_type', 'room_ids']);
-
-        // ✅ Base query with relations
-        $query = RoomBooking::with([
-            'room:id,name,room_type_id',
-            'customer:id,customer_no,email,name',
-            'member:id,membership_no,full_name',
-            'corporateMember:id,membership_no,full_name'
-        ])
-            ->latest()
-            ->whereNotIn('status', ['checked_in', 'checked_out']);
-
-        // ✅ Apply Date Range filter via helper
-        $this->applyFilters($query, $filters);
-
-        // ✅ Apply search filter
-
-        // ✅ Eager load invoice with polymorphic relationship
-        $query->with('invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data');
-
-        // ✅ Paginate results and keep query string
-        $bookings = $query->paginate(50)->withQueryString();
-
-        // ✅ Transform invoice data for frontend
-        $bookings->getCollection()->transform(function ($booking) {
-            $booking->invoice = $booking->invoice ? [
-                'id' => $booking->invoice->id,
-                'status' => $booking->invoice->status,
-                'paid_amount' => $booking->invoice->paid_amount,
-                'total_price' => $booking->invoice->total_price,
-                'advance_payment' => $booking->invoice->advance_payment,
-                'payment_method' => $booking->invoice->payment_method,
-                'data' => $booking->invoice->data,
-            ] : null;
-            return $booking;
-        });
-
-        // ✅ Return Inertia page with data
-        return Inertia::render('App/Admin/Booking/RoomManage', [
-            'bookings' => $bookings,
-            'filters' => $filters,  // ✅ Pass filters to front-end
-            'roomTypes' => RoomType::select('id', 'name')->get(),  // ✅ Pass room types dynamically
-            'rooms' => Room::select('id', 'name')->get(),  // ✅ Pass rooms dynamically
-        ]);
-    }
-
-    public function bookingInvoice($id)
-    {
-        // ✅ Fetch the booking with relations
-        $booking = RoomBooking::with([
-            'room',
-            'customer',
-            'member',
-            'corporateMember',
-            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment'
-        ])->findOrFail($id);
-
-        // ✅ Get invoice using polymorphic relationship
-        $invoice = $booking->invoice;
-
-        $booking->invoice = $invoice ? [
-            'id' => $invoice->id,
-            // Override status for display: If cancelled but has money, show as 'paid' (or whatever logic fits 'held money')
-            'status' => ($invoice->status === 'cancelled' && ($invoice->paid_amount > 0 || $invoice->advance_payment > 0)) ? 'paid' : $invoice->status,
-            'paid_amount' => $invoice->paid_amount,
-            'total_price' => $invoice->total_price,
-            'advance_payment' => $invoice->advance_payment,
-        ] : null;
-
-        return response()->json(['success' => true, 'booking' => $booking]);
-    }
-
-    public function dashboard()
-    {
-        // Other stats
-        $totalBookings = RoomBooking::count();
-        $totalRoomBookings = RoomBooking::count();
-
-        $rooms = Room::latest()->get();
-        $totalRooms = $rooms->count();
-
-        $conflictedRooms = RoomBooking::query()
-            ->whereIn('status', ['confirmed', 'checked_in'])
-            ->where('check_in_date', '<', now()->addDay())
-            ->where('check_out_date', '>', now())
-            ->pluck('room_id')
-            ->unique();
-
-        $availableRoomsToday = Room::query()
-            ->whereNotIn('id', $conflictedRooms)
-            ->count();
-
-        $data = [
-            'rooms' => $rooms,
-            'totalRooms' => $totalRooms,
-            'availableRoomsToday' => $availableRoomsToday,
-            'totalBookings' => $totalBookings,
-            'totalRoomBookings' => $totalRoomBookings,
-        ];
-
-        $roomTypes = RoomType::where('status', 'active')->select('id', 'name')->get();
-
-        return Inertia::render('App/Admin/Booking/Dashboard', [
-            'data' => $data,
-            'roomTypes' => $roomTypes
-        ]);
-    }
-
     public function allRooms()
     {
         $rooms = Room::latest()->get();
@@ -281,94 +170,9 @@ class RoomController extends Controller
         return redirect()->route('rooms.all')->with('success', 'Room deleted successfully.');
     }
 
-    // CheckIn Rooms
-    public function checkInIndex(Request $request)
-    {
-        $filters = $request->only(['search', 'room_type', 'booking_date_from', 'booking_date_to', 'check_in_from', 'check_in_to', 'check_out_from', 'check_out_to', 'customer_type', 'room_ids']);
-
-        $query = RoomBooking::with([
-            'room:id,name,room_type_id',
-            'customer:id,customer_no,email,name',
-            'member:id,membership_no,full_name',
-            'corporateMember:id,membership_no,full_name',
-            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
-        ])
-            ->where('status', 'checked_in');
-
-        $this->applyFilters($query, $filters);
-
-        $bookings = $query
-            ->orderBy('check_in_date', 'desc')
-            ->latest()
-            ->paginate(50)
-            ->withQueryString();
-
-        $bookings->getCollection()->transform(function ($booking) {
-            $booking->invoice = $booking->invoice ? [
-                'id' => $booking->invoice->id,
-                'status' => $booking->invoice->status,
-                'paid_amount' => $booking->invoice->paid_amount,
-                'total_price' => $booking->invoice->total_price,
-                'advance_payment' => $booking->invoice->advance_payment,
-                'payment_method' => $booking->invoice->payment_method,
-                'data' => $booking->invoice->data,
-            ] : null;
-            return $booking;
-        });
-
-        return Inertia::render('App/Admin/Booking/Room/CheckIn', [
-            'bookings' => $bookings,
-            'filters' => $filters,
-            'roomTypes' => RoomType::select('id', 'name')->get(),
-            'rooms' => Room::select('id', 'name')->get(),
-        ]);
-    }
-
-    // CheckOut Rooms
-    public function checkOutIndex(Request $request)
-    {
-        $filters = $request->only(['search', 'room_type', 'booking_date_from', 'booking_date_to', 'check_in_from', 'check_in_to', 'check_out_from', 'check_out_to', 'customer_type', 'room_ids']);
-
-        $query = RoomBooking::with([
-            'room:id,name,room_type_id',
-            'customer:id,customer_no,email,name',
-            'member:id,membership_no,full_name',
-            'corporateMember:id,membership_no,full_name',
-            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment,payment_method,data'
-        ])
-            ->where('status', 'checked_out');
-
-        $this->applyFilters($query, $filters);
-
-        $bookings = $query
-            ->orderBy('check_out_date', 'desc')
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
-
-        $bookings->getCollection()->transform(function ($booking) {
-            $booking->invoice = $booking->invoice ? [
-                'id' => $booking->invoice->id,
-                'status' => $booking->invoice->status,
-                'paid_amount' => $booking->invoice->paid_amount,
-                'total_price' => $booking->invoice->total_price,
-                'advance_payment' => $booking->invoice->advance_payment,
-                'payment_method' => $booking->invoice->payment_method,
-                'data' => $booking->invoice->data,
-            ] : null;
-            return $booking;
-        });
-
-        return Inertia::render('App/Admin/Booking/Room/CheckOut', [
-            'bookings' => $bookings,
-            'filters' => $filters,
-            'roomTypes' => RoomType::select('id', 'name')->get(),
-            'rooms' => Room::select('id', 'name')->get(),
-        ]);
-    }
-
     private function applyFilters($query, $filters)
     {
+        // Search
         // Customer Type & Search Logic
         $customerType = $filters['customer_type'] ?? 'all';
         $search = $filters['search'] ?? null;
@@ -466,30 +270,11 @@ class RoomController extends Controller
         if (!empty($filters['check_out_to'])) {
             $query->whereDate('check_out_date', '<=', $filters['check_out_to']);
         }
-    }
 
-    /**
-     * Update room booking status
-     */
-    public function updateStatus(Request $request, $id)
-    {
-        $request->validate([
-            'status' => 'required|string',
-            'cancellation_reason' => 'nullable|string',
-        ]);
-
-        $booking = RoomBooking::findOrFail($id);
-
-        $booking->status = $request->status;
-
-        if ($request->has('cancellation_reason')) {
-            $booking->cancellation_reason = $request->cancellation_reason;
+        // Booking Status
+        if (!empty($filters['booking_status'])) {
+            $query->where('status', $filters['booking_status']);
         }
-
-        return response()->json([
-            'message' => 'Booking status updated successfully',
-            'booking' => $booking
-        ]);
     }
 
     /**

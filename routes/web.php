@@ -349,17 +349,17 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('/update-booking/{id}', [RoomBookingController::class, 'update'])->name('rooms.update.booking')->middleware('permission:rooms.booking.edit');
             Route::post('/create-booking', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
 
-            Route::get('dashboard', [RoomController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
-            Route::get('manage', [RoomController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
-            Route::get('check-in', [RoomController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
-            Route::get('check-out', [RoomController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
+            Route::get('dashboard', [RoomBookingController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
+            Route::get('manage', [RoomBookingController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
+            Route::get('check-in', [RoomBookingController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
+            Route::get('check-out', [RoomBookingController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
             // Cancelled Bookings
             Route::get('booking/cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');  // Add middleware permission later if needed
             Route::put('booking/refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund');
             Route::put('booking/cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel');
             Route::put('booking/undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel');
-            Route::get('booking/invoice/{id}', [RoomController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
-            Route::put('booking/update-status/{id}', [RoomController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
+            Route::get('booking/invoice/{id}', [RoomBookingController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
+            Route::put('booking/update-status/{id}', [RoomBookingController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
 
             // Room Calendar
             Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
@@ -621,6 +621,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         // Main Finance Dashboard & Manage
         Route::get('dashboard', [FinancialController::class, 'index'])->name('finance.dashboard')->middleware('permission:financial.dashboard.view');
         Route::get('manage', [FinancialController::class, 'getAllTransactions'])->name('finance.transaction')->middleware('permission:financial.view');
+        Route::post('bulk-discount', [FinancialController::class, 'bulkApplyDiscount'])->name('finance.transaction.bulk-discount')->middleware('permission:financial.edit');
+        Route::post('bulk-overdue', [FinancialController::class, 'bulkApplyOverdue'])->name('finance.transaction.bulk-overdue')->middleware('permission:financial.edit');
 
         // Transaction Management Routes
         Route::get('create', [MemberTransactionController::class, 'create'])->name('finance.transaction.create')->middleware('permission:financial.create');
@@ -630,6 +632,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('member/{memberId}', [MemberTransactionController::class, 'getMemberTransactions'])->name('finance.transaction.member')->middleware('permission:financial.create');
         Route::post('/finance/transaction/update-status/{id}', [MemberTransactionController::class, 'updateStatus'])->name('finance.transaction.update-status');
         Route::get('transaction-types', [MemberTransactionController::class, 'getTransactionTypes'])->name('finance.transaction.types');
+        Route::get('search-invoices', [FinancialController::class, 'searchInvoices'])->name('finance.transaction.search-invoices');
 
         // Charge Types Management (CRUD)
         Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
@@ -915,6 +918,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-customers', [DataMigrationController::class, 'migrateCustomers'])->name('data-migration.customers');
         Route::post('/migrate-employees', [DataMigrationController::class, 'migrateEmployees'])->name('data-migration.employees');
         Route::post('/migrate-invoices', [DataMigrationController::class, 'migrateInvoicesPublic'])->name('data-migration.migrate-invoices');
+        Route::post('/migrate-invoices-global', [DataMigrationController::class, 'migrateInvoicesGlobal'])->name('data-migration.migrate-invoices-global');
         Route::post('/migrate-transaction-types', [DataMigrationController::class, 'migrateTransactionTypesPublic'])->name('data-migration.migrate-transaction-types');
         Route::post('/migrate-subscription-types', [DataMigrationController::class, 'migrateSubscriptionTypesPublic'])->name('data-migration.migrate-subscription-types');
         Route::post('/migrate-departments', [DataMigrationController::class, 'migrateDepartmentsAndSubdepartments'])->name('data-migration.migrate-departments');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment, Pagination, MenuItem, Select, FormControl, Tooltip, ThemeProvider, createTheme } from '@mui/material';
+import { Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment, Pagination, MenuItem, Select, FormControl, Tooltip, ThemeProvider, createTheme, Checkbox, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch } from '@mui/material';
 import { Search, FilterAlt, Payment } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -17,10 +17,9 @@ import dayjs from 'dayjs';
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
 
-const Transaction = ({ transactions, filters }) => {
+const Transaction = ({ transactions, filters, users, transactionTypes, subscriptionCategories, financialChargeTypes }) => {
     // Modal state
     // const [open, setOpen] = useState(true);
-    const [openFilterModal, setOpenFilterModal] = useState(false);
     const [openInvoiceModal, setOpenInvoiceModal] = useState(false);
     const [openMembershipInvoiceModal, setOpenMembershipInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -30,36 +29,95 @@ const Transaction = ({ transactions, filters }) => {
     const [showEventInvoiceModal, setShowEventInvoiceModal] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState(null);
     const [transactionList, setTransactionList] = useState(transactions);
-    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    // const [searchQuery, setSearchQuery] = useState(filters?.search || ''); // Search handled by Filter component now
     const [perPage, setPerPage] = useState(filters?.per_page || 10);
 
-    // Handle search with debounce
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            router.get(
-                route('finance.transaction'),
-                { search: searchQuery, per_page: perPage },
-                {
-                    preserveState: true,
-                    preserveScroll: true,
-                    replace: true,
-                },
-            );
-        }, 500);
+    // Bulk Action State
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
+    const [overdueDialogOpen, setOverdueDialogOpen] = useState(false);
+    const [bulkAmount, setBulkAmount] = useState('');
+    const [bulkIsPercent, setBulkIsPercent] = useState(false);
+    const [isSubmittingBulk, setIsSubmittingBulk] = useState(false);
 
-        return () => clearTimeout(timeoutId);
-    }, [searchQuery]);
+    // Handle Checkbox Select All
+    const handleSelectAll = (event) => {
+        if (event.target.checked) {
+            const newSelecteds = transactions.data.map((n) => n.id);
+            setSelectedIds(newSelecteds);
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    // Handle Checkbox Select Single
+    const handleSelectClick = (event, id) => {
+        const selectedIndex = selectedIds.indexOf(id);
+        let newSelected = [];
+
+        if (selectedIndex === -1) {
+            newSelected = newSelected.concat(selectedIds, id);
+        } else if (selectedIndex === 0) {
+            newSelected = newSelected.concat(selectedIds.slice(1));
+        } else if (selectedIndex === selectedIds.length - 1) {
+            newSelected = newSelected.concat(selectedIds.slice(0, -1));
+        } else if (selectedIndex > 0) {
+            newSelected = newSelected.concat(selectedIds.slice(0, selectedIndex), selectedIds.slice(selectedIndex + 1));
+        }
+        setSelectedIds(newSelected);
+    };
+
+    const isSelected = (id) => selectedIds.indexOf(id) !== -1;
+
+    // Bulk Action Handlers
+    const handleBulkSubmit = async (type) => {
+        if (!bulkAmount) {
+            enqueueSnackbar('Please enter an amount', { variant: 'error' });
+            return;
+        }
+
+        setIsSubmittingBulk(true);
+        const endpoint = type === 'discount' ? route('finance.transaction.bulk-discount') : route('finance.transaction.bulk-overdue');
+
+        try {
+            const response = await axios.post(endpoint, {
+                ids: selectedIds,
+                amount: bulkAmount,
+                is_percent: bulkIsPercent,
+            });
+
+            if (response.data.success) {
+                enqueueSnackbar(response.data.message, { variant: 'success' });
+                // Reset state
+                setSelectedIds([]);
+                setBulkAmount('');
+                setBulkIsPercent(false);
+                if (type === 'discount') setDiscountDialogOpen(false);
+                else setOverdueDialogOpen(false);
+
+                // Reload data
+                router.reload();
+            }
+        } catch (error) {
+            console.error('Bulk action error:', error);
+            enqueueSnackbar(error.response?.data?.message || 'Action failed', { variant: 'error' });
+        } finally {
+            setIsSubmittingBulk(false);
+        }
+    };
 
     // Handle per page change
     const handlePerPageChange = (event) => {
         const newPerPage = event.target.value;
         setPerPage(newPerPage);
+        // Preserve other filters when changing per_page
         router.get(
             route('finance.transaction'),
-            { search: searchQuery, per_page: newPerPage },
+            { ...filters, per_page: newPerPage },
             {
                 preserveState: true,
                 preserveScroll: true,
+                replace: true,
             },
         );
     };
@@ -140,23 +198,6 @@ const Transaction = ({ transactions, filters }) => {
         }
     };
 
-    // Handle filter application
-    const handleFilterApply = (newFilters) => {
-        router.get(
-            route('finance.transaction'),
-            {
-                search: searchQuery,
-                per_page: perPage,
-                ...newFilters,
-            },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
-    };
-
     return (
         <>
             <div className="container-fluid p-4" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', overflowX: 'hidden' }}>
@@ -165,35 +206,8 @@ const Transaction = ({ transactions, filters }) => {
                     <div className="d-flex justify-content-between align-items-center">
                         <div>
                             <Typography style={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Transactions</Typography>
-                            {/* <Typography style={{ fontSize: '14px', color: '#7F7F7F', marginTop: '5px' }}>
-                                Showing {transactions.from || 0} to {transactions.to || 0} of {transactions.total || 0} transactions
-                            </Typography> */}
                         </div>
                         <div className="d-flex align-items-center">
-                            <TextField
-                                placeholder="Search by invoice, name, membership no..."
-                                variant="outlined"
-                                size="small"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                sx={{
-                                    width: '300px',
-                                    marginRight: '10px',
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '16px',
-                                    },
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderRadius: '16px',
-                                    },
-                                }}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Search />
-                                        </InputAdornment>
-                                    ),
-                                }}
-                            />
                             <FormControl
                                 size="small"
                                 sx={{
@@ -214,23 +228,6 @@ const Transaction = ({ transactions, filters }) => {
                                     <MenuItem value={100}>100</MenuItem>
                                 </Select>
                             </FormControl>
-                            <Button
-                                variant="outlined"
-                                startIcon={<FilterAlt sx={{ color: '#fff' }} />}
-                                style={{
-                                    border: '1px solid #063455',
-                                    color: '#fff',
-                                    textTransform: 'none',
-                                    backgroundColor: '#063455',
-                                    marginRight: 10,
-                                    borderRadius: '16px',
-                                }}
-                                onClick={() => {
-                                    setOpenFilterModal(true); // open the modal
-                                }}
-                            >
-                                Filter
-                            </Button>
 
                             <Button
                                 variant="contained"
@@ -248,11 +245,47 @@ const Transaction = ({ transactions, filters }) => {
                     </div>
                     <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View and manage all recorded financial transactions</Typography>
 
+                    {/* Inline Filter */}
+                    <TransactionFilter transactionTypes={transactionTypes} users={users} subscriptionCategories={subscriptionCategories} financialChargeTypes={financialChargeTypes} />
+
+                    {/* Bulk Actions Toolbar */}
+                    {selectedIds.length > 0 && (
+                        <Paper
+                            sx={{
+                                p: 2,
+                                mt: 2,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                backgroundColor: '#e3f2fd',
+                                border: '1px solid #90caf9',
+                            }}
+                        >
+                            <Typography variant="body1" color="primary" fontWeight={600}>
+                                {selectedIds.length} invoice(s) selected
+                            </Typography>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <Button variant="contained" color="primary" onClick={() => setDiscountDialogOpen(true)}>
+                                    Apply Discount
+                                </Button>
+                                <Button variant="contained" color="error" onClick={() => setOverdueDialogOpen(true)}>
+                                    Apply Overdue
+                                </Button>
+                                <Button variant="outlined" color="primary" onClick={() => setSelectedIds([])}>
+                                    Clear Selection
+                                </Button>
+                            </div>
+                        </Paper>
+                    )}
+
                     {/* Transactions Table */}
                     <TableContainer component={Paper} style={{ boxShadow: 'none', marginTop: '2rem', overflowX: 'auto', borderRadius: '12px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox color="primary" indeterminate={selectedIds.length > 0 && selectedIds.length < transactions.data.length} checked={transactions.data.length > 0 && selectedIds.length === transactions.data.length} onChange={handleSelectAll} sx={{ color: 'white', '&.Mui-checked': { color: 'white' }, '&.MuiCheckbox-indeterminate': { color: 'white' } }} />
+                                    </TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Invoice No</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Member</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Type</TableCell>
@@ -271,6 +304,7 @@ const Transaction = ({ transactions, filters }) => {
                             <TableBody>
                                 {transactions.data && transactions.data.length > 0 ? (
                                     transactions.data.map((transaction) => {
+                                        const isItemSelected = isSelected(transaction.id);
                                         // Format fee type
                                         const formatType = (type) => {
                                             if (!type) return 'N/A';
@@ -313,7 +347,10 @@ const Transaction = ({ transactions, filters }) => {
                                         const statusStyle = getStatusBadge(transaction.status);
 
                                         return (
-                                            <TableRow key={transaction.id} style={{ borderBottom: '1px solid #eee' }}>
+                                            <TableRow key={transaction.id} style={{ borderBottom: '1px solid #eee' }} hover onClick={(event) => handleSelectClick(event, transaction.id)} role="checkbox" aria-checked={isItemSelected} selected={isItemSelected}>
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox color="primary" checked={isItemSelected} />
+                                                </TableCell>
                                                 <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '16px' }}>{transaction.invoice_no || 'N/A'}</TableCell>
                                                 <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '14px' }}>
                                                     <Tooltip title={transaction.member?.full_name || transaction.corporate_member?.full_name || transaction.customer?.name || transaction.invoiceable?.name || 'N/A'} arrow>
@@ -379,7 +416,8 @@ const Transaction = ({ transactions, filters }) => {
                                                         variant="outlined"
                                                         size="small"
                                                         style={{ textTransform: 'none', color: '#063455', borderColor: '#063455', padding: '2px 8px', fontSize: '12px' }}
-                                                        onClick={() => {
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Prevent row click
                                                             // View Logic (Keep existing modal logic if desired, or simplified)
                                                             if (transaction.invoice_type === 'room_booking' && transaction.invoiceable_id) {
                                                                 setSelectedBookingId(transaction.invoiceable_id);
@@ -400,7 +438,17 @@ const Transaction = ({ transactions, filters }) => {
                                                         View
                                                     </Button>
                                                     {(transaction.balance > 0 || transaction.status === 'unpaid' || transaction.status === 'partial') && (
-                                                        <Button size="small" variant="contained" color="success" startIcon={<Payment sx={{ fontSize: '16px' }} />} onClick={() => router.visit(route('finance.invoice.pay', transaction.id))} sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap', textTransform: 'none' }}>
+                                                        <Button
+                                                            size="small"
+                                                            variant="contained"
+                                                            color="success"
+                                                            startIcon={<Payment sx={{ fontSize: '16px' }} />}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                router.visit(route('finance.invoice.pay', transaction.id));
+                                                            }}
+                                                            sx={{ fontSize: '11px', py: 0.5, px: 1, whiteSpace: 'nowrap', textTransform: 'none' }}
+                                                        >
                                                             Pay
                                                         </Button>
                                                     )}
@@ -429,7 +477,7 @@ const Transaction = ({ transactions, filters }) => {
                         </div>
                     )}
                 </div>
-                <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} />
+                {/* <TransactionFilter open={openFilterModal} onClose={() => setOpenFilterModal(false)} currentFilters={filters} onApply={handleFilterApply} /> */}
 
                 {/* Fallback Invoice Modal (for non-member transactions) */}
                 <InvoiceSlip open={openInvoiceModal} onClose={() => setOpenInvoiceModal(false)} data={selectedInvoice} />
@@ -481,6 +529,42 @@ const Transaction = ({ transactions, filters }) => {
                     onConfirm={handleConfirmPayment}
                     submitting={submittingPayment}
                 />
+
+                {/* Bulk Discount Dialog */}
+                <Dialog open={discountDialogOpen} onClose={() => setDiscountDialogOpen(false)}>
+                    <DialogTitle>Apply Bulk Discount</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                            Apply a discount to {selectedIds.length} selected items. This will reduce the invoice amount.
+                        </Typography>
+                        <TextField autoFocus margin="dense" label="Discount Amount" type="number" fullWidth variant="outlined" value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} />
+                        <FormControlLabel control={<Switch checked={bulkIsPercent} onChange={(e) => setBulkIsPercent(e.target.checked)} />} label="Is Percentage (%)" />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setDiscountDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={() => handleBulkSubmit('discount')} variant="contained" disabled={isSubmittingBulk}>
+                            {isSubmittingBulk ? 'Applying...' : 'Apply'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Bulk Overdue Dialog */}
+                <Dialog open={overdueDialogOpen} onClose={() => setOverdueDialogOpen(false)}>
+                    <DialogTitle>Apply Bulk Overdue Charges</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                            Apply overdue charges to {selectedIds.length} selected items. This will increase the invoice amount.
+                        </Typography>
+                        <TextField autoFocus margin="dense" label="Overdue Amount" type="number" fullWidth variant="outlined" value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} />
+                        <FormControlLabel control={<Switch checked={bulkIsPercent} onChange={(e) => setBulkIsPercent(e.target.checked)} />} label="Is Percentage (%)" />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOverdueDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={() => handleBulkSubmit('overdue')} variant="contained" color="error" disabled={isSubmittingBulk}>
+                            {isSubmittingBulk ? 'Applying...' : 'Apply'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </div>
             {/* </div> */}
         </>

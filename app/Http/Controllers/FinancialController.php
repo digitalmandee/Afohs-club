@@ -160,8 +160,11 @@ class FinancialController extends Controller
 
     public function getAllTransactions(Request $request)
     {
-        $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 40);
         $search = $request->input('search', '');
+
+        // Capture new filters for passing back to view
+        $filters = $request->only(['status', 'type', 'start_date', 'end_date', 'created_by', 'customer_type', 'membership_no', 'invoice_no']);
 
         $query = FinancialInvoice::with([
             'member:id,full_name,membership_no,mobile_number_a',
@@ -172,23 +175,110 @@ class FinancialController extends Controller
             'items.transactions'  // Eager load items and their transactions
         ]);
 
-        // Apply status filter
+        // Apply Status Filter (supports comma-separated)
         if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            $statuses = explode(',', $request->status);
+            $query->whereIn('status', $statuses);
         }
 
-        // Apply type filter
+        // Apply Mixed Fee Type Filter
         if ($request->filled('type') && $request->type !== 'all') {
-            $type = $request->type;
-            // Note: 'fee_type' is now an integer ID. Filtering by string will fail if not handled.
-            // Ideally we should filter by TransactionType ID.
-            // If $request->type is a string/slug, translate it.
-            // Assuming frontend sends ID or we need to handle legacy strings?
-            // For now, keep as is assuming user filters by ID or simple fields.
-            $query->where(function ($q) use ($type) {
-                $q
-                    ->where('fee_type', $type)
-                    ->orWhere('invoice_type', $type);
+            $selectedValues = explode(',', $request->type);
+
+            $typeIds = [];
+            $subIds = [];
+            $chargeIds = [];
+
+            foreach ($selectedValues as $val) {
+                if (str_starts_with($val, 'sub_')) {
+                    $subIds[] = substr($val, 4);
+                } elseif (str_starts_with($val, 'charge_')) {
+                    $chargeIds[] = substr($val, 7);
+                } elseif (str_starts_with($val, 'type_')) {
+                    $typeIds[] = substr($val, 5);
+                } else {
+                    // Fallback for legacy simple IDs (though frontend should send prefixes)
+                    // If it's just a number, assume it's a type ID
+                    if (is_numeric($val)) {
+                        $typeIds[] = $val;
+                    }
+                }
+            }
+
+            $query->where(function ($q) use ($typeIds, $subIds, $chargeIds) {
+                // Main Transaction Types
+                if (!empty($typeIds)) {
+                    $q->orWhere(function ($subQ) use ($typeIds) {
+                        $subQ
+                            ->whereIn('fee_type', $typeIds)
+                            ->orWhereIn('invoice_type', $typeIds)
+                            ->orWhereHas('items', function ($itemQ) use ($typeIds) {
+                                $itemQ->whereIn('fee_type', $typeIds);
+                            });
+                    });
+                }
+
+                // Subscription Categories
+                if (!empty($subIds)) {
+                    $q->orWhereHas('items', function ($itemQ) use ($subIds) {
+                        $itemQ->whereIn('subscription_type_id', $subIds);
+                    });
+                }
+
+                // Financial Charges
+                if (!empty($chargeIds)) {
+                    $q->orWhereHas('items', function ($itemQ) use ($chargeIds) {
+                        $itemQ->whereIn('financial_charge_type_id', $chargeIds);
+                    });
+                }
+            });
+        }
+
+        /*
+         * Removed separate 'subscription_category_id' and 'financial_charge_type_id' filters
+         * as they are now merged into the main 'type' filter.
+         */
+
+        // Apply Created By Filter
+        if ($request->filled('created_by') && $request->created_by !== 'all') {
+            $creators = explode(',', $request->created_by);
+            $query->whereIn('created_by', $creators);
+        }
+
+        // Apply Invoice No Filter
+        if ($request->filled('invoice_no')) {
+            $query->where('invoice_no', 'like', "%{$request->invoice_no}%");
+        }
+
+        // Apply Customer Type & Membership No Filter
+        $customerType = $request->input('customer_type', 'all');
+        $membershipNo = trim($request->input('membership_no'));
+
+        if ($customerType !== 'all') {
+            if ($customerType === 'member') {
+                $query->whereNotNull('member_id');
+            } elseif ($customerType === 'corporate') {
+                $query->whereNotNull('corporate_member_id');
+            } elseif ($customerType === 'guest') {
+                $query->whereNotNull('customer_id');
+            }
+        }
+
+        if ($membershipNo) {
+            $query->where(function ($q) use ($membershipNo) {
+                $q->whereHas('member', function ($m) use ($membershipNo) {
+                    $m
+                        ->where('membership_no', 'like', "%{$membershipNo}%")
+                        ->orWhere('full_name', 'like', "%{$membershipNo}%");
+                })->orWhereHas('corporateMember', function ($cm) use ($membershipNo) {
+                    $cm
+                        ->where('membership_no', 'like', "%{$membershipNo}%")
+                        ->orWhere('full_name', 'like', "%{$membershipNo}%");
+                })->orWhereHas('customer', function ($c) use ($membershipNo) {
+                    $c
+                        ->where('customer_no', 'like', "%{$membershipNo}%")
+                        ->orWhere('name', 'like', "%{$membershipNo}%");
+                });
             });
         }
 
@@ -200,12 +290,12 @@ class FinancialController extends Controller
             $query->whereDate('issue_date', '<=', $request->end_date);
         }
 
-        // Apply search filter
+        // Apply general search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q
                     ->where('invoice_no', 'like', "%{$search}%")
-                    ->orWhere('payment_method', 'like', "%{$search}%")  // Fee type is ID, searching 'like' string won't work well
+                    ->orWhere('payment_method', 'like', "%{$search}%")
                     ->orWhere('invoice_type', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($q) use ($search) {
                         $q
@@ -215,17 +305,31 @@ class FinancialController extends Controller
                     ->orWhereHas('customer', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     })
-                    // Search in items (description)
                     ->orWhereHas('items', function ($q) use ($search) {
-                        $q->where('description', 'like', "%{$search}%");
+                        $q
+                            ->where('fee_type', 'like', "%{$search}%")  // User mentioned fee_type in items, adding this check
+                            ->orWhere('description', 'like', "%{$search}%");
                     });
             });
         }
 
         $transactions = $query->latest()->paginate($perPage)->withQueryString();
 
-        // Get all transaction types for lookup
-        $transactionTypes = \App\Models\TransactionType::pluck('name', 'id')->toArray();
+        // Get limited transaction types (IDs 1-7)
+        $mainTypeIds = [
+            AppConstants::TRANSACTION_TYPE_ID_ROOM_BOOKING,
+            AppConstants::TRANSACTION_TYPE_ID_EVENT_BOOKING,
+            AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
+            AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
+            AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION,
+            AppConstants::TRANSACTION_TYPE_ID_FINANCIAL_CHARGE,
+            AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER
+        ];
+        $transactionTypes = \App\Models\TransactionType::whereIn('id', $mainTypeIds)->pluck('name', 'id')->toArray();
+
+        // Fetch Subtables for Filters
+        $subscriptionCategories = \App\Models\SubscriptionCategory::where('status', 'active')->select('id', 'name')->get();
+        $financialChargeTypes = \App\Models\FinancialChargeType::where('status', 'active')->select('id', 'name')->get();
 
         // Transform transactions
         $transactions->getCollection()->transform(function ($invoice) use ($transactionTypes) {
@@ -264,14 +368,20 @@ class FinancialController extends Controller
 
         return Inertia::render('App/Admin/Finance/Transaction', [
             'transactions' => $transactions,
-            'filters' => [
+            'filters' => array_merge([
                 'search' => $search,
                 'per_page' => $perPage,
                 'status' => $request->input('status', 'all'),
                 'type' => $request->input('type', 'all'),
+                'subscription_category_id' => $request->input('subscription_category_id'),
+                'financial_charge_type_id' => $request->input('financial_charge_type_id'),
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
-            ],
+            ], $filters),
+            'users' => \App\Models\User::select('id', 'name')->orderBy('name')->get(),
+            'transactionTypes' => $transactionTypes,
+            'subscriptionCategories' => $subscriptionCategories,
+            'financialChargeTypes' => $financialChargeTypes,
         ]);
     }
 
@@ -448,10 +558,225 @@ class FinancialController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function searchInvoices(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $invoices = FinancialInvoice::with(['member', 'corporateMember', 'customer'])
+            ->where('invoice_no', 'like', "%{$query}%")
+            // Or search by payer name
+            ->orWhereHas('member', function ($q) use ($query) {
+                $q->where('full_name', 'like', "%{$query}%");
+            })
+            ->orWhereHas('corporateMember', function ($q) use ($query) {
+                $q->where('full_name', 'like', "%{$query}%");
+            })
+            ->orWhereHas('customer', function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%");
+            })
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(function ($inv) {
+                $name = 'Guest';
+                $type = 'Guest';
+                if ($inv->member) {
+                    $name = $inv->member->full_name;
+                    $type = 'Member';
+                } elseif ($inv->corporateMember) {
+                    $name = $inv->corporateMember->full_name;
+                    $type = 'Corporate';
+                } elseif ($inv->customer) {
+                    $name = $inv->customer->name;
+                    $type = 'Guest';
+                } elseif (!empty($inv->data['member_name'])) {
+                    $name = $inv->data['member_name'];
+                }
+
+                return [
+                    'label' => "{$inv->invoice_no} - {$name} ($type)",
+                    'value' => $inv->invoice_no,
+                    'id' => $inv->id,
+                    'name' => $name,
+                    'type' => $type
+                ];
+            });
+
+        return response()->json($invoices);
+    }
+
     private function getInvoiceNo()
     {
         $invoiceNo = FinancialInvoice::max('invoice_no');
         $invoiceNo = $invoiceNo + 1;
         return $invoiceNo;
+    }
+
+    public function bulkApplyDiscount(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:financial_invoices,id',
+            'amount' => 'required|numeric|min:0',
+            'is_percent' => 'boolean'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $updatedCount = 0;
+            $invoices = FinancialInvoice::whereIn('id', $request->ids)
+                ->whereIn('status', ['unpaid', 'partial'])  // Only allow modifying unpaid/partial
+                ->get();
+
+            foreach ($invoices as $invoice) {
+                // Calculate original net amount (excluding discount/overdue for safe recalc? Or just modify final total?)
+                // Strategy: We adjust the CURRENT total_price.
+                // But wait, if we apply discount multiple times, it stacks?
+                // User requirement: "one time add discount".
+                // Let's assume we are ADJUSTING the discount.
+                // Actually safer to calculate discount based on (Items Total + Tax + Overdue).
+
+                // Let's use the current 'amount' (subtotal usually) logic if possible, or total_price.
+                // If usage is simple: Total = (Old Total + Old Discount) - New Discount.
+                // But let's look at how MaintenanceFeePosting calculated it: Final = SubTotal + Tax + Overdue - Discount.
+
+                // Reverse engineering current basics:
+                // Base Amount = $invoice->total_price + $invoice->discount_amount - $invoice->tax_amount - $invoice->overdue_amount?
+                // Depending on data integrity this might be risky.
+
+                // Alternative: Just ADD to the current discount?
+                // "Apply Bulk Discount" usually implies "Give 10% off".
+                // Let's calculate the NEW discount value.
+
+                // Calculate base for discount:
+                $base = $invoice->items->sum('sub_total');  // Safer to sum items
+
+                $newDiscount = 0;
+                if ($request->is_percent) {
+                    $newDiscount = ($base * $request->amount / 100);
+                } else {
+                    $newDiscount = $request->amount;
+                }
+
+                // If we want to ADD to existing discount:
+                // $totalDiscount = $invoice->discount_amount + $newDiscount;
+                // But usually bulk action overrides or adds. Let's ADD for now?
+                // Or simply SET? "One time add" suggests adding.
+                // However, if I run it twice, do I get 20%?
+                // Let's assume SET is safer for "Apply 10% discount".
+                // If they want another 10%, they should likely do it manually or we warn.
+                // But "Bulk Discount" often means "Set Discount to X".
+
+                // Actually, let's go with ADDING to existing discount if any, to support "Extra Discount".
+                // $invoice->discount_amount += $newDiscount;
+                // $invoice->total_price -= $newDiscount;
+
+                // Update Invoice
+                $invoice->discount_amount = ($invoice->discount_amount ?? 0) + $newDiscount;
+                $invoice->total_price = $invoice->total_price - $newDiscount;
+
+                // Verify not negative
+                if ($invoice->total_price < 0) {
+                    // Cap discount? Or error?
+                    // Let's cap at 0.
+                    $diff = 0 - $invoice->total_price;  // Amount we went under
+                    $invoice->total_price = 0;
+                    $invoice->discount_amount -= $diff;  // Reduce discount to match 0
+                }
+
+                $invoice->save();
+
+                // Update Ledger Transaction (Debit)
+                // We need to find the main debit transaction for this invoice.
+                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
+                    ->where('reference_id', $invoice->id)
+                    ->where('type', 'debit')
+                    ->first();
+
+                if ($transaction) {
+                    $transaction->amount = $invoice->total_price;
+                    $transaction->save();
+                }
+
+                // If paid_amount > total_price (due to discount), status becomes Paid?
+                // Or is there a "Credit" balance?
+                // Logic:
+                $paid = $invoice->transactions()->where('type', 'credit')->sum('amount');
+                if ($paid >= $invoice->total_price) {
+                    $invoice->status = 'paid';
+                    $invoice->save();
+                }
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => "Discount applied to {$updatedCount} invoices."]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function bulkApplyOverdue(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:financial_invoices,id',
+            'amount' => 'required|numeric|min:0',
+            'is_percent' => 'boolean'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $updatedCount = 0;
+            $invoices = FinancialInvoice::whereIn('id', $request->ids)
+                ->whereIn('status', ['unpaid', 'partial'])
+                ->get();
+
+            foreach ($invoices as $invoice) {
+                // Calculate Overdue
+                $base = $invoice->items->sum('sub_total');
+
+                $newOverdue = 0;
+                if ($request->is_percent) {
+                    $newOverdue = ($base * $request->amount / 100);
+                } else {
+                    $newOverdue = $request->amount;
+                }
+
+                // Add to existing Overdue
+                // Use 'additional_charges' field if 'overdue_amount' is not consistent?
+                // Model has 'overdue_amount'.
+
+                $invoice->overdue_amount = ($invoice->overdue_amount ?? 0) + $newOverdue;
+                $invoice->total_price = $invoice->total_price + $newOverdue;
+
+                $invoice->save();
+
+                // Update Ledger
+                $transaction = Transaction::where('reference_type', FinancialInvoice::class)
+                    ->where('reference_id', $invoice->id)
+                    ->where('type', 'debit')
+                    ->first();
+
+                if ($transaction) {
+                    $transaction->amount = $invoice->total_price;
+                    $transaction->save();
+                }
+
+                $updatedCount++;
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => "Overdue charges applied to {$updatedCount} invoices."]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }
