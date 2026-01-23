@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, CircularProgress, Stack, Typography, Divider, Grid } from '@mui/material';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
+import dayjs from 'dayjs';
 
 const RoomCheckInModal = ({ open, onClose, bookingId }) => {
     const [loading, setLoading] = useState(false);
     const [checkInDate, setCheckInDate] = useState('');
-    const [checkInTime, setCheckInTime] = useState(new Date().toISOString().slice(11, 16));
+    const [checkInTime, setCheckInTime] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [bookingInfo, setBookingInfo] = useState(null);
 
     useEffect(() => {
         if (!bookingId || !open) return;
 
+        setCheckInTime(dayjs().format('HH:mm'));
         setLoading(true);
         axios
             .get(route('api.room.booking.show', { id: bookingId }))

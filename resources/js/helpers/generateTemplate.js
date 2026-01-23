@@ -194,38 +194,6 @@ export const generateInvoiceContent = (booking, type) => {
                         <div class="typography-h6" style="color: #333">
                         ${getBookingTypeLabel(booking.booking_type)}
                         </div>
-                        <div style="
-                            margin-top: 4px;
-                            font-size: 14px;
-                            font-weight: bold;
-                            display: ${booking.invoice?.status === 'cancelled' ? 'none' : 'block'};
-                            color: ${booking.invoice?.status === 'paid' ? '#155724' :
-                    booking.invoice?.status === 'refunded' ? '#004085' :
-                        booking.invoice?.status === 'unpaid' ? '#721c24' :
-                            '#333'
-                };
-                            background-color: ${booking.invoice?.status === 'paid' ? '#d4edda' :
-                    booking.invoice?.status === 'refunded' ? '#cce5ff' :
-                        booking.invoice?.status === 'unpaid' ? '#f8d7da' :
-                            '#e2e3e5'
-                };
-                            text-transform: uppercase;
-                            border: 1px solid ${booking.invoice?.status === 'paid' ? '#c3e6cb' :
-                    booking.invoice?.status === 'refunded' ? '#b8daff' :
-                        booking.invoice?.status === 'unpaid' ? '#f5c6cb' :
-                            '#d6d8db'
-                };
-                            padding: 2px 8px;
-                            display: inline-block;
-                            border-radius: 4px;
-                        ">
-                            ${(booking.invoice?.status || 'Unpaid').replace(/_/g, ' ')}
-                            ${booking.invoice?.status === 'refunded' ? (() => {
-                    const notes = booking.additional_notes || booking.notes;
-                    const match = notes && notes.match(/Refund Processed: (\d+)/);
-                    return match ? ` (Rs ${match[1]})` : '';
-                })() : ''}
-                        </div>
                     </div>
                 </div>
 

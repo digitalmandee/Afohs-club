@@ -139,6 +139,10 @@ export default function SideNav({ open, setOpen }) {
                                 path: route('rooms.dashboard'),
                             },
                             {
+                                text: 'Calendar',
+                                path: route('rooms.booking.calendar'),
+                            },
+                            {
                                 text: 'Room Bookings',
                                 path: route('rooms.manage'),
                             },
@@ -165,10 +169,6 @@ export default function SideNav({ open, setOpen }) {
                             {
                                 text: 'All Rooms',
                                 path: route('rooms.all'),
-                            },
-                            {
-                                text: 'Calendar',
-                                path: route('rooms.booking.calendar'),
                             },
                             {
                                 text: 'Types',

@@ -56,7 +56,7 @@ const RoomCalendar = () => {
                 booking: b,
                 resource: 'R' + b.room_number,
                 start: b.check_in_date,
-                end: moment(b.check_out_date).add(1, 'day').format('YYYY-MM-DD'),
+                end: moment(b.check_out_date).format('YYYY-MM-DD'), // Exclusive end date (stops at 00:00 of checkout day)
                 text: `#${b.booking_no}: ${b.guest_name}`,
                 backColor: statusBack(b.status),
                 barColor: statusBar(b.status),
@@ -154,6 +154,7 @@ const RoomCalendar = () => {
         startDate: startDate.format('YYYY-MM-DD'),
         days: totalDays,
         scale: 'Day',
+        cellWidth: 120, // Wider cells for better visibility
         treeEnabled: true,
         treePreventParentUsage: true,
         timeHeaders: [
