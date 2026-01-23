@@ -256,15 +256,15 @@ export const generateInvoiceContent = (booking, type) => {
         </td>
 
         <td style="border: 1px solid #000; padding: 10px;">
-        <strong>Accompanied Guest:</strong>
-        ${booking.accompanied_guest ? `${booking.accompanied_guest} (${booking.acc_relationship || 'N/A'})` : 'N/A'}
+        <strong>Booked By:</strong>
+        ${booking.booked_by || 'N/A'}
         </td>
       </tr>
 
       <!-- Row 3 -->
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Issue Date:</strong>
+          <strong>Booking Date:</strong>
           ${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}
         </td>
 
@@ -279,39 +279,23 @@ export const generateInvoiceContent = (booking, type) => {
         </td>
       </tr>
 
-      <!-- Row 4 -->
-      <tr>
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Max Capacity:</strong>
-          ${booking.room?.max_capacity || 'N/A'}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>No of Beds:</strong>
-          ${booking.room?.number_of_beds || 'N/A'}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-        <strong>No of Bathrooms:</strong>
-        ${booking.room?.number_of_bathrooms}
-        </td>
-      </tr>
+      <!-- Row 4 Removed Beds and Bathrooms -->
 
       <!-- Row 5 -->
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">
           <strong>Room Charge:</strong>
-          Rs. ${booking.room_charge || '0'}
+          Rs. ${Math.round(booking.room_charge || 0)}
         </td>
 
         <td style="border: 1px solid #000; padding: 10px;">
           <strong>Security Deposit:</strong>
-          Rs. ${booking.security_deposit || '0'}
+          Rs. ${Math.round(booking.security_deposit || 0)}
         </td>
 
         <td style="border: 1px solid #000; padding: 10px;">
         <strong>Per Day Charge:</strong>
-        Rs. ${booking.per_day_charge || '0'}
+        Rs. ${Math.round(booking.per_day_charge || 0)}
         </td>
       </tr>
 
@@ -323,35 +307,33 @@ export const generateInvoiceContent = (booking, type) => {
         </td>
 
         <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Check-Out</strong>
+          <strong>Check-Out:</strong>
           ${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}
         </td>
 
         <td style="border: 1px solid #000; padding: 10px;">
-        <strong>Guests:</strong>
-        ${booking.persons || 'N/A'}
+        <strong>Nights:</strong>
+        ${booking.check_in_date && booking.check_out_date ? dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day') : '0'}
         </td>
       </tr>
 
       <!-- Row 7 -->
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">
+            <strong>Guest Name:</strong>
+            ${booking.guest_first_name || ''} ${booking.guest_last_name || ''}
+        </td>
+        <td colspan="2" style="border: 1px solid #000; padding: 10px;">
           <strong>Booking Status:</strong>
           ${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}
         </td>
-
-        <td colspan="2" style="border: 1px solid #000; padding: 10px;">
-          <strong>Cancellation Reason:</strong>
-          ${booking.cancellation_reason}
-        </td>
-
       </tr>
 
       <!-- Row 8 - Other Charges Header -->
       ${(booking.other_charges && booking.other_charges.length > 0) || (booking.otherCharges && booking.otherCharges.length > 0) ? `
       <tr>
         <td colspan="3" style="border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold;">
-        Other Charges Details (Total: Rs. ${booking.total_other_charges || '0'})
+        Other Charges Details (Total: Rs. ${Math.round(booking.total_other_charges || 0)})
         </td>
       </tr>
       <tr>
@@ -363,7 +345,7 @@ export const generateInvoiceContent = (booking, type) => {
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">${charge.charge_type || charge.name || 'N/A'}</td>
         <td style="border: 1px solid #000; padding: 10px;">${charge.quantity || 1}</td>
-        <td style="border: 1px solid #000; padding: 10px;">Rs. ${charge.amount || charge.total || '0'}</td>
+        <td style="border: 1px solid #000; padding: 10px;">Rs. ${Math.round(charge.amount || charge.total || 0)}</td>
       </tr>
       `).join('')}
       ` : ''}
@@ -372,7 +354,7 @@ export const generateInvoiceContent = (booking, type) => {
       ${(booking.mini_bar_items && booking.mini_bar_items.length > 0) || (booking.miniBarItems && booking.miniBarItems.length > 0) ? `
       <tr>
         <td colspan="3" style="border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold;">
-        Mini Bar Items (Total: Rs. ${booking.total_mini_bar || '0'})
+        Mini Bar Items (Total: Rs. ${Math.round(booking.total_mini_bar || 0)})
         </td>
       </tr>
       <tr>
@@ -384,7 +366,7 @@ export const generateInvoiceContent = (booking, type) => {
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">${item.item_name || item.name || 'N/A'}</td>
         <td style="border: 1px solid #000; padding: 10px;">${item.quantity || 1}</td>
-        <td style="border: 1px solid #000; padding: 10px;">Rs. ${item.amount || item.total || '0'}</td>
+        <td style="border: 1px solid #000; padding: 10px;">Rs. ${Math.round(item.amount || item.total || 0)}</td>
       </tr>
       `).join('')}
       ` : ''}
@@ -393,7 +375,7 @@ export const generateInvoiceContent = (booking, type) => {
       ${booking.discount_value && parseFloat(booking.discount_value) > 0 ? `
       <tr>
         <td colspan="2" style="border: 1px solid #000; padding: 10px;"><strong>Discount (${booking.discount_type || 'Fixed'}):</strong></td>
-        <td style="border: 1px solid #000; padding: 10px;">Rs. ${booking.discount_value}</td>
+        <td style="border: 1px solid #000; padding: 10px;">Rs. ${Math.round(booking.discount_value)}</td>
       </tr>
       ` : ''}
 
@@ -401,7 +383,7 @@ export const generateInvoiceContent = (booking, type) => {
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">
           <strong>Total Payable Amount:   </strong>
-           ${booking.grand_total || '0'}
+           Rs. ${Math.round(booking.grand_total || 0)}
         </td>
 
         <td colspan="2" style="border: 1px solid #000; padding: 10px;">
@@ -415,7 +397,7 @@ export const generateInvoiceContent = (booking, type) => {
                             paid += parseInt(match[1]);
                         }
                     }
-                    return paid.toFixed(2);
+                    return Math.round(paid);
                 })()}
 </td>
       </tr>
@@ -427,7 +409,7 @@ export const generateInvoiceContent = (booking, type) => {
         Rs. ${(() => {
                     const total = parseFloat(booking.grand_total || 0);
                     const paid = parseFloat(booking.invoice?.paid_amount || 0);
-                    return Math.max(0, total - paid).toFixed(2);
+                    return Math.round(Math.max(0, total - paid));
                 })()}
     </td>
       </tr>
@@ -795,11 +777,10 @@ export const generateInvoiceContent = (booking, type) => {
                             ? (booking.corporateMember || booking.corporate_member).personal_email
                             : 'N/A'}
         </div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Number of Beds: </span>${booking.room?.number_of_beds || 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">No of Bathrooms: </span>${booking.room?.number_of_bathrooms}</div>
+        <!-- Removed Beds and Baths -->
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guests: </span>${booking.persons || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Name: </span>${booking.guest_first_name || ''} ${booking.guest_last_name || ''}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking Status: </span>${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason}</div>
     </div>
@@ -827,7 +808,7 @@ export const generateInvoiceContent = (booking, type) => {
                 </td>
 
                 <td style="padding: 8px 4px;">
-                    ${booking.per_day_charge || 0}
+                    ${Math.round(booking.per_day_charge || 0)}
                 </td>
 
                 <td style="padding: 8px 4px;">
@@ -847,7 +828,7 @@ export const generateInvoiceContent = (booking, type) => {
                 </td>
 
                 <td style="padding: 8px 4px; text-align: right;">
-                    ${booking.grand_total || 0}
+                    ${Math.round(booking.grand_total || 0)}
                 </td>
             </tr>
         </tbody>
@@ -868,7 +849,7 @@ export const generateInvoiceContent = (booking, type) => {
                     ${(() => {
                     const orders = booking.orders || [];
                     const total = orders.reduce((sum, order) => sum + parseFloat(order.total || order.grand_total || 0), 0);
-                    return total || 0;
+                    return Math.round(total || 0);
                 })()}
                 </td>
             </tr>
@@ -887,7 +868,7 @@ export const generateInvoiceContent = (booking, type) => {
         <tbody>
             <tr>
                 <td style="padding: 8px 4px;">
-                    Other Charges:   ${booking.total_other_charges || 0}
+                    Other Charges:   ${Math.round(booking.total_other_charges || 0)}
                 </td>
             </tr>
             <tr style="border-bottom: 1px solid #ddd;">
@@ -895,7 +876,7 @@ export const generateInvoiceContent = (booking, type) => {
             </tr>
             <tr>
                 <td style="padding: 8px 4px;">
-                    Mini Bar:   ${booking.total_mini_bar || 0}
+                    Mini Bar:   ${Math.round(booking.total_mini_bar || 0)}
                 </td>
             </tr>
         </tbody>
@@ -916,32 +897,32 @@ export const generateInvoiceContent = (booking, type) => {
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">TOTAL PAYABLE AMOUNT</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${booking.grand_total || 0}
+                    ${Math.round(booking.grand_total || 0)}
                 </td>
             </tr>
 
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">ADVANCE</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${booking.advance_amount || booking.invoice?.advance_payment || 0}
+                    ${Math.round(booking.advance_amount || booking.invoice?.advance_payment || 0)}
                 </td>
             </tr>
 
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">TOTAL PAID AMOUNT</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${booking.invoice?.paid_amount || 0}
+                    ${Math.round(booking.invoice?.paid_amount || 0)}
                 </td>
             </tr>
 
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">REMAINING BALANCE</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${Math.max(
+                    ${Math.round(Math.max(
                     0,
                     (booking.grand_total || 0) -
                     (booking.invoice?.paid_amount || 0)
-                )}
+                ))}
                 </td>
             </tr>
         </table>
