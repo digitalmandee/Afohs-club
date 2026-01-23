@@ -1,4 +1,4 @@
-import { router, usePage, useRemember } from '@inertiajs/react';
+import { router, usePage, useRemember, Link } from '@inertiajs/react';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import HomeIcon from '@mui/icons-material/Home';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
@@ -816,13 +816,13 @@ export default function SideNav({ open, setOpen }) {
                                             }}
                                         >
                                             <ListItemButton
+                                                component={children || text === 'Logout' ? 'div' : Link}
+                                                href={!children && text !== 'Logout' ? path : undefined}
                                                 onClick={() => {
                                                     if (text === 'Logout') {
                                                         router.post(route('logout'));
                                                     } else if (children) {
                                                         toggleDropdown(text);
-                                                    } else {
-                                                        router.visit(path);
                                                     }
                                                 }}
                                                 onMouseEnter={!open && children ? (e) => handleDropdownMouseEnter(text, e) : undefined}
@@ -941,11 +941,11 @@ export default function SideNav({ open, setOpen }) {
                                                                         <>
                                                                             <ListItem disablePadding sx={{ pl: 2, pr: 2 }}>
                                                                                 <ListItemButton
+                                                                                    component={hasNested ? 'div' : Link}
+                                                                                    href={!hasNested ? child.path : undefined}
                                                                                     onClick={() => {
                                                                                         if (hasNested) {
                                                                                             toggleDropdown(child.text);
-                                                                                        } else {
-                                                                                            router.visit(child.path);
                                                                                         }
                                                                                     }}
                                                                                     sx={{
@@ -1009,7 +1009,8 @@ export default function SideNav({ open, setOpen }) {
                                                                                                 return (
                                                                                                     <ListItem key={sub.text} disablePadding sx={{ py: 0.1, pl: 2, pr: 1 }} className="connector">
                                                                                                         <ListItemButton
-                                                                                                            onClick={() => router.visit(sub.path)}
+                                                                                                            component={Link}
+                                                                                                            href={sub.path}
                                                                                                             sx={{
                                                                                                                 minHeight: 16,
                                                                                                                 borderRadius: '12px',
@@ -1105,8 +1106,10 @@ function HoverMenuList({ items, level }) {
                     <Box key={item.text} onMouseEnter={(e) => hasSub && handleMouseEnter(item.text, e)} onMouseLeave={() => hasSub && handleMouseLeave()}>
                         <ListItem disablePadding sx={{ pl: level * 1 }}>
                             <ListItemButton
+                                component={!hasSub ? Link : 'div'}
+                                href={!hasSub ? item.path : undefined}
                                 onClick={() => {
-                                    if (!hasSub) router.visit(item.path);
+                                    // if (!hasSub) router.visit(item.path);
                                 }}
                                 sx={{
                                     minHeight: 40,
