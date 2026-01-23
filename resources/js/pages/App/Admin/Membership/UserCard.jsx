@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Avatar, Button, Grid, styled, Drawer } from '@mui/material';
+import { Box, Card, CardContent, Divider, Typography, Avatar, Button, Grid, styled, Drawer } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
 import DownloadIcon from '@mui/icons-material/Download';
 import html2canvas from 'html2canvas';
@@ -119,7 +119,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .logo {
-        margin-top:-20px;
+        margin-top:-10px;
             height: 100px;
         }
 
@@ -165,7 +165,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label-valid-until {
-            margin-top: 10px;
+            margin-top: 7px;
             font-size: 12px;
             font-weight: 700;
             color: #000;
@@ -180,6 +180,23 @@ export const handlePrintMembershipCard = (member) => {
             font-weight: 600;
             text-transform: Uppercase;
         }
+
+        .footer.supplementary {
+    background-color: transparent;
+    color: black;
+    position: relative;
+}
+
+/* Horizontal line above footer */
+.footer.supplementary::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 5px;        /* margin from left */
+    right: 5px;       /* margin from right */
+    height: 2px;
+    background-color: #063455;
+}
 
         @media print {
             body {
@@ -223,9 +240,13 @@ export const handlePrintMembershipCard = (member) => {
             </div>
         </div>
 
-        <div class="footer">
-            ${member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
-        </div>
+        <div class="footer ${member?.parent_id ? 'supplementary' : ''}">
+    ${member?.parent_id
+            ? 'Supplementary Member'
+            : member?.corporate_company_id || member?.is_corporate
+                ? 'Corporate Member'
+                : 'Primary Member'}
+</div>
     </div>
 </body>
 </html>
@@ -284,10 +305,10 @@ export const MembershipCardContent = ({ member, id }) => {
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
                                 <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 150 }} />
                             </Box>
-                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 7, pl: 10, whiteSpace: 'nowrap', color:'#000' }}>
+                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 7, pl: 10, whiteSpace: 'nowrap', color: '#000' }}>
                                 Membership No
                             </Typography>
-                            <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{ml:7}}>
+                            <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{ ml: 7 }}>
                                 {member?.membership_no || 'N/A'}
                             </Typography>
                         </Box>
@@ -317,9 +338,9 @@ export const MembershipCardContent = ({ member, id }) => {
                                         height: '100%',
                                     }}
                                 /> */}
-                                <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: "100%", height: "100%"}} />
+                                <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: "100%", height: "100%" }} />
                             </Box>
-                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 0.4, color:'#000' }}>
+                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 0.4, color: '#000' }}>
                                 Valid Until
                             </Typography>
                             <Typography variant="subtitle1" fontWeight="bold" color="#000">
@@ -329,11 +350,44 @@ export const MembershipCardContent = ({ member, id }) => {
                     </Grid>
                 </Grid>
             </CardContent>
-            <MembershipFooter>
-                <Typography variant="h6" fontWeight="medium" sx={{textTransform:'uppercase'}}>
+            {/* <MembershipFooter>
+                <Typography variant="h6" fontWeight="medium" sx={{ textTransform: 'uppercase' }}>
                     {member?.parent_id ? 'Supplementary Member' : member?.corporate_company_id || member?.is_corporate ? 'Corporate Member' : 'Primary Member'}
                 </Typography>
-            </MembershipFooter>
+            </MembershipFooter> */}
+            <>
+                {member?.parent_id && (
+                    <Divider
+                        sx={{
+                            borderColor: '#063455',      // 👈 IMPORTANT
+                            borderBottomWidth: '5px',
+                            opacity: 1,    // thickness
+                            width: 'calc(100% - 20px)',  // 5px left + right
+                            mx: 'auto',
+                            mb: 1,
+                        }}
+                    />
+                )}
+
+                <MembershipFooter
+                    sx={{
+                        backgroundColor: member?.parent_id ? 'transparent' : '#063455',
+                        color: member?.parent_id ? 'black' : 'white',
+                    }}
+                >
+                    <Typography
+                        variant="h6"
+                        fontWeight="small"
+                        sx={{ textTransform: 'uppercase' }}
+                    >
+                        {member?.parent_id
+                            ? 'Supplementary Member'
+                            : member?.corporate_company_id || member?.is_corporate
+                                ? 'Corporate Member'
+                                : 'Primary Member'}
+                    </Typography>
+                </MembershipFooter>
+            </>
         </MembershipCard>
     );
 };
