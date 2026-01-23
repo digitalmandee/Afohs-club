@@ -173,9 +173,9 @@ export default function SalarySheet() {
             {/* <Head title="Salary Sheet" /> */}
             <div style={{ backgroundColor: '#f5f5f5', height: '100vh' }}>
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <Box sx={{p:2}}>
+                    <Box sx={{ p: 2 }}>
                         <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-                            <Typography sx={{fontWeight:700, fontSize:'30px', color:'#063455'}}>
+                            <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                                 Salary Sheet Editor
                             </Typography>
                             <IconButton onClick={() => setHelpOpen(true)} color="primary">
@@ -237,7 +237,7 @@ export default function SalarySheet() {
                         </Dialog>
 
                         {/* Filters */}
-                        <Card sx={{ mb: 3, px:0, boxShadow:'none', bgcolor:'transparent' }}>
+                        <Card sx={{ mb: 3, px: 0, boxShadow: 'none', bgcolor: 'transparent' }}>
                             <CardContent>
                                 <Grid container spacing={2} alignItems="center">
                                     <Grid item xs={12} md={3}>
@@ -257,11 +257,25 @@ export default function SalarySheet() {
                                                     InputProps: { readOnly: true }, // Prevent manual typing to force picker use
                                                 },
                                             }}
+                                            sx={{
+                                                '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                    borderRadius: '16px !important',
+                                                },
+                                            }}
                                         />
                                     </Grid>
                                     <Grid item xs={12} md={2}>
                                         <Autocomplete
                                             size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+
+                                                    '& fieldset': {
+                                                        borderRadius: '16px',
+                                                    },
+                                                },
+                                            }}
                                             options={[{ id: 'all', name: 'All' }, ...designations]}
                                             getOptionLabel={(option) => option.name || ''}
                                             value={designation === 'all' ? { id: 'all', name: 'All' } : designations.find((d) => d.name === designation) || { id: 'all', name: 'All' }}
@@ -272,7 +286,16 @@ export default function SalarySheet() {
                                         />
                                     </Grid>
                                     <Grid item xs={12} md={2}>
-                                        <FormControl fullWidth size="small">
+                                        <FormControl fullWidth size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+
+                                                    '& fieldset': {
+                                                        borderRadius: '16px',
+                                                    },
+                                                },
+                                            }}>
                                             <InputLabel>Employee Type</InputLabel>
                                             <Select value={employeeType} label="Employee Type" onChange={(e) => setEmployeeType(e.target.value)}>
                                                 <MenuItem value="all">All</MenuItem>
@@ -285,7 +308,16 @@ export default function SalarySheet() {
                                         </FormControl>
                                     </Grid>
                                     <Grid item xs={12} md={2}>
-                                        <FormControl fullWidth size="small">
+                                        <FormControl fullWidth size="small"
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+
+                                                    '& fieldset': {
+                                                        borderRadius: '16px',
+                                                    },
+                                                },
+                                            }}>
                                             <InputLabel>Location</InputLabel>
                                             <Select value={location} label="Location" onChange={(e) => setLocation(e.target.value)}>
                                                 <MenuItem value="all">All</MenuItem>
@@ -299,7 +331,7 @@ export default function SalarySheet() {
                                     </Grid>
                                     <Grid item xs={12} md={3}>
                                         {/* Add other filters as needed */}
-                                        <Button variant="contained" onClick={fetchData} startIcon={<Refresh />} sx={{textTransform:'none', borderRadius:'16px',}}>
+                                        <Button variant="contained" onClick={fetchData} startIcon={<Refresh />} sx={{ textTransform: 'none', borderRadius: '16px', }}>
                                             Fetch Data
                                         </Button>
                                     </Grid>
@@ -313,19 +345,19 @@ export default function SalarySheet() {
                                 To import: Download template or export current sheet, modify values, and re-import.
                             </Typography>
                             <Button startIcon={<Download />} variant="outlined" onClick={handleDownloadTemplate}
-                            sx={{color:'#063455', border:'1px solid #063455', textTransform:'none', borderRadius:'16px',}}>
+                                sx={{ color: '#063455', border: '1px solid #063455', textTransform: 'none', borderRadius: '16px', }}>
                                 Template
                             </Button>
-                            <Button startIcon={<Upload />} variant="outlined" sx={{color:'#063455', border:'1px solid #063455', whiteSpace:'nowrap', borderRadius:'16px', textTransform:'none'}}>
+                            <Button startIcon={<Upload />} variant="outlined" sx={{ color: '#063455', border: '1px solid #063455', whiteSpace: 'nowrap', borderRadius: '16px', textTransform: 'none' }}>
                                 Import Excel
                                 <input type="file" hidden accept=".csv, .xlsx, .xls" onChange={handleImport} />
                             </Button>
                             <Button startIcon={<Download />} variant="outlined" onClick={handleExport}
-                            sx={{color:'#063455', border:'1px solid #063455', whiteSpace:'nowrap', borderRadius:'16px', textTransform:'none'}}>
+                                sx={{ color: '#063455', border: '1px solid #063455', whiteSpace: 'nowrap', borderRadius: '16px', textTransform: 'none' }}>
                                 Export Excel
                             </Button>
                             <Button startIcon={<Save />} variant="contained" onClick={handleSave} disabled={loading}
-                            sx={{color:'#fff', whiteSpace:'nowrap', textTransform:'none', borderRadius:'16px',}}>
+                                sx={{ color: '#fff', whiteSpace: 'nowrap', textTransform: 'none', borderRadius: '16px', }}>
                                 {loading ? 'Saving...' : 'Save Changes'}
                             </Button>
                         </Box>
@@ -333,15 +365,15 @@ export default function SalarySheet() {
                         {loading && <LinearProgress sx={{ mb: 2 }} />}
 
                         {/* Grid */}
-                        <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius:'12px' }}>
+                        <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: '12px' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow sx={{bgcolor:'#063455'}}>
-                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Code</TableCell>
-                                        <TableCell sx={{ fontWeight:600, color:'#fff'}}>Employee</TableCell>
-                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>CNIC</TableCell>
-                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Designation</TableCell>
-                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Basic</TableCell>
+                                    <TableRow sx={{ bgcolor: '#063455' }}>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Code</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Employee</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>CNIC</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Designation</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Basic</TableCell>
 
                                         {/* Dynamic Allowance Headers */}
                                         {allowanceHeaders.map((h) => (
@@ -350,7 +382,7 @@ export default function SalarySheet() {
                                             </TableCell>
                                         ))}
 
-                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Gross Salary</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Gross Salary</TableCell>
 
                                         {/* Dynamic Deduction Headers */}
                                         {deductionHeaders.map((h) => (
@@ -359,7 +391,7 @@ export default function SalarySheet() {
                                             </TableCell>
                                         ))}
 
-                                        <TableCell sx={{ fontWeight:600, color:'#fff' }}>Net Salary</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Net Salary</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

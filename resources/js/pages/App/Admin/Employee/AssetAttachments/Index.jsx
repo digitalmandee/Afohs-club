@@ -138,9 +138,14 @@ const Index = () => {
                                 ),
                             }}
                             sx={{
-                                // backgroundColor: 'white',
-                                borderRadius: '16px',
                                 width: '300px',
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: '16px',
+
+                                    '& fieldset': {
+                                        borderRadius: '16px',
+                                    },
+                                },
                             }}
                         />
                     </Box>

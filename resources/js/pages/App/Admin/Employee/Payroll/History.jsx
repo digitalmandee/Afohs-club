@@ -113,20 +113,59 @@ export default function History() {
                         </Row>
 
                         {/* Filters */}
-                        <Card sx={{ mb: 3, borderRadius: '12px', bgcolor:'transparent', boxShadow: 'none' }}>
+                        <Card sx={{ mb: 3, borderRadius: '12px', bgcolor: 'transparent', boxShadow: 'none' }}>
                             <CardContent>
                                 <Grid container spacing={2} alignItems="center">
                                     <Grid item xs={12} md={3}>
-                                        <Autocomplete options={employeesList} getOptionLabel={(option) => `${option.name} (${option.employee_id})`} value={employee} onChange={(event, newValue) => setEmployee(newValue)} renderInput={(params) => <TextField {...params} label="Select Employee" fullWidth size="small" />} />
+                                        <Autocomplete
+                                            options={employeesList}
+                                            getOptionLabel={(option) => `${option.name} (${option.employee_id})`}
+                                            value={employee}
+                                            onChange={(event, newValue) => setEmployee(newValue)}
+                                            renderInput={(params) => <TextField {...params}
+                                                label="Select Employee"
+                                                fullWidth
+                                                size="small"
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: '16px',
+
+                                                        '& fieldset': {
+                                                            borderRadius: '16px',
+                                                        },
+                                                    },
+                                                }}
+                                            />}
+                                        />
                                     </Grid>
                                     <Grid item xs={12} md={3}>
-                                        <DatePicker label="From Date" value={fromDate} onChange={(newValue) => setFromDate(newValue)} slotProps={{ textField: { fullWidth: true, size: 'small' } }} format="DD/MM/YYYY" />
+                                        <DatePicker
+                                            label="From Date"
+                                            value={fromDate}
+                                            onChange={(newValue) => setFromDate(newValue)}
+                                            slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+                                            format="DD/MM/YYYY"
+                                            sx={{
+                                                '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                    borderRadius: '16px !important',
+                                                },
+                                            }} />
                                     </Grid>
                                     <Grid item xs={12} md={3}>
-                                        <DatePicker label="To Date" value={toDate} onChange={(newValue) => setToDate(newValue)} slotProps={{ textField: { fullWidth: true, size: 'small' } }} format="DD/MM/YYYY" />
+                                        <DatePicker
+                                            label="To Date"
+                                            value={toDate}
+                                            onChange={(newValue) => setToDate(newValue)}
+                                            slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+                                            format="DD/MM/YYYY"
+                                            sx={{
+                                                '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                    borderRadius: '16px !important',
+                                                },
+                                            }} />
                                     </Grid>
                                     <Grid item xs={12} md={1.5}>
-                                        <Button variant="contained" startIcon={<Search />} onClick={fetchHistory} fullWidth disabled={loading} sx={{ textTransform: 'none !important', fontWeight: 'bold', borderRadius:'16px' }}>
+                                        <Button variant="contained" startIcon={<Search />} onClick={fetchHistory} fullWidth disabled={loading} sx={{ textTransform: 'none !important', fontWeight: 'bold', borderRadius: '16px' }}>
                                             {loading ? 'Fetching...' : 'Search'}
                                         </Button>
                                     </Grid>
