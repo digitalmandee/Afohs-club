@@ -7,7 +7,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { Search, FilterAlt, Visibility, Delete } from '@mui/icons-material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
-import { FaEdit } from 'react-icons/fa';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const Management = () => {
     const { props } = usePage();
@@ -126,9 +126,9 @@ const Management = () => {
                             </Typography>
                         </div>
                         <div className="col-auto ms-auto">
-                            <Button variant="outlined" sx={{ borderRadius: '16px', height: 35, textTransform: 'none', borderColor: '#063455', color: '#063455', marginRight: 2 }} onClick={() => router.visit(route('employees.departments.trashed'))}>
+                            {/* <Button variant="outlined" color='error' sx={{ borderRadius: '16px', height: 35, textTransform: 'none', borderColor: '#063455', color: '#063455', marginRight: 2 }} onClick={() => router.visit(route('employees.departments.trashed'))}>
                                 Trashed
-                            </Button>
+                            </Button> */}
                             <Button
                                 variant="contained"
                                 startIcon={
@@ -145,6 +145,23 @@ const Management = () => {
                                 onClick={() => handleOpen()}
                             >
                                 New Department
+                            </Button>
+                            <Button
+                                onClick={() => router.visit(route('employees.departments.trashed'))}
+                                style={{
+                                    // color: '#063455',
+                                    // backgroundColor: 'white',
+                                    borderRadius: '16px',
+                                    height: 35,
+                                    marginLeft: '10px',
+                                    textTransform: 'none',
+                                    // border: '1px solid #063455',
+                                }}
+                                variant="outlined"
+                                color='error'
+                                startIcon={<FaTrash size={14} />}
+                            >
+                                Trashed
                             </Button>
                         </div>
                     </div>

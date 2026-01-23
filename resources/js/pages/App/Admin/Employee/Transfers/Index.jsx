@@ -7,22 +7,22 @@ const TransfersIndex = () => {
     const { transfers } = usePage().props;
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{ p: 2, height:'100vh', bgcolor:'#f5f5f5' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 600, color: '#063455' }}>
+                <Typography sx={{ fontWeight: 700, color: '#063455', fontSize:'30px' }}>
                     Employee Transfer History
                 </Typography>
             </Box>
 
-            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 2, border: '1px solid #e0e0e0' }}>
+            <TableContainer component={Paper} sx={{ borderRadius: '12px' }}>
                 <Table>
-                    <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableHead sx={{ bgcolor: '#063455' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Employee</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Transferred From</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Transferred To</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Reason</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Date</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Employee</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Transferred From</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Transferred To</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Reason</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>

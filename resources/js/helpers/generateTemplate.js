@@ -805,15 +805,15 @@ export const generateInvoiceContent = (booking, type) => {
                             ? (booking.corporateMember || booking.corporate_member).mobile_number_a
                             : 'N/A'}
         </div>
-        <div class="typography-body2" style="margin-bottom: 6px;>
+        <div class="typography-body2" style="margin-bottom: 6px;">
         <span style="font-weight: bold">Booking ID: </span>
         ${booking.booking_no ? booking.booking_no : 'N/A'}
         </div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking For: </span>${(booking.booking_For || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
     </div>
 
     <!-- RIGHT COLUMN : OCCUPIED BY -->
