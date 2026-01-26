@@ -192,7 +192,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.nights || 1}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(roomCharge)}</TableCell>
 
-                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(otherCharges)}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(booking.total_other_charges)}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(foodBill)}</TableCell>
 
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(advance)}</TableCell>

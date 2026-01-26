@@ -373,7 +373,7 @@ class RoomBookingController extends Controller
 
         if ($booking->customer) {
             $bookingData['guest'] = [
-                'id' => $booking->customer->id,
+                'id' => $booking->customer->id ?? null,
                 'booking_type' => 'customer',
                 'name' => $fullName,
                 'label' => $fullName,
@@ -383,7 +383,7 @@ class RoomBookingController extends Controller
             ];
         } elseif ($booking->member) {
             $bookingData['guest'] = [
-                'id' => $booking->member->id,
+                'id' => $booking->member->id ?? null,
                 'booking_type' => 'member',
                 'name' => $fullName,
                 'label' => $fullName,
@@ -393,7 +393,7 @@ class RoomBookingController extends Controller
             ];
         } elseif ($booking->corporateMember) {
             $bookingData['guest'] = [
-                'id' => $booking->corporateMember->id,
+                'id' => $booking->corporateMember->id ?? null,
                 'booking_type' => '2',
                 'name' => $fullName,
                 'label' => $fullName,
@@ -705,7 +705,7 @@ class RoomBookingController extends Controller
                 $invoice->update([
                     'paid_amount' => $advanceAmount,
                     'advance_payment' => 0,
-                    'status' => ($advanceAmount >= $booking->grand_total) ? 'paid' : 'unpaid'
+                    // 'status' => ($advanceAmount >= $booking->grand_total) ? 'paid' : 'unpaid'
                 ]);
             }
 
