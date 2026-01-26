@@ -397,7 +397,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
                 Route::post('/create', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
 
                 Route::get('dashboard', [RoomBookingController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
-                Route::get('manage', [RoomBookingController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
+                Route::get('manage', [RoomBookingController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.bookings.view');
                 Route::get('check-in', [RoomBookingController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
                 Route::get('check-out', [RoomBookingController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
                 // Cancelled Bookings
@@ -405,7 +405,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
                 Route::put('refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund')->middleware('permission:rooms.bookings.edit');
                 Route::put('cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel')->middleware('permission:rooms.bookings.edit');
                 Route::put('undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel')->middleware('permission:rooms.bookings.edit');
-                Route::get('invoice/{id}', [RoomBookingController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('super.admin:rooms.bookings.view');
+                Route::get('invoice/{id}', [RoomBookingController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
                 Route::put('update-status/{id}', [RoomBookingController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
 
                 // Room Calendar
@@ -524,7 +524,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('cancelled', [EventBookingController::class, 'cancelled'])->name('events.cancelled')->middleware('super.admin:events.bookings.cancelled');
             Route::get('create', [EventBookingController::class, 'create'])->name('events.booking.create')->middleware('super.admin:events.bookings.create');
             Route::post('booking', [EventBookingController::class, 'store'])->name('events.booking.store')->middleware('permission:events.bookings.create');
-            Route::get('booking/{id}/invoice', [EventBookingController::class, 'showInvoice'])->name('events.booking.invoice')->middleware('super.admin:events.bookings.view');
+            Route::get('booking/{id}/invoice', [EventBookingController::class, 'showInvoice'])->name('events.booking.invoice')->middleware('permission:events.bookings.view');
             Route::put('booking/{id}/status', [EventBookingController::class, 'updateStatus'])->name('events.booking.update.status')->middleware('permission:events.bookings.edit');
 
             // Cancellation & Refund Routes
@@ -594,10 +594,10 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     });
 
     // Admin Booking Routes
-    Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar');
-    Route::get('/api/room-bookings/search-customers', [RoomBookingController::class, 'searchCustomers'])->name('api.bookings.search-customers');
-    Route::get('/api/events/calendar', [EventBookingController::class, 'calendarData'])->name('api.events.calendar');
-    Route::get('/api/events/venues', [EventBookingController::class, 'getVenues'])->name('api.events.venues');
+    Route::get('/api/room-bookings/calendar', [RoomBookingController::class, 'getCalendar'])->name('api.bookings.calendar')->middleware('permission:rooms.bookings.calendar');
+    Route::get('/api/room-bookings/search-customers', [RoomBookingController::class, 'searchCustomers'])->name('api.bookings.search-customers')->middleware('permission:rooms.bookings.create');
+    Route::get('/api/events/calendar', [EventBookingController::class, 'calendarData'])->name('api.events.calendar')->middleware('permission:events.bookings.calendar');
+    Route::get('/api/events/venues', [EventBookingController::class, 'getVenues'])->name('api.events.venues')->middleware('permission:events.venue.view');
     Route::get('/booking/payment', [BookingController::class, 'payNow'])->name('booking.payment');
     Route::post('booking/payment/store', [BookingController::class, 'paymentStore'])->name('booking.payment.store');
 
@@ -1143,32 +1143,32 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         // Dashboard Stats API
         Route::get('dashboard/stats', [AdminController::class, 'getDashboardStats'])->name('api.dashboard.stats');
 
-        Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit']);
+        Route::resource('departments', EmployeeDepartmentController::class)->except(['create', 'show', 'edit'])->middleware('permission:employees.departments.view');
         // Replace index with your own custom function
-        Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll');
+        Route::get('departments', [EmployeeDepartmentController::class, 'listAll'])->name('api.departments.listAll')->middleware('permission:employees.departments.view');
 
         // Subdepartment API routes
-        Route::resource('subdepartments', EmployeeSubdepartmentController::class)->except(['create', 'show', 'edit']);
-        Route::get('subdepartments', [EmployeeSubdepartmentController::class, 'listAll'])->name('api.subdepartments.listAll');
+        Route::resource('subdepartments', EmployeeSubdepartmentController::class)->except(['create', 'show', 'edit'])->middleware('permission:employees.departments.view');
+        Route::get('subdepartments', [EmployeeSubdepartmentController::class, 'listAll'])->name('api.subdepartments.listAll')->middleware('permission:employees.departments.view');
 
-        Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store');
-        Route::put('employees/update/{employeeId}', [EmployeeController::class, 'update'])->name('api.employees.update');
+        Route::post('employee/create', [EmployeeController::class, 'store'])->name('api.employees.store')->middleware('permission:employees.create');
+        Route::put('employees/update/{employeeId}', [EmployeeController::class, 'update'])->name('api.employees.update')->middleware('permission:employees.edit');
 
         // Leave Category API routes
-        Route::prefix('leave-categories')->group(function () {
+        Route::prefix('leave-categories')->middleware('permission:employees.leaves.view')->group(function () {
             Route::get('/', [LeaveCategoryController::class, 'getAll'])->name('api.leave-categories.getAll');
-            Route::post('/', [LeaveCategoryController::class, 'store'])->name('api.leave-categories.store');
+            Route::post('/', [LeaveCategoryController::class, 'store'])->name('api.leave-categories.store')->middleware('permission:employees.leaves.approve');
             Route::get('/{id}', [LeaveCategoryController::class, 'show'])->name('api.leave-categories.show');
-            Route::put('/{id}', [LeaveCategoryController::class, 'update'])->name('api.leave-categories.update');
-            Route::delete('/{id}', [LeaveCategoryController::class, 'destroy'])->name('api.leave-categories.destroy');
+            Route::put('/{id}', [LeaveCategoryController::class, 'update'])->name('api.leave-categories.update')->middleware('permission:employees.leaves.approve');
+            Route::delete('/{id}', [LeaveCategoryController::class, 'destroy'])->name('api.leave-categories.destroy')->middleware('permission:employees.leaves.approve');
         });
 
         // Leave Application API routes
-        Route::prefix('leave-applications')->group(function () {
-            Route::post('/', [LeaveApplicationController::class, 'store'])->name('api.leave-applications.store');
+        Route::prefix('leave-applications')->middleware('permission:employees.leaves.view')->group(function () {
+            Route::post('/', [LeaveApplicationController::class, 'store'])->name('api.leave-applications.store')->middleware('permission:employees.leaves.approve');
             Route::get('/{id}', [LeaveApplicationController::class, 'show'])->name('api.leave-applications.show');
-            Route::put('/{id}', [LeaveApplicationController::class, 'update'])->name('api.leave-applications.update');
-            Route::delete('/{id}', [LeaveApplicationController::class, 'destroy'])->name('api.leave-applications.destroy');
+            Route::put('/{id}', [LeaveApplicationController::class, 'update'])->name('api.leave-applications.update')->middleware('permission:employees.leaves.approve');
+            Route::delete('/{id}', [LeaveApplicationController::class, 'destroy'])->name('api.leave-applications.destroy')->middleware('permission:employees.leaves.approve');
         });
 
         // Leave Applications List API route (with search)
@@ -1179,7 +1179,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('employees/leaves/reports/export', [LeaveApplicationController::class, 'exportLeaveReport'])->name('api.leave-reports.export');
 
         // Attendance API routes
-        Route::prefix('attendances')->group(function () {
+        Route::prefix('attendances')->middleware('permission:employees.attendance.view')->group(function () {
             Route::get('/', [AttendanceController::class, 'index'])->name('api.attendances.index');
             Route::get('reports', [AttendanceController::class, 'attendanceReport'])->name('api.attendances.reports');
             Route::get('reports/export', [AttendanceController::class, 'exportAttendanceReport'])->name('api.attendances.reports.export');
@@ -1192,7 +1192,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         });
 
         // Voucher API routes
-        Route::prefix('vouchers')->group(function () {
+        Route::prefix('vouchers')->middleware('permission:finance.vouchers.view')->group(function () {
             Route::get('/', [VoucherController::class, 'getVouchers'])->name('api.vouchers.index');
             Route::get('/{voucher}', [VoucherController::class, 'show'])->name('api.vouchers.show');
             Route::post('/{voucher}/mark-used', [VoucherController::class, 'markAsUsed'])->name('api.vouchers.mark-used');

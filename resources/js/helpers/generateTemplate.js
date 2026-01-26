@@ -120,7 +120,7 @@ export const generateInvoiceContent = (booking, type) => {
             }
             .typography-body2 {
                 font-size: 12px;
-                color: #555;
+                color: #000;
                 line-height: 0.6;
             }
             .typography-body2-bold {
@@ -590,7 +590,7 @@ export const generateInvoiceContent = (booking, type) => {
                   }
                   .typography-body2 {
                       font-size: 12px;
-                      color: #555;
+                      color: #000;
                       line-height: 0.6;
                   }
                   .typography-body2-bold {
@@ -718,10 +718,18 @@ export const generateInvoiceContent = (booking, type) => {
 
     <!-- LEFT COLUMN : BILL TO -->
     <div style="flex: 1;">
-        <div class="subtitle1" style="font-size:14px; font-weight:600;">Bill To - #${booking.booking_no || 'N/A'}</div>
+        <div class="subtitle1" style="font-size:14px; font-weight:600;">Bill To</div>
 
         <div class="typography-body2" style="margin-bottom: 6px;">
-            <span style="font-weight: bold">Guest Name: </span>
+            <span style="font-weight: bold">Booking #: </span>
+            ${booking.booking_no || 'N/A'}
+        </div>
+        <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Booking Date: </span>
+            ${booking.booking_date ? new Date(booking.booking_date).toLocaleDateString('en-GB') : 'N/A'}
+        </div>
+        <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Name: </span>
             ${booking.customer
                     ? booking.customer.name
                     : booking.member
@@ -731,33 +739,9 @@ export const generateInvoiceContent = (booking, type) => {
                             : ''}
         </div>
 
-        <div class="typography-body2" style="margin-bottom: 6px;">
-            <span style="font-weight: bold">Phone Number: </span>
-            ${booking.customer
-                    ? booking.customer.contact
-                    : booking.member
-                        ? booking.member.mobile_number_a
-                        : (booking.corporateMember || booking.corporate_member)
-                            ? (booking.corporateMember || booking.corporate_member).mobile_number_a
-                            : 'N/A'}
-        </div>
-        <div class="typography-body2" style="margin-bottom: 6px;">
-        <span style="font-weight: bold">Booking ID: </span>
-        ${booking.booking_no ? booking.booking_no : 'N/A'}
-        </div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Accompanied Guest: </span>${booking.accompanied_guest ? `${booking.accompanied_guest} (${booking.acc_relationship || 'N/A'})` : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
-    </div>
-
-    <!-- RIGHT COLUMN : OCCUPIED BY -->
-    <div style="flex: 1;">
-        <div class="subtitle1">Occupied By</div>
-
-        <div class="typography-body2" style="margin-bottom: 6px;">
-            <span style="font-weight: bold">Membership ID: </span>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
+         <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Membership #: </span>
             ${booking.customer
                     ? booking.customer.customer_no
                     : booking.member
@@ -766,24 +750,53 @@ export const generateInvoiceContent = (booking, type) => {
                             ? (booking.corporateMember || booking.corporate_member).membership_no
                             : 'N/A'}
         </div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">CNIC / Passport: </span>${booking.cnic_passport || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Contact #: </span>
+            ${booking.customer
+                    ? booking.customer.contact
+                    : booking.member
+                        ? booking.member.mobile_number_a
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).mobile_number_a
+                            : 'N/A'}
+        </div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Email: </span><a style="color: #000; text-decoration: none;" href="mailto:${booking.email || 'N/A'}">${booking.email || 'N/A'}</a></div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Address: </span>${booking.address || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Family Member: </span>${booking.family_member || 'N/A'}</div>
+    </div>
 
+    <!-- RIGHT COLUMN : OCCUPIED BY -->
+    <div style="flex: 1;">
+        <div class="subtitle1">Occupied By</div>
+                <!-- Removed Beds and Baths -->
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Name: </span>${booking.guest_first_name || ''} ${booking.guest_last_name || ''}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Category: </span>${booking.category}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">CNIC / Passport: </span>${booking.cnic_passport || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Contact #: </span>${booking.category}</div>
         <div class="typography-body2" style="margin-bottom: 6px;">
             <span style="font-weight: bold">Email: </span>
-            ${booking.customer
+            <a style="color: #000; text-decoration: none;" href="mailto:${booking.customer
                     ? booking.customer.email
                     : booking.member
                         ? booking.member.personal_email
                         : (booking.corporateMember || booking.corporate_member)
                             ? (booking.corporateMember || booking.corporate_member).personal_email
-                            : 'N/A'}
+                            : 'N/A'}">${booking.customer
+                                ? booking.customer.email
+                                : booking.member
+                                    ? booking.member.personal_email
+                                    : (booking.corporateMember || booking.corporate_member)
+                                        ? (booking.corporateMember || booking.corporate_member).personal_email
+                                        : 'N/A'}</a>
         </div>
-        <!-- Removed Beds and Baths -->
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Name: </span>${booking.guest_first_name || ''} ${booking.guest_last_name || ''}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Address: </span>${booking.address || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">City: </span>${booking.city || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Country: </span>${booking.country || 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booked By: </span>${booking.booked_by || 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Category: </span>${booking.category || getBookingTypeLabel(booking.booking_type)}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking Status: </span>${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Accompanied Guest: </span>${booking.accompanied_guest ? `${booking.accompanied_guest}` : 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Relationship: </span>${booking.acc_relationship || 'N/A'}</div>
+
         ${['cancelled', 'no_show', 'refunded'].includes(booking.status) ? `
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason || 'N/A'}</div>
         ` : ''}
@@ -968,14 +981,14 @@ export const generateInvoiceContent = (booking, type) => {
     </div>
 </div>
 <div style="margin-top: 40px; display: flex; justify-content: space-between;">
-            <div>
-                <div style="font-weight: bold;">GUEST ROOMS MANAGER SIGNATURE:</div>
-                <div style="margin-top: 8px;">____________________</div>
+            <div style="font-size: 12px;display: flex;gap:4px;">
+                <div>GUEST ROOMS MANAGER SIGNATURE:</div>
+                <div style="margin-top: 0px;">____________________</div>
             </div>
 
-            <div>
-                <div style="font-weight: bold;">GUEST SIGNATURE:</div>
-                <div style="margin-top: 8px;">____________________</div>
+            <div style="font-size: 12px;display: flex;gap:4px;">
+                <div>GUEST SIGNATURE:</div>
+                <div style="margin-top: 0px;">____________________</div>
             </div>
         </div>
 
