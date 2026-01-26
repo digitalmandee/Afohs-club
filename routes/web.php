@@ -484,6 +484,56 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
             Route::get('booking/{id}/edit', [EventBookingController::class, 'edit'])->name('events.booking.edit')->middleware('super.admin:events.bookings.edit');
             Route::post('booking/{id}', [EventBookingController::class, 'update'])->name('events.booking.update')->middleware('permission:events.bookings.edit');
+
+            // Event Reports
+            Route::prefix('reports')->group(function () {
+                Route::get('/', [\App\Http\Controllers\EventReportController::class, 'index'])->name('events.reports');
+
+                // Day-wise
+                Route::get('day-wise', [\App\Http\Controllers\EventReportController::class, 'dayWise'])->name('events.reports.day-wise');
+                Route::get('day-wise/print', [\App\Http\Controllers\EventReportController::class, 'dayWisePrint'])->name('events.reports.day-wise.print');
+                Route::get('day-wise/export', [\App\Http\Controllers\EventReportController::class, 'dayWiseExport'])->name('events.reports.day-wise.export');
+
+                // Payment History
+                Route::get('payment-history', [\App\Http\Controllers\EventReportController::class, 'paymentHistory'])->name('events.reports.payment-history');
+                Route::get('payment-history/print', [\App\Http\Controllers\EventReportController::class, 'paymentHistoryPrint'])->name('events.reports.payment-history.print');
+                Route::get('payment-history/export', [\App\Http\Controllers\EventReportController::class, 'paymentHistoryExport'])->name('events.reports.payment-history.export');
+
+                // Booking
+                Route::get('booking', [\App\Http\Controllers\EventReportController::class, 'booking'])->name('events.reports.booking');
+                Route::get('booking/print', [\App\Http\Controllers\EventReportController::class, 'bookingPrint'])->name('events.reports.booking.print');
+                Route::get('booking/export', [\App\Http\Controllers\EventReportController::class, 'bookingExport'])->name('events.reports.booking.export');
+
+                // Cancelled
+                Route::get('cancelled', [\App\Http\Controllers\EventReportController::class, 'cancelled'])->name('events.reports.cancelled');
+                Route::get('cancelled/print', [\App\Http\Controllers\EventReportController::class, 'cancelledPrint'])->name('events.reports.cancelled.print');
+                Route::get('cancelled/export', [\App\Http\Controllers\EventReportController::class, 'cancelledExport'])->name('events.reports.cancelled.export');
+
+                // Completed
+                Route::get('completed', [\App\Http\Controllers\EventReportController::class, 'completed'])->name('events.reports.completed');
+                Route::get('completed/print', [\App\Http\Controllers\EventReportController::class, 'completedPrint'])->name('events.reports.completed.print');
+                Route::get('completed/export', [\App\Http\Controllers\EventReportController::class, 'completedExport'])->name('events.reports.completed.export');
+
+                // Venue-wise
+                Route::get('venue-wise', [\App\Http\Controllers\EventReportController::class, 'venueWise'])->name('events.reports.venue-wise');
+                Route::get('venue-wise/print', [\App\Http\Controllers\EventReportController::class, 'venueWisePrint'])->name('events.reports.venue-wise.print');
+                Route::get('venue-wise/export', [\App\Http\Controllers\EventReportController::class, 'venueWiseExport'])->name('events.reports.venue-wise.export');
+
+                // Menu-wise
+                Route::get('menu-wise', [\App\Http\Controllers\EventReportController::class, 'menuWise'])->name('events.reports.menu-wise');
+                Route::get('menu-wise/print', [\App\Http\Controllers\EventReportController::class, 'menuWisePrint'])->name('events.reports.menu-wise.print');
+                Route::get('menu-wise/export', [\App\Http\Controllers\EventReportController::class, 'menuWiseExport'])->name('events.reports.menu-wise.export');
+
+                // Add-ons
+                Route::get('addons', [\App\Http\Controllers\EventReportController::class, 'addOns'])->name('events.reports.addons');
+                Route::get('addons/print', [\App\Http\Controllers\EventReportController::class, 'addOnsPrint'])->name('events.reports.addons.print');
+                Route::get('addons/export', [\App\Http\Controllers\EventReportController::class, 'addOnsExport'])->name('events.reports.addons.export');
+
+                // Complementary
+                Route::get('complementary', [\App\Http\Controllers\EventReportController::class, 'complementary'])->name('events.reports.complementary');
+                Route::get('complementary/print', [\App\Http\Controllers\EventReportController::class, 'complementaryPrint'])->name('events.reports.complementary.print');
+                Route::get('complementary/export', [\App\Http\Controllers\EventReportController::class, 'complementaryExport'])->name('events.reports.complementary.export');
+            });
         });
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
         Route::resource('event-menu', EventMenuController::class)->except(['show']);
