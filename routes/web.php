@@ -78,143 +78,172 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('dashboard/print', [AdminController::class, 'printDashboard'])->name('dashboard.print')->middleware('super.admin:dashboard.view');
 
     // Employeee Management
-    Route::prefix('admin/employees')->middleware('super.admin:employees.view')->group(function () {
+    Route::prefix('admin/employees')->middleware('permission:employees.view')->group(function () {
         Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('employees.dashboard');
-        Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create');
-        Route::get('/edit/{employeeId}', [EmployeeController::class, 'edit'])->name('employees.edit');
+        Route::get('/create', [EmployeeController::class, 'create'])->name('employees.create')->middleware('permission:employees.create');
+        Route::get('/edit/{employeeId}', [EmployeeController::class, 'edit'])->name('employees.edit')->middleware('permission:employees.edit');
         // Departments
-        Route::get('/departments/trashed', [EmployeeDepartmentController::class, 'trashed'])->name('employees.departments.trashed');
-        Route::post('/departments/{id}/restore', [EmployeeDepartmentController::class, 'restore'])->name('employees.departments.restore');
-        Route::delete('/departments/{id}/force-delete', [EmployeeDepartmentController::class, 'forceDelete'])->name('employees.departments.force-delete');
-        Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments');
-        Route::post('/departments/{id}/change-status', [EmployeeDepartmentController::class, 'changeStatus'])->name('employees.departments.change-status');  // Add status route
+        Route::get('/departments', [EmployeeDepartmentController::class, 'index'])->name('employees.departments')->middleware('permission:employees.departments.view');
+        Route::get('/departments/trashed', [EmployeeDepartmentController::class, 'trashed'])->name('employees.departments.trashed')->middleware('permission:employees.departments.delete');
+        Route::post('/departments/{id}/restore', [EmployeeDepartmentController::class, 'restore'])->name('employees.departments.restore')->middleware('permission:employees.departments.delete');
+        Route::delete('/departments/{id}/force-delete', [EmployeeDepartmentController::class, 'forceDelete'])->name('employees.departments.force-delete')->middleware('permission:employees.departments.delete');
+        Route::post('/departments/{id}/change-status', [EmployeeDepartmentController::class, 'changeStatus'])->name('employees.departments.change-status')->middleware('permission:employees.departments.edit');
 
-        // Subdepartments
-        Route::get('/subdepartments/trashed', [EmployeeSubdepartmentController::class, 'trashed'])->name('employees.subdepartments.trashed');
-        Route::post('/subdepartments/{id}/restore', [EmployeeSubdepartmentController::class, 'restore'])->name('employees.subdepartments.restore');
-        Route::delete('/subdepartments/{id}/force-delete', [EmployeeSubdepartmentController::class, 'forceDelete'])->name('employees.subdepartments.force-delete');
-        Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments');
-        Route::post('/subdepartments/{id}/change-status', [EmployeeSubdepartmentController::class, 'changeStatus'])->name('employees.subdepartments.change-status');  // Add status route
-        Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details');
-        Route::get('/trashed', [EmployeeController::class, 'trashed'])->name('employees.trashed');
-        Route::post('/{id}/restore', [EmployeeController::class, 'restore'])->name('employees.restore');
-        Route::delete('/{id}/force-delete', [EmployeeController::class, 'forceDelete'])->name('employees.force-delete');
-        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
+        // Subdepartments (Using Department permissions)
+        Route::get('/subdepartments', [EmployeeSubdepartmentController::class, 'index'])->name('employees.subdepartments')->middleware('permission:employees.departments.view');
+        Route::get('/subdepartments/trashed', [EmployeeSubdepartmentController::class, 'trashed'])->name('employees.subdepartments.trashed')->middleware('permission:employees.departments.delete');
+        Route::post('/subdepartments/{id}/restore', [EmployeeSubdepartmentController::class, 'restore'])->name('employees.subdepartments.restore')->middleware('permission:employees.departments.delete');
+        Route::delete('/subdepartments/{id}/force-delete', [EmployeeSubdepartmentController::class, 'forceDelete'])->name('employees.subdepartments.force-delete')->middleware('permission:employees.departments.delete');
+        Route::post('/subdepartments/{id}/change-status', [EmployeeSubdepartmentController::class, 'changeStatus'])->name('employees.subdepartments.change-status')->middleware('permission:employees.departments.edit');
+
+        Route::get('/details/{employeeId}', [EmployeeController::class, 'details'])->name('employees.details')->middleware('permission:employees.view');
+        Route::get('/trashed', [EmployeeController::class, 'trashed'])->name('employees.trashed')->middleware('permission:employees.delete');
+        Route::post('/{id}/restore', [EmployeeController::class, 'restore'])->name('employees.restore')->middleware('permission:employees.delete');
+        Route::delete('/{id}/force-delete', [EmployeeController::class, 'forceDelete'])->name('employees.force-delete')->middleware('permission:employees.delete');
+        Route::delete('/{id}', [EmployeeController::class, 'destroy'])->name('employees.destroy')->middleware('permission:employees.delete');
 
         // Designations
         Route::get('designations/list', [App\Http\Controllers\DesignationController::class, 'list'])->name('designations.list');
         Route::get('designations/data', [App\Http\Controllers\DesignationController::class, 'fetchData'])->name('designations.data');
-        Route::get('designations/trashed', [App\Http\Controllers\DesignationController::class, 'trashed'])->name('designations.trashed');
-        Route::post('designations/{id}/restore', [App\Http\Controllers\DesignationController::class, 'restore'])->name('designations.restore');
-        Route::delete('designations/{id}/force-delete', [App\Http\Controllers\DesignationController::class, 'forceDelete'])->name('designations.force-delete');
-        Route::resource('designations', App\Http\Controllers\DesignationController::class);
+        Route::get('designations/trashed', [App\Http\Controllers\DesignationController::class, 'trashed'])->name('designations.trashed')->middleware('permission:employees.designations.delete');
+        Route::post('designations/{id}/restore', [App\Http\Controllers\DesignationController::class, 'restore'])->name('designations.restore')->middleware('permission:employees.designations.delete');
+        Route::delete('designations/{id}/force-delete', [App\Http\Controllers\DesignationController::class, 'forceDelete'])->name('designations.force-delete')->middleware('permission:employees.designations.delete');
+        Route::resource('designations', App\Http\Controllers\DesignationController::class)->middleware([
+            'index' => 'permission:employees.designations.view',
+            'create' => 'permission:employees.designations.create',
+            'store' => 'permission:employees.designations.create',
+            'edit' => 'permission:employees.designations.edit',
+            'update' => 'permission:employees.designations.edit',
+            'destroy' => 'permission:employees.designations.delete',
+        ]);
 
         // Assets
-        Route::resource('assets', EmployeeAssetController::class);
+        Route::resource('assets', EmployeeAssetController::class)->middleware([
+            'index' => 'permission:employees.assets.view',
+            'create' => 'permission:employees.assets.create',
+            'store' => 'permission:employees.assets.create',
+            'edit' => 'permission:employees.assets.edit',
+            'update' => 'permission:employees.assets.edit',
+            'destroy' => 'permission:employees.assets.delete',
+        ]);
 
         // Shifts
         Route::get('shifts/list', [App\Http\Controllers\ShiftController::class, 'list'])->name('shifts.list');
-        Route::get('shifts/trashed', [App\Http\Controllers\ShiftController::class, 'trashed'])->name('shifts.trashed');
-        Route::post('shifts/{id}/restore', [App\Http\Controllers\ShiftController::class, 'restore'])->name('shifts.restore');
-        Route::delete('shifts/{id}/force-delete', [App\Http\Controllers\ShiftController::class, 'forceDelete'])->name('shifts.force-delete');
-        Route::resource('shifts', App\Http\Controllers\ShiftController::class);
+        Route::get('shifts/trashed', [App\Http\Controllers\ShiftController::class, 'trashed'])->name('shifts.trashed')->middleware('permission:employees.shifts.delete');
+        Route::post('shifts/{id}/restore', [App\Http\Controllers\ShiftController::class, 'restore'])->name('shifts.restore')->middleware('permission:employees.shifts.delete');
+        Route::delete('shifts/{id}/force-delete', [App\Http\Controllers\ShiftController::class, 'forceDelete'])->name('shifts.force-delete')->middleware('permission:employees.shifts.delete');
+        Route::resource('shifts', App\Http\Controllers\ShiftController::class)->middleware([
+            'index' => 'permission:employees.shifts.view',
+            'create' => 'permission:employees.shifts.create',
+            'store' => 'permission:employees.shifts.create',
+            'edit' => 'permission:employees.shifts.edit',
+            'update' => 'permission:employees.shifts.edit',
+            'destroy' => 'permission:employees.shifts.delete',
+        ]);
 
         // Employee Transfers
-        Route::get('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'index'])->name('employees.transfers.index');
-        Route::post('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'store'])->name('employees.transfers.store');
+        Route::get('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'index'])->name('employees.transfers.index')->middleware('permission:employees.transfers.view');
+        Route::post('transfers', [App\Http\Controllers\EmployeeTransferController::class, 'store'])->name('employees.transfers.store')->middleware('permission:employees.transfers.create');
 
         // Branches
         Route::get('branches/list', [App\Http\Controllers\BranchController::class, 'list'])->name('branches.list');
-        Route::get('branches/trashed', [App\Http\Controllers\BranchController::class, 'trashed'])->name('branches.trashed');
-        Route::post('branches/{id}/restore', [App\Http\Controllers\BranchController::class, 'restore'])->name('branches.restore');
-        Route::delete('branches/{id}/force-delete', [App\Http\Controllers\BranchController::class, 'forceDelete'])->name('branches.force-delete');
-        Route::resource('branches', App\Http\Controllers\BranchController::class);
+        Route::get('branches/trashed', [App\Http\Controllers\BranchController::class, 'trashed'])->name('branches.trashed')->middleware('permission:employees.branches.delete');
+        Route::post('branches/{id}/restore', [App\Http\Controllers\BranchController::class, 'restore'])->name('branches.restore')->middleware('permission:employees.branches.delete');
+        Route::delete('branches/{id}/force-delete', [App\Http\Controllers\BranchController::class, 'forceDelete'])->name('branches.force-delete')->middleware('permission:employees.branches.delete');
+        Route::resource('branches', App\Http\Controllers\BranchController::class)->middleware([
+            'index' => 'permission:employees.branches.view',
+            'create' => 'permission:employees.branches.create',
+            'store' => 'permission:employees.branches.create',
+            'edit' => 'permission:employees.branches.edit',
+            'update' => 'permission:employees.branches.edit',
+            'destroy' => 'permission:employees.branches.delete',
+        ]);
         Route::post('assets/{asset}/assign', [EmployeeAssetController::class, 'assign'])->name('assets.assign');
         Route::post('assets/{asset}/return', [EmployeeAssetController::class, 'returnAsset'])->name('assets.return');
         Route::post('assets/{asset}/upload-attachment', [EmployeeAssetController::class, 'uploadAttachment'])->name('assets.upload-attachment');
         Route::delete('asset-attachments/{attachment}', [EmployeeAssetController::class, 'deleteAttachment'])->name('assets.delete-attachment');
 
-        Route::prefix('leaves')->group(function () {
+        Route::prefix('leaves')->middleware('permission:employees.leaves.view')->group(function () {
             Route::get('category', [LeaveCategoryController::class, 'index'])->name('employees.leaves.category.index');
-            Route::get('category/create', [LeaveCategoryController::class, 'create'])->name('employees.leaves.category.create');
-            Route::get('category/edit/{id}', [LeaveCategoryController::class, 'edit'])->name('employees.leaves.category.edit');
+            Route::get('category/create', [LeaveCategoryController::class, 'create'])->name('employees.leaves.category.create')->middleware('permission:employees.leaves.approve');
+            Route::get('category/edit/{id}', [LeaveCategoryController::class, 'edit'])->name('employees.leaves.category.edit')->middleware('permission:employees.leaves.approve');
 
             Route::get('application', [LeaveApplicationController::class, 'index'])->name('employees.leaves.application.index');
-            Route::get('application/new', [LeaveApplicationController::class, 'create'])->name('employees.leaves.application.create');
-            Route::get('application/edit/{id}', [LeaveApplicationController::class, 'edit'])->name('employees.leaves.application.edit');
+            Route::get('application/new', [LeaveApplicationController::class, 'create'])->name('employees.leaves.application.create')->middleware('permission:employees.leaves.approve');
+            Route::get('application/edit/{id}', [LeaveApplicationController::class, 'edit'])->name('employees.leaves.application.edit')->middleware('permission:employees.leaves.approve');
 
             Route::get('report', [LeaveApplicationController::class, 'leaveReportPage'])->name('employees.leaves.application.report');
             Route::get('report/print', [LeaveApplicationController::class, 'leaveReportPrint'])->name('employees.leaves.application.report.print');
         });
 
         // Employee Advances
-        Route::prefix('advances')->group(function () {
+        Route::prefix('advances')->middleware('permission:employees.advances.view')->group(function () {
             Route::get('/', [\App\Http\Controllers\EmployeeAdvanceController::class, 'index'])->name('employees.advances.index');
-            Route::get('/create', [\App\Http\Controllers\EmployeeAdvanceController::class, 'create'])->name('employees.advances.create');
-            Route::post('/', [\App\Http\Controllers\EmployeeAdvanceController::class, 'store'])->name('employees.advances.store');
-            Route::get('/edit/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'edit'])->name('employees.advances.edit');
-            Route::put('/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'update'])->name('employees.advances.update');
-            Route::delete('/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'destroy'])->name('employees.advances.destroy');
-            Route::post('/{id}/approve', [\App\Http\Controllers\EmployeeAdvanceController::class, 'approve'])->name('employees.advances.approve');
-            Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeAdvanceController::class, 'reject'])->name('employees.advances.reject');
-            Route::post('/{id}/mark-paid', [\App\Http\Controllers\EmployeeAdvanceController::class, 'markPaid'])->name('employees.advances.mark-paid');
+            Route::get('/create', [\App\Http\Controllers\EmployeeAdvanceController::class, 'create'])->name('employees.advances.create')->middleware('permission:employees.advances.create');
+            Route::post('/', [\App\Http\Controllers\EmployeeAdvanceController::class, 'store'])->name('employees.advances.store')->middleware('permission:employees.advances.create');
+            Route::get('/edit/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'edit'])->name('employees.advances.edit')->middleware('permission:employees.advances.edit');
+            Route::put('/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'update'])->name('employees.advances.update')->middleware('permission:employees.advances.edit');
+            Route::delete('/{id}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'destroy'])->name('employees.advances.destroy')->middleware('permission:employees.advances.delete');
+            Route::post('/{id}/approve', [\App\Http\Controllers\EmployeeAdvanceController::class, 'approve'])->name('employees.advances.approve')->middleware('permission:employees.advances.edit');
+            Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeAdvanceController::class, 'reject'])->name('employees.advances.reject')->middleware('permission:employees.advances.edit');
+            Route::post('/{id}/mark-paid', [\App\Http\Controllers\EmployeeAdvanceController::class, 'markPaid'])->name('employees.advances.mark-paid')->middleware('permission:employees.advances.edit');
             Route::get('/employee/{employeeId}', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeAdvances'])->name('employees.advances.employee');
             Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeAdvanceController::class, 'getEmployeeSalary'])->name('employees.advances.salary');
         });
 
         // Employee Assets (Inventory)
-        Route::prefix('assets')->group(function () {
+        Route::prefix('assets')->middleware('permission:employees.assets.view')->group(function () {
             Route::get('/', [EmployeeAssetController::class, 'index'])->name('employees.assets.index');
             Route::get('/list', [EmployeeAssetController::class, 'getAssets'])->name('employees.assets.list');
             Route::get('/options', [EmployeeAssetController::class, 'getOptions'])->name('employees.assets.options');
-            Route::get('/trashed', [EmployeeAssetController::class, 'trashed'])->name('employees.assets.trashed');  // Moved up
-            Route::post('/', [EmployeeAssetController::class, 'store'])->name('employees.assets.store');
+            Route::get('/trashed', [EmployeeAssetController::class, 'trashed'])->name('employees.assets.trashed')->middleware('permission:employees.assets.delete');  // Moved up
+            Route::post('/', [EmployeeAssetController::class, 'store'])->name('employees.assets.store')->middleware('permission:employees.assets.create');
 
             // Routes with {id} must come last or after specific routes
-            Route::delete('/media/{id}', [EmployeeAssetController::class, 'deleteMedia'])->name('employees.assets.media.delete');  // Specific delete
-            Route::post('/{id}/restore', [EmployeeAssetController::class, 'restore'])->name('employees.assets.restore');
-            Route::delete('/{id}/force-delete', [EmployeeAssetController::class, 'forceDelete'])->name('employees.assets.force-delete');
+            Route::delete('/media/{id}', [EmployeeAssetController::class, 'deleteMedia'])->name('employees.assets.media.delete')->middleware('permission:employees.assets.delete');  // Specific delete
+            Route::post('/{id}/restore', [EmployeeAssetController::class, 'restore'])->name('employees.assets.restore')->middleware('permission:employees.assets.delete');
+            Route::delete('/{id}/force-delete', [EmployeeAssetController::class, 'forceDelete'])->name('employees.assets.force-delete')->middleware('permission:employees.assets.delete');
 
             Route::get('/{id}', [EmployeeAssetController::class, 'show'])->name('employees.assets.show');
-            Route::put('/{id}', [EmployeeAssetController::class, 'update'])->name('employees.assets.update');
-            Route::delete('/{id}', [EmployeeAssetController::class, 'destroy'])->name('employees.assets.destroy');
+            Route::put('/{id}', [EmployeeAssetController::class, 'update'])->name('employees.assets.update')->middleware('permission:employees.assets.edit');
+            Route::delete('/{id}', [EmployeeAssetController::class, 'destroy'])->name('employees.assets.destroy')->middleware('permission:employees.assets.delete');
         });
 
         // Employee Asset Attachments (Assignments)
-        Route::prefix('asset-attachments')->group(function () {
+        Route::prefix('asset-attachments')->middleware('permission:employees.assets.view')->group(function () {
             Route::get('/', [EmployeeAssetAttachmentController::class, 'index'])->name('employees.asset-attachments.index');
             Route::get('/list', [EmployeeAssetAttachmentController::class, 'getAttachments'])->name('employees.asset-attachments.list');
             Route::get('/form-data', [EmployeeAssetAttachmentController::class, 'getFormData'])->name('employees.asset-attachments.form-data');
-            Route::get('/trashed', [EmployeeAssetAttachmentController::class, 'trashed'])->name('employees.asset-attachments.trashed');  // Moved up
-            Route::post('/', [EmployeeAssetAttachmentController::class, 'store'])->name('employees.asset-attachments.store');
+            Route::get('/trashed', [EmployeeAssetAttachmentController::class, 'trashed'])->name('employees.asset-attachments.trashed')->middleware('permission:employees.assets.delete');  // Moved up
+            Route::post('/', [EmployeeAssetAttachmentController::class, 'store'])->name('employees.asset-attachments.store')->middleware('permission:employees.assets.create');
 
             // Routes with {id} need care
-            Route::delete('/media/{id}', [EmployeeAssetAttachmentController::class, 'deleteMedia'])->name('employees.asset-attachments.media.delete');
-            Route::post('/{id}/restore', [EmployeeAssetAttachmentController::class, 'restore'])->name('employees.asset-attachments.restore');
-            Route::delete('/{id}/force-delete', [EmployeeAssetAttachmentController::class, 'forceDelete'])->name('employees.asset-attachments.force-delete');
+            Route::delete('/media/{id}', [EmployeeAssetAttachmentController::class, 'deleteMedia'])->name('employees.asset-attachments.media.delete')->middleware('permission:employees.assets.edit');
+            Route::post('/{id}/restore', [EmployeeAssetAttachmentController::class, 'restore'])->name('employees.asset-attachments.restore')->middleware('permission:employees.assets.delete');
+            Route::delete('/{id}/force-delete', [EmployeeAssetAttachmentController::class, 'forceDelete'])->name('employees.asset-attachments.force-delete')->middleware('permission:employees.assets.delete');
 
-            Route::put('/{id}', [EmployeeAssetAttachmentController::class, 'update'])->name('employees.asset-attachments.update');
-            Route::delete('/{id}', [EmployeeAssetAttachmentController::class, 'destroy'])->name('employees.asset-attachments.destroy');
+            Route::put('/{id}', [EmployeeAssetAttachmentController::class, 'update'])->name('employees.asset-attachments.update')->middleware('permission:employees.assets.edit');
+            Route::delete('/{id}', [EmployeeAssetAttachmentController::class, 'destroy'])->name('employees.asset-attachments.destroy')->middleware('permission:employees.assets.delete');
         });
 
         // Employee Loans
-        Route::prefix('loans')->group(function () {
+        Route::prefix('loans')->middleware('permission:employees.loans.view')->group(function () {
             Route::get('/', [\App\Http\Controllers\EmployeeLoanController::class, 'index'])->name('employees.loans.index');
-            Route::get('/create', [\App\Http\Controllers\EmployeeLoanController::class, 'create'])->name('employees.loans.create');
-            Route::post('/', [\App\Http\Controllers\EmployeeLoanController::class, 'store'])->name('employees.loans.store');
-            Route::get('/edit/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'edit'])->name('employees.loans.edit');
-            Route::put('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'update'])->name('employees.loans.update');
-            Route::delete('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'destroy'])->name('employees.loans.destroy');
-            Route::post('/{id}/approve', [\App\Http\Controllers\EmployeeLoanController::class, 'approve'])->name('employees.loans.approve');
-            Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeLoanController::class, 'reject'])->name('employees.loans.reject');
-            Route::post('/{id}/disburse', [\App\Http\Controllers\EmployeeLoanController::class, 'disburse'])->name('employees.loans.disburse');
+            Route::get('/create', [\App\Http\Controllers\EmployeeLoanController::class, 'create'])->name('employees.loans.create')->middleware('permission:employees.loans.create');
+            Route::post('/', [\App\Http\Controllers\EmployeeLoanController::class, 'store'])->name('employees.loans.store')->middleware('permission:employees.loans.create');
+            Route::get('/edit/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'edit'])->name('employees.loans.edit')->middleware('permission:employees.loans.edit');
+            Route::put('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'update'])->name('employees.loans.update')->middleware('permission:employees.loans.edit');
+            Route::delete('/{id}', [\App\Http\Controllers\EmployeeLoanController::class, 'destroy'])->name('employees.loans.destroy')->middleware('permission:employees.loans.delete');
+            Route::post('/{id}/approve', [\App\Http\Controllers\EmployeeLoanController::class, 'approve'])->name('employees.loans.approve')->middleware('permission:employees.loans.edit');
+            Route::post('/{id}/reject', [\App\Http\Controllers\EmployeeLoanController::class, 'reject'])->name('employees.loans.reject')->middleware('permission:employees.loans.edit');
+            Route::post('/{id}/disburse', [\App\Http\Controllers\EmployeeLoanController::class, 'disburse'])->name('employees.loans.disburse')->middleware('permission:employees.loans.edit');
             Route::get('/employee/{employeeId}', [\App\Http\Controllers\EmployeeLoanController::class, 'getEmployeeLoans'])->name('employees.loans.employee');
             Route::get('/employee/{employeeId}/salary', [\App\Http\Controllers\EmployeeLoanController::class, 'getEmployeeSalary'])->name('employees.loans.salary');
         });
 
-        Route::prefix('attendances')->group(function () {
+        Route::prefix('attendances')->middleware('permission:employees.attendance.view')->group(function () {
             // Actions
-            Route::post('apply-standard', [AttendanceController::class, 'applyStandardAttendance'])->name('employees.attendances.apply-standard');
+            Route::post('apply-standard', [AttendanceController::class, 'applyStandardAttendance'])->name('employees.attendances.apply-standard')->middleware('permission:employees.attendance.create');
 
             // Inertia.js Pages
             Route::get('dashboard', [AttendanceController::class, 'dashboard'])->name('employees.attendances.dashboard');
@@ -225,7 +254,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('monthly/report/print', [AttendanceController::class, 'monthlyReportPrint'])->name('employees.attendances.monthly.report.print');
         });
 
-        Route::prefix('payroll')->group(function () {
+        Route::prefix('payroll')->middleware('permission:employees.payroll.view')->group(function () {
             // Payroll Dashboard
             Route::get('dashboard', [PayrollController::class, 'dashboard'])->name('employees.payroll.dashboard');
 
@@ -234,8 +263,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
             // Employee Salary Management
             Route::get('salaries', [PayrollController::class, 'employeeSalaries'])->name('employees.payroll.salaries');
-            Route::get('salaries/create/{employeeId}', [PayrollController::class, 'createSalaryStructure'])->name('employees.payroll.salaries.create');
-            Route::get('salaries/edit/{employeeId}', [PayrollController::class, 'editSalaryStructure'])->name('employees.payroll.salaries.edit');
+            Route::get('salaries/create/{employeeId}', [PayrollController::class, 'createSalaryStructure'])->name('employees.payroll.salaries.create')->middleware('permission:employees.payroll.process');
+            Route::get('salaries/edit/{employeeId}', [PayrollController::class, 'editSalaryStructure'])->name('employees.payroll.salaries.edit')->middleware('permission:employees.payroll.process');
             Route::get('salaries/view/{employeeId}', [PayrollController::class, 'viewSalaryStructure'])->name('employees.payroll.salaries.view');
 
             // Allowance & Deduction Types Management
@@ -243,12 +272,12 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('deduction-types', [PayrollController::class, 'deductionTypes'])->name('employees.payroll.deduction-types');
 
             // Payroll Processing
-            Route::get('process', [PayrollController::class, 'processPayroll'])->name('employees.payroll.process');
+            Route::get('process', [PayrollController::class, 'processPayroll'])->name('employees.payroll.process')->middleware('permission:employees.payroll.process');
             // Payroll Preview (full page)
             Route::get('preview', [PayrollController::class, 'previewPayrollPage'])->name('employees.payroll.preview');
             Route::get('periods', [PayrollController::class, 'payrollPeriods'])->name('employees.payroll.periods');
-            Route::get('periods/create', [PayrollController::class, 'createPeriod'])->name('employees.payroll.periods.create');
-            Route::get('periods/{periodId}/edit', [PayrollController::class, 'editPeriod'])->name('employees.payroll.periods.edit');
+            Route::get('periods/create', [PayrollController::class, 'createPeriod'])->name('employees.payroll.periods.create')->middleware('permission:employees.payroll.process');
+            Route::get('periods/{periodId}/edit', [PayrollController::class, 'editPeriod'])->name('employees.payroll.periods.edit')->middleware('permission:employees.payroll.process');
             Route::get('periods/{periodId}/payslips', [PayrollController::class, 'periodPayslips'])->name('employees.payroll.periods.payslips');
 
             // Payslips Management
@@ -273,42 +302,45 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
         // Employee Reports
         Route::prefix('reports')->group(function () {
-            Route::get('/', [EmployeeReportController::class, 'index'])->name('employees.reports');
+            // Page Views (Super Admin)
+            Route::group(['middleware' => 'super.admin:employees.reports.view'], function () {
+                Route::get('/', [EmployeeReportController::class, 'index'])->name('employees.reports');
 
-            // Employee Details Report
-            Route::get('employee-details', [EmployeeReportController::class, 'employeeDetails'])->name('employees.reports.employee-details');
-            Route::get('employee-details/print', [EmployeeReportController::class, 'employeeDetailsPrint'])->name('employees.reports.employee-details.print');
+                // Employee Details Report
+                Route::get('employee-details', [EmployeeReportController::class, 'employeeDetails'])->name('employees.reports.employee-details');
+                Route::get('employee-details/print', [EmployeeReportController::class, 'employeeDetailsPrint'])->name('employees.reports.employee-details.print');
 
-            // New Hiring Report
-            Route::get('new-hiring', [EmployeeReportController::class, 'newHiring'])->name('employees.reports.new-hiring');
-            Route::get('new-hiring/print', [EmployeeReportController::class, 'newHiringPrint'])->name('employees.reports.new-hiring.print');
+                // New Hiring Report
+                Route::get('new-hiring', [EmployeeReportController::class, 'newHiring'])->name('employees.reports.new-hiring');
+                Route::get('new-hiring/print', [EmployeeReportController::class, 'newHiringPrint'])->name('employees.reports.new-hiring.print');
 
-            // Salary Sheet
-            Route::get('salary-sheet', [EmployeeReportController::class, 'salarySheet'])->name('employees.reports.salary-sheet');
-            Route::get('salary-sheet/print', [EmployeeReportController::class, 'salarySheetPrint'])->name('employees.reports.salary-sheet.print');
+                // Salary Sheet
+                Route::get('salary-sheet', [EmployeeReportController::class, 'salarySheet'])->name('employees.reports.salary-sheet');
+                Route::get('salary-sheet/print', [EmployeeReportController::class, 'salarySheetPrint'])->name('employees.reports.salary-sheet.print');
 
-            // Deductions Report
-            Route::get('deductions', [EmployeeReportController::class, 'deductions'])->name('employees.reports.deductions');
-            Route::get('deductions/print', [EmployeeReportController::class, 'deductionsPrint'])->name('employees.reports.deductions.print');
+                // Deductions Report
+                Route::get('deductions', [EmployeeReportController::class, 'deductions'])->name('employees.reports.deductions');
+                Route::get('deductions/print', [EmployeeReportController::class, 'deductionsPrint'])->name('employees.reports.deductions.print');
 
-            // Loans Report
-            Route::get('loans', [EmployeeReportController::class, 'loans'])->name('employees.reports.loans');
-            Route::get('loans/print', [EmployeeReportController::class, 'loansPrint'])->name('employees.reports.loans.print');
+                // Loans Report
+                Route::get('loans', [EmployeeReportController::class, 'loans'])->name('employees.reports.loans');
+                Route::get('loans/print', [EmployeeReportController::class, 'loansPrint'])->name('employees.reports.loans.print');
 
-            // Advances Report
-            Route::get('advances', [EmployeeReportController::class, 'advances'])->name('employees.reports.advances');
-            Route::get('advances/print', [EmployeeReportController::class, 'advancesPrint'])->name('employees.reports.advances.print');
+                // Advances Report
+                Route::get('advances', [EmployeeReportController::class, 'advances'])->name('employees.reports.advances');
+                Route::get('advances/print', [EmployeeReportController::class, 'advancesPrint'])->name('employees.reports.advances.print');
 
-            // Increments Report
-            Route::get('increments', [EmployeeReportController::class, 'increments'])->name('employees.reports.increments');
-            Route::get('increments/print', [EmployeeReportController::class, 'incrementsPrint'])->name('employees.reports.increments.print');
+                // Increments Report
+                Route::get('increments', [EmployeeReportController::class, 'increments'])->name('employees.reports.increments');
+                Route::get('increments/print', [EmployeeReportController::class, 'incrementsPrint'])->name('employees.reports.increments.print');
 
-            // Bank Transfer Report
-            Route::get('bank-transfer', [EmployeeReportController::class, 'bankTransfer'])->name('employees.reports.bank-transfer');
-            Route::get('bank-transfer/print', [EmployeeReportController::class, 'bankTransferPrint'])->name('employees.reports.bank-transfer.print');
+                // Bank Transfer Report
+                Route::get('bank-transfer', [EmployeeReportController::class, 'bankTransfer'])->name('employees.reports.bank-transfer');
+                Route::get('bank-transfer/print', [EmployeeReportController::class, 'bankTransferPrint'])->name('employees.reports.bank-transfer.print');
+            });
 
-            // API Routes (Data & Export)
-            Route::prefix('api')->group(function () {
+            // API Routes (Data & Export) - Permission Middleware
+            Route::prefix('api')->middleware('permission:employees.reports.view')->group(function () {
                 // Data APIs
                 Route::get('employee-details', [\App\Http\Controllers\EmployeeReportApiController::class, 'employeeDetails'])->name('employees.reports.api.employee-details');
                 Route::get('new-hiring', [\App\Http\Controllers\EmployeeReportApiController::class, 'newHiring'])->name('employees.reports.api.new-hiring');
@@ -334,18 +366,32 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Admin Room Booking Routes
     Route::group(['prefix' => 'booking-management'], function () {
-        Route::resource('guest-types', GuestTypeController::class)->except(['show']);
-        Route::get('/api/guest-types/active', [GuestTypeController::class, 'getActiveList'])->name('api.guest-types.active');
+        Route::resource('guest-types', GuestTypeController::class)->except(['show'])->middleware([
+            'index' => 'permission:guest-types.view',
+            'create' => 'permission:guest-types.create',
+            'store' => 'permission:guest-types.create',
+            'edit' => 'permission:guest-types.edit',
+            'update' => 'permission:guest-types.edit',
+            'destroy' => 'permission:guest-types.delete',
+        ]);
+        Route::get('/api/guest-types/active', [GuestTypeController::class, 'getActiveList'])->name('api.guest-types.active')->middleware('permission:guest-types.view');
 
-        Route::get('guests/trashed', [CustomerController::class, 'trashed'])->name('guests.trashed');
-        Route::post('guests/restore/{id}', [CustomerController::class, 'restore'])->name('guests.restore');
-        Route::resource('guests', CustomerController::class)->except(['show']);
+        Route::get('guests/trashed', [CustomerController::class, 'trashed'])->name('guests.trashed')->middleware('permission:guests.restore');
+        Route::post('guests/restore/{id}', [CustomerController::class, 'restore'])->name('guests.restore')->middleware('permission:guests.restore');
+        Route::resource('guests', CustomerController::class)->except(['show'])->middleware([
+            'index' => 'permission:guests.view',
+            'create' => 'permission:guests.create',
+            'store' => 'permission:guests.create',
+            'edit' => 'permission:guests.edit',
+            'update' => 'permission:guests.edit',
+            'destroy' => 'permission:guests.delete',
+        ]);
 
         Route::group(['prefix' => 'rooms'], function () {
             Route::get('/', [RoomController::class, 'allRooms'])->name('rooms.all')->middleware('super.admin:rooms.view');
 
-            Route::get('/create-booking', [RoomBookingController::class, 'booking'])->name('rooms.create.booking')->middleware('super.admin:rooms.booking.create');
-            Route::get('/edit-booking/{id}', [RoomBookingController::class, 'editbooking'])->name('rooms.edit.booking')->middleware('super.admin:rooms.booking.edit');
+            Route::get('/create-booking', [RoomBookingController::class, 'booking'])->name('rooms.create.booking')->middleware('super.admin:rooms.bookings.create');
+            Route::get('/edit-booking/{id}', [RoomBookingController::class, 'editbooking'])->name('rooms.edit.booking')->middleware('super.admin:rooms.bookings.edit');
             Route::post('/update-booking/{id}', [RoomBookingController::class, 'update'])->name('rooms.update.booking')->middleware('permission:rooms.booking.edit');
             Route::post('/create-booking', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
 
@@ -354,18 +400,18 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('check-in', [RoomBookingController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
             Route::get('check-out', [RoomBookingController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
             // Cancelled Bookings
-            Route::get('booking/cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');  // Add middleware permission later if needed
-            Route::put('booking/refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund');
-            Route::put('booking/cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel');
-            Route::put('booking/undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel');
-            Route::get('booking/invoice/{id}', [RoomBookingController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('permission:rooms.bookings.view');
+            Route::get('booking/cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');
+            Route::put('booking/refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund')->middleware('permission:rooms.bookings.edit');
+            Route::put('booking/cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel')->middleware('permission:rooms.bookings.edit');
+            Route::put('booking/undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel')->middleware('permission:rooms.bookings.edit');
+            Route::get('booking/invoice/{id}', [RoomBookingController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('super.admin:rooms.bookings.view');
             Route::put('booking/update-status/{id}', [RoomBookingController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
 
             // Room Calendar
             Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
 
             // Rooms Trashed Module
-            Route::get('trashed', [RoomController::class, 'trashed'])->name('rooms.trashed')->middleware('permission:rooms.delete');
+            Route::get('trashed', [RoomController::class, 'trashed'])->name('rooms.trashed')->middleware('super.admin:rooms.delete');
             Route::post('restore/{id}', [RoomController::class, 'restore'])->name('rooms.restore')->middleware('permission:rooms.delete');
             Route::delete('force-delete/{id}', [RoomController::class, 'forceDelete'])->name('rooms.force-delete')->middleware('permission:rooms.delete');
 
@@ -383,59 +429,65 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::group(['prefix' => 'requests', 'middleware' => 'super.admin:rooms.bookings.requests'], function () {
                 Route::get('', [RoomBookingRequestController::class, 'index'])->name('rooms.request');
                 Route::get('create', [RoomBookingRequestController::class, 'create'])->name('rooms.request.create');
-                Route::post('store', [RoomBookingRequestController::class, 'store'])->name('rooms.request.store');
-                Route::put('update/status/{id}', [RoomBookingRequestController::class, 'updateStatus'])->name('rooms.request.update.status');
+                Route::post('store', [RoomBookingRequestController::class, 'store'])->name('rooms.request.store')->middleware('permission:rooms.bookings.requests');  // Action overrides group? No, middleware accumulates.
+                // Actually store is action. But group has super.admin.
+                // Standard way: Group has page permission. Actions have action permission?
+                // User said: "if we have page then we use super.admin... if api then permission".
+                // I should probably not put super.admin on the Group if the group contains APIs.
+                // But here requests seem to be "Index" and "Create" pages mostly, "Store" is action.
+                // I will apply middleware individually to be safe.
+                Route::put('update/status/{id}', [RoomBookingRequestController::class, 'updateStatus'])->name('rooms.request.update.status')->middleware('permission:rooms.bookings.requests');
                 Route::get('{id}/edit', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.edit');
-                Route::put('{id}', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.update');
+                Route::put('{id}', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.update')->middleware('permission:rooms.bookings.requests');
             });
             // Room Reports
-            Route::prefix('reports')->group(function () {
+            Route::prefix('reports')->middleware('super.admin:rooms.reports.view')->group(function () {
                 Route::get('/', [\App\Http\Controllers\RoomReportController::class, 'index'])->name('rooms.reports');
 
                 // Day-wise
-                Route::get('day-wise', [\App\Http\Controllers\RoomReportController::class, 'dayWise'])->name('rooms.reports.day-wise');
-                Route::get('day-wise/print', [\App\Http\Controllers\RoomReportController::class, 'dayWisePrint'])->name('rooms.reports.day-wise.print');
-                Route::get('day-wise/export', [\App\Http\Controllers\RoomReportController::class, 'dayWiseExport'])->name('rooms.reports.day-wise.export');
+                Route::get('day-wise', [\App\Http\Controllers\RoomReportController::class, 'dayWise'])->name('rooms.reports.day-wise')->middleware('super.admin:rooms.reports.day-wise');
+                Route::get('day-wise/print', [\App\Http\Controllers\RoomReportController::class, 'dayWisePrint'])->name('rooms.reports.day-wise.print')->middleware('super.admin:rooms.reports.day-wise');
+                Route::get('day-wise/export', [\App\Http\Controllers\RoomReportController::class, 'dayWiseExport'])->name('rooms.reports.day-wise.export')->middleware('permission:rooms.reports.day-wise');
 
                 // Room-wise Payment History
-                Route::get('payment-history', [\App\Http\Controllers\RoomReportController::class, 'paymentHistory'])->name('rooms.reports.payment-history');
-                Route::get('payment-history/print', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryPrint'])->name('rooms.reports.payment-history.print');
-                Route::get('payment-history/export', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryExport'])->name('rooms.reports.payment-history.export');
+                Route::get('payment-history', [\App\Http\Controllers\RoomReportController::class, 'paymentHistory'])->name('rooms.reports.payment-history')->middleware('super.admin:rooms.reports.payment-history');
+                Route::get('payment-history/print', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryPrint'])->name('rooms.reports.payment-history.print')->middleware('super.admin:rooms.reports.payment-history');
+                Route::get('payment-history/export', [\App\Http\Controllers\RoomReportController::class, 'paymentHistoryExport'])->name('rooms.reports.payment-history.export')->middleware('permission:rooms.reports.payment-history');
 
                 // Booking
-                Route::get('booking', [\App\Http\Controllers\RoomReportController::class, 'booking'])->name('rooms.reports.booking');
-                Route::get('booking/print', [\App\Http\Controllers\RoomReportController::class, 'bookingPrint'])->name('rooms.reports.booking.print');
-                Route::get('booking/export', [\App\Http\Controllers\RoomReportController::class, 'bookingExport'])->name('rooms.reports.booking.export');
+                Route::get('booking', [\App\Http\Controllers\RoomReportController::class, 'booking'])->name('rooms.reports.booking')->middleware('super.admin:rooms.reports.booking');
+                Route::get('booking/print', [\App\Http\Controllers\RoomReportController::class, 'bookingPrint'])->name('rooms.reports.booking.print')->middleware('super.admin:rooms.reports.booking');
+                Route::get('booking/export', [\App\Http\Controllers\RoomReportController::class, 'bookingExport'])->name('rooms.reports.booking.export')->middleware('permission:rooms.reports.booking');
 
                 // Cancelled
-                Route::get('cancelled', [\App\Http\Controllers\RoomReportController::class, 'cancelled'])->name('rooms.reports.cancelled');
-                Route::get('cancelled/print', [\App\Http\Controllers\RoomReportController::class, 'cancelledPrint'])->name('rooms.reports.cancelled.print');
-                Route::get('cancelled/export', [\App\Http\Controllers\RoomReportController::class, 'cancelledExport'])->name('rooms.reports.cancelled.export');
+                Route::get('cancelled', [\App\Http\Controllers\RoomReportController::class, 'cancelled'])->name('rooms.reports.cancelled')->middleware('super.admin:rooms.reports.cancelled');
+                Route::get('cancelled/print', [\App\Http\Controllers\RoomReportController::class, 'cancelledPrint'])->name('rooms.reports.cancelled.print')->middleware('super.admin:rooms.reports.cancelled');
+                Route::get('cancelled/export', [\App\Http\Controllers\RoomReportController::class, 'cancelledExport'])->name('rooms.reports.cancelled.export')->middleware('permission:rooms.reports.cancelled');
 
                 // Check-in
-                Route::get('check-in', [\App\Http\Controllers\RoomReportController::class, 'checkIn'])->name('rooms.reports.check-in');
-                Route::get('check-in/print', [\App\Http\Controllers\RoomReportController::class, 'checkInPrint'])->name('rooms.reports.check-in.print');
-                Route::get('check-in/export', [\App\Http\Controllers\RoomReportController::class, 'checkInExport'])->name('rooms.reports.check-in.export');
+                Route::get('check-in', [\App\Http\Controllers\RoomReportController::class, 'checkIn'])->name('rooms.reports.check-in')->middleware('super.admin:rooms.reports.check-in');
+                Route::get('check-in/print', [\App\Http\Controllers\RoomReportController::class, 'checkInPrint'])->name('rooms.reports.check-in.print')->middleware('super.admin:rooms.reports.check-in');
+                Route::get('check-in/export', [\App\Http\Controllers\RoomReportController::class, 'checkInExport'])->name('rooms.reports.check-in.export')->middleware('permission:rooms.reports.check-in');
 
                 // Check-out
-                Route::get('check-out', [\App\Http\Controllers\RoomReportController::class, 'checkOut'])->name('rooms.reports.check-out');
-                Route::get('check-out/print', [\App\Http\Controllers\RoomReportController::class, 'checkOutPrint'])->name('rooms.reports.check-out.print');
-                Route::get('check-out/export', [\App\Http\Controllers\RoomReportController::class, 'checkOutExport'])->name('rooms.reports.check-out.export');
+                Route::get('check-out', [\App\Http\Controllers\RoomReportController::class, 'checkOut'])->name('rooms.reports.check-out')->middleware('super.admin:rooms.reports.check-out');
+                Route::get('check-out/print', [\App\Http\Controllers\RoomReportController::class, 'checkOutPrint'])->name('rooms.reports.check-out.print')->middleware('super.admin:rooms.reports.check-out');
+                Route::get('check-out/export', [\App\Http\Controllers\RoomReportController::class, 'checkOutExport'])->name('rooms.reports.check-out.export')->middleware('permission:rooms.reports.check-out');
 
                 // Member Wise
-                Route::get('member-wise', [\App\Http\Controllers\RoomReportController::class, 'memberWise'])->name('rooms.reports.member-wise');
-                Route::get('member-wise/print', [\App\Http\Controllers\RoomReportController::class, 'memberWisePrint'])->name('rooms.reports.member-wise.print');
-                Route::get('member-wise/export', [\App\Http\Controllers\RoomReportController::class, 'memberWiseExport'])->name('rooms.reports.member-wise.export');
+                Route::get('member-wise', [\App\Http\Controllers\RoomReportController::class, 'memberWise'])->name('rooms.reports.member-wise')->middleware('super.admin:rooms.reports.member-wise');
+                Route::get('member-wise/print', [\App\Http\Controllers\RoomReportController::class, 'memberWisePrint'])->name('rooms.reports.member-wise.print')->middleware('super.admin:rooms.reports.member-wise');
+                Route::get('member-wise/export', [\App\Http\Controllers\RoomReportController::class, 'memberWiseExport'])->name('rooms.reports.member-wise.export')->middleware('permission:rooms.reports.member-wise');
 
                 // Mini Bar
-                Route::get('mini-bar', [\App\Http\Controllers\RoomReportController::class, 'miniBar'])->name('rooms.reports.mini-bar');
-                Route::get('mini-bar/print', [\App\Http\Controllers\RoomReportController::class, 'miniBarPrint'])->name('rooms.reports.mini-bar.print');
-                Route::get('mini-bar/export', [\App\Http\Controllers\RoomReportController::class, 'miniBarExport'])->name('rooms.reports.mini-bar.export');
+                Route::get('mini-bar', [\App\Http\Controllers\RoomReportController::class, 'miniBar'])->name('rooms.reports.mini-bar')->middleware('super.admin:rooms.reports.mini-bar');
+                Route::get('mini-bar/print', [\App\Http\Controllers\RoomReportController::class, 'miniBarPrint'])->name('rooms.reports.mini-bar.print')->middleware('super.admin:rooms.reports.mini-bar');
+                Route::get('mini-bar/export', [\App\Http\Controllers\RoomReportController::class, 'miniBarExport'])->name('rooms.reports.mini-bar.export')->middleware('permission:rooms.reports.mini-bar');
 
                 // Complementary
-                Route::get('complementary', [\App\Http\Controllers\RoomReportController::class, 'complementary'])->name('rooms.reports.complementary');
-                Route::get('complementary/print', [\App\Http\Controllers\RoomReportController::class, 'complementaryPrint'])->name('rooms.reports.complementary.print');
-                Route::get('complementary/export', [\App\Http\Controllers\RoomReportController::class, 'complementaryExport'])->name('rooms.reports.complementary.export');
+                Route::get('complementary', [\App\Http\Controllers\RoomReportController::class, 'complementary'])->name('rooms.reports.complementary')->middleware('super.admin:rooms.reports.complementary');
+                Route::get('complementary/print', [\App\Http\Controllers\RoomReportController::class, 'complementaryPrint'])->name('rooms.reports.complementary.print')->middleware('super.admin:rooms.reports.complementary');
+                Route::get('complementary/export', [\App\Http\Controllers\RoomReportController::class, 'complementaryExport'])->name('rooms.reports.complementary.export')->middleware('permission:rooms.reports.complementary');
             });
         });
 
@@ -474,7 +526,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('cancelled', [EventBookingController::class, 'cancelled'])->name('events.cancelled')->middleware('super.admin:events.bookings.cancelled');
             Route::get('create', [EventBookingController::class, 'create'])->name('events.booking.create')->middleware('super.admin:events.bookings.create');
             Route::post('booking', [EventBookingController::class, 'store'])->name('events.booking.store')->middleware('permission:events.bookings.create');
-            Route::get('booking/{id}/invoice', [EventBookingController::class, 'showInvoice'])->name('events.booking.invoice')->middleware('permission:events.bookings.view');
+            Route::get('booking/{id}/invoice', [EventBookingController::class, 'showInvoice'])->name('events.booking.invoice')->middleware('super.admin:events.bookings.view');
             Route::put('booking/{id}/status', [EventBookingController::class, 'updateStatus'])->name('events.booking.update.status')->middleware('permission:events.bookings.edit');
 
             // Cancellation & Refund Routes
@@ -486,53 +538,53 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::post('booking/{id}', [EventBookingController::class, 'update'])->name('events.booking.update')->middleware('permission:events.bookings.edit');
 
             // Event Reports
-            Route::prefix('reports')->group(function () {
+            Route::prefix('reports')->middleware('super.admin:events.reports.view')->group(function () {
                 Route::get('/', [\App\Http\Controllers\EventReportController::class, 'index'])->name('events.reports');
 
                 // Day-wise
-                Route::get('day-wise', [\App\Http\Controllers\EventReportController::class, 'dayWise'])->name('events.reports.day-wise');
-                Route::get('day-wise/print', [\App\Http\Controllers\EventReportController::class, 'dayWisePrint'])->name('events.reports.day-wise.print');
-                Route::get('day-wise/export', [\App\Http\Controllers\EventReportController::class, 'dayWiseExport'])->name('events.reports.day-wise.export');
+                Route::get('day-wise', [\App\Http\Controllers\EventReportController::class, 'dayWise'])->name('events.reports.day-wise')->middleware('super.admin:events.reports.day-wise');
+                Route::get('day-wise/print', [\App\Http\Controllers\EventReportController::class, 'dayWisePrint'])->name('events.reports.day-wise.print')->middleware('super.admin:events.reports.day-wise');
+                Route::get('day-wise/export', [\App\Http\Controllers\EventReportController::class, 'dayWiseExport'])->name('events.reports.day-wise.export')->middleware('permission:events.reports.day-wise');
 
                 // Payment History
-                Route::get('payment-history', [\App\Http\Controllers\EventReportController::class, 'paymentHistory'])->name('events.reports.payment-history');
-                Route::get('payment-history/print', [\App\Http\Controllers\EventReportController::class, 'paymentHistoryPrint'])->name('events.reports.payment-history.print');
-                Route::get('payment-history/export', [\App\Http\Controllers\EventReportController::class, 'paymentHistoryExport'])->name('events.reports.payment-history.export');
+                Route::get('payment-history', [\App\Http\Controllers\EventReportController::class, 'paymentHistory'])->name('events.reports.payment-history')->middleware('super.admin:events.reports.payment-history');
+                Route::get('payment-history/print', [\App\Http\Controllers\EventReportController::class, 'paymentHistoryPrint'])->name('events.reports.payment-history.print')->middleware('super.admin:events.reports.payment-history');
+                Route::get('payment-history/export', [\App\Http\Controllers\EventReportController::class, 'paymentHistoryExport'])->name('events.reports.payment-history.export')->middleware('permission:events.reports.payment-history');
 
                 // Booking
-                Route::get('booking', [\App\Http\Controllers\EventReportController::class, 'booking'])->name('events.reports.booking');
-                Route::get('booking/print', [\App\Http\Controllers\EventReportController::class, 'bookingPrint'])->name('events.reports.booking.print');
-                Route::get('booking/export', [\App\Http\Controllers\EventReportController::class, 'bookingExport'])->name('events.reports.booking.export');
+                Route::get('booking', [\App\Http\Controllers\EventReportController::class, 'booking'])->name('events.reports.booking')->middleware('super.admin:events.reports.booking');
+                Route::get('booking/print', [\App\Http\Controllers\EventReportController::class, 'bookingPrint'])->name('events.reports.booking.print')->middleware('super.admin:events.reports.booking');
+                Route::get('booking/export', [\App\Http\Controllers\EventReportController::class, 'bookingExport'])->name('events.reports.booking.export')->middleware('permission:events.reports.booking');
 
                 // Cancelled
-                Route::get('cancelled', [\App\Http\Controllers\EventReportController::class, 'cancelled'])->name('events.reports.cancelled');
-                Route::get('cancelled/print', [\App\Http\Controllers\EventReportController::class, 'cancelledPrint'])->name('events.reports.cancelled.print');
-                Route::get('cancelled/export', [\App\Http\Controllers\EventReportController::class, 'cancelledExport'])->name('events.reports.cancelled.export');
+                Route::get('cancelled', [\App\Http\Controllers\EventReportController::class, 'cancelled'])->name('events.reports.cancelled')->middleware('super.admin:events.reports.cancelled');
+                Route::get('cancelled/print', [\App\Http\Controllers\EventReportController::class, 'cancelledPrint'])->name('events.reports.cancelled.print')->middleware('super.admin:events.reports.cancelled');
+                Route::get('cancelled/export', [\App\Http\Controllers\EventReportController::class, 'cancelledExport'])->name('events.reports.cancelled.export')->middleware('permission:events.reports.cancelled');
 
                 // Completed
-                Route::get('completed', [\App\Http\Controllers\EventReportController::class, 'completed'])->name('events.reports.completed');
-                Route::get('completed/print', [\App\Http\Controllers\EventReportController::class, 'completedPrint'])->name('events.reports.completed.print');
-                Route::get('completed/export', [\App\Http\Controllers\EventReportController::class, 'completedExport'])->name('events.reports.completed.export');
+                Route::get('completed', [\App\Http\Controllers\EventReportController::class, 'completed'])->name('events.reports.completed')->middleware('super.admin:events.reports.completed');
+                Route::get('completed/print', [\App\Http\Controllers\EventReportController::class, 'completedPrint'])->name('events.reports.completed.print')->middleware('super.admin:events.reports.completed');
+                Route::get('completed/export', [\App\Http\Controllers\EventReportController::class, 'completedExport'])->name('events.reports.completed.export')->middleware('permission:events.reports.completed');
 
                 // Venue-wise
-                Route::get('venue-wise', [\App\Http\Controllers\EventReportController::class, 'venueWise'])->name('events.reports.venue-wise');
-                Route::get('venue-wise/print', [\App\Http\Controllers\EventReportController::class, 'venueWisePrint'])->name('events.reports.venue-wise.print');
-                Route::get('venue-wise/export', [\App\Http\Controllers\EventReportController::class, 'venueWiseExport'])->name('events.reports.venue-wise.export');
+                Route::get('venue-wise', [\App\Http\Controllers\EventReportController::class, 'venueWise'])->name('events.reports.venue-wise')->middleware('super.admin:events.reports.venue-wise');
+                Route::get('venue-wise/print', [\App\Http\Controllers\EventReportController::class, 'venueWisePrint'])->name('events.reports.venue-wise.print')->middleware('super.admin:events.reports.venue-wise');
+                Route::get('venue-wise/export', [\App\Http\Controllers\EventReportController::class, 'venueWiseExport'])->name('events.reports.venue-wise.export')->middleware('permission:events.reports.venue-wise');
 
                 // Menu-wise
-                Route::get('menu-wise', [\App\Http\Controllers\EventReportController::class, 'menuWise'])->name('events.reports.menu-wise');
-                Route::get('menu-wise/print', [\App\Http\Controllers\EventReportController::class, 'menuWisePrint'])->name('events.reports.menu-wise.print');
-                Route::get('menu-wise/export', [\App\Http\Controllers\EventReportController::class, 'menuWiseExport'])->name('events.reports.menu-wise.export');
+                Route::get('menu-wise', [\App\Http\Controllers\EventReportController::class, 'menuWise'])->name('events.reports.menu-wise')->middleware('super.admin:events.reports.menu-wise');
+                Route::get('menu-wise/print', [\App\Http\Controllers\EventReportController::class, 'menuWisePrint'])->name('events.reports.menu-wise.print')->middleware('super.admin:events.reports.menu-wise');
+                Route::get('menu-wise/export', [\App\Http\Controllers\EventReportController::class, 'menuWiseExport'])->name('events.reports.menu-wise.export')->middleware('permission:events.reports.menu-wise');
 
-                // Add-ons
-                Route::get('addons', [\App\Http\Controllers\EventReportController::class, 'addOns'])->name('events.reports.addons');
-                Route::get('addons/print', [\App\Http\Controllers\EventReportController::class, 'addOnsPrint'])->name('events.reports.addons.print');
-                Route::get('addons/export', [\App\Http\Controllers\EventReportController::class, 'addOnsExport'])->name('events.reports.addons.export');
+                // Addons
+                Route::get('addons', [\App\Http\Controllers\EventReportController::class, 'addOns'])->name('events.reports.addons')->middleware('super.admin:events.reports.addons');
+                Route::get('addons/print', [\App\Http\Controllers\EventReportController::class, 'addOnsPrint'])->name('events.reports.addons.print')->middleware('super.admin:events.reports.addons');
+                Route::get('addons/export', [\App\Http\Controllers\EventReportController::class, 'addOnsExport'])->name('events.reports.addons.export')->middleware('permission:events.reports.addons');
 
                 // Complementary
-                Route::get('complementary', [\App\Http\Controllers\EventReportController::class, 'complementary'])->name('events.reports.complementary');
-                Route::get('complementary/print', [\App\Http\Controllers\EventReportController::class, 'complementaryPrint'])->name('events.reports.complementary.print');
-                Route::get('complementary/export', [\App\Http\Controllers\EventReportController::class, 'complementaryExport'])->name('events.reports.complementary.export');
+                Route::get('complementary', [\App\Http\Controllers\EventReportController::class, 'complementary'])->name('events.reports.complementary')->middleware('super.admin:events.reports.complementary');
+                Route::get('complementary/print', [\App\Http\Controllers\EventReportController::class, 'complementaryPrint'])->name('events.reports.complementary.print')->middleware('super.admin:events.reports.complementary');
+                Route::get('complementary/export', [\App\Http\Controllers\EventReportController::class, 'complementaryExport'])->name('events.reports.complementary.export')->middleware('permission:events.reports.complementary');
             });
         });
         Route::resource('event-venues', EventVenueController::class)->except(['create', 'edit', 'show']);
@@ -649,8 +701,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     Route::group(['prefix' => 'admin/subscription'], function () {
         // Subscription Routes
-        Route::get('dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard')->middleware('permission:subscriptions.dashboard.view');
-        Route::get('manage', [SubscriptionController::class, 'management'])->name('subscriptions.management')->middleware('permission:subscriptions.view');
+        Route::get('dashboard', [SubscriptionController::class, 'index'])->name('subscription.dashboard')->middleware('super.admin:subscriptions.dashboard.view');
+        Route::get('manage', [SubscriptionController::class, 'management'])->name('subscriptions.management')->middleware('super.admin:subscriptions.view');
         // Subscription categories
         Route::resource('subscription-categories', SubscriptionCategoryController::class)->except('show');
         // Subscription types
@@ -669,13 +721,13 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     // Financial Routes
     Route::group(['prefix' => 'admin/finance'], function () {
         // Main Finance Dashboard & Manage
-        Route::get('dashboard', [FinancialController::class, 'index'])->name('finance.dashboard')->middleware('permission:financial.dashboard.view');
-        Route::get('manage', [FinancialController::class, 'getAllTransactions'])->name('finance.transaction')->middleware('permission:financial.view');
+        Route::get('dashboard', [FinancialController::class, 'index'])->name('finance.dashboard')->middleware('super.admin:financial.dashboard.view');
+        Route::get('manage', [FinancialController::class, 'getAllTransactions'])->name('finance.transaction')->middleware('super.admin:financial.view');
         Route::post('bulk-discount', [FinancialController::class, 'bulkApplyDiscount'])->name('finance.transaction.bulk-discount')->middleware('permission:financial.edit');
         Route::post('bulk-overdue', [FinancialController::class, 'bulkApplyOverdue'])->name('finance.transaction.bulk-overdue')->middleware('permission:financial.edit');
 
         // Transaction Management Routes
-        Route::get('create', [MemberTransactionController::class, 'create'])->name('finance.transaction.create')->middleware('permission:financial.create');
+        Route::get('create', [MemberTransactionController::class, 'create'])->name('finance.transaction.create')->middleware('super.admin:financial.create');
         Route::get('invoice/{id}/pay', [MemberTransactionController::class, 'payInvoiceView'])->name('finance.invoice.pay');
         Route::post('store', [MemberTransactionController::class, 'store'])->name('finance.transaction.store')->middleware('permission:financial.create');
         Route::get('search', [MemberTransactionController::class, 'searchMembers'])->name('finance.transaction.search')->middleware('permission:financial.create');
@@ -685,13 +737,20 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('search-invoices', [FinancialController::class, 'searchInvoices'])->name('finance.transaction.search-invoices');
 
         // Charge Types Management (CRUD)
-        Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed');
-        Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore');
-        Route::delete('charge-types/force-delete/{id}', [FinancialChargeTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete');
-        Route::resource('charge-types', FinancialChargeTypeController::class)->names('finance.charge-types');
+        Route::get('charge-types/trashed', [FinancialChargeTypeController::class, 'trashed'])->name('finance.charge-types.trashed')->middleware('permission:finance.charge-types.delete');
+        Route::post('charge-types/restore/{id}', [FinancialChargeTypeController::class, 'restore'])->name('finance.charge-types.restore')->middleware('permission:finance.charge-types.delete');
+        Route::delete('charge-types/force-delete/{id}', [FinancialChargeTypeController::class, 'forceDelete'])->name('finance.charge-types.force-delete')->middleware('permission:finance.charge-types.delete');
+        Route::resource('charge-types', FinancialChargeTypeController::class)->names('finance.charge-types')->middleware([
+            'index' => 'super.admin:finance.charge-types.view',
+            'create' => 'super.admin:finance.charge-types.create',
+            'store' => 'permission:finance.charge-types.create',
+            'edit' => 'super.admin:finance.charge-types.edit',
+            'update' => 'permission:finance.charge-types.edit',
+            'destroy' => 'permission:finance.charge-types.delete',
+        ]);
 
         // Maintenance Fee Posting Routes
-        Route::get('maintenance-posting', [MaintenanceFeePostingController::class, 'create'])->name('finance.maintenance.create')->middleware('permission:financial.create');
+        Route::get('maintenance-posting', [MaintenanceFeePostingController::class, 'create'])->name('finance.maintenance.create')->middleware('super.admin:financial.create');
         Route::post('maintenance-posting/preview', [MaintenanceFeePostingController::class, 'preview'])->name('finance.maintenance.preview')->middleware('permission:financial.create');
         Route::post('maintenance-posting', [MaintenanceFeePostingController::class, 'store'])->name('finance.maintenance.store')->middleware('permission:financial.create');
     });
@@ -702,7 +761,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/api/finance/totalRevenue', [FinancialController::class, 'fetchRevenue'])->name('api.finance.totalRevenue');
 
     // Payroll API Routes
-    Route::prefix('api/payroll')->group(function () {
+    Route::prefix('api/payroll')->middleware('permission:employees.payroll.view')->group(function () {
         // Dashboard Stats
         Route::get('/dashboard/stats', [PayrollApiController::class, 'getDashboardStats'])->name('api.payroll.dashboard.stats');
 
@@ -785,23 +844,33 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('kitchen.history');
 
     Route::group(['prefix' => 'admin/membership'], function () {
-        Route::get('partners-affiliates/search', [PartnerAffiliateController::class, 'search'])->name('admin.membership.partners-affiliates.search');
-        Route::get('partners-affiliates/trashed', [PartnerAffiliateController::class, 'trashed'])->name('admin.membership.partners-affiliates.trashed');
-        Route::post('partners-affiliates/restore/{id}', [PartnerAffiliateController::class, 'restore'])->name('admin.membership.partners-affiliates.restore');
-        Route::resource('partners-affiliates', PartnerAffiliateController::class)->names('admin.membership.partners-affiliates');
-        Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('permission:members.view');
-        Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('permission:members.view');
+        Route::get('partners-affiliates/search', [PartnerAffiliateController::class, 'search'])->name('admin.membership.partners-affiliates.search')->middleware('permission:partners-affiliates.view');
+        Route::get('partners-affiliates/trashed', [PartnerAffiliateController::class, 'trashed'])->name('admin.membership.partners-affiliates.trashed')->middleware('permission:partners-affiliates.restore');
+        Route::post('partners-affiliates/restore/{id}', [PartnerAffiliateController::class, 'restore'])->name('admin.membership.partners-affiliates.restore')->middleware('permission:partners-affiliates.restore');
+        Route::resource('partners-affiliates', PartnerAffiliateController::class)->names('admin.membership.partners-affiliates')->middleware(
+            [
+                'index' => 'permission:partners-affiliates.view',
+                'show' => 'permission:partners-affiliates.view',
+                'create' => 'permission:partners-affiliates.create',
+                'store' => 'permission:partners-affiliates.create',
+                'edit' => 'permission:partners-affiliates.edit',
+                'update' => 'permission:partners-affiliates.edit',
+                'destroy' => 'permission:partners-affiliates.delete',
+            ]
+        );
+        Route::get('dashboard', [MembershipController::class, 'index'])->name('membership.dashboard')->middleware('super.admin:members.view');
+        Route::get('all', [MembershipController::class, 'allMembers'])->name('membership.members')->middleware('super.admin:members.view');
 
-        Route::get('trashed', [MembershipController::class, 'trashed'])->name('membership.trashed')->middleware('permission:members.delete');
+        Route::get('trashed', [MembershipController::class, 'trashed'])->name('membership.trashed')->middleware('super.admin:members.delete');
         Route::post('restore/{id}', [MembershipController::class, 'restore'])->name('membership.restore')->middleware('permission:members.delete');
 
         Route::delete('/{id}', [MembershipController::class, 'destroy'])->name('membership.destroy')->middleware('permission:members.delete');
-        Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('permission:members.create');
-        Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('permission:members.edit');
-        Route::get('profile/{id}', [MembershipController::class, 'showMemberProfile'])->name('membership.profile')->middleware('permission:members.view');
-        Route::get('profile/{id}/family-members', [MembershipController::class, 'getMemberFamilyMembers'])->name('membership.profile.family-members')->middleware('permission:members.view');
-        Route::get('profile/{id}/all-family-members', [MembershipController::class, 'getAllFamilyMembers'])->name('membership.members.all-family-members')->middleware('permission:members.view');
-        Route::get('profile/{id}/order-history', [MembershipController::class, 'getMemberOrderHistory'])->name('membership.profile.order-history')->middleware('permission:members.view');
+        Route::get('create', [MembershipController::class, 'create'])->name('membership.add')->middleware('super.admin:members.create');
+        Route::get('edit/{id}', [MembershipController::class, 'edit'])->name('membership.edit')->middleware('super.admin:members.edit');
+        Route::get('profile/{id}', [MembershipController::class, 'showMemberProfile'])->name('membership.profile')->middleware('super.admin:members.view');
+        Route::get('profile/{id}/family-members', [MembershipController::class, 'getMemberFamilyMembers'])->name('membership.profile.family-members')->middleware('super.admin:members.view');
+        Route::get('profile/{id}/all-family-members', [MembershipController::class, 'getAllFamilyMembers'])->name('membership.members.all-family-members')->middleware('permission:members.view');  // API-like? If view, change.
+        Route::get('profile/{id}/order-history', [MembershipController::class, 'getMemberOrderHistory'])->name('membership.profile.order-history')->middleware('super.admin:members.view');
         Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('member.orderhistory.invoice');
         Route::post('update/{id}', [MembershipController::class, 'updateMember'])->name('membership.update')->middleware('permission:members.edit');
         Route::post('store', [MembershipController::class, 'store'])->name('membership.store')->middleware('permission:members.create');
@@ -810,54 +879,54 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('profession-info', [MembershipController::class, 'saveProfessionInfo'])->name('membership.profession-info')->middleware('permission:members.create');
         Route::get('profession-info/{id}', [MembershipController::class, 'getProfessionInfo'])->name('membership.profession-info.get')->middleware('permission:members.view');
         // Card Routes
-        Route::get('/cards', [CardController::class, 'index'])->name('cards.dashboard');
+        Route::get('/cards', [CardController::class, 'index'])->name('cards.dashboard')->middleware('super.admin:cards.view');
 
         // Reports Index - Dashboard with all reports
-        Route::get('reports', [MemberFeeRevenueController::class, 'reportsIndex'])->name('membership.reports')->middleware('permission:reports.view');
+        Route::get('reports', [MemberFeeRevenueController::class, 'reportsIndex'])->name('membership.reports')->middleware('super.admin:reports.view');
 
         // Membership Maintanance Revenue
-        Route::get('maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue')->middleware('permission:reports.view');
-        Route::get('maintanance-fee-revenue/print', [MemberFeeRevenueController::class, 'maintenanceFeeRevenuePrint'])->name('membership.maintanance-fee-revenue.print')->middleware('permission:reports.view');
+        Route::get('maintanance-fee-revenue', [MemberFeeRevenueController::class, 'maintenanceFeeRevenue'])->name('membership.maintanance-fee-revenue')->middleware('super.admin:reports.maintanance-fee-revenue');
+        Route::get('maintanance-fee-revenue/print', [MemberFeeRevenueController::class, 'maintenanceFeeRevenuePrint'])->name('membership.maintanance-fee-revenue.print')->middleware('super.admin:reports.maintanance-fee-revenue');
 
         // Pending Maintenance Report
-        Route::get('pending-maintenance-report', [MemberFeeRevenueController::class, 'pendingMaintenanceReport'])->name('membership.pending-maintenance-report')->middleware('permission:reports.view');
-        Route::get('pending-maintenance-report/print', [MemberFeeRevenueController::class, 'pendingMaintenanceReportPrint'])->name('membership.pending-maintenance-report.print')->middleware('permission:reports.view');
+        Route::get('pending-maintenance-report', [MemberFeeRevenueController::class, 'pendingMaintenanceReport'])->name('membership.pending-maintenance-report')->middleware('super.admin:reports.pending-maintenance');
+        Route::get('pending-maintenance-report/print', [MemberFeeRevenueController::class, 'pendingMaintenanceReportPrint'])->name('membership.pending-maintenance-report.print')->middleware('super.admin:reports.pending-maintenance');
 
         // Supplementary Card Report
-        Route::get('supplementary-card-report', [MemberFeeRevenueController::class, 'supplementaryCardReport'])->name('membership.supplementary-card-report')->middleware('permission:reports.view');
-        Route::get('supplementary-card-report/print', [MemberFeeRevenueController::class, 'supplementaryCardReportPrint'])->name('membership.supplementary-card-report.print')->middleware('permission:reports.view');
+        Route::get('supplementary-card-report', [MemberFeeRevenueController::class, 'supplementaryCardReport'])->name('membership.supplementary-card-report')->middleware('super.admin:reports.supplementary-card');
+        Route::get('supplementary-card-report/print', [MemberFeeRevenueController::class, 'supplementaryCardReportPrint'])->name('membership.supplementary-card-report.print')->middleware('super.admin:reports.supplementary-card');
 
         // Sleeping Members Report
-        Route::get('sleeping-members-report', [MemberFeeRevenueController::class, 'sleepingMembersReport'])->name('membership.sleeping-members-report')->middleware('permission:reports.view');
-        Route::get('sleeping-members-report/print', [MemberFeeRevenueController::class, 'sleepingMembersReportPrint'])->name('membership.sleeping-members-report.print')->middleware('permission:reports.view');
+        Route::get('sleeping-members-report', [MemberFeeRevenueController::class, 'sleepingMembersReport'])->name('membership.sleeping-members-report')->middleware('super.admin:reports.sleeping-members');
+        Route::get('sleeping-members-report/print', [MemberFeeRevenueController::class, 'sleepingMembersReportPrint'])->name('membership.sleeping-members-report.print')->middleware('super.admin:reports.sleeping-members');
 
         // Member Card Detail Report
-        Route::get('member-card-detail-report', [MemberFeeRevenueController::class, 'memberCardDetailReport'])->name('membership.member-card-detail-report')->middleware('permission:reports.view');
-        Route::get('member-card-detail-report/print', [MemberFeeRevenueController::class, 'memberCardDetailReportPrint'])->name('membership.member-card-detail-report.print')->middleware('permission:reports.view');
+        Route::get('member-card-detail-report', [MemberFeeRevenueController::class, 'memberCardDetailReport'])->name('membership.member-card-detail-report')->middleware('super.admin:reports.member-card-detail');
+        Route::get('member-card-detail-report/print', [MemberFeeRevenueController::class, 'memberCardDetailReportPrint'])->name('membership.member-card-detail-report.print')->middleware('super.admin:reports.member-card-detail');
 
         // Monthly Maintenance Fee Report
-        Route::get('monthly-maintenance-fee-report', [MemberFeeRevenueController::class, 'monthlyMaintenanceFeeReport'])->name('membership.monthly-maintenance-fee-report')->middleware('permission:reports.view');
-        Route::get('monthly-maintenance-fee-report/print', [MemberFeeRevenueController::class, 'monthlyMaintenanceFeeReportPrint'])->name('membership.monthly-maintenance-fee-report.print')->middleware('permission:reports.view');
+        Route::get('monthly-maintenance-fee-report', [MemberFeeRevenueController::class, 'monthlyMaintenanceFeeReport'])->name('membership.monthly-maintenance-fee-report')->middleware('super.admin:reports.monthly-maintenance-fee');
+        Route::get('monthly-maintenance-fee-report/print', [MemberFeeRevenueController::class, 'monthlyMaintenanceFeeReportPrint'])->name('membership.monthly-maintenance-fee-report.print')->middleware('super.admin:reports.monthly-maintenance-fee');
 
         // New Year Eve Report
-        Route::get('new-year-eve-report', [MemberFeeRevenueController::class, 'newYearEveReport'])->name('membership.new-year-eve-report')->middleware('permission:reports.view');
-        Route::get('new-year-eve-report/print', [MemberFeeRevenueController::class, 'newYearEveReportPrint'])->name('membership.new-year-eve-report.print')->middleware('permission:reports.view');
+        Route::get('new-year-eve-report', [MemberFeeRevenueController::class, 'newYearEveReport'])->name('membership.new-year-eve-report')->middleware('super.admin:reports.new-year-eve');
+        Route::get('new-year-eve-report/print', [MemberFeeRevenueController::class, 'newYearEveReportPrint'])->name('membership.new-year-eve-report.print')->middleware('super.admin:reports.new-year-eve');
 
         // Reinstating Fee Report
-        Route::get('reinstating-fee-report', [MemberFeeRevenueController::class, 'reinstatingFeeReport'])->name('membership.reinstating-fee-report')->middleware('permission:reports.view');
-        Route::get('reinstating-fee-report/print', [MemberFeeRevenueController::class, 'reinstatingFeeReportPrint'])->name('membership.reinstating-fee-report.print')->middleware('permission:reports.view');
+        Route::get('reinstating-fee-report', [MemberFeeRevenueController::class, 'reinstatingFeeReport'])->name('membership.reinstating-fee-report')->middleware('super.admin:reports.reinstating-fee');
+        Route::get('reinstating-fee-report/print', [MemberFeeRevenueController::class, 'reinstatingFeeReportPrint'])->name('membership.reinstating-fee-report.print')->middleware('super.admin:reports.reinstating-fee');
 
         // Sports Subscriptions Report
-        Route::get('sports-subscriptions-report', [MemberFeeRevenueController::class, 'sportsSubscriptionsReport'])->name('membership.sports-subscriptions-report')->middleware('permission:reports.view');
-        Route::get('sports-subscriptions-report/print', [MemberFeeRevenueController::class, 'sportsSubscriptionsReportPrint'])->name('membership.sports-subscriptions-report.print')->middleware('permission:reports.view');
+        Route::get('sports-subscriptions-report', [MemberFeeRevenueController::class, 'sportsSubscriptionsReport'])->name('membership.sports-subscriptions-report')->middleware('super.admin:reports.sports-subscriptions');
+        Route::get('sports-subscriptions-report/print', [MemberFeeRevenueController::class, 'sportsSubscriptionsReportPrint'])->name('membership.sports-subscriptions-report.print')->middleware('super.admin:reports.sports-subscriptions');
 
         // Subscriptions & Maintenance Summary Report
-        Route::get('subscriptions-maintenance-summary', [MemberFeeRevenueController::class, 'subscriptionsMaintenanceSummary'])->name('membership.subscriptions-maintenance-summary')->middleware('permission:reports.view');
-        Route::get('subscriptions-maintenance-summary/print', [MemberFeeRevenueController::class, 'subscriptionsMaintenanceSummaryPrint'])->name('membership.subscriptions-maintenance-summary.print')->middleware('permission:reports.view');
+        Route::get('subscriptions-maintenance-summary', [MemberFeeRevenueController::class, 'subscriptionsMaintenanceSummary'])->name('membership.subscriptions-maintenance-summary')->middleware('super.admin:reports.subscriptions-maintenance-summary');
+        Route::get('subscriptions-maintenance-summary/print', [MemberFeeRevenueController::class, 'subscriptionsMaintenanceSummaryPrint'])->name('membership.subscriptions-maintenance-summary.print')->middleware('super.admin:reports.subscriptions-maintenance-summary');
 
         // Pending Maintenance Quarters Report
-        Route::get('pending-maintenance-quarters-report', [MemberFeeRevenueController::class, 'pendingMaintenanceQuartersReport'])->name('membership.pending-maintenance-quarters-report')->middleware('permission:reports.view');
-        Route::get('pending-maintenance-quarters-report/print', [MemberFeeRevenueController::class, 'pendingMaintenanceQuartersReportPrint'])->name('membership.pending-maintenance-quarters-report.print')->middleware('permission:reports.view');
+        Route::get('pending-maintenance-quarters-report', [MemberFeeRevenueController::class, 'pendingMaintenanceQuartersReport'])->name('membership.pending-maintenance-quarters-report')->middleware('super.admin:reports.pending-maintenance-quarters');
+        Route::get('pending-maintenance-quarters-report/print', [MemberFeeRevenueController::class, 'pendingMaintenanceQuartersReportPrint'])->name('membership.pending-maintenance-quarters-report.print')->middleware('super.admin:reports.pending-maintenance-quarters');
 
         // Family Members Archive route
         Route::get('family-members-archive', [FamilyMembersArchiveConroller::class, 'index'])->name('membership.family-members')->middleware('permission:family-members.view');
@@ -866,31 +935,45 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::get('family-members-archive/search', [FamilyMembersArchiveConroller::class, 'search'])->name('membership.family-members.search');
 
         // Applied Member
-        Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index');
-        Route::get('applied-member/trashed', [AppliedMemberController::class, 'trashed'])->name('applied-member.trashed');
-        Route::post('applied-member/restore/{id}', [AppliedMemberController::class, 'restore'])->name('applied-member.restore');
-        Route::get('api/applied-members/search', [AppliedMemberController::class, 'search'])->name('api.applied-members.search');
-        Route::post('applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store');
-        Route::put('applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update');
-        Route::delete('applied-member/{id}', [AppliedMemberController::class, 'destroy'])->name('applied-member.destroy');
+        Route::get('applied-member', [AppliedMemberController::class, 'index'])->name('applied-member.index')->middleware('permission:applied-members.view');
+        Route::get('applied-member/trashed', [AppliedMemberController::class, 'trashed'])->name('applied-member.trashed')->middleware('permission:applied-members.restore');
+        Route::post('applied-member/restore/{id}', [AppliedMemberController::class, 'restore'])->name('applied-member.restore')->middleware('permission:applied-members.restore');
+        Route::get('api/applied-members/search', [AppliedMemberController::class, 'search'])->name('api.applied-members.search')->middleware('permission:applied-members.view');
+        Route::post('applied-member', [AppliedMemberController::class, 'store'])->name('applied-member.store')->middleware('permission:applied-members.create');
+        Route::put('applied-member/{id}', [AppliedMemberController::class, 'update'])->name('applied-member.update')->middleware('permission:applied-members.edit');
+        Route::delete('applied-member/{id}', [AppliedMemberController::class, 'destroy'])->name('applied-member.destroy')->middleware('permission:applied-members.delete');
 
         // Member Categories
-        Route::get('member-categories/trashed', [MemberCategoryController::class, 'trashed'])->name('member-categories.trashed');
-        Route::post('member-categories/restore/{id}', [MemberCategoryController::class, 'restore'])->name('member-categories.restore');
-        Route::resource('member-categories', MemberCategoryController::class)->except('show');
+        Route::get('member-categories/trashed', [MemberCategoryController::class, 'trashed'])->name('member-categories.trashed')->middleware('permission:member-categories.restore');
+        Route::post('member-categories/restore/{id}', [MemberCategoryController::class, 'restore'])->name('member-categories.restore')->middleware('permission:member-categories.restore');
+        Route::resource('member-categories', MemberCategoryController::class)->except('show')->middleware([
+            'index' => 'permission:member-categories.view',
+            'create' => 'permission:member-categories.create',
+            'store' => 'permission:member-categories.create',
+            'edit' => 'permission:member-categories.edit',
+            'update' => 'permission:member-categories.edit',
+            'destroy' => 'permission:member-categories.delete',
+        ]);
 
         // Corporate Company Management Routes
-        Route::get('corporate-companies/trashed', [CorporateCompanyController::class, 'trashed'])->name('corporate-companies.trashed');
-        Route::post('corporate-companies/restore/{id}', [CorporateCompanyController::class, 'restore'])->name('corporate-companies.restore');
-        Route::resource('corporate-companies', CorporateCompanyController::class)->except('show');
+        Route::get('corporate-companies/trashed', [CorporateCompanyController::class, 'trashed'])->name('corporate-companies.trashed')->middleware('permission:corporate-companies.restore');
+        Route::post('corporate-companies/restore/{id}', [CorporateCompanyController::class, 'restore'])->name('corporate-companies.restore')->middleware('permission:corporate-companies.restore');
+        Route::resource('corporate-companies', CorporateCompanyController::class)->except('show')->middleware([
+            'index' => 'permission:corporate-companies.view',
+            'create' => 'permission:corporate-companies.create',
+            'store' => 'permission:corporate-companies.create',
+            'edit' => 'permission:corporate-companies.edit',
+            'update' => 'permission:corporate-companies.edit',
+            'destroy' => 'permission:corporate-companies.delete',
+        ]);
 
         // Members types
-        Route::get('member-types', [MemberTypeController::class, 'index'])->name('member-types.index');
-        Route::get('member-types/trashed', [MemberTypeController::class, 'trashed'])->name('member-types.trashed');
-        Route::post('member-types/restore/{id}', [MemberTypeController::class, 'restore'])->name('member-types.restore');
-        Route::post('member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store');
-        Route::post('member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2');
-        Route::delete('member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy');
+        Route::get('member-types', [MemberTypeController::class, 'index'])->name('member-types.index')->middleware('permission:member-types.view');
+        Route::get('member-types/trashed', [MemberTypeController::class, 'trashed'])->name('member-types.trashed')->middleware('permission:member-types.restore');
+        Route::post('member-types/restore/{id}', [MemberTypeController::class, 'restore'])->name('member-types.restore')->middleware('permission:member-types.restore');
+        Route::post('member-types/store', [MemberTypeController::class, 'store'])->name('member-types.store')->middleware('permission:member-types.create');
+        Route::post('member-types/{id}/update2', [MemberTypeController::class, 'update'])->name('member-types.update2')->middleware('permission:member-types.edit');
+        Route::delete('member-types/{id}/delete', [MemberTypeController::class, 'destroy'])->name('member-types.destroy')->middleware('permission:member-types.delete');
 
         // payment
         Route::get('payments', [PaymentController::class, 'index'])->name('membership.allpayment');
@@ -911,23 +994,23 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // Corporate Membership Routes
     Route::group(['prefix' => 'admin/corporate-membership'], function () {
-        Route::get('dashboard', [CorporateMembershipController::class, 'index'])->name('corporate-membership.dashboard')->middleware('permission:members.view');
-        Route::get('all', [CorporateMembershipController::class, 'allMembers'])->name('corporate-membership.members')->middleware('permission:members.view');
-        Route::get('create', [CorporateMembershipController::class, 'create'])->name('corporate-membership.add')->middleware('permission:members.create');
-        Route::get('edit/{id}', [CorporateMembershipController::class, 'edit'])->name('corporate-membership.edit')->middleware('permission:members.edit');
-        Route::get('profile/{id}', [CorporateMembershipController::class, 'showMemberProfile'])->name('corporate-membership.profile')->middleware('permission:members.view');
-        Route::get('profile/{id}/family-members', [CorporateMembershipController::class, 'getFamilyMembers'])->name('corporate-membership.profile.family-members')->middleware('permission:members.view');
-        Route::get('profile/{id}/all-family-members', [CorporateMembershipController::class, 'getAllFamilyMembers'])->name('corporate-membership.members.all-family-members')->middleware('permission:members.view');
-        Route::get('profile/{id}/profession-info', [CorporateMembershipController::class, 'getProfessionInfo'])->name('corporate-membership.profession-info.get')->middleware('permission:members.view');
-        Route::get('family-members', [CorporateMembershipController::class, 'familyMembersIndex'])->name('corporate-membership.family-members')->middleware('permission:members.view');
-        Route::post('store', [CorporateMembershipController::class, 'store'])->name('corporate-membership.store')->middleware('permission:members.create');
-        Route::post('store-step-4', [CorporateMembershipController::class, 'storeStep4'])->name('corporate-membership.store-step-4')->middleware('permission:members.create');
-        Route::post('update-status', [CorporateMembershipController::class, 'updateStatus'])->name('corporate-membership.update-status')->middleware('permission:members.edit');
-        Route::post('update/{id}', [CorporateMembershipController::class, 'update'])->name('corporate-membership.update')->middleware('permission:members.edit');
-        Route::delete('/{id}', [CorporateMembershipController::class, 'destroy'])->name('corporate-membership.destroy')->middleware('permission:members.delete');
-        Route::get('trashed', [CorporateMembershipController::class, 'trashed'])->name('corporate-membership.trashed')->middleware('permission:members.delete');
-        Route::post('restore/{id}', [CorporateMembershipController::class, 'restore'])->name('corporate-membership.restore')->middleware('permission:members.delete');
-        Route::get('api/search', [CorporateMembershipController::class, 'search'])->name('api.corporate-members.search');
+        Route::get('dashboard', [CorporateMembershipController::class, 'index'])->name('corporate-membership.dashboard')->middleware('permission:corporate-members.view');
+        Route::get('all', [CorporateMembershipController::class, 'allMembers'])->name('corporate-membership.members')->middleware('permission:corporate-members.view');
+        Route::get('create', [CorporateMembershipController::class, 'create'])->name('corporate-membership.add')->middleware('permission:corporate-members.create');
+        Route::get('edit/{id}', [CorporateMembershipController::class, 'edit'])->name('corporate-membership.edit')->middleware('permission:corporate-members.edit');
+        Route::get('profile/{id}', [CorporateMembershipController::class, 'showMemberProfile'])->name('corporate-membership.profile')->middleware('permission:corporate-members.view');
+        Route::get('profile/{id}/family-members', [CorporateMembershipController::class, 'getFamilyMembers'])->name('corporate-membership.profile.family-members')->middleware('permission:corporate-members.view');
+        Route::get('profile/{id}/all-family-members', [CorporateMembershipController::class, 'getAllFamilyMembers'])->name('corporate-membership.members.all-family-members')->middleware('permission:corporate-members.view');
+        Route::get('profile/{id}/profession-info', [CorporateMembershipController::class, 'getProfessionInfo'])->name('corporate-membership.profession-info.get')->middleware('permission:corporate-members.view');
+        Route::get('family-members', [CorporateMembershipController::class, 'familyMembersIndex'])->name('corporate-membership.family-members')->middleware('permission:corporate-members.view');
+        Route::post('store', [CorporateMembershipController::class, 'store'])->name('corporate-membership.store')->middleware('permission:corporate-members.create');
+        Route::post('store-step-4', [CorporateMembershipController::class, 'storeStep4'])->name('corporate-membership.store-step-4')->middleware('permission:corporate-members.create');
+        Route::post('update-status', [CorporateMembershipController::class, 'updateStatus'])->name('corporate-membership.update-status')->middleware('permission:corporate-members.edit');
+        Route::post('update/{id}', [CorporateMembershipController::class, 'update'])->name('corporate-membership.update')->middleware('permission:corporate-members.edit');
+        Route::delete('/{id}', [CorporateMembershipController::class, 'destroy'])->name('corporate-membership.destroy')->middleware('permission:corporate-members.delete');
+        Route::get('trashed', [CorporateMembershipController::class, 'trashed'])->name('corporate-membership.trashed')->middleware('permission:corporate-members.delete');
+        Route::post('restore/{id}', [CorporateMembershipController::class, 'restore'])->name('corporate-membership.restore')->middleware('permission:corporate-members.delete');
+        Route::get('api/search', [CorporateMembershipController::class, 'search'])->name('api.corporate-members.search')->middleware('permission:corporate-members.view');
     });
 
     // Corporate Member Profile route
@@ -960,7 +1043,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     })->name('membership.detail2');
 
     // Data Migration Routes
-    Route::group(['prefix' => 'admin/data-migration'], function () {
+    Route::group(['prefix' => 'admin/data-migration', 'middleware' => ['permission:system.data-migration']], function () {
         Route::get('/', [DataMigrationController::class, 'index'])->name('data-migration.index');
         Route::get('/stats', [DataMigrationController::class, 'getMigrationStats'])->name('data-migration.stats');
         Route::post('/migrate-members', [DataMigrationController::class, 'migrateMembers'])->name('data-migration.migrate-members');
@@ -1020,41 +1103,41 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
 
     // tenant route
     Route::group(['prefix' => 'admin/kitchen'], function () {
-        Route::get('', [TenantController::class, 'index'])->name('locations.index')->middleware('super.admin:locations.view');
-        Route::get('register', [TenantController::class, 'create'])->name('locations.create')->middleware('super.admin:locations.create');
-        Route::post('store', [TenantController::class, 'store'])->name('locations.store')->middleware('super.admin:locations.create');
-        Route::get('{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit')->middleware('super.admin:locations.edit');
-        Route::put('{tenant}', [TenantController::class, 'update'])->name('locations.update')->middleware('super.admin:locations.edit');
+        Route::get('', [TenantController::class, 'index'])->name('locations.index')->middleware('permission:kitchen.locations.view');
+        Route::get('register', [TenantController::class, 'create'])->name('locations.create')->middleware('permission:kitchen.locations.create');
+        Route::post('store', [TenantController::class, 'store'])->name('locations.store')->middleware('permission:kitchen.locations.create');
+        Route::get('{tenant}/edit', [TenantController::class, 'edit'])->name('locations.edit')->middleware('permission:kitchen.locations.edit');
+        Route::put('{tenant}', [TenantController::class, 'update'])->name('locations.update')->middleware('permission:kitchen.locations.edit');
     });
 
     // Admin POS Reports Routes
-    Route::prefix('admin/reports')->middleware('super.admin:reports.view')->group(function () {
+    Route::prefix('admin/reports')->middleware('super.admin:reports.pos.view')->group(function () {
         Route::get('pos/all', [AdminPosReportController::class, 'index'])->name('admin.reports.pos.all');
-        Route::get('pos/restaurant/{tenantId}', [AdminPosReportController::class, 'singleRestaurant'])->name('admin.reports.pos.single');
+        Route::get('pos/restaurant/{tenantId}', [AdminPosReportController::class, 'singleRestaurant'])->name('admin.reports.pos.single')->middleware('super.admin:reports.pos.restaurant-wise');
         Route::get('pos/all/print', [AdminPosReportController::class, 'printAll'])->name('admin.reports.pos.all.print');
-        Route::get('pos/restaurant/{tenantId}/print', [AdminPosReportController::class, 'printSingle'])->name('admin.reports.pos.single.print');
-        Route::get('pos/restaurant-wise', [AdminPosReportController::class, 'restaurantWise'])->name('admin.reports.pos.restaurant-wise');
-        Route::get('pos/restaurant-wise/print', [AdminPosReportController::class, 'restaurantWisePrint'])->name('admin.reports.pos.restaurant-wise.print');
-        Route::get('pos/running-sales-orders', [AdminPosReportController::class, 'runningSalesOrders'])->name('admin.reports.pos.running-sales-orders');
-        Route::get('pos/running-sales-orders/print', [AdminPosReportController::class, 'runningSalesOrdersPrint'])->name('admin.reports.pos.running-sales-orders.print');
-        Route::get('pos/sales-summary-with-items', [AdminPosReportController::class, 'salesSummaryWithItems'])->name('admin.reports.pos.sales-summary-with-items');
-        Route::get('pos/sales-summary-with-items/print', [AdminPosReportController::class, 'salesSummaryWithItemsPrint'])->name('admin.reports.pos.sales-summary-with-items.print');
-        Route::get('pos/daily-sales-list-cashier-wise', [AdminPosReportController::class, 'dailySalesListCashierWise'])->name('admin.reports.pos.daily-sales-list-cashier-wise');
-        Route::get('pos/daily-sales-list-cashier-wise/print', [AdminPosReportController::class, 'dailySalesListCashierWisePrint'])->name('admin.reports.pos.daily-sales-list-cashier-wise.print');
-        Route::get('pos/daily-dump-items-report', [AdminPosReportController::class, 'dailyDumpItemsReport'])->name('admin.reports.pos.daily-dump-items-report');
-        Route::get('pos/daily-dump-items-report/print', [AdminPosReportController::class, 'dailyDumpItemsReportPrint'])->name('admin.reports.pos.daily-dump-items-report.print');
+        Route::get('pos/restaurant/{tenantId}/print', [AdminPosReportController::class, 'printSingle'])->name('admin.reports.pos.single.print')->middleware('super.admin:reports.pos.restaurant-wise');
+        Route::get('pos/restaurant-wise', [AdminPosReportController::class, 'restaurantWise'])->name('admin.reports.pos.restaurant-wise')->middleware('super.admin:reports.pos.restaurant-wise');
+        Route::get('pos/restaurant-wise/print', [AdminPosReportController::class, 'restaurantWisePrint'])->name('admin.reports.pos.restaurant-wise.print')->middleware('super.admin:reports.pos.restaurant-wise');
+        Route::get('pos/running-sales-orders', [AdminPosReportController::class, 'runningSalesOrders'])->name('admin.reports.pos.running-sales-orders')->middleware('super.admin:reports.pos.running-sales');
+        Route::get('pos/running-sales-orders/print', [AdminPosReportController::class, 'runningSalesOrdersPrint'])->name('admin.reports.pos.running-sales-orders.print')->middleware('super.admin:reports.pos.running-sales');
+        Route::get('pos/sales-summary-with-items', [AdminPosReportController::class, 'salesSummaryWithItems'])->name('admin.reports.pos.sales-summary-with-items')->middleware('super.admin:reports.pos.sales-summary');
+        Route::get('pos/sales-summary-with-items/print', [AdminPosReportController::class, 'salesSummaryWithItemsPrint'])->name('admin.reports.pos.sales-summary-with-items.print')->middleware('super.admin:reports.pos.sales-summary');
+        Route::get('pos/daily-sales-list-cashier-wise', [AdminPosReportController::class, 'dailySalesListCashierWise'])->name('admin.reports.pos.daily-sales-list-cashier-wise')->middleware('super.admin:reports.pos.cashier-sales');
+        Route::get('pos/daily-sales-list-cashier-wise/print', [AdminPosReportController::class, 'dailySalesListCashierWisePrint'])->name('admin.reports.pos.daily-sales-list-cashier-wise.print')->middleware('super.admin:reports.pos.cashier-sales');
+        Route::get('pos/daily-dump-items-report', [AdminPosReportController::class, 'dailyDumpItemsReport'])->name('admin.reports.pos.daily-dump-items-report')->middleware('super.admin:reports.pos.dump-report');
+        Route::get('pos/daily-dump-items-report/print', [AdminPosReportController::class, 'dailyDumpItemsReportPrint'])->name('admin.reports.pos.daily-dump-items-report.print')->middleware('super.admin:reports.pos.dump-report');
     });
 
     // Voucher Management Routes
-    Route::prefix('admin/vouchers')->middleware('super.admin:vouchers.view')->group(function () {
+    Route::prefix('admin/vouchers')->middleware('super.admin:finance.vouchers.view')->group(function () {
         Route::get('/', [VoucherController::class, 'dashboard'])->name('vouchers.dashboard');
-        Route::get('/create', [VoucherController::class, 'create'])->name('vouchers.create');
-        Route::post('/', [VoucherController::class, 'store'])->name('vouchers.store');
+        Route::get('/create', [VoucherController::class, 'create'])->name('vouchers.create')->middleware('super.admin:finance.vouchers.create');
+        Route::post('/', [VoucherController::class, 'store'])->name('vouchers.store')->middleware('permission:finance.vouchers.create');
         Route::get('/{voucher}', [VoucherController::class, 'show'])->name('vouchers.show');
-        Route::get('/{voucher}/edit', [VoucherController::class, 'edit'])->name('vouchers.edit');
-        Route::put('/{voucher}', [VoucherController::class, 'update'])->name('vouchers.update');
-        Route::delete('/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy');
-        Route::post('/{voucher}/mark-used', [VoucherController::class, 'markAsUsed'])->name('vouchers.mark-used');
+        Route::get('/{voucher}/edit', [VoucherController::class, 'edit'])->name('vouchers.edit')->middleware('super.admin:finance.vouchers.edit');
+        Route::put('/{voucher}', [VoucherController::class, 'update'])->name('vouchers.update')->middleware('permission:finance.vouchers.edit');
+        Route::delete('/{voucher}', [VoucherController::class, 'destroy'])->name('vouchers.destroy')->middleware('permission:finance.vouchers.delete');
+        Route::post('/{voucher}/mark-used', [VoucherController::class, 'markAsUsed'])->name('vouchers.mark-used')->middleware('permission:finance.vouchers.view');
         Route::post('/update-status', [VoucherController::class, 'updateStatus'])->name('vouchers.update-status');
     });
 
