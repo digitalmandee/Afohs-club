@@ -395,9 +395,7 @@ export const generateInvoiceContent = (booking, type) => {
         <td style="border: 1px solid #000; padding: 10px;"><strong>Transport:</strong> As per usage</td>
       </tr>
       <tr>
-        <td style="border: 1px solid #000; padding: 10px;"><strong>Service Charges:</strong> Rs. 100 per night</td>
-        <td style="border: 1px solid #000; padding: 10px;"><strong>Mattress:</strong> Rs. 500 per mattress per night</td>
-        <td style="border: 1px solid #000; padding: 10px;"><strong>Wifi:</strong> Free of cost</td>
+        <td colspan="2" style="border: 1px solid #000; padding: 10px;"><strong>Wifi:</strong> Free of cost</td>
       </tr>
 
       <!-- Discount Row (if applicable) -->
@@ -953,7 +951,7 @@ export const generateInvoiceContent = (booking, type) => {
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">TOTAL PAYABLE AMOUNT</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${Math.round(booking.grand_total || 0)}
+                    ${Math.round((parseFloat(booking.grand_total || 0) + (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0)))}
                 </td>
             </tr>
 
@@ -981,20 +979,14 @@ export const generateInvoiceContent = (booking, type) => {
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">REMAINING BALANCE</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
                     ${(() => {
-                    const roomCharge = parseFloat(booking.room_charge || 0);
-                    const otherChargesList = booking.other_charges || booking.otherCharges || [];
-                    const otherCharges = otherChargesList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
-                    const miniBarList = booking.mini_bar_items || booking.miniBarItems || [];
-                    const miniBar = miniBarList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
                     const orders = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
-                    const discount = parseFloat(booking.discount_value || 0);
 
                     const paidAmount = parseFloat(booking.invoice?.paid_amount || 0);
                     const paidOrders = (booking.orders || [])
                         .filter(o => o.payment_status === 'paid')
                         .reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
 
-                    return Math.round(Math.max(0, booking.grand_total - (paidAmount + paidOrders)));
+                    return Math.round(Math.max(0, (parseFloat(booking.grand_total || 0) + orders) - (paidAmount + paidOrders)));
                 })()}
                 </td>
             </tr>

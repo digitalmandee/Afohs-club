@@ -509,7 +509,7 @@ class RoomBookingController extends Controller
                 'family_id' => $data['familyMember'] ?? null,
                 'persons' => $data['persons'] ?? 0,
                 'category' => $data['bookingCategory'] ?? null,
-                'nights' => (isset($data['checkInDate']) && isset($data['checkOutDate'])) ? max(1, \Carbon\Carbon::parse($data['checkOutDate'])->diffInDays(\Carbon\Carbon::parse($data['checkInDate']))) : ($data['nights'] ?? null),
+                'nights' => $data['nights'] ?? 0,
                 'per_day_charge' => $data['perDayCharge'] ?? null,
                 'room_charge' => $data['roomCharge'] ?? null,
                 'total_other_charges' => $data['totalOtherCharges'] ?? null,
@@ -543,7 +543,7 @@ class RoomBookingController extends Controller
 
             foreach ($data['other_charges'] ?? [] as $charge) {
                 if (!empty($charge['type'])) {
-                    $charge['is_complementary'] = $charge['is_complementary'] ? 1 : 0;
+                    $charge['is_complementary'] = filter_var($charge['is_complementary'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
                     $booking->otherCharges()->create($charge);
                 }
             }
@@ -822,7 +822,7 @@ class RoomBookingController extends Controller
                 'room_id' => $data['room']['id'] ?? null,
                 'persons' => $data['persons'] ?? 0,
                 'category' => $data['bookingCategory'] ?? null,
-                'nights' => (isset($data['checkInDate']) && isset($data['checkOutDate'])) ? max(1, \Carbon\Carbon::parse($data['checkOutDate'])->diffInDays(\Carbon\Carbon::parse($data['checkInDate']))) : ($data['nights'] ?? null),
+                'nights' => $data['nights'] ?? 0,
                 'per_day_charge' => $data['perDayCharge'] ?? null,
                 'room_charge' => $data['roomCharge'] ?? null,
                 'total_other_charges' => $data['totalOtherCharges'] ?? null,
@@ -848,7 +848,7 @@ class RoomBookingController extends Controller
             $booking->otherCharges()->delete();
             foreach ($data['other_charges'] ?? [] as $charge) {
                 if (!empty($charge['type'])) {
-                    $charge['is_complementary'] = $charge['is_complementary'] ? 1 : 0;
+                    $charge['is_complementary'] = filter_var($charge['is_complementary'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
                     $booking->otherCharges()->create($charge);
                 }
             }

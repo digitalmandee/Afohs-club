@@ -749,6 +749,12 @@ const ChargesInfo = ({ formData, handleChange }) => {
         <Grid container spacing={2}>
             {/* Summary Fields */}
             <Grid item xs={2}>
+                <TextField label="Total Other Charges" value={totalOther} fullWidth disabled />
+            </Grid>
+            <Grid item xs={2}>
+                <TextField label="Total Mini Bar Charges" value={totalMini} fullWidth disabled />
+            </Grid>
+            <Grid item xs={2}>
                 <TextField label="Room Charges" value={formData.roomCharge} fullWidth disabled />
             </Grid>
             <Grid item xs={2}>

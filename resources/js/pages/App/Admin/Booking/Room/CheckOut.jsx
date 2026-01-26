@@ -160,7 +160,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             const discount = parseFloat(booking.discount_value || 0);
                                             const paidOrdersSum = (booking.orders || []).filter((o) => o.payment_status === 'paid').reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
 
-                                            const invoiceTotal = booking.grand_total;
+                                            const invoiceTotal = parseFloat(booking.grand_total || 0) + foodBill;
                                             const paid = parseFloat(booking.invoice?.paid_amount || 0) + paidOrdersSum;
                                             const balance = Math.max(0, invoiceTotal - paid);
 
@@ -250,7 +250,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         <TableCell sx={{ fontWeight: 'bold' }}>
                                             {Math.round(
                                                 bookings.data.reduce((sum, b) => {
-                                                    return sum + parseFloat(b.grand_total || 0);
+                                                    const fb = (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+                                                    return sum + parseFloat(b.grand_total || 0) + fb;
                                                 }, 0),
                                             )}
                                         </TableCell>
@@ -269,7 +270,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                                 bookings.data.reduce((sum, b) => {
                                                     const paidOrdersSum = (b.orders || []).filter((o) => o.payment_status === 'paid').reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
                                                     const pd = parseFloat(b.invoice?.paid_amount || 0) + paidOrdersSum;
-                                                    return sum + Math.max(0, b.grand_total - pd);
+                                                    const fb = (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
+                                                    return sum + Math.max(0, parseFloat(b.grand_total || 0) + fb - pd);
                                                 }, 0),
                                             )}
                                         </TableCell>
