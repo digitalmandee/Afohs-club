@@ -316,7 +316,7 @@ class RoomBookingController extends Controller
 
     public function editbooking(Request $request, $id)
     {
-        $booking = RoomBooking::with(['customer', 'member', 'corporateMember', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems'])->findOrFail($id);
+        $booking = RoomBooking::with(['customer', 'member', 'corporateMember', 'room', 'room.roomType', 'room.categoryCharges', 'otherCharges', 'miniBarItems', 'memberFamily', 'corporateFamily'])->findOrFail($id);
         $fullName = ($booking->customer ? $booking->customer->name : ($booking->member ? $booking->member->full_name : ($booking->corporateMember ? $booking->corporateMember->full_name : null)));
         $bookingData = [
             'id' => $booking->id,
@@ -341,8 +341,10 @@ class RoomBookingController extends Controller
             'cnic' => $booking->guest_cnic,
             'accompaniedGuest' => $booking->accompanied_guest,
             'guestRelation' => $booking->acc_relationship,
+            'acc_relationship' => $booking->acc_relationship,
             'bookedBy' => $booking->booked_by,
             'room' => $booking->room,
+            'familyMember' => $booking->family_id,
             'persons' => $booking->persons,
             'bookingCategory' => $booking->category,
             'nights' => $booking->nights,
@@ -504,6 +506,7 @@ class RoomBookingController extends Controller
                 'acc_relationship' => $data['guestRelation'] ?? null,
                 'booked_by' => $data['bookedBy'] ?? null,
                 'room_id' => $data['room']['id'] ?? null,
+                'family_id' => $data['familyMember'] ?? null,
                 'persons' => $data['persons'] ?? 0,
                 'category' => $data['bookingCategory'] ?? null,
                 'nights' => (isset($data['checkInDate']) && isset($data['checkOutDate'])) ? max(1, \Carbon\Carbon::parse($data['checkOutDate'])->diffInDays(\Carbon\Carbon::parse($data['checkInDate']))) : ($data['nights'] ?? null),
@@ -1498,14 +1501,18 @@ class RoomBookingController extends Controller
         // ✅ Fetch the booking with relations
         $booking = RoomBooking::with([
             'room',
+            'room.roomType',
             'customer',
             'member',
+            'category',
             'corporateMember',
+            'memberFamily',
+            'corporateFamily',
             'miniBarItems',
             'otherCharges',
             'orders',
             'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment'
-        ])->findOrFail($id);
+        ])->findOrFail($id)->append('family_member');
 
         // ✅ Get invoice using polymorphic relationship
         $invoice = $booking->invoice;

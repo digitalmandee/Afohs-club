@@ -160,7 +160,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             const discount = parseFloat(booking.discount_value || 0);
                                             const paidOrdersSum = (booking.orders || []).filter((o) => o.payment_status === 'paid').reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0);
 
-                                            const invoiceTotal = roomCharge + otherCharges + foodBill - discount;
+                                            const invoiceTotal = booking.grand_total;
                                             const paid = parseFloat(booking.invoice?.paid_amount || 0) + paidOrdersSum;
                                             const balance = Math.max(0, invoiceTotal - paid);
 
@@ -250,11 +250,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         <TableCell sx={{ fontWeight: 'bold' }}>
                                             {Math.round(
                                                 bookings.data.reduce((sum, b) => {
-                                                    const rc = parseFloat(b.room_charge || 0);
-                                                    const oc = parseFloat(b.other_charges_sum_amount || 0) + parseFloat(b.mini_bar_items_sum_amount || 0);
-                                                    const fb = (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
-                                                    const d = parseFloat(b.discount_value || 0);
-                                                    return sum + (rc + oc + fb - d);
+                                                    return sum + parseFloat(b.grand_total || 0);
                                                 }, 0),
                                             )}
                                         </TableCell>
@@ -271,14 +267,9 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         <TableCell sx={{ fontWeight: 'bold', color: 'red' }}>
                                             {Math.round(
                                                 bookings.data.reduce((sum, b) => {
-                                                    const rc = parseFloat(b.room_charge || 0);
-                                                    const oc = parseFloat(b.other_charges_sum_amount || 0) + parseFloat(b.mini_bar_items_sum_amount || 0);
-                                                    const fb = (b.orders || []).reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
-                                                    const d = parseFloat(b.discount_value || 0);
-                                                    const tot = rc + oc + fb - d;
                                                     const paidOrdersSum = (b.orders || []).filter((o) => o.payment_status === 'paid').reduce((s, o) => s + parseFloat(o.total_price || 0), 0);
                                                     const pd = parseFloat(b.invoice?.paid_amount || 0) + paidOrdersSum;
-                                                    return sum + Math.max(0, tot - pd);
+                                                    return sum + Math.max(0, b.grand_total - pd);
                                                 }, 0),
                                             )}
                                         </TableCell>

@@ -393,8 +393,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::group(['prefix' => 'booking'], function () {
                 Route::get('/create', [RoomBookingController::class, 'booking'])->name('rooms.create.booking')->middleware('super.admin:rooms.bookings.create');
                 Route::get('/edit/{id}', [RoomBookingController::class, 'editbooking'])->name('rooms.edit.booking')->middleware('super.admin:rooms.bookings.edit');
-                Route::post('/update/{id}', [RoomBookingController::class, 'update'])->name('rooms.update.booking')->middleware('permission:rooms.booking.edit');
-                Route::post('/create', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
+                Route::post('/update/{id}', [RoomBookingController::class, 'update'])->name('rooms.update.booking')->middleware('permission:rooms.bookings.edit');
+                Route::post('/create', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.bookings.create');
 
                 Route::get('dashboard', [RoomBookingController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
                 Route::get('manage', [RoomBookingController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.bookings.view');
