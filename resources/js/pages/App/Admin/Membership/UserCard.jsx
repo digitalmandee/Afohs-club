@@ -49,7 +49,7 @@ export const handlePrintMembershipCard = (member) => {
     <title>Membership Card</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Inter, sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -84,7 +84,7 @@ export const handlePrintMembershipCard = (member) => {
         /* LEFT COLUMN - Perfect MUI replica */
         .left {
             padding-left: 15px;
-            padding-top: 30px;
+            padding-top: 40px;
             align-items: flex-start;
         }
 
@@ -142,7 +142,7 @@ export const handlePrintMembershipCard = (member) => {
         /* RIGHT COLUMN - Perfect MUI replica */
         .right {
             padding-right: 15px;
-            padding-top: 45px;
+            padding-top: 58px;
             align-items: flex-end;
         }
 
@@ -359,10 +359,10 @@ export const MembershipCardContent = ({ member, id }) => {
                 {member?.parent_id && (
                     <Divider
                         sx={{
-                            borderColor: '#063455',      // 👈 IMPORTANT
+                            borderColor: '#063455',
                             borderBottomWidth: '5px',
-                            opacity: 1,    // thickness
-                            width: 'calc(100% - 20px)',  // 5px left + right
+                            opacity: 1,
+                            width: 'calc(100% - 20px)',
                             mx: 'auto',
                             mb: 1,
                         }}
