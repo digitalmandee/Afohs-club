@@ -239,6 +239,10 @@ export default function SideNav({ open, setOpen }) {
                                 text: 'Menu AddOn',
                                 path: route('event-menu-addon.index'),
                             },
+                            {
+                                text: 'Reports',
+                                path: route('events.reports'),
+                            },
                             // {
                             //     text: 'Locations',
                             //     path: route('events.locations'),
