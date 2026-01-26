@@ -13,6 +13,7 @@ use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
 use App\Models\FinancialReceipt;
 use App\Models\Floor;
+use App\Models\GuestType;
 use App\Models\Invoices;
 use App\Models\Member;
 use App\Models\MemberType;
@@ -46,7 +47,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $orderNo = $this->getOrderNo();
-        $memberTypes = MemberType::select('id', 'name')->get();
+        $guestTypes = GuestType::where('status', 1)->select('id', 'name')->get();
 
         $floorData = null;
         $tableData = null;
@@ -73,9 +74,10 @@ class OrderController extends Controller
 
         return Inertia::render('App/Order/New/Index', [
             'orderNo' => $orderNo,
-            'memberTypes' => $memberTypes,
-            'selectedFloor' => $floorData,
-            'selectedTable' => $tableData,
+            'floorData' => $floorData,
+            'tableData' => $tableData,
+            // 'memberTypes' => $memberTypes, // Removed to avoid confusion if not needed
+            'guestTypes' => $guestTypes,
         ]);
     }
 
@@ -211,22 +213,30 @@ class OrderController extends Controller
         ]);
         $allrestaurants = Tenant::select('id', 'name')->get();
 
-        // 🔍 Search
-        if ($request->filled('search')) {
-            $search = trim(preg_replace('/\s+/', ' ', $request->search));
-            $query->where(function ($q) use ($search) {
+        // 🔍 Search By ID
+        if ($request->filled('search_id')) {
+            $query->where('id', $request->search_id);
+        }
+
+        // 🔍 Search By Client Name
+        if ($request->filled('search_name')) {
+            $searchName = trim(preg_replace('/\s+/', ' ', $request->search_name));
+            $query->where(function ($q) use ($searchName) {
                 $q
-                    ->where('id', 'like', "%$search%")
-                    ->orWhereHas('member', fn($q) =>
-                        $q
-                            ->where('full_name', 'like', "%$search%")
-                            ->orWhere('membership_no', 'like', "%$search%"))
-                    ->orWhereHas('customer', fn($q) =>
-                        $q
-                            ->where('name', 'like', "%$search%")
-                            ->orWhere('customer_no', 'like', "%$search%"))
-                    ->orWhereHas('table', fn($q) =>
-                        $q->where('table_no', 'like', "%$search%"));
+                    ->whereHas('member', fn($q) => $q->where('full_name', 'like', "%$searchName%"))
+                    ->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%$searchName%"))
+                    ->orWhereHas('employee', fn($q) => $q->where('name', 'like', "%$searchName%"));
+            });
+        }
+
+        // 🔍 Search By Membership No
+        if ($request->filled('search_membership')) {
+            $searchMembership = trim($request->search_membership);
+            $query->where(function ($q) use ($searchMembership) {
+                $q
+                    ->whereHas('member', fn($q) => $q->where('membership_no', 'like', "%$searchMembership%"))
+                    ->orWhereHas('customer', fn($q) => $q->where('customer_no', 'like', "%$searchMembership%"))
+                    ->orWhereHas('employee', fn($q) => $q->where('employee_id', 'like', "%$searchMembership%"));
             });
         }
 
@@ -267,7 +277,7 @@ class OrderController extends Controller
         return Inertia::render('App/Order/Management/Dashboard', [
             'orders' => $orders,
             'allrestaurants' => $allrestaurants,
-            'filters' => $request->only('search', 'time', 'type', 'start_date', 'end_date')
+            'filters' => $request->only('search_id', 'search_name', 'search_membership', 'time', 'type', 'start_date', 'end_date')
         ]);
     }
 
@@ -997,5 +1007,117 @@ class OrderController extends Controller
             ->get();
 
         return response()->json(['success' => true, 'products' => $products], 200);
+    }
+
+    /**
+     * Search Customers (Member, Corporate, Guest) for Auto-complete
+     */
+    public function searchCustomers(Request $request)
+    {
+        $query = $request->input('query');
+        $type = $request->input('type', 'all');
+
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        $results = collect();
+
+        // 1. Members
+        if ($type === 'all' || $type === 'member') {
+            $members = Member::where('status', 'active')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%");
+                })
+                ->limit(30)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Member - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Member',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                    ];
+                });
+            $results = $results->merge($members);
+        }
+
+        // 2. Corporate Members
+        if ($type === 'all' || $type === 'corporate') {
+            // Check if CorporateMember model exists and is imported, assuming yes based on previous files
+            $corporate = \App\Models\CorporateMember::where('status', 'active')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('full_name', 'like', "%{$query}%")
+                        ->orWhere('membership_no', 'like', "%{$query}%");
+                })
+                ->limit(30)
+                ->get()
+                ->map(function ($m) {
+                    return [
+                        'label' => "{$m->full_name} (Corporate - {$m->membership_no})",
+                        'value' => $m->full_name,
+                        'type' => 'Corporate',
+                        'name' => $m->full_name,
+                        'membership_no' => $m->membership_no,
+                        'status' => $m->status,
+                    ];
+                });
+            $results = $results->merge($corporate);
+        }
+
+        // 3. Guests (Customers)
+        if ($type === 'all' || $type === 'guest') {
+            $guests = Customer::query()
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->limit(30)
+                ->get()
+                ->map(function ($c) {
+                    return [
+                        'label' => "{$c->name} (Guest - {$c->customer_no})",
+                        'value' => $c->name,
+                        'type' => 'Guest',
+                        'name' => $c->name,
+                        'customer_no' => $c->customer_no,
+                        'id' => $c->id,
+                        'status' => 'active',  // Guests usually don't have status, default active
+                    ];
+                });
+            $results = $results->merge($guests);
+        }
+
+        // 4. Employees (Optional, but useful for internal orders) - only if type is all or employee
+        if ($type === 'all' || $type === 'employee') {
+            $employees = Employee::where('status', 'active')
+                ->where(function ($q) use ($query) {
+                    $q
+                        ->where('name', 'like', "%{$query}%")
+                        ->orWhere('employee_id', 'like', "%{$query}%");
+                })
+                ->limit(30)
+                ->get()
+                ->map(function ($e) {
+                    return [
+                        'label' => "{$e->name} (Employee - {$e->employee_id})",
+                        'value' => $e->name,
+                        'type' => 'Employee',
+                        'name' => $e->name,
+                        'membership_no' => $e->employee_id,  // Normalize key
+                        'employee_id' => $e->employee_id,
+                        'status' => $e->status,
+                    ];
+                });
+            $results = $results->merge($employees);
+        }
+
+        return response()->json($results);
     }
 }

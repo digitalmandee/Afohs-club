@@ -54,7 +54,7 @@ export const useOrderStore = create((set, get) => ({
     orderDetails: {
         order_no: '',
         order_type: 'dineIn',
-        member_type: 1,
+        member_type: '0', // Default to '0' (Member) as string
         membership_type: '',
         member: {},
         person_count: 1,
@@ -102,12 +102,12 @@ export const useOrderStore = create((set, get) => ({
                 address: '',
             },
         })),
-    setInitialOrder: ({ orderNo, memberTypes, floorTables, time, table }) =>
+    setInitialOrder: ({ orderNo, guestTypes, floorTables, time, table }) =>
         set((state) => ({
             orderDetails: {
                 ...state.orderDetails,
                 order_no: orderNo,
-                membership_type: memberTypes[0]?.id ?? '',
+                // membership_type: memberTypes[0]?.id ?? '', // Legacy? Removed to prevent crash
                 floor: floorTables[0]?.id ?? '',
                 table: table ?? '',
                 time: time ?? dayjs().format('HH:mm'),

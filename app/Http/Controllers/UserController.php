@@ -161,7 +161,7 @@ class UserController extends Controller
 
         // Case 1: bookingType = 0 => Search in Users table (members)
         // Case 4: bookingType = 'employee' => Search in Employees table
-        if ($bookingType === 'employee') {
+        if ($bookingType === 'employee' || $bookingType == '3') {
             $employees = Employee::select('id', 'name', 'employee_id', 'email', 'designation', 'phone_no')
                 ->where(function ($q) use ($query) {
                     $q

@@ -75,9 +75,9 @@ Route::group([
         // Send to kitchen order
         Route::post('/order/send/kitchen', [OrderController::class, 'sendToKitchen'])->name('order.send-to-kitchen');
 
-        // get products
         Route::get('/product/categories', [OrderController::class, 'getCategories'])->name('products.categories');
         Route::get('/products/{category_id}', [OrderController::class, 'getProducts'])->name('products.bycategory');
+        Route::get('/api/orders/search-customers', [OrderController::class, 'searchCustomers'])->name('api.orders.search-customers');
 
         Route::get('/settings', function () {
             return Inertia::render('App/Settings/Dashboard');

@@ -8,7 +8,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-const RoomDialog = ({ roomTypes, loading }) => {
+const RoomDialog = ({ guestTypes, roomTypes, loading }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [filterOption, setFilterOption] = useState('occupied');
@@ -38,8 +38,9 @@ const RoomDialog = ({ roomTypes, loading }) => {
                     const foundRoom = type.rooms.find((r) => {
                         const booking = r.current_booking;
                         if (!booking) return false;
-                        if (orderDetails.member_type == 1) return booking.member_id == orderDetails.member.id;
-                        if (orderDetails.member_type == 2) return booking.customer_id == orderDetails.member.id;
+                        if (orderDetails.member_type == 0) return booking.member_id == orderDetails.member.id;
+                        if (String(orderDetails.member_type).startsWith('guest-') || orderDetails.member_type == 2) return booking.customer_id == orderDetails.member.id;
+                        if (orderDetails.member_type == 3) return booking.employee_id == orderDetails.member.id;
                         return false;
                     });
 
@@ -67,14 +68,16 @@ const RoomDialog = ({ roomTypes, loading }) => {
                   if (!booking) return false;
 
                   // Check if booking matches selected member
-                  if (orderDetails.member_type == 1) {
+                  if (orderDetails.member_type == 0) {
                       // Member
                       if (booking.member_id != orderDetails.member.id) return false;
-                  } else if (orderDetails.member_type == 2) {
-                      // Guest
+                  } else if (String(orderDetails.member_type).startsWith('guest-') || orderDetails.member_type == 2) {
+                      // Guest (or Corporate) -> assuming booking.customer covers guests
                       if (booking.customer_id != orderDetails.member.id) return false;
+                  } else if (orderDetails.member_type == 3) {
+                      // Employee
+                      if (booking.employee_id != orderDetails.member.id) return false;
                   }
-                  // For employee or walk-in, logic might vary, but for now strict match
               }
 
               const keyword = searchTerm.toLowerCase();
@@ -117,50 +120,34 @@ const RoomDialog = ({ roomTypes, loading }) => {
 
             <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
-                    <RadioGroup row name="membership-type" value={orderDetails.member_type} onChange={(e) => handleMemberType(e.target.value)}>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexWrap: 'wrap',
-                                gap: 1,
-                                width: '100%',
-                            }}
-                        >
-                            {[
-                                { id: 1, name: 'Member' },
-                                { id: 2, name: 'Guest' },
-                                { id: 3, name: 'Employee' },
-                            ].map((option) => {
-                                const isSelected = orderDetails.member_type == option.id;
-                                return (
-                                    <Box
-                                        key={option.id}
-                                        sx={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            border: `1px solid ${isSelected ? '#A27B5C' : '#E3E3E3'}`,
-                                            bgcolor: isSelected ? '#FCF7EF' : 'transparent',
-                                            borderRadius: 1,
-                                            px: 2,
-                                            py: 1,
-                                            transition: 'all 0.2s ease-in-out',
-                                        }}
-                                    >
-                                        <FormControlLabel
-                                            value={option.id}
-                                            control={<Radio size="small" />}
-                                            label={<Typography variant="body2">{option.name}</Typography>}
-                                            sx={{
-                                                m: 0,
-                                                width: '100%',
-                                                '& .MuiFormControlLabel-label': {
-                                                    flexGrow: 1,
-                                                },
-                                            }}
-                                        />
-                                    </Box>
-                                );
-                            })}
+                    <RadioGroup
+                        row
+                        name="membership-type"
+                        value={orderDetails.member_type}
+                        onChange={(e) => {
+                            handleMemberType(e.target.value);
+                            handleOrderDetailChange('member', {});
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, width: '100%' }}>
+                            <FormControlLabel value="0" control={<Radio />} label="Member" sx={{ border: orderDetails.member_type == '0' ? '1px solid #A27B5C' : '1px solid #E3E3E3', borderRadius: 1, px: 1, m: 0, bgcolor: orderDetails.member_type == '0' ? '#FCF7EF' : 'transparent' }} />
+                            <FormControlLabel value="2" control={<Radio />} label="Corporate Member" sx={{ border: orderDetails.member_type == '2' ? '1px solid #A27B5C' : '1px solid #E3E3E3', borderRadius: 1, px: 1, m: 0, bgcolor: orderDetails.member_type == '2' ? '#FCF7EF' : 'transparent' }} />
+                            <FormControlLabel value="3" control={<Radio />} label="Employee" sx={{ border: orderDetails.member_type == '3' ? '1px solid #A27B5C' : '1px solid #E3E3E3', borderRadius: 1, px: 1, m: 0, bgcolor: orderDetails.member_type == '3' ? '#FCF7EF' : 'transparent' }} />
+                            {guestTypes.map((type) => (
+                                <FormControlLabel
+                                    key={type.id}
+                                    value={`guest-${type.id}`}
+                                    control={<Radio />}
+                                    label={type.name}
+                                    sx={{
+                                        border: orderDetails.member_type == `guest-${type.id}` ? '1px solid #A27B5C' : '1px solid #E3E3E3',
+                                        borderRadius: 1,
+                                        px: 1,
+                                        m: 0,
+                                        bgcolor: orderDetails.member_type == `guest-${type.id}` ? '#FCF7EF' : 'transparent',
+                                    }}
+                                />
+                            ))}
                         </Box>
                     </RadioGroup>
                 </FormControl>
