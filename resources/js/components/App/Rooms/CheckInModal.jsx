@@ -22,13 +22,13 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
                 const booking = res.data.booking;
                 setCheckInDate(booking.check_in_date || booking.booking_date);
                 setBookingInfo({
-                    customerName: booking.customer ? booking.customer.name : booking.member?.full_name || 'N/A',
-                    email: booking.customer ? booking.customer.email : booking.member?.personal_email || 'N/A',
+                    customerName: booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : 'N/A',
+                    email: booking.customer ? booking.customer.email : booking.member ? booking.member.personal_email : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).personal_email : 'N/A',
                     bookingId: booking.booking_no,
-                    roomName: booking.room?.room_type?.name + ' - ' + booking.room?.name,
+                    roomName: (booking.room?.room_type?.name || '') + ' - ' + (booking.room?.name || ''),
                     charges: booking.grand_total,
                     invoiceStatus: booking.invoice?.status,
-                    status: booking.status, // Add status
+                    status: booking.status,
                 });
             })
             .catch((error) => {

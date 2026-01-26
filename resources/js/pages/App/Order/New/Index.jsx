@@ -17,7 +17,7 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const NewOrder = ({ orderNo, memberTypes }) => {
+const NewOrder = ({ orderNo, guestTypes }) => {
     const { orderDetails, weeks, initWeeks, selectedWeek, monthYear, setInitialOrder, handleOrderTypeChange, handleWeekChange, resetOrderDetails, handleOrderDetailChange } = useOrderStore();
 
     const [open, setOpen] = useState(true);
@@ -39,7 +39,7 @@ const NewOrder = ({ orderNo, memberTypes }) => {
 
         setInitialOrder({
             orderNo,
-            memberTypes,
+            guestTypes,
             floorTables: floor ? [{ id: floor }] : floorTables,
             table: table ? table : null,
             time: dayjs().format('HH:mm'),
@@ -416,10 +416,10 @@ const NewOrder = ({ orderNo, memberTypes }) => {
                         </Box>
 
                         {/* =====  */}
-                        {orderDetails.order_type === 'dineIn' && <DineDialog memberTypes={memberTypes} floorTables={floorTables} />}
-                        {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog />}
-                        {orderDetails.order_type === 'reservation' && <ReservationDialog />}
-                        {orderDetails.order_type === 'room' && <RoomDialog roomTypes={roomTypes} loading={loading} />}
+                        {orderDetails.order_type === 'dineIn' && <DineDialog guestTypes={guestTypes} floorTables={floorTables} />}
+                        {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} />}
+                        {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} />}
+                        {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} />}
                     </Paper>
                 </Box>
             </div>

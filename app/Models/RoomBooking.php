@@ -12,6 +12,7 @@ class RoomBooking extends BaseModel
         'booking_no',
         'customer_id',
         'member_id',
+        'family_id',
         'corporate_member_id',
         'booking_date',
         'check_in_date',
@@ -89,6 +90,11 @@ class RoomBooking extends BaseModel
         return $this->hasMany(RoomBookingOtherCharge::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(RoomCategory::class, 'category', 'id');
+    }
+
     public function room()
     {
         return $this->belongsTo(Room::class);
@@ -112,5 +118,25 @@ class RoomBooking extends BaseModel
     public function corporateMember()
     {
         return $this->belongsTo(CorporateMember::class, 'corporate_member_id', 'id');
+    }
+
+    public function memberFamily()
+    {
+        return $this->belongsTo(Member::class, 'family_id', 'id');
+    }
+
+    public function corporateFamily()
+    {
+        return $this->belongsTo(CorporateMember::class, 'family_id', 'id');
+    }
+
+    public function getFamilyMemberAttribute()
+    {
+        if ($this->member_id) {
+            return $this->memberFamily;
+        } elseif ($this->corporate_member_id) {
+            return $this->corporateFamily;
+        }
+        return null;  // Return null if neither is set
     }
 }

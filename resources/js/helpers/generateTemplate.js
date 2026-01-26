@@ -120,7 +120,7 @@ export const generateInvoiceContent = (booking, type) => {
             }
             .typography-body2 {
                 font-size: 12px;
-                color: #555;
+                color: #000;
                 line-height: 0.6;
             }
             .typography-body2-bold {
@@ -201,10 +201,39 @@ export const generateInvoiceContent = (booking, type) => {
                 <div style="margin-bottom: 10px;">
   <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
     <tbody>
-      <!-- Row 1 -->
+     <!-- Row 1 -->
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Guest Name:</strong>
+          <strong>Booking No:</strong>
+          ${booking.booking_no ? booking.booking_no : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Booking Date:</strong>
+          ${booking.booking_date ? new Date(booking.booking_date).toLocaleDateString('en-GB') : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Booking Type:</strong>
+          ${getBookingTypeLabel(booking.booking_type)}
+        </td>
+      </tr>
+       <!-- Row 2 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Check-in:</strong>
+          ${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;" colspan="2">
+          <strong>Check-Out:</strong>
+          ${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}
+        </td>
+      </tr>
+      <!-- Row 3 -->
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Name:</strong>
           ${booking.customer
                     ? booking.customer.name
                     : booking.member
@@ -214,19 +243,8 @@ export const generateInvoiceContent = (booking, type) => {
                             : 'N/A'}
         </td>
 
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Membership ID:</strong>
-          ${booking.customer
-                    ? booking.customer.customer_no
-                    : booking.member
-                        ? booking.member.membership_no
-                        : (booking.corporateMember || booking.corporate_member)
-                            ? (booking.corporateMember || booking.corporate_member).membership_no
-                            : 'N/A'}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Phone Number:</strong>
+         <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Phone No:</strong>
           ${booking.customer
                     ? booking.customer.contact
                     : booking.member
@@ -235,10 +253,7 @@ export const generateInvoiceContent = (booking, type) => {
                             ? (booking.corporateMember || booking.corporate_member).mobile_number_a
                             : 'N/A'}
         </td>
-      </tr>
 
-      <!-- Row 2 -->
-      <tr>
         <td style="border: 1px solid #000; padding: 10px;">
           <strong>Email:</strong>
           ${booking.customer
@@ -250,126 +265,138 @@ export const generateInvoiceContent = (booking, type) => {
                             : 'N/A'}
         </td>
 
+      </tr>
+
+      <tr>
         <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Booking ID:</strong>
-          ${booking.booking_no ? booking.booking_no : 'N/A'}
+          <strong>Family Member:</strong>
+          ${booking.family_member ? booking.family_member.full_name + ' (' + booking.family_member.membership_no + ')' : ''}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;" colspan="2">
+        <strong>Address:</strong>
+        ${booking.customer
+                    ? booking.customer.address
+                    : booking.member
+                        ? booking.member.current_address
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).current_address
+                            : 'N/A'}
+        </td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>City:</strong>
+          ${booking.member
+                    ? booking.member.current_city
+                    : (booking.corporateMember || booking.corporate_member)
+                        ? (booking.corporateMember || booking.corporate_member).current_city
+                        : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Country:</strong>
+        ${booking.member
+                    ? booking.member.current_country
+                    : (booking.corporateMember || booking.corporate_member)
+                        ? (booking.corporateMember || booking.corporate_member).current_country
+                        : 'N/A'}
+        </td>
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>CNIC / Passport No:</strong>
+        ${booking.customer
+                    ? booking.customer.cnic
+                    : booking.member
+                        ? booking.member.cnic_no
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).cnic_no
+                            : 'N/A'}
+        </td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Membership No:</strong>
+        ${booking.customer
+                    ? booking.customer.customer_no
+                    : booking.member
+                        ? booking.member.membership_no
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).membership_no
+                            : 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Acc. Guest Name:</strong>
+          ${booking.accompanied_guest || 'N/A'}
+        </td>
+
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Relationship:</strong>
+        ${booking.acc_relationship || 'N/A'}
+        </td>
+      </tr>
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Guest Name:</strong>
+          ${booking.guest_first_name || ''} ${booking.guest_last_name || ''}
+        </td>
+        </td>
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Guest Category:</strong>
+        ${booking.category?.name || 'N/A'}
+        </td>
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>CNIC:</strong>
+        ${booking.guest_cnic || 'N/A'}
+      </tr>
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>Guest Tel:</strong>
+          ${booking.guest_mob || 'N/A'}
         </td>
 
         <td style="border: 1px solid #000; padding: 10px;">
         <strong>Booked By:</strong>
         ${booking.booked_by || 'N/A'}
         </td>
-      </tr>
-
-      <!-- Row 3 -->
-      <tr>
         <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Booking Date:</strong>
-          ${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Booking Type:</strong>
-          ${getBookingTypeLabel(booking.booking_type)}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-        <strong>Room Name:</strong>
-        ${booking.room?.name || 'N/A'}
-        </td>
-      </tr>
-
-      <!-- Row 4 Removed Beds and Bathrooms -->
-
-      <!-- Row 5 -->
-      <tr>
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Room Charge:</strong>
-          Rs. ${Math.round(booking.room_charge || 0)}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Security Deposit:</strong>
-          Rs. ${Math.round(booking.security_deposit || 0)}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-        <strong>Per Day Charge:</strong>
-        Rs. ${Math.round(booking.per_day_charge || 0)}
-        </td>
-      </tr>
-
-      <!-- Row 6 -->
-      <tr>
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Check-in:</strong>
-          ${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Check-Out:</strong>
-          ${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}
-        </td>
-
-        <td style="border: 1px solid #000; padding: 10px;">
-        <strong>Nights:</strong>
-        ${booking.check_in_date && booking.check_out_date ? dayjs(booking.check_out_date).diff(dayjs(booking.check_in_date), 'day') : '0'}
-        </td>
-      </tr>
-
-      <!-- Row 7 -->
-      <tr>
-        <td style="border: 1px solid #000; padding: 10px;">
-            <strong>Guest Name:</strong>
-            ${booking.guest_first_name || ''} ${booking.guest_last_name || ''}
-        </td>
-        <td colspan="2" style="border: 1px solid #000; padding: 10px;">
-          <strong>Booking Status:</strong>
-          ${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}
-        </td>
-      </tr>
-
-      <!-- Row 8 - Other Charges Header -->
-      ${(booking.other_charges && booking.other_charges.length > 0) || (booking.otherCharges && booking.otherCharges.length > 0) ? `
-      <tr>
-        <td colspan="3" style="border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold;">
-        Other Charges Details (Total: Rs. ${Math.round(booking.total_other_charges || 0)})
+        <strong>Room No:</strong>
+        ${booking.room?.name} (${booking.room?.room_type?.name || ''})
         </td>
       </tr>
       <tr>
-        <td style="border: 1px solid #000; padding: 10px; font-weight: bold;">Charge Type</td>
-        <td style="border: 1px solid #000; padding: 10px; font-weight: bold;">Quantity</td>
-        <td style="border: 1px solid #000; padding: 10px; font-weight: bold;">Amount</td>
-      </tr>
-      ${(booking.other_charges || booking.otherCharges || []).map(charge => `
-      <tr>
-        <td style="border: 1px solid #000; padding: 10px;">${charge.charge_type || charge.name || 'N/A'}</td>
-        <td style="border: 1px solid #000; padding: 10px;">${charge.quantity || 1}</td>
-        <td style="border: 1px solid #000; padding: 10px;">Rs. ${Math.round(charge.amount || charge.total || 0)}</td>
-      </tr>
-      `).join('')}
-      ` : ''}
+        <td style="border: 1px solid #000; padding: 10px;">
+          <strong>No. of Nights:</strong>
+          ${booking.nights || 'N/A'}
+        </td>
 
-      <!-- Mini Bar Items -->
-      ${(booking.mini_bar_items && booking.mini_bar_items.length > 0) || (booking.miniBarItems && booking.miniBarItems.length > 0) ? `
-      <tr>
-        <td colspan="3" style="border: 1px solid #000; padding: 10px; text-align: center; font-weight: bold;">
-        Mini Bar Items (Total: Rs. ${Math.round(booking.total_mini_bar || 0)})
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Rates Per Night:</strong>
+        ${Math.round(booking.per_day_charge || 0)}
+        </td>
+        <td style="border: 1px solid #000; padding: 10px;">
+        <strong>Room Charges:</strong>
+        ${Math.round(booking.room_charge || 0)}
         </td>
       </tr>
       <tr>
-        <td style="border: 1px solid #000; padding: 10px; font-weight: bold;">Item</td>
-        <td style="border: 1px solid #000; padding: 10px; font-weight: bold;">Quantity</td>
-        <td style="border: 1px solid #000; padding: 10px; font-weight: bold;">Amount</td>
+        <td style="border: 1px solid #000; padding: 10px;text-align: center;" colspan="3">
+          <strong>Other Charges Details</strong>
+        </td>
       </tr>
-      ${(booking.mini_bar_items || booking.miniBarItems || []).map(item => `
       <tr>
-        <td style="border: 1px solid #000; padding: 10px;">${item.item_name || item.name || 'N/A'}</td>
-        <td style="border: 1px solid #000; padding: 10px;">${item.quantity || 1}</td>
-        <td style="border: 1px solid #000; padding: 10px;">Rs. ${Math.round(item.amount || item.total || 0)}</td>
+        <td style="border: 1px solid #000; padding: 10px;"><strong>Breakfast:</strong> Free for upto 2 persons</td>
+        <td style="border: 1px solid #000; padding: 10px;"><strong>Food & Beverages:</strong> As per usage</td>
+        <td style="border: 1px solid #000; padding: 10px;"><strong>Mini Bar:</strong> As per usage</td>
       </tr>
-      `).join('')}
-      ` : ''}
+      <tr>
+        <td style="border: 1px solid #000; padding: 10px;"><strong>Outgoing Calls:</strong> As per usage</td>
+        <td style="border: 1px solid #000; padding: 10px;"><strong>Dry Cleaning / Ironing:</strong> As per usage</td>
+        <td style="border: 1px solid #000; padding: 10px;"><strong>Transport:</strong> As per usage</td>
+      </tr>
+      <tr>
+        <td colspan="2" style="border: 1px solid #000; padding: 10px;"><strong>Wifi:</strong> Free of cost</td>
+      </tr>
 
       <!-- Discount Row (if applicable) -->
       ${booking.discount_value && parseFloat(booking.discount_value) > 0 ? `
@@ -379,16 +406,14 @@ export const generateInvoiceContent = (booking, type) => {
       </tr>
       ` : ''}
 
-      <!-- Row 12 -->
+      <!-- Row 12 New -->
       <tr>
         <td style="border: 1px solid #000; padding: 10px;">
-          <strong>Total Payable Amount:   </strong>
-           Rs. ${Math.round(booking.grand_total || 0)}
+          <strong>Total Payable Amount:</strong> ${Math.round(booking.grand_total || 0)}
         </td>
-
-        <td colspan="2" style="border: 1px solid #000; padding: 10px;">
-    <strong>Advance Amount: </strong>
-    Rs. ${(() => {
+        <td style="border: 1px solid #000; padding: 10px;" colspan="2">
+            <strong>Advance Amount:</strong>
+            ${(() => {
                     let paid = parseFloat(booking.invoice?.paid_amount || 0);
                     if (booking.invoice?.status === 'refunded') {
                         const notes = booking.additional_notes || booking.notes;
@@ -399,19 +424,19 @@ export const generateInvoiceContent = (booking, type) => {
                     }
                     return Math.round(paid);
                 })()}
-</td>
+        </td>
       </tr>
 
-      <!-- Row 13 -->
+      <!-- Row 13 New -->
       <tr>
         <td colspan="3" style="border: 1px solid #000; padding: 10px;">
         <strong>Remaining Balance:</strong>
-        Rs. ${(() => {
+        ${(() => {
                     const total = parseFloat(booking.grand_total || 0);
                     const paid = parseFloat(booking.invoice?.paid_amount || 0);
                     return Math.round(Math.max(0, total - paid));
                 })()}
-    </td>
+        </td>
       </tr>
 
     </tbody>
@@ -590,7 +615,7 @@ export const generateInvoiceContent = (booking, type) => {
                   }
                   .typography-body2 {
                       font-size: 12px;
-                      color: #555;
+                      color: #000;
                       line-height: 0.6;
                   }
                   .typography-body2-bold {
@@ -718,10 +743,18 @@ export const generateInvoiceContent = (booking, type) => {
 
     <!-- LEFT COLUMN : BILL TO -->
     <div style="flex: 1;">
-        <div class="subtitle1" style="font-size:14px; font-weight:600;">Bill To - #${booking.booking_no || 'N/A'}</div>
+        <div class="subtitle1" style="font-size:14px; font-weight:600;">Bill To</div>
 
         <div class="typography-body2" style="margin-bottom: 6px;">
-            <span style="font-weight: bold">Guest Name: </span>
+            <span style="font-weight: bold">Booking #: </span>
+            ${booking.booking_no || 'N/A'}
+        </div>
+        <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Booking Date: </span>
+            ${booking.booking_date ? new Date(booking.booking_date).toLocaleDateString('en-GB') : 'N/A'}
+        </div>
+        <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Name: </span>
             ${booking.customer
                     ? booking.customer.name
                     : booking.member
@@ -731,33 +764,9 @@ export const generateInvoiceContent = (booking, type) => {
                             : ''}
         </div>
 
-        <div class="typography-body2" style="margin-bottom: 6px;">
-            <span style="font-weight: bold">Phone Number: </span>
-            ${booking.customer
-                    ? booking.customer.contact
-                    : booking.member
-                        ? booking.member.mobile_number_a
-                        : (booking.corporateMember || booking.corporate_member)
-                            ? (booking.corporateMember || booking.corporate_member).mobile_number_a
-                            : 'N/A'}
-        </div>
-        <div class="typography-body2" style="margin-bottom: 6px;">
-        <span style="font-weight: bold">Booking ID: </span>
-        ${booking.booking_no ? booking.booking_no : 'N/A'}
-        </div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Accompanied Guest: </span>${booking.accompanied_guest ? `${booking.accompanied_guest} (${booking.acc_relationship || 'N/A'})` : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Issue Date: </span>${booking.booking_date ? dayjs(booking.created_at).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Room Name: </span>${booking.room?.name || 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;><span style="font-weight: bold">Max Capacity: </span>${booking.room?.max_capacity || 'N/A'}</div>
-    </div>
-
-    <!-- RIGHT COLUMN : OCCUPIED BY -->
-    <div style="flex: 1;">
-        <div class="subtitle1">Occupied By</div>
-
-        <div class="typography-body2" style="margin-bottom: 6px;">
-            <span style="font-weight: bold">Membership ID: </span>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking Type: </span>${getBookingTypeLabel(booking.booking_type)}</div>
+         <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Membership #: </span>
             ${booking.customer
                     ? booking.customer.customer_no
                     : booking.member
@@ -766,24 +775,65 @@ export const generateInvoiceContent = (booking, type) => {
                             ? (booking.corporateMember || booking.corporate_member).membership_no
                             : 'N/A'}
         </div>
-
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">CNIC / Passport: </span>${booking.customer
+                    ? booking.customer.cnic
+                    : booking.member
+                        ? booking.member.cnic_no
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).cnic_no
+                            : 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;">
-            <span style="font-weight: bold">Email: </span>
+            <span style="font-weight: bold">Contact #: </span>
             ${booking.customer
+                    ? booking.customer.contact
+                    : booking.member
+                        ? booking.member.mobile_number_a
+                        : (booking.corporateMember || booking.corporate_member)
+                            ? (booking.corporateMember || booking.corporate_member).mobile_number_a
+                            : 'N/A'}
+        </div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Email: </span><a style="color: #000; text-decoration: none;" href="mailto:${booking.customer
                     ? booking.customer.email
                     : booking.member
                         ? booking.member.personal_email
-                        : (booking.corporateMember || booking.corporate_member)
-                            ? (booking.corporateMember || booking.corporate_member).personal_email
-                            : 'N/A'}
+                        : booking.corporate_member
+                            ? booking.corporate_member.personal_email
+                            : 'N/A'}">${booking.customer
+                                ? booking.customer.email
+                                : booking.member
+                                    ? booking.member.personal_email
+                                    : booking.corporate_member
+                                        ? booking.corporate_member.personal_email
+                                        : 'N/A'}</a></div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Address: </span>${booking.customer
+                    ? booking.customer.address
+                    : booking.member
+                        ? booking.member.current_address
+                        : booking.corporate_member
+                            ? booking.corporate_member.current_address
+                            : 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Family Member: </span>${booking.family_member ? booking.family_member.full_name + ' (' + booking.family_member.membership_no + ')' : ''}</div>
+    </div>
+
+    <!-- RIGHT COLUMN : OCCUPIED BY -->
+    <div style="flex: 1;">
+        <div class="subtitle1">Occupied By</div>
+                <!-- Removed Beds and Baths -->
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Name: </span>${booking.guest_first_name || ''} ${booking.guest_last_name || ''}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Category: </span>${booking.category?.name}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">CNIC / Passport: </span>${booking.guest_cnic || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Contact #: </span>${booking.guest_mob || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;">
+            <span style="font-weight: bold">Email: </span>
+            <a style="color: #000; text-decoration: none;" href="mailto:${booking.guest_email || 'N/A'}">${booking.guest_email || 'N/A'}</a>
         </div>
-        <!-- Removed Beds and Baths -->
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Name: </span>${booking.guest_first_name || ''} ${booking.guest_last_name || ''}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Address: </span>${booking.guest_address || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">City: </span>${booking.guest_city || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Country: </span>${booking.guest_country || 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booked By: </span>${booking.booked_by || 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Guest Category: </span>${booking.category || getBookingTypeLabel(booking.booking_type)}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-in: </span>${booking.check_in_date ? dayjs(booking.check_in_date).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Check-out: </span>${booking.check_out_date ? dayjs(booking.check_out_date).format('DD-MM-YYYY') : 'N/A'}</div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booking Status: </span>${(booking.status || 'N/A').replace(/_/g, ' ').toUpperCase()}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Accompanied Guest: </span>${booking.accompanied_guest ? `${booking.accompanied_guest}` : 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Relationship: </span>${booking.acc_relationship || 'N/A'}</div>
+
         ${['cancelled', 'no_show', 'refunded'].includes(booking.status) ? `
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Cancellation Reason: </span>${booking.cancellation_reason || 'N/A'}</div>
         ` : ''}
@@ -791,8 +841,8 @@ export const generateInvoiceContent = (booking, type) => {
 
 </div>
 
-                      <!-- Summary and Notes sections remain unchanged -->
-                       <div style="margin-top: 24px;">
+<!-- Summary and Notes sections remain unchanged -->
+<div style="margin-top: 24px;">
     <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
         <thead>
             <tr style="border-bottom: 1px solid #ddd;">
@@ -808,7 +858,7 @@ export const generateInvoiceContent = (booking, type) => {
         <tbody>
             <tr>
                 <td style="padding: 8px 4px;">
-                    ${booking.room?.room_no || ''} (${booking.room?.name || 'Room'})
+                    ${booking.room?.name || ''} (${booking.room?.room_type?.name || 'Room'})
                 </td>
 
                 <td style="padding: 8px 4px;">
@@ -901,24 +951,7 @@ export const generateInvoiceContent = (booking, type) => {
             <tr>
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">TOTAL PAYABLE AMOUNT</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
-                    ${(() => {
-                    const roomCharge = parseFloat(booking.room_charge || 0);
-
-                    // Calculate sums from arrays to be safe
-                    const otherChargesList = booking.other_charges || booking.otherCharges || [];
-                    const otherCharges = otherChargesList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
-
-                    const miniBarList = booking.mini_bar_items || booking.miniBarItems || [];
-                    const miniBar = miniBarList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
-
-                    const orders = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
-
-                    const discount = parseFloat(booking.discount_value || 0);
-
-                    // Sum everything
-                    const total = roomCharge + otherCharges + miniBar + orders - discount;
-                    return Math.round(total);
-                })()}
+                    ${Math.round((parseFloat(booking.grand_total || 0) + (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || 0), 0)))}
                 </td>
             </tr>
 
@@ -946,21 +979,14 @@ export const generateInvoiceContent = (booking, type) => {
                 <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #ddd;">REMAINING BALANCE</td>
                 <td style="padding: 8px 0; border-top: 1px solid #ddd;">
                     ${(() => {
-                    const roomCharge = parseFloat(booking.room_charge || 0);
-                    const otherChargesList = booking.other_charges || booking.otherCharges || [];
-                    const otherCharges = otherChargesList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
-                    const miniBarList = booking.mini_bar_items || booking.miniBarItems || [];
-                    const miniBar = miniBarList.reduce((sum, item) => sum + parseFloat(item.amount || item.total || 0), 0);
                     const orders = (booking.orders || []).reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
-                    const discount = parseFloat(booking.discount_value || 0);
-                    const grandTotal = roomCharge + otherCharges + miniBar + orders - discount;
 
                     const paidAmount = parseFloat(booking.invoice?.paid_amount || 0);
                     const paidOrders = (booking.orders || [])
                         .filter(o => o.payment_status === 'paid')
                         .reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
 
-                    return Math.round(Math.max(0, grandTotal - (paidAmount + paidOrders)));
+                    return Math.round(Math.max(0, (parseFloat(booking.grand_total || 0) + orders) - (paidAmount + paidOrders)));
                 })()}
                 </td>
             </tr>
@@ -968,14 +994,14 @@ export const generateInvoiceContent = (booking, type) => {
     </div>
 </div>
 <div style="margin-top: 40px; display: flex; justify-content: space-between;">
-            <div>
-                <div style="font-weight: bold;">GUEST ROOMS MANAGER SIGNATURE:</div>
-                <div style="margin-top: 8px;">____________________</div>
+            <div style="font-size: 12px;display: flex;gap:4px;">
+                <div>GUEST ROOMS MANAGER SIGNATURE:</div>
+                <div style="margin-top: 0px;">____________________</div>
             </div>
 
-            <div>
-                <div style="font-weight: bold;">GUEST SIGNATURE:</div>
-                <div style="margin-top: 8px;">____________________</div>
+            <div style="font-size: 12px;display: flex;gap:4px;">
+                <div>GUEST SIGNATURE:</div>
+                <div style="margin-top: 0px;">____________________</div>
             </div>
         </div>
 

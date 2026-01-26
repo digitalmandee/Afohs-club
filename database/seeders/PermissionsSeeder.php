@@ -22,13 +22,11 @@ class PermissionsSeeder extends Seeder
             // Dashboard
             'dashboard.view',
             'dashboard.stats.view',
-
             // Members Management
             'members.view',
             'members.create',
             'members.edit',
             'members.delete',
-
             // Family Members
             'family-members.view',
             'family-members.create',
@@ -36,26 +34,48 @@ class PermissionsSeeder extends Seeder
             'family-members.delete',
             'family-members.extend-expiry',
             'family-members.bulk-expire',
-
             // Member Categories
             'member-categories.view',
             'member-categories.create',
             'member-categories.edit',
             'member-categories.delete',
-
+            'member-categories.restore',
+            // Partners & Affiliates
+            'partners-affiliates.view',
+            'partners-affiliates.create',
+            'partners-affiliates.edit',
+            'partners-affiliates.delete',
+            'partners-affiliates.restore',
+            // Applied Members
+            'applied-members.view',
+            'applied-members.create',
+            'applied-members.edit',
+            'applied-members.delete',
+            'applied-members.restore',
+            // Corporate Companies
+            'corporate-companies.view',
+            'corporate-companies.create',
+            'corporate-companies.edit',
+            'corporate-companies.delete',
+            'corporate-companies.restore',
+            // Corporate Members
+            'corporate-members.view',
+            'corporate-members.create',
+            'corporate-members.edit',
+            'corporate-members.delete',
+            'corporate-members.restore',
             // Member Types
             'member-types.view',
             'member-types.create',
             'member-types.edit',
             'member-types.delete',
-
+            'member-types.restore',
             // Financial Management
             'financial.dashboard.view',
             'financial.view',
             'financial.create',
             'financial.edit',
             'financial.delete',
-
             // Sports Subscription
             'subscriptions.dashboard.view',
             'subscriptions.view',
@@ -70,13 +90,10 @@ class PermissionsSeeder extends Seeder
             'subscriptions.categories.create',
             'subscriptions.categories.edit',
             'subscriptions.categories.delete',
-
-            'kitchen.dashboard.view',
-            'kitchen.view',
-            'kitchen.create',
-            'kitchen.edit',
-            'kitchen.delete',
-
+            'kitchen.locations.view',
+            'kitchen.locations.create',
+            'kitchen.locations.edit',
+            'kitchen.locations.delete',
             // Events Management
             'events.bookings.create',
             'events.bookings.edit',
@@ -85,42 +102,53 @@ class PermissionsSeeder extends Seeder
             'events.bookings.completed',
             'events.bookings.cancelled',
             'events.bookings.calendar',
-            
             'events.venue.view',
             'events.venue.create',
             'events.venue.edit',
             'events.venue.delete',
-
             'events.menu.view',
             'events.menu.create',
             'events.menu.edit',
             'events.menu.delete',
-            
             'events.menuCategories.view',
             'events.menuCategories.create',
             'events.menuCategories.edit',
             'events.menuCategories.delete',
-            
             'events.menuTypes.view',
             'events.menuTypes.create',
             'events.menuTypes.edit',
             'events.menuTypes.delete',
-
             'events.menuAdons.view',
             'events.menuAdons.create',
             'events.menuAdons.edit',
             'events.menuAdons.delete',
-            
             'events.chargesTypes.view',
             'events.chargesTypes.create',
             'events.chargesTypes.edit',
-            'events.chargesTypes.delete',
+            'events.reports.view',  // Dashboard
+            'events.reports.day-wise',
+            'events.reports.payment-history',
+            'events.reports.booking',
+            'events.reports.cancelled',
+            'events.reports.completed',
+            'events.reports.venue-wise',
+            'events.reports.menu-wise',
+            'events.reports.addons',
+            'events.reports.complementary',  // End Event Reports
             'events.bookings.view',
             'events.bookings.create',
             'events.bookings.edit',
             'events.bookings.delete',
-
             // Room Bookings
+            'guests.view',
+            'guests.create',
+            'guests.edit',
+            'guests.delete',
+            'guests.restore',
+            'guest-types.view',
+            'guest-types.create',
+            'guest-types.edit',
+            'guest-types.delete',
             'rooms.bookings.view',
             'rooms.bookings.create',
             'rooms.bookings.edit',
@@ -129,32 +157,36 @@ class PermissionsSeeder extends Seeder
             'rooms.bookings.checkin',
             'rooms.bookings.checkout',
             'rooms.bookings.requests',
-
+            'rooms.bookings.cancelled',  // Added missing permission
             'rooms.view',
             'rooms.create',
             'rooms.edit',
             'rooms.delete',
-            
             'rooms.types.view',
             'rooms.types.create',
             'rooms.types.edit',
             'rooms.types.delete',
-            
             'rooms.categories.view',
             'rooms.categories.create',
             'rooms.categories.edit',
             'rooms.categories.delete',
-            
             'rooms.chargesTypes.view',
             'rooms.chargesTypes.create',
             'rooms.chargesTypes.edit',
             'rooms.chargesTypes.delete',
-            
             'rooms.miniBar.view',
             'rooms.miniBar.create',
             'rooms.miniBar.edit',
-            'rooms.miniBar.delete',
-            
+            'rooms.reports.view',  // Dashboard
+            'rooms.reports.day-wise',
+            'rooms.reports.payment-history',
+            'rooms.reports.booking',
+            'rooms.reports.cancelled',
+            'rooms.reports.check-in',
+            'rooms.reports.check-out',
+            'rooms.reports.member-wise',
+            'rooms.reports.mini-bar',
+            'rooms.reports.complementary',  // End Room Reports
             // Employee Management
             'employees.view',
             'employees.create',
@@ -165,14 +197,81 @@ class PermissionsSeeder extends Seeder
             'employees.attendance.edit',
             'employees.leaves.view',
             'employees.leaves.approve',
-
+            // Detailed Employee Permissions
+            'employees.transfers.view',
+            'employees.transfers.create',
+            'employees.transfers.edit',
+            'employees.transfers.delete',
+            'employees.departments.view',
+            'employees.departments.create',
+            'employees.departments.edit',
+            'employees.departments.delete',
+            'employees.designations.view',
+            'employees.designations.create',
+            'employees.designations.edit',
+            'employees.designations.delete',
+            'employees.shifts.view',
+            'employees.shifts.create',
+            'employees.shifts.edit',
+            'employees.shifts.delete',
+            'employees.branches.view',
+            'employees.branches.create',
+            'employees.branches.edit',
+            'employees.branches.delete',
+            'employees.loans.view',
+            'employees.loans.create',
+            'employees.loans.edit',
+            'employees.loans.delete',
+            'employees.advances.view',
+            'employees.advances.create',
+            'employees.advances.edit',
+            'employees.advances.delete',
+            'employees.payroll.view',
+            'employees.payroll.process',
+            'employees.assets.view',
+            'employees.assets.create',
+            'employees.assets.edit',
+            'employees.assets.delete',
+            'employees.reports.view',
             'finance.dashboard.view',
             'finance.view',
+            // Finance
             'finance.create',
-            
-            // Reports
+            'finance.charge-types.view',
+            'finance.charge-types.create',
+            'finance.charge-types.edit',
+            'finance.charge-types.delete',
+            'finance.vouchers.view',
+            'finance.vouchers.create',
+            'finance.vouchers.edit',
+            'finance.vouchers.delete',
+            // Cards
+            'cards.view',
+            'cards.create',
+            'cards.edit',
+            'cards.delete',
+            // Data Migration
+            'system.data-migration',
+            // Reports (Members & Corporate)
             'reports.view',
-
+            'reports.maintanance-fee-revenue',
+            'reports.pending-maintenance',
+            'reports.supplementary-card',
+            'reports.sleeping-members',
+            'reports.member-card-detail',
+            'reports.monthly-maintenance-fee',
+            'reports.new-year-eve',
+            'reports.reinstating-fee',
+            'reports.sports-subscriptions',
+            'reports.subscriptions-maintenance-summary',
+            'reports.pending-maintenance-quarters',
+            // POS Reports
+            'reports.pos.view',
+            'reports.pos.restaurant-wise',
+            'reports.pos.running-sales',
+            'reports.pos.sales-summary',
+            'reports.pos.cashier-sales',
+            'reports.pos.dump-report',
             // // POS System
             // 'pos.view',
             // 'pos.orders.create',
@@ -182,13 +281,11 @@ class PermissionsSeeder extends Seeder
             // 'pos.product.create',
             // 'pos.product.edit',
             // 'pos.product.delete',
-
             // User Management (Super Admin only)
             'users.view',
             'users.create',
             'users.edit',
             'users.delete',
-
             // Roles & Permissions (Super Admin only)
             'roles.view',
             'roles.create',
@@ -196,16 +293,13 @@ class PermissionsSeeder extends Seeder
             'roles.delete',
             'permissions.view',
             'permissions.assign',
-
             // System Settings (Super Admin only)
             'settings.view',
             'settings.edit',
             'settings.backup',
             'settings.maintenance',
-
             // Audit Logs (Super Admin only)
             'audit-logs.view',
-
             // Advanced Features (Super Admin only)
             'advanced.database-access',
             'advanced.system-commands',

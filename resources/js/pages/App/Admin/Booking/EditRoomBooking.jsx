@@ -72,6 +72,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
         accompaniedGuest: booking.accompaniedGuest,
         guestRelation: booking.guestRelation,
         bookedBy: booking.bookedBy,
+        familyMember: booking.familyMember,
         room: booking.room, // contains id (and optionally label)
         persons: booking.persons,
         bookingCategory: booking.bookingCategory,
@@ -611,7 +612,7 @@ const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
     const { props } = usePage();
 
     // Automatically calculate nights between check-in and check-out
-    const nights = formData.checkInDate && formData.checkOutDate ? Math.max(1, dayjs(formData.checkOutDate).diff(dayjs(formData.checkInDate), 'day') + 1) : 0;
+    const nights = formData.checkInDate && formData.checkOutDate ? Math.max(1, dayjs(formData.checkOutDate).diff(dayjs(formData.checkInDate), 'day')) : 0;
 
     // Find charge by selected booking category
     const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
@@ -794,7 +795,7 @@ const ChargesInfo = ({ formData, handleChange, isCheckout }) => {
                         <TextField label="Amount" type="number" fullWidth value={item.amount} onChange={(e) => handleOtherChange(index, 'amount', e.target.value)} />
                     </Grid>
                     <Grid item xs={2}>
-                        <FormControlLabel control={<Checkbox checked={item.is_complementary} onChange={(e) => handleOtherChange(index, 'is_complementary', e.target.checked)} />} label="Complementary" />
+                        <FormControlLabel control={<Checkbox checked={item.is_complementary == 1 || item.is_complementary === true} onChange={(e) => handleOtherChange(index, 'is_complementary', e.target.checked)} />} label="Complementary" />
                     </Grid>
                 </React.Fragment>
             ))}

@@ -1,7 +1,7 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography } from '@mui/material';
+import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography, Autocomplete, TextField, Chip } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
@@ -9,6 +9,7 @@ import OrderFilter from './Filter';
 import { router } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
 import debounce from 'lodash.debounce';
+import axios from 'axios';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -18,9 +19,18 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    // Search Order
-    const [search, setSearch] = useState(filters.search || '');
-    const [filteredOrders, setFilteredOrders] = useState(orders.data);
+
+    // Search Order State
+    const [searchId, setSearchId] = useState(filters.search_id || '');
+    const [searchName, setSearchName] = useState(filters.search_name || '');
+    const [searchMembership, setSearchMembership] = useState(filters.search_membership || '');
+    const [customerType, setCustomerType] = useState(filters.customer_type || 'all');
+
+    // Suggestions State
+    const [suggestions, setSuggestions] = useState([]);
+    const [membershipSuggestions, setMembershipSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
     // Add state for category filtering
     const [activeCategory, setActiveCategory] = useState('All Menus');
 
@@ -101,19 +111,86 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
         });
     };
 
-    // Debounced function to trigger search after user stops typing
-    const triggerSearch = useMemo(
+    // Fetch Suggestions
+    const fetchSuggestions = useMemo(
         () =>
-            debounce((value) => {
-                router.get(route('order.management'), { ...filters, search: value, page: 1 }, { preserveState: true });
-            }, 500), // 500ms delay
+            debounce(async (query, type) => {
+                if (!query) {
+                    setSuggestions([]);
+                    return;
+                }
+                setLoadingSuggestions(true);
+                try {
+                    const response = await axios.get(route('api.orders.search-customers'), {
+                        params: { query, type },
+                    });
+                    setSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                } finally {
+                    setLoadingSuggestions(false);
+                }
+            }, 300),
         [],
     );
 
-    const handleSearchChange = (e) => {
-        const value = e.target.value;
-        setSearch(value);
-        triggerSearch(value); // call debounced function
+    // Fetch Membership Suggestions
+    const fetchMembershipSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query) {
+                    setMembershipSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(route('api.orders.search-customers'), {
+                        params: { query, type: 'all' },
+                    });
+                    setMembershipSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching membership suggestions:', error);
+                }
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        if (searchName) {
+            fetchSuggestions(searchName, customerType);
+        } else {
+            setSuggestions([]);
+        }
+    }, [searchName, customerType]);
+
+    useEffect(() => {
+        if (searchMembership) {
+            fetchMembershipSuggestions(searchMembership);
+        } else {
+            setMembershipSuggestions([]);
+        }
+    }, [searchMembership]);
+
+    const handleApply = () => {
+        router.get(
+            route('order.management'),
+            {
+                ...filters,
+                search_id: searchId,
+                search_name: searchName,
+                search_membership: searchMembership,
+                customer_type: customerType,
+                page: 1,
+            },
+            { preserveState: true },
+        );
+    };
+
+    const handleReset = () => {
+        setSearchId('');
+        setSearchName('');
+        setSearchMembership('');
+        setCustomerType('all');
+        router.get(route('order.management'), {}, { preserveState: true });
     };
 
     return (
@@ -148,23 +225,6 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
 
                         {/* Right - Search + Filter */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            {/* Category Filter dropdown */}
-                            <div
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    border: '1px solid #121212',
-                                    borderRadius: '0px',
-                                    width: '300px',
-                                    height: '40px',
-                                    padding: '4px 8px',
-                                    backgroundColor: '#FFFFFF',
-                                }}
-                            >
-                                <SearchIcon style={{ color: '#121212', marginRight: '8px' }} />
-                                <InputBase placeholder="Search by order ID, client name, or member ID" fullWidth sx={{ fontSize: '14px' }} inputProps={{ style: { padding: 0 } }} value={search} onChange={handleSearchChange} />
-                            </div>
-
                             <Button
                                 variant="outlined"
                                 startIcon={<FilterIcon />}
@@ -180,6 +240,154 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                 Filter
                             </Button>
                         </Box>
+                    </Box>
+
+                    {/* New Filter Design */}
+                    <Box sx={{ mb: 3, mt: 3, boxShadow: 'none' }}>
+                        <Grid container spacing={2} alignItems="center">
+                            {/* Customer Type Selection */}
+                            <Grid item xs={12} md={2}>
+                                <FormControl
+                                    size="small"
+                                    sx={{
+                                        width: '100%',
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
+                                >
+                                    <Select
+                                        value={customerType}
+                                        onChange={(e) => setCustomerType(e.target.value)}
+                                        displayEmpty
+                                        MenuProps={{
+                                            sx: {
+                                                '& .MuiPaper-root': {
+                                                    borderRadius: '16px',
+                                                    boxShadow: 'none !important',
+                                                    marginTop: '4px',
+                                                    maxHeight: '180px',
+                                                    overflowY: 'auto',
+                                                },
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    '&:hover': {
+                                                        backgroundColor: '#063455 !important',
+                                                        color: '#fff !important',
+                                                    },
+                                                },
+                                            },
+                                        }}
+                                    >
+                                        <MenuItem value="all">All Types</MenuItem>
+                                        <MenuItem value="member">Member</MenuItem>
+                                        <MenuItem value="corporate">Corporate</MenuItem>
+                                        <MenuItem value="guest">Guest</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+
+                            {/* Search by Name with Autocomplete */}
+                            <Grid item xs={12} md={3}>
+                                <Autocomplete
+                                    freeSolo
+                                    disablePortal
+                                    options={suggestions}
+                                    getOptionLabel={(option) => option.value || option}
+                                    inputValue={searchName}
+                                    onInputChange={(event, newInputValue) => {
+                                        setSearchName(newInputValue);
+                                    }}
+                                    renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Guest Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                    renderOption={(props, option) => (
+                                        <li {...props} key={option.id || option.label}>
+                                            <Box sx={{ width: '100%' }}>
+                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {option.membership_no || option.customer_no || option.employee_id}
+                                                    </Typography>
+                                                    {option.status && (
+                                                        <Chip
+                                                            label={option.status}
+                                                            size="small"
+                                                            sx={{
+                                                                height: '20px',
+                                                                fontSize: '10px',
+                                                                backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                                color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                                textTransform: 'capitalize',
+                                                                ml: 1,
+                                                            }}
+                                                        />
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {option.name || option.label}
+                                                </Typography>
+                                            </Box>
+                                        </li>
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* Search by Membership Number */}
+                            <Grid item xs={12} md={2}>
+                                <Autocomplete
+                                    freeSolo
+                                    disablePortal
+                                    options={membershipSuggestions}
+                                    getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
+                                    inputValue={searchMembership}
+                                    onInputChange={(event, newInputValue) => {
+                                        setSearchMembership(newInputValue);
+                                    }}
+                                    renderInput={(params) => <TextField {...params} fullWidth size="small" label="Membership #" placeholder="Number..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                    renderOption={(props, option) => (
+                                        <li {...props} key={option.id || option.label}>
+                                            <Box sx={{ width: '100%' }}>
+                                                <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {option.membership_no || option.customer_no || option.employee_id}
+                                                    </Typography>
+                                                    {option.status && (
+                                                        <Chip
+                                                            label={option.status}
+                                                            size="small"
+                                                            sx={{
+                                                                height: '20px',
+                                                                fontSize: '10px',
+                                                                backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                                color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                                textTransform: 'capitalize',
+                                                                ml: 1,
+                                                            }}
+                                                        />
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {option.name || option.label}
+                                                </Typography>
+                                            </Box>
+                                        </li>
+                                    )}
+                                />
+                            </Grid>
+
+                            {/* Search by ID */}
+                            <Grid item xs={12} md={2}>
+                                <TextField fullWidth size="small" label="Order ID" placeholder="Order ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                            </Grid>
+
+                            {/* Action Buttons */}
+                            <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 2 }}>
+                                <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455', paddingLeft: 4, paddingRight: 4 }}>
+                                    Reset
+                                </Button>
+                                <Button variant="contained" startIcon={<SearchIcon />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none', paddingLeft: 4, paddingRight: 4 }}>
+                                    Search
+                                </Button>
+                            </Grid>
+                        </Grid>
                     </Box>
 
                     <Grid
@@ -326,7 +534,9 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                     route('order.management'),
                                     {
                                         page,
-                                        search,
+                                        search_id: searchId,
+                                        search_name: searchName,
+                                        search_membership: searchMembership,
                                         ...filters,
                                     },
                                     { preserveState: true },
