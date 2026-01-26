@@ -390,25 +390,36 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::group(['prefix' => 'rooms'], function () {
             Route::get('/', [RoomController::class, 'allRooms'])->name('rooms.all')->middleware('super.admin:rooms.view');
 
-            Route::get('/create-booking', [RoomBookingController::class, 'booking'])->name('rooms.create.booking')->middleware('super.admin:rooms.bookings.create');
-            Route::get('/edit-booking/{id}', [RoomBookingController::class, 'editbooking'])->name('rooms.edit.booking')->middleware('super.admin:rooms.bookings.edit');
-            Route::post('/update-booking/{id}', [RoomBookingController::class, 'update'])->name('rooms.update.booking')->middleware('permission:rooms.booking.edit');
-            Route::post('/create-booking', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
+            Route::group(['prefix' => 'booking'], function () {
+                Route::get('/create', [RoomBookingController::class, 'booking'])->name('rooms.create.booking')->middleware('super.admin:rooms.bookings.create');
+                Route::get('/edit/{id}', [RoomBookingController::class, 'editbooking'])->name('rooms.edit.booking')->middleware('super.admin:rooms.bookings.edit');
+                Route::post('/update/{id}', [RoomBookingController::class, 'update'])->name('rooms.update.booking')->middleware('permission:rooms.booking.edit');
+                Route::post('/create', [RoomBookingController::class, 'store'])->name('rooms.store.booking')->middleware('permission:rooms.booking.create');
 
-            Route::get('dashboard', [RoomBookingController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
-            Route::get('manage', [RoomBookingController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
-            Route::get('check-in', [RoomBookingController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
-            Route::get('check-out', [RoomBookingController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
-            // Cancelled Bookings
-            Route::get('booking/cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');
-            Route::put('booking/refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund')->middleware('permission:rooms.bookings.edit');
-            Route::put('booking/cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel')->middleware('permission:rooms.bookings.edit');
-            Route::put('booking/undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel')->middleware('permission:rooms.bookings.edit');
-            Route::get('booking/invoice/{id}', [RoomBookingController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('super.admin:rooms.bookings.view');
-            Route::put('booking/update-status/{id}', [RoomBookingController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
+                Route::get('dashboard', [RoomBookingController::class, 'dashboard'])->name('rooms.dashboard')->middleware('super.admin:rooms.bookings.view');
+                Route::get('manage', [RoomBookingController::class, 'index'])->name('rooms.manage')->middleware('super.admin:rooms.view');
+                Route::get('check-in', [RoomBookingController::class, 'checkInIndex'])->name('rooms.checkin')->middleware('super.admin:rooms.bookings.checkin');
+                Route::get('check-out', [RoomBookingController::class, 'checkOutIndex'])->name('rooms.checkout')->middleware('super.admin:rooms.bookings.checkout');
+                // Cancelled Bookings
+                Route::get('cancelled', [RoomBookingController::class, 'cancelled'])->name('rooms.booking.cancelled')->middleware('super.admin:rooms.bookings.cancelled');
+                Route::put('refund/{id}', [RoomBookingController::class, 'processRefund'])->name('rooms.booking.refund')->middleware('permission:rooms.bookings.edit');
+                Route::put('cancel/{id}', [RoomBookingController::class, 'cancelBooking'])->name('rooms.booking.cancel')->middleware('permission:rooms.bookings.edit');
+                Route::put('undo-cancel/{id}', [RoomBookingController::class, 'undoBooking'])->name('rooms.booking.undo-cancel')->middleware('permission:rooms.bookings.edit');
+                Route::get('invoice/{id}', [RoomBookingController::class, 'bookingInvoice'])->name('rooms.invoice')->middleware('super.admin:rooms.bookings.view');
+                Route::put('update-status/{id}', [RoomBookingController::class, 'updateStatus'])->name('rooms.update.status')->middleware('permission:rooms.bookings.edit');
 
-            // Room Calendar
-            Route::get('booking/calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
+                // Room Calendar
+                Route::get('calendar', [RoomBookingController::class, 'calendar'])->name('rooms.booking.calendar')->middleware('super.admin:rooms.bookings.calendar');
+
+                Route::group(['prefix' => 'requests', 'middleware' => 'super.admin:rooms.bookings.requests'], function () {
+                    Route::get('', [RoomBookingRequestController::class, 'index'])->name('rooms.request');
+                    Route::get('create', [RoomBookingRequestController::class, 'create'])->name('rooms.request.create');
+                    Route::post('store', [RoomBookingRequestController::class, 'store'])->name('rooms.request.store')->middleware('permission:rooms.bookings.requests');  // Action overrides group? No, middleware accumulates.
+                    Route::put('update/status/{id}', [RoomBookingRequestController::class, 'updateStatus'])->name('rooms.request.update.status')->middleware('permission:rooms.bookings.requests');
+                    Route::get('{id}/edit', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.edit');
+                    Route::put('{id}', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.update')->middleware('permission:rooms.bookings.requests');
+                });
+            });
 
             // Rooms Trashed Module
             Route::get('trashed', [RoomController::class, 'trashed'])->name('rooms.trashed')->middleware('super.admin:rooms.delete');
@@ -426,20 +437,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
             Route::get('api/bookings/{id}/orders', [RoomBookingController::class, 'getOrders'])->name('api.room.booking.orders')->middleware('permission:rooms.bookings.view');
             Route::post('api/bookings/check-in', [RoomBookingController::class, 'checkIn'])->name('api.room.booking.checkin')->middleware('permission:rooms.bookings.checkin');
             // Route::get('/types', [RoomController::class, 'mamageTypes'])->name('rooms.types');
-            Route::group(['prefix' => 'requests', 'middleware' => 'super.admin:rooms.bookings.requests'], function () {
-                Route::get('', [RoomBookingRequestController::class, 'index'])->name('rooms.request');
-                Route::get('create', [RoomBookingRequestController::class, 'create'])->name('rooms.request.create');
-                Route::post('store', [RoomBookingRequestController::class, 'store'])->name('rooms.request.store')->middleware('permission:rooms.bookings.requests');  // Action overrides group? No, middleware accumulates.
-                // Actually store is action. But group has super.admin.
-                // Standard way: Group has page permission. Actions have action permission?
-                // User said: "if we have page then we use super.admin... if api then permission".
-                // I should probably not put super.admin on the Group if the group contains APIs.
-                // But here requests seem to be "Index" and "Create" pages mostly, "Store" is action.
-                // I will apply middleware individually to be safe.
-                Route::put('update/status/{id}', [RoomBookingRequestController::class, 'updateStatus'])->name('rooms.request.update.status')->middleware('permission:rooms.bookings.requests');
-                Route::get('{id}/edit', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.edit');
-                Route::put('{id}', [RoomBookingRequestController::class, 'edit'])->name('rooms.request.update')->middleware('permission:rooms.bookings.requests');
-            });
+
             // Room Reports
             Route::prefix('reports')->middleware('super.admin:rooms.reports.view')->group(function () {
                 Route::get('/', [\App\Http\Controllers\RoomReportController::class, 'index'])->name('rooms.reports');
