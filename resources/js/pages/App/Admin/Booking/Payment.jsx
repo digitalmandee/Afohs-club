@@ -150,8 +150,8 @@ const BookingPayment = ({ invoice, roomOrders }) => {
         data.append('pay_orders', includeOrders ? 1 : 0);
 
         if (paymentMethod === 'credit_card' || paymentMethod === 'debit_card') {
-            data.append('credit_card_type', invoiceForm.credit_card_type || '');
-            data.append('paymentAccount', invoiceForm.paymentAccount || '');
+            // data.append('credit_card_type', invoiceForm.credit_card_type || '');
+            // data.append('paymentAccount', invoiceForm.paymentAccount || '');
             if (invoiceForm.receipt) {
                 data.append('receipt', invoiceForm.receipt);
             }
@@ -375,28 +375,6 @@ const BookingPayment = ({ invoice, roomOrders }) => {
                         </div>
 
                         {/* Conditional Fields based on Payment Method */}
-                        {(paymentMethod === 'credit_card' || paymentMethod === 'debit_card') && (
-                            <Row className="mb-3">
-                                <Col md={6}>
-                                    <Form.Group>
-                                        <Form.Label className="small">Card Type</Form.Label>
-                                        <Select fullWidth size="small" value={invoiceForm.credit_card_type || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, credit_card_type: e.target.value })} displayEmpty>
-                                            <MenuItem value="" disabled>
-                                                Select Type
-                                            </MenuItem>
-                                            <MenuItem value="visa">Visa</MenuItem>
-                                            <MenuItem value="mastercard">MasterCard</MenuItem>
-                                        </Select>
-                                    </Form.Group>
-                                </Col>
-                                <Col md={6}>
-                                    <Form.Group>
-                                        <Form.Label className="small">Card/Ref No</Form.Label>
-                                        <Form.Control type="text" name="paymentAccount" placeholder="Last 4 digits / Ref" value={invoiceForm.paymentAccount || ''} onChange={(e) => setInvoiceForm({ ...invoiceForm, paymentAccount: e.target.value })} />
-                                    </Form.Group>
-                                </Col>
-                            </Row>
-                        )}
 
                         {(paymentMethod === 'cheque' || paymentMethod === 'online') && (
                             <Form.Group className="mb-3">

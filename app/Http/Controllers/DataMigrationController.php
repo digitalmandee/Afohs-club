@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
 use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
@@ -16,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -2365,6 +2367,7 @@ class DataMigrationController extends Controller
             // "transaction with item... trans_type_id... also here has key date, is_Active... so i think we need to only migrate active one"
             // So transactions table likely has is_active too.
             ->where('is_active', 1)
+            ->whereNull('deleted_at')
             ->get();
 
         foreach ($legacyTrans as $t) {
@@ -2394,7 +2397,7 @@ class DataMigrationController extends Controller
                 if ($t->receipt_id) {
                     $receipt = \App\Models\FinancialReceipt::where('legacy_id', $t->receipt_id)->first();
                     if (!$receipt) {
-                        $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $t->receipt_id)->first();
+                        $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $t->receipt_id)->whereNull('deleted_at')->first();
                         if ($oldReceipt) {
                             $receipt = $this->migrateSingleReceipt($oldReceipt, $payableType, $payableId, false);
                         }
@@ -2457,6 +2460,7 @@ class DataMigrationController extends Controller
         $transIds = DB::connection('old_afohs')
             ->table('transactions')
             ->where('trans_type_id', $oldInvoice->id)
+            ->whereNull('deleted_at')
             ->pluck('id')
             ->toArray();
 
@@ -2474,7 +2478,7 @@ class DataMigrationController extends Controller
         foreach ($relations as $rel) {
             // The 'receipt' column in trans_relations points to a Transaction ID (Type 2), NOT the Receipt ID directly.
             $legacyTransId = $rel->receipt;
-            $legacyTrans = DB::connection('old_afohs')->table('transactions')->where('id', $legacyTransId)->first();
+            $legacyTrans = DB::connection('old_afohs')->table('transactions')->where('id', $legacyTransId)->whereNull('deleted_at')->first();
 
             if (!$legacyTrans) {
                 continue;
@@ -2487,7 +2491,7 @@ class DataMigrationController extends Controller
 
             if (!$receipt) {
                 // Must migrate NOW
-                $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $legacyReceiptId)->first();
+                $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $legacyReceiptId)->whereNull('deleted_at')->first();
                 if ($oldReceipt) {
                     $receipt = $this->migrateSingleReceipt($oldReceipt);
                 }
@@ -2496,7 +2500,7 @@ class DataMigrationController extends Controller
             if ($receipt) {
                 // Fetch the specific credit transaction to get the exact allocated amount
                 $creditTransId = $rel->account;
-                $creditTrans = DB::connection('old_afohs')->table('transactions')->where('id', $creditTransId)->first();
+                $creditTrans = DB::connection('old_afohs')->table('transactions')->where('id', $creditTransId)->whereNull('deleted_at')->first();
                 $allocatedAmount = $creditTrans ? $creditTrans->trans_amount : $receipt->amount;
 
                 // Create Relation
@@ -2769,6 +2773,7 @@ class DataMigrationController extends Controller
             // "migrated" = 0 or NULL means not yet migrated.
             $invoiceNos = DB::connection('old_afohs')
                 ->table('finance_invoices')
+                ->whereNull('deleted_at')
                 ->where(function ($q) {
                     $q
                         ->whereNull('migrated')
@@ -2794,6 +2799,7 @@ class DataMigrationController extends Controller
             $rows = DB::connection('old_afohs')
                 ->table('finance_invoices')
                 ->whereIn('invoice_no', $invoiceNos)
+                ->whereNull('deleted_at')
                 ->get();
 
             $grouped = $rows->groupBy('invoice_no');
@@ -2849,6 +2855,7 @@ class DataMigrationController extends Controller
             // Check if there are more
             $remaining = DB::connection('old_afohs')
                 ->table('finance_invoices')
+                ->whereNull('deleted_at')
                 ->where(function ($q) {
                     $q
                         ->whereNull('migrated')
@@ -2867,6 +2874,298 @@ class DataMigrationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Specialized migration for Member/Family Profile Photos.
+     * Checks old_media (types 3, 100) without trashed items,
+     * and updates/creates the corresponding Media record with correct path.
+     */
+    public function migrateMediaPhotos(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 100);
+        $offset = $request->get('offset', 0);
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Iterate through Members who have either old_member_id OR old_family_id
+            // We use 'skip' and 'take' for batching based on the offset passed from frontend
+            $members = Member::where(function ($q) {
+                $q
+                    ->whereNotNull('old_member_id')
+                    ->orWhereNotNull('old_family_id');
+            })
+                ->skip($offset)
+                ->take($batchSize)
+                ->get();
+
+            $updated = 0;
+            $created = 0;
+            $errors = [];
+            $migratedCount = 0;
+
+            foreach ($members as $member) {
+                try {
+                    $oldMedia = null;
+
+                    // A. Check for Member Photo (Type 3)
+                    if ($member->old_member_id) {
+                        $oldMedia = DB::connection('old_afohs')
+                            ->table('media')
+                            ->where('trans_type', 3)
+                            ->where('trans_type_id', $member->old_member_id)
+                            ->whereNull('deleted_at')
+                            ->orderBy('id', 'desc')  // Get latest
+                            ->first();
+                    }
+
+                    // B. If no Member Photo found, check for Family Photo (Type 100) if applicable
+                    if (!$oldMedia && $member->old_family_id) {
+                        $oldMedia = DB::connection('old_afohs')
+                            ->table('media')
+                            ->where('trans_type', 100)
+                            ->where('trans_type_id', $member->old_family_id)
+                            ->whereNull('deleted_at')
+                            ->orderBy('id', 'desc')  // Get latest
+                            ->first();
+                    }
+
+                    // If still no media found, skip
+                    if (!$oldMedia) {
+                        continue;
+                    }
+
+                    // Define New Mapping
+                    $mediableType = Member::class;
+                    $mediableId = $member->id;
+                    $newType = 'profile_photo';  // or 'member_photo' based on your conventions
+
+                    // Logic to copy/map file
+                    // Use transformMediaPath to get the correct new path based on trans_type
+                    // This handles directory structure like /tenants/default/membership/ etc.
+                    $newFilePath = $this->transformMediaPath($oldMedia->url, $oldMedia->trans_type);
+
+                    // Extract filename from the new path
+                    $fileName = basename($newFilePath);
+
+                    // If file name is empty, skip
+                    if (!$fileName)
+                        continue;
+
+                    // Mime type detection (consistent with migrateMedia)
+                    $mimeType = $this->getMimeTypeFromPath($newFilePath);
+
+                    // Check if Media record already exists for this member
+                    $existingMedia = Media::where('mediable_type', $mediableType)
+                        ->where('mediable_id', $mediableId)
+                        ->where('type', $newType)
+                        ->first();
+
+                    if ($existingMedia) {
+                        // Update existing
+                        $existingMedia->update([
+                            'file_name' => $fileName,
+                            // 'file_path' => $newFilePath, // Don't overwrite path if we aren't actually moving files yet, or do if we are.
+                            // Assuming we are just mapping data for now, or if we need to set the path validation:
+                            'file_path' => $newFilePath,
+                            'mime_type' => $mimeType,
+                            'updated_at' => now(),
+                        ]);
+                        $updated++;
+                    } else {
+                        // Create new
+                        Media::create([
+                            'mediable_type' => $mediableType,
+                            'mediable_id' => $mediableId,
+                            'type' => $newType,
+                            'file_name' => $fileName,
+                            'file_path' => $newFilePath,
+                            'mime_type' => $mimeType,
+                            'disk' => 'public',
+                            'created_at' => $oldMedia->created_at ? Carbon::parse($oldMedia->created_at) : now(),
+                            'updated_at' => $oldMedia->updated_at ? Carbon::parse($oldMedia->updated_at) : now(),
+                            'created_by' => $oldMedia->created_by ?? 1,  // Default to admin/system
+                            'updated_by' => $oldMedia->updated_by ?? 1,
+                        ]);
+                        $created++;
+                    }
+                    $migratedCount++;
+                } catch (\Exception $e) {
+                    // Log error but continue with next member
+                    $errors[] = ['member_id' => $member->id, 'error' => $e->getMessage()];
+                    Log::error("Media migration error for member {$member->id}: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            // Calculate remaining
+            // This is an approximation since we iterate Members, not Media.
+            // We can just count remaining Members with old_ids.
+            $totalMembersToCheck = Member::where(function ($q) {
+                $q
+                    ->whereNotNull('old_member_id')
+                    ->orWhereNotNull('old_family_id');
+            })->count();
+
+            $remaining = $totalMembersToCheck - ($offset + $batchSize);
+            if ($remaining < 0)
+                $remaining = 0;
+
+            return response()->json([
+                'success' => true,
+                'migrated' => $migratedCount,  // This batch
+                'created' => $created,
+                'updated' => $updated,
+                'errors' => $errors,
+                'has_more' => $remaining > 0,
+                'remaining' => $remaining,
+                'total' => $totalMembersToCheck  // Useful for progress bar
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Media photo migration fatal error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function cleanupProfilePhotos(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $deletedCount = 0;
+            $processedGroups = 0;
+
+            // Find members with multiple profile photos
+            // Group by mediable_id and mediable_type where type is profile_photo
+            // We can't easily do "HAVING COUNT > 1" on complex polymorphic queries in one go efficiently without raw SQL or collection processing.
+            // Given the dataset might be large, let's try a raw query approach to find IDs with duplicates.
+
+            $duplicates = DB::table('media')
+                ->select('mediable_type', 'mediable_id', DB::raw('count(*) as count'))
+                ->whereIn('type', ['profile_photo'])  // Ensure we stick to profile photos
+                ->whereNull('deleted_at')
+                ->groupBy('mediable_type', 'mediable_id')
+                ->having('count', '>', 1)
+                ->get();
+
+            Log::info('Found ' . $duplicates->count() . ' members with duplicate profile photos.');
+
+            foreach ($duplicates as $duplicate) {
+                // Get all photos for this member, ordered by ID DESC (latest first)
+                // This MATCHES the logic in Member::profilePhoto() -> orderBy('id', 'desc')
+                // So the first photo in this list is the one currently visible on the profile.
+                $photos = Media::where('mediable_type', $duplicate->mediable_type)
+                    ->where('mediable_id', $duplicate->mediable_id)
+                    ->where('type', 'profile_photo')
+                    ->orderBy('id', 'desc')
+                    ->get();
+
+                // Keep the first one (latest), delete the rest
+                if ($photos->count() > 1) {
+                    $photosToDelete = $photos->slice(1);
+                    foreach ($photosToDelete as $photo) {
+                        $photo->delete();  // Soft delete
+                        $deletedCount++;
+                    }
+                    $processedGroups++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Cleanup complete. Processed {$processedGroups} members, deleted {$deletedCount} duplicate photos.",
+                'deleted_count' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Cleanup profile photos error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteLegacyInvoices(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Define the legacy ID threshold
+            $legacyIdThreshold = 8915;
+
+            // 1. Delete Financial Invoice Items (Children)
+            $deletedItems = FinancialInvoiceItem::whereHas('invoice', function ($q) use ($legacyIdThreshold) {
+                $q->where('id', '<=', $legacyIdThreshold);
+            })->forceDelete();
+
+            // 2. Identify Receipts linked to these invoices (via Transactions)
+            // Get all receipt_ids from transactions linked to these invoices
+            $receiptIds = \App\Models\Transaction::whereHas('invoice', function ($q) use ($legacyIdThreshold) {
+                $q->where('id', '<=', $legacyIdThreshold);
+            })->whereNotNull('receipt_id')->pluck('receipt_id')->unique();
+
+            // 3. Delete Transaction Relations (Where invoice_id is legacy OR receipt_id is from legacy transactions)
+            $deletedRelations = \App\Models\TransactionRelation::where(function ($q) use ($legacyIdThreshold, $receiptIds) {
+                $q->whereIn('invoice_id', function ($sub) use ($legacyIdThreshold) {
+                    $sub->select('id')->from('financial_invoices')->where('id', '<=', $legacyIdThreshold);
+                });
+
+                if ($receiptIds->isNotEmpty()) {
+                    $q->orWhereIn('receipt_id', $receiptIds);
+                }
+            })->forceDelete();
+
+            // 4. Delete Transactions related to these receipts (Credit side)
+            $deletedReceiptTransactions = 0;
+            if ($receiptIds->isNotEmpty()) {
+                $deletedReceiptTransactions = \App\Models\Transaction::whereIn('receipt_id', $receiptIds)->forceDelete();
+            }
+
+            // 5. Delete Transactions related to invoices (Debit side)
+            $deletedInvoiceTransactions = \App\Models\Transaction::whereHas('invoice', function ($q) use ($legacyIdThreshold) {
+                $q->where('id', '<=', $legacyIdThreshold);
+            })->forceDelete();
+
+            // 6. Delete Receipts
+            $deletedReceipts = 0;
+            if ($receiptIds->isNotEmpty()) {
+                $deletedReceipts = \App\Models\FinancialReceipt::whereIn('id', $receiptIds)->forceDelete();
+            }
+
+            // 7. Delete Invoices (Parents)
+            $deletedInvoices = FinancialInvoice::where('id', '<=', $legacyIdThreshold)->forceDelete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully hard-deleted legacy invoices (ID <= {$legacyIdThreshold}) and their relations.",
+                'stats' => [
+                    'invoices_deleted' => $deletedInvoices,
+                    'items_deleted' => $deletedItems,
+                    'transaction_relations_deleted' => $deletedRelations,
+                    'invoice_transactions_deleted' => $deletedInvoiceTransactions,
+                    'receipt_transactions_deleted' => $deletedReceiptTransactions,
+                    'receipts_deleted' => $deletedReceipts
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Delete Legacy Invoices Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

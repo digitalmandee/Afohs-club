@@ -328,7 +328,7 @@ class BookingController extends Controller
             $invoice->customer_charges = $request->customer_charges ?? $invoice->customer_charges;
             $invoice->payment_method = $request->payment_method;
             if ($request->has('credit_card_type')) {
-                $invoice->credit_card_type = $request->credit_card_type;
+                // $invoice->credit_card_type = $request->credit_card_type;
             }
             $invoice->receipt = $recieptPath;
 

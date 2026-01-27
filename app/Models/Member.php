@@ -258,7 +258,7 @@ class Member extends BaseModel
         return $this
             ->morphOne(Media::class, 'mediable')
             ->where('type', 'profile_photo')
-            ->latest();
+            ->orderBy('id', 'desc');
     }
 
     /**

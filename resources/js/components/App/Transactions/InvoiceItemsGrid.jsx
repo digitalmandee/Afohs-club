@@ -13,10 +13,15 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
     const [openPickers, setOpenPickers] = useState({});
 
     const togglePicker = (index, field, isOpen) => {
-        setOpenPickers((prev) => ({
-            ...prev,
-            [`${index}_${field}`]: isOpen,
-        }));
+        setOpenPickers((prev) => {
+            const key = `${index}_${field}`;
+            // If state matches, return prev to avoid re-render
+            if (!!prev[key] === isOpen) return prev;
+            return {
+                ...prev,
+                [key]: isOpen,
+            };
+        });
     };
 
     const handleAddItem = () => {
@@ -122,14 +127,22 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 item.family_member_id = '';
             }
         } else if (field === 'valid_from' || field === 'valid_to') {
-            item[field] = value ? dayjs(value).format('YYYY-MM-DD') : null;
+            // Update state with formatted date if valid, otherwise keep null or invalid
+            // Note: If we don't update state on invalid input, the input might revert.
+            // But storing "Invalid Date" string is also bad.
+            // Compromise: We update 'item[field]' if valid. If invalid/partial, we expect DatePicker internal state to handle it?
+            // Actually, for controlled component, we must update value.
+            // If we assume user input is correct, we let it flow.
+            item[field] = value ? (dayjs(value).isValid() ? dayjs(value).format('YYYY-MM-DD') : null) : null;
 
-            // Update 'days' if both dates are present
+            // Update 'days' if both dates are present and valid
             if (item.valid_from && item.valid_to) {
                 const from = dayjs(item.valid_from);
                 const to = dayjs(item.valid_to);
-                const diff = to.diff(from, 'day') + 1;
-                item.days = diff > 0 ? diff : 0;
+                if (from.isValid() && to.isValid()) {
+                    const diff = to.diff(from, 'day') + 1;
+                    item.days = diff > 0 ? diff : 0;
+                }
             }
 
             // Auto-calc logic
@@ -141,7 +154,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
             if (typeId === TRANSACTION_TYPES.MAINTENANCE && item.valid_from && item.valid_to && selectedMember) {
                 const from = dayjs(item.valid_from);
                 const to = dayjs(item.valid_to);
-                if (to.isAfter(from) || to.isSame(from)) {
+                if (from.isValid() && to.isValid() && (to.isAfter(from) || to.isSame(from))) {
                     const monthlyFee = parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, ''));
 
                     // Check if dates represent complete months
@@ -390,8 +403,6 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 textField: {
                                                     size: 'small',
                                                     fullWidth: true,
-
-                                                    onClick: () => togglePicker(index, 'valid_from', true), // Click input to open
                                                 },
                                                 actionBar: {
                                                     actions: ['clear', 'today', 'cancel', 'accept'],
@@ -420,7 +431,6 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                     size: 'small',
                                                     fullWidth: true,
                                                     variant: 'outlined',
-                                                    onClick: () => togglePicker(index, 'valid_to', true),
                                                 },
                                                 actionBar: {
                                                     actions: ['clear', 'today', 'cancel', 'accept'],

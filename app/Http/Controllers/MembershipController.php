@@ -1078,6 +1078,11 @@ class MembershipController extends Controller
         // Add membership duration to member
         $member->membership_duration = $member->membership_duration;
 
+        // Load profile photo count
+        $member->loadCount(['media as profile_photos_count' => function ($query) {
+            $query->where('type', 'profile_photo');
+        }]);
+
         return Inertia::render('App/Admin/Membership/ViewProfile', [
             'member' => $member
         ]);
