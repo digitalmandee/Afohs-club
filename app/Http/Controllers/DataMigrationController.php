@@ -2869,4 +2869,139 @@ class DataMigrationController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Specialized migration for Member/Family Profile Photos.
+     * Checks old_media (types 3, 100) without trashed items,
+     * and updates/creates the corresponding Media record with correct path.
+     */
+    public function migrateMediaPhotos(Request $request)
+    {
+        $batchSize = $request->get('batch_size', 100);
+        $offset = $request->get('offset', 0);
+
+        try {
+            DB::beginTransaction();
+
+            // Get batch of old media records (only Member & Family photos, non-trashed)
+            $oldMediaRecords = DB::connection('old_afohs')
+                ->table('media')
+                ->whereIn('trans_type', [3, 100])
+                ->whereNull('deleted_at')
+                ->offset($offset)
+                ->limit($batchSize)
+                ->get();
+
+            if ($oldMediaRecords->isEmpty()) {
+                DB::commit();
+                return response()->json([
+                    'success' => true,
+                    'processed' => 0,
+                    'message' => 'No more media records to migrate'
+                ]);
+            }
+
+            $processed = 0;
+            $updated = 0;
+            $created = 0;
+            $errors = [];
+
+            foreach ($oldMediaRecords as $oldMedia) {
+                try {
+                    // Map trans_type to new type
+                    $newType = 'profile_photo';  // Both 3 and 100 are profile_photo
+
+                    // Find the new member ID based on trans_type and old ID
+                    $newMemberId = null;
+                    $mediableType = 'App\Models\Member';
+
+                    if ($oldMedia->trans_type == 3) {
+                        // Member profile photo
+                        $member = Member::where('old_member_id', $oldMedia->trans_type_id)->first();
+                        $newMemberId = $member ? $member->id : null;
+                    } elseif ($oldMedia->trans_type == 100) {
+                        // Family member profile photo
+                        // Attempt to find in Member first
+                        $member = Member::where('old_family_id', $oldMedia->trans_type_id)->first();
+
+                        $newMemberId = $member ? $member->id : null;
+                    }
+
+                    if (!$newMemberId) {
+                        // Log but don't error out the whole batch
+                        $errors[] = [
+                            'media_id' => $oldMedia->id,
+                            'error' => "Member/Family not found (trans_type: {$oldMedia->trans_type}, old_id: {$oldMedia->trans_type_id})"
+                        ];
+                        continue;
+                    }
+
+                    // Transform file path
+                    $newFilePath = $this->transformMediaPath($oldMedia->url, $oldMedia->trans_type);
+                    $fileName = basename($newFilePath);
+                    $mimeType = $this->getMimeTypeFromPath($newFilePath);
+
+                    // Check for existing Media record
+                    $existingMedia = Media::where('mediable_type', $mediableType)
+                        ->where('mediable_id', $newMemberId)
+                        ->where('type', $newType)
+                        ->first();
+
+                    if ($existingMedia) {
+                        // Update existing
+                        $existingMedia->update([
+                            'file_name' => $fileName,
+                            'file_path' => $newFilePath,
+                            'mime_type' => $mimeType,
+                            'updated_at' => now(),
+                        ]);
+                        $updated++;
+                    } else {
+                        // Create new
+                        Media::create([
+                            'mediable_type' => $mediableType,
+                            'mediable_id' => $newMemberId,
+                            'type' => $newType,
+                            'file_name' => $fileName,
+                            'file_path' => $newFilePath,
+                            'mime_type' => $mimeType,
+                            'disk' => 'public',
+                            'created_at' => $this->validateDate($oldMedia->created_at),
+                            'updated_at' => $this->validateDate($oldMedia->updated_at),
+                            // deleted_at is null since we filtered by null
+                            'created_by' => $oldMedia->created_by,
+                            'updated_by' => $oldMedia->updated_by,
+                        ]);
+                        $created++;
+                    }
+
+                    $processed++;
+                } catch (\Exception $e) {
+                    $errors[] = [
+                        'media_id' => $oldMedia->id,
+                        'error' => $e->getMessage()
+                    ];
+                    Log::error("Error processing media photo ID {$oldMedia->id}: " . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'processed' => $processed,
+                'updated' => $updated,
+                'created' => $created,
+                'errors' => $errors,
+                'has_more' => count($oldMediaRecords) === $batchSize
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Media photo migration error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

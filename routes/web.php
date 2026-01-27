@@ -1083,6 +1083,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/migrate-corporate-members', [DataMigrationController::class, 'migrateCorporateMembers'])->name('data-migration.migrate-corporate-members');
         Route::post('/migrate-corporate-families', [DataMigrationController::class, 'migrateCorporateFamilies'])->name('data-migration.migrate-corporate-families');
         Route::post('/migrate-media', [DataMigrationController::class, 'migrateMedia'])->name('data-migration.migrate-media');
+        Route::post('/migrate-media-photos', [DataMigrationController::class, 'migrateMediaPhotos'])->name('data-migration.migrate-media-photos');
         Route::post('/reset', [DataMigrationController::class, 'resetMigration'])->name('data-migration.reset');
         Route::post('/reset-families', [DataMigrationController::class, 'resetFamiliesOnly'])->name('data-migration.reset-families');
         Route::post('/delete-profile-photos', [DataMigrationController::class, 'deleteProfilePhotos'])->name('data-migration.delete-profile-photos');

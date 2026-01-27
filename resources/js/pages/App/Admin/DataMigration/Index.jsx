@@ -12,6 +12,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         families: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         media: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         invoices: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
+        media_photos: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
         customers: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add customers state
         employees: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add employees state
         corporate_members: { running: false, progress: 0, total: 0, migrated: 0, errors: [] },
@@ -33,7 +34,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
     const [globalMigrationStats, setGlobalMigrationStats] = useState({ migrated: 0, distinct_total: 0, remaining: 0 });
-    const migrationRunning = useRef({ members: false, families: false, media: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, media_photos: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false });
 
     useEffect(() => {
         refreshStats();
@@ -181,6 +182,21 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         }));
 
         await processMigrationBatch('media', 0);
+    };
+
+    const startMediaPhotosMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current.media_photos = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            media_photos: { ...prev.media_photos, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        await processMigrationBatch('media_photos', 0);
     };
 
     const startQrCodeGeneration = async () => {
@@ -346,6 +362,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 members: '/admin/data-migration/migrate-members',
                 families: '/admin/data-migration/migrate-families',
                 media: '/admin/data-migration/migrate-media',
+                media_photos: '/admin/data-migration/migrate-media-photos',
                 invoices: '/admin/data-migration/migrate-invoices',
                 customers: '/admin/data-migration/migrate-customers',
                 employees: '/admin/data-migration/migrate-employees',
@@ -372,6 +389,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 members: stats.old_members_count,
                 families: stats.old_families_count,
                 media: stats.old_media_count,
+                media_photos: stats.old_media_count, // Using total media count as approximation or we can add a specific count stats later
                 invoices: stats.old_financial_invoices_count,
                 customers: stats.old_customers_count,
                 employees: stats.old_employees_count,
@@ -1084,6 +1102,63 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                         </Alert>
                                         <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
                                             {migrationStatus.media.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    <Typography variant="caption" component="div">
+                                                        <strong>Media ID:</strong> {error.media_id}
+                                                        <br />
+                                                        <strong>Error:</strong> {error.error}
+                                                    </Typography>
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </Grid>
+
+                    {/* Media Photos Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Typography variant="h6" gutterBottom>
+                                    Media Photos Migration
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Migrates Member & Family Profile Photos (Types 3 & 100) from Old Media.
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Status: {migrationStatus.media_photos.running ? 'Running...' : 'Ready'}
+                                        {migrationStatus.media_photos.progress > 0 && ` (${migrationStatus.media_photos.progress.toFixed(2)}%)`}
+                                    </Typography>
+                                    <LinearProgress variant="determinate" value={migrationStatus.media_photos.progress} sx={{ mt: 1 }} />
+                                </Box>
+
+                                <Typography variant="body2" sx={{ mb: 2 }}>
+                                    Migrated: {migrationStatus.media_photos.migrated} records
+                                </Typography>
+
+                                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                    <Button variant="contained" color="secondary" startIcon={migrationStatus.media_photos.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={startMediaPhotosMigration} disabled={migrationStatus.media_photos.running}>
+                                        {migrationStatus.media_photos.running ? 'Migrating...' : 'Start Photo Migration'}
+                                    </Button>
+
+                                    {migrationStatus.media_photos.running && (
+                                        <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('media_photos')}>
+                                            Stop
+                                        </Button>
+                                    )}
+                                </Box>
+
+                                {migrationStatus.media_photos.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.media_photos.errors.length} errors occurred
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
+                                            {migrationStatus.media_photos.errors.map((error, index) => (
                                                 <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
                                                     <Typography variant="caption" component="div">
                                                         <strong>Media ID:</strong> {error.media_id}
