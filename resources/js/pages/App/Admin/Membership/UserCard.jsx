@@ -58,7 +58,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .membership-card {
-            width: 350px;
+            width: 325px;
             border: 1px solid #e3e3e3;
             border-radius: 12px;
             box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
@@ -84,7 +84,7 @@ export const handlePrintMembershipCard = (member) => {
         /* LEFT COLUMN - Perfect MUI replica */
         .left {
             padding-left: 15px;
-            padding-top: 40px;
+            padding-top: 30px;
             align-items: flex-start;
         }
 
@@ -105,7 +105,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .name {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 700;
             color: #000;
             margin-top: 10px;
@@ -124,8 +124,8 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label {
-            margin-top: 17px;
-            font-size: 12px;
+            margin-top: 20px;
+            font-size: 10px;
             font-weight: 700;
             padding-left: 70px;
             color: #000;
@@ -133,7 +133,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .value {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 700;
             color: #000;
             padding-left: 50px
@@ -142,7 +142,7 @@ export const handlePrintMembershipCard = (member) => {
         /* RIGHT COLUMN - Perfect MUI replica */
         .right {
             padding-right: 15px;
-            padding-top: 58px;
+            padding-top: 45px;
             align-items: flex-end;
         }
 
@@ -165,8 +165,8 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label-valid-until {
-            margin-top: 7px;
-            font-size: 12px;
+            margin-top: 9px;
+            font-size: 10px;
             font-weight: 700;
             color: #000;
         }
@@ -174,9 +174,9 @@ export const handlePrintMembershipCard = (member) => {
         .footer {
             background-color: #063455;
             color: white;
-            padding: 10px;
+            padding: 5px;
             text-align: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
             text-transform: Uppercase;
         }
