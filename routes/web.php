@@ -1091,6 +1091,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/generate-corporate-qr-codes', [DataMigrationController::class, 'generateCorporateQrCodes'])->name('data-migration.generate-corporate-qr-codes');
         Route::post('/cleanup-profile-photos', [DataMigrationController::class, 'cleanupProfilePhotos'])->name('data-migration.cleanup-profile-photos');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
+        Route::post('/delete-legacy-invoices', [DataMigrationController::class, 'deleteLegacyInvoices'])->name('data-migration.delete-legacy-invoices');
     });
 
     // Role Management Routes (Super Admin only - Web Guard)

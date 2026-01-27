@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\FileHelper;
 use App\Models\CorporateMember;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
 use App\Models\Media;
 use App\Models\Member;
 use App\Models\MemberCategory;
@@ -2366,6 +2367,7 @@ class DataMigrationController extends Controller
             // "transaction with item... trans_type_id... also here has key date, is_Active... so i think we need to only migrate active one"
             // So transactions table likely has is_active too.
             ->where('is_active', 1)
+            ->whereNull('deleted_at')
             ->get();
 
         foreach ($legacyTrans as $t) {
@@ -2395,7 +2397,7 @@ class DataMigrationController extends Controller
                 if ($t->receipt_id) {
                     $receipt = \App\Models\FinancialReceipt::where('legacy_id', $t->receipt_id)->first();
                     if (!$receipt) {
-                        $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $t->receipt_id)->first();
+                        $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $t->receipt_id)->whereNull('deleted_at')->first();
                         if ($oldReceipt) {
                             $receipt = $this->migrateSingleReceipt($oldReceipt, $payableType, $payableId, false);
                         }
@@ -2458,6 +2460,7 @@ class DataMigrationController extends Controller
         $transIds = DB::connection('old_afohs')
             ->table('transactions')
             ->where('trans_type_id', $oldInvoice->id)
+            ->whereNull('deleted_at')
             ->pluck('id')
             ->toArray();
 
@@ -2475,7 +2478,7 @@ class DataMigrationController extends Controller
         foreach ($relations as $rel) {
             // The 'receipt' column in trans_relations points to a Transaction ID (Type 2), NOT the Receipt ID directly.
             $legacyTransId = $rel->receipt;
-            $legacyTrans = DB::connection('old_afohs')->table('transactions')->where('id', $legacyTransId)->first();
+            $legacyTrans = DB::connection('old_afohs')->table('transactions')->where('id', $legacyTransId)->whereNull('deleted_at')->first();
 
             if (!$legacyTrans) {
                 continue;
@@ -2488,7 +2491,7 @@ class DataMigrationController extends Controller
 
             if (!$receipt) {
                 // Must migrate NOW
-                $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $legacyReceiptId)->first();
+                $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $legacyReceiptId)->whereNull('deleted_at')->first();
                 if ($oldReceipt) {
                     $receipt = $this->migrateSingleReceipt($oldReceipt);
                 }
@@ -2497,7 +2500,7 @@ class DataMigrationController extends Controller
             if ($receipt) {
                 // Fetch the specific credit transaction to get the exact allocated amount
                 $creditTransId = $rel->account;
-                $creditTrans = DB::connection('old_afohs')->table('transactions')->where('id', $creditTransId)->first();
+                $creditTrans = DB::connection('old_afohs')->table('transactions')->where('id', $creditTransId)->whereNull('deleted_at')->first();
                 $allocatedAmount = $creditTrans ? $creditTrans->trans_amount : $receipt->amount;
 
                 // Create Relation
@@ -2770,6 +2773,7 @@ class DataMigrationController extends Controller
             // "migrated" = 0 or NULL means not yet migrated.
             $invoiceNos = DB::connection('old_afohs')
                 ->table('finance_invoices')
+                ->whereNull('deleted_at')
                 ->where(function ($q) {
                     $q
                         ->whereNull('migrated')
@@ -2795,6 +2799,7 @@ class DataMigrationController extends Controller
             $rows = DB::connection('old_afohs')
                 ->table('finance_invoices')
                 ->whereIn('invoice_no', $invoiceNos)
+                ->whereNull('deleted_at')
                 ->get();
 
             $grouped = $rows->groupBy('invoice_no');
@@ -2850,6 +2855,7 @@ class DataMigrationController extends Controller
             // Check if there are more
             $remaining = DB::connection('old_afohs')
                 ->table('finance_invoices')
+                ->whereNull('deleted_at')
                 ->where(function ($q) {
                     $q
                         ->whereNull('migrated')
@@ -3082,6 +3088,80 @@ class DataMigrationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Cleanup profile photos error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteLegacyInvoices(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Define the legacy ID threshold
+            $legacyIdThreshold = 8915;
+
+            // 1. Delete Financial Invoice Items (Children)
+            $deletedItems = FinancialInvoiceItem::whereHas('invoice', function ($q) use ($legacyIdThreshold) {
+                $q->where('id', '<=', $legacyIdThreshold);
+            })->forceDelete();
+
+            // 2. Identify Receipts linked to these invoices (via Transactions)
+            // Get all receipt_ids from transactions linked to these invoices
+            $receiptIds = \App\Models\Transaction::whereHas('invoice', function ($q) use ($legacyIdThreshold) {
+                $q->where('id', '<=', $legacyIdThreshold);
+            })->whereNotNull('receipt_id')->pluck('receipt_id')->unique();
+
+            // 3. Delete Transaction Relations (Where invoice_id is legacy OR receipt_id is from legacy transactions)
+            $deletedRelations = \App\Models\TransactionRelation::where(function ($q) use ($legacyIdThreshold, $receiptIds) {
+                $q->whereIn('invoice_id', function ($sub) use ($legacyIdThreshold) {
+                    $sub->select('id')->from('financial_invoices')->where('id', '<=', $legacyIdThreshold);
+                });
+
+                if ($receiptIds->isNotEmpty()) {
+                    $q->orWhereIn('receipt_id', $receiptIds);
+                }
+            })->forceDelete();
+
+            // 4. Delete Transactions related to these receipts (Credit side)
+            $deletedReceiptTransactions = 0;
+            if ($receiptIds->isNotEmpty()) {
+                $deletedReceiptTransactions = \App\Models\Transaction::whereIn('receipt_id', $receiptIds)->forceDelete();
+            }
+
+            // 5. Delete Transactions related to invoices (Debit side)
+            $deletedInvoiceTransactions = \App\Models\Transaction::whereHas('invoice', function ($q) use ($legacyIdThreshold) {
+                $q->where('id', '<=', $legacyIdThreshold);
+            })->forceDelete();
+
+            // 6. Delete Receipts
+            $deletedReceipts = 0;
+            if ($receiptIds->isNotEmpty()) {
+                $deletedReceipts = \App\Models\FinancialReceipt::whereIn('id', $receiptIds)->forceDelete();
+            }
+
+            // 7. Delete Invoices (Parents)
+            $deletedInvoices = FinancialInvoice::where('id', '<=', $legacyIdThreshold)->forceDelete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully hard-deleted legacy invoices (ID <= {$legacyIdThreshold}) and their relations.",
+                'stats' => [
+                    'invoices_deleted' => $deletedInvoices,
+                    'items_deleted' => $deletedItems,
+                    'transaction_relations_deleted' => $deletedRelations,
+                    'invoice_transactions_deleted' => $deletedInvoiceTransactions,
+                    'receipt_transactions_deleted' => $deletedReceiptTransactions,
+                    'receipts_deleted' => $deletedReceipts
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Delete Legacy Invoices Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
