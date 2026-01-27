@@ -6,14 +6,14 @@ import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import Pagination from '@/components/Pagination';
 
-const Trashed = ({ roomMiniBars, filters: initialFilters }) => {
+const Trashed = ({ eventVenues, filters: initialFilters }) => {
     const { enqueueSnackbar } = useSnackbar();
     const [search, setSearch] = useState(initialFilters?.search || '');
     const [processingId, setProcessingId] = useState(null);
 
     const handleSearch = () => {
         router.get(
-            route('room-minibar.trashed'),
+            route('event-venues.trashed'),
             { search },
             {
                 preserveState: true,
@@ -25,15 +25,15 @@ const Trashed = ({ roomMiniBars, filters: initialFilters }) => {
     const handleRestore = (id) => {
         setProcessingId(id);
         router.post(
-            route('room-minibar.restore', id),
+            route('event-venues.restore', id),
             {},
             {
                 onSuccess: () => {
-                    enqueueSnackbar('Room MiniBar restored successfully', { variant: 'success' });
+                    enqueueSnackbar('Event Venue restored successfully', { variant: 'success' });
                     setProcessingId(null);
                 },
                 onError: () => {
-                    enqueueSnackbar('Failed to restore room minibar', { variant: 'error' });
+                    enqueueSnackbar('Failed to restore event venue', { variant: 'error' });
                     setProcessingId(null);
                 },
             },
@@ -44,10 +44,10 @@ const Trashed = ({ roomMiniBars, filters: initialFilters }) => {
         <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', padding: '20px' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <IconButton onClick={() => router.get(route('room-minibar.index'))}>
+                    <IconButton onClick={() => router.get(route('event-venues.index'))}>
                         <ArrowBack sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Deleted Room MiniBars</Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Deleted Event Venues</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <TextField
@@ -66,6 +66,7 @@ const Trashed = ({ roomMiniBars, filters: initialFilters }) => {
                         sx={{
                             '& .MuiOutlinedInput-root': {
                                 borderRadius: '16px',
+                                backgroundColor: 'white',
                             },
                         }}
                     />
@@ -80,20 +81,18 @@ const Trashed = ({ roomMiniBars, filters: initialFilters }) => {
                     <TableHead>
                         <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Name</TableCell>
-                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Amount</TableCell>
                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Deleted At</TableCell>
                             <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {roomMiniBars.data.length > 0 ? (
-                            roomMiniBars.data.map((item) => (
+                        {eventVenues.data.length > 0 ? (
+                            eventVenues.data.map((item) => (
                                 <TableRow key={item.id} style={{ borderBottom: '1px solid #eee' }}>
                                     <TableCell sx={{ color: '#7F7F7F' }}>{item.name}</TableCell>
-                                    <TableCell sx={{ color: '#7F7F7F' }}>{item.amount}</TableCell>
                                     <TableCell>
-                                        <Chip label={item.status} size="small" color={item.status === 'active' ? 'success' : 'default'} />
+                                        <Chip label={item.status} size="small" color={item.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
                                     </TableCell>
                                     <TableCell sx={{ color: '#7F7F7F' }}>{dayjs(item.deleted_at).format('DD-MM-YYYY HH:mm')}</TableCell>
                                     <TableCell>
@@ -105,10 +104,10 @@ const Trashed = ({ roomMiniBars, filters: initialFilters }) => {
                                             color="error"
                                             startIcon={<DeleteForever />}
                                             onClick={() => {
-                                                if (confirm('Are you sure you want to permanently delete this room minibar? This action cannot be undone.')) {
-                                                    router.delete(route('room-minibar.force-delete', item.id), {
-                                                        onSuccess: () => enqueueSnackbar('Room MiniBar deleted permanently', { variant: 'success' }),
-                                                        onError: () => enqueueSnackbar('Failed to delete room minibar', { variant: 'error' }),
+                                                if (confirm('Are you sure you want to permanently delete this event venue? This action cannot be undone.')) {
+                                                    router.delete(route('event-venues.force-delete', item.id), {
+                                                        onSuccess: () => enqueueSnackbar('Event Venue deleted permanently', { variant: 'success' }),
+                                                        onError: () => enqueueSnackbar('Failed to delete event venue', { variant: 'error' }),
                                                     });
                                                 }
                                             }}
@@ -121,15 +120,15 @@ const Trashed = ({ roomMiniBars, filters: initialFilters }) => {
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
-                                    No deleted room minibars found.
+                                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                                    No deleted event venues found.
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
             </TableContainer>
-            <Pagination className="mt-6" links={roomMiniBars.links} />
+            <Pagination className="mt-6" links={eventVenues.links} />
         </Box>
     );
 };

@@ -15,11 +15,23 @@ class EventVenueController extends Controller
         $this->middleware('super.admin:events.venue.edit')->only('edit', 'update');
         $this->middleware('permission:events.venue.delete')->only('destroy');
     }
-    public function index()
-    {
-        $eventVenuesData = EventVenue::orderBy('created_at', 'desc')->get();
 
-        return Inertia::render('App/Admin/Events/Venue/Index', compact('eventVenuesData'));
+    // List all event venues with search and pagination
+    public function index(Request $request)
+    {
+        $query = EventVenue::orderBy('created_at', 'desc');
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventVenuesData = $query->paginate(10);
+
+        return Inertia::render('App/Admin/Events/Venue/Index', [
+            'eventVenuesData' => $eventVenuesData,
+            'filters' => $request->only(['search']),
+        ]);
     }
 
     // Store a new event venue
@@ -27,12 +39,12 @@ class EventVenueController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:event_venues,name',
-            'status' => 'required|in:active,inactive', // ✅ validate status
+            'status' => 'required|in:active,inactive',
         ]);
 
         $eventVenue = EventVenue::create([
             'name' => $request->name,
-            'status' => $request->status, // ✅ store status
+            'status' => $request->status,
         ]);
 
         return response()->json([
@@ -48,12 +60,12 @@ class EventVenueController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255|unique:event_venues,name,' . $eventVenue->id,
-            'status' => 'required|in:active,inactive', // ✅ validate status
+            'status' => 'required|in:active,inactive',
         ]);
 
         $eventVenue->update([
             'name' => $request->name,
-            'status' => $request->status, // ✅ update status
+            'status' => $request->status,
         ]);
 
         return response()->json([
@@ -69,5 +81,41 @@ class EventVenueController extends Controller
         $eventVenue->delete();
 
         return response()->json(['message' => 'Event Venue deleted successfully.']);
+    }
+
+    // Display a listing of trashed event venues
+    public function trashed(Request $request)
+    {
+        $query = EventVenue::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventVenues = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Events/Venue/Trashed', [
+            'eventVenues' => $eventVenues,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    // Restore the specified trashed event venue
+    public function restore($id)
+    {
+        $eventVenue = EventVenue::withTrashed()->findOrFail($id);
+        $eventVenue->restore();
+
+        return redirect()->back()->with('success', 'Event Venue restored successfully.');
+    }
+
+    // Force delete an event venue
+    public function forceDelete($id)
+    {
+        $eventVenue = EventVenue::withTrashed()->findOrFail($id);
+        $eventVenue->forceDelete();
+
+        return redirect()->back()->with('success', 'Event Venue deleted permanently.');
     }
 }

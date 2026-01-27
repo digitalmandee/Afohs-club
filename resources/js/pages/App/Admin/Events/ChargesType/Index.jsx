@@ -1,22 +1,33 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { Button, Typography, IconButton, Box, Grid, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Button, Typography, IconButton, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, InputAdornment, Chip } from '@mui/material';
+import { Add as AddIcon, Delete as DeleteIcon, Search, DeleteForever } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import AddEventModal from '@/components/App/Events/Charges/AddModal';
 import { FaEdit } from 'react-icons/fa';
+import Pagination from '@/components/Pagination';
 
-const EventChargesType = ({ eventChargesData }) => {
-    // const [open, setOpen] = useState(true);
+const EventChargesType = ({ eventChargesData, filters: initialFilters }) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingRoom, setEditingRoom] = useState(null);
-    const [roomCharges, setRoomCharges] = useState(eventChargesData || []);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [roomToDelete, setRoomToDelete] = useState(null);
     const { props } = usePage();
     const csrfToken = props._token;
+    const [search, setSearch] = useState(initialFilters?.search || '');
+
+    const handleSearch = () => {
+        router.get(
+            route('event-charges-type.index'),
+            { search },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
+    };
 
     const handleAdd = () => {
         setEditingRoom(null);
@@ -45,7 +56,8 @@ const EventChargesType = ({ eventChargesData }) => {
             await axios.delete(route('event-charges-type.destroy', roomToDelete.id), {
                 headers: { 'X-CSRF-TOKEN': csrfToken },
             });
-            setRoomCharges((prev) => prev.filter((type) => type.id !== roomToDelete.id));
+            // Refresh
+            router.reload();
             enqueueSnackbar('Event Charge Type deleted successfully.', { variant: 'success' });
         } catch (error) {
             enqueueSnackbar('Failed to delete: ' + (error.response?.data?.message || error.message), {
@@ -57,81 +69,95 @@ const EventChargesType = ({ eventChargesData }) => {
     };
 
     const handleSuccess = (data) => {
-        setRoomCharges((prev) => {
-            const exists = prev.find((p) => p.id === data.id);
-            return exists ? prev.map((p) => (p.id === data.id ? data : p)) : [...prev, data];
-        });
+        // Refresh
+        router.reload();
         setModalOpen(false);
         setEditingRoom(null);
     };
 
     return (
-        <>
-            {/* <SideNav open={open} setOpen={setOpen} /> */}
-            <Box
-                sx={{
-                    minHeight: '100vh',
-                    backgroundColor: '#f5f5f5',
-                    padding: '20px',
-                }}
-            >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {/* <IconButton onClick={() => router.visit(route('rooms.manage'))}>
-                            <ArrowBackIcon sx={{ color: '#063455' }} />
-                        </IconButton> */}
-                        <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                            Event Charges
-                        </Typography>
-                    </Box>
-                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px', textTransform:'none' }} onClick={handleAdd}>
+        <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', padding: '20px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Event Charges</Typography>
+                    <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Includes venue charges, menu pricing, service fees, and extras</Typography>
+                </Box>
+                <div className="flex items-center gap-2">
+                    <TextField
+                        placeholder="Search..."
+                        size="small"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Search />
+                                </InputAdornment>
+                            ),
+                        }}
+                        sx={{
+                            '& .MuiOutlinedInput-root': {
+                                borderRadius: '16px',
+                                backgroundColor: 'white',
+                            },
+                        }}
+                    />
+                    <Button variant="contained" startIcon={<Search />} onClick={handleSearch} sx={{ backgroundColor: '#063455', borderRadius: '16px' }}>
+                        Search
+                    </Button>
+                    <Button variant="contained" startIcon={<AddIcon />} sx={{ backgroundColor: '#063455', height: 35, borderRadius: '16px', textTransform: 'none' }} onClick={handleAdd}>
                         Add Charge
                     </Button>
-                </Box>
-                <Typography style={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                    Includes venue charges, menu pricing, service fees, and extras
-                </Typography>
+                    <Button variant="outlined" color="error" startIcon={<DeleteForever />} onClick={() => router.visit(route('event-charges-type.trashed'))} sx={{ borderRadius: '16px' }}>
+                        Recycle Bin
+                    </Button>
+                </div>
+            </Box>
 
-                <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px', marginTop:'2rem' }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow style={{ backgroundColor: '#063455', height: '30px' }}>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>#</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Event Charge Type</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Amount</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
-                            </TableRow>
-                        </TableHead>
+            <TableContainer component={Paper} style={{ boxShadow: 'none', borderRadius: '16px' }}>
+                <Table>
+                    <TableHead>
+                        <TableRow style={{ backgroundColor: '#063455', height: '60px' }}>
+                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>#</TableCell>
+                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Event Charge Type</TableCell>
+                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Amount</TableCell>
+                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Status</TableCell>
+                            <TableCell sx={{ color: '#fff', fontSize: '14px', fontWeight: 600 }}>Action</TableCell>
+                        </TableRow>
+                    </TableHead>
 
-                        <TableBody>
-                            {roomCharges.length > 0 ? (
-                                roomCharges.map((type, index) => (
-                                    <TableRow key={type.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight:600 }}>{index + 1}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{type.name}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{type.amount}</TableCell>
-                                        <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', textTransform: 'capitalize' }}>{type.status}</TableCell>
-                                        <TableCell>
-                                            <IconButton onClick={() => handleEdit(type)} size="small" title="Edit">
-                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />                                            </IconButton>
-                                            <IconButton onClick={() => confirmDelete(type)} size="small" title="Delete">
-                                                <DeleteIcon fontSize="small" color='error' />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={5} align="center" sx={{ py: 3, color: '#999' }}>
-                                        No Event Charges found.
+                    <TableBody>
+                        {eventChargesData.data.length > 0 ? (
+                            eventChargesData.data.map((type, index) => (
+                                <TableRow key={type.id} style={{ borderBottom: '1px solid #eee' }}>
+                                    <TableCell sx={{ color: '#000', fontSize: '14px', fontWeight: 600 }}>{index + 1 + (eventChargesData.current_page - 1) * eventChargesData.per_page}</TableCell>
+                                    <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{type.name}</TableCell>
+                                    <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{type.amount}</TableCell>
+                                    <TableCell>
+                                        <Chip label={type.status} size="small" color={type.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton onClick={() => handleEdit(type)} size="small" title="Edit">
+                                            <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />{' '}
+                                        </IconButton>
+                                        <IconButton onClick={() => confirmDelete(type)} size="small" title="Delete">
+                                            <DeleteIcon fontSize="small" color="error" />
+                                        </IconButton>
                                     </TableCell>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </Box>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 3, color: '#999' }}>
+                                    No Event Charges found.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <Pagination className="mt-6" links={eventChargesData.links} />
 
             <AddEventModal open={modalOpen} handleClose={() => setModalOpen(false)} eventChargesType={editingRoom} onSuccess={handleSuccess} />
 
@@ -150,7 +176,7 @@ const EventChargesType = ({ eventChargesData }) => {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </>
+        </Box>
     );
 };
 

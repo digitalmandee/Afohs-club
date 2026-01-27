@@ -15,11 +15,22 @@ class EventMenuTypeController extends Controller
         $this->middleware('super.admin:events.menuType.edit')->only('edit', 'update');
         $this->middleware('permission:events.menuType.delete')->only('destroy');
     }
-    public function index()
-    {
-        $eventMenuTypesData = EventMenuType::orderBy('created_at', 'desc')->get();
 
-        return Inertia::render('App/Admin/Events/MenuType/Index', compact('eventMenuTypesData'));
+    public function index(Request $request)
+    {
+        $query = EventMenuType::orderBy('created_at', 'desc');
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventMenuTypesData = $query->paginate(10);
+
+        return Inertia::render('App/Admin/Events/MenuType/Index', [
+            'eventMenuTypesData' => $eventMenuTypesData,
+            'filters' => $request->only(['search']),
+        ]);
     }
 
     // Store a new event menu type
@@ -27,12 +38,12 @@ class EventMenuTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:event_menu_types,name',
-            'status' => 'required|in:active,inactive', // ✅ validate status
+            'status' => 'required|in:active,inactive',
         ]);
 
         $eventMenuType = EventMenuType::create([
             'name' => $request->name,
-            'status' => $request->status, // ✅ store status
+            'status' => $request->status,
         ]);
 
         return response()->json([
@@ -48,12 +59,12 @@ class EventMenuTypeController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255|unique:event_menu_types,name,' . $eventMenuType->id,
-            'status' => 'required|in:active,inactive', // ✅ validate status
+            'status' => 'required|in:active,inactive',
         ]);
 
         $eventMenuType->update([
             'name' => $request->name,
-            'status' => $request->status, // ✅ update status
+            'status' => $request->status,
         ]);
 
         return response()->json([
@@ -69,5 +80,41 @@ class EventMenuTypeController extends Controller
         $eventMenuType->delete();
 
         return response()->json(['message' => 'Event Menu Type deleted successfully.']);
+    }
+
+    // Display a listing of trashed event menu types
+    public function trashed(Request $request)
+    {
+        $query = EventMenuType::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventMenuTypes = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Events/MenuType/Trashed', [
+            'eventMenuTypes' => $eventMenuTypes,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    // Restore the specified trashed event menu type
+    public function restore($id)
+    {
+        $eventMenuType = EventMenuType::withTrashed()->findOrFail($id);
+        $eventMenuType->restore();
+
+        return redirect()->back()->with('success', 'Event Menu Type restored successfully.');
+    }
+
+    // Force delete an event menu type
+    public function forceDelete($id)
+    {
+        $eventMenuType = EventMenuType::withTrashed()->findOrFail($id);
+        $eventMenuType->forceDelete();
+
+        return redirect()->back()->with('success', 'Event Menu Type deleted permanently.');
     }
 }

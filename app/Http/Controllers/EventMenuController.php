@@ -17,11 +17,21 @@ class EventMenuController extends Controller
         $this->middleware('permission:events.menu.delete')->only('destroy');
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $eventMenusData = EventMenu::orderBy('created_at', 'desc')->get();
+        $query = EventMenu::orderBy('created_at', 'desc');
 
-        return Inertia::render('App/Admin/Events/Menu/Index', compact('eventMenusData'));
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventMenusData = $query->paginate(10);
+
+        return Inertia::render('App/Admin/Events/Menu/Index', [
+            'eventMenusData' => $eventMenusData,
+            'filters' => $request->only(['search']),
+        ]);
     }
 
     public function create()
@@ -102,5 +112,49 @@ class EventMenuController extends Controller
         }
 
         return redirect()->route('event-menu.index')->with('success', 'Menu updated successfully.');
+    }
+
+    public function destroy($id)
+    {
+        $eventMenu = EventMenu::findOrFail($id);
+        $eventMenu->delete();
+
+        return redirect()->back()->with('success', 'Menu deleted successfully.');
+    }
+
+    // Display a listing of trashed event menus
+    public function trashed(Request $request)
+    {
+        $query = EventMenu::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventMenus = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Events/Menu/Trashed', [
+            'eventMenus' => $eventMenus,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    // Restore the specified trashed event menu
+    public function restore($id)
+    {
+        $eventMenu = EventMenu::withTrashed()->findOrFail($id);
+        $eventMenu->restore();
+
+        return redirect()->back()->with('success', 'Menu restored successfully.');
+    }
+
+    // Force delete an event menu
+    public function forceDelete($id)
+    {
+        $eventMenu = EventMenu::withTrashed()->findOrFail($id);
+        $eventMenu->forceDelete();
+
+        return redirect()->back()->with('success', 'Menu deleted permanently.');
     }
 }
