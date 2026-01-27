@@ -127,7 +127,6 @@ const DineDialog = ({ guestTypes, floorTables }) => {
 
             <Box sx={{ px: 2, mb: 2 }}>
                 <FormControl component="fieldset">
-                    <RadioGroup
                     <Grid item xs={12}>
                         <RadioGroup
                             row
@@ -140,12 +139,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                         >
                             <FormControlLabel value="0" control={<Radio />} label="Member" sx={{ border: orderDetails.member_type == '0' ? '1px solid #A27B5C' : '1px solid #E3E3E3', borderRadius: 1, px: 1, m: 0, bgcolor: orderDetails.member_type == '0' ? '#FCF7EF' : 'transparent' }} />
                             <FormControlLabel value="2" control={<Radio />} label="Corporate Member" sx={{ border: orderDetails.member_type == '2' ? '1px solid #A27B5C' : '1px solid #E3E3E3', borderRadius: 1, px: 1, m: 0, bgcolor: orderDetails.member_type == '2' ? '#FCF7EF' : 'transparent' }} />
-                            <FormControlLabel
-                                value="3"
-                                control={<Radio />}
-                                label="Employee"
-                                sx={{ border: orderDetails.member_type == '3' ? '1px solid #A27B5C' : '1px solid #E3E3E3', borderRadius: 1, px: 1, m: 0, bgcolor: orderDetails.member_type == '3' ? '#FCF7EF' : 'transparent' }}
-                            />
+                            <FormControlLabel value="3" control={<Radio />} label="Employee" sx={{ border: orderDetails.member_type == '3' ? '1px solid #A27B5C' : '1px solid #E3E3E3', borderRadius: 1, px: 1, m: 0, bgcolor: orderDetails.member_type == '3' ? '#FCF7EF' : 'transparent' }} />
                             {guestTypes.map((type) => (
                                 <FormControlLabel
                                     key={type.id}
@@ -181,7 +175,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                         getOptionLabel={(option) => option.label || ''}
                         options={options}
                         loading={loading}
-                        value={(orderDetails.member && orderDetails.member.id) ? orderDetails.member : null}
+                        value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null}
                         onInputChange={(event, newInputValue, reason) => {
                             if (reason === 'input') {
                                 handleSearch(event, newInputValue);
