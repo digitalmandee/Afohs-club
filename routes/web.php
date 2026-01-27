@@ -1089,6 +1089,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         Route::post('/delete-profile-photos', [DataMigrationController::class, 'deleteProfilePhotos'])->name('data-migration.delete-profile-photos');
         Route::post('/generate-qr-codes', [DataMigrationController::class, 'generateQrCodes'])->name('data-migration.generate-qr-codes');
         Route::post('/generate-corporate-qr-codes', [DataMigrationController::class, 'generateCorporateQrCodes'])->name('data-migration.generate-corporate-qr-codes');
+        Route::post('/cleanup-profile-photos', [DataMigrationController::class, 'cleanupProfilePhotos'])->name('data-migration.cleanup-profile-photos');
         Route::get('/validate', [DataMigrationController::class, 'validateMigration'])->name('data-migration.validate');
     });
 

@@ -204,9 +204,7 @@ const ViewProfile = ({ member }) => {
                             <IconButton onClick={() => window.history.back()}>
                                 <ArrowBackIcon sx={{ color: '#063455' }} />
                             </IconButton>
-                            <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
-                                Member Profile
-                            </Typography>
+                            <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>Member Profile</Typography>
                         </Box>
                         <Button
                             startIcon={<FaEdit />}
@@ -289,6 +287,23 @@ const ViewProfile = ({ member }) => {
                                             boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                         }}
                                     />
+                                    {member.profile_photos_count > 1 && (
+                                        <Chip
+                                            label={`${member.profile_photos_count} Photos`}
+                                            size="small"
+                                            color="warning"
+                                            sx={{
+                                                position: 'absolute',
+                                                bottom: -10,
+                                                left: '50%',
+                                                transform: 'translateX(-50%)',
+                                                zIndex: 2,
+                                                fontWeight: 600,
+                                                fontSize: '0.7rem',
+                                                height: '20px',
+                                            }}
+                                        />
+                                    )}
                                 </Box>
                                 <Box sx={{ flexGrow: 1 }}>
                                     <Typography variant="h4" sx={{ fontWeight: 700, mb: 2, color: '#063455' }}>
@@ -914,7 +929,7 @@ const ViewProfile = ({ member }) => {
                                                     <TableCell>
                                                         <Avatar src={familyMember.profile_photo?.file_path || '/placeholder.svg?height=40&width=40'} alt={familyMember.full_name} sx={{ width: 40, height: 40 }} />
                                                     </TableCell>
-                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', maxWidth: '120px', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden', }}>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', maxWidth: '120px', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
                                                         <Tooltip title={familyMember.full_name} arrow>
                                                             <span>{familyMember.full_name}</span>
                                                         </Tooltip>
@@ -924,26 +939,16 @@ const ViewProfile = ({ member }) => {
                                                             <span>{familyMember.membership_no || 'N/A'}</span>
                                                         </Tooltip>
                                                     </TableCell>
-                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        {familyMember.relation || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        {familyMember.gender || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        {formatDate(familyMember.card_expiry_date)}
-                                                    </TableCell>
-                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', maxWidth:'100px', textOverflow:'ellipsis', overflow:'hidden', whiteSpace: 'nowrap' }}>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{familyMember.relation || 'N/A'}</TableCell>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{familyMember.gender || 'N/A'}</TableCell>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(familyMember.card_expiry_date)}</TableCell>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', maxWidth: '100px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                                                         <Tooltip title={familyMember.passport_no || 'N/A'} arrow>
                                                             <span>{familyMember.passport_no || 'N/A'}</span>
                                                         </Tooltip>
                                                     </TableCell>
-                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        {familyMember.nationality || 'N/A'}
-                                                    </TableCell>
-                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>
-                                                        {familyMember.martial_status || 'N/A'}
-                                                    </TableCell>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{familyMember.nationality || 'N/A'}</TableCell>
+                                                    <TableCell style={{ color: '#7f7f7f', fontWeight: 400, fontSize: '14px', whiteSpace: 'nowrap' }}>{familyMember.martial_status || 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <Chip label={formatStatus(familyMember.status)} color={getStatusColor(familyMember.status)} size="small" />
                                                     </TableCell>

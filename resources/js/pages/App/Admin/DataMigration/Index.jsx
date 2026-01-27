@@ -33,6 +33,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [resetDialog, setResetDialog] = useState(false);
     const [resetFamiliesDialog, setResetFamiliesDialog] = useState(false);
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
+    const [cleanupDuplicatesDialog, setCleanupDuplicatesDialog] = useState(false);
     const [globalMigrationStats, setGlobalMigrationStats] = useState({ migrated: 0, distinct_total: 0, remaining: 0 });
     const migrationRunning = useRef({ members: false, families: false, media: false, media_photos: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false });
 
@@ -503,6 +504,18 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         }
     };
 
+    const cleanupDuplicatePhotos = async () => {
+        try {
+            const response = await axios.post('/admin/data-migration/cleanup-profile-photos');
+            setCleanupDuplicatesDialog(false);
+            refreshStats();
+            alert(response.data.message);
+        } catch (error) {
+            console.error('Cleanup duplicate photos error:', error);
+            alert('Error cleaning up photos: ' + (error.response?.data?.error || error.message));
+        }
+    };
+
     if (!stats.old_tables_exist) {
         return (
             <AdminLayout>
@@ -527,6 +540,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         </Button>
                         <Button variant="outlined" startIcon={<Assessment />} onClick={validateMigration}>
                             Validate Migration
+                        </Button>
+                        <Button variant="outlined" color="primary" startIcon={<PhotoCamera />} onClick={() => setCleanupDuplicatesDialog(true)}>
+                            Cleanup Duplicates
                         </Button>
                         <Button variant="outlined" color="info" startIcon={<PhotoCamera />} onClick={() => setDeletePhotosDialog(true)}>
                             Delete Profile Photos
@@ -1705,6 +1721,22 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         <Button onClick={() => setDeletePhotosDialog(false)}>Cancel</Button>
                         <Button onClick={deleteProfilePhotos} color="info" variant="contained">
                             Delete Profile Photos
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Cleanup Duplicates Dialog */}
+                <Dialog open={cleanupDuplicatesDialog} onClose={() => setCleanupDuplicatesDialog(false)}>
+                    <DialogTitle>Cleanup Duplicate Profile Photos</DialogTitle>
+                    <DialogContent>
+                        <Typography>
+                            Are you sure you want to cleanup duplicate profile photos? This will check all members and family members. If multiple profile photos are found for the same person, the <strong>latest one (by ID) will be kept</strong> and older ones will be deleted.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setCleanupDuplicatesDialog(false)}>Cancel</Button>
+                        <Button onClick={cleanupDuplicatePhotos} color="primary" variant="contained">
+                            Cleanup Duplicates
                         </Button>
                     </DialogActions>
                 </Dialog>

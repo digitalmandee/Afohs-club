@@ -3027,4 +3027,65 @@ class DataMigrationController extends Controller
             ], 500);
         }
     }
+
+    public function cleanupProfilePhotos(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $deletedCount = 0;
+            $processedGroups = 0;
+
+            // Find members with multiple profile photos
+            // Group by mediable_id and mediable_type where type is profile_photo
+            // We can't easily do "HAVING COUNT > 1" on complex polymorphic queries in one go efficiently without raw SQL or collection processing.
+            // Given the dataset might be large, let's try a raw query approach to find IDs with duplicates.
+
+            $duplicates = DB::table('media')
+                ->select('mediable_type', 'mediable_id', DB::raw('count(*) as count'))
+                ->whereIn('type', ['profile_photo'])  // Ensure we stick to profile photos
+                ->whereNull('deleted_at')
+                ->groupBy('mediable_type', 'mediable_id')
+                ->having('count', '>', 1)
+                ->get();
+
+            Log::info('Found ' . $duplicates->count() . ' members with duplicate profile photos.');
+
+            foreach ($duplicates as $duplicate) {
+                // Get all photos for this member, ordered by ID DESC (latest first)
+                // This MATCHES the logic in Member::profilePhoto() -> orderBy('id', 'desc')
+                // So the first photo in this list is the one currently visible on the profile.
+                $photos = Media::where('mediable_type', $duplicate->mediable_type)
+                    ->where('mediable_id', $duplicate->mediable_id)
+                    ->where('type', 'profile_photo')
+                    ->orderBy('id', 'desc')
+                    ->get();
+
+                // Keep the first one (latest), delete the rest
+                if ($photos->count() > 1) {
+                    $photosToDelete = $photos->slice(1);
+                    foreach ($photosToDelete as $photo) {
+                        $photo->delete();  // Soft delete
+                        $deletedCount++;
+                    }
+                    $processedGroups++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Cleanup complete. Processed {$processedGroups} members, deleted {$deletedCount} duplicate photos.",
+                'deleted_count' => $deletedCount
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Cleanup profile photos error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
