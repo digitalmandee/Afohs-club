@@ -1289,9 +1289,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                     >
                                         1
                                     </Box>
-                                    <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455' }}>
-                                        Booking Type
-                                    </Typography>
+                                    <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455' }}>Booking Type</Typography>
                                 </Box>
                                 <Grid item xs={12} mb={1}>
                                     <RadioGroup row name="bookingType" value={bookingType} onChange={handleBookingTypeChange} disabled={paymentMode || !!preSelectedMember}>
@@ -1375,9 +1373,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                     <Person sx={{ fontSize: 18, color: '#063455' }} />
                                                 </Box>
                                                 <Box>
-                                                    <Typography sx={{ color: '#1e293b', fontWeight: 700, fontSize: '14px', mb: -1 }}>
-                                                        {selectedMember.full_name}{' '}
-                                                    </Typography>
+                                                    <Typography sx={{ color: '#1e293b', fontWeight: 700, fontSize: '14px', mb: -1 }}>{selectedMember.full_name} </Typography>
                                                     <Typography component="span" variant="caption" color="text.secondary">
                                                         ({selectedMember.membership_no || 'No #'})
                                                     </Typography>
@@ -1392,45 +1388,25 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             {/* Fees Summary Strip */}
                                             <Box sx={{ display: 'flex', gap: 5, flexGrow: 1, flexWrap: 'wrap' }}>
                                                 <Box>
-                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
-                                                        Membership Fee
-                                                    </Typography>
-                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
-                                                        {(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}
-                                                    </Typography>
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>Membership Fee</Typography>
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>{(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0) > 0 ? `Rs ${(parseFloat(String(selectedMember.membership_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}` : '-'}</Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
-                                                        Monthly Fee
-                                                    </Typography>
-                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
-                                                        Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}
-                                                    </Typography>
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>Monthly Fee</Typography>
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) || 0).toLocaleString()}</Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
-                                                        Quarterly Fee
-                                                    </Typography>
-                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
-                                                        Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}
-                                                    </Typography>
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>Quarterly Fee</Typography>
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>Rs {(parseFloat(String(selectedMember.total_maintenance_fee || 0).replace(/,/g, '')) * 3 || 0).toLocaleString()}</Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
-                                                        Joined Date
-                                                    </Typography>
-                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
-                                                        {formatDate(selectedMember.membership_date)}
-                                                    </Typography>
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>Joined Date</Typography>
+                                                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>{formatDate(selectedMember.membership_date)}</Typography>
                                                 </Box>
                                                 <Box>
-                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>
-                                                        Ledger Balance
-                                                    </Typography>
+                                                    <Typography sx={{ fontWeight: '600', fontSize: '14px', color: '#7f7f7f' }}>Ledger Balance</Typography>
                                                     <Box display="flex" alignItems="center">
-                                                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>
-                                                            {formatCurrency(Math.max(0, ledgerBalance || 0))}
-                                                        </Typography>
+                                                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '14px' }}>{formatCurrency(Math.max(0, ledgerBalance || 0))}</Typography>
                                                         {/* <IconButton
                                                             size="small"
                                                             onClick={() => {
@@ -1475,9 +1451,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                             >
                                                 2
                                             </Box>
-                                            <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455' }}>
-                                                Transaction Details
-                                            </Typography>
+                                            <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455' }}>Transaction Details</Typography>
                                         </Box>
                                         {selectedMember ? (
                                             <form onSubmit={(e) => handleSubmit(e)}>
@@ -1557,11 +1531,15 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         </Typography>
                                                         <Grid container spacing={2}>
                                                             <Grid item xs={12} md={4}>
-                                                                <FormControl fullWidth size="small" sx={{
-                                                                    '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
-                                                                        borderRadius: '16px !important',
-                                                                    },
-                                                                }}>
+                                                                <FormControl
+                                                                    fullWidth
+                                                                    size="small"
+                                                                    sx={{
+                                                                        '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                                            borderRadius: '16px !important',
+                                                                        },
+                                                                    }}
+                                                                >
                                                                     <InputLabel>Payment Method</InputLabel>
                                                                     <Select value={data.payment_method} label="Payment Method" onChange={(e) => setData('payment_method', e.target.value)}>
                                                                         <MenuItem value="cash">Cash</MenuItem>
@@ -1705,7 +1683,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                         >
                                             3
                                         </Box>
-                                        <Typography sx={{ fontWeight: 600, color: '#063455', fontSize:'18px' }}>Transaction History - {selectedMember.full_name}</Typography>
+                                        <Typography sx={{ fontWeight: 600, color: '#063455', fontSize: '18px' }}>Transaction History - {selectedMember.full_name}</Typography>
                                     </Box>
 
                                     {/* Search Bar */}

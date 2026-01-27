@@ -744,7 +744,7 @@ class MemberTransactionController extends Controller
 
         // Handle credit card specific data
         if ($request->payment_method === 'credit_card') {
-            $data['credit_card_type'] = $request->credit_card_type;
+            // $data['credit_card_type'] = $request->credit_card_type;
 
             // Handle file upload
             if ($request->hasFile('receipt_file')) {
@@ -1089,7 +1089,7 @@ class MemberTransactionController extends Controller
 
         if ($request->status === 'paid') {
             $rules['payment_method'] = 'required|in:cash,credit_card,cheque,online,bank_transfer';
-            $rules['credit_card_type'] = 'required_if:payment_method,credit_card|in:mastercard,visa';
+            // $rules['credit_card_type'] = 'required_if:payment_method,credit_card|in:mastercard,visa';
             // Receipt validation:
             if ($request->payment_method === 'credit_card' && empty($transaction->receipt)) {
                 $rules['receipt_file'] = 'required|file|mimes:jpeg,png,jpg,gif,pdf|max:2048';
@@ -1114,7 +1114,7 @@ class MemberTransactionController extends Controller
             $transaction->payment_method = $request->payment_method;
 
             if ($request->payment_method === 'credit_card') {
-                $transaction->credit_card_type = $request->credit_card_type;
+                // $transaction->credit_card_type = $request->credit_card_type;
 
                 if ($request->hasFile('receipt_file')) {
                     $receiptPath = FileHelper::saveImage($request->file('receipt_file'), 'receipts');

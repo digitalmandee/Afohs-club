@@ -43,9 +43,9 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
             newErrors.payment_method = 'Payment method is required';
         }
         if (data.payment_method === 'credit_card' || data.payment_method === 'debit_card') {
-            if (!data.credit_card_type) {
-                newErrors.credit_card_type = 'Card type is required';
-            }
+            // if (!data.credit_card_type) {
+            //     newErrors.credit_card_type = 'Card type is required';
+            // }
             // Receipt is now OPTIONAL for all methods
         }
         setErrors(newErrors);
@@ -143,19 +143,6 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
                         </FormControl>
                     </Grid>
 
-                    {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card') && (
-                        <Grid item xs={12} sm={6}>
-                            <FormControl fullWidth size="small" error={!!errors.credit_card_type}>
-                                <InputLabel>Card Type</InputLabel>
-                                <Select value={data.credit_card_type} label="Card Type" onChange={(e) => handleChange('credit_card_type', e.target.value)}>
-                                    <MenuItem value="visa">Visa</MenuItem>
-                                    <MenuItem value="mastercard">MasterCard</MenuItem>
-                                </Select>
-                                {errors.credit_card_type && <FormHelperText>{errors.credit_card_type}</FormHelperText>}
-                            </FormControl>
-                        </Grid>
-                    )}
-
                     {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card' || data.payment_method === 'cheque' || data.payment_method === 'online') && (
                         <Grid item xs={12} sm={data.payment_method === 'credit_card' || data.payment_method === 'debit_card' ? 6 : 12}>
                             <Button
@@ -185,9 +172,9 @@ const PaymentDialog = ({ open, onClose, transaction, onConfirm, submitting }) =>
                         </Grid>
                     )}
 
-                    {(data.payment_method === 'cheque' || data.payment_method === 'online' || data.payment_method === 'credit_card' || data.payment_method === 'debit_card') && (
+                    {(data.payment_method === 'cheque' || data.payment_method === 'online') && (
                         <Grid item xs={12}>
-                            <TextField fullWidth size="small" label={data.payment_method === 'cheque' ? 'Cheque No' : data.payment_method === 'online' ? 'Transaction ID/Ref' : 'Card No (Last 4) / Ref'} value={data.payment_mode_details || ''} onChange={(e) => handleChange('payment_mode_details', e.target.value)} />
+                            <TextField fullWidth size="small" label={data.payment_method === 'cheque' ? 'Cheque No' : 'Transaction ID/Ref'} value={data.payment_mode_details || ''} onChange={(e) => handleChange('payment_mode_details', e.target.value)} />
                         </Grid>
                     )}
                 </Grid>
