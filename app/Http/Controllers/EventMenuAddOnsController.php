@@ -15,12 +15,22 @@ class EventMenuAddOnsController extends Controller
         $this->middleware('super.admin:events.menuAddOn.edit')->only('edit', 'update');
         $this->middleware('permission:events.menuAddOn.delete')->only('destroy');
     }
-    // List all event menu add-ons
-    public function index()
-    {
-        $eventMenuAddOnsData = EventMenuAddOn::orderBy('created_at', 'desc')->get();
 
-        return Inertia::render('App/Admin/Events/MenuAddons/Index', compact('eventMenuAddOnsData'));
+    public function index(Request $request)
+    {
+        $query = EventMenuAddOn::orderBy('created_at', 'desc');
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventMenuAddOnsData = $query->paginate(10);
+
+        return Inertia::render('App/Admin/Events/MenuAddons/Index', [
+            'eventMenuAddOnsData' => $eventMenuAddOnsData,
+            'filters' => $request->only(['search']),
+        ]);
     }
 
     // Store a new event menu add-on
@@ -29,13 +39,13 @@ class EventMenuAddOnsController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:event_menu_add_ons,name',
             'amount' => 'required|numeric|min:0',
-            'status' => 'required|in:active,inactive', // validate status
+            'status' => 'required|in:active,inactive',  // validate status
         ]);
 
         $eventMenuAddOn = EventMenuAddOn::create([
             'name' => $request->name,
             'amount' => $request->amount,
-            'status' => $request->status, // store status
+            'status' => $request->status,  // store status
         ]);
 
         return response()->json([
@@ -52,13 +62,13 @@ class EventMenuAddOnsController extends Controller
         $request->validate([
             'name' => 'required|string|max:255|unique:event_menu_add_ons,name,' . $eventMenuAddOn->id,
             'amount' => 'required|numeric|min:0',
-            'status' => 'required|in:active,inactive', // validate status
+            'status' => 'required|in:active,inactive',  // validate status
         ]);
 
         $eventMenuAddOn->update([
             'name' => $request->name,
             'amount' => $request->amount,
-            'status' => $request->status, // update status
+            'status' => $request->status,  // update status
         ]);
 
         return response()->json([
@@ -74,5 +84,41 @@ class EventMenuAddOnsController extends Controller
         $eventMenuAddOn->delete();
 
         return response()->json(['message' => 'Event Menu Add-on deleted successfully.']);
+    }
+
+    // Display a listing of trashed event menu add-ons
+    public function trashed(Request $request)
+    {
+        $query = EventMenuAddOn::onlyTrashed();
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $eventMenuAddOns = $query->orderBy('deleted_at', 'desc')->paginate(10);
+
+        return Inertia::render('App/Admin/Events/MenuAddons/Trashed', [
+            'eventMenuAddOns' => $eventMenuAddOns,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    // Restore the specified trashed event menu add-on
+    public function restore($id)
+    {
+        $eventMenuAddOn = EventMenuAddOn::withTrashed()->findOrFail($id);
+        $eventMenuAddOn->restore();
+
+        return redirect()->back()->with('success', 'Event Menu Add-on restored successfully.');
+    }
+
+    // Force delete an event menu add-on
+    public function forceDelete($id)
+    {
+        $eventMenuAddOn = EventMenuAddOn::withTrashed()->findOrFail($id);
+        $eventMenuAddOn->forceDelete();
+
+        return redirect()->back()->with('success', 'Event Menu Add-on deleted permanently.');
     }
 }
