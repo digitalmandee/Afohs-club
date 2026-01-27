@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
@@ -2883,67 +2884,76 @@ class DataMigrationController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get batch of old media records (only Member & Family photos, non-trashed)
-            $oldMediaRecords = DB::connection('old_afohs')
-                ->table('media')
-                ->whereIn('trans_type', [3, 100])
-                ->whereNull('deleted_at')
-                ->offset($offset)
-                ->limit($batchSize)
+            // 1. Iterate through Members who have either old_member_id OR old_family_id
+            // We use 'skip' and 'take' for batching based on the offset passed from frontend
+            $members = Member::where(function ($q) {
+                $q
+                    ->whereNotNull('old_member_id')
+                    ->orWhereNotNull('old_family_id');
+            })
+                ->skip($offset)
+                ->take($batchSize)
                 ->get();
 
-            if ($oldMediaRecords->isEmpty()) {
-                DB::commit();
-                return response()->json([
-                    'success' => true,
-                    'processed' => 0,
-                    'message' => 'No more media records to migrate'
-                ]);
-            }
-
-            $processed = 0;
             $updated = 0;
             $created = 0;
             $errors = [];
+            $migratedCount = 0;
 
-            foreach ($oldMediaRecords as $oldMedia) {
+            foreach ($members as $member) {
                 try {
-                    // Map trans_type to new type
-                    $newType = 'profile_photo';  // Both 3 and 100 are profile_photo
+                    $oldMedia = null;
 
-                    // Find the new member ID based on trans_type and old ID
-                    $newMemberId = null;
-                    $mediableType = 'App\Models\Member';
-
-                    if ($oldMedia->trans_type == 3) {
-                        // Member profile photo
-                        $member = Member::where('old_member_id', $oldMedia->trans_type_id)->first();
-                        $newMemberId = $member ? $member->id : null;
-                    } elseif ($oldMedia->trans_type == 100) {
-                        // Family member profile photo
-                        // Attempt to find in Member first
-                        $member = Member::where('old_family_id', $oldMedia->trans_type_id)->first();
-
-                        $newMemberId = $member ? $member->id : null;
+                    // A. Check for Member Photo (Type 3)
+                    if ($member->old_member_id) {
+                        $oldMedia = DB::connection('old_afohs')
+                            ->table('media')
+                            ->where('trans_type', 3)
+                            ->where('trans_type_id', $member->old_member_id)
+                            ->whereNull('deleted_at')
+                            ->orderBy('id', 'desc')  // Get latest
+                            ->first();
                     }
 
-                    if (!$newMemberId) {
-                        // Log but don't error out the whole batch
-                        $errors[] = [
-                            'media_id' => $oldMedia->id,
-                            'error' => "Member/Family not found (trans_type: {$oldMedia->trans_type}, old_id: {$oldMedia->trans_type_id})"
-                        ];
+                    // B. If no Member Photo found, check for Family Photo (Type 100) if applicable
+                    if (!$oldMedia && $member->old_family_id) {
+                        $oldMedia = DB::connection('old_afohs')
+                            ->table('media')
+                            ->where('trans_type', 100)
+                            ->where('trans_type_id', $member->old_family_id)
+                            ->whereNull('deleted_at')
+                            ->orderBy('id', 'desc')  // Get latest
+                            ->first();
+                    }
+
+                    // If still no media found, skip
+                    if (!$oldMedia) {
                         continue;
                     }
 
-                    // Transform file path
+                    // Define New Mapping
+                    $mediableType = Member::class;
+                    $mediableId = $member->id;
+                    $newType = 'profile_photo';  // or 'member_photo' based on your conventions
+
+                    // Logic to copy/map file
+                    // Use transformMediaPath to get the correct new path based on trans_type
+                    // This handles directory structure like /tenants/default/membership/ etc.
                     $newFilePath = $this->transformMediaPath($oldMedia->url, $oldMedia->trans_type);
+
+                    // Extract filename from the new path
                     $fileName = basename($newFilePath);
+
+                    // If file name is empty, skip
+                    if (!$fileName)
+                        continue;
+
+                    // Mime type detection (consistent with migrateMedia)
                     $mimeType = $this->getMimeTypeFromPath($newFilePath);
 
-                    // Check for existing Media record
+                    // Check if Media record already exists for this member
                     $existingMedia = Media::where('mediable_type', $mediableType)
-                        ->where('mediable_id', $newMemberId)
+                        ->where('mediable_id', $mediableId)
                         ->where('type', $newType)
                         ->first();
 
@@ -2951,6 +2961,8 @@ class DataMigrationController extends Controller
                         // Update existing
                         $existingMedia->update([
                             'file_name' => $fileName,
+                            // 'file_path' => $newFilePath, // Don't overwrite path if we aren't actually moving files yet, or do if we are.
+                            // Assuming we are just mapping data for now, or if we need to set the path validation:
                             'file_path' => $newFilePath,
                             'mime_type' => $mimeType,
                             'updated_at' => now(),
@@ -2960,44 +2972,55 @@ class DataMigrationController extends Controller
                         // Create new
                         Media::create([
                             'mediable_type' => $mediableType,
-                            'mediable_id' => $newMemberId,
+                            'mediable_id' => $mediableId,
                             'type' => $newType,
                             'file_name' => $fileName,
                             'file_path' => $newFilePath,
                             'mime_type' => $mimeType,
                             'disk' => 'public',
-                            'created_at' => $this->validateDate($oldMedia->created_at),
-                            'updated_at' => $this->validateDate($oldMedia->updated_at),
-                            // deleted_at is null since we filtered by null
-                            'created_by' => $oldMedia->created_by,
-                            'updated_by' => $oldMedia->updated_by,
+                            'created_at' => $oldMedia->created_at ? Carbon::parse($oldMedia->created_at) : now(),
+                            'updated_at' => $oldMedia->updated_at ? Carbon::parse($oldMedia->updated_at) : now(),
+                            'created_by' => $oldMedia->created_by ?? 1,  // Default to admin/system
+                            'updated_by' => $oldMedia->updated_by ?? 1,
                         ]);
                         $created++;
                     }
-
-                    $processed++;
+                    $migratedCount++;
                 } catch (\Exception $e) {
-                    $errors[] = [
-                        'media_id' => $oldMedia->id,
-                        'error' => $e->getMessage()
-                    ];
-                    Log::error("Error processing media photo ID {$oldMedia->id}: " . $e->getMessage());
+                    // Log error but continue with next member
+                    $errors[] = ['member_id' => $member->id, 'error' => $e->getMessage()];
+                    Log::error("Media migration error for member {$member->id}: " . $e->getMessage());
                 }
             }
 
             DB::commit();
 
+            // Calculate remaining
+            // This is an approximation since we iterate Members, not Media.
+            // We can just count remaining Members with old_ids.
+            $totalMembersToCheck = Member::where(function ($q) {
+                $q
+                    ->whereNotNull('old_member_id')
+                    ->orWhereNotNull('old_family_id');
+            })->count();
+
+            $remaining = $totalMembersToCheck - ($offset + $batchSize);
+            if ($remaining < 0)
+                $remaining = 0;
+
             return response()->json([
                 'success' => true,
-                'processed' => $processed,
-                'updated' => $updated,
+                'migrated' => $migratedCount,  // This batch
                 'created' => $created,
+                'updated' => $updated,
                 'errors' => $errors,
-                'has_more' => count($oldMediaRecords) === $batchSize
+                'has_more' => $remaining > 0,
+                'remaining' => $remaining,
+                'total' => $totalMembersToCheck  // Useful for progress bar
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Media photo migration error: ' . $e->getMessage());
+            Log::error('Media photo migration fatal error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage()
