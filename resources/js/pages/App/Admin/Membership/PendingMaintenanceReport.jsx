@@ -4,22 +4,38 @@ import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
 
-
 const PendingMaintenanceReport = () => {
     // Get props first
     const { members, statistics, filters, all_statuses, all_categories } = usePage().props;
 
     // Modal state
     // const [open, setOpen] = useState(true);
+    const [selectedMembers, setSelectedMembers] = useState([]);
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
+    const [newStatus, setNewStatus] = useState('');
+    const [statusReason, setStatusReason] = useState('');
     const [allFilters, setAllFilters] = useState({
         member_search: filters?.member_search || '',
         cnic_search: filters?.cnic_search || '',
         contact_search: filters?.contact_search || '',
         status: filters?.status || [],
         categories: filters?.categories || [],
+        quarters_pending: filters?.quarters_pending || '',
         date_from: filters?.date_from || '',
         date_to: filters?.date_to || '',
     });
+
+    const quartersOptions = [
+        { label: '1 Quarter', value: '1' },
+        { label: '2 Quarters', value: '2' },
+        { label: '3 Quarters', value: '3' },
+        { label: '4 Quarters', value: '4' },
+        { label: '5 Quarters', value: '5' },
+        { label: 'More than 5', value: '6+' },
+    ];
+
+    // Fixed status options from AddForm3.jsx
+    const statusOptions = ['active', 'suspended', 'cancelled', 'absent', 'expired', 'terminated', 'not_assign', 'in_suspension_process'];
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
@@ -69,6 +85,7 @@ const PendingMaintenanceReport = () => {
             contact_search: '',
             status: [],
             categories: [],
+            quarters_pending: '',
             date_from: '',
             date_to: '',
         });
@@ -94,8 +111,97 @@ const PendingMaintenanceReport = () => {
         return '#059669'; // Green - Normal
     };
 
+    const handleSelectAll = (event) => {
+        if (event.target.checked) {
+            setSelectedMembers(members?.data?.map((m) => m.id) || []);
+        } else {
+            setSelectedMembers([]);
+        }
+    };
+
+    const handleSelectOne = (event, id) => {
+        if (event.target.checked) {
+            setSelectedMembers((prev) => [...prev, id]);
+        } else {
+            setSelectedMembers((prev) => prev.filter((item) => item !== id));
+        }
+    };
+
+    const handleBulkStatusChange = () => {
+        if (selectedMembers.length === 0) return alert('Please select members first.');
+        if (!newStatus) return alert('Please select a status.');
+
+        router.post(
+            route('membership.pending-maintenance-report.bulk-status'),
+            {
+                member_ids: selectedMembers,
+                status: newStatus,
+                reason: statusReason,
+            },
+            {
+                onSuccess: () => {
+                    setStatusModalOpen(false);
+                    setSelectedMembers([]);
+                    setNewStatus('');
+                    setStatusReason('');
+                },
+            },
+        );
+    };
+
+    const handleBulkPrint = () => {
+        if (selectedMembers.length === 0) return alert('Please select members first.');
+
+        // Construct URL for bulk print
+        const url = route('membership.pending-maintenance-report.bulk-print', {
+            member_ids: selectedMembers,
+        });
+        window.open(url, '_blank');
+    };
+
     return (
         <>
+            {/* Status Change Modal */}
+            {statusModalOpen && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)',
+                        zIndex: 9999,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Paper sx={{ p: 4, width: '400px' }}>
+                        <Typography variant="h6" mb={2}>
+                            Change Status for {selectedMembers.length} Members
+                        </Typography>
+                        <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                            <InputLabel>New Status</InputLabel>
+                            <Select value={newStatus} label="New Status" onChange={(e) => setNewStatus(e.target.value)} MenuProps={{ style: { zIndex: 10001 } }}>
+                                {statusOptions.map((s) => (
+                                    <MenuItem key={s} value={s}>
+                                        {s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <TextField fullWidth multiline rows={3} label="Reason (Optional)" value={statusReason} onChange={(e) => setStatusReason(e.target.value)} sx={{ mb: 2 }} />
+                        <Box display="flex" justifyContent="flex-end" gap={1}>
+                            <Button onClick={() => setStatusModalOpen(false)}>Cancel</Button>
+                            <Button variant="contained" onClick={handleBulkStatusChange}>
+                                Update
+                            </Button>
+                        </Box>
+                    </Paper>
+                </div>
+            )}
+
             {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
@@ -114,25 +220,39 @@ const PendingMaintenanceReport = () => {
                         </IconButton>
                         <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Pending Maintenance Report</Typography>
                     </div>
-                    <Button
-                        variant="contained"
-                        startIcon={<Print />}
-                        onClick={() => {
-                            const currentUrl = new URL(window.location.href);
-                            const printUrl = currentUrl.pathname + '/print' + currentUrl.search;
-                            window.open(printUrl, '_blank');
-                        }}
-                        sx={{
-                            backgroundColor: '#063455',
-                            color: 'white',
-                            textTransform: 'none',
-                            '&:hover': {
-                                backgroundColor: '#052d47',
-                            },
-                        }}
-                    >
-                        Print
-                    </Button>
+                    <Box>
+                        {/* Bulk Actions */}
+                        {selectedMembers.length > 0 && (
+                            <>
+                                <Button variant="outlined" color="warning" sx={{ mr: 2 }} onClick={() => setStatusModalOpen(true)}>
+                                    Change Status ({selectedMembers.length})
+                                </Button>
+                                <Button variant="outlined" sx={{ mr: 2 }} onClick={handleBulkPrint}>
+                                    Print Selected ({selectedMembers.length})
+                                </Button>
+                            </>
+                        )}
+
+                        <Button
+                            variant="contained"
+                            startIcon={<Print />}
+                            onClick={() => {
+                                const currentUrl = new URL(window.location.href);
+                                const printUrl = currentUrl.pathname + '/print' + currentUrl.search;
+                                window.open(printUrl, '_blank');
+                            }}
+                            sx={{
+                                backgroundColor: '#063455',
+                                color: 'white',
+                                textTransform: 'none',
+                                '&:hover': {
+                                    backgroundColor: '#052d47',
+                                },
+                            }}
+                        >
+                            Print Report
+                        </Button>
+                    </Box>
                 </div>
 
                 {/* Search and Filters */}
@@ -194,7 +314,7 @@ const PendingMaintenanceReport = () => {
                             <TextField
                                 fullWidth
                                 size="small"
-                                placeholder="Search Contact (Phone)"
+                                placeholder="Search Contact"
                                 value={allFilters.contact_search}
                                 onChange={(e) => handleFilterChange('contact_search', e.target.value)}
                                 sx={{
@@ -252,28 +372,14 @@ const PendingMaintenanceReport = () => {
                                 multiple
                                 size="small"
                                 fullWidth
-                                options={all_statuses || []}
+                                options={statusOptions}
+                                getOptionLabel={(option) => option.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
                                 value={allFilters.status || []}
                                 onChange={(event, newValue) => {
                                     handleFilterChange('status', newValue);
                                 }}
-                                renderTags={(value, getTagProps) =>
-                                    value.map((option, index) => (
-                                        <Chip
-                                            label={option}
-                                            size="small"
-                                            {...getTagProps({ index })}
-                                            key={option}
-                                        />
-                                    ))
-                                }
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Member Status"
-                                        placeholder="Select status"
-                                    />
-                                )}
+                                renderTags={(value, getTagProps) => value.map((option, index) => <Chip label={option.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())} size="small" {...getTagProps({ index })} key={option} />)}
+                                renderInput={(params) => <TextField {...params} label="Member Status" placeholder="Select status" />}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.5}>
@@ -307,36 +413,33 @@ const PendingMaintenanceReport = () => {
                                 options={all_categories || []}
                                 getOptionLabel={(option) => option.name}
                                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                                value={
-                                    all_categories?.filter(cat =>
-                                        allFilters.categories.includes(cat.id)
-                                    ) || []
-                                }
+                                value={all_categories?.filter((cat) => allFilters.categories.includes(cat.id)) || []}
                                 onChange={(event, newValue) => {
                                     handleFilterChange(
                                         'categories',
-                                        newValue.map(cat => cat.id)
+                                        newValue.map((cat) => cat.id),
                                     );
                                 }}
-                                renderTags={(value, getTagProps) =>
-                                    value.map((option, index) => (
-                                        <Chip
-                                            key={option.id}
-                                            label={option.name}
-                                            size="small"
-                                            {...getTagProps({ index })}
-                                        />
-                                    ))
-                                }
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Member Category"
-                                        placeholder="Select categories"
-                                    />
-                                )}
+                                renderTags={(value, getTagProps) => value.map((option, index) => <Chip key={option.id} label={option.name} size="small" {...getTagProps({ index })} />)}
+                                renderInput={(params) => <TextField {...params} label="Member Category" placeholder="Select categories" />}
                             />
                         </Grid>
+
+                        {/* New Quarters Filter */}
+                        <Grid item xs={12} md={2.5}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel>Quarters Pending</InputLabel>
+                                <Select value={allFilters.quarters_pending || ''} label="Quarters Pending" onChange={(e) => handleFilterChange('quarters_pending', e.target.value)}>
+                                    <MenuItem value="">All</MenuItem>
+                                    {quartersOptions.map((opt) => (
+                                        <MenuItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
                         <Grid item xs={12} md={2.5}>
                             <TextField
                                 fullWidth
@@ -345,19 +448,6 @@ const PendingMaintenanceReport = () => {
                                 label="From Date"
                                 value={allFilters.date_from}
                                 onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={2.5}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="To Date"
-                                value={allFilters.date_to}
-                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
@@ -392,17 +482,15 @@ const PendingMaintenanceReport = () => {
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
+                                    <TableCell padding="checkbox">
+                                        <input type="checkbox" onChange={handleSelectAll} checked={members?.data?.length > 0 && selectedMembers.length === members?.data?.length} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                                    </TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>SR #</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>ID</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Membership Date</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Member #</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Name</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Contact</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Address</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Maintenance Per Quarter</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Debit</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Credit</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Balance</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Pending</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Status</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Print</TableCell>
                                 </TableRow>
@@ -419,16 +507,14 @@ const PendingMaintenanceReport = () => {
                                                 borderBottom: '1px solid #e5e7eb',
                                             }}
                                         >
+                                            <TableCell padding="checkbox">
+                                                <input type="checkbox" checked={selectedMembers.includes(member.id)} onChange={(e) => handleSelectOne(e, member.id)} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                                            </TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{index + 1}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{member.id}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(member.membership_date)}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{member.membership_no}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{member.full_name}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{member.contact}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '12px' }}>{member.address || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.quarterly_fee).replace('PKR', 'Rs.')}</TableCell>
-                                            <TableCell sx={{ color: '#dc2626', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.total_debit_amount || 0).replace('PKR', 'Rs.')}</TableCell>
-                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.total_paid_amount || 0).replace('PKR', 'Rs.')}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(member.monthly_fee * 3).replace('PKR', 'Rs.')}</TableCell>
                                             <TableCell
                                                 sx={{
                                                     color: getPendingQuartersColor(member.pending_quarters),
@@ -437,6 +523,8 @@ const PendingMaintenanceReport = () => {
                                                 }}
                                             >
                                                 {formatCurrency(member.total_pending_amount).replace('PKR', 'Rs.')}
+                                                <br />
+                                                <small>({member.pending_quarters} Qtrs)</small>
                                             </TableCell>
                                             <TableCell>
                                                 <Chip label={member.status} color={getStatusColor(member.status)} size="small" sx={{ textTransform: 'capitalize' }} />
@@ -445,6 +533,10 @@ const PendingMaintenanceReport = () => {
                                                 <Button
                                                     size="small"
                                                     variant="outlined"
+                                                    onClick={() => {
+                                                        const url = route('membership.pending-maintenance-report.bulk-print', { member_ids: [member.id] });
+                                                        window.open(url, '_blank');
+                                                    }}
                                                     sx={{
                                                         color: '#dc2626',
                                                         borderColor: '#dc2626',
@@ -465,15 +557,16 @@ const PendingMaintenanceReport = () => {
                                 {/* Footer Row */}
                                 {members?.data && members.data.length > 0 && (
                                     <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={7}>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={6}>
                                             TOTAL ({statistics?.total_members || 0} Members)
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.average_pending_per_member || 0).replace('PKR', 'Rs.')}</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>Rs. 0</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>Rs. 0</TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.total_pending_amount || 0).replace('PKR', 'Rs.')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
+                                            {formatCurrency(statistics?.total_pending_amount || 0).replace('PKR', 'Rs.')}
+                                            <br />
+                                            <small>({statistics?.total_pending_quarters || 0} Qtrs)</small>
+                                        </TableCell>
                                         <TableCell colSpan={2} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
-                                            {statistics?.total_pending_quarters || 0} Quarters Pending
+                                            {/* {statistics?.total_pending_quarters || 0} Quarters Pending */}
                                         </TableCell>
                                     </TableRow>
                                 )}

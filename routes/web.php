@@ -907,6 +907,8 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         // Pending Maintenance Report
         Route::get('pending-maintenance-report', [MemberFeeRevenueController::class, 'pendingMaintenanceReport'])->name('membership.pending-maintenance-report')->middleware('super.admin:reports.pending-maintenance');
         Route::get('pending-maintenance-report/print', [MemberFeeRevenueController::class, 'pendingMaintenanceReportPrint'])->name('membership.pending-maintenance-report.print')->middleware('super.admin:reports.pending-maintenance');
+        Route::post('pending-maintenance-report/bulk-status', [MemberFeeRevenueController::class, 'pendingMaintenanceBulkStatusChange'])->name('membership.pending-maintenance-report.bulk-status')->middleware('super.admin:reports.pending-maintenance');
+        Route::get('pending-maintenance-report/bulk-print', [MemberFeeRevenueController::class, 'pendingMaintenanceBulkPrint'])->name('membership.pending-maintenance-report.bulk-print')->middleware('super.admin:reports.pending-maintenance');
 
         // Supplementary Card Report
         Route::get('supplementary-card-report', [MemberFeeRevenueController::class, 'supplementaryCardReport'])->name('membership.supplementary-card-report')->middleware('super.admin:reports.supplementary-card');

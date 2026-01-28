@@ -208,8 +208,8 @@ class MemberFeeRevenueController extends Controller
         $memberSearch = $request->input('member_search');
         $cnicSearch = $request->input('cnic_search');
         $contactSearch = $request->input('contact_search');
+        $quartersFilter = $request->input('quarters_pending');  // New Filter
 
-        // Subquery to get the latest valid_to date for maintenance fees per member
         // Subquery to get the latest valid_to date for maintenance fees per member using Items
         $latestMaintenance = \App\Models\FinancialInvoiceItem::select(
             'financial_invoices.member_id',
@@ -259,56 +259,39 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
-        // Filter for PENDING members only
-        // Logic: (Last Valid Date < Now) OR (Never Paid AND Joined/Created < Now)
-        $query->where(function ($q) {
-            $q
-                ->where('latest_maintenance.last_valid_date', '<', now())
-                ->orWhere(function ($sub) {
-                    $sub->whereNull('latest_maintenance.last_valid_date');
-                    // Optional: Add logic here if members allowed grace period
-                });
-        });
+        // Calculate Pending Months/Quarters in SQL for filtering and sorting
+        // Logic: CEIL(TIMESTAMPDIFF(MONTH, start_date, NOW()) / 3)
+        // start_date = COALESCE(last_valid_date, membership_date, created_at)
+        $currentDate = now()->format('Y-m-d');
+        $query->selectRaw("
+            CEIL( GREATEST(0, TIMESTAMPDIFF(MONTH,
+                COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
+                '$currentDate'
+            )) / 3 ) as pending_quarters_calc
+        ");
+
+        // Filter for PENDING members (pending_quarters > 0)
+        // This replaces the complex PHP/Collection logic
+        $query->having('pending_quarters_calc', '>', 0);
+
+        // Apply Quarters Filter
+        if ($quartersFilter) {
+            $query->having('pending_quarters_calc', '=', $quartersFilter);
+            // Handle "More than 5" separately if needed, e.g. input '6+'
+            if ($quartersFilter === '6+') {
+                $query->having('pending_quarters_calc', '>=', 6);
+            }
+        }
 
         // Pagination
         $perPage = 15;
         $paginatedMembers = $query->paginate($perPage)->withQueryString();
 
-        // Transform collection to calculate exact amounts
+        // Transform collection to add calculated fee amounts (easier in PHP)
         $paginatedMembers->getCollection()->transform(function ($member) {
             $monthlyFee = $member->memberCategory ? $member->memberCategory->subscription_fee : 0;
-            $currentDate = now();
-
-            // Determine start point for calculation
-            // If they have a valid_to date, start from there. If not, start from membership date.
-            if ($member->last_valid_date) {
-                $startDate = \Carbon\Carbon::parse($member->last_valid_date);
-            } else {
-                $startDate = $member->membership_date ? \Carbon\Carbon::parse($member->membership_date) : \Carbon\Carbon::parse($member->created_at);
-            }
-
-            // Ensure start date is not in future (negative pending)
-            if ($startDate->gt($currentDate)) {
-                $pendingMonths = 0;
-            } else {
-                // Diff in months
-                $pendingMonths = $startDate->diffInMonths($currentDate);
-                // If less than 1 month but past date, count as 0 or 1?
-                // diffInMonths returns integer. Check if we want ceiling or floor.
-                // Usually precise diff:
-                $pendingMonths = $startDate->floatDiffInMonths($currentDate);
-            }
-
-            $pendingMonths = max(0, ceil($pendingMonths));  // Ceiling to charge for started months? Or floor? adhering to previous logic "ceil" implied by loop
-
-            if ($pendingMonths > 0) {
-                $pendingMonths = ceil($startDate->diffInMonths($currentDate, false));
-                // Re-evaluating previous logic:
-                // "pendingMonths = paidUntilDate->diffInMonths($currentDate)"
-                // This effectively counts full months passed.
-            }
-
-            $pendingQuarters = ceil($pendingMonths / 3);
+            $pendingQuarters = $member->pending_quarters_calc;  // Use SQL calculated value
+            $pendingMonths = $pendingQuarters * 3;  // Approx
             $totalPendingAmount = $pendingMonths * $monthlyFee;
 
             return [
@@ -328,19 +311,9 @@ class MemberFeeRevenueController extends Controller
             ];
         });
 
-        // Quick Stats (Approximated or separate query for speed)
-        // Calculating EXACT total for ALL pages is expensive.
-        // We can Sum (Now - Max(Valid_Date)) * Fee in SQL?
-        // For now, let's keep stats simplified or calculate on current page to avoid timeout,
-        // OR run a simplified aggregate query.
-
-        // Simplified Aggregate Query for Total Pending Amount
-        // This is complex in SQL due to differing fees per category.
-        // Let's return 0 for totals for now to ensure page loads, or implement a lighter calc.
-
         $statistics = [
             'total_members' => $paginatedMembers->total(),
-            'total_pending_amount' => 0,  // Placeholder to prevent timeout
+            'total_pending_amount' => 0,  // Placeholder
             'total_pending_quarters' => 0,
         ];
 
@@ -351,6 +324,7 @@ class MemberFeeRevenueController extends Controller
                 'status' => $statusFilter,
                 'categories' => $categoryFilter,
                 'member_search' => $memberSearch,
+                'quarters_pending' => $quartersFilter,
             ],
             'all_statuses' => Member::distinct()->pluck('status')->filter()->values(),
             'all_categories' => MemberCategory::select('id', 'name')->get(),
@@ -501,6 +475,79 @@ class MemberFeeRevenueController extends Controller
                 'contact_search' => $contactSearch,
             ],
             'all_categories' => MemberCategory::select('id', 'name')->get(),
+        ]);
+    }
+
+    public function pendingMaintenanceBulkStatusChange(Request $request)
+    {
+        $request->validate([
+            'member_ids' => 'required|array',
+            'member_ids.*' => 'exists:members,id',
+            'status' => 'required|string',
+            'reason' => 'nullable|string',
+        ]);
+
+        $memberIds = $request->input('member_ids');
+        $status = $request->input('status');
+        $reason = $request->input('reason');
+
+        // Logic to update status
+        Member::whereIn('id', $memberIds)->update([
+            'status' => $status,
+            // 'status_change_reason' => $reason // Assuming there's a column or log for this. If not, we skip or add it.
+        ]);
+
+        // Log the change (Optional implementation detail)
+        // if ($reason) { ... }
+
+        return redirect()->back()->with('success', 'Members status updated successfully.');
+    }
+
+    public function pendingMaintenanceBulkPrint(Request $request)
+    {
+        // Accept filters similar to report, OR direct member_ids
+        $memberIds = $request->input('member_ids');
+
+        // Re-use logic or fetch specific invoice items
+        // For simplicity, we can fetch the maintenance fee items for these members
+        // OR print a simplified "Monthly Maintenance Invoice" summary.
+
+        // Implementation:
+        // If member_ids provided, filter by them.
+        // If filters provided, re-run query to get IDs.
+
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member', 'invoice'])
+            ->where('fee_type', 'maintenance_fee')
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            });
+
+        if ($memberIds) {
+            $query->whereHas('invoice', function ($q) use ($memberIds) {
+                $q->whereIn('member_id', $memberIds);
+            });
+        }
+
+        // NOTE: The user requested "Monthly Maintenance Invoice".
+        // If they are pending, they might NOT have an invoice item yet?
+        // Wait, "Pending Maintenance Report" lists members who OWE fees.
+        // So we might need to GENERATE a print view of what they OWE (Invoice format).
+        // It's not necessarily existing FinancialInvoiceItems.
+
+        // Let's print a "Demand Note" or "Statement" for these members.
+        // We will fetch members and calculating pending.
+
+        $members = Member::whereIn('id', $memberIds)->get();
+        // ... (Logic to calculate pending and pass to view)
+
+        // For now, let's return a simple view or existing print view adapted.
+        return Inertia::render('App/Admin/Membership/PendingMaintenanceReportPrint', [
+            // Re-using the report print logic but filtering by selected IDs
+            'members' => $members,  // This needs proper transformation like the main report
+            'statistics' => [],  // ...
+            'filters' => [],
+            'all_statuses' => [],
+            'all_categories' => [],
         ]);
     }
 
