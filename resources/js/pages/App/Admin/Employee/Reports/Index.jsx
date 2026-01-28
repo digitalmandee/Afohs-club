@@ -61,13 +61,9 @@ const ReportsIndex = ({ reports = [] }) => {
                                     onClick={() => handleReportClick(report.route)}
                                 >
                                     <CardContent sx={{ p: 3 }}>
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                                             <Box
                                                 sx={{
-                                                    width: 56,
-                                                    height: 56,
-                                                    borderRadius: '12px',
-                                                    // backgroundColor: report.color || '#063455',
                                                     display: 'flex',
                                                     alignItems: 'center',
                                                     justifyContent: 'center',

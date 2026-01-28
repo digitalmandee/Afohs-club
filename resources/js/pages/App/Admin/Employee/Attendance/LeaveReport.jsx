@@ -102,6 +102,85 @@ const LeaveReport = () => {
                 <div style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Leave Report</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FormControl
+                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                            >
+                                <Select value={month}
+                                    onChange={(e) => setMonth(e.target.value)}
+                                    sx={{ minWidth: 150 }}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px',
+                                                maxHeight: '300px',
+                                                overflowY: 'auto',
+                                                py:1
+                                            },
+                                        },
+                                        MenuListProps: {
+                                            sx: {
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my:0.3,
+                                                    transition: 'all 0.2s ease',
+                                                },
+
+                                                '& .MuiMenuItem-root:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+
+                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+
+                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        },
+                                    }}>
+                                    {months.map((m) => (
+                                        <MenuItem key={m.value} value={m.value}>
+                                            {m.label}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <Button
+                                variant="contained"
+                                style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', borderRadius: '16px' }}
+                                onClick={() => {
+                                    const url = route('employees.leaves.application.report.print', {
+                                        month: month,
+                                    });
+                                    window.open(url, '_blank');
+                                }}
+                            >
+                                Print Report
+                            </Button>
+                            <Button
+                                variant="contained"
+                                style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none', borderRadius: '16px' }}
+                                onClick={() => {
+                                    const url = route('api.leave-reports.export', {
+                                        month: month,
+                                    });
+                                    window.location.href = url;
+                                }}
+                            >
+                                Export Excel
+                            </Button>
+                        </Box>
                     </div>
                     <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>View detailed reports of employee leave history</Typography>
                     <Box sx={{ mb: 3, mt: '2rem' }}>
@@ -145,66 +224,24 @@ const LeaveReport = () => {
                                     Search
                                 </Button>
                                 {/* {searchTerm && ( */}
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleClearSearch}
-                                        sx={{
-                                            color: '#063455',
-                                            borderColor: '#063455',
-                                            textTransform: 'none',
-                                            borderRadius: '16px',
-                                            px:4,
-                                            '&:hover': {
-                                                borderColor: '#052d45',
-                                                // backgroundColor: 'rgba(6, 52, 85, 0.04)',
-                                            },
-                                        }}
-                                    >
-                                        Reset
-                                    </Button>
-                                
-                            </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <FormControl
-                                    size="small"
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleClearSearch}
                                     sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: '16px',
+                                        color: '#063455',
+                                        borderColor: '#063455',
+                                        textTransform: 'none',
+                                        borderRadius: '16px',
+                                        px: 4,
+                                        '&:hover': {
+                                            borderColor: '#052d45',
+                                            // backgroundColor: 'rgba(6, 52, 85, 0.04)',
                                         },
                                     }}
                                 >
-                                    <Select value={month} onChange={(e) => setMonth(e.target.value)} sx={{ minWidth: 150 }}>
-                                        {months.map((m) => (
-                                            <MenuItem key={m.value} value={m.value}>
-                                                {m.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <Button
-                                    variant="contained"
-                                    style={{ backgroundColor: '#063455', color: 'white', textTransform: 'none', borderRadius: '16px' }}
-                                    onClick={() => {
-                                        const url = route('employees.leaves.application.report.print', {
-                                            month: month,
-                                        });
-                                        window.open(url, '_blank');
-                                    }}
-                                >
-                                    Print Report
+                                    Reset
                                 </Button>
-                                <Button
-                                    variant="contained"
-                                    style={{ backgroundColor: '#4caf50', color: 'white', textTransform: 'none', borderRadius: '16px' }}
-                                    onClick={() => {
-                                        const url = route('api.leave-reports.export', {
-                                            month: month,
-                                        });
-                                        window.location.href = url;
-                                    }}
-                                >
-                                    Export Excel
-                                </Button>
+
                             </Box>
                         </Box>
                     </Box>

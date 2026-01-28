@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { ArrowBack } from '@mui/icons-material';
-import { Button, TextField, Checkbox, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Box } from '@mui/material';
+import { Button, TextField, MenuItem, Checkbox, Pagination, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Paper, CircularProgress, Box } from '@mui/material';
 import axios from 'axios';
 
 // const drawerWidthOpen = 240;
@@ -135,7 +135,7 @@ const AttendanceReport = () => {
                         <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Includes staff performance, attendance, and leave summaries</Typography>
                         <div style={{ display: 'flex', justifyContent: 'end', gap: '8px', marginTop: '1rem' }}>
                             {/* Month & Year Section */}
-                            <TextField
+                            {/* <TextField
                                 select
                                 label="Month"
                                 value={month}
@@ -158,7 +158,64 @@ const AttendanceReport = () => {
                                         {new Date(0, i).toLocaleString('default', { month: 'long' })}
                                     </option>
                                 ))}
+                            </TextField> */}
+                            <TextField
+                                select
+                                label="Month"
+                                value={month}
+                                onChange={handleMonthChange}
+                                size="small"
+                                sx={{
+                                    backgroundColor: 'transparent',
+                                    minWidth: '120px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                                SelectProps={{
+                                    MenuProps: {
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px',
+                                                maxHeight: '300px',
+                                                overflowY: 'auto',
+                                            },
+                                        },
+                                        MenuListProps: {
+                                            sx: {
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my:'0.3px',
+                                                    transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiMenuItem-root:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        },
+                                    },
+                                }}
+                            >
+                                {[...Array(12)].map((_, i) => (
+                                    <MenuItem key={i + 1} value={i + 1}>
+                                        {new Date(0, i).toLocaleString('default', { month: 'long' })}
+                                    </MenuItem>
+                                ))}
                             </TextField>
+
 
                             <TextField
                                 type="number"
