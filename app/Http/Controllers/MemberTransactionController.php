@@ -631,6 +631,9 @@ class MemberTransactionController extends Controller
 
         if ($bookingType === 'corporate') {
             $sub->corporate_member_id = $member->id;
+        } elseif (str_starts_with($bookingType, 'guest')) {
+            // Guest booking - use customer_id
+            $sub->customer_id = $member->id;
         } else {
             $sub->member_id = $member->id;
         }

@@ -1080,9 +1080,11 @@ class MemberFeeRevenueController extends Controller
         $paymentMethodFilter = $request->input('payment_method');
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
+        $cashierFilter = $request->input('cashier');
 
         // Get maintenance fee transactions - using Items for Mixed support
-        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice'])
+        // Include createdBy relation to show who created the receipt
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.createdBy'])
             ->where('fee_type', 'maintenance_fee')
             // Only paid invoices
             ->whereHas('invoice', function ($q) {
@@ -1146,6 +1148,13 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
+        // Apply cashier filter (user who created the receipt)
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
+            });
+        }
+
         // Get paginated results
         $transactions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
@@ -1163,6 +1172,8 @@ class MemberFeeRevenueController extends Controller
         $allCities = Member::distinct()->pluck('current_city')->filter()->values();
         $allPaymentMethods = ['Cash', 'Credit Card', 'Bank Transfer', 'Cheque'];
         $allGenders = ['Male', 'Female'];
+        // Get all users for cashier filter
+        $allCashiers = \App\Models\User::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('App/Admin/Membership/MonthlyMaintenanceFeeReport', [
             'transactions' => $transactions,
@@ -1180,11 +1191,13 @@ class MemberFeeRevenueController extends Controller
                 'payment_method' => $paymentMethodFilter,
                 'categories' => $categoryFilter ?? [],
                 'gender' => $genderFilter,
+                'cashier' => $cashierFilter,
             ],
             'all_cities' => $allCities,
             'all_payment_methods' => $allPaymentMethods,
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_genders' => $allGenders,
+            'all_cashiers' => $allCashiers,
         ]);
     }
 
@@ -2183,12 +2196,13 @@ class MemberFeeRevenueController extends Controller
         // Initialize summary structure with ALL categories
         $summary = [];
         $grandTotals = [
-            '1_quarter_pending' => 0,
-            '2_quarters_pending' => 0,
-            '3_quarters_pending' => 0,
-            '4_quarters_pending' => 0,
-            '5_quarters_pending' => 0,
-            'more_than_5_quarters_pending' => 0,
+            '1_quarter_pending' => ['count' => 0, 'amount' => 0],
+            '2_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '3_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '4_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '5_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '6_quarters_pending' => ['count' => 0, 'amount' => 0],
+            'more_than_6_quarters_pending' => ['count' => 0, 'amount' => 0],
             'maintenance_fee_quarterly' => 0,
             'total_values' => 0
         ];
@@ -2203,15 +2217,17 @@ class MemberFeeRevenueController extends Controller
 
         $allCategories = $allCategoriesQuery->get();
 
-        // Initialize all categories in summary
+        // Initialize all categories in summary with count+amount structure
         foreach ($allCategories as $category) {
             $summary[$category->name] = [
-                '1_quarter_pending' => 0,
-                '2_quarters_pending' => 0,
-                '3_quarters_pending' => 0,
-                '4_quarters_pending' => 0,
-                '5_quarters_pending' => 0,
-                'more_than_5_quarters_pending' => 0,
+                'category_id' => $category->id,
+                '1_quarter_pending' => ['count' => 0, 'amount' => 0],
+                '2_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '3_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '4_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '5_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '6_quarters_pending' => ['count' => 0, 'amount' => 0],
+                'more_than_6_quarters_pending' => ['count' => 0, 'amount' => 0],
                 'maintenance_fee_quarterly' => $category->subscription_fee ?? 0,
                 'total_values' => 0
             ];
@@ -2258,29 +2274,35 @@ class MemberFeeRevenueController extends Controller
             $pendingQuarters = ceil($pendingMonths / 3);
 
             if ($pendingQuarters > 0) {
-                if ($pendingQuarters == 1) {
-                    $summary[$categoryName]['1_quarter_pending']++;
-                    $grandTotals['1_quarter_pending']++;
-                } elseif ($pendingQuarters == 2) {
-                    $summary[$categoryName]['2_quarters_pending']++;
-                    $grandTotals['2_quarters_pending']++;
-                } elseif ($pendingQuarters == 3) {
-                    $summary[$categoryName]['3_quarters_pending']++;
-                    $grandTotals['3_quarters_pending']++;
-                } elseif ($pendingQuarters == 4) {
-                    $summary[$categoryName]['4_quarters_pending']++;
-                    $grandTotals['4_quarters_pending']++;
-                } elseif ($pendingQuarters == 5) {
-                    $summary[$categoryName]['5_quarters_pending']++;
-                    $grandTotals['5_quarters_pending']++;
-                } else {
-                    $summary[$categoryName]['more_than_5_quarters_pending']++;
-                    $grandTotals['more_than_5_quarters_pending']++;
-                }
-
-                // Calculate total pending amount
+                // Calculate pending amount for this member
                 $quarterlyFee = $member->memberCategory->subscription_fee ?? 0;
                 $totalPendingAmount = $pendingQuarters * $quarterlyFee;
+
+                // Determine bucket key
+                $bucketKey = '';
+                if ($pendingQuarters == 1) {
+                    $bucketKey = '1_quarter_pending';
+                } elseif ($pendingQuarters == 2) {
+                    $bucketKey = '2_quarters_pending';
+                } elseif ($pendingQuarters == 3) {
+                    $bucketKey = '3_quarters_pending';
+                } elseif ($pendingQuarters == 4) {
+                    $bucketKey = '4_quarters_pending';
+                } elseif ($pendingQuarters == 5) {
+                    $bucketKey = '5_quarters_pending';
+                } elseif ($pendingQuarters == 6) {
+                    $bucketKey = '6_quarters_pending';
+                } else {
+                    $bucketKey = 'more_than_6_quarters_pending';
+                }
+
+                // Update count and amount for the bucket
+                $summary[$categoryName][$bucketKey]['count']++;
+                $summary[$categoryName][$bucketKey]['amount'] += $totalPendingAmount;
+                $grandTotals[$bucketKey]['count']++;
+                $grandTotals[$bucketKey]['amount'] += $totalPendingAmount;
+
+                // Also update total values
                 $summary[$categoryName]['total_values'] += $totalPendingAmount;
                 $grandTotals['total_values'] += $totalPendingAmount;
             }
@@ -2546,8 +2568,8 @@ class MemberFeeRevenueController extends Controller
             ],
             [
                 'id' => 8,
-                'title' => 'Pending Maintenance Quarters Report',
-                'description' => 'Quarter-wise analysis of pending maintenance payments',
+                'title' => 'Pending Maintenance Quarters Summary (Category-wise)',
+                'description' => 'Quarter-wise analysis of pending maintenance payments by category',
                 'icon' => 'Timeline',
                 'color' => '#063455',
                 'route' => 'membership.pending-maintenance-quarters-report',

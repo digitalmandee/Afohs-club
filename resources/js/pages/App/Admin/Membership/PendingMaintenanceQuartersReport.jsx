@@ -1,19 +1,27 @@
 import { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { router, usePage } from '@inertiajs/react';
-import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem, Autocomplete } from '@mui/material';
-import { Search, Print, ArrowBack } from '@mui/icons-material';
+import { router, usePage, Link } from '@inertiajs/react';
+import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Search, Print, ArrowBack, InfoOutlined } from '@mui/icons-material';
 
 const PendingMaintenanceQuartersReport = () => {
     // Get props first
     const { summary, grand_totals, filters, all_categories } = usePage().props;
 
-    // Modal state
-    // const [open, setOpen] = useState(true);
+    // Filter state
     const [allFilters, setAllFilters] = useState({
         date_from: filters?.date_from || '',
         date_to: filters?.date_to || '',
         category: filters?.category || '',
+    });
+
+    // Detail modal state
+    const [detailModal, setDetailModal] = useState({
+        open: false,
+        categoryId: null,
+        categoryName: '',
+        quartersValue: null,
+        quartersLabel: '',
     });
 
     const formatCurrency = (amount) => {
@@ -24,6 +32,33 @@ const PendingMaintenanceQuartersReport = () => {
         }).format(amount || 0);
     };
 
+    // Open the detail modal with category and quarter info
+    const handleOpenDetail = (categoryId, categoryName, quartersValue, quartersLabel) => {
+        setDetailModal({
+            open: true,
+            categoryId,
+            categoryName,
+            quartersValue,
+            quartersLabel,
+        });
+    };
+
+    const handleCloseDetail = () => {
+        setDetailModal({ open: false, categoryId: null, categoryName: '', quartersValue: null, quartersLabel: '' });
+    };
+
+    // Generate link to detailed Pending Maintenance Report with filters
+    const getDetailReportUrl = () => {
+        const params = new URLSearchParams();
+        if (detailModal.categoryId) {
+            params.append('category', detailModal.categoryId);
+        }
+        if (detailModal.quartersValue) {
+            params.append('quarters_pending', detailModal.quartersValue);
+        }
+        return route('membership.pending-maintenance-report') + (params.toString() ? '?' + params.toString() : '');
+    };
+
     const handleSearch = () => {
         router.get(route('membership.pending-maintenance-quarters-report'), allFilters, {
             preserveState: true,
@@ -32,9 +67,9 @@ const PendingMaintenanceQuartersReport = () => {
     };
 
     const handleFilterChange = (field, value) => {
-        setAllFilters(prev => ({
+        setAllFilters((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
     };
 
@@ -86,9 +121,7 @@ const PendingMaintenanceQuartersReport = () => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBack sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>
-                            Pending Maintenance Report (Category-wise)
-                        </Typography>
+                        <Typography sx={{ fontWeight: 600, fontSize: '24px', color: '#063455' }}>Pending Maintenance Report (Category-wise)</Typography>
                     </div>
                     <Button
                         variant="contained"
@@ -163,23 +196,15 @@ const PendingMaintenanceQuartersReport = () => {
                                 </FormControl> */}
                             <Autocomplete
                                 multiple
-                                value={all_categories.filter(cat => allFilters.category?.includes(cat.id)) || []}
+                                value={all_categories.filter((cat) => allFilters.category?.includes(cat.id)) || []}
                                 onChange={(event, newValue) => {
-                                    const categoryIds = newValue.map(cat => cat.id);
+                                    const categoryIds = newValue.map((cat) => cat.id);
                                     handleFilterChange('category', categoryIds);
                                 }}
                                 options={all_categories || []}
                                 getOptionLabel={(option) => option.name || ''}
                                 isOptionEqualToValue={(option, value) => option.id === value?.id}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Choose Categories"
-                                        placeholder="All Categories"
-                                        size="small"
-                                        fullWidth
-                                    />
-                                )}
+                                renderInput={(params) => <TextField {...params} label="Choose Categories" placeholder="All Categories" size="small" fullWidth />}
                             />
                         </Grid>
                         <Grid item xs={12} md={3}>
@@ -225,36 +250,17 @@ const PendingMaintenanceQuartersReport = () => {
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', width: '50px' }}>
-                                        SR #
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
-                                        CATEGORY
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#059669' }}>
-                                        1 QUARTER PENDING
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#0ea5e9' }}>
-                                        2 QUARTERS PENDING
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#8b5cf6' }}>
-                                        3 QUARTERS PENDING
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#f59e0b' }}>
-                                        4 QUARTERS PENDING
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#ef4444' }}>
-                                        5 QUARTERS PENDING
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#dc2626' }}>
-                                        MORE THAN 5 QUARTERS PENDING
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                        MAINTENANCE FEE (QUARTERLY)
-                                    </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                        TOTAL VALUES
-                                    </TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', width: '50px' }}>SR #</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>CATEGORY</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#059669' }}>1 QUARTER PENDING</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#0ea5e9' }}>2 QUARTERS PENDING</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#8b5cf6' }}>3 QUARTERS PENDING</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#f59e0b' }}>4 QUARTERS PENDING</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#ef4444' }}>5 QTS PENDING</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#b91c1c' }}>6 QTS PENDING</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center', backgroundColor: '#dc2626' }}>MORE THAN 6 QTS</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>MAINTENANCE FEE (QUARTERLY)</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>TOTAL VALUES</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -268,44 +274,107 @@ const PendingMaintenanceQuartersReport = () => {
                                                 borderBottom: '1px solid #e5e7eb',
                                             }}
                                         >
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {index + 1}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>
-                                                {categoryName}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>{index + 1}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{categoryName}</TableCell>
                                             <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {data['1_quarter_pending'] || 0}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                    {data['1_quarter_pending']?.count || 0}
+                                                    {(data['1_quarter_pending']?.count || 0) > 0 && (
+                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 1, '1 Qts')} sx={{ p: 0 }}>
+                                                            <InfoOutlined sx={{ fontSize: 14, color: '#059669' }} />
+                                                        </IconButton>
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" sx={{ display: 'block', color: '#059669' }}>
+                                                    ({formatCurrency(data['1_quarter_pending']?.amount || 0).replace('PKR', '')})
+                                                </Typography>
                                             </TableCell>
                                             <TableCell sx={{ color: '#0ea5e9', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {data['2_quarters_pending'] || 0}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                    {data['2_quarters_pending']?.count || 0}
+                                                    {(data['2_quarters_pending']?.count || 0) > 0 && (
+                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 2, '2 Qts')} sx={{ p: 0 }}>
+                                                            <InfoOutlined sx={{ fontSize: 14, color: '#0ea5e9' }} />
+                                                        </IconButton>
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" sx={{ display: 'block', color: '#0ea5e9' }}>
+                                                    ({formatCurrency(data['2_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                                </Typography>
                                             </TableCell>
                                             <TableCell sx={{ color: '#8b5cf6', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {data['3_quarters_pending'] || 0}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                    {data['3_quarters_pending']?.count || 0}
+                                                    {(data['3_quarters_pending']?.count || 0) > 0 && (
+                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 3, '3 Qts')} sx={{ p: 0 }}>
+                                                            <InfoOutlined sx={{ fontSize: 14, color: '#8b5cf6' }} />
+                                                        </IconButton>
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" sx={{ display: 'block', color: '#8b5cf6' }}>
+                                                    ({formatCurrency(data['3_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                                </Typography>
                                             </TableCell>
                                             <TableCell sx={{ color: '#f59e0b', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {data['4_quarters_pending'] || 0}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                    {data['4_quarters_pending']?.count || 0}
+                                                    {(data['4_quarters_pending']?.count || 0) > 0 && (
+                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 4, '4 Qts')} sx={{ p: 0 }}>
+                                                            <InfoOutlined sx={{ fontSize: 14, color: '#f59e0b' }} />
+                                                        </IconButton>
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" sx={{ display: 'block', color: '#f59e0b' }}>
+                                                    ({formatCurrency(data['4_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                                </Typography>
                                             </TableCell>
                                             <TableCell sx={{ color: '#ef4444', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {data['5_quarters_pending'] || 0}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                    {data['5_quarters_pending']?.count || 0}
+                                                    {(data['5_quarters_pending']?.count || 0) > 0 && (
+                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 5, '5 Qts')} sx={{ p: 0 }}>
+                                                            <InfoOutlined sx={{ fontSize: 14, color: '#ef4444' }} />
+                                                        </IconButton>
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" sx={{ display: 'block', color: '#ef4444' }}>
+                                                    ({formatCurrency(data['5_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                                </Typography>
+                                            </TableCell>
+                                            <TableCell sx={{ color: '#b91c1c', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                    {data['6_quarters_pending']?.count || 0}
+                                                    {(data['6_quarters_pending']?.count || 0) > 0 && (
+                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 6, '6 Qts')} sx={{ p: 0 }}>
+                                                            <InfoOutlined sx={{ fontSize: 14, color: '#b91c1c' }} />
+                                                        </IconButton>
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" sx={{ display: 'block', color: '#b91c1c' }}>
+                                                    ({formatCurrency(data['6_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                                </Typography>
                                             </TableCell>
                                             <TableCell sx={{ color: '#dc2626', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {data['more_than_5_quarters_pending'] || 0}
+                                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+                                                    {data['more_than_6_quarters_pending']?.count || 0}
+                                                    {(data['more_than_6_quarters_pending']?.count || 0) > 0 && (
+                                                        <IconButton size="small" onClick={() => handleOpenDetail(data.category_id, categoryName, 7, '6+ Qts')} sx={{ p: 0 }}>
+                                                            <InfoOutlined sx={{ fontSize: 14, color: '#dc2626' }} />
+                                                        </IconButton>
+                                                    )}
+                                                </Box>
+                                                <Typography variant="caption" sx={{ display: 'block', color: '#dc2626' }}>
+                                                    ({formatCurrency(data['more_than_6_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                                </Typography>
                                             </TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>
-                                                {formatCurrency(data['maintenance_fee_quarterly']).replace('PKR', '')}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#dc2626', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>
-                                                {formatCurrency(data['total_values']).replace('PKR', '')}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px', textAlign: 'center' }}>{formatCurrency(data['maintenance_fee_quarterly']).replace('PKR', '')}</TableCell>
+                                            <TableCell sx={{ color: '#dc2626', fontWeight: 700, fontSize: '14px', textAlign: 'center' }}>{formatCurrency(data['total_values']).replace('PKR', '')}</TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                                            <Typography color="textSecondary">
-                                                No pending maintenance records found for the selected criteria
-                                            </Typography>
+                                        <TableCell colSpan={11} align="center" sx={{ py: 4 }}>
+                                            <Typography color="textSecondary">No pending maintenance records found for the selected criteria</Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -313,36 +382,52 @@ const PendingMaintenanceQuartersReport = () => {
                                 {/* Grand Total Row */}
                                 {summary && Object.keys(summary).length > 0 && (
                                     <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}></TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>GRAND TOTAL</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>
+                                            {grand_totals['1_quarter_pending']?.count || 0}
+                                            <Typography variant="caption" sx={{ display: 'block', color: 'white' }}>
+                                                ({formatCurrency(grand_totals['1_quarter_pending']?.amount || 0).replace('PKR', '')})
+                                            </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                            GRAND TOTAL
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>
+                                            {grand_totals['2_quarters_pending']?.count || 0}
+                                            <Typography variant="caption" sx={{ display: 'block', color: 'white' }}>
+                                                ({formatCurrency(grand_totals['2_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                            </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {grand_totals['1_quarter_pending'] || 0}
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>
+                                            {grand_totals['3_quarters_pending']?.count || 0}
+                                            <Typography variant="caption" sx={{ display: 'block', color: 'white' }}>
+                                                ({formatCurrency(grand_totals['3_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                            </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {grand_totals['2_quarters_pending'] || 0}
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>
+                                            {grand_totals['4_quarters_pending']?.count || 0}
+                                            <Typography variant="caption" sx={{ display: 'block', color: 'white' }}>
+                                                ({formatCurrency(grand_totals['4_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                            </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {grand_totals['3_quarters_pending'] || 0}
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>
+                                            {grand_totals['5_quarters_pending']?.count || 0}
+                                            <Typography variant="caption" sx={{ display: 'block', color: 'white' }}>
+                                                ({formatCurrency(grand_totals['5_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                            </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {grand_totals['4_quarters_pending'] || 0}
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>
+                                            {grand_totals['6_quarters_pending']?.count || 0}
+                                            <Typography variant="caption" sx={{ display: 'block', color: 'white' }}>
+                                                ({formatCurrency(grand_totals['6_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                            </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {grand_totals['5_quarters_pending'] || 0}
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>
+                                            {grand_totals['more_than_6_quarters_pending']?.count || 0}
+                                            <Typography variant="caption" sx={{ display: 'block', color: 'white' }}>
+                                                ({formatCurrency(grand_totals['more_than_6_quarters_pending']?.amount || 0).replace('PKR', '')})
+                                            </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {grand_totals['more_than_5_quarters_pending'] || 0}
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {formatCurrency(grand_totals['maintenance_fee_quarterly']).replace('PKR', '')}
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px', textAlign: 'center' }}>
-                                            {formatCurrency(grand_totals['total_values']).replace('PKR', '')}
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>{formatCurrency(grand_totals['maintenance_fee_quarterly']).replace('PKR', '')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px', textAlign: 'center' }}>{formatCurrency(grand_totals['total_values']).replace('PKR', '')}</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
@@ -357,63 +442,73 @@ const PendingMaintenanceQuartersReport = () => {
                             Pending Quarters Summary
                         </Typography>
                         <Grid container spacing={2}>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={6} md={1.7}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#dcfce7', borderRadius: 2 }}>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#059669' }}>
-                                        {grand_totals['1_quarter_pending'] || 0}
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#059669' }}>
+                                        {grand_totals['1_quarter_pending']?.count || 0}
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#047857', fontWeight: 600 }}>
-                                        1 Quarter Pending
+                                        1 Qts Pending
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={6} md={1.7}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#dbeafe', borderRadius: 2 }}>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#0ea5e9' }}>
-                                        {grand_totals['2_quarters_pending'] || 0}
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#0ea5e9' }}>
+                                        {grand_totals['2_quarters_pending']?.count || 0}
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#0284c7', fontWeight: 600 }}>
-                                        2 Quarters Pending
+                                        2 Qts Pending
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={6} md={1.7}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#ede9fe', borderRadius: 2 }}>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#8b5cf6' }}>
-                                        {grand_totals['3_quarters_pending'] || 0}
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#8b5cf6' }}>
+                                        {grand_totals['3_quarters_pending']?.count || 0}
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#7c3aed', fontWeight: 600 }}>
-                                        3 Quarters Pending
+                                        3 Qts Pending
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={6} md={1.7}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fef3c7', borderRadius: 2 }}>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#f59e0b' }}>
-                                        {grand_totals['4_quarters_pending'] || 0}
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#f59e0b' }}>
+                                        {grand_totals['4_quarters_pending']?.count || 0}
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#d97706', fontWeight: 600 }}>
-                                        4 Quarters Pending
+                                        4 Qts Pending
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={6} md={1.7}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fee2e2', borderRadius: 2 }}>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#ef4444' }}>
-                                        {grand_totals['5_quarters_pending'] || 0}
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#ef4444' }}>
+                                        {grand_totals['5_quarters_pending']?.count || 0}
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#dc2626', fontWeight: 600 }}>
-                                        5 Quarters Pending
+                                        5 Qts Pending
                                     </Typography>
                                 </Box>
                             </Grid>
-                            <Grid item xs={12} md={2}>
+                            <Grid item xs={6} md={1.7}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fca5a5', borderRadius: 2 }}>
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#b91c1c' }}>
+                                        {grand_totals['6_quarters_pending']?.count || 0}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ color: '#991b1b', fontWeight: 600 }}>
+                                        6 Qts Pending
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                            <Grid item xs={6} md={1.7}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fecaca', borderRadius: 2 }}>
-                                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#dc2626' }}>
-                                        {grand_totals['more_than_5_quarters_pending'] || 0}
+                                    <Typography variant="h5" sx={{ fontWeight: 700, color: '#dc2626' }}>
+                                        {grand_totals['more_than_6_quarters_pending']?.count || 0}
                                     </Typography>
                                     <Typography variant="body2" sx={{ color: '#b91c1c', fontWeight: 600 }}>
-                                        5+ Quarters Pending
+                                        6+ Qts Pending
                                     </Typography>
                                 </Box>
                             </Grid>
@@ -429,7 +524,39 @@ const PendingMaintenanceQuartersReport = () => {
                     </Box>
                 )}
             </div>
-            {/* </div> */}
+            {/* Detail Modal */}
+            <Dialog open={detailModal.open} onClose={handleCloseDetail} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ backgroundColor: '#063455', color: 'white', fontWeight: 600 }}>View Detailed Report</DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
+                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                        <Typography variant="h6" sx={{ color: '#374151', mb: 1 }}>
+                            {detailModal.categoryName}
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: '#6b7280', mb: 2 }}>
+                            {detailModal.quartersLabel} Pending
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: '#9ca3af' }}>
+                            Click below to view the detailed Pending Maintenance Report filtered by this category and quarter.
+                        </Typography>
+                    </Box>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, gap: 1 }}>
+                    <Button onClick={handleCloseDetail} variant="outlined" sx={{ color: '#6b7280', borderColor: '#d1d5db' }}>
+                        Cancel
+                    </Button>
+                    <Link href={getDetailReportUrl()} style={{ textDecoration: 'none' }}>
+                        <Button
+                            variant="contained"
+                            sx={{
+                                backgroundColor: '#063455',
+                                '&:hover': { backgroundColor: '#052d47' },
+                            }}
+                        >
+                            View Report
+                        </Button>
+                    </Link>
+                </DialogActions>
+            </Dialog>
         </>
     );
 };
