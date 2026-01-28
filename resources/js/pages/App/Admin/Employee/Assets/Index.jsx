@@ -125,7 +125,7 @@ const Index = () => {
                         </Box>
                     </Box>
 
-                    <Box sx={{ mb: 3 }}>
+                    <Box sx={{ mb: 3, display:'flex', justifyContent:'flex-end' }}>
                         <TextField
                             variant="outlined"
                             placeholder="Search assets..."
@@ -143,7 +143,7 @@ const Index = () => {
                                 ),
                             }}
                             sx={{
-                                width: '300px',
+                                width: '270px',
 
                                 '& .MuiOutlinedInput-root': {
                                     borderRadius: '16px',

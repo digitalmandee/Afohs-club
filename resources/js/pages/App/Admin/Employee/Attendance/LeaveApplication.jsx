@@ -217,7 +217,7 @@ const LeaveApplication = () => {
                                 >
                                     Search
                                 </Button>
-                                {searchTerm && (
+                                {/* {searchTerm && ( */}
                                     <Button
                                         variant="outlined"
                                         onClick={handleClearSearch}
@@ -226,6 +226,7 @@ const LeaveApplication = () => {
                                             borderColor: '#063455',
                                             textTransform: 'none',
                                             borderRadius: '16px',
+                                            px:3,
                                             '&:hover': {
                                                 borderColor: '#052d45',
                                                 // backgroundColor: 'rgba(6, 52, 85, 0.04)',
@@ -234,7 +235,7 @@ const LeaveApplication = () => {
                                     >
                                         Reset
                                     </Button>
-                                )}
+                                {/* )} */}
                             </Box>
 
                             {/* <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
