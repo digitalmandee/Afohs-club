@@ -468,4 +468,9 @@ class Member extends BaseModel
     {
         return $this->belongsTo(Employee::class, 'business_developer_id');
     }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class, 'family_member_id');
+    }
 }
