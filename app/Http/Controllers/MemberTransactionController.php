@@ -481,12 +481,15 @@ class MemberTransactionController extends Controller
                 // Resolve Fee Type from ID if possible
                 $transactionType = \App\Models\TransactionType::find($itemData['fee_type']);
 
+                // Use the Generic Type ID (e.g. 4 for Maintenance) if found, otherwise use input
+                $feeTypeIdToStore = $transactionType ? $transactionType->type : $itemData['fee_type'];
+
                 // Determine if it is a subscription fee based on the TransactionType 'type' column
                 $isSubscription = $transactionType && $transactionType->type == AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION;
 
                 $invoiceItem = new \App\Models\FinancialInvoiceItem([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => $itemData['fee_type'],  // Storing the ID as requested
+                    'fee_type' => $feeTypeIdToStore,  // Storing the Category ID (3, 4, 5, 6)
                     'description' => $itemData['description'] ?? ($transactionType ? $transactionType->name : ($itemData['fee_type_name'] ?? $itemData['fee_type'])),
                     'qty' => $qty,
                     'amount' => $rate,
@@ -1050,10 +1053,18 @@ class MemberTransactionController extends Controller
                     'updated_at' => now(),
                 ]);
 
+                // Map string fee_types to IDs for Items
+                $feeTypeId = $paymentData['fee_type'];
+                if ($paymentData['fee_type'] === 'membership_fee') {
+                    $feeTypeId = AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP;
+                } elseif ($paymentData['fee_type'] === 'maintenance_fee') {
+                    $feeTypeId = AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE;
+                }
+
                 // ✅ Create Invoice Item
                 FinancialInvoiceItem::create([
                     'invoice_id' => $invoice->id,
-                    'fee_type' => $paymentData['fee_type'],
+                    'fee_type' => $feeTypeId,
                     'description' => ucfirst(str_replace('_', ' ', $paymentData['fee_type'])),
                     'qty' => 1,
                     'amount' => $totalPrice,  // Using total price as amount for single item
