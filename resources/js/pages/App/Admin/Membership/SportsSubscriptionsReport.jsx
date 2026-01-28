@@ -1,12 +1,19 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
-import { TextField, Chip, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
+import { TextField, Chip, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
+import axios from 'axios';
+import debounce from 'lodash.debounce';
 
 const SportsSubscriptionsReport = () => {
     // Get props first
-    const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders, all_family_members } = usePage().props;
+    const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders, all_family_members, subscription_categories, all_cashiers } = usePage().props;
+
+    // Suggestions State (dynamic API)
+    const [suggestions, setSuggestions] = useState([]);
+    const [membershipSuggestions, setMembershipSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
     // Modal state
     // const [open, setOpen] = useState(true);
@@ -20,7 +27,69 @@ const SportsSubscriptionsReport = () => {
         categories: filters?.categories || [],
         gender: filters?.gender || '',
         family_member: filters?.family_member || '',
+        customer_type: filters?.customer_type || 'all',
+        subscription_category_id: filters?.subscription_category_id || '',
+        cashier: filters?.cashier || '',
     });
+
+    // Fetch Suggestions - debounced API call
+    const fetchSuggestions = useMemo(
+        () =>
+            debounce(async (query, type) => {
+                if (!query) {
+                    setSuggestions([]);
+                    return;
+                }
+                setLoadingSuggestions(true);
+                try {
+                    const response = await axios.get(route('api.bookings.search-customers'), {
+                        params: { query, type },
+                    });
+                    setSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                } finally {
+                    setLoadingSuggestions(false);
+                }
+            }, 300),
+        [],
+    );
+
+    // Fetch Membership Suggestions
+    const fetchMembershipSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query) {
+                    setMembershipSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(route('api.bookings.search-customers'), {
+                        params: { query, type: 'all' },
+                    });
+                    setMembershipSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching membership suggestions:', error);
+                }
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        if (allFilters.invoice_search) {
+            fetchMembershipSuggestions(allFilters.invoice_search);
+        } else {
+            setMembershipSuggestions([]);
+        }
+    }, [allFilters.invoice_search]);
+
+    useEffect(() => {
+        if (allFilters.member_search) {
+            fetchSuggestions(allFilters.member_search, allFilters.customer_type);
+        } else {
+            setSuggestions([]);
+        }
+    }, [allFilters.member_search, allFilters.customer_type]);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
@@ -43,19 +112,23 @@ const SportsSubscriptionsReport = () => {
     };
 
     const handlePageChange = (event, page) => {
-        router.get(route('membership.sports-subscriptions-report'), {
-            ...allFilters,
-            page: page
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('membership.sports-subscriptions-report'),
+            {
+                ...allFilters,
+                page: page,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     const handleFilterChange = (field, value) => {
-        setAllFilters(prev => ({
+        setAllFilters((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
     };
 
@@ -70,6 +143,9 @@ const SportsSubscriptionsReport = () => {
             categories: [],
             gender: '',
             family_member: '',
+            customer_type: 'all',
+            subscription_category_id: '',
+            cashier: '',
         });
         router.get(route('membership.sports-subscriptions-report'));
     };
@@ -143,8 +219,20 @@ const SportsSubscriptionsReport = () => {
             params.append('family_member', allFilters.family_member);
         }
 
+        if (allFilters.customer_type && allFilters.customer_type !== 'all') {
+            params.append('customer_type', allFilters.customer_type);
+        }
+
+        if (allFilters.subscription_category_id) {
+            params.append('subscription_category_id', allFilters.subscription_category_id);
+        }
+
+        if (allFilters.cashier) {
+            params.append('cashier', allFilters.cashier);
+        }
+
         if (allFilters.categories && allFilters.categories.length > 0) {
-            allFilters.categories.forEach(cat => params.append('categories[]', cat));
+            allFilters.categories.forEach((cat) => params.append('categories[]', cat));
         }
 
         // Add current page number
@@ -198,36 +286,136 @@ const SportsSubscriptionsReport = () => {
                 <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
 
-                    {/* Search Fields */}
+                    {/* Search Fields - Row 1 */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
+                        {/* Booking Type - FIRST */}
                         <Grid item xs={12} md={2}>
-                            <TextField
-                                fullWidth
+                            <FormControl
                                 size="small"
-                                placeholder="Search by Name"
-                                value={allFilters.member_search}
-                                onChange={(e) => handleFilterChange('member_search', e.target.value)}
                                 sx={{
+                                    width: '100%',
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
+                                        borderRadius: '16px',
                                     },
                                 }}
-                            />
+                            >
+                                <Select
+                                    value={allFilters.customer_type}
+                                    onChange={(e) => handleFilterChange('customer_type', e.target.value)}
+                                    displayEmpty
+                                    MenuProps={{
+                                        sx: {
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px',
+                                                boxShadow: 'none !important',
+                                                marginTop: '4px',
+                                                maxHeight: '180px',
+                                                overflowY: 'auto',
+                                            },
+                                            '& .MuiMenuItem-root': {
+                                                borderRadius: '16px',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: '#fff !important',
+                                                },
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="all">All</MenuItem>
+                                    <MenuItem value="member">Member</MenuItem>
+                                    <MenuItem value="corporate">Corporate</MenuItem>
+                                    <MenuItem value="guest">Guest</MenuItem>
+                                </Select>
+                            </FormControl>
                         </Grid>
-                        <Grid item xs={12} md={2}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search by Invoice No"
-                                value={allFilters.invoice_search}
-                                onChange={(e) => handleFilterChange('invoice_search', e.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    },
+
+                        {/* Search by Name with Autocomplete */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={suggestions}
+                                getOptionLabel={(option) => option.value || option}
+                                inputValue={allFilters.member_search || ''}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('member_search', newInputValue);
                                 }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Guest Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no || option.employee_id}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
                             />
                         </Grid>
+
+                        {/* Search by Membership Number */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={membershipSuggestions}
+                                getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
+                                inputValue={allFilters.invoice_search || ''}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('invoice_search', newInputValue);
+                                }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Membership #" placeholder="Number..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no || option.employee_id}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                            />
+                        </Grid>
+
                         <Grid item xs={12} md={2}>
                             <TextField
                                 fullWidth
@@ -241,7 +429,25 @@ const SportsSubscriptionsReport = () => {
                                 }}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={2}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                type="date"
+                                label="End Date"
+                                value={allFilters.date_to}
+                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
                                     },
                                 }}
                             />
@@ -279,17 +485,7 @@ const SportsSubscriptionsReport = () => {
                                         ))}
                                     </Select>
                                 </FormControl> */}
-                            <Autocomplete
-                                fullWidth
-                                size="small"
-                                options={all_genders || []}
-                                value={allFilters.gender || ''}
-                                onChange={(e, value) => handleFilterChange('gender', value)}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Choose Gender" placeholder="Select gender" />
-                                )}
-                                freeSolo
-                            />
+                            <Autocomplete fullWidth size="small" options={all_genders || []} value={allFilters.gender || ''} onChange={(e, value) => handleFilterChange('gender', value)} renderInput={(params) => <TextField {...params} label="Choose Gender" placeholder="Select gender" />} freeSolo />
                         </Grid>
                         <Grid item xs={12} md={2}>
                             {/* <FormControl fullWidth size="small">
@@ -306,92 +502,22 @@ const SportsSubscriptionsReport = () => {
                                     ))}
                                 </Select>
                             </FormControl> */}
-                            <Autocomplete
-                                fullWidth
-                                size="small"
-                                options={all_family_members || []}
-                                value={allFilters.family_member || ''}
-                                onChange={(e, value) => handleFilterChange('family_member', value)}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Details" placeholder="Select or type member" />
-                                )}
-                                freeSolo
-                            />
+                            <Autocomplete fullWidth size="small" options={all_family_members || []} value={allFilters.family_member || ''} onChange={(e, value) => handleFilterChange('family_member', value)} renderInput={(params) => <TextField {...params} label="Details" placeholder="Select or type member" />} freeSolo />
                         </Grid>
                     </Grid>
 
                     {/* Filter Fields Row 2 */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={12} md={2.4}>
-                            {/* <FormControl fullWidth size="small">
-                                <InputLabel>Choose Payment Method</InputLabel>
-                                <Select
-                                    value={allFilters.payment_method}
-                                    onChange={(e) => handleFilterChange('payment_method', e.target.value)}
-                                >
-                                    <MenuItem value="">All Methods</MenuItem>
-                                    {all_payment_methods && all_payment_methods.map((method) => (
-                                        <MenuItem key={method} value={method}>
-                                            {method}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl> */}
-                            <Autocomplete
-                                fullWidth
-                                size="small"
-                                options={all_payment_methods || []}
-                                value={allFilters.payment_method || ''}
-                                onChange={(e, value) => handleFilterChange('payment_method', value)}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Choose Payment Method" placeholder="Select or type method" />
-                                )}
-                                freeSolo
-                            />
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                        <Grid item xs={12} md={2}>
+                            <Autocomplete fullWidth size="small" options={subscription_categories || []} value={subscription_categories?.find((cat) => cat.id === allFilters.subscription_category_id) || null} onChange={(e, value) => handleFilterChange('subscription_category_id', value?.id || '')} getOptionLabel={(option) => option.name || ''} isOptionEqualToValue={(option, value) => option.id === value?.id} renderInput={(params) => <TextField {...params} label="Subscription Category" placeholder="e.g. Gym, Swimming" />} />
                         </Grid>
-                        <Grid item xs={12} md={2.4}>
-                            {/* <FormControl fullWidth size="small">
-                                <InputLabel>Choose Categories</InputLabel>
-                                <Select
-                                    multiple
-                                    value={allFilters.categories}
-                                    onChange={(e) => handleFilterChange('categories', e.target.value)}
-                                    renderValue={(selected) => (
-                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                            {selected.map((value) => {
-                                                const category = all_categories?.find(cat => cat.id === value);
-                                                return <Chip key={value} label={category?.name || value} size="small" />;
-                                            })}
-                                        </Box>
-                                    )}
-                                >
-                                    {all_categories && all_categories.map((category) => (
-                                        <MenuItem key={category.id} value={category.id}>
-                                            {category.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl> */}
-                            <Autocomplete
-                                fullWidth
-                                size="small"
-                                multiple
-                                options={all_categories || []}
-                                value={all_categories?.filter(cat => allFilters.categories?.includes(cat.id)) || []}
-                                onChange={(e, value) => handleFilterChange('categories', value.map(cat => cat.id))}
-                                getOptionLabel={(option) => option.name || ''}
-                                renderTags={(value, getTagProps) =>
-                                    value.map((option, index) => (
-                                        <Chip key={option.id} label={option.name} size="small" {...getTagProps({ index })} />
-                                    ))
-                                }
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Choose Categories" placeholder="Select or type category" />
-                                )}
-                                freeSolo
-                            />
+                        <Grid item xs={12} md={2}>
+                            <Autocomplete fullWidth size="small" options={all_cashiers || []} value={all_cashiers?.find((c) => c.id === allFilters.cashier) || null} onChange={(e, value) => handleFilterChange('cashier', value?.id || '')} getOptionLabel={(option) => option.name || ''} isOptionEqualToValue={(option, value) => option.id === value?.id} renderInput={(params) => <TextField {...params} label="Cashier" placeholder="Select cashier" />} />
                         </Grid>
-                        <Grid item xs={12} md={2.4}>
+                        <Grid item xs={12} md={2}>
+                            <Autocomplete fullWidth size="small" options={all_payment_methods || []} value={allFilters.payment_method || ''} onChange={(e, value) => handleFilterChange('payment_method', value)} renderInput={(params) => <TextField {...params} label="Payment Method" placeholder="Select method" />} freeSolo />
+                        </Grid>
+                        <Grid item xs={12} md={2}>
                             <Button
                                 fullWidth
                                 variant="contained"
@@ -408,7 +534,7 @@ const SportsSubscriptionsReport = () => {
                                 Search
                             </Button>
                         </Grid>
-                        <Grid item xs={12} md={2.4}>
+                        <Grid item xs={12} md={2}>
                             <Button
                                 fullWidth
                                 variant="outlined"
@@ -462,27 +588,25 @@ const SportsSubscriptionsReport = () => {
                                                 borderBottom: '1px solid #e5e7eb',
                                             }}
                                         >
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.member?.full_name}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.full_name}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                {transaction.data?.subscription_type_name || 'N/A'}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_type?.name || transaction.data?.subscription_type_name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={transaction.data?.family_member_relation || 'SELF'}
+                                                    label={transaction.invoice?.customer_id ? 'Guest' : transaction.data?.family_member_relation || 'SELF'}
                                                     size="small"
                                                     sx={{
-                                                        backgroundColor: `${getFamilyMemberColor(transaction.data?.family_member_relation)}20`,
-                                                        color: getFamilyMemberColor(transaction.data?.family_member_relation),
-                                                        fontWeight: 600
+                                                        backgroundColor: transaction.invoice?.customer_id ? '#f0f9ff' : `${getFamilyMemberColor(transaction.data?.family_member_relation)}20`,
+                                                        color: transaction.invoice?.customer_id ? '#0284c7' : getFamilyMemberColor(transaction.data?.family_member_relation),
+                                                        fontWeight: 600,
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.valid_from)}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.valid_to)}</TableCell>
-                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total_price).replace('PKR', 'Rs.')}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.membership_no}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.start_date)}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.end_date)}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={transaction.payment_method}
@@ -490,24 +614,18 @@ const SportsSubscriptionsReport = () => {
                                                     sx={{
                                                         backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,
                                                         color: getPaymentMethodColor(transaction.payment_method),
-                                                        fontWeight: 600
+                                                        fontWeight: 600,
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                {transaction.data?.subscription_category_name || 'N/A'}
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                System
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_type?.subscription_category?.name || transaction.data?.subscription_category_name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'System'}</TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
-                                            <Typography color="textSecondary">
-                                                No sports subscription records found
-                                            </Typography>
+                                            <Typography color="textSecondary">No sports subscription records found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -518,9 +636,7 @@ const SportsSubscriptionsReport = () => {
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={7}>
                                             TOTAL ({statistics?.total_transactions || 0} Subscriptions)
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                            {formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}</TableCell>
                                         <TableCell colSpan={4} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
                                             Sports Subscriptions Collection Report
                                         </TableCell>

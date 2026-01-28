@@ -1713,9 +1713,13 @@ class MemberFeeRevenueController extends Controller
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
         $familyMemberFilter = $request->input('family_member');
+        $customerTypeFilter = $request->input('customer_type');  // member or guest
+        $subscriptionCategoryFilter = $request->input('subscription_category_id');
+        $cashierFilter = $request->input('cashier');
 
         // Get subscription fee transactions only - using Items for Mixed Invoice support
-        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice'])
+        // Include createdBy for payment receiver and customer for guest subscriptions
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.customer', 'invoice.createdBy', 'subscriptionType.subscriptionCategory'])
             ->where('fee_type', 'subscription_fee')
             // Only paid invoices
             ->whereHas('invoice', function ($q) {
@@ -1788,6 +1792,35 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
+        // Apply customer type filter (member, corporate, or guest)
+        if ($customerTypeFilter === 'member') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('member_id');
+            });
+        } elseif ($customerTypeFilter === 'corporate') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('corporate_member_id');
+            });
+        } elseif ($customerTypeFilter === 'guest') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('customer_id');
+            });
+        }
+
+        // Apply subscription category filter
+        if ($subscriptionCategoryFilter) {
+            $query->whereHas('subscriptionType', function ($q) use ($subscriptionCategoryFilter) {
+                $q->where('subscription_category_id', $subscriptionCategoryFilter);
+            });
+        }
+
+        // Apply cashier filter (user who received payment)
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
+            });
+        }
+
         // Get paginated results
         $transactions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
@@ -1825,12 +1858,48 @@ class MemberFeeRevenueController extends Controller
                 'categories' => $categoryFilter ?? [],
                 'gender' => $genderFilter,
                 'family_member' => $familyMemberFilter,
+                'customer_type' => $customerTypeFilter,
+                'subscription_category_id' => $subscriptionCategoryFilter,
+                'cashier' => $cashierFilter,
             ],
             'all_cities' => $allCities,
             'all_payment_methods' => $allPaymentMethods,
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_genders' => $allGenders,
             'all_family_members' => $allFamilyMembers,
+            'subscription_categories' => \App\Models\SubscriptionCategory::select('id', 'name')->orderBy('name')->get(),
+            'all_cashiers' => \App\Models\User::select('id', 'name')->orderBy('name')->get(),
+            'all_members' => Member::select('id', 'full_name', 'membership_no', 'status')
+                ->orderBy('full_name')
+                ->limit(200)
+                ->get()
+                ->map(function ($member) {
+                    return [
+                        'id' => $member->id,
+                        'full_name' => $member->full_name,
+                        'name' => $member->full_name,
+                        'membership_no' => $member->membership_no,
+                        'customer_no' => null,
+                        'status' => $member->status
+                    ];
+                })
+                ->concat(
+                    \App\Models\Customer::select('id', 'name', 'customer_no')
+                        ->orderBy('name')
+                        ->limit(100)
+                        ->get()
+                        ->map(function ($customer) {
+                            return [
+                                'id' => 'customer_' . $customer->id,
+                                'full_name' => $customer->name,
+                                'name' => $customer->name,
+                                'membership_no' => null,
+                                'customer_no' => $customer->customer_no,
+                                'status' => 'guest'
+                            ];
+                        })
+                )
+                ->values(),
         ]);
     }
 
