@@ -36,7 +36,7 @@ class MemberFeeRevenueController extends Controller
             // We join users/members to ensure we only get items for members in this category?
             // Actually we have $memberUserIds, so we can filter by invoice.member_id
 
-            $maintenanceQuery = \App\Models\FinancialInvoiceItem::where('fee_type', 'maintenance_fee')
+            $maintenanceQuery = \App\Models\FinancialInvoiceItem::where('fee_type', '4')  // 4 = Maintenance
                 ->whereHas('invoice', function ($q) use ($memberUserIds) {
                     $q
                         ->where('status', 'paid')
@@ -59,7 +59,7 @@ class MemberFeeRevenueController extends Controller
 
             // Count members who have paid maintenance fees
             // We can distinct by invoice.member_id
-            $membersWithMaintenanceFees = \App\Models\FinancialInvoiceItem::where('fee_type', 'maintenance_fee')
+            $membersWithMaintenanceFees = \App\Models\FinancialInvoiceItem::where('fee_type', '4')  // 4 = Maintenance
                 ->whereHas('invoice', function ($q) use ($memberUserIds, $dateFrom, $dateTo) {
                     $q
                         ->where('status', 'paid')
@@ -130,7 +130,7 @@ class MemberFeeRevenueController extends Controller
             $memberUserIds = $category->members->pluck('id');
 
             // Calculate maintenance fee revenue from FinancialInvoiceItems
-            $maintenanceQuery = \App\Models\FinancialInvoiceItem::where('fee_type', 'maintenance_fee')
+            $maintenanceQuery = \App\Models\FinancialInvoiceItem::where('fee_type', '4')
                 ->whereHas('invoice', function ($q) use ($memberUserIds) {
                     $q
                         ->where('status', 'paid')
@@ -150,7 +150,7 @@ class MemberFeeRevenueController extends Controller
             $totalMaintenance = $maintenanceQuery->sum('total');
 
             // Count members who have paid maintenance fees
-            $membersWithMaintenanceFees = \App\Models\FinancialInvoiceItem::where('fee_type', 'maintenance_fee')
+            $membersWithMaintenanceFees = \App\Models\FinancialInvoiceItem::where('fee_type', '4')
                 ->whereHas('invoice', function ($q) use ($memberUserIds, $dateFrom, $dateTo) {
                     $q
                         ->where('status', 'paid')
@@ -208,8 +208,8 @@ class MemberFeeRevenueController extends Controller
         $memberSearch = $request->input('member_search');
         $cnicSearch = $request->input('cnic_search');
         $contactSearch = $request->input('contact_search');
+        $quartersFilter = $request->input('quarters_pending');  // New Filter
 
-        // Subquery to get the latest valid_to date for maintenance fees per member
         // Subquery to get the latest valid_to date for maintenance fees per member using Items
         $latestMaintenance = \App\Models\FinancialInvoiceItem::select(
             'financial_invoices.member_id',
@@ -217,7 +217,7 @@ class MemberFeeRevenueController extends Controller
             \Illuminate\Support\Facades\DB::raw('MAX(financial_invoices.payment_date) as last_payment_date')
         )
             ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-            ->where('financial_invoice_items.fee_type', 'maintenance_fee')
+            ->where('financial_invoice_items.fee_type', '4')
             ->where('financial_invoices.status', 'paid')
             ->groupBy('financial_invoices.member_id');
 
@@ -259,56 +259,39 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
-        // Filter for PENDING members only
-        // Logic: (Last Valid Date < Now) OR (Never Paid AND Joined/Created < Now)
-        $query->where(function ($q) {
-            $q
-                ->where('latest_maintenance.last_valid_date', '<', now())
-                ->orWhere(function ($sub) {
-                    $sub->whereNull('latest_maintenance.last_valid_date');
-                    // Optional: Add logic here if members allowed grace period
-                });
-        });
+        // Calculate Pending Months/Quarters in SQL for filtering and sorting
+        // Logic: CEIL(TIMESTAMPDIFF(MONTH, start_date, NOW()) / 3)
+        // start_date = COALESCE(last_valid_date, membership_date, created_at)
+        $currentDate = now()->format('Y-m-d');
+        $query->selectRaw("
+            CEIL( GREATEST(0, TIMESTAMPDIFF(MONTH,
+                COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
+                '$currentDate'
+            )) / 3 ) as pending_quarters_calc
+        ");
+
+        // Filter for PENDING members (pending_quarters > 0)
+        // This replaces the complex PHP/Collection logic
+        $query->having('pending_quarters_calc', '>', 0);
+
+        // Apply Quarters Filter
+        if ($quartersFilter) {
+            $query->having('pending_quarters_calc', '=', $quartersFilter);
+            // Handle "More than 5" separately if needed, e.g. input '6+'
+            if ($quartersFilter === '6+') {
+                $query->having('pending_quarters_calc', '>=', 6);
+            }
+        }
 
         // Pagination
         $perPage = 15;
         $paginatedMembers = $query->paginate($perPage)->withQueryString();
 
-        // Transform collection to calculate exact amounts
+        // Transform collection to add calculated fee amounts (easier in PHP)
         $paginatedMembers->getCollection()->transform(function ($member) {
             $monthlyFee = $member->memberCategory ? $member->memberCategory->subscription_fee : 0;
-            $currentDate = now();
-
-            // Determine start point for calculation
-            // If they have a valid_to date, start from there. If not, start from membership date.
-            if ($member->last_valid_date) {
-                $startDate = \Carbon\Carbon::parse($member->last_valid_date);
-            } else {
-                $startDate = $member->membership_date ? \Carbon\Carbon::parse($member->membership_date) : \Carbon\Carbon::parse($member->created_at);
-            }
-
-            // Ensure start date is not in future (negative pending)
-            if ($startDate->gt($currentDate)) {
-                $pendingMonths = 0;
-            } else {
-                // Diff in months
-                $pendingMonths = $startDate->diffInMonths($currentDate);
-                // If less than 1 month but past date, count as 0 or 1?
-                // diffInMonths returns integer. Check if we want ceiling or floor.
-                // Usually precise diff:
-                $pendingMonths = $startDate->floatDiffInMonths($currentDate);
-            }
-
-            $pendingMonths = max(0, ceil($pendingMonths));  // Ceiling to charge for started months? Or floor? adhering to previous logic "ceil" implied by loop
-
-            if ($pendingMonths > 0) {
-                $pendingMonths = ceil($startDate->diffInMonths($currentDate, false));
-                // Re-evaluating previous logic:
-                // "pendingMonths = paidUntilDate->diffInMonths($currentDate)"
-                // This effectively counts full months passed.
-            }
-
-            $pendingQuarters = ceil($pendingMonths / 3);
+            $pendingQuarters = $member->pending_quarters_calc;  // Use SQL calculated value
+            $pendingMonths = $pendingQuarters * 3;  // Approx
             $totalPendingAmount = $pendingMonths * $monthlyFee;
 
             return [
@@ -328,19 +311,9 @@ class MemberFeeRevenueController extends Controller
             ];
         });
 
-        // Quick Stats (Approximated or separate query for speed)
-        // Calculating EXACT total for ALL pages is expensive.
-        // We can Sum (Now - Max(Valid_Date)) * Fee in SQL?
-        // For now, let's keep stats simplified or calculate on current page to avoid timeout,
-        // OR run a simplified aggregate query.
-
-        // Simplified Aggregate Query for Total Pending Amount
-        // This is complex in SQL due to differing fees per category.
-        // Let's return 0 for totals for now to ensure page loads, or implement a lighter calc.
-
         $statistics = [
             'total_members' => $paginatedMembers->total(),
-            'total_pending_amount' => 0,  // Placeholder to prevent timeout
+            'total_pending_amount' => 0,  // Placeholder
             'total_pending_quarters' => 0,
         ];
 
@@ -351,6 +324,7 @@ class MemberFeeRevenueController extends Controller
                 'status' => $statusFilter,
                 'categories' => $categoryFilter,
                 'member_search' => $memberSearch,
+                'quarters_pending' => $quartersFilter,
             ],
             'all_statuses' => Member::distinct()->pluck('status')->filter()->values(),
             'all_categories' => MemberCategory::select('id', 'name')->get(),
@@ -375,7 +349,7 @@ class MemberFeeRevenueController extends Controller
             \Illuminate\Support\Facades\DB::raw('MAX(financial_invoices.payment_date) as last_payment_date')
         )
             ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-            ->where('financial_invoice_items.fee_type', 'maintenance_fee')
+            ->where('financial_invoice_items.fee_type', '4')
             ->where('financial_invoices.status', 'paid')
             ->groupBy('financial_invoices.member_id');
 
@@ -504,6 +478,79 @@ class MemberFeeRevenueController extends Controller
         ]);
     }
 
+    public function pendingMaintenanceBulkStatusChange(Request $request)
+    {
+        $request->validate([
+            'member_ids' => 'required|array',
+            'member_ids.*' => 'exists:members,id',
+            'status' => 'required|string',
+            'reason' => 'nullable|string',
+        ]);
+
+        $memberIds = $request->input('member_ids');
+        $status = $request->input('status');
+        $reason = $request->input('reason');
+
+        // Logic to update status
+        Member::whereIn('id', $memberIds)->update([
+            'status' => $status,
+            // 'status_change_reason' => $reason // Assuming there's a column or log for this. If not, we skip or add it.
+        ]);
+
+        // Log the change (Optional implementation detail)
+        // if ($reason) { ... }
+
+        return redirect()->back()->with('success', 'Members status updated successfully.');
+    }
+
+    public function pendingMaintenanceBulkPrint(Request $request)
+    {
+        // Accept filters similar to report, OR direct member_ids
+        $memberIds = $request->input('member_ids');
+
+        // Re-use logic or fetch specific invoice items
+        // For simplicity, we can fetch the maintenance fee items for these members
+        // OR print a simplified "Monthly Maintenance Invoice" summary.
+
+        // Implementation:
+        // If member_ids provided, filter by them.
+        // If filters provided, re-run query to get IDs.
+
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member', 'invoice'])
+            ->where('fee_type', '4')
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            });
+
+        if ($memberIds) {
+            $query->whereHas('invoice', function ($q) use ($memberIds) {
+                $q->whereIn('member_id', $memberIds);
+            });
+        }
+
+        // NOTE: The user requested "Monthly Maintenance Invoice".
+        // If they are pending, they might NOT have an invoice item yet?
+        // Wait, "Pending Maintenance Report" lists members who OWE fees.
+        // So we might need to GENERATE a print view of what they OWE (Invoice format).
+        // It's not necessarily existing FinancialInvoiceItems.
+
+        // Let's print a "Demand Note" or "Statement" for these members.
+        // We will fetch members and calculating pending.
+
+        $members = Member::whereIn('id', $memberIds)->get();
+        // ... (Logic to calculate pending and pass to view)
+
+        // For now, let's return a simple view or existing print view adapted.
+        return Inertia::render('App/Admin/Membership/PendingMaintenanceReportPrint', [
+            // Re-using the report print logic but filtering by selected IDs
+            'members' => $members,  // This needs proper transformation like the main report
+            'statistics' => [],  // ...
+            'filters' => [],
+            'all_statuses' => [],
+            'all_categories' => [],
+        ]);
+    }
+
     public function supplementaryCardReport(Request $request)
     {
         $categoryFilter = $request->input('categories');
@@ -615,7 +662,11 @@ class MemberFeeRevenueController extends Controller
         $cardStatusFilter = $request->input('card_status');
 
         // Get all family members (supplementary members with parent_id)
-        $supplementaryQuery = Member::whereNotNull('parent_id');
+        // AND who have a valid Subscription record
+        $supplementaryQuery = Member::whereNotNull('parent_id')
+            ->whereHas('subscriptions', function ($q) {
+                $q->whereColumn('family_member_id', 'members.id');
+            });
 
         // Apply card status filter
         if ($cardStatusFilter) {
@@ -1029,15 +1080,21 @@ class MemberFeeRevenueController extends Controller
         $paymentMethodFilter = $request->input('payment_method');
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
+        $cashierFilter = $request->input('cashier');
 
-        // Get maintenance fee transactions
-        $query = FinancialInvoice::with(['member.memberCategory'])
-            ->where('fee_type', 'maintenance_fee')
-            ->select('financial_invoices.*');
+        // Get maintenance fee transactions - using Items for Mixed support
+        // Include createdBy relation to show who created the receipt
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.createdBy'])
+            ->where('fee_type', '4')
+            // Only paid invoices
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            })
+            ->select('financial_invoice_items.*');
 
         // Apply member search filter
         if ($memberSearch) {
-            $query->whereHas('member', function ($q) use ($memberSearch) {
+            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
                 $q
                     ->where('full_name', 'like', "%{$memberSearch}%")
                     ->orWhere('membership_no', 'like', "%{$memberSearch}%");
@@ -1046,40 +1103,55 @@ class MemberFeeRevenueController extends Controller
 
         // Apply invoice search filter
         if ($invoiceSearch) {
-            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            $query->whereHas('invoice', function ($q) use ($invoiceSearch) {
+                $q->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            });
         }
 
         // Apply date range filter
         if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereHas('invoice', function ($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            });
         }
         if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereHas('invoice', function ($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
+            });
         }
 
         // Apply city filter
         if ($cityFilter) {
-            $query->whereHas('member', function ($q) use ($cityFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($cityFilter) {
                 $q->where('current_city', $cityFilter);
             });
         }
 
         // Apply payment method filter
         if ($paymentMethodFilter) {
-            $query->where('payment_method', $paymentMethodFilter);
+            $query->whereHas('invoice', function ($q) use ($paymentMethodFilter) {
+                $q->where('payment_method', $paymentMethodFilter);
+            });
         }
 
         // Apply category filter
         if ($categoryFilter) {
-            $query->whereHas('member', function ($q) use ($categoryFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($categoryFilter) {
                 $q->whereIn('member_category_id', (array) $categoryFilter);
             });
         }
 
         // Apply gender filter
         if ($genderFilter) {
-            $query->whereHas('member', function ($q) use ($genderFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($genderFilter) {
                 $q->where('gender', $genderFilter);
+            });
+        }
+
+        // Apply cashier filter (user who created the receipt)
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
             });
         }
 
@@ -1087,15 +1159,21 @@ class MemberFeeRevenueController extends Controller
         $transactions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
         // Calculate statistics
-        $allTransactions = $query->get();
-        $totalAmount = $allTransactions->sum('total_price');
-        $totalTransactions = $allTransactions->count();
+        // Need to sum ITEM amounts now, or 'total'.
+        $statsQuery = clone $query;
+        // Optimization: Don't load relations for stats
+        $statsQuery->with = [];
+
+        $totalAmount = $statsQuery->sum('total');
+        $totalTransactions = $statsQuery->count();
         $averageAmount = $totalTransactions > 0 ? round($totalAmount / $totalTransactions, 2) : 0;
 
         // Get filter options
         $allCities = Member::distinct()->pluck('current_city')->filter()->values();
         $allPaymentMethods = ['Cash', 'Credit Card', 'Bank Transfer', 'Cheque'];
         $allGenders = ['Male', 'Female'];
+        // Get all users for cashier filter
+        $allCashiers = \App\Models\User::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('App/Admin/Membership/MonthlyMaintenanceFeeReport', [
             'transactions' => $transactions,
@@ -1113,11 +1191,13 @@ class MemberFeeRevenueController extends Controller
                 'payment_method' => $paymentMethodFilter,
                 'categories' => $categoryFilter ?? [],
                 'gender' => $genderFilter,
+                'cashier' => $cashierFilter,
             ],
             'all_cities' => $allCities,
             'all_payment_methods' => $allPaymentMethods,
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_genders' => $allGenders,
+            'all_cashiers' => $allCashiers,
         ]);
     }
 
@@ -1133,14 +1213,18 @@ class MemberFeeRevenueController extends Controller
         $genderFilter = $request->input('gender');
         $page = $request->input('page', 1);
 
-        // Get maintenance fee transactions with pagination
-        $query = FinancialInvoice::with(['member.memberCategory'])
-            ->where('fee_type', 'maintenance_fee')
-            ->select('financial_invoices.*');
+        // Get maintenance fee transactions with pagination - using Items for Mixed support
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice'])
+            ->where('fee_type', '4')
+            // Only paid invoices
+            ->whereHas('invoice', function ($q) {
+                $q->where('status', 'paid');
+            })
+            ->select('financial_invoice_items.*');
 
         // Apply member search filter
         if ($memberSearch) {
-            $query->whereHas('member', function ($q) use ($memberSearch) {
+            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
                 $q
                     ->where('full_name', 'like', "%{$memberSearch}%")
                     ->orWhere('membership_no', 'like', "%{$memberSearch}%");
@@ -1149,39 +1233,47 @@ class MemberFeeRevenueController extends Controller
 
         // Apply invoice search filter
         if ($invoiceSearch) {
-            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            $query->whereHas('invoice', function ($q) use ($invoiceSearch) {
+                $q->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            });
         }
 
         // Apply date range filter
         if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+            $query->whereHas('invoice', function ($q) use ($dateFrom) {
+                $q->whereDate('created_at', '>=', $dateFrom);
+            });
         }
         if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
+            $query->whereHas('invoice', function ($q) use ($dateTo) {
+                $q->whereDate('created_at', '<=', $dateTo);
+            });
         }
 
         // Apply city filter
         if ($cityFilter) {
-            $query->whereHas('member', function ($q) use ($cityFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($cityFilter) {
                 $q->where('current_city', $cityFilter);
             });
         }
 
         // Apply payment method filter
         if ($paymentMethodFilter) {
-            $query->where('payment_method', $paymentMethodFilter);
+            $query->whereHas('invoice', function ($q) use ($paymentMethodFilter) {
+                $q->where('payment_method', $paymentMethodFilter);
+            });
         }
 
         // Apply category filter
         if ($categoryFilter) {
-            $query->whereHas('member', function ($q) use ($categoryFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($categoryFilter) {
                 $q->whereIn('member_category_id', (array) $categoryFilter);
             });
         }
 
         // Apply gender filter
         if ($genderFilter) {
-            $query->whereHas('member', function ($q) use ($genderFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($genderFilter) {
                 $q->where('gender', $genderFilter);
             });
         }
@@ -1226,15 +1318,17 @@ class MemberFeeRevenueController extends Controller
         $paymentMethodFilter = $request->input('payment_method');
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
+        $cashierFilter = $request->input('cashier');
 
-        // Get all fee transactions (membership, maintenance, and reinstating)
-        $query = FinancialInvoice::with(['member.memberCategory'])
-            ->whereIn('fee_type', ['maintenance_fee', 'membership_fee', 'reinstating_fee'])
-            ->select('financial_invoices.*');
+        // Query FinancialInvoiceItem with fee_type = 6 (Charges) and financial_charge_type_id IN (3, 4) for New Year Eve
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.createdBy'])
+            ->where('fee_type', '6')  // 6 = Charges
+            ->whereIn('financial_charge_type_id', [3, 4])  // 3 = New Year Eve (Member), 4 = New Year Eve (Guest)
+            ->select('financial_invoice_items.*');
 
         // Apply member search filter
         if ($memberSearch) {
-            $query->whereHas('member', function ($q) use ($memberSearch) {
+            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
                 $q
                     ->where('full_name', 'like', "%{$memberSearch}%")
                     ->orWhere('membership_no', 'like', "%{$memberSearch}%");
@@ -1243,7 +1337,9 @@ class MemberFeeRevenueController extends Controller
 
         // Apply invoice search filter
         if ($invoiceSearch) {
-            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            $query->whereHas('invoice', function ($q) use ($invoiceSearch) {
+                $q->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            });
         }
 
         // Apply date range filter
@@ -1256,27 +1352,36 @@ class MemberFeeRevenueController extends Controller
 
         // Apply city filter
         if ($cityFilter) {
-            $query->whereHas('member', function ($q) use ($cityFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($cityFilter) {
                 $q->where('current_city', $cityFilter);
             });
         }
 
         // Apply payment method filter
         if ($paymentMethodFilter) {
-            $query->where('payment_method', $paymentMethodFilter);
+            $query->whereHas('invoice', function ($q) use ($paymentMethodFilter) {
+                $q->where('payment_method', $paymentMethodFilter);
+            });
         }
 
         // Apply category filter
         if ($categoryFilter) {
-            $query->whereHas('member', function ($q) use ($categoryFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($categoryFilter) {
                 $q->whereIn('member_category_id', (array) $categoryFilter);
             });
         }
 
         // Apply gender filter
         if ($genderFilter) {
-            $query->whereHas('member', function ($q) use ($genderFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($genderFilter) {
                 $q->where('gender', $genderFilter);
+            });
+        }
+
+        // Apply cashier filter
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
             });
         }
 
@@ -1285,7 +1390,7 @@ class MemberFeeRevenueController extends Controller
 
         // Calculate statistics
         $allTransactions = $query->get();
-        $totalAmount = $allTransactions->sum('total_price');
+        $totalAmount = $allTransactions->sum('total');
         $totalTransactions = $allTransactions->count();
         $averageAmount = $totalTransactions > 0 ? round($totalAmount / $totalTransactions, 2) : 0;
 
@@ -1293,6 +1398,7 @@ class MemberFeeRevenueController extends Controller
         $allCities = Member::distinct()->pluck('current_city')->filter()->values();
         $allPaymentMethods = ['Cash', 'Credit Card', 'Bank Transfer', 'Cheque'];
         $allGenders = ['Male', 'Female'];
+        $allCashiers = \App\Models\User::select('id', 'name')->orderBy('name')->get();
 
         return Inertia::render('App/Admin/Membership/NewYearEveReport', [
             'transactions' => $transactions,
@@ -1310,11 +1416,13 @@ class MemberFeeRevenueController extends Controller
                 'payment_method' => $paymentMethodFilter,
                 'categories' => $categoryFilter ?? [],
                 'gender' => $genderFilter,
+                'cashier' => $cashierFilter,
             ],
             'all_cities' => $allCities,
             'all_payment_methods' => $allPaymentMethods,
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_genders' => $allGenders,
+            'all_cashiers' => $allCashiers,
         ]);
     }
 
@@ -1331,9 +1439,11 @@ class MemberFeeRevenueController extends Controller
         $page = $request->input('page', 1);
 
         // Get all fee transactions with pagination
-        $query = FinancialInvoice::with(['member.memberCategory'])
-            ->whereIn('fee_type', ['maintenance_fee', 'membership_fee', 'reinstating_fee'])
-            ->select('financial_invoices.*');
+        // Query FinancialInvoiceItem with fee_type = 6 (Charges) and financial_charge_type_id IN (3, 4) for New Year Eve
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.createdBy'])
+            ->where('fee_type', '6')  // 6 = Charges
+            ->whereIn('financial_charge_type_id', [3, 4])  // 3 = New Year Eve (Member), 4 = New Year Eve (Guest)
+            ->select('financial_invoice_items.*');
 
         // Apply member search filter
         if ($memberSearch) {
@@ -1423,15 +1533,19 @@ class MemberFeeRevenueController extends Controller
         $paymentMethodFilter = $request->input('payment_method');
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
+        $cashierFilter = $request->input('cashier');
+        $page = $request->input('page', 1);
 
-        // Get reinstating fee transactions only
-        $query = FinancialInvoice::with(['member.memberCategory'])
-            ->where('fee_type', 'reinstating_fee')
-            ->select('financial_invoices.*');
+        // Get reinstating fee transactions with pagination
+        // Query FinancialInvoiceItem with fee_type = 6 (Charges) and financial_charge_type_id = 2 (Reinstating Fee)
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.createdBy'])
+            ->where('fee_type', '6')  // 6 = Charges
+            ->where('financial_charge_type_id', 2)  // 2 = Reinstating Fee
+            ->select('financial_invoice_items.*');
 
         // Apply member search filter
         if ($memberSearch) {
-            $query->whereHas('member', function ($q) use ($memberSearch) {
+            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
                 $q
                     ->where('full_name', 'like', "%{$memberSearch}%")
                     ->orWhere('membership_no', 'like', "%{$memberSearch}%");
@@ -1440,7 +1554,9 @@ class MemberFeeRevenueController extends Controller
 
         // Apply invoice search filter
         if ($invoiceSearch) {
-            $query->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            $query->whereHas('invoice', function ($q) use ($invoiceSearch) {
+                $q->where('invoice_no', 'like', "%{$invoiceSearch}%");
+            });
         }
 
         // Apply date range filter
@@ -1453,27 +1569,36 @@ class MemberFeeRevenueController extends Controller
 
         // Apply city filter
         if ($cityFilter) {
-            $query->whereHas('member', function ($q) use ($cityFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($cityFilter) {
                 $q->where('current_city', $cityFilter);
             });
         }
 
         // Apply payment method filter
         if ($paymentMethodFilter) {
-            $query->where('payment_method', $paymentMethodFilter);
+            $query->whereHas('invoice', function ($q) use ($paymentMethodFilter) {
+                $q->where('payment_method', $paymentMethodFilter);
+            });
         }
 
         // Apply category filter
         if ($categoryFilter) {
-            $query->whereHas('member', function ($q) use ($categoryFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($categoryFilter) {
                 $q->whereIn('member_category_id', (array) $categoryFilter);
             });
         }
 
         // Apply gender filter
         if ($genderFilter) {
-            $query->whereHas('member', function ($q) use ($genderFilter) {
+            $query->whereHas('invoice.member', function ($q) use ($genderFilter) {
                 $q->where('gender', $genderFilter);
+            });
+        }
+
+        // Apply cashier filter
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
             });
         }
 
@@ -1482,7 +1607,7 @@ class MemberFeeRevenueController extends Controller
 
         // Calculate statistics
         $allTransactions = $query->get();
-        $totalAmount = $allTransactions->sum('total_price');
+        $totalAmount = $allTransactions->sum('total');
         $totalTransactions = $allTransactions->count();
         $averageAmount = $totalTransactions > 0 ? round($totalAmount / $totalTransactions, 2) : 0;
 
@@ -1512,6 +1637,7 @@ class MemberFeeRevenueController extends Controller
             'all_payment_methods' => $allPaymentMethods,
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_genders' => $allGenders,
+            'all_cashiers' => \App\Models\User::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
@@ -1525,12 +1651,15 @@ class MemberFeeRevenueController extends Controller
         $paymentMethodFilter = $request->input('payment_method');
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
+        $cashierFilter = $request->input('cashier');
         $page = $request->input('page', 1);
 
         // Get reinstating fee transactions with pagination
-        $query = FinancialInvoice::with(['member.memberCategory'])
-            ->where('fee_type', 'reinstating_fee')
-            ->select('financial_invoices.*');
+        // Get reinstating fee transactions with pagination
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.createdBy'])
+            ->where('fee_type', '6')  // 6 = Charges
+            ->where('financial_charge_type_id', 2)  // 2 = Reinstating Fee
+            ->select('financial_invoice_items.*');
 
         // Apply member search filter
         if ($memberSearch) {
@@ -1580,6 +1709,13 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
+        // Apply cashier filter
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
+            });
+        }
+
         // Get paginated results (same 15 per page)
         $transactions = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
 
@@ -1605,8 +1741,10 @@ class MemberFeeRevenueController extends Controller
                 'payment_method' => $paymentMethodFilter,
                 'categories' => $categoryFilter ?? [],
                 'gender' => $genderFilter,
+                'cashier' => $cashierFilter,
             ],
             'all_categories' => MemberCategory::select('id', 'name')->get(),
+            'all_cashiers' => \App\Models\User::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 
@@ -1621,10 +1759,14 @@ class MemberFeeRevenueController extends Controller
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
         $familyMemberFilter = $request->input('family_member');
+        $customerTypeFilter = $request->input('customer_type');  // member or guest
+        $subscriptionCategoryFilter = $request->input('subscription_category_id');
+        $cashierFilter = $request->input('cashier');
 
         // Get subscription fee transactions only - using Items for Mixed Invoice support
-        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice'])
-            ->where('fee_type', 'subscription_fee')
+        // Include createdBy for payment receiver and customer for guest subscriptions
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.customer', 'invoice.createdBy', 'subscriptionType.subscriptionCategory'])
+            ->where('fee_type', '5')  // 5 = Subscription
             // Only paid invoices
             ->whereHas('invoice', function ($q) {
                 $q->where('status', 'paid');
@@ -1696,6 +1838,35 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
+        // Apply customer type filter (member, corporate, or guest)
+        if ($customerTypeFilter === 'member') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('member_id');
+            });
+        } elseif ($customerTypeFilter === 'corporate') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('corporate_member_id');
+            });
+        } elseif ($customerTypeFilter === 'guest') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('customer_id');
+            });
+        }
+
+        // Apply subscription category filter
+        if ($subscriptionCategoryFilter) {
+            $query->whereHas('subscriptionType', function ($q) use ($subscriptionCategoryFilter) {
+                $q->where('subscription_category_id', $subscriptionCategoryFilter);
+            });
+        }
+
+        // Apply cashier filter (user who received payment)
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
+            });
+        }
+
         // Get paginated results
         $transactions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
@@ -1733,12 +1904,48 @@ class MemberFeeRevenueController extends Controller
                 'categories' => $categoryFilter ?? [],
                 'gender' => $genderFilter,
                 'family_member' => $familyMemberFilter,
+                'customer_type' => $customerTypeFilter,
+                'subscription_category_id' => $subscriptionCategoryFilter,
+                'cashier' => $cashierFilter,
             ],
             'all_cities' => $allCities,
             'all_payment_methods' => $allPaymentMethods,
             'all_categories' => MemberCategory::select('id', 'name')->get(),
             'all_genders' => $allGenders,
             'all_family_members' => $allFamilyMembers,
+            'subscription_categories' => \App\Models\SubscriptionCategory::select('id', 'name')->orderBy('name')->get(),
+            'all_cashiers' => \App\Models\User::select('id', 'name')->orderBy('name')->get(),
+            'all_members' => Member::select('id', 'full_name', 'membership_no', 'status')
+                ->orderBy('full_name')
+                ->limit(200)
+                ->get()
+                ->map(function ($member) {
+                    return [
+                        'id' => $member->id,
+                        'full_name' => $member->full_name,
+                        'name' => $member->full_name,
+                        'membership_no' => $member->membership_no,
+                        'customer_no' => null,
+                        'status' => $member->status
+                    ];
+                })
+                ->concat(
+                    \App\Models\Customer::select('id', 'name', 'customer_no')
+                        ->orderBy('name')
+                        ->limit(100)
+                        ->get()
+                        ->map(function ($customer) {
+                            return [
+                                'id' => 'customer_' . $customer->id,
+                                'full_name' => $customer->name,
+                                'name' => $customer->name,
+                                'membership_no' => null,
+                                'customer_no' => $customer->customer_no,
+                                'status' => 'guest'
+                            ];
+                        })
+                )
+                ->values(),
         ]);
     }
 
@@ -1757,7 +1964,7 @@ class MemberFeeRevenueController extends Controller
 
         // Get subscription fee transactions with pagination - using Items for Mixed support
         $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice'])
-            ->where('fee_type', 'subscription_fee')
+            ->where('fee_type', '5')
             // Only paid invoices
             ->whereHas('invoice', function ($q) {
                 $q->where('status', 'paid');
@@ -1873,7 +2080,7 @@ class MemberFeeRevenueController extends Controller
         $query = \App\Models\FinancialInvoiceItem::join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
             ->join('members', 'financial_invoices.member_id', '=', 'members.id')
             ->join('member_categories', 'members.member_category_id', '=', 'member_categories.id')
-            ->whereIn('financial_invoice_items.fee_type', ['subscription_fee', 'maintenance_fee'])
+            ->whereIn('financial_invoice_items.fee_type', ['5', '4'])  // 5 = Subscription, 4 = Maintenance
             ->where('financial_invoices.status', 'paid')
             ->selectRaw('
                 member_categories.name as category_name,
@@ -1978,7 +2185,7 @@ class MemberFeeRevenueController extends Controller
         $query = \App\Models\FinancialInvoiceItem::join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
             ->join('members', 'financial_invoices.member_id', '=', 'members.id')
             ->join('member_categories', 'members.member_category_id', '=', 'member_categories.id')
-            ->whereIn('financial_invoice_items.fee_type', ['subscription_fee', 'maintenance_fee'])
+            ->whereIn('financial_invoice_items.fee_type', ['5', '4'])
             ->where('financial_invoices.status', 'paid')
             ->selectRaw('
                 member_categories.name as category_name,
@@ -2079,11 +2286,12 @@ class MemberFeeRevenueController extends Controller
         $dateTo = $request->input('date_to');
         $categoryFilter = $request->input('category');
 
-        // Subquery for latest valid maintenance date
-        $latestMaintenance = FinancialInvoice::select('member_id', DB::raw('MAX(valid_to) as last_valid_date'))
-            ->where('fee_type', 'maintenance_fee')
-            ->where('status', 'paid')
-            ->groupBy('member_id');
+        // Subquery for latest valid maintenance date using Items
+        $latestMaintenance = \App\Models\FinancialInvoiceItem::select('financial_invoices.member_id', DB::raw('MAX(financial_invoice_items.end_date) as last_valid_date'))
+            ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
+            ->where('financial_invoice_items.fee_type', '4')
+            ->where('financial_invoices.status', 'paid')
+            ->groupBy('financial_invoices.member_id');
 
         // Get all members with query optimization
         $membersQuery = Member::with(['memberCategory'])
@@ -2103,12 +2311,13 @@ class MemberFeeRevenueController extends Controller
         // Initialize summary structure with ALL categories
         $summary = [];
         $grandTotals = [
-            '1_quarter_pending' => 0,
-            '2_quarters_pending' => 0,
-            '3_quarters_pending' => 0,
-            '4_quarters_pending' => 0,
-            '5_quarters_pending' => 0,
-            'more_than_5_quarters_pending' => 0,
+            '1_quarter_pending' => ['count' => 0, 'amount' => 0],
+            '2_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '3_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '4_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '5_quarters_pending' => ['count' => 0, 'amount' => 0],
+            '6_quarters_pending' => ['count' => 0, 'amount' => 0],
+            'more_than_6_quarters_pending' => ['count' => 0, 'amount' => 0],
             'maintenance_fee_quarterly' => 0,
             'total_values' => 0
         ];
@@ -2123,15 +2332,17 @@ class MemberFeeRevenueController extends Controller
 
         $allCategories = $allCategoriesQuery->get();
 
-        // Initialize all categories in summary
+        // Initialize all categories in summary with count+amount structure
         foreach ($allCategories as $category) {
             $summary[$category->name] = [
-                '1_quarter_pending' => 0,
-                '2_quarters_pending' => 0,
-                '3_quarters_pending' => 0,
-                '4_quarters_pending' => 0,
-                '5_quarters_pending' => 0,
-                'more_than_5_quarters_pending' => 0,
+                'category_id' => $category->id,
+                '1_quarter_pending' => ['count' => 0, 'amount' => 0],
+                '2_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '3_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '4_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '5_quarters_pending' => ['count' => 0, 'amount' => 0],
+                '6_quarters_pending' => ['count' => 0, 'amount' => 0],
+                'more_than_6_quarters_pending' => ['count' => 0, 'amount' => 0],
                 'maintenance_fee_quarterly' => $category->subscription_fee ?? 0,
                 'total_values' => 0
             ];
@@ -2178,29 +2389,35 @@ class MemberFeeRevenueController extends Controller
             $pendingQuarters = ceil($pendingMonths / 3);
 
             if ($pendingQuarters > 0) {
-                if ($pendingQuarters == 1) {
-                    $summary[$categoryName]['1_quarter_pending']++;
-                    $grandTotals['1_quarter_pending']++;
-                } elseif ($pendingQuarters == 2) {
-                    $summary[$categoryName]['2_quarters_pending']++;
-                    $grandTotals['2_quarters_pending']++;
-                } elseif ($pendingQuarters == 3) {
-                    $summary[$categoryName]['3_quarters_pending']++;
-                    $grandTotals['3_quarters_pending']++;
-                } elseif ($pendingQuarters == 4) {
-                    $summary[$categoryName]['4_quarters_pending']++;
-                    $grandTotals['4_quarters_pending']++;
-                } elseif ($pendingQuarters == 5) {
-                    $summary[$categoryName]['5_quarters_pending']++;
-                    $grandTotals['5_quarters_pending']++;
-                } else {
-                    $summary[$categoryName]['more_than_5_quarters_pending']++;
-                    $grandTotals['more_than_5_quarters_pending']++;
-                }
-
-                // Calculate total pending amount
+                // Calculate pending amount for this member
                 $quarterlyFee = $member->memberCategory->subscription_fee ?? 0;
                 $totalPendingAmount = $pendingQuarters * $quarterlyFee;
+
+                // Determine bucket key
+                $bucketKey = '';
+                if ($pendingQuarters == 1) {
+                    $bucketKey = '1_quarter_pending';
+                } elseif ($pendingQuarters == 2) {
+                    $bucketKey = '2_quarters_pending';
+                } elseif ($pendingQuarters == 3) {
+                    $bucketKey = '3_quarters_pending';
+                } elseif ($pendingQuarters == 4) {
+                    $bucketKey = '4_quarters_pending';
+                } elseif ($pendingQuarters == 5) {
+                    $bucketKey = '5_quarters_pending';
+                } elseif ($pendingQuarters == 6) {
+                    $bucketKey = '6_quarters_pending';
+                } else {
+                    $bucketKey = 'more_than_6_quarters_pending';
+                }
+
+                // Update count and amount for the bucket
+                $summary[$categoryName][$bucketKey]['count']++;
+                $summary[$categoryName][$bucketKey]['amount'] += $totalPendingAmount;
+                $grandTotals[$bucketKey]['count']++;
+                $grandTotals[$bucketKey]['amount'] += $totalPendingAmount;
+
+                // Also update total values
                 $summary[$categoryName]['total_values'] += $totalPendingAmount;
                 $grandTotals['total_values'] += $totalPendingAmount;
             }
@@ -2233,11 +2450,12 @@ class MemberFeeRevenueController extends Controller
         $dateTo = $request->input('date_to');
         $categoryFilter = $request->input('category');
 
-        // Subquery for latest valid maintenance date
-        $latestMaintenance = FinancialInvoice::select('member_id', DB::raw('MAX(valid_to) as last_valid_date'))
-            ->where('fee_type', 'maintenance_fee')
-            ->where('status', 'paid')
-            ->groupBy('member_id');
+        // Subquery for latest valid maintenance date using Items
+        $latestMaintenance = \App\Models\FinancialInvoiceItem::select('financial_invoices.member_id', DB::raw('MAX(financial_invoice_items.end_date) as last_valid_date'))
+            ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
+            ->where('financial_invoice_items.fee_type', '4')
+            ->where('financial_invoices.status', 'paid')
+            ->groupBy('financial_invoices.member_id');
 
         // Get all members with query optimization
         $membersQuery = Member::with(['memberCategory'])
@@ -2369,7 +2587,7 @@ class MemberFeeRevenueController extends Controller
     {
         // Get member's maintenance fee transactions
         $query = FinancialInvoice::where('member_id', $member->id)
-            ->where('fee_type', 'maintenance_fee')
+            ->where('fee_type', '4')
             ->where('status', 'paid');
 
         // Apply date filters if provided
@@ -2465,8 +2683,8 @@ class MemberFeeRevenueController extends Controller
             ],
             [
                 'id' => 8,
-                'title' => 'Pending Maintenance Quarters Report',
-                'description' => 'Quarter-wise analysis of pending maintenance payments',
+                'title' => 'Pending Maintenance Quarters Summary (Category-wise)',
+                'description' => 'Quarter-wise analysis of pending maintenance payments by category',
                 'icon' => 'Timeline',
                 'color' => '#063455',
                 'route' => 'membership.pending-maintenance-quarters-report',

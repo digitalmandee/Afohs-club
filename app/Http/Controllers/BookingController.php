@@ -155,7 +155,6 @@ class BookingController extends Controller
     }
 
     // Search family Members
-
     public function familyMembers(Request $request, $id)
     {
         $type = $request->query('type', 'member');  // default to member

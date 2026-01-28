@@ -4,10 +4,9 @@ import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
 
-
 const NewYearEveReport = () => {
     // Get props first
-    const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders } = usePage().props;
+    const { transactions, statistics, filters, all_cities, all_payment_methods, all_categories, all_genders, all_cashiers } = usePage().props;
 
     // Modal state
     // const [open, setOpen] = useState(true);
@@ -20,6 +19,7 @@ const NewYearEveReport = () => {
         payment_method: filters?.payment_method || '',
         categories: filters?.categories || [],
         gender: filters?.gender || '',
+        cashier: filters?.cashier || '',
     });
 
     const formatCurrency = (amount) => {
@@ -43,19 +43,23 @@ const NewYearEveReport = () => {
     };
 
     const handlePageChange = (event, page) => {
-        router.get(route('membership.new-year-eve-report'), {
-            ...allFilters,
-            page: page
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        router.get(
+            route('membership.new-year-eve-report'),
+            {
+                ...allFilters,
+                page: page,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            },
+        );
     };
 
     const handleFilterChange = (field, value) => {
-        setAllFilters(prev => ({
+        setAllFilters((prev) => ({
             ...prev,
-            [field]: value
+            [field]: value,
         }));
     };
 
@@ -69,6 +73,7 @@ const NewYearEveReport = () => {
             payment_method: '',
             categories: [],
             gender: '',
+            cashier: '',
         });
         router.get(route('membership.new-year-eve-report'));
     };
@@ -121,7 +126,11 @@ const NewYearEveReport = () => {
         }
 
         if (allFilters.categories && allFilters.categories.length > 0) {
-            allFilters.categories.forEach(cat => params.append('categories[]', cat));
+            allFilters.categories.forEach((cat) => params.append('categories[]', cat));
+        }
+
+        if (allFilters.cashier) {
+            params.append('cashier', allFilters.cashier);
         }
 
         // Add current page number
@@ -286,13 +295,7 @@ const NewYearEveReport = () => {
                                     handleFilterChange('city', newValue || '');
                                 }}
                                 isOptionEqualToValue={(option, value) => option === value}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Search by City"
-                                        placeholder="All Cities"
-                                    />
-                                )}
+                                renderInput={(params) => <TextField {...params} label="Search by City" placeholder="All Cities" />}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
@@ -319,13 +322,7 @@ const NewYearEveReport = () => {
                                     handleFilterChange('payment_method', newValue || '');
                                 }}
                                 isOptionEqualToValue={(option, value) => option === value}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Choose Payment Method"
-                                        placeholder="All Methods"
-                                    />
-                                )}
+                                renderInput={(params) => <TextField {...params} label="Choose Payment Method" placeholder="All Methods" />}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
@@ -358,48 +355,22 @@ const NewYearEveReport = () => {
                                 options={all_categories || []}
                                 getOptionLabel={(option) => option.name}
                                 isOptionEqualToValue={(option, value) => option.id === value.id}
-                                value={
-                                    all_categories?.filter(cat =>
-                                        allFilters.categories.includes(cat.id)
-                                    ) || []
-                                }
+                                value={all_categories?.filter((cat) => allFilters.categories.includes(cat.id)) || []}
                                 onChange={(event, newValue) => {
                                     handleFilterChange(
                                         'categories',
-                                        newValue.map(cat => cat.id)
+                                        newValue.map((cat) => cat.id),
                                     );
                                 }}
-                                renderTags={(value, getTagProps) =>
-                                    value.map((option, index) => (
-                                        <Chip
-                                            key={option.id}
-                                            label={option.name}
-                                            size="small"
-                                            {...getTagProps({ index })}
-                                        />
-                                    ))
-                                }
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Choose Categories"
-                                        placeholder="Select categories"
-                                    />
-                                )}
+                                renderTags={(value, getTagProps) => value.map((option, index) => <Chip key={option.id} label={option.name} size="small" {...getTagProps({ index })} />)}
+                                renderInput={(params) => <TextField {...params} label="Choose Categories" placeholder="Select categories" />}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
-                            <Autocomplete
-                                fullWidth
-                                size="small"
-                                options={all_genders || []}
-                                value={allFilters.gender || ''}
-                                onChange={(e, value) => handleFilterChange('gender', value)}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Choose Gender" placeholder="Select gender" />
-                                )}
-                                freeSolo
-                            />
+                            <Autocomplete fullWidth size="small" options={all_genders || []} value={allFilters.gender || ''} onChange={(e, value) => handleFilterChange('gender', value)} renderInput={(params) => <TextField {...params} label="Choose Gender" placeholder="Select gender" />} freeSolo />
+                        </Grid>
+                        <Grid item xs={12} md={2.4}>
+                            <Autocomplete fullWidth size="small" options={all_cashiers || []} getOptionLabel={(option) => option.name || ''} value={all_cashiers?.find((c) => c.id === allFilters.cashier) || null} onChange={(e, value) => handleFilterChange('cashier', value?.id || '')} isOptionEqualToValue={(option, value) => option.id === value?.id} renderInput={(params) => <TextField {...params} label="Cashier" placeholder="Select cashier" />} />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
                             <Button
@@ -453,43 +424,32 @@ const NewYearEveReport = () => {
                                                 borderBottom: '1px solid #e5e7eb',
                                             }}
                                         >
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.current_city || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.member?.full_name}</TableCell>
-                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total_price).replace('PKR', 'Rs.')}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.current_city || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={transaction.payment_method}
+                                                    label={transaction.invoice?.payment_method}
                                                     size="small"
                                                     sx={{
-                                                        backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,
-                                                        color: getPaymentMethodColor(transaction.payment_method),
-                                                        fontWeight: 600
+                                                        backgroundColor: `${getPaymentMethodColor(transaction.invoice?.payment_method)}20`,
+                                                        color: getPaymentMethodColor(transaction.invoice?.payment_method),
+                                                        fontWeight: 600,
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.member?.member_category?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.member?.member_category?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                {transaction.quarter_start_date && transaction.quarter_end_date
-                                                    ? `${formatDate(transaction.quarter_start_date)} - ${formatDate(transaction.quarter_end_date)}`
-                                                    : transaction.fee_type === 'membership_fee'
-                                                        ? 'Invalid date-Invalid date-Invalid date-Invalid date'
-                                                        : 'N/A'
-                                                }
-                                            </TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.membership_no}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
-                                                {transaction.fee_type === 'membership_fee' ? 'Abu Bakar' : 'Muhammad Akram'}
-                                            </TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.start_date && transaction.end_date ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}` : 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'N/A'}</TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                                            <Typography color="textSecondary">
-                                                No New Year Eve subscription records found
-                                            </Typography>
+                                            <Typography color="textSecondary">No New Year Eve subscription records found</Typography>
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -500,12 +460,8 @@ const NewYearEveReport = () => {
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={3}>
                                             TOTAL ({statistics?.total_transactions || 0} Transactions)
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>
-                                            {formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
-                                            Avg: {formatCurrency(statistics?.average_amount || 0).replace('PKR', 'Rs.')}
-                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}</TableCell>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>Avg: {formatCurrency(statistics?.average_amount || 0).replace('PKR', 'Rs.')}</TableCell>
                                         <TableCell colSpan={5} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
                                             New Year Eve Subscription Collection Report
                                         </TableCell>

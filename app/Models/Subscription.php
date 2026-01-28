@@ -12,6 +12,7 @@ class Subscription extends Model
     protected $fillable = [
         'member_id',
         'corporate_member_id',
+        'customer_id',
         'family_member_id',
         'subscription_category_id',
         'subscription_type_id',
@@ -25,6 +26,11 @@ class Subscription extends Model
     public function corporateMember()
     {
         return $this->belongsTo(CorporateMember::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     protected $casts = [
@@ -70,17 +76,30 @@ class Subscription extends Model
         return $this->belongsTo(SubscriptionType::class);
     }
 
-    // Helper method to get the actual subscriber (family member or primary member)
+    // Helper method to get the actual subscriber (family member, primary member, corporate, or customer)
     public function getSubscriberAttribute()
     {
-        return $this->family_member_id ? $this->familyMember : $this->member;
+        if ($this->family_member_id) {
+            return $this->familyMember;
+        }
+        if ($this->customer_id) {
+            return $this->customer;
+        }
+        if ($this->corporate_member_id) {
+            return $this->corporateMember;
+        }
+        return $this->member;
     }
 
     // Helper method to get subscriber name
     public function getSubscriberNameAttribute()
     {
         $subscriber = $this->subscriber;
-        return $subscriber ? $subscriber->full_name : 'Unknown';
+        if (!$subscriber) {
+            return 'Unknown';
+        }
+        // Customer uses 'name', Member/CorporateMember use 'full_name'
+        return $subscriber->full_name ?? $subscriber->name ?? 'Unknown';
     }
 
     // Helper method to get subscriber relation
@@ -88,6 +107,12 @@ class Subscription extends Model
     {
         if ($this->family_member_id) {
             return $this->familyMember ? $this->familyMember->relation : 'Family Member';
+        }
+        if ($this->customer_id) {
+            return 'Guest';
+        }
+        if ($this->corporate_member_id) {
+            return 'Corporate';
         }
         return 'SELF';
     }
