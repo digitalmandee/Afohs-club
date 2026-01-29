@@ -233,6 +233,23 @@ const EmployeeDashboard = () => {
                                             // backgroundColor: '#fff',
                                         },
                                     }}
+                                    ListboxProps={{
+                                        sx: {
+
+                                            '& .MuiAutocomplete-option': {
+                                                borderRadius: '16px',
+                                                mx: '8px',
+                                            },
+                                            '& .MuiAutocomplete-option:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                            '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                        },
+                                    }}
                                 />
                                 <Autocomplete
                                     size="small"
@@ -245,7 +262,23 @@ const EmployeeDashboard = () => {
                                         minWidth: 250,
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '16px',
-                                            // backgroundColor: '#fff',
+                                        },
+                                    }}
+                                    ListboxProps={{
+                                        sx: {
+
+                                            '& .MuiAutocomplete-option': {
+                                                borderRadius: '16px',
+                                                mx: '8px',
+                                            },
+                                            '& .MuiAutocomplete-option:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                            '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
                                         },
                                     }}
                                 />
@@ -264,6 +297,23 @@ const EmployeeDashboard = () => {
                                             // backgroundColor: '#fff',
                                         },
                                     }}
+                                    ListboxProps={{
+                                        sx: {
+
+                                            '& .MuiAutocomplete-option': {
+                                                borderRadius: '16px',
+                                                mx: '8px',
+                                            },
+                                            '& .MuiAutocomplete-option:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                            '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                        },
+                                    }}
                                 />
                                 <Autocomplete
                                     size="small"
@@ -279,6 +329,23 @@ const EmployeeDashboard = () => {
                                             // backgroundColor: '#fff',
                                         },
                                     }}
+                                    ListboxProps={{
+                                        sx: {
+
+                                            '& .MuiAutocomplete-option': {
+                                                borderRadius: '16px',
+                                                mx: '8px',
+                                            },
+                                            '& .MuiAutocomplete-option:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                            '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                        },
+                                    }}
                                 />
                                 <Autocomplete
                                     size="small"
@@ -292,6 +359,23 @@ const EmployeeDashboard = () => {
                                         '& .MuiOutlinedInput-root': {
                                             borderRadius: '16px',
                                             // backgroundColor: '#fff',
+                                        },
+                                    }}
+                                    ListboxProps={{
+                                        sx: {
+
+                                            '& .MuiAutocomplete-option': {
+                                                borderRadius: '16px',
+                                                mx: '8px',
+                                            },
+                                            '& .MuiAutocomplete-option:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                            '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
                                         },
                                     }}
                                 />
@@ -314,22 +398,22 @@ const EmployeeDashboard = () => {
                                     {isLoading ? <CircularProgress size={16} sx={{ color: 'inherit' }} /> : 'Search'}
                                 </Button>
                                 {/* {(searchTerm || filters.department_id || filters.branch_id || filters.shift_id || filters.designation_id) && ( */}
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleClearFilters}
-                                        sx={{
-                                            color: '#063455',
-                                            borderColor: '#063455',
-                                            textTransform: 'none',
-                                            borderRadius: '20px',
-                                            height: '40px',
-                                            px: 4,
-                                            '&:hover': { borderColor: '#052d45', backgroundColor: 'rgba(6,52,85,0.05)' },
-                                        }}
-                                    >
-                                        Reset
-                                    </Button>
-                                
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleClearFilters}
+                                    sx={{
+                                        color: '#063455',
+                                        borderColor: '#063455',
+                                        textTransform: 'none',
+                                        borderRadius: '20px',
+                                        height: '40px',
+                                        px: 4,
+                                        '&:hover': { borderColor: '#052d45', backgroundColor: 'rgba(6,52,85,0.05)' },
+                                    }}
+                                >
+                                    Reset
+                                </Button>
+
                             </Box>
                         </Box>
 
@@ -478,7 +562,7 @@ const EmployeeDashboard = () => {
                                                                     py: 0.7,
                                                                     borderRadius: '16px',
                                                                     display: 'inline-block',
-                                                                    fontSize:'14px'
+                                                                    fontSize: '14px'
                                                                 }}
                                                             >
                                                                 {hasNoDepartment ? 'No Department' : 'Dept Deleted'}
@@ -491,7 +575,7 @@ const EmployeeDashboard = () => {
                                                                     px: 2,
                                                                     py: 0.7,
                                                                     borderRadius: '16px',
-                                                                    fontSize:'14px',
+                                                                    fontSize: '14px',
                                                                     display: 'inline-block',
                                                                     color: emp.status === 'inactive' ? '#d32f2f' : '#2E7D32',
                                                                     border: `1px solid ${emp.status === 'inactive' ? '#d32f2f' : '#2E7D32'

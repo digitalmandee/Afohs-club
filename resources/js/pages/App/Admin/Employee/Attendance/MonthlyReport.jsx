@@ -116,7 +116,7 @@ const MonthlyReport = () => {
                                         <div
                                             key={index}
                                             style={{
-                                                backgroundColor: 'white',
+                                                backgroundColor: '#063455',
                                                 borderRadius: '8px',
                                                 overflow: 'hidden',
                                                 boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
@@ -150,103 +150,105 @@ const MonthlyReport = () => {
                                                             width: '64px',
                                                             height: '64px',
                                                             borderRadius: '50%',
-                                                            backgroundColor: '#F5F5F5',
+                                                            backgroundColor: '#fff',
                                                             marginBottom: '12px',
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
                                                         }}
                                                     >
-                                                        <span style={{ color: '#666' }}>👤</span>
+                                                        <span style={{ color: '#063455' }}>👤</span>
                                                     </div>
                                                 )}
-                                                <div style={{ color: '#666', fontSize: '14px', marginBottom: '4px' }}>Employ ID : {employee.employee_id}</div>
-                                                <div style={{ fontSize: '16px', fontWeight: '500', marginBottom: '4px' }}>{employee.employee_name}</div>
-                                                <div style={{ color: '#666', fontSize: '14px' }}>{employee.designation}</div>
+                                                <div style={{ color: '#fff', fontSize: '14px', marginBottom: '4px' }}>Employ ID : {employee.employee_id}</div>
+                                                <div style={{ fontSize: '16px', color: '#fff', fontWeight: '500', marginBottom: '4px' }}>{employee.employee_name}</div>
+                                                <div style={{ color: '#fff', fontSize: '14px' }}>{employee.designation}</div>
                                             </div>
 
                                             {/* Statistics */}
-                                            <div style={{ padding: '16px 24px', backgroundColor: '#FFFFFF' }}>
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                        marginBottom: '16px',
-                                                    }}
-                                                >
+                                            <div style={{ backgroundColor: '#FFFFFF' }}>
+                                                <div style={{ padding: '16px 24px' }}>
                                                     <div
                                                         style={{
-                                                            backgroundColor: '#F5F6FA',
-                                                            width: '100%',
-                                                            maxWidth: '120px',
-                                                            borderRadius: '10px',
                                                             display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            flexDirection: 'column',
-                                                            padding: '10px',
+                                                            justifyContent: 'space-between',
+                                                            marginBottom: '16px',
                                                         }}
                                                     >
-                                                        <div style={{ fontSize: '20px', fontWeight: '500' }}>{employee.total_leave}</div>
-                                                        <div style={{ color: '#666', fontSize: '12px' }}>Total Leave</div>
+                                                        <div
+                                                            style={{
+                                                                backgroundColor: '#063455',
+                                                                width: '100%',
+                                                                maxWidth: '120px',
+                                                                borderRadius: '10px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                flexDirection: 'column',
+                                                                padding: '10px',
+                                                            }}
+                                                        >
+                                                            <div style={{ fontSize: '20px', color: '#fff', fontWeight: '500' }}>{employee.total_leave}</div>
+                                                            <div style={{ color: '#fff', fontSize: '12px' }}>Total Leave</div>
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                backgroundColor: '#063455',
+                                                                width: '100%',
+                                                                maxWidth: '120px',
+                                                                borderRadius: '10px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                flexDirection: 'column',
+                                                                padding: '10px',
+                                                            }}
+                                                        >
+                                                            <div style={{ fontSize: '20px', color: '#fff', fontWeight: '500' }}>{employee.total_attendance}</div>
+                                                            <div style={{ color: '#fff', fontSize: '12px' }}>Total Attendance</div>
+                                                        </div>
                                                     </div>
                                                     <div
                                                         style={{
-                                                            backgroundColor: '#F5F6FA',
-                                                            width: '100%',
-                                                            maxWidth: '120px',
-                                                            borderRadius: '10px',
                                                             display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            flexDirection: 'column',
-                                                            padding: '10px',
+                                                            justifyContent: 'space-between',
                                                         }}
                                                     >
-                                                        <div style={{ fontSize: '20px', fontWeight: '500' }}>{employee.total_attendance}</div>
-                                                        <div style={{ color: '#666', fontSize: '12px' }}>Total Attendance</div>
+                                                        <div
+                                                            style={{
+                                                                backgroundColor: '#063455',
+                                                                width: '100%',
+                                                                maxWidth: '120px',
+                                                                borderRadius: '10px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                flexDirection: 'column',
+                                                                padding: '10px',
+                                                            }}
+                                                        >
+                                                            <div style={{ fontSize: '20px', color: '#fff', fontWeight: '500' }}>{employee.time_present}</div>
+                                                            <div style={{ color: '#fff', fontSize: '12px' }}>Time Present</div>
+                                                        </div>
+                                                        <div
+                                                            style={{
+                                                                backgroundColor: '#063455',
+                                                                width: '100%',
+                                                                maxWidth: '120px',
+                                                                borderRadius: '10px',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                flexDirection: 'column',
+                                                                padding: '10px',
+                                                            }}
+                                                        >
+                                                            <div style={{ fontSize: '20px', color: '#fff', fontWeight: '500' }}>{employee.time_late}</div>
+                                                            <div style={{ color: '#fff', fontSize: '12px' }}>Time Late</div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div
-                                                    style={{
-                                                        display: 'flex',
-                                                        justifyContent: 'space-between',
-                                                    }}
-                                                >
-                                                    <div
-                                                        style={{
-                                                            backgroundColor: '#F5F6FA',
-                                                            width: '100%',
-                                                            maxWidth: '120px',
-                                                            borderRadius: '10px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            flexDirection: 'column',
-                                                            padding: '10px',
-                                                        }}
-                                                    >
-                                                        <div style={{ fontSize: '20px', fontWeight: '500' }}>{employee.time_present}</div>
-                                                        <div style={{ color: '#666', fontSize: '12px' }}>Time Present</div>
-                                                    </div>
-                                                    <div
-                                                        style={{
-                                                            backgroundColor: '#F5F6FA',
-                                                            width: '100%',
-                                                            maxWidth: '120px',
-                                                            borderRadius: '10px',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            flexDirection: 'column',
-                                                            padding: '10px',
-                                                        }}
-                                                    >
-                                                        <div style={{ fontSize: '20px', fontWeight: '500' }}>{employee.time_late}</div>
-                                                        <div style={{ color: '#666', fontSize: '12px' }}>Time Late</div>
-                                                    </div>
-                                                </div>
-                                                <div style={{ height: '8px', backgroundColor: '#E0E8F0', marginTop: 'auto' }}></div>
+                                                <div style={{ height: '8px', backgroundColor: '#063455' }} />
                                             </div>
                                         </div>
                                     ))
