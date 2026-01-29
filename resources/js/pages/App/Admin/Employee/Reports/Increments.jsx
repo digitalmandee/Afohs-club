@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, TextField, Grid, Chip } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Print as PrintIcon, TrendingUp as TrendingUpIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, Print as PrintIcon, TrendingUp as TrendingUpIcon, FileDownload as FileDownloadIcon, Search } from '@mui/icons-material';
 
 const formatCurrency = (amount) => {
     return `Rs ${parseFloat(amount || 0).toLocaleString()}`;
@@ -46,32 +46,57 @@ const Increments = ({ increments = [], filters = {} }) => {
                         <IconButton onClick={() => router.visit(route('employees.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 700, ml: 1 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                             Increments Report
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="contained" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ backgroundColor: '#28a745', '&:hover': { backgroundColor: '#218838' } }}>
+                        <Button
+                            variant="contained"
+                            startIcon={<FileDownloadIcon />}
+                            onClick={handleExport}
+                            sx={{
+                                backgroundColor: '#28a745',
+                                borderRadius: '16px',
+                                textTransform: 'capitalize',
+                                '&:hover': { backgroundColor: '#218838' }
+                            }}>
                             Export Excel
                         </Button>
-                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<PrintIcon />}
+                            onClick={handlePrint}
+                            sx={{
+                                borderColor: '#063455',
+                                borderRadius: '16px',
+                                textTransform: 'capitalize',
+                                color: '#063455'
+                            }}>
                             Print
                         </Button>
                     </Box>
                 </Box>
 
                 {/* Filters */}
-                <Card sx={{ mb: 3, p: 2, borderRadius: '12px' }}>
+                <Card sx={{ mb: 3, pt: 2, boxShadow:'none', bgcolor:'transparent'}}>
                     <Grid container spacing={2} alignItems="center">
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={2}>
                             <TextField fullWidth size="small" type="date" label="From Date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid item xs={12} sm={2}>
                             <TextField fullWidth size="small" type="date" label="To Date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
-                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', '&:hover': { backgroundColor: '#052d45' } }}>
-                                Apply Filters
+                        <Grid item xs={12} sm={2}>
+                            <Button 
+                            variant="contained"
+                            startIcon={<Search/>} 
+                            onClick={handleFilter} 
+                            sx={{ backgroundColor: '#063455', 
+                            borderRadius:'16px',
+                            textTransform:'capitalize',
+                            '&:hover': { backgroundColor: '#052d45' } }}>
+                                Search
                             </Button>
                         </Grid>
                     </Grid>

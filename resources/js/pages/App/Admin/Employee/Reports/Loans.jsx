@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, CardContent, Typography, Button, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, FormControl, InputLabel, Select, MenuItem, TextField, IconButton, Autocomplete } from '@mui/material';
-import { Print as PrintIcon, ArrowBack as ArrowBackIcon, AccountBalance as LoanIcon } from '@mui/icons-material';
+import { Print as PrintIcon, ArrowBack as ArrowBackIcon, AccountBalance as LoanIcon, Search } from '@mui/icons-material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -57,12 +57,12 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                 <ArrowBackIcon sx={{ color: '#063455' }} />
                             </IconButton>
                             <Box>
-                                <Typography variant="h4" sx={{ fontWeight: 600, color: '#063455' }}>
+                                <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                                     Employee Loans Report
                                 </Typography>
-                                <Typography variant="body2" color="textSecondary">
+                                {/* <Typography variant="body2" color="textSecondary">
                                     Track loan disbursements and recovery
-                                </Typography>
+                                </Typography> */}
                             </Box>
                         </Box>
                         <Box>
@@ -76,9 +76,14 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                     date_to: dateTo || undefined,
                                 })}
                                 target="_blank"
-                                sx={{ borderColor: '#063455', color: '#063455', mr: 1 }}
+                                sx={{
+                                    borderColor: '#063455',
+                                    color: '#063455', mr: 1,
+                                    textTransform: 'capitalize',
+                                    borderRadius: '16px'
+                                }}
                             >
-                                Print Report
+                                Print
                             </Button>
                             <Button
                                 variant="contained"
@@ -88,7 +93,12 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                     date_from: dateFrom || undefined,
                                     date_to: dateTo || undefined,
                                 })}
-                                sx={{ backgroundColor: '#008f3d', color: '#fff', '&:hover': { backgroundColor: '#00642b' } }}
+                                sx={{
+                                    backgroundColor: '#008f3d',
+                                    borderRadius: '16px',
+                                    textTransform: 'capitalize',
+                                    color: '#fff', '&:hover': { backgroundColor: '#00642b' }
+                                }}
                             >
                                 Export Excel
                             </Button>
@@ -96,7 +106,7 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                     </Box>
 
                     {/* Filters */}
-                    <Card sx={{ mb: 4, '@media print': { display: 'none' }, borderRadius: '12px' }}>
+                    <Card sx={{ mb: 4, boxShadow: 'none', bgcolor: 'transparent', '@media print': { display: 'none' }, borderRadius: '12px' }}>
                         <CardContent>
                             <Grid container spacing={2} alignItems="center">
                                 <Grid item xs={12} sm={3}>
@@ -107,13 +117,83 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                         onChange={(event, newValue) => {
                                             setSelectedEmployee(newValue ? newValue.id : '');
                                         }}
-                                        renderInput={(params) => <TextField {...params} label="Employee" size="small" />}
+                                        ListboxProps={{
+                                            sx: {
+                                                '& .MuiAutocomplete-option': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiAutocomplete-option:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiAutocomplete-option.Mui-focused': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        }}
+                                        renderInput={(params) =>
+                                            <TextField {...params} label="Employee" size="small"
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: '16px',
+                                                        '& fieldset': {
+                                                            borderRadius: '16px',
+                                                        },
+                                                    },
+                                                }}
+                                            />}
                                     />
                                 </Grid>
                                 <Grid item xs={12} sm={2}>
-                                    <FormControl fullWidth size="small">
+                                    <FormControl fullWidth size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+                                            },
+                                        }}>
                                         <InputLabel>Status</InputLabel>
-                                        <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+                                        <Select
+                                            value={selectedStatus}
+                                            label="Status"
+                                            onChange={(e) => setSelectedStatus(e.target.value)}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    sx: {
+                                                        borderRadius: '16px',
+                                                        maxHeight: '300px',
+                                                        overflowY: 'auto',
+                                                    },
+                                                },
+                                                MenuListProps: {
+                                                    sx: {
+                                                        '& .MuiMenuItem-root': {
+                                                            borderRadius: '16px',
+                                                            mx: '8px',
+                                                            my: '1px'
+                                                            // transition: 'all 0.2s ease',
+                                                        },
+                                                        '& .MuiMenuItem-root:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                    },
+                                                },
+                                            }}>
                                             <MenuItem value="">All Status</MenuItem>
                                             <MenuItem value="pending">Pending</MenuItem>
                                             <MenuItem value="disbursed">Disbursed (Active)</MenuItem>
@@ -121,7 +201,7 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                         </Select>
                                     </FormControl>
                                 </Grid>
-                                <Grid item xs={12} sm={2.5}>
+                                <Grid item xs={12} sm={2}>
                                     <DatePicker
                                         label="From Date"
                                         value={dateFrom ? dayjs(dateFrom) : null}
@@ -134,9 +214,14 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                             },
                                             actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                         }}
+                                        sx={{
+                                            '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                borderRadius: '16px !important',
+                                            },
+                                        }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={2.5}>
+                                <Grid item xs={12} sm={2}>
                                     <DatePicker
                                         label="To Date"
                                         value={dateTo ? dayjs(dateTo) : null}
@@ -149,13 +234,36 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                                             },
                                             actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                         }}
+                                        sx={{
+                                            '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                borderRadius: '16px !important',
+                                            },
+                                        }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={2} sx={{ display: 'flex', gap: 1 }}>
-                                    <Button fullWidth variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455' }}>
-                                        Apply
+                                <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
+                                    <Button
+                                        fullWidth
+                                        variant="contained"
+                                        startIcon={<Search />}
+                                        onClick={handleFilter}
+                                        sx={{
+                                            backgroundColor: '#063455',
+                                            borderRadius: '16px',
+                                            textTransform: 'capitalize'
+                                        }}>
+                                        Search
                                     </Button>
-                                    <Button fullWidth variant="outlined" onClick={() => router.visit(route('employees.reports.loans'))} sx={{ borderColor: '#d3d3d3', color: '#666' }}>
+                                    <Button
+                                        fullWidth
+                                        variant="outlined"
+                                        onClick={() => router.visit(route('employees.reports.loans'))}
+                                        sx={{
+                                            borderColor: '#063455',
+                                            color: '#063455',
+                                            borderRadius: '16px',
+                                            textTransform: 'capitalize'
+                                        }}>
                                         Reset
                                     </Button>
                                 </Grid>
@@ -166,51 +274,55 @@ const Loans = ({ loans, employees, summary, filters, hasLoansTable }) => {
                     {/* Summary Cards */}
                     <Grid container spacing={3} sx={{ mb: 4 }}>
                         <Grid item xs={12} sm={3}>
-                            <Card sx={{ borderRadius: '12px', bgcolor: '#e3f2fd' }}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <LoanIcon sx={{ fontSize: 40, color: '#1976d2', mb: 1 }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#063455' }}>
-                                        {formatCurrency(summary?.total_amount)}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
+                                    {/* <LoanIcon sx={{ fontSize: 40, color: '#fff', mb: 1 }} /> */}
+                                    <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '14px' }}>
                                         Total Loaned Amount
                                     </Typography>
+                                    <Typography sx={{ fontWeight: 700, color: '#fff', fontSize: '18px' }}>
+                                        {formatCurrency(summary?.total_amount)}
+                                    </Typography>
+
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={3}>
-                            <Card sx={{ borderRadius: '12px', bgcolor: '#e8f5e9' }}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#2e7d32' }}>
-                                        {formatCurrency(summary?.total_recovered)}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
+                                    <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '14px' }}>
                                         Total Recovered
                                     </Typography>
+                                    <Typography sx={{ fontWeight: 700, color: '#fff', fontSize: '18px' }}>
+                                        {formatCurrency(summary?.total_recovered)}
+                                    </Typography>
+
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={3}>
-                            <Card sx={{ borderRadius: '12px', bgcolor: '#ffebee' }}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#c62828' }}>
-                                        {formatCurrency(summary?.total_remaining)}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
+                                    <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '14px' }}>
                                         Outstanding Balance
                                     </Typography>
+                                    <Typography sx={{ fontWeight: 700, color: '#fff', fontSize: '18px' }}>
+                                        {formatCurrency(summary?.total_remaining)}
+                                    </Typography>
+
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={3}>
-                            <Card sx={{ borderRadius: '12px', bgcolor: '#fff3e0' }}>
+                            <Card sx={{ borderRadius: '12px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" sx={{ fontWeight: 700, color: '#ef6c00' }}>
-                                        {summary?.active_count || 0}
-                                    </Typography>
-                                    <Typography variant="body2" color="textSecondary">
+                                    <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '14px' }}>
                                         Active Loans
                                     </Typography>
+                                    <Typography sx={{ fontWeight: 700, color: '#fff', fontSize: '18px' }}>
+                                        {summary?.active_count || 0}
+                                    </Typography>
+
                                 </CardContent>
                             </Card>
                         </Grid>

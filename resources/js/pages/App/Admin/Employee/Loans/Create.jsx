@@ -70,7 +70,7 @@ const Create = ({ employees = [] }) => {
                         <IconButton onClick={() => router.visit(route('employees.loans.index'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 700, ml: 1 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                             New Loan Application
                         </Typography>
                     </Box>
@@ -143,10 +143,10 @@ const Create = ({ employees = [] }) => {
                                         </Grid>
                                         <Grid item xs={12}>
                                             <Box sx={{ display: 'flex', gap: 2 }}>
-                                                <Button type="submit" variant="contained" startIcon={<SaveIcon />} sx={{ backgroundColor: '#063455' }}>
+                                                <Button type="submit" variant="contained" startIcon={<SaveIcon />} sx={{ backgroundColor: '#063455', textTransform:'capitalize', borderRadius:'16px' }}>
                                                     Submit Application
                                                 </Button>
-                                                <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ borderColor: '#063455', color: '#063455' }}>
+                                                <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ borderColor: '#063455', textTransform:'capitalize', color: '#063455', borderRadius:'16px' }}>
                                                     Cancel
                                                 </Button>
                                             </Box>

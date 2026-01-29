@@ -152,7 +152,7 @@ const CreatePeriod = () => {
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
                         <Box>
-                            <Typography sx={{ fontWeight: 700, fontSize:'30px', color: '#063455' }}>
+                            <Typography sx={{ fontWeight: 700, fontSize: '30px', color: '#063455' }}>
                                 Create Payroll Period
                             </Typography>
                             {/* <Typography variant="body2" color="textSecondary">
@@ -243,7 +243,7 @@ const CreatePeriod = () => {
                                     fullWidth
                                     InputLabelProps={{ shrink: true }}
                                     error={!!errors.pay_date}
-                                    helperText={errors.pay_date || 'Date when salaries will be paid'}
+                                    helperText={errors.pay_date}
                                     sx={{
                                         minWidth: 0,
                                         height: 40,
@@ -382,6 +382,8 @@ const CreatePeriod = () => {
                                         sx={{
                                             borderColor: '#063455',
                                             color: '#063455',
+                                            borderRadius: '16px',
+                                            textTransform: 'capitalize',
                                             '&:hover': { borderColor: '#052d45', backgroundColor: 'rgba(6, 52, 85, 0.04)' },
                                         }}
                                     >
@@ -394,6 +396,8 @@ const CreatePeriod = () => {
                                         disabled={loading}
                                         sx={{
                                             backgroundColor: '#063455',
+                                            borderRadius: '16px',
+                                            textTransform: 'capitalize',
                                             '&:hover': { backgroundColor: '#052d45' },
                                             minWidth: 120,
                                         }}

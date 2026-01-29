@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, FormControl, InputLabel, Select, MenuItem, Chip, Grid } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon, Search } from '@mui/icons-material';
 
 const EmployeeDetails = ({ employees = [], departments = [], filters = {} }) => {
     const [selectedDepartment, setSelectedDepartment] = useState(filters.department_id || '');
@@ -59,27 +59,86 @@ const EmployeeDetails = ({ employees = [], departments = [], filters = {} }) => 
                         <IconButton onClick={() => router.visit(route('employees.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 700, ml: 1 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                             Employee Details Report
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="contained" startIcon={<FileDownloadIcon />} onClick={handleExport} sx={{ backgroundColor: '#28a745', '&:hover': { backgroundColor: '#218838' } }}>
+                        <Button
+                            variant="contained"
+                            startIcon={<FileDownloadIcon />}
+                            onClick={handleExport}
+                            sx={{
+                                backgroundColor: '#28a745',
+                                borderRadius: '16px',
+                                textTransform: 'capitalize',
+                                '&:hover': { backgroundColor: '#218838' }
+                            }}>
                             Export Excel
                         </Button>
-                        <Button variant="outlined" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderColor: '#063455', color: '#063455' }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<PrintIcon />}
+                            onClick={handlePrint}
+                            sx={{
+                                borderColor: '#063455',
+                                color: '#063455',
+                                borderRadius: '16px',
+                                textTransform: 'capitalize',
+                            }}>
                             Print
                         </Button>
                     </Box>
                 </Box>
 
                 {/* Filters */}
-                <Card sx={{ mb: 3, p: 2, borderRadius: '12px' }}>
+                <Card sx={{ mb: 3, pt: 2, bgcolor: 'transparent', boxShadow: 'none' }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={3}>
-                            <FormControl fullWidth size="small">
+                            <FormControl
+                                fullWidth
+                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}>
                                 <InputLabel>Department</InputLabel>
-                                <Select value={selectedDepartment} label="Department" onChange={(e) => setSelectedDepartment(e.target.value)}>
+                                <Select
+                                    value={selectedDepartment}
+                                    label="Department"
+                                    onChange={(e) => setSelectedDepartment(e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px',
+                                                maxHeight: '300px',
+                                                overflowY: 'auto',
+                                            },
+                                        },
+                                        MenuListProps: {
+                                            sx: {
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my: '1px'
+                                                    // transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiMenuItem-root:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        },
+                                    }}>
                                     <MenuItem value="">All Departments</MenuItem>
                                     {departments.map((dept) => (
                                         <MenuItem key={dept.id} value={dept.id}>
@@ -90,9 +149,50 @@ const EmployeeDetails = ({ employees = [], departments = [], filters = {} }) => 
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={3}>
-                            <FormControl fullWidth size="small">
+                            <FormControl
+                                fullWidth
+                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}>
                                 <InputLabel>Status</InputLabel>
-                                <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+                                <Select
+                                    value={selectedStatus}
+                                    label="Status"
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px',
+                                                maxHeight: '300px',
+                                                overflowY: 'auto',
+                                            },
+                                        },
+                                        MenuListProps: {
+                                            sx: {
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my: '1px'
+                                                    // transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiMenuItem-root:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        },
+                                    }}>
                                     <MenuItem value="">All Status</MenuItem>
                                     <MenuItem value="active">Active</MenuItem>
                                     <MenuItem value="inactive">Inactive</MenuItem>
@@ -102,9 +202,50 @@ const EmployeeDetails = ({ employees = [], departments = [], filters = {} }) => 
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={3}>
-                            <FormControl fullWidth size="small">
+                            <FormControl
+                                fullWidth
+                                size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}>
                                 <InputLabel>Employment Type</InputLabel>
-                                <Select value={selectedEmploymentType} label="Employment Type" onChange={(e) => setSelectedEmploymentType(e.target.value)}>
+                                <Select
+                                    value={selectedEmploymentType}
+                                    label="Employment Type"
+                                    onChange={(e) => setSelectedEmploymentType(e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px',
+                                                maxHeight: '300px',
+                                                overflowY: 'auto',
+                                            },
+                                        },
+                                        MenuListProps: {
+                                            sx: {
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my: '1px'
+                                                    // transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiMenuItem-root:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        },
+                                    }}>
                                     <MenuItem value="">All Types</MenuItem>
                                     <MenuItem value="full_time">Full Time</MenuItem>
                                     <MenuItem value="part_time">Part Time</MenuItem>
@@ -113,8 +254,17 @@ const EmployeeDetails = ({ employees = [], departments = [], filters = {} }) => 
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={3}>
-                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', '&:hover': { backgroundColor: '#052d45' } }}>
-                                Apply Filters
+                            <Button
+                                variant="contained"
+                                startIcon={<Search />}
+                                onClick={handleFilter}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': { backgroundColor: '#052d45' }
+                                }}>
+                                Search
                             </Button>
                         </Grid>
                     </Grid>

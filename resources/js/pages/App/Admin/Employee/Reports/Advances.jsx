@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
 import { Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, FormControl, InputLabel, Select, MenuItem, Grid, Chip, TextField, Alert } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon, OpenInNew as OpenInNewIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, Print as PrintIcon, FileDownload as FileDownloadIcon, OpenInNew as OpenInNewIcon, Search } from '@mui/icons-material';
 
 const formatCurrency = (amount) => `Rs ${parseFloat(amount || 0).toLocaleString()}`;
 
@@ -64,14 +64,36 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                         <IconButton onClick={() => router.visit(route('employees.reports'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 700, ml: 1 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>
                             Advances Report
                         </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Button variant="contained" startIcon={<OpenInNewIcon />} onClick={() => router.visit(route('employees.advances.index'))} sx={{ backgroundColor: '#28a745' }}>
+                        <Button
+                            variant="contained"
+                            startIcon={<OpenInNewIcon />}
+                            onClick={() => router.visit(route('employees.advances.index'))}
+                            sx={{ backgroundColor: '#28a745', textTransform: 'none', borderRadius: 'capitalise', borderRadius: '16px' }}>
                             Manage Advances
                         </Button>
+
+                        <Button
+                            variant="contained"
+                            href={route('employees.reports.api.advances.export', {
+                                employee_id: selectedEmployee || undefined,
+                                status: selectedStatus || undefined,
+                                date_from: dateFrom || undefined,
+                                date_to: dateTo || undefined,
+                            })}
+                            sx={{
+                                backgroundColor: '#28a745',
+                                textTransform: 'none', borderRadius: 'capitalise', borderRadius: '16px',
+                                color: '#fff', '&:hover': { backgroundColor: '#00642b' }
+                            }}
+                        >
+                            Export Excel
+                        </Button>
+
                         <Button
                             variant="outlined"
                             startIcon={<PrintIcon />}
@@ -82,21 +104,9 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                                 date_to: dateTo || undefined,
                             })}
                             target="_blank"
-                            sx={{ borderColor: '#063455', color: '#063455' }}
+                            sx={{ borderColor: '#063455', color: '#063455', textTransform: 'none', borderRadius: 'capitalise', borderRadius: '16px' }}
                         >
                             Print
-                        </Button>
-                        <Button
-                            variant="contained"
-                            href={route('employees.reports.api.advances.export', {
-                                employee_id: selectedEmployee || undefined,
-                                status: selectedStatus || undefined,
-                                date_from: dateFrom || undefined,
-                                date_to: dateTo || undefined,
-                            })}
-                            sx={{ backgroundColor: '#008f3d', color: '#fff', '&:hover': { backgroundColor: '#00642b' } }}
-                        >
-                            Export Excel
                         </Button>
                     </Box>
                 </Box>
@@ -105,51 +115,51 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                 {summary && (
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                         <Grid item xs={6} sm={2.4}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2 }}>
-                                <Typography variant="body2" color="textSecondary">
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: '#063455' }}>
+                                <Typography sx={{ color: '#fff', fontSize: '16px' }}>
                                     Total Advances
                                 </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                <Typography sx={{ fontWeight: 600, color: '#fff', fontSize: '18px' }}>
                                     {summary.count}
                                 </Typography>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2.4}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2 }}>
-                                <Typography variant="body2" color="textSecondary">
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: '#063455' }}>
+                                <Typography sx={{ color: '#fff', fontSize: '16px' }}>
                                     Total Amount
                                 </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 600, color: '#063455' }}>
+                                <Typography sx={{ fontWeight: 600, color: '#fff', fontSize: '18px' }}>
                                     {formatCurrency(summary.total_amount)}
                                 </Typography>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2.4}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2 }}>
-                                <Typography variant="body2" color="textSecondary">
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: '#063455' }}>
+                                <Typography sx={{ color: '#fff', fontSize: '16px' }}>
                                     Outstanding
                                 </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 600, color: 'red' }}>
+                                <Typography sx={{ fontWeight: 600, color: '#fff', fontSize: '18px' }}>
                                     {formatCurrency(summary.total_remaining)}
                                 </Typography>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2.4}>
-                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2 }}>
-                                <Typography variant="body2" color="textSecondary">
+                            <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, bgcolor: '#063455' }}>
+                                <Typography sx={{ color: '#fff', fontSize: '16px' }}>
                                     Pending
                                 </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 600, color: '#ff9800' }}>
+                                <Typography sx={{ fontWeight: 600, color: '#fff', fontSize: '18px' }}>
                                     {summary.pending_count}
                                 </Typography>
                             </Card>
                         </Grid>
                         <Grid item xs={6} sm={2.4}>
                             <Card sx={{ borderRadius: '12px', textAlign: 'center', p: 2, backgroundColor: '#063455' }}>
-                                <Typography variant="body2" sx={{ color: '#ccc' }}>
-                                    Being Deducted
+                                <Typography sx={{ color: '#fff', fontSize: '16px' }}>
+                                    Deducted
                                 </Typography>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: '#fff' }}>
+                                <Typography sx={{ fontWeight: 600, color: '#fff', fontSize: '18px' }}>
                                     {summary.paid_count}
                                 </Typography>
                             </Card>
@@ -158,12 +168,51 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                 )}
 
                 {/* Filters */}
-                <Card sx={{ mb: 3, p: 2, borderRadius: '12px' }}>
+                <Card sx={{ mb: 3, pt: 2, boxShadow: 'none', bgcolor: 'transparent' }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={3}>
-                            <FormControl fullWidth size="small">
+                            <FormControl fullWidth size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}>
                                 <InputLabel>Employee</InputLabel>
-                                <Select value={selectedEmployee} label="Employee" onChange={(e) => setSelectedEmployee(e.target.value)}>
+                                <Select
+                                    value={selectedEmployee}
+                                    label="Employee"
+                                    onChange={(e) => setSelectedEmployee(e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px',
+                                                maxHeight: '300px',
+                                                overflowY: 'auto',
+                                            },
+                                        },
+                                        MenuListProps: {
+                                            sx: {
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my:'1px'
+                                                    // transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiMenuItem-root:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        },
+                                    }}>
                                     <MenuItem value="">All Employees</MenuItem>
                                     {employees.map((emp) => (
                                         <MenuItem key={emp.id} value={emp.id}>
@@ -174,9 +223,47 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                             </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={2}>
-                            <FormControl fullWidth size="small">
+                            <FormControl fullWidth size="small"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}>
                                 <InputLabel>Status</InputLabel>
-                                <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+                                <Select value={selectedStatus}
+                                    label="Status"
+                                    onChange={(e) => setSelectedStatus(e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                borderRadius: '16px',
+                                                maxHeight: '300px',
+                                                overflowY: 'auto',
+                                            },
+                                        },
+                                        MenuListProps: {
+                                            sx: {
+                                                '& .MuiMenuItem-root': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my: '1px'
+                                                    // transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiMenuItem-root:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        },
+                                    }}>
                                     <MenuItem value="">All Status</MenuItem>
                                     <MenuItem value="pending">Pending</MenuItem>
                                     <MenuItem value="approved">Approved</MenuItem>
@@ -192,10 +279,25 @@ const Advances = ({ advances = [], employees = [], summary = null, hasAdvancesTa
                             <TextField fullWidth size="small" type="date" label="To" value={dateTo} onChange={(e) => setDateTo(e.target.value)} InputLabelProps={{ shrink: true }} />
                         </Grid>
                         <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
-                            <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', flex: 1 }}>
-                                Apply
+                            <Button
+                                variant="contained"
+                                startIcon={<Search />}
+                                onClick={handleFilter}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    borderRadius: '16px',
+                                    textTransform: 'capitalize',
+                                }}>
+                                Search
                             </Button>
-                            <Button variant="outlined" onClick={() => router.visit(route('employees.reports.advances'))} sx={{ borderColor: '#d3d3d3', color: '#666' }}>
+                            <Button
+                                variant="outlined"
+                                onClick={() => router.visit(route('employees.reports.advances'))}
+                                sx={{
+                                    borderColor: '#063455', color: '#063455',
+                                    borderRadius: '16px',
+                                    textTransform: 'capitalize',
+                                }}>
                                 Reset
                             </Button>
                         </Grid>
