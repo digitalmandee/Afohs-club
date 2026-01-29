@@ -510,13 +510,7 @@ class AdminPosReportController extends Controller
         $cashierFilter = $filters['cashier_id'] ?? null;
 
         // Get all cashiers from Employee model (assuming cashier is an employee type)
-        $allCashiers = Employee::with(['employeeType'])
-            ->whereHas('employeeType', function ($q) {
-                $q
-                    ->where('name', 'LIKE', '%Cashier%')
-                    ->orWhere('slug', 'LIKE', '%cashier%');
-            })
-            ->select('id', 'name')
+        $allCashiers = Employee::select('id', 'name')
             ->get();
         Log::info('allCashiers: ' . $allCashiers);
         // Get financial invoices with food_order type within date range

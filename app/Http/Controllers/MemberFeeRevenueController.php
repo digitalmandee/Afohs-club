@@ -2315,8 +2315,9 @@ class MemberFeeRevenueController extends Controller
                 '5_quarters_pending' => ['count' => 0, 'amount' => 0],
                 '6_quarters_pending' => ['count' => 0, 'amount' => 0],
                 'more_than_6_quarters_pending' => ['count' => 0, 'amount' => 0],
-                'maintenance_fee_quarterly' => $category->subscription_fee ?? 0,
-                'total_values' => 0
+                'maintenance_fee_quarterly' => 0,  // Will be calculated dynamically
+                'total_values' => 0,
+                'total_quarters' => 0  // Track total quarters to calculate average fee
             ];
         }
 
@@ -2362,7 +2363,8 @@ class MemberFeeRevenueController extends Controller
 
             if ($pendingQuarters > 0) {
                 // Calculate pending amount for this member
-                $quarterlyFee = $member->memberCategory->subscription_fee ?? 0;
+                // User requested to use member's total_maintenance_fee directly
+                $quarterlyFee = $member->total_maintenance_fee ?? 0;
                 $totalPendingAmount = $pendingQuarters * $quarterlyFee;
 
                 // Determine bucket key
@@ -2389,15 +2391,25 @@ class MemberFeeRevenueController extends Controller
                 $grandTotals[$bucketKey]['count']++;
                 $grandTotals[$bucketKey]['amount'] += $totalPendingAmount;
 
-                // Also update total values
+                // Also update total values and quarters
                 $summary[$categoryName]['total_values'] += $totalPendingAmount;
+                $summary[$categoryName]['total_quarters'] += $pendingQuarters;
                 $grandTotals['total_values'] += $totalPendingAmount;
+            }
+        }
+
+        // Calculate effective average quarterly fee for each category
+        foreach ($summary as $key => $data) {
+            if ($data['total_quarters'] > 0) {
+                $summary[$key]['maintenance_fee_quarterly'] = $data['total_values'] / $data['total_quarters'];
             }
         }
 
         // Set maintenance fee quarterly for grand totals
         if (!empty($summary)) {
             $fees = array_column($summary, 'maintenance_fee_quarterly');
+            // Filter out 0 fees to avoid skewing average if needed, or just average all
+            $fees = array_filter($fees, fn($f) => $f > 0);
             $grandTotals['maintenance_fee_quarterly'] = count($fees) > 0 ? array_sum($fees) / count($fees) : 0;
         }
 
@@ -2476,8 +2488,9 @@ class MemberFeeRevenueController extends Controller
                 '4_quarters_pending' => 0,
                 '5_quarters_pending' => 0,
                 'more_than_5_quarters_pending' => 0,
-                'maintenance_fee_quarterly' => $category->subscription_fee ?? 0,
-                'total_values' => 0
+                'maintenance_fee_quarterly' => 0,  // Will be calculated dynamically
+                'total_values' => 0,
+                'total_quarters' => 0  // Track total quarters
             ];
         }
 
@@ -2527,17 +2540,27 @@ class MemberFeeRevenueController extends Controller
                     $grandTotals['more_than_5_quarters_pending']++;
                 }
 
-                $quarterlyFee = $member->memberCategory->subscription_fee ?? 0;
+                // User requested to use member's total_maintenance_fee directly
+                $quarterlyFee = $member->total_maintenance_fee ?? 0;
                 $totalPendingAmount = $pendingQuarters * $quarterlyFee;
                 $summary[$categoryName]['total_values'] += $totalPendingAmount;
+                $summary[$categoryName]['total_quarters'] += $pendingQuarters;
                 $grandTotals['total_values'] += $totalPendingAmount;
+            }
+        }
+
+        // Calculate effective average quarterly fee for each category
+        foreach ($summary as $key => $data) {
+            if ($data['total_quarters'] > 0) {
+                $summary[$key]['maintenance_fee_quarterly'] = $data['total_values'] / $data['total_quarters'];
             }
         }
 
         // Set maintenance fee quarterly for grand totals
         if (!empty($summary)) {
             $fees = array_column($summary, 'maintenance_fee_quarterly');
-            $grandTotals['maintenance_fee_quarterly'] = array_sum($fees) / count($fees);
+            $fees = array_filter($fees, fn($f) => $f > 0);
+            $grandTotals['maintenance_fee_quarterly'] = count($fees) > 0 ? array_sum($fees) / count($fees) : 0;
         }
 
         // Get all categories for filter dropdown
