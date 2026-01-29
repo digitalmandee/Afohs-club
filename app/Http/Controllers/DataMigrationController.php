@@ -2258,7 +2258,7 @@ class DataMigrationController extends Controller
         }
     }
 
-    private function createInvoiceFromLegacy($first, $groupRows, $typeId)
+    private function createInvoiceFromLegacy($first, $groupRows)
     {
         // Resolve Payer
         $memberId = null;
@@ -2277,41 +2277,7 @@ class DataMigrationController extends Controller
         }
 
         // Map Type & Reference IDs
-        $feeType = 'custom';
-        $finChargeTypeId = null;
-        $subTypeId = null;
-
-        if ($typeId == 3) {
-            $generic = TransactionType::where('name', 'Membership Fee')->first();
-            $feeType = $generic ? $generic->id : null;
-        } elseif ($typeId == 4) {
-            $generic = TransactionType::where('name', 'Monthly Maintenance Fee')->first();
-            $feeType = $generic ? $generic->id : null;
-        } else {
-            // Lookup Legacy Definition to decide strategy
-            $legacyDef = DB::connection('old_afohs')->table('trans_types')->where('id', $typeId)->first();
-
-            if ($legacyDef) {
-                if ($legacyDef->type == 3) {
-                    // --- SUBSCRIPTION STRATEGY ---
-                    // Link to "Monthly Subscription" Generic TransactionType AND Specific SubscriptionType
-
-                    $generic = TransactionType::where('name', 'Subscription Fee')->first();
-                    $feeType = $generic ? $generic->id : null;
-
-                    $subTypeModel = \App\Models\SubscriptionCategory::where('name', $legacyDef->name)->first();
-                    $subTypeId = $subTypeModel ? $subTypeModel->id : null;
-                } elseif ($legacyDef->type == 2) {
-                    // --- AD-HOC / CHARGES STRATEGY ---
-                    // Link directly to specific TransactionType
-                    $generic = TransactionType::where('name', 'Charges Fee')->first();
-                    $feeType = $generic ? $generic->id : null;
-
-                    $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
-                    $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
-                }
-            }
-        }
+        // Map Type & Reference IDs logic moved inside loop below
 
         // Header
         $invoice = FinancialInvoice::create([
@@ -2333,11 +2299,50 @@ class DataMigrationController extends Controller
 
         // Items
         foreach ($groupRows as $row) {
+            // Map Type & Reference IDs Per Item
+            $typeId = $row->charges_type;
+            $feeType = 'custom';
+            $finChargeTypeId = null;
+            $subTypeId = null;
+
+            if ($typeId == 3) {
+                // $generic = TransactionType::where('name', 'Membership Fee')->first();
+                // Optimization: Hardcode known IDs or use cache if possible, but for now stick to query or simple lookups
+                // To avoid 1000s of queries, we could look up once outside loop, but "typeId" varies.
+                // Re-using the logic:
+                $generic = TransactionType::where('name', 'Membership Fee')->first();
+                $feeType = $generic ? $generic->id : null;
+            } elseif ($typeId == 4) {
+                $generic = TransactionType::where('name', 'Monthly Maintenance Fee')->first();
+                $feeType = $generic ? $generic->id : null;
+            } else {
+                // Lookup Legacy Definition to decide strategy
+                $legacyDef = DB::connection('old_afohs')->table('trans_types')->where('id', $typeId)->first();
+
+                if ($legacyDef) {
+                    if ($legacyDef->type == 3) {  // Subscription Strategy
+                        $generic = TransactionType::where('name', 'Subscription Fee')->first();
+                        $feeType = $generic ? $generic->id : null;
+
+                        $subTypeModel = \App\Models\SubscriptionCategory::where('name', $legacyDef->name)->first();
+                        $subTypeId = $subTypeModel ? $subTypeModel->subscription_type_id : null;
+                        $subCategoryId = $subTypeModel ? $subTypeModel->id : null;
+                    } elseif ($legacyDef->type == 2) {  // Ad-hoc / Charges Strategy
+                        $generic = TransactionType::where('name', 'Charges Fee')->first();
+                        $feeType = $generic ? $generic->id : null;
+
+                        $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
+                        $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
+                    }
+                }
+            }
+
             $item = \App\Models\FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'fee_type' => $feeType,
                 'financial_charge_type_id' => $finChargeTypeId,
                 'subscription_type_id' => $subTypeId,
+                'subscription_category_id' => $subCategoryId,
                 'description' => $row->comments,
                 'amount' => $row->charges_amount ?? 0,
                 'qty' => $row->qty ?? 1,
@@ -2357,91 +2362,88 @@ class DataMigrationController extends Controller
 
     private function migrateInvoiceTransactions($newInvoice, $newItem, $legacyRow)
     {
-        // Find legacy transactions linked to this specific row/item
-        // Legacy Link: transactions.trans_type_id == finance_invoices.id (legacyRow->id)
+        $payableType = $this->getPayableType($newInvoice);
+        $payableId = $this->getPayableId($newInvoice);
+
+        // 1. Synthesize DEBIT (Charge) Transaction from the Item itself
+        // We do this to ensure every item has a corresponding charge, avoiding legacy data gaps.
+        \App\Models\Transaction::create([
+            'amount' => $newItem->total,  // Usage Total from Item
+            'type' => 'debit',
+            'payable_type' => $payableType,
+            'payable_id' => $payableId,
+            'reference_type' => \App\Models\FinancialInvoiceItem::class,
+            'reference_id' => $newItem->id,
+            'invoice_id' => $newInvoice->id,
+            'date' => $newItem->start_date ?? $newInvoice->issue_date,  // Best guess for date
+            'created_at' => $newItem->created_at,
+            'updated_at' => $newItem->updated_at,
+            'created_by' => $newItem->created_by,
+            'updated_by' => $newItem->updated_by,
+        ]);
+
+        // 2. Find legacy CREDITS (Payments) linked to this specific row/item
         $legacyTrans = DB::connection('old_afohs')
             ->table('transactions')
             ->where('trans_type_id', $legacyRow->id)
-            ->where('debit_or_credit', '>=', 0)  // Getting both debit(0) and credit(1)
-            // User mentioned "is_active" on transactions or invoices?
-            // "transaction with item... trans_type_id... also here has key date, is_Active... so i think we need to only migrate active one"
-            // So transactions table likely has is_active too.
-            ->where('is_active', 1)
+            ->where('trans_type', $legacyRow->charges_type)  // STRICT MATCH
+            ->where('debit_or_credit', '>', 0)  // ONLY CREDITS
             ->whereNull('deleted_at')
+            ->orderBy('id', 'asc')
             ->get();
 
         foreach ($legacyTrans as $t) {
-            $payableType = $this->getPayableType($newInvoice);
-            $payableId = $this->getPayableId($newInvoice);
+            // SKIP Credits that have no Receipt ID (Phantom/Duplicate Credits)
+            if (empty($t->receipt_id)) {
+                continue;
+            }
 
-            if ($t->debit_or_credit == 0) {
-                // DEBIT (Charge)
-                \App\Models\Transaction::create([
-                    'amount' => $t->trans_amount,
-                    'type' => 'debit',
-                    'payable_type' => $payableType,
-                    'payable_id' => $payableId,
-                    'reference_type' => \App\Models\FinancialInvoiceItem::class,
-                    'reference_id' => $newItem->id,
-                    'invoice_id' => $newInvoice->id,
-                    'date' => $this->validateDate($t->date),
-                    'created_at' => $this->validateDate($t->created_at),
-                    'updated_at' => $this->validateDate($t->updated_at),
-                    'created_by' => $t->created_by ?? null,
-                    'updated_by' => $t->updated_by ?? null,
-                ]);
-            } else {
-                // CREDIT (Payment)
-                // Try to find Receipt (for metadata/linking if possible, or just to verify existence)
-                $receipt = null;
-                if ($t->receipt_id) {
-                    $receipt = \App\Models\FinancialReceipt::where('legacy_id', $t->receipt_id)->first();
-                    if (!$receipt) {
-                        $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $t->receipt_id)->whereNull('deleted_at')->first();
-                        if ($oldReceipt) {
-                            $receipt = $this->migrateSingleReceipt($oldReceipt, $payableType, $payableId, false);
-                        }
+            // CREDIT (Payment)
+            // Try to find Receipt (for metadata/linking if possible, or just to verify existence)
+            $receipt = null;
+            if ($t->receipt_id) {
+                $receipt = \App\Models\FinancialReceipt::where('legacy_id', $t->receipt_id)->first();
+                if (!$receipt) {
+                    $oldReceipt = DB::connection('old_afohs')->table('finance_cash_receipts')->where('id', $t->receipt_id)->whereNull('deleted_at')->first();
+                    if ($oldReceipt) {
+                        $receipt = $this->migrateSingleReceipt($oldReceipt, $payableType, $payableId, false);
                     }
                 }
+            }
 
-                // Reference: We link to InvoiceItem as requested ("attach it with our new invocie items")
-                // We will store the legacy receipt ID in remarks or data if needed, or rely on Invoice-level relations for the hard link.
-                // But CRITICALLY, we must create the transaction row regardless of receipt finding to preserve the balance.
+            $remarks = $t->remarks ?? 'Legacy Credit';
+            if ($receipt) {
+                $remarks .= " (Receipt #{$receipt->receipt_no})";
+            } elseif ($t->receipt_id) {
+                $remarks .= " (Legacy Receipt ID: {$t->receipt_id} - Not Found)";
+            }
 
-                $remarks = $t->remarks ?? 'Legacy Credit';
-                if ($receipt) {
-                    $remarks .= " (Receipt #{$receipt->receipt_no})";
-                } elseif ($t->receipt_id) {
-                    $remarks .= " (Legacy Receipt ID: {$t->receipt_id} - Not Found)";
-                }
+            \App\Models\Transaction::create([
+                'amount' => $t->trans_amount,
+                'type' => 'credit',
+                'payable_type' => $payableType,
+                'payable_id' => $payableId,
+                'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                'reference_id' => $newItem->id,
+                'invoice_id' => $newInvoice->id,
+                'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
+                'date' => $this->validateDate($t->date),
+                'remarks' => $remarks,
+                'created_at' => $this->validateDate($t->created_at),
+                'updated_at' => $this->validateDate($t->updated_at),
+                'created_by' => $t->created_by ?? null,
+                'updated_by' => $t->updated_by ?? null,
+            ]);
 
-                \App\Models\Transaction::create([
-                    'amount' => $t->trans_amount,
-                    'type' => 'credit',
-                    'payable_type' => $payableType,
-                    'payable_id' => $payableId,
-                    'reference_type' => \App\Models\FinancialInvoiceItem::class,
-                    'reference_id' => $newItem->id,
+            // Update Invoice-Level Relation if receipt exists
+            if ($receipt) {
+                \App\Models\TransactionRelation::updateOrCreate([
                     'invoice_id' => $newInvoice->id,
-                    'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
-                    'date' => $this->validateDate($t->date),
-                    'remarks' => $remarks,
-                    'created_at' => $this->validateDate($t->created_at),
-                    'updated_at' => $this->validateDate($t->updated_at),
-                    'created_by' => $t->created_by ?? null,
-                    'updated_by' => $t->updated_by ?? null,
+                    'receipt_id' => $receipt->id
+                ], [
+                    'amount' => $t->trans_amount,
+                    'legacy_transaction_id' => $t->id
                 ]);
-
-                // Update Invoice-Level Relation if receipt exists
-                if ($receipt) {
-                    \App\Models\TransactionRelation::updateOrCreate([
-                        'invoice_id' => $newInvoice->id,
-                        'receipt_id' => $receipt->id
-                    ], [
-                        'amount' => $t->trans_amount,
-                        'legacy_transaction_id' => $t->id
-                    ]);
-                }
             }
         }
     }
@@ -2531,7 +2533,7 @@ class DataMigrationController extends Controller
         if ($totalPaid >= $invoice->total_price) {
             $invoice->update(['status' => 'paid']);
         } elseif ($totalPaid > 0) {
-            $invoice->update(['status' => 'partial']);
+            $invoice->update(['status' => 'unpaid']);
         } else {
             $invoice->update(['status' => 'unpaid']);
         }
@@ -2822,7 +2824,8 @@ class DataMigrationController extends Controller
                     }
 
                     // --- A. Migrate Invoice Header & Items ---
-                    $result = $this->createInvoiceFromLegacy($first, $groupRows, $typeId);
+                    // --- A. Migrate Invoice Header & Items ---
+                    $result = $this->createInvoiceFromLegacy($first, $groupRows);
                     $invoice = $result['invoice'];
                     $itemsMap = $result['items_map'];
 
@@ -3054,8 +3057,6 @@ class DataMigrationController extends Controller
                 ->groupBy('mediable_type', 'mediable_id')
                 ->having('count', '>', 1)
                 ->get();
-
-            Log::info('Found ' . $duplicates->count() . ' members with duplicate profile photos.');
 
             foreach ($duplicates as $duplicate) {
                 // Get all photos for this member, ordered by ID DESC (latest first)

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import axios from 'axios';
+import debounce from 'lodash.debounce';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, IconButton, Autocomplete, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination } from '@mui/material';
@@ -20,6 +22,27 @@ const MonthlyMaintenanceFeeReport = () => {
         gender: filters?.gender || '',
         cashier: filters?.cashier || '',
     });
+
+    const [nameSuggestions, setNameSuggestions] = useState([]);
+
+    const fetchNameSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query) {
+                    setNameSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(route('api.bookings.search-customers'), {
+                        params: { query, type: 'member' },
+                    });
+                    setNameSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching name suggestions:', error);
+                }
+            }, 300),
+        [],
+    );
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('en-PK', {
@@ -81,9 +104,13 @@ const MonthlyMaintenanceFeeReport = () => {
         switch (method?.toLowerCase()) {
             case 'cash':
                 return '#059669'; // Green
+            case 'credit_card':
             case 'credit card':
+            case 'debit_card':
+            case 'debit card':
                 return '#0ea5e9'; // Blue
             case 'bank transfer':
+            case 'online':
                 return '#8b5cf6'; // Purple
             case 'cheque':
                 return '#f59e0b'; // Orange
@@ -186,17 +213,45 @@ const MonthlyMaintenanceFeeReport = () => {
                     {/* Search Fields */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                         <Grid item xs={12} md={2.4}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search by Name"
-                                value={allFilters.member_search}
-                                onChange={(e) => handleFilterChange('member_search', e.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    },
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={nameSuggestions}
+                                getOptionLabel={(option) => option.value || option}
+                                inputValue={allFilters.member_search}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('member_search', newInputValue);
+                                    fetchNameSuggestions(newInputValue);
                                 }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" placeholder="Search by Name" sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.name || option.full_name}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.membership_no || option.customer_no}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
@@ -419,25 +474,25 @@ const MonthlyMaintenanceFeeReport = () => {
                                                 borderBottom: '1px solid #e5e7eb',
                                             }}
                                         >
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.current_city || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.member?.full_name}</TableCell>
-                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total_price).replace('PKR', 'Rs.')}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.current_city || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name}</TableCell>
+                                            <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={transaction.payment_method}
+                                                    label={transaction.invoice?.payment_method || 'N/A'}
                                                     size="small"
                                                     sx={{
-                                                        backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,
-                                                        color: getPaymentMethodColor(transaction.payment_method),
+                                                        backgroundColor: `${getPaymentMethodColor(transaction.invoice?.payment_method)}20`,
+                                                        color: getPaymentMethodColor(transaction.invoice?.payment_method),
                                                         fontWeight: 600,
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.member?.member_category?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.member?.member_category?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.quarter_start_date && transaction.quarter_end_date ? `${formatDate(transaction.quarter_start_date)} - ${formatDate(transaction.quarter_end_date)}` : 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.member?.membership_no}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.start_date && transaction.end_date ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}` : 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'System'}</TableCell>
                                         </TableRow>
                                     ))

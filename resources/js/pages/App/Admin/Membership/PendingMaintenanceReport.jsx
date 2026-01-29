@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
+import axios from 'axios';
+import debounce from 'lodash.debounce';
 import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
 
@@ -16,6 +18,8 @@ const PendingMaintenanceReport = () => {
     const [statusReason, setStatusReason] = useState('');
     const [allFilters, setAllFilters] = useState({
         member_search: filters?.member_search || '',
+        name_search: filters?.name_search || '',
+        membership_no_search: filters?.membership_no_search || '',
         cnic_search: filters?.cnic_search || '',
         contact_search: filters?.contact_search || '',
         status: filters?.status || [],
@@ -24,6 +28,44 @@ const PendingMaintenanceReport = () => {
         date_from: filters?.date_from || '',
         date_to: filters?.date_to || '',
     });
+
+    // Suggestions State
+    const [nameSuggestions, setNameSuggestions] = useState([]);
+    const [noSuggestions, setNoSuggestions] = useState([]);
+    const [cnicSuggestions, setCnicSuggestions] = useState([]);
+    const [contactSuggestions, setContactSuggestions] = useState([]);
+
+    // Fetch Suggestions Helper
+    const createFetchSuggestions = (setter) =>
+        debounce(async (query) => {
+            if (!query) {
+                setter([]);
+                return;
+            }
+            try {
+                const response = await axios.get(route('api.bookings.search-customers'), {
+                    params: { query, type: 'member' },
+                });
+                setter(response.data);
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+            }
+        }, 300);
+
+    const fetchNameSuggestions = useMemo(() => createFetchSuggestions(setNameSuggestions), []);
+    const fetchNoSuggestions = useMemo(() => createFetchSuggestions(setNoSuggestions), []);
+    const fetchCnicSuggestions = useMemo(() => createFetchSuggestions(setCnicSuggestions), []);
+    const fetchContactSuggestions = useMemo(() => createFetchSuggestions(setContactSuggestions), []);
+
+    // Effect to trigger fetches when inputs change
+    useEffect(() => {
+        if (allFilters.member_search) {
+            // We don't know if member_search came from Name or No input if they share the variable.
+            // But for autocomplete, we trigger on the *input method* (onInputChange), not the state effect.
+            // So we don't strictly need this effect if we use onInputChange.
+            // However, to pre-populate suggestions if desired? No, usually fine.
+        }
+    }, []);
 
     const quartersOptions = [
         { label: '1 Quarter', value: '1' },
@@ -81,6 +123,8 @@ const PendingMaintenanceReport = () => {
     const handleReset = () => {
         setAllFilters({
             member_search: '',
+            name_search: '',
+            membership_no_search: '',
             cnic_search: '',
             contact_search: '',
             status: [],
@@ -261,85 +305,180 @@ const PendingMaintenanceReport = () => {
 
                     {/* Search Fields */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid item xs={12} md={2.5}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search Member ID"
-                                value={allFilters.member_search}
-                                onChange={(e) => handleFilterChange('member_search', e.target.value)}
-                                InputProps={{
-                                    startAdornment: (
-                                        <InputAdornment position="start">
-                                            <Search sx={{ color: 'action.active' }} />
-                                        </InputAdornment>
-                                    ),
+                        {/* 1. Search Name */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={nameSuggestions}
+                                getOptionLabel={(option) => option.full_name || option.name || option.value || option}
+                                inputValue={allFilters.member_search}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('member_search', newInputValue);
+                                    fetchNameSuggestions(newInputValue);
                                 }}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    },
-                                }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Member Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.full_name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
                             />
                         </Grid>
-                        <Grid item xs={12} md={2.5}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search by Name"
-                                value={allFilters.member_search}
-                                onChange={(e) => handleFilterChange('member_search', e.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    },
+
+                        {/* 2. Search Membership No */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={noSuggestions}
+                                getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
+                                inputValue={allFilters.membership_no_search}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('membership_no_search', newInputValue);
+                                    fetchNoSuggestions(newInputValue);
                                 }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Member No" placeholder="Membership #..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.full_name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
                             />
                         </Grid>
-                        <Grid item xs={12} md={2.5}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search CNIC"
-                                value={allFilters.cnic_search}
-                                onChange={(e) => handleFilterChange('cnic_search', e.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    },
+
+                        {/* 3. Search CNIC */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={cnicSuggestions}
+                                getOptionLabel={(option) => option.cnic_no || option.cnic || option.value || option}
+                                inputValue={allFilters.cnic_search}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('cnic_search', newInputValue);
+                                    fetchCnicSuggestions(newInputValue);
                                 }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search CNIC" placeholder="CNIC..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.cnic_no || option.cnic}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.full_name} ({option.membership_no})
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
                             />
                         </Grid>
-                        <Grid item xs={12} md={2.5}>
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search Contact"
-                                value={allFilters.contact_search}
-                                onChange={(e) => handleFilterChange('contact_search', e.target.value)}
-                                sx={{
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
-                                    },
+
+                        {/* 4. Search Contact */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={contactSuggestions}
+                                getOptionLabel={(option) => option.mobile_number_a || option.contact || option.value || option}
+                                inputValue={allFilters.contact_search}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('contact_search', newInputValue);
+                                    fetchContactSuggestions(newInputValue);
                                 }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Contact" placeholder="Mobile..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.mobile_number_a || option.contact}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.full_name} ({option.membership_no})
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
                             />
-                        </Grid>
-                        <Grid item xs={12} md={2}>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                onClick={handleSearch}
-                                sx={{
-                                    backgroundColor: '#063455',
-                                    height: '40px',
-                                    textTransform: 'none',
-                                    '&:hover': {
-                                        backgroundColor: '#047857',
-                                    },
-                                }}
-                            >
-                                Search
-                            </Button>
                         </Grid>
                     </Grid>
 
@@ -453,23 +592,49 @@ const PendingMaintenanceReport = () => {
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} md={2}>
-                            <Button
+                        <Grid item xs={12} md={2.5}>
+                            <TextField
                                 fullWidth
+                                size="small"
+                                type="date"
+                                label="To Date"
+                                value={allFilters.date_to}
+                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                            />
+                        </Grid>
+                        {/* Buttons: Reset and Search */}
+                        <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
+                            <Button
                                 variant="outlined"
+                                color="error"
                                 onClick={handleReset}
                                 sx={{
-                                    borderColor: '#dc2626',
-                                    color: '#dc2626',
+                                    borderRadius: '16px',
                                     height: '40px',
+                                    minWidth: '120px',
                                     textTransform: 'none',
-                                    '&:hover': {
-                                        backgroundColor: '#fef2f2',
-                                        borderColor: '#dc2626',
-                                    },
                                 }}
                             >
                                 Reset
+                            </Button>
+                            <Button
+                                variant="contained"
+                                onClick={handleSearch}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    borderRadius: '16px',
+                                    height: '40px',
+                                    minWidth: '120px',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                        backgroundColor: '#047857',
+                                    },
+                                }}
+                            >
+                                Search
                             </Button>
                         </Grid>
                     </Grid>
