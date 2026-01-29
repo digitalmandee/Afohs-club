@@ -199,8 +199,6 @@ const EmployeeDashboard = () => {
 
                         {/* Filter Section */}
                         <Box sx={{ mb: 3 }}>
-                            <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 2 }}>Search & Filter Options</Typography>
-
                             {/* Search and Filters - Single Row */}
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
                                 <TextField

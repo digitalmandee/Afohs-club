@@ -150,7 +150,7 @@ const DeductionTypes = () => {
                         <IconButton onClick={() => window.history.back()}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography variant="h5" sx={{ color: '#063455', fontWeight: 600 }}>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                             Deduction Types
                         </Typography>
                     </Box>
@@ -160,6 +160,8 @@ const DeductionTypes = () => {
                         variant="contained"
                         sx={{
                             backgroundColor: '#063455',
+                            textTransform:'capitalize',
+                            borderRadius:'16px',
                             '&:hover': { backgroundColor: '#052d45' },
                         }}
                     >
@@ -169,17 +171,17 @@ const DeductionTypes = () => {
 
                 {/* Deduction Types Table */}
                 <Card>
-                    <TableContainer component={Paper}>
+                    <TableContainer component={Paper} sx={{borderRadius:'12px'}}>
                         <Table>
                             <TableHead>
-                                <TableRow sx={{ backgroundColor: '#E5E5EA' }}>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Name</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Type</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Amount/Rate</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Global</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Mandatory</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: 600, color: '#000' }}>Actions</TableCell>
+                                <TableRow sx={{ backgroundColor: '#063455' }}>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Name</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Type</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Amount/Rate</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Global</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Mandatory</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

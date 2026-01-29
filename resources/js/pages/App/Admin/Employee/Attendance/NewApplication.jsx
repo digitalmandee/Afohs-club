@@ -95,7 +95,7 @@ const LeaveApplication = () => {
 								onClick={() => window.history.back()}>
 								<ArrowBack sx={{ color: '#063455' }} />
 							</IconButton>
-							<Typography variant="h5" style={{ fontWeight: '600', color: '#063455' }}>
+							<Typography style={{ fontWeight: '600', color: '#063455', fontSize:'30px' }}>
 								{leaveApplication ? 'Edit Leave Application' : 'New Leave Application'}
 							</Typography>
 						</div>

@@ -244,7 +244,7 @@ const ManageAttendance = () => {
                                         },
                                     }}
                                 />
-                                <TextField
+                                {/* <TextField
                                     label="Select Date"
                                     type="date"
                                     size="small"
@@ -262,8 +262,28 @@ const ManageAttendance = () => {
                                             borderRadius: '16px',
                                         },
                                     }}
-                                />
-
+                                /> */}
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker
+                                        label="Select Date"
+                                        value={date}
+                                        onChange={(newValue) => setDate(newValue)}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                fullWidth: true,
+                                                onClick: (e) => e.target.closest('.MuiFormControl-root').querySelector('button')?.click(),
+                                            },
+                                            actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                                        }}
+                                        sx={{
+                                            width:'250px',
+                                            '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                borderRadius: '16px !important',
+                                            },
+                                        }}
+                                    />
+                                </LocalizationProvider>
                                 {/* Filters */}
                                 {/* Need Autocomplete for Branch, Designation, Dept, SubDept */}
                                 {/* Since we don't have Autocomplete imported in the original file, we need to import it or use Select */}

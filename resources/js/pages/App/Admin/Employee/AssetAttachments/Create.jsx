@@ -105,7 +105,7 @@ const Create = ({ open, onClose, onSuccess }) => {
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{ backgroundColor: '#063455', color: 'white' }}>Assign Asset</DialogTitle>
+            <DialogTitle sx={{ backgroundColor: 'transparent', color: '#000' }}>Assign Asset</DialogTitle>
             <DialogContent sx={{ pt: 3 }}>
                 <Grid container spacing={2} sx={{ mt: 1 }}>
                     <Grid item xs={12}>

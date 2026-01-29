@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import AdminLayout from '@/layouts/AdminLayout';
+import { Search, Visibility } from '@mui/icons-material';
 import { Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, FormControl, InputLabel, Select, MenuItem, Grid, Chip, TextField, Pagination, LinearProgress, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Check as CheckIcon, Close as CloseIcon, Payment as PaymentIcon, LocalAtm as DisbursedIcon } from '@mui/icons-material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -150,6 +151,30 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                                     onChange={(event, newValue) => {
                                         setSelectedEmployee(newValue ? newValue.id : '');
                                     }}
+                                    ListboxProps={{
+                                        sx: {
+                                            maxHeight: '350px',
+                                            overflowY: 'auto',
+                                            '& .MuiAutocomplete-option': {
+                                                borderRadius: '16px',
+                                                mx: '8px',
+                                                my: '0.3px',
+                                                // transition: 'all 0.2s ease',
+                                            },
+                                            '& .MuiAutocomplete-option:hover': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                            '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                            '& .MuiAutocomplete-option.Mui-focused': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                            },
+                                        },
+                                    }}
                                     renderInput={(params) => <TextField {...params} label="Employee" size="small"
                                         sx={{
                                             '& .MuiOutlinedInput-root': {
@@ -174,7 +199,40 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                                         },
                                     }}>
                                     <InputLabel>Status</InputLabel>
-                                    <Select value={selectedStatus} label="Status" onChange={(e) => setSelectedStatus(e.target.value)}>
+                                    <Select value={selectedStatus}
+                                        label="Status"
+                                        onChange={(e) => setSelectedStatus(e.target.value)}
+                                        MenuProps={{
+                                            PaperProps: {
+                                                sx: {
+                                                    borderRadius: '16px',
+                                                    maxHeight: '300px',
+                                                    overflowY: 'auto', 
+                                                },
+                                            },
+                                            MenuListProps: {
+                                                sx: {
+                                                    '& .MuiMenuItem-root': {
+                                                        borderRadius: '16px',
+                                                        mx: '8px',
+                                                        my:'1px'
+                                                        // transition: 'all 0.2s ease',
+                                                    },
+                                                    '& .MuiMenuItem-root:hover': {
+                                                        backgroundColor: '#063455',
+                                                        color: '#fff',
+                                                    },
+                                                    '& .MuiMenuItem-root.Mui-selected': {
+                                                        backgroundColor: '#063455',
+                                                        color: '#fff',
+                                                    },
+                                                    '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                        backgroundColor: '#063455',
+                                                        color: '#fff',
+                                                    },
+                                                },
+                                            },
+                                        }}>
                                         <MenuItem value="">All Status</MenuItem>
                                         <MenuItem value="pending">Pending</MenuItem>
                                         <MenuItem value="approved">Approved</MenuItem>
@@ -225,7 +283,7 @@ const Index = ({ loans, employees = [], stats = {}, filters = {} }) => {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={2.5} sx={{ display: 'flex', gap: 1 }}>
-                                <Button variant="contained" onClick={handleFilter} sx={{ backgroundColor: '#063455', borderRadius: '16px', px: 4, textTransform: 'none' }}>
+                                <Button variant="contained" startIcon={<Search />} onClick={handleFilter} sx={{ backgroundColor: '#063455', borderRadius: '16px', px: 4, textTransform: 'none' }}>
                                     Search
                                 </Button>
                                 <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ border: '1px solid #063455', color: '#063455', borderRadius: '16px', px: 4, textTransform: 'none' }}>

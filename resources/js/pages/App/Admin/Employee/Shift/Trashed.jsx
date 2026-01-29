@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSnackbar } from 'notistack';
 import { MdRestore } from 'react-icons/md';
 import { RiDeleteBin6Line } from 'react-icons/ri';
+import { RestoreFromTrash, DeleteForever, ArrowBack } from '@mui/icons-material';
 
 const Trashed = ({ shifts }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -34,23 +35,23 @@ const Trashed = ({ shifts }) => {
     };
 
     return (
-        <Box sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h4" sx={{ color: '#063455', fontWeight: 600 }}>
+        <Box sx={{ p: 2, bgcolor: '#f5f5f5', height: '100vh' }}>
+            <Box sx={{ display: 'flex', mb: 3 }}>
+                <IconButton onClick={() => router.visit(route('shifts.index'))} sx={{ color: '#063455' }}>
+                    <ArrowBack />
+                </IconButton>
+                <Typography sx={{ color: '#063455', fontWeight: 600, fontSize: '30px' }}>
                     Trashed Shifts
                 </Typography>
-                <Button variant="outlined" onClick={() => router.visit(route('shifts.index'))}>
-                    Back to List
-                </Button>
             </Box>
 
-            <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 2 }}>
+            <TableContainer component={Paper} elevation={0} sx={{ borderRadius: '12px' }}>
                 <Table>
-                    <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableHead sx={{ bgcolor: '#063455' }}>
                         <TableRow>
-                            <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Time</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Action</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Name</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Time</TableCell>
+                            <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Action</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
