@@ -332,9 +332,9 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 // Show Membership Charges ONLY if NOT Guest
                                                 ...(!String(bookingType).startsWith('guest') && membershipCharges.length > 0
                                                     ? [
-                                                          <ListSubheader key="hdr-mem" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
-                                                              Membership Charges
-                                                          </ListSubheader>,
+                                                          //   <ListSubheader key="hdr-mem" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                          //       Membership Charges
+                                                          //   </ListSubheader>,
                                                           ...membershipCharges.map((type) => (
                                                               <MenuItem key={type.id} value={type.id}>
                                                                   {type.name}
@@ -347,9 +347,9 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 ...(!String(bookingType).startsWith('guest') && maintenanceCharges.length > 0
                                                     ? [
                                                           <Divider key="div-maint" />,
-                                                          <ListSubheader key="hdr-maint" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
-                                                              Maintenance Charges
-                                                          </ListSubheader>,
+                                                          //   <ListSubheader key="hdr-maint" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                          //       Maintenance Charges
+                                                          //   </ListSubheader>,
                                                           ...maintenanceCharges.map((type) => (
                                                               <MenuItem key={type.id} value={type.id}>
                                                                   {type.name}
@@ -361,9 +361,9 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 ...(subscriptionCharges.length > 0
                                                     ? [
                                                           <Divider key="div-sub" />,
-                                                          <ListSubheader key="hdr-sub" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
-                                                              Subscription Charges
-                                                          </ListSubheader>,
+                                                          //   <ListSubheader key="hdr-sub" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                          //       Subscription Charges
+                                                          //   </ListSubheader>,
                                                           ...subscriptionCharges.map((type) => (
                                                               <MenuItem key={type.id} value={type.id}>
                                                                   {type.name}
@@ -374,9 +374,9 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                 ...(otherCharges.length > 0
                                                     ? [
                                                           <Divider key="div-other" />,
-                                                          <ListSubheader key="hdr-other" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
-                                                              Other Charges
-                                                          </ListSubheader>,
+                                                          //   <ListSubheader key="hdr-other" sx={{ fontWeight: 'bold', bgcolor: '#f1f5f9', lineHeight: '36px' }}>
+                                                          //       Other Charges
+                                                          //   </ListSubheader>,
                                                           ...otherCharges.map((type) => (
                                                               <MenuItem key={type.id} value={type.id}>
                                                                   {type.name}

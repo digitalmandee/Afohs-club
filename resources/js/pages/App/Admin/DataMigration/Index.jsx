@@ -35,6 +35,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [deletePhotosDialog, setDeletePhotosDialog] = useState(false);
     const [cleanupDuplicatesDialog, setCleanupDuplicatesDialog] = useState(false);
     const [globalMigrationStats, setGlobalMigrationStats] = useState({ migrated: 0, distinct_total: 0, remaining: 0 });
+    const [deleteLegacyInvoicesDialog, setDeleteLegacyInvoicesDialog] = useState(false);
     const migrationRunning = useRef({ members: false, families: false, media: false, media_photos: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false });
 
     useEffect(() => {
@@ -127,6 +128,21 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                     errors: [...prev.deep_migration.errors, { error: error.response?.data?.error || error.message }],
                 },
             }));
+        }
+    };
+
+    const deleteLegacyInvoices = async () => {
+        try {
+            setMigrationStatus((prev) => ({ ...prev, invoices: { ...prev.invoices, running: true } }));
+            const response = await axios.post(route('data-migration.delete-legacy-invoices'));
+            alert(response.data.message);
+            refreshStats();
+        } catch (error) {
+            console.error('Error deleting legacy invoices:', error);
+            alert('Error deleting legacy invoices: ' + (error.response?.data?.error || error.message));
+        } finally {
+            setMigrationStatus((prev) => ({ ...prev, invoices: { ...prev.invoices, running: false } }));
+            setDeleteLegacyInvoicesDialog(false);
         }
     };
 
@@ -1213,6 +1229,9 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                     <Button variant="contained" startIcon={migrationStatus.invoices.running ? <CircularProgress size={20} /> : <PlayArrow />} onClick={startInvoicesMigration} disabled={migrationStatus.invoices.running}>
                                         {migrationStatus.invoices.running ? 'Migrating...' : 'Start Migration'}
                                     </Button>
+                                    <Button variant="contained" color="error" startIcon={<DeleteSweep />} onClick={() => setDeleteLegacyInvoicesDialog(true)} disabled={migrationStatus.invoices.running}>
+                                        Delete Legacy Data
+                                    </Button>
 
                                     {migrationStatus.invoices.running && (
                                         <Button variant="outlined" startIcon={<Stop />} onClick={() => stopMigration('invoices')}>
@@ -1737,6 +1756,27 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                         <Button onClick={() => setCleanupDuplicatesDialog(false)}>Cancel</Button>
                         <Button onClick={cleanupDuplicatePhotos} color="primary" variant="contained">
                             Cleanup Duplicates
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                {/* Delete Legacy Invoices Dialog */}
+                <Dialog open={deleteLegacyInvoicesDialog} onClose={() => setDeleteLegacyInvoicesDialog(false)}>
+                    <DialogTitle>Delete Legacy Invoices</DialogTitle>
+                    <DialogContent>
+                        <Typography>
+                            Are you sure you want to <strong>permanently delete</strong> all legacy invoices (ID &lt;= 8915) and their related transactions, receipts, and items?
+                        </Typography>
+                        <Alert severity="error" sx={{ mt: 2 }}>
+                            <Typography variant="body2">
+                                <strong>Warning:</strong> This action is irreversible. Ensure you have a backup if needed.
+                            </Typography>
+                        </Alert>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setDeleteLegacyInvoicesDialog(false)}>Cancel</Button>
+                        <Button onClick={deleteLegacyInvoices} color="error" variant="contained" disabled={migrationStatus.invoices.running}>
+                            {migrationStatus.invoices.running ? 'Deleting...' : 'Delete Legacy Data'}
                         </Button>
                     </DialogActions>
                 </Dialog>

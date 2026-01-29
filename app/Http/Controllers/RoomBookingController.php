@@ -1380,9 +1380,14 @@ class RoomBookingController extends Controller
                 ->where(function ($q) use ($query) {
                     $q
                         ->where('full_name', 'like', "%{$query}%")
-                        ->orWhere('membership_no', 'like', "%{$query}%");
+                        ->orWhere('membership_no', 'like', "%{$query}%")
+                        ->orWhere('cnic_no', 'like', "%{$query}%")
+                        ->orWhere('mobile_number_a', 'like', "%{$query}%")
+                        ->orWhere('mobile_number_b', 'like', "%{$query}%")
+                        ->orWhere('telephone_number', 'like', "%{$query}%")
+                        ->orWhere('personal_email', 'like', "%{$query}%");
                 })
-                ->limit(30)
+                ->limit(40)
                 ->get()
                 ->map(function ($m) {
                     return [
@@ -1392,6 +1397,8 @@ class RoomBookingController extends Controller
                         'name' => $m->full_name,
                         'membership_no' => $m->membership_no,
                         'status' => $m->status,
+                        'cnic' => $m->cnic_no,
+                        'contact' => $m->mobile_number_a,
                     ];
                 });
             $results = $results->merge($members);
@@ -1405,7 +1412,7 @@ class RoomBookingController extends Controller
                         ->where('full_name', 'like', "%{$query}%")
                         ->orWhere('membership_no', 'like', "%{$query}%");
                 })
-                ->limit(30)
+                ->limit(40)
                 ->get()
                 ->map(function ($m) {
                     return [
@@ -1428,7 +1435,7 @@ class RoomBookingController extends Controller
                         ->where('name', 'like', "%{$query}%")
                         ->orWhere('customer_no', 'like', "%{$query}%");
                 })
-                ->limit(30)
+                ->limit(40)
                 ->get()
                 ->map(function ($c) {
                     return [

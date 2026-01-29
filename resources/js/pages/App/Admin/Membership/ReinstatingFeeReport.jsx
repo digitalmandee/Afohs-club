@@ -85,14 +85,16 @@ const ReinstatingFeeReport = () => {
         switch (method?.toLowerCase()) {
             case 'cash':
                 return '#059669'; // Green
+            case 'credit_card':
             case 'credit card':
+            case 'debit_card':
+            case 'debit card':
                 return '#0ea5e9'; // Blue
             case 'bank transfer':
+            case 'online':
                 return '#8b5cf6'; // Purple
             case 'cheque':
                 return '#f59e0b'; // Orange
-            case 'online':
-                return '#10b981'; // Emerald
             default:
                 return '#6b7280';
         }

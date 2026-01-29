@@ -154,9 +154,13 @@ const SportsSubscriptionsReport = () => {
         switch (method?.toLowerCase()) {
             case 'cash':
                 return '#059669'; // Green
+            case 'credit_card':
             case 'credit card':
+            case 'debit_card':
+            case 'debit card':
                 return '#0ea5e9'; // Blue
             case 'bank transfer':
+            case 'online':
                 return '#8b5cf6'; // Purple
             case 'cheque':
                 return '#f59e0b'; // Orange
@@ -618,7 +622,7 @@ const SportsSubscriptionsReport = () => {
                                                     }}
                                                 />
                                             </TableCell>
-                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_type?.subscription_category?.name || transaction.data?.subscription_category_name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_category?.name || transaction.subscription_type?.subscription_category?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'System'}</TableCell>
                                         </TableRow>
                                     ))

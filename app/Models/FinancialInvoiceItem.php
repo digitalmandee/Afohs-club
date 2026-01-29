@@ -55,4 +55,19 @@ class FinancialInvoiceItem extends Model
     {
         return $this->morphMany(Transaction::class, 'reference');
     }
+
+    public function familyMember()
+    {
+        return $this->belongsTo(Member::class, 'family_member_id');
+    }
+
+    public function subscriptionType()
+    {
+        return $this->belongsTo(SubscriptionType::class, 'subscription_type_id');
+    }
+
+    public function subscriptionCategory()
+    {
+        return $this->belongsTo(SubscriptionCategory::class, 'subscription_category_id');
+    }
 }
