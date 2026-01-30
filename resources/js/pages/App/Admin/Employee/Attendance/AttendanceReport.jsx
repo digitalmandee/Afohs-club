@@ -189,7 +189,7 @@ const AttendanceReport = () => {
                                                 '& .MuiMenuItem-root': {
                                                     borderRadius: '16px',
                                                     mx: '8px',
-                                                    my:'0.3px',
+                                                    my:'1px',
                                                     transition: 'all 0.2s ease',
                                                 },
                                                 '& .MuiMenuItem-root:hover': {

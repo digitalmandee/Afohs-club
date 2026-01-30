@@ -62,14 +62,14 @@ const Create = ({ employees = [] }) => {
                     <IconButton onClick={() => router.visit(route('employees.advances.index'))}>
                         <ArrowBackIcon sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography variant="h5" sx={{ color: '#063455', fontWeight: 700, ml: 1 }}>
+                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
                         New Advance Request
                     </Typography>
                 </Box>
 
                 <Card sx={{ borderRadius: '12px', p: 3 }}>
                     <form onSubmit={handleSubmit}>
-                        <Grid container spacing={3}>
+                        <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth error={!!errors.employee_id}>
                                     <InputLabel>Employee *</InputLabel>
@@ -88,27 +88,27 @@ const Create = ({ employees = [] }) => {
                                     )}
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField fullWidth type="number" label="Advance Amount *" value={formData.amount} onChange={(e) => handleChange('amount', e.target.value)} error={!!errors.amount || (employeeSalary > 0 && parseFloat(formData.amount) > employeeSalary)} helperText={errors.amount || (employeeSalary > 0 ? (parseFloat(formData.amount) > employeeSalary ? `Error: Exceeds salary (${formatCurrency(employeeSalary)})` : `Max allowed: ${formatCurrency(employeeSalary)}`) : '')} InputProps={{ inputProps: { min: 1 } }} />
                             </Grid>
-                            <Grid item xs={12} sm={6}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField fullWidth type="date" label="Advance Date *" value={formData.advance_date} onChange={(e) => handleChange('advance_date', e.target.value)} error={!!errors.advance_date} helperText={errors.advance_date} InputLabelProps={{ shrink: true }} />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <TextField fullWidth label="Reason" value={formData.reason} onChange={(e) => handleChange('reason', e.target.value)} error={!!errors.reason} helperText={errors.reason} />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField fullWidth type="number" label="Deduction Months *" value={formData.deduction_months} onChange={(e) => handleChange('deduction_months', e.target.value)} error={!!errors.deduction_months} helperText={errors.deduction_months || 'Number of months to deduct'} InputProps={{ inputProps: { min: 1, max: 24 } }} />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField fullWidth type="date" label="Deduction Start Date" value={formData.deduction_start_date} onChange={(e) => handleChange('deduction_start_date', e.target.value)} InputLabelProps={{ shrink: true }} helperText="Leave empty for next payroll" />
                             </Grid>
                             <Grid item xs={12} sm={4}>
-                                <Card sx={{ p: 2, backgroundColor: '#e3f2fd', textAlign: 'center' }}>
-                                    <Typography variant="body2" color="textSecondary">
+                                <Card sx={{ py:1, backgroundColor: '#063455', textAlign: 'center' }}>
+                                    <Typography sx={{color:'#fff', fontSize:'18px', fontWeight:'600'}}>
                                         Monthly Deduction
                                     </Typography>
-                                    <Typography variant="h6" sx={{ fontWeight: 600, color: '#1976d2' }}>
+                                    <Typography sx={{color:'#fff', fontSize:'18px', fontWeight:'600'}}>
                                         Rs {monthlyDeduction}
                                     </Typography>
                                 </Card>
@@ -118,10 +118,17 @@ const Create = ({ employees = [] }) => {
                             </Grid>
                             <Grid item xs={12}>
                                 <Box sx={{ display: 'flex', gap: 2 }}>
-                                    <Button type="submit" variant="contained" startIcon={<SaveIcon />} sx={{ backgroundColor: '#063455' }}>
+                                    <Button 
+                                    type="submit" 
+                                    variant="contained" 
+                                    startIcon={<SaveIcon />} 
+                                    sx={{ backgroundColor: '#063455', textTransform:'capitalize', borderRadius:'16px' }}>
                                         Submit Request
                                     </Button>
-                                    <Button variant="outlined" onClick={() => router.visit(route('employees.advances.index'))} sx={{ borderColor: '#063455', color: '#063455' }}>
+                                    <Button 
+                                    variant="outlined" 
+                                    onClick={() => router.visit(route('employees.advances.index'))} 
+                                    sx={{ borderColor: '#063455', color: '#063455', textTransform:'capitalize', borderRadius:'16px' }}>
                                         Cancel
                                     </Button>
                                 </Box>

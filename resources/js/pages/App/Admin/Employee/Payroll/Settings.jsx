@@ -155,6 +155,7 @@ const PayrollSettings = () => {
                             sx={{
                                 backgroundColor: '#063455',
                                 borderRadius:'16px',
+                                textTransform:'capitalize',
                                 '&:hover': { backgroundColor: '#052d45' },
                             }}
                             disabled={saving}
@@ -297,7 +298,14 @@ const PayrollSettings = () => {
                                     <Typography variant="h6" sx={{ color: '#063455', fontWeight: 600 }}>
                                         Tax Configuration (Income Tax Slabs)
                                     </Typography>
-                                    <Button startIcon={<AddIcon />} onClick={handleAddSlab} variant="outlined" size="small">
+                                    <Button
+                                    variant='contained' 
+                                    startIcon={<AddIcon />} 
+                                    onClick={handleAddSlab} 
+                                    sx={{borderRadius:'16px', 
+                                    bgcolor:"#063455", 
+                                    color:'#fff',
+                                    textTransform:'capitalize'}}>
                                         Add Slab
                                     </Button>
                                 </Box>
@@ -308,17 +316,17 @@ const PayrollSettings = () => {
                                     <strong>Logic:</strong> If salary falls in range, Tax = (Salary - Min) * Rate% + Fixed Amount.
                                 </Alert>
 
-                                <TableContainer component={Paper} variant="outlined">
+                                <TableContainer component={Paper} sx={{borderRadius:'12px'}}>
                                     <Table size="small">
-                                        <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                                        <TableHead sx={{ bgcolor: '#063455' }}>
                                             <TableRow>
-                                                <TableCell>Name</TableCell>
-                                                <TableCell>Frequency</TableCell>
-                                                <TableCell>Min Salary</TableCell>
-                                                <TableCell>Max Salary</TableCell>
-                                                <TableCell>Tax Rate (%)</TableCell>
-                                                <TableCell>Fixed Amount</TableCell>
-                                                <TableCell>Action</TableCell>
+                                                <TableCell sx={{color:'#fff', fontWeight:600}}>Name</TableCell>
+                                                <TableCell sx={{color:'#fff', fontWeight:600}}>Frequency</TableCell>
+                                                <TableCell sx={{color:'#fff', fontWeight:600, whiteSpace:'nowrap'}}>Min Salary</TableCell>
+                                                <TableCell sx={{color:'#fff', fontWeight:600, whiteSpace:'nowrap'}}>Max Salary</TableCell>
+                                                <TableCell sx={{color:'#fff', fontWeight:600, whiteSpace:'nowrap'}}>Tax Rate (%)</TableCell>
+                                                <TableCell sx={{color:'#fff', fontWeight:600, whiteSpace:'nowrap'}}>Fixed Amount</TableCell>
+                                                <TableCell sx={{color:'#fff', fontWeight:600}}>Action</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>

@@ -59,7 +59,7 @@ const Trashed = ({ subdepartments }) => {
                         <IconButton onClick={() => router.visit(route('employees.subdepartments'))} sx={{ mr: 1, color: '#063455' }}>
                             <ArrowBack />
                         </IconButton>
-                        <h2 style={{ margin: 0, fontWeight: '600', color: '#0A3D62' }}>Trashed Subdepartments</h2>
+                        <h2 style={{ margin: 0, fontWeight: '600', color: '#063455' }}>Trashed Subdepartments</h2>
                     </div>
 
                     <TableContainer component={Paper} style={{ borderRadius: '12px', boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.05)' }}>

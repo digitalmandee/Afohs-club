@@ -153,6 +153,8 @@ const PayrollPeriods = () => {
                         variant="contained"
                         sx={{
                             backgroundColor: '#063455',
+                            borderRadius:'16px',
+                            textTransform:'capitalize',
                             '&:hover': { backgroundColor: '#052d45' },
                         }}
                     >

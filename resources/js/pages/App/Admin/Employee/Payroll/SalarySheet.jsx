@@ -237,106 +237,197 @@ export default function SalarySheet() {
                         </Dialog>
 
                         {/* Filters */}
-                        <Card sx={{ mb: 3, px: 0, boxShadow: 'none', bgcolor: 'transparent' }}>
-                            <CardContent>
-                                <Grid container spacing={2} alignItems="center">
-                                    <Grid item xs={12} md={3}>
-                                        <DatePicker
-                                            label="Select Month"
-                                            views={['year', 'month']}
-                                            value={month}
-                                            onChange={(val) => setMonth(val)}
-                                            open={datePickerOpen}
-                                            onOpen={() => setDatePickerOpen(true)}
-                                            onClose={() => setDatePickerOpen(false)}
-                                            slotProps={{
-                                                textField: {
-                                                    size: 'small',
-                                                    fullWidth: true,
-                                                    onClick: () => setDatePickerOpen(true),
-                                                    InputProps: { readOnly: true }, // Prevent manual typing to force picker use
-                                                },
-                                            }}
-                                            sx={{
-                                                '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
-                                                    borderRadius: '16px !important',
-                                                },
-                                            }}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={2}>
-                                        <Autocomplete
-                                            size="small"
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '16px',
-
-                                                    '& fieldset': {
-                                                        borderRadius: '16px',
-                                                    },
-                                                },
-                                            }}
-                                            options={[{ id: 'all', name: 'All' }, ...designations]}
-                                            getOptionLabel={(option) => option.name || ''}
-                                            value={designation === 'all' ? { id: 'all', name: 'All' } : designations.find((d) => d.name === designation) || { id: 'all', name: 'All' }}
-                                            onChange={(e, newValue) => {
-                                                setDesignation(newValue ? (newValue.id === 'all' ? 'all' : newValue.name) : 'all');
-                                            }}
-                                            renderInput={(params) => <TextField {...params} label="Designation" />}
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={2}>
-                                        <FormControl fullWidth size="small"
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '16px',
-
-                                                    '& fieldset': {
-                                                        borderRadius: '16px',
-                                                    },
-                                                },
-                                            }}>
-                                            <InputLabel>Employee Type</InputLabel>
-                                            <Select value={employeeType} label="Employee Type" onChange={(e) => setEmployeeType(e.target.value)}>
-                                                <MenuItem value="all">All</MenuItem>
-                                                {employeeTypes.map((t) => (
-                                                    <MenuItem key={t} value={t}>
-                                                        {t}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12} md={2}>
-                                        <FormControl fullWidth size="small"
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: '16px',
-
-                                                    '& fieldset': {
-                                                        borderRadius: '16px',
-                                                    },
-                                                },
-                                            }}>
-                                            <InputLabel>Location</InputLabel>
-                                            <Select value={location} label="Location" onChange={(e) => setLocation(e.target.value)}>
-                                                <MenuItem value="all">All</MenuItem>
-                                                {locations.map((l) => (
-                                                    <MenuItem key={l} value={l}>
-                                                        {l}
-                                                    </MenuItem>
-                                                ))}
-                                            </Select>
-                                        </FormControl>
-                                    </Grid>
-                                    <Grid item xs={12} md={3}>
-                                        {/* Add other filters as needed */}
-                                        <Button variant="contained" onClick={fetchData} startIcon={<Refresh />} sx={{ textTransform: 'none', borderRadius: '16px', }}>
-                                            Fetch Data
-                                        </Button>
-                                    </Grid>
+                        <Card sx={{ mb: 3, pt: 2, boxShadow: 'none', bgcolor: 'transparent' }}>
+                            {/* <CardContent> */}
+                            <Grid container spacing={2} alignItems="center">
+                                <Grid item xs={12} md={3}>
+                                    <DatePicker
+                                        label="Select Month"
+                                        views={['year', 'month']}
+                                        value={month}
+                                        onChange={(val) => setMonth(val)}
+                                        open={datePickerOpen}
+                                        onOpen={() => setDatePickerOpen(true)}
+                                        onClose={() => setDatePickerOpen(false)}
+                                        slotProps={{
+                                            textField: {
+                                                size: 'small',
+                                                fullWidth: true,
+                                                onClick: () => setDatePickerOpen(true),
+                                                InputProps: { readOnly: true }, // Prevent manual typing to force picker use
+                                            },
+                                        }}
+                                        sx={{
+                                            '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                                borderRadius: '16px !important',
+                                            },
+                                        }}
+                                    />
                                 </Grid>
-                            </CardContent>
+                                <Grid item xs={12} md={2}>
+                                    <Autocomplete
+                                        size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+
+                                                '& fieldset': {
+                                                    borderRadius: '16px',
+                                                },
+                                            },
+                                        }}
+                                        options={[{ id: 'all', name: 'All' }, ...designations]}
+                                        getOptionLabel={(option) => option.name || ''}
+                                        value={designation === 'all' ? { id: 'all', name: 'All' } : designations.find((d) => d.name === designation) || { id: 'all', name: 'All' }}
+                                        onChange={(e, newValue) => {
+                                            setDesignation(newValue ? (newValue.id === 'all' ? 'all' : newValue.name) : 'all');
+                                        }}
+                                        ListboxProps={{
+                                            sx: {
+                                                maxHeight: '250px',
+                                                overflowY: 'auto',
+
+                                                '& .MuiAutocomplete-option': {
+                                                    borderRadius: '16px',
+                                                    mx: '8px',
+                                                    my: '0.3px',
+                                                    // transition: 'all 0.2s ease',
+                                                },
+                                                '& .MuiAutocomplete-option:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiAutocomplete-option[aria-selected="true"]': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                                '& .MuiAutocomplete-option.Mui-focused': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                },
+                                            },
+                                        }}
+                                        renderInput={(params) => <TextField {...params} label="Designation" />}
+                                    />
+                                </Grid>
+                                <Grid item xs={12} md={2}>
+                                    <FormControl fullWidth size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+
+                                                '& fieldset': {
+                                                    borderRadius: '16px',
+                                                },
+                                            },
+                                        }}>
+                                        <InputLabel>Employee Type</InputLabel>
+                                        <Select
+                                            value={employeeType}
+                                            label="Employee Type"
+                                            onChange={(e) => setEmployeeType(e.target.value)}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    sx: {
+                                                        borderRadius: '16px',
+                                                        maxHeight: '300px',     // 👈 dropdown height
+                                                        overflowY: 'auto',      // 👈 scrollbar
+                                                    },
+                                                },
+                                                MenuListProps: {
+                                                    sx: {
+                                                        '& .MuiMenuItem-root': {
+                                                            borderRadius: '16px',
+                                                            mx: '8px',
+                                                            transition: 'all 0.2s ease',
+                                                        },
+                                                        '& .MuiMenuItem-root:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                    },
+                                                },
+                                            }}>
+                                            <MenuItem value="all">All</MenuItem>
+                                            {employeeTypes.map((t) => (
+                                                <MenuItem key={t} value={t}>
+                                                    {t}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} md={2}>
+                                    <FormControl fullWidth size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+
+                                                '& fieldset': {
+                                                    borderRadius: '16px',
+                                                },
+                                            },
+                                        }}>
+                                        <InputLabel>Location</InputLabel>
+                                        <Select
+                                            value={location}
+                                            label="Location"
+                                            onChange={(e) => setLocation(e.target.value)}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    sx: {
+                                                        borderRadius: '16px',
+                                                        maxHeight: '300px',     // 👈 dropdown height
+                                                        overflowY: 'auto',      // 👈 scrollbar
+                                                    },
+                                                },
+                                                MenuListProps: {
+                                                    sx: {
+                                                        '& .MuiMenuItem-root': {
+                                                            borderRadius: '16px',
+                                                            mx: '8px',
+                                                            transition: 'all 0.2s ease',
+                                                        },
+                                                        '& .MuiMenuItem-root:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                    },
+                                                },
+                                            }}>
+                                            <MenuItem value="all">All</MenuItem>
+                                            {locations.map((l) => (
+                                                <MenuItem key={l} value={l}>
+                                                    {l}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+                                <Grid item xs={12} md={3}>
+                                    {/* Add other filters as needed */}
+                                    <Button variant="contained" onClick={fetchData} startIcon={<Refresh />} sx={{ textTransform: 'none', borderRadius: '16px', }}>
+                                        Fetch Data
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                            {/* </CardContent> */}
                         </Card>
 
                         {/* Actions */}

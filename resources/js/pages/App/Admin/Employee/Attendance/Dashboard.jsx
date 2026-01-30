@@ -242,7 +242,7 @@ const AttendanceDashboard = () => {
                                     />
                                 </Grid>
                                 <Grid item xs={12} md={3}>
-                                    <FormControl fullWidth size="small">
+                                    {/* <FormControl fullWidth size="small">
                                         <InputLabel>Departments</InputLabel>
                                         <Select
                                             multiple
@@ -280,7 +280,71 @@ const AttendanceDashboard = () => {
                                                 </MenuItem>
                                             ))}
                                         </Select>
+                                    </FormControl> */}
+                                    <FormControl fullWidth size="small">
+                                        <InputLabel>Departments</InputLabel>
+
+                                        <Select
+                                            multiple
+                                            value={selectedDepartments}
+                                            label="Departments"
+                                            onChange={(e) => setSelectedDepartments(e.target.value)}
+                                            renderValue={(selected) => (
+                                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                    {selected.map((value) => {
+                                                        const dept = departments?.find((d) => d.id === value);
+                                                        return (
+                                                            <Chip
+                                                                key={value}
+                                                                label={dept?.name || value}
+                                                                size="small"
+                                                                sx={{
+                                                                    backgroundColor: '#063455',
+                                                                    color: '#fff',
+                                                                    '& .MuiChip-deleteIcon': {
+                                                                        color: '#fff',
+                                                                    },
+                                                                }}
+                                                            />
+                                                        );
+                                                    })}
+                                                </Box>
+                                            )}
+                                            sx={{
+                                                borderRadius: 16,
+                                            }}
+                                            MenuProps={{
+                                                PaperProps: {
+                                                    sx: {
+                                                        '& .MuiMenuItem-root': {
+                                                            borderRadius: '16px',
+                                                            mx: '8px',
+                                                            my: '0.3px'
+                                                        },
+                                                        '& .MuiMenuItem-root:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                        '& .MuiMenuItem-root.Mui-selected:hover': {
+                                                            backgroundColor: '#063455',
+                                                            color: '#fff',
+                                                        },
+                                                    },
+                                                },
+                                            }}
+                                        >
+                                            {departments?.map((dept) => (
+                                                <MenuItem key={dept.id} value={dept.id}>
+                                                    {dept.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
                                     </FormControl>
+
                                 </Grid>
                                 <Grid item xs={12} md={1.5}>
                                     <Button
