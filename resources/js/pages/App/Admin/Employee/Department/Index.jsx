@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { MdArrowBackIos } from 'react-icons/md';
-import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box, Switch } from '@mui/material';
+import { Button, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, Pagination, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Snackbar, Alert, Box, Switch, MenuItem } from '@mui/material';
 import axios from 'axios';
 import { ArrowBack } from '@mui/icons-material';
 import { Search, FilterAlt, Visibility, Delete } from '@mui/icons-material';
@@ -11,7 +11,7 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 
 const Management = () => {
     const { props } = usePage();
-    const { departments } = props; // comes from Laravel
+    const { departments, branches, filters } = props; // comes from Laravel
 
     // const [open, setOpen] = useState(true);
 
@@ -21,15 +21,32 @@ const Management = () => {
     const [deleteDepartmentId, setDeleteDepartmentId] = useState(null);
     const [editDepartment, setEditDepartment] = useState(null);
     const [name, setName] = useState('');
+    const [branchId, setBranchId] = useState('');
     const [error, setError] = useState('');
+
+    // Filter states
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [filterBranchId, setFilterBranchId] = useState(filters?.branch_id || '');
+
+    const handleSearch = (e) => {
+        if (e.key === 'Enter') {
+            applyFilters();
+        }
+    };
+
+    const applyFilters = () => {
+        router.get(route('employees.departments'), { search: searchQuery, branch_id: filterBranchId }, { preserveState: true });
+    };
 
     const handleOpen = (department = null) => {
         if (department) {
             setEditDepartment(department);
             setName(department.name);
+            setBranchId(department.branch_id || '');
         } else {
             setEditDepartment(null);
             setName('');
+            setBranchId('');
         }
         setError('');
         setOpenDepartment(true);
@@ -38,7 +55,9 @@ const Management = () => {
     const handleClose = () => {
         setOpenDepartment(false);
         setError('');
+        setError('');
         setName('');
+        setBranchId('');
     };
 
     const handleSubmit = async () => {
@@ -49,10 +68,10 @@ const Management = () => {
         setIsSaving(true);
         try {
             if (editDepartment) {
-                await axios.put(`/api/departments/${editDepartment.id}`, { name });
+                await axios.put(`/api/departments/${editDepartment.id}`, { name, branch_id: branchId });
                 enqueueSnackbar('Department updated successfully!', { variant: 'success' });
             } else {
-                await axios.post('/api/departments', { name });
+                await axios.post('/api/departments', { name, branch_id: branchId });
                 enqueueSnackbar('Department added successfully!', { variant: 'success' });
             }
             router.reload({ only: ['departments'] }); // reload just departments
@@ -158,13 +177,52 @@ const Management = () => {
                                     // border: '1px solid #063455',
                                 }}
                                 variant="outlined"
-                                color='error'
+                                color="error"
                                 startIcon={<FaTrash size={14} />}
                             >
                                 Trashed
                             </Button>
                         </div>
                     </div>
+
+                    {/* Filters */}
+                    <Box sx={{ display: 'flex', gap: 2, mt: 2, mb: 2 }}>
+                        <TextField
+                            size="small"
+                            label="Search Departments"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={handleSearch}
+                            InputProps={{
+                                endAdornment: (
+                                    <IconButton onClick={applyFilters}>
+                                        <Search />
+                                    </IconButton>
+                                ),
+                            }}
+                        />
+                        <TextField
+                            select
+                            size="small"
+                            label="Filter by Company"
+                            value={filterBranchId}
+                            onChange={(e) => {
+                                setFilterBranchId(e.target.value);
+                                // Optional: auto-apply on change
+                                router.get(route('employees.departments'), { search: searchQuery, branch_id: e.target.value }, { preserveState: true });
+                            }}
+                            sx={{ minWidth: 200 }}
+                        >
+                            <MenuItem value="">All Companies</MenuItem>
+                            {branches &&
+                                branches.map((branch) => (
+                                    <MenuItem key={branch.id} value={branch.id}>
+                                        {branch.name}
+                                    </MenuItem>
+                                ))}
+                        </TextField>
+                    </Box>
+
                     <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Manage all primary departments within the club</Typography>
 
                     {/* Table */}
@@ -173,6 +231,7 @@ const Management = () => {
                             <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
                                     <TableCell style={{ color: '#fff', fontWeight: '600' }}>Name</TableCell>
+                                    <TableCell style={{ color: '#fff', fontWeight: '600' }}>Company</TableCell>
                                     <TableCell style={{ color: '#fff', fontWeight: '600' }}>Total Employees</TableCell>
                                     <TableCell style={{ color: '#fff', fontWeight: '600' }}>Status</TableCell>
                                     <TableCell style={{ color: '#fff', fontWeight: '600' }}>Action</TableCell>
@@ -183,6 +242,7 @@ const Management = () => {
                                     departments.data.map((department) => (
                                         <TableRow key={department.id}>
                                             <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{department.name}</TableCell>
+                                            <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{department.branch ? department.branch.name : '-'}</TableCell>
                                             <TableCell style={{ color: '#7f7f7f', fontWeight: '400', fontSize: '14px' }}>{department.employees_count || 0}</TableCell>
                                             <TableCell>
                                                 <Switch checked={department.status === 'active'} onChange={() => handleStatusChange(department.id, department.status)} color="primary" />
@@ -231,6 +291,14 @@ const Management = () => {
             <Dialog open={openDepartment} onClose={handleClose} fullWidth maxWidth="sm">
                 <DialogTitle>{editDepartment ? 'Edit Department' : 'New Department'}</DialogTitle>
                 <DialogContent>
+                    <TextField select fullWidth label="Company *" margin="normal" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+                        {branches &&
+                            branches.map((branch) => (
+                                <MenuItem key={branch.id} value={branch.id}>
+                                    {branch.name}
+                                </MenuItem>
+                            ))}
+                    </TextField>
                     <TextField fullWidth label="Department Name" variant="outlined" margin="normal" value={name} onChange={(e) => setName(e.target.value)} error={!!error} helperText={error} />
                     <DialogActions>
                         <Button

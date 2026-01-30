@@ -214,11 +214,15 @@ const EmployeeCreate = () => {
     }, [formData.address, formData.cur_city, formData.cur_country, sameAsCurrent]);
 
     useEffect(() => {
-        axios
-            .get(route('api.departments.listAll', { type: 'search', query: searchTerm }))
-            .then((res) => setDepartments(res.data.results))
-            .catch((err) => console.error('Error fetching departments', err));
-    }, [searchTerm]);
+        if (formData.branch_id) {
+            axios
+                .get(route('api.departments.listAll', { type: 'search', query: searchTerm, branch_id: formData.branch_id }))
+                .then((res) => setDepartments(res.data.results))
+                .catch((err) => console.error('Error fetching departments', err));
+        } else {
+            setDepartments([]);
+        }
+    }, [searchTerm, formData.branch_id]);
 
     useEffect(() => {
         if (formData.department?.id) {
@@ -545,36 +549,6 @@ const EmployeeCreate = () => {
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', mb: 4 }}>
-                        <Box>
-                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                                Department*
-                            </Typography>
-                            <Autocomplete
-                                size="small"
-                                options={departments}
-                                getOptionLabel={(option) => option.name}
-                                value={formData.department}
-                                onInputChange={(event, value) => setSearchTerm(value)}
-                                onChange={(event, value) => {
-                                    setFormData({ ...formData, department: value, subdepartment: null });
-                                    setSubdepartmentSearchTerm('');
-                                }}
-                                renderInput={(params) => (
-                                    <>
-                                        <TextField {...params} sx={textFieldStyle} label="Search Department" />
-                                        {errors.department && <FormHelperText error>{errors.department}</FormHelperText>}
-                                    </>
-                                )}
-                            />
-                        </Box>
-
-                        <Box>
-                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-                                Subdepartment
-                            </Typography>
-                            <Autocomplete size="small" options={subdepartments} getOptionLabel={(option) => option.name} value={formData.subdepartment} disabled={!formData.department} onInputChange={(event, value) => setSubdepartmentSearchTerm(value)} onChange={(event, value) => setFormData({ ...formData, subdepartment: value })} renderInput={(params) => <TextField {...params} sx={textFieldStyle} label="Search Subdepartment" placeholder={!formData.department ? 'Select department first' : 'Search'} />} />
-                        </Box>
-
                         {/* Company Selection */}
                         <Box>
                             <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
@@ -586,10 +560,46 @@ const EmployeeCreate = () => {
                                 getOptionLabel={(option) => option.name}
                                 value={branches.find((b) => b.id === formData.branch_id) || null}
                                 onChange={(event, value) => {
-                                    setFormData({ ...formData, branch_id: value ? value.id : null });
+                                    setFormData({
+                                        ...formData,
+                                        branch_id: value ? value.id : null,
+                                        department: null,
+                                        subdepartment: null,
+                                    });
                                 }}
                                 renderInput={(params) => <TextField {...params} sx={textFieldStyle} placeholder="Select Company" />}
                             />
+                        </Box>
+
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Department*
+                            </Typography>
+                            <Autocomplete
+                                size="small"
+                                options={departments}
+                                getOptionLabel={(option) => option.name}
+                                value={formData.department}
+                                onInputChange={(event, value) => setSearchTerm(value)}
+                                disabled={!formData.branch_id}
+                                onChange={(event, value) => {
+                                    setFormData({ ...formData, department: value, subdepartment: null });
+                                    setSubdepartmentSearchTerm('');
+                                }}
+                                renderInput={(params) => (
+                                    <>
+                                        <TextField {...params} sx={textFieldStyle} label="Search Department" placeholder={!formData.branch_id ? 'Select company first' : 'Search Department'} />
+                                        {errors.department && <FormHelperText error>{errors.department}</FormHelperText>}
+                                    </>
+                                )}
+                            />
+                        </Box>
+
+                        <Box>
+                            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+                                Subdepartment
+                            </Typography>
+                            <Autocomplete size="small" options={subdepartments} getOptionLabel={(option) => option.name} value={formData.subdepartment} disabled={!formData.department} onInputChange={(event, value) => setSubdepartmentSearchTerm(value)} onChange={(event, value) => setFormData({ ...formData, subdepartment: value })} renderInput={(params) => <TextField {...params} sx={textFieldStyle} label="Search Subdepartment" placeholder={!formData.department ? 'Select department first' : 'Search'} />} />
                         </Box>
 
                         {/* Shift Selection */}

@@ -7,9 +7,9 @@ import { useForm } from '@inertiajs/react';
 const Create = ({ open, onClose, onSuccess }) => {
     const { data, setData, post, processing, reset } = useForm({
         name: '',
-        classification: [], // Changed to array
-        type: [], // Changed to array
-        acquisition_date: '', // Changed to empty string
+        classification: '', // Changed to string
+        type: '', // Changed to string
+        acquisition_date: '',
         location: '',
         quantity: '', // Changed to empty string
         cost: '',
@@ -63,8 +63,8 @@ const Create = ({ open, onClose, onSuccess }) => {
 
         const formData = new FormData();
         formData.append('name', data.name);
-        formData.append('classification', Array.isArray(data.classification) ? data.classification.join(', ') : data.classification);
-        formData.append('type', Array.isArray(data.type) ? data.type.join(', ') : data.type);
+        formData.append('classification', data.classification);
+        formData.append('type', data.type);
         formData.append('acquisition_date', data.acquisition_date);
         formData.append('location', data.location || '');
         formData.append('quantity', data.quantity);
@@ -117,10 +117,10 @@ const Create = ({ open, onClose, onSuccess }) => {
                         <TextField fullWidth label="Asset Name" name="name" value={data.name} onChange={handleChange} error={!!errors.name} helperText={errors.name?.[0]} size="small" />
                     </Grid>
                     <Grid item xs={6}>
-                        <Autocomplete multiple freeSolo options={options.classifications} value={Array.isArray(data.classification) ? data.classification : []} onChange={(e, newVal) => setData({ ...data, classification: newVal })} renderTags={(value, getTagProps) => value.map((option, index) => <Chip variant="outlined" label={option} {...getTagProps({ index })} />)} renderInput={(params) => <TextField {...params} label="Classification" error={!!errors.classification} helperText={errors.classification?.[0]} size="small" placeholder="Select or type..." />} />
+                        <Autocomplete freeSolo options={options.classifications} value={data.classification} onChange={(e, newVal) => setData({ ...data, classification: newVal })} onInputChange={(e, newVal) => setData({ ...data, classification: newVal })} renderInput={(params) => <TextField {...params} label="Classification" error={!!errors.classification} helperText={errors.classification?.[0]} size="small" placeholder="Select or type..." />} />
                     </Grid>
                     <Grid item xs={6}>
-                        <Autocomplete multiple freeSolo options={options.types} value={Array.isArray(data.type) ? data.type : []} onChange={(e, newVal) => setData({ ...data, type: newVal })} renderTags={(value, getTagProps) => value.map((option, index) => <Chip variant="outlined" label={option} {...getTagProps({ index })} />)} renderInput={(params) => <TextField {...params} label="Type" error={!!errors.type} helperText={errors.type?.[0]} size="small" placeholder="Select or type..." />} />
+                        <Autocomplete freeSolo options={options.types} value={data.type} onChange={(e, newVal) => setData({ ...data, type: newVal })} onInputChange={(e, newVal) => setData({ ...data, type: newVal })} renderInput={(params) => <TextField {...params} label="Type" error={!!errors.type} helperText={errors.type?.[0]} size="small" placeholder="Select or type..." />} />
                     </Grid>
                     <Grid item xs={6}>
                         <TextField fullWidth label="Acquisition Date" type="date" name="acquisition_date" value={data.acquisition_date} onChange={handleChange} error={!!errors.acquisition_date} helperText={errors.acquisition_date?.[0]} size="small" InputLabelProps={{ shrink: true }} />

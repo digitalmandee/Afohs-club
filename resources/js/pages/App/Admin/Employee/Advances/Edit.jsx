@@ -9,10 +9,10 @@ const Edit = ({ advance, employees = [] }) => {
     const [formData, setFormData] = useState({
         employee_id: advance.employee_id || '',
         amount: advance.amount || '',
-        advance_date: advance.advance_date || '',
+        advance_date: advance.advance_date ? advance.advance_date.split('T')[0] : '', // Fix for date input
         reason: advance.reason || '',
         deduction_months: advance.deduction_months || 1,
-        deduction_start_date: advance.deduction_start_date || '',
+        deduction_start_date: advance.deduction_start_date ? advance.deduction_start_date.split('T')[0] : '', // Fix for date input
         notes: advance.notes || '',
     });
     const [errors, setErrors] = useState({});
