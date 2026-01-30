@@ -393,7 +393,7 @@ class CorporateMembershipController extends Controller
             $query->orderBy('id', $sortDirection);
         }
 
-        $members = $query->paginate(50)->withQueryString();
+        $members = $query->paginate(7)->withQueryString();
 
         // Get Member Categories for filter
         $memberCategories = \App\Models\MemberCategory::select('id', 'name')->get();
@@ -1052,7 +1052,7 @@ class CorporateMembershipController extends Controller
             $query->whereDate('date_of_birth', '<=', Carbon::now()->subYears(25)->toDateString());
         }
 
-        $familyGroups = $query->latest()->paginate(10)->withQueryString();
+        $familyGroups = $query->latest()->paginate(7)->withQueryString();
 
         // Add calculated age
         $familyGroups->getCollection()->transform(function ($member) {

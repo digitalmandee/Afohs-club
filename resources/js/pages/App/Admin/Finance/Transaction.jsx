@@ -295,9 +295,9 @@ const Transaction = ({ transactions, filters, users, transactionTypes, subscript
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Status</TableCell>
                                     {/* <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Payment Method</TableCell> */}
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Date</TableCell>
-                                    {/* <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>From</TableCell>
-                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>To</TableCell> */}
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Days</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>From</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>To</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace: 'nowrap' }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -409,7 +409,38 @@ const Transaction = ({ transactions, filters, users, transactionTypes, subscript
                                                 {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell> */}
                                                 <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(transaction.created_at)}</TableCell>
 
-                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{transaction.valid_from && transaction.valid_to ? dayjs(transaction.valid_to).diff(dayjs(transaction.valid_from), 'day') + 1 : '-'}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>
+                                                    {(() => {
+                                                        // Get dates from items
+                                                        const itemsWithDates = transaction.items?.filter((item) => item.start_date && item.end_date) || [];
+                                                        if (itemsWithDates.length > 0) {
+                                                            const startDate = itemsWithDates.reduce((min, item) => (!min || dayjs(item.start_date).isBefore(dayjs(min)) ? item.start_date : min), null);
+                                                            const endDate = itemsWithDates.reduce((max, item) => (!max || dayjs(item.end_date).isAfter(dayjs(max)) ? item.end_date : max), null);
+                                                            return dayjs(endDate).diff(dayjs(startDate), 'day') + 1;
+                                                        }
+                                                        return '-';
+                                                    })()}
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>
+                                                    {(() => {
+                                                        const itemsWithDates = transaction.items?.filter((item) => item.start_date) || [];
+                                                        if (itemsWithDates.length > 0) {
+                                                            const startDate = itemsWithDates.reduce((min, item) => (!min || dayjs(item.start_date).isBefore(dayjs(min)) ? item.start_date : min), null);
+                                                            return dayjs(startDate).format('DD-MM-YYYY');
+                                                        }
+                                                        return '-';
+                                                    })()}
+                                                </TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>
+                                                    {(() => {
+                                                        const itemsWithDates = transaction.items?.filter((item) => item.end_date) || [];
+                                                        if (itemsWithDates.length > 0) {
+                                                            const endDate = itemsWithDates.reduce((max, item) => (!max || dayjs(item.end_date).isAfter(dayjs(max)) ? item.end_date : max), null);
+                                                            return dayjs(endDate).format('DD-MM-YYYY');
+                                                        }
+                                                        return '-';
+                                                    })()}
+                                                </TableCell>
 
                                                 <TableCell sx={{ display: 'flex', gap: '4px' }}>
                                                     <Button

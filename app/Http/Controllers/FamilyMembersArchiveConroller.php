@@ -82,7 +82,7 @@ class FamilyMembersArchiveConroller extends Controller
             $query->whereDate('date_of_birth', '>=', Carbon::now()->subYears($request->max_age + 1)->addDay()->toDateString());
         }
 
-        $familyGroups = $query->latest()->paginate(50)->withQueryString();
+        $familyGroups = $query->latest()->paginate(7)->withQueryString();
 
         // Add calculated age and expiry info to each member
         $familyGroups->getCollection()->transform(function ($member) {
