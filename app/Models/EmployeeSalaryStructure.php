@@ -22,8 +22,6 @@ class EmployeeSalaryStructure extends Model
 
     protected $casts = [
         'basic_salary' => 'decimal:2',
-        'effective_from' => 'date',
-        'effective_to' => 'date',
         'is_active' => 'boolean'
     ];
 
@@ -64,11 +62,13 @@ class EmployeeSalaryStructure extends Model
      */
     public function scopeCurrent($query)
     {
-        return $query->where('effective_from', '<=', now())
-                    ->where(function($q) {
-                        $q->whereNull('effective_to')
-                          ->orWhere('effective_to', '>=', now());
-                    });
+        return $query
+            ->where('effective_from', '<=', now())
+            ->where(function ($q) {
+                $q
+                    ->whereNull('effective_to')
+                    ->orWhere('effective_to', '>=', now());
+            });
     }
 
     /**
@@ -76,8 +76,8 @@ class EmployeeSalaryStructure extends Model
      */
     public function isCurrent()
     {
-        return $this->effective_from <= now() && 
-               ($this->effective_to === null || $this->effective_to >= now());
+        return $this->effective_from <= now() &&
+            ($this->effective_to === null || $this->effective_to >= now());
     }
 
     /**
@@ -89,5 +89,82 @@ class EmployeeSalaryStructure extends Model
             'is_active' => false,
             'effective_to' => now()->subDay()
         ]);
+    }
+
+    /**
+     * Get effective from date attribute
+     */
+    public function getEffectiveFromAttribute($value)
+    {
+        return $this->parseDate($value);
+    }
+
+    /**
+     * Set effective from date attribute
+     */
+    public function setEffectiveFromAttribute($value)
+    {
+        $this->attributes['effective_from'] = $this->formatDateForStorage($value);
+    }
+
+    /**
+     * Get effective to date attribute
+     */
+    public function getEffectiveToAttribute($value)
+    {
+        return $this->parseDate($value);
+    }
+
+    /**
+     * Set effective to date attribute
+     */
+    public function setEffectiveToAttribute($value)
+    {
+        $this->attributes['effective_to'] = $this->formatDateForStorage($value);
+    }
+
+    /**
+     * Helper to parse date
+     */
+    protected function parseDate($value)
+    {
+        if (!$value)
+            return null;
+
+        try {
+            return \Carbon\Carbon::createFromFormat('Y-m-d', $value)->startOfDay();
+        } catch (\Exception $e) {
+            try {
+                return \Carbon\Carbon::createFromFormat('d/m/Y', $value)->startOfDay();
+            } catch (\Exception $e) {
+                try {
+                    return \Carbon\Carbon::parse($value);
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper to format date for storage
+     */
+    protected function formatDateForStorage($value)
+    {
+        if (!$value)
+            return null;
+
+        try {
+            if ($value instanceof \Carbon\Carbon) {
+                return $value->format('Y-m-d');
+            }
+            return \Carbon\Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            try {
+                return \Carbon\Carbon::createFromFormat('d/m/Y', $value)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return $value;
+            }
+        }
     }
 }

@@ -31,19 +31,7 @@ class PayrollController extends Controller
      */
     public function dashboard()
     {
-        $stats = [
-            'total_employees' => Employee::count(),
-            'active_employees' => Employee::whereNull('deleted_at')->count(),
-            'current_period' => PayrollPeriod::where('status', 'processing')->first(),
-            'pending_payslips' => Payslip::where('status', 'draft')->count(),
-            'this_month_payroll' => PayrollPeriod::whereMonth('start_date', now()->month)
-                ->whereYear('start_date', now()->year)
-                ->first(),
-        ];
-
-        return Inertia::render('App/Admin/Employee/Payroll/Dashboard', [
-            'stats' => $stats
-        ]);
+        return Inertia::render('App/Admin/Employee/Payroll/Dashboard');
     }
 
     /**

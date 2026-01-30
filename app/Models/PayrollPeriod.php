@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
 
 class PayrollPeriod extends Model
 {
@@ -27,9 +27,6 @@ class PayrollPeriod extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'pay_date' => 'date',
         'processed_at' => 'datetime',
         'total_gross_amount' => 'decimal:2',
         'total_deductions' => 'decimal:2',
@@ -42,6 +39,99 @@ class PayrollPeriod extends Model
     public function payslips()
     {
         return $this->hasMany(Payslip::class);
+    }
+
+    /**
+     * Get start date attribute
+     */
+    public function getStartDateAttribute($value)
+    {
+        return $this->parseDate($value);
+    }
+
+    /**
+     * Set start date attribute
+     */
+    public function setStartDateAttribute($value)
+    {
+        $this->attributes['start_date'] = $this->formatDateForStorage($value);
+    }
+
+    /**
+     * Get end date attribute
+     */
+    public function getEndDateAttribute($value)
+    {
+        return $this->parseDate($value);
+    }
+
+    /**
+     * Set end date attribute
+     */
+    public function setEndDateAttribute($value)
+    {
+        $this->attributes['end_date'] = $this->formatDateForStorage($value);
+    }
+
+    /**
+     * Get pay date attribute
+     */
+    public function getPayDateAttribute($value)
+    {
+        return $this->parseDate($value);
+    }
+
+    /**
+     * Set pay date attribute
+     */
+    public function setPayDateAttribute($value)
+    {
+        $this->attributes['pay_date'] = $this->formatDateForStorage($value);
+    }
+
+    /**
+     * Helper to parse date
+     */
+    protected function parseDate($value)
+    {
+        if (!$value)
+            return null;
+
+        try {
+            return Carbon::createFromFormat('Y-m-d', $value)->startOfDay();
+        } catch (\Exception $e) {
+            try {
+                return Carbon::createFromFormat('d/m/Y', $value)->startOfDay();
+            } catch (\Exception $e) {
+                try {
+                    return Carbon::parse($value);
+                } catch (\Exception $e) {
+                    return null;
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper to format date for storage
+     */
+    protected function formatDateForStorage($value)
+    {
+        if (!$value)
+            return null;
+
+        try {
+            if ($value instanceof Carbon) {
+                return $value->format('Y-m-d');
+            }
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            try {
+                return Carbon::createFromFormat('d/m/Y', $value)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return $value;
+            }
+        }
     }
 
     /**
@@ -73,8 +163,9 @@ class PayrollPeriod extends Model
      */
     public function scopeCurrentMonth($query)
     {
-        return $query->whereMonth('start_date', now()->month)
-                    ->whereYear('start_date', now()->year);
+        return $query
+            ->whereMonth('start_date', now()->month)
+            ->whereYear('start_date', now()->year);
     }
 
     /**
@@ -82,8 +173,7 @@ class PayrollPeriod extends Model
      */
     public function getFormattedPeriodNameAttribute()
     {
-        return $this->period_name ?: 
-               Carbon::parse($this->start_date)->format('M Y') . ' Payroll';
+        return $this->period_name ?: Carbon::parse($this->start_date)->format('M Y') . ' Payroll';
     }
 
     /**
@@ -109,7 +199,7 @@ class PayrollPeriod extends Model
     {
         $start = Carbon::parse($startDate);
         $end = Carbon::parse($endDate);
-        
+
         if ($start->month === $end->month) {
             return $start->format('F Y') . ' Payroll';
         } else {

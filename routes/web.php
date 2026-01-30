@@ -652,10 +652,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         return Inertia::render('App/Admin/Employee/MonthlyReport');
     })->name('employee.monthlyreport');
 
-    Route::get('/employee/payroll/dashboard', function () {
-        return Inertia::render('App/Admin/Employee/Payroll/Dashboard');
-    })->name('employee.payroll');
-
     Route::get('/employee/payroll/monthly/summary', function () {
         return Inertia::render('App/Admin/Employee/Payroll/Summary');
     })->name('employee.summary');

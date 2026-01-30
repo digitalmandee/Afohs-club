@@ -491,7 +491,7 @@ export default function SideNav({ open, setOpen }) {
                 },
                 {
                     text: 'Payroll',
-                    path: route('employee.payroll'),
+                    path: route('employees.payroll.dashboard'),
                     permission: 'employees.payroll.view',
                 },
                 {
