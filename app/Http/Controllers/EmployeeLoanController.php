@@ -39,7 +39,11 @@ class EmployeeLoanController extends Controller
         $loans = $query->paginate(15)->through(function ($loan) {
             $loanArray = $loan->toArray();
             try {
-                $loanArray['loan_date'] = $loanArray['loan_date'] ? \Carbon\Carbon::parse($loanArray['loan_date'])->format('d/m/Y') : '-';
+                if ($loan->loan_date) {
+                    $loanArray['loan_date'] = \Carbon\Carbon::parse($loan->loan_date)->format('d/m/Y');
+                } else {
+                    $loanArray['loan_date'] = '-';
+                }
             } catch (\Exception $e) {
                 // Keep original value on error
             }
@@ -264,7 +268,11 @@ class EmployeeLoanController extends Controller
             ->map(function ($loan) {
                 $loanArray = $loan->toArray();
                 try {
-                    $loanArray['loan_date'] = $loanArray['loan_date'] ? \Carbon\Carbon::parse($loanArray['loan_date'])->format('d/m/Y') : '-';
+                    if ($loan->loan_date) {
+                        $loanArray['loan_date'] = \Carbon\Carbon::parse($loan->loan_date)->format('d/m/Y');
+                    } else {
+                        $loanArray['loan_date'] = '-';
+                    }
                 } catch (\Exception $e) {
                 }
                 return $loanArray;

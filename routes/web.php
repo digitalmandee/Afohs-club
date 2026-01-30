@@ -118,6 +118,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         ]);
 
         // Assets
+        Route::get('assets/list', [EmployeeAssetController::class, 'getAssets'])->name('employees.assets.list')->middleware('permission:employees.assets.view');
         Route::resource('assets', EmployeeAssetController::class)->middleware([
             'index' => 'permission:employees.assets.view',
             'create' => 'permission:employees.assets.create',

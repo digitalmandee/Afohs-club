@@ -34,7 +34,11 @@ class EmployeeAdvanceController extends Controller
         $advances = $query->orderBy('advance_date', 'desc')->paginate(15)->through(function ($advance) {
             $advanceArray = $advance->toArray();
             try {
-                $advanceArray['advance_date'] = $advanceArray['advance_date'] ? \Carbon\Carbon::parse($advanceArray['advance_date'])->format('d/m/Y') : '-';
+                if ($advance->advance_date) {
+                    $advanceArray['advance_date'] = \Carbon\Carbon::parse($advance->advance_date)->format('d/m/Y');
+                } else {
+                    $advanceArray['advance_date'] = '-';
+                }
             } catch (\Exception $e) {
             }
             return $advanceArray;
@@ -115,12 +119,17 @@ class EmployeeAdvanceController extends Controller
     public function edit($id)
     {
         $advance = EmployeeAdvance::with(['employee'])->findOrFail($id);
+
+        $advanceArray = $advance->toArray();
+        $advanceArray['advance_date'] = $advance->advance_date ? $advance->advance_date->format('Y-m-d') : '';
+        $advanceArray['deduction_start_date'] = $advance->deduction_start_date ? $advance->deduction_start_date->format('Y-m-d') : '';
+
         $employees = Employee::where('status', 'active')
             ->orderBy('name')
             ->get(['id', 'name', 'employee_id']);
 
         return Inertia::render('App/Admin/Employee/Advances/Edit', [
-            'advance' => $advance,
+            'advance' => $advanceArray,  // Send array instead of model
             'employees' => $employees,
         ]);
     }
