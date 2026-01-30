@@ -282,10 +282,10 @@ class PayrollController extends Controller
             $payslip->order_deductions = $empOrders->map(function ($o) {
                 return [
                     'id' => $o->id,
-                    'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
+                    'paid_at' => $o->paid_at ? \Carbon\Carbon::parse($o->paid_at)->format('d/m/Y h:i A') : null,
                     'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                     'note' => $o->payment_note ?? $o->remark ?? null,
-                    'deducted_at' => $o->deducted_at ? (string) $o->deducted_at : null
+                    'deducted_at' => $o->deducted_at ? \Carbon\Carbon::parse($o->deducted_at)->format('d/m/Y h:i A') : null
                 ];
             })->values();
             $payslip->total_order_deductions = $totalOrderDeductions;

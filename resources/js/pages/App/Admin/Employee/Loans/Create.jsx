@@ -58,7 +58,7 @@ const Create = ({ employees = [] }) => {
         });
     };
 
-    const monthlyDeduction = formData.amount && formData.installments ? (parseFloat(formData.amount) / parseInt(formData.installments)).toFixed(2) : 0;
+    const monthlyDeduction = formData.amount && formData.installments ? Math.round(parseFloat(formData.amount) / parseInt(formData.installments)) : 0;
     const maxRecommended = employeeSalary * 0.5;
 
     return (
@@ -70,9 +70,7 @@ const Create = ({ employees = [] }) => {
                         <IconButton onClick={() => router.visit(route('employees.loans.index'))}>
                             <ArrowBackIcon sx={{ color: '#063455' }} />
                         </IconButton>
-                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
-                            New Loan Application
-                        </Typography>
+                        <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>New Loan Application</Typography>
                     </Box>
 
                     <Grid container spacing={3}>
@@ -143,10 +141,10 @@ const Create = ({ employees = [] }) => {
                                         </Grid>
                                         <Grid item xs={12}>
                                             <Box sx={{ display: 'flex', gap: 2 }}>
-                                                <Button type="submit" variant="contained" startIcon={<SaveIcon />} sx={{ backgroundColor: '#063455', textTransform:'capitalize', borderRadius:'16px' }}>
+                                                <Button type="submit" variant="contained" startIcon={<SaveIcon />} sx={{ backgroundColor: '#063455', textTransform: 'capitalize', borderRadius: '16px' }}>
                                                     Submit Application
                                                 </Button>
-                                                <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ borderColor: '#063455', textTransform:'capitalize', color: '#063455', borderRadius:'16px' }}>
+                                                <Button variant="outlined" onClick={() => router.visit(route('employees.loans.index'))} sx={{ borderColor: '#063455', textTransform: 'capitalize', color: '#063455', borderRadius: '16px' }}>
                                                     Cancel
                                                 </Button>
                                             </Box>

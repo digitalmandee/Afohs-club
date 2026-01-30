@@ -89,7 +89,15 @@ class LeaveApplicationController extends Controller
             });
         }
 
-        $applications = $query->paginate(10);
+        $applications = $query->paginate(10)->through(function ($app) {
+            $appArray = $app->toArray();
+            try {
+                $appArray['start_date'] = $appArray['start_date'] ? \Carbon\Carbon::parse($appArray['start_date'])->format('d/m/Y') : '-';
+                $appArray['end_date'] = $appArray['end_date'] ? \Carbon\Carbon::parse($appArray['end_date'])->format('d/m/Y') : '-';
+            } catch (\Exception $e) {
+            }
+            return $appArray;
+        });
 
         return response()->json([
             'success' => true,

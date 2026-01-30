@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import axios from 'axios';
 import AdminLayout from '@/layouts/AdminLayout';
-import { Box, Card, CardContent, Typography, Button, TextField, FormControl, InputLabel, Select, MenuItem, Grid, IconButton, Alert } from '@mui/material';
+import { Box, Card, CardContent, Typography, Button, TextField, FormControl, InputLabel, Select, MenuItem, Grid, IconButton, Alert, Autocomplete } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
 
 const formatCurrency = (amount) => `Rs ${parseFloat(amount || 0).toLocaleString()}`;
@@ -62,31 +62,22 @@ const Create = ({ employees = [] }) => {
                     <IconButton onClick={() => router.visit(route('employees.advances.index'))}>
                         <ArrowBackIcon sx={{ color: '#063455' }} />
                     </IconButton>
-                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
-                        New Advance Request
-                    </Typography>
+                    <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '30px' }}>New Advance Request</Typography>
                 </Box>
 
                 <Card sx={{ borderRadius: '12px', p: 3 }}>
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
-                                <FormControl fullWidth error={!!errors.employee_id}>
-                                    <InputLabel>Employee *</InputLabel>
-                                    <Select value={formData.employee_id} label="Employee *" onChange={(e) => handleChange('employee_id', e.target.value)}>
-                                        <MenuItem value="">Select Employee</MenuItem>
-                                        {employees.map((emp) => (
-                                            <MenuItem key={emp.id} value={emp.id}>
-                                                {emp.name} ({emp.employee_id || emp.id})
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {errors.employee_id && (
-                                        <Typography variant="caption" color="error">
-                                            {errors.employee_id}
-                                        </Typography>
-                                    )}
-                                </FormControl>
+                                <Autocomplete
+                                    options={employees}
+                                    getOptionLabel={(option) => `${option.name} (${option.employee_id || option.id})`}
+                                    value={employees.find((e) => e.id === formData.employee_id) || null}
+                                    onChange={(event, newValue) => {
+                                        handleChange('employee_id', newValue ? newValue.id : '');
+                                    }}
+                                    renderInput={(params) => <TextField {...params} label="Employee *" error={!!errors.employee_id} helperText={errors.employee_id} />}
+                                />
                             </Grid>
                             <Grid item xs={12} sm={3}>
                                 <TextField fullWidth type="number" label="Advance Amount *" value={formData.amount} onChange={(e) => handleChange('amount', e.target.value)} error={!!errors.amount || (employeeSalary > 0 && parseFloat(formData.amount) > employeeSalary)} helperText={errors.amount || (employeeSalary > 0 ? (parseFloat(formData.amount) > employeeSalary ? `Error: Exceeds salary (${formatCurrency(employeeSalary)})` : `Max allowed: ${formatCurrency(employeeSalary)}`) : '')} InputProps={{ inputProps: { min: 1 } }} />
@@ -104,13 +95,9 @@ const Create = ({ employees = [] }) => {
                                 <TextField fullWidth type="date" label="Deduction Start Date" value={formData.deduction_start_date} onChange={(e) => handleChange('deduction_start_date', e.target.value)} InputLabelProps={{ shrink: true }} helperText="Leave empty for next payroll" />
                             </Grid>
                             <Grid item xs={12} sm={4}>
-                                <Card sx={{ py:1, backgroundColor: '#063455', textAlign: 'center' }}>
-                                    <Typography sx={{color:'#fff', fontSize:'18px', fontWeight:'600'}}>
-                                        Monthly Deduction
-                                    </Typography>
-                                    <Typography sx={{color:'#fff', fontSize:'18px', fontWeight:'600'}}>
-                                        Rs {monthlyDeduction}
-                                    </Typography>
+                                <Card sx={{ py: 1, backgroundColor: '#063455', textAlign: 'center' }}>
+                                    <Typography sx={{ color: '#fff', fontSize: '18px', fontWeight: '600' }}>Monthly Deduction</Typography>
+                                    <Typography sx={{ color: '#fff', fontSize: '18px', fontWeight: '600' }}>Rs {monthlyDeduction}</Typography>
                                 </Card>
                             </Grid>
                             <Grid item xs={12}>
@@ -118,17 +105,10 @@ const Create = ({ employees = [] }) => {
                             </Grid>
                             <Grid item xs={12}>
                                 <Box sx={{ display: 'flex', gap: 2 }}>
-                                    <Button 
-                                    type="submit" 
-                                    variant="contained" 
-                                    startIcon={<SaveIcon />} 
-                                    sx={{ backgroundColor: '#063455', textTransform:'capitalize', borderRadius:'16px' }}>
+                                    <Button type="submit" variant="contained" startIcon={<SaveIcon />} sx={{ backgroundColor: '#063455', textTransform: 'capitalize', borderRadius: '16px' }}>
                                         Submit Request
                                     </Button>
-                                    <Button 
-                                    variant="outlined" 
-                                    onClick={() => router.visit(route('employees.advances.index'))} 
-                                    sx={{ borderColor: '#063455', color: '#063455', textTransform:'capitalize', borderRadius:'16px' }}>
+                                    <Button variant="outlined" onClick={() => router.visit(route('employees.advances.index'))} sx={{ borderColor: '#063455', color: '#063455', textTransform: 'capitalize', borderRadius: '16px' }}>
                                         Cancel
                                     </Button>
                                 </Box>

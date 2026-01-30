@@ -31,7 +31,14 @@ class EmployeeAdvanceController extends Controller
             $query->whereDate('advance_date', '<=', $request->date_to);
         }
 
-        $advances = $query->orderBy('advance_date', 'desc')->paginate(15);
+        $advances = $query->orderBy('advance_date', 'desc')->paginate(15)->through(function ($advance) {
+            $advanceArray = $advance->toArray();
+            try {
+                $advanceArray['advance_date'] = $advanceArray['advance_date'] ? \Carbon\Carbon::parse($advanceArray['advance_date'])->format('d/m/Y') : '-';
+            } catch (\Exception $e) {
+            }
+            return $advanceArray;
+        });
         $employees = Employee::orderBy('name')->get(['id', 'name', 'employee_id']);
 
         // Stats

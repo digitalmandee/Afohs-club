@@ -36,7 +36,15 @@ class EmployeeLoanController extends Controller
         $sortOrder = $request->sort_order ?? 'desc';
         $query->orderBy($sortBy, $sortOrder);
 
-        $loans = $query->paginate(15);
+        $loans = $query->paginate(15)->through(function ($loan) {
+            $loanArray = $loan->toArray();
+            try {
+                $loanArray['loan_date'] = $loanArray['loan_date'] ? \Carbon\Carbon::parse($loanArray['loan_date'])->format('d/m/Y') : '-';
+            } catch (\Exception $e) {
+                // Keep original value on error
+            }
+            return $loanArray;
+        });
         $employees = Employee::orderBy('name')->get(['id', 'name', 'employee_id']);
 
         // Stats
@@ -86,7 +94,7 @@ class EmployeeLoanController extends Controller
         ]);
 
         // Calculate monthly deduction
-        $validated['monthly_deduction'] = $validated['amount'] / $validated['installments'];
+        $validated['monthly_deduction'] = round($validated['amount'] / $validated['installments']);
         $validated['remaining_amount'] = $validated['amount'];
         $validated['total_paid'] = 0;
         $validated['installments_paid'] = 0;
@@ -142,7 +150,7 @@ class EmployeeLoanController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $validated['monthly_deduction'] = $validated['amount'] / $validated['installments'];
+        $validated['monthly_deduction'] = round($validated['amount'] / $validated['installments']);
         $validated['remaining_amount'] = $validated['amount'];
 
         $loan->update($validated);
@@ -252,7 +260,15 @@ class EmployeeLoanController extends Controller
     {
         $loans = EmployeeLoan::where('employee_id', $employeeId)
             ->orderBy('loan_date', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($loan) {
+                $loanArray = $loan->toArray();
+                try {
+                    $loanArray['loan_date'] = $loanArray['loan_date'] ? \Carbon\Carbon::parse($loanArray['loan_date'])->format('d/m/Y') : '-';
+                } catch (\Exception $e) {
+                }
+                return $loanArray;
+            });
 
         $activeLoans = $loans->where('status', 'disbursed')->sum('remaining_amount');
 
