@@ -20,8 +20,7 @@ class Product extends BaseModel
         'cost_of_goods_sold',
         'current_stock',
         'minimal_stock',
-        'discount',
-        'discount_type',
+        'is_discountable',
         'notify_when_out_of_stock',
         'available_order_types',
         'status',
@@ -58,9 +57,10 @@ class Product extends BaseModel
      */
     public function ingredients()
     {
-        return $this->belongsToMany(Ingredient::class, 'product_ingredients', 'product_id', 'ingredient_id')
-                    ->withPivot('quantity_used', 'cost')
-                    ->withTimestamps();
+        return $this
+            ->belongsToMany(Ingredient::class, 'product_ingredients', 'product_id', 'ingredient_id')
+            ->withPivot('quantity_used', 'cost')
+            ->withTimestamps();
     }
 
     /**
@@ -75,5 +75,4 @@ class Product extends BaseModel
     {
         return $this->belongsTo(Tenant::class);
     }
-
 }

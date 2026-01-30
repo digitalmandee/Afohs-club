@@ -659,66 +659,67 @@ class OrderController extends Controller
 
             $invoice = FinancialInvoice::create($invoiceData);
 
-            // ✅ Create Invoice Items & DEBIT Transactions (Item Level) with Discount & Tax
+            // ✅ Create Invoice Items & DEBIT Transactions (Aggregated)
             if (!empty($request->order_items)) {
-                // Calculate Total Gross for allocation if needed
-                $totalGross = collect($request->order_items)->sum(function ($i) {
-                    return ($i['quantity'] ?? 1) * ($i['price'] ?? 0);
-                });
+                $totalGross = 0;
+                $totalDiscount = 0;
+                $totalTax = 0;
+                $itemNames = [];
 
-                $discountType = $request->discount_type;
-                $discountValue = $request->discount_type ? (float) $request->discount_value : 0;
-                $totalTax = $request->tax ?? 0;
+                $taxRate = $request->tax ?? 0;  // Tax rate (e.g. 0.16)
 
                 foreach ($request->order_items as $item) {
                     $qty = $item['quantity'] ?? 1;
                     $price = $item['price'] ?? 0;
                     $subTotal = $qty * $price;
-                    $itemDiscountAmount = 0;
-                    $itemTaxAmount = 0;
 
-                    if ($totalGross > 0) {
-                        // Discount Allocation
-                        if ($discountType === 'percentage') {
-                            $itemDiscountAmount = ($subTotal * $discountValue) / 100;
-                        } elseif ($discountType === 'fixed') {
-                            $itemDiscountAmount = ($subTotal / $totalGross) * $discountValue;
-                        }
+                    // Use item discount as sum source
+                    $itemDiscountAmount = $item['discount_amount'] ?? 0;
 
-                        // Tax Allocation (Proportional)
-                        $itemTaxAmount = ($subTotal / $totalGross) * $totalTax;
+                    // Tax Calculation per item (consistent with previous logic)
+                    $netAmount = $subTotal - $itemDiscountAmount;
+                    $itemTaxAmount = $netAmount * $taxRate;
+
+                    $totalGross += $subTotal;
+                    $totalDiscount += $itemDiscountAmount;
+                    $totalTax += $itemTaxAmount;
+
+                    if (count($itemNames) < 3) {
+                        $itemNames[] = $item['name'] ?? 'Item';
                     }
-
-                    $itemTotal = $subTotal - $itemDiscountAmount + $itemTaxAmount;
-
-                    $invoiceItem = FinancialInvoiceItem::create([
-                        'invoice_id' => $invoice->id,
-                        'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,  // Food Order / Room Service
-                        'description' => $item['name'] ?? 'Food Item',
-                        'qty' => $qty,
-                        'amount' => $price,
-                        'sub_total' => $subTotal,
-                        'discount_type' => $discountType,
-                        'discount_value' => $discountValue,
-                        'discount_amount' => $itemDiscountAmount,
-                        'tax_amount' => $itemTaxAmount,
-                        'total' => $itemTotal,
-                    ]);
-
-                    // Create Debit Transaction for THIS item (Use itemTotal = Net)
-                    Transaction::create([
-                        'type' => 'debit',
-                        'amount' => $itemTotal,
-                        'date' => now(),
-                        'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - ' . ($item['name'] ?? 'Food Item'),
-                        'payable_type' => $payerType,
-                        'payable_id' => $payerId,
-                        'reference_type' => FinancialInvoiceItem::class,
-                        'reference_id' => $invoiceItem->id,
-                        'invoice_id' => $invoice->id,
-                        'created_by' => Auth::id(),
-                    ]);
                 }
+
+                $totalNet = $totalGross - $totalDiscount + $totalTax;
+
+                $description = 'Food Order Items (' . count($request->order_items) . ') - ' . implode(', ', $itemNames) . (count($request->order_items) > 3 ? '...' : '');
+
+                $invoiceItem = FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,  // Food Order / Room Service
+                    'description' => $description,
+                    'qty' => 1,  // Aggregated item count as 1 block
+                    'amount' => $totalGross,
+                    'sub_total' => $totalGross,
+                    'discount_type' => 'fixed',  // Aggregated discount is always an amount
+                    'discount_value' => $totalDiscount,
+                    'discount_amount' => $totalDiscount,
+                    'tax_amount' => $totalTax,
+                    'total' => $totalNet,
+                ]);
+
+                // Create Debit Transaction for THIS aggregated invoice item
+                Transaction::create([
+                    'type' => 'debit',
+                    'amount' => $totalNet,
+                    'date' => now(),
+                    'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - Food Order',
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'reference_type' => FinancialInvoiceItem::class,
+                    'reference_id' => $invoiceItem->id,
+                    'invoice_id' => $invoice->id,
+                    'created_by' => Auth::id(),
+                ]);
             }
 
             // If Paid (Takeaway) -> Receipt + Credit + Allocation
