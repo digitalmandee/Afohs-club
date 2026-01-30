@@ -72,7 +72,7 @@ const RoomCalendar = () => {
                             }
                             ${
                                 b.status === 'checked_in'
-                                    ? `<a href="/booking-management/rooms/edit-booking/${b.id}?type=checkout" target="_blank"
+                                    ? `<a href="/booking-management/rooms/booking/edit/${b.id}?type=checkout" target="_blank"
                                     style="display: inline-block; background: #28a745; color: white; padding: 4px 8px; text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 4px;">Check-out</a>`
                                     : ''
                             }

@@ -202,7 +202,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             .then((res) => {
                 enqueueSnackbar('Booking Updated successfully', { variant: 'success' });
                 // Redirect or show success
-                if (isCheckout && res.data.invoice.status === 'unpaid') {
+                if (isCheckout && res.data.invoice && res.data.invoice.status === 'unpaid') {
                     router.visit(route('booking.payment', { invoice_no: res.data.invoice.id }));
                 } else {
                     router.visit(route('rooms.dashboard'));

@@ -955,7 +955,7 @@ class RoomBookingController extends Controller
 
             DB::commit();
 
-            return response()->json(['message' => 'Booking updated successfully.', 'invoice' => ['id' => $invoice->id, 'status' => $invoice->status]], 200);
+            return response()->json(['message' => 'Booking updated successfully.', 'invoice' => $invoice ? ['id' => $invoice->id, 'status' => $invoice->status] : null], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
             return response()->json(['error' => $e->getMessage()], 500);
