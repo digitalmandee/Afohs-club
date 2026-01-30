@@ -1,4 +1,4 @@
-import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router, usePage } from '@inertiajs/react';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -6,7 +6,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { Autocomplete, Box, Button, ClickAwayListener, CircularProgress, FormControl, FormControlLabel, Grid, InputAdornment, Paper, Popper, Radio, RadioGroup, TextField, Typography } from '@mui/material';
+import { Box, Button, ClickAwayListener, FormControl, FormControlLabel, Grid, InputAdornment, Paper, Popper, Radio, RadioGroup, TextField, Typography } from '@mui/material';
 import { StaticDatePicker, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -16,7 +16,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
 import { enqueueSnackbar } from 'notistack';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -206,33 +206,6 @@ const ReservationDialog = ({ guestTypes }) => {
         return !availableSlots.some((slot) => formattedTime > slot.start && formattedTime <= slot.end);
     };
 
-    // New state variables for Autocomplete
-    const [autocompleteOpen, setAutocompleteOpen] = useState(false);
-    const [options, setOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
-
-    const handleSearch = async (event, query) => {
-        if (!query) {
-            setOptions([]);
-            return;
-        }
-        setLoading(true);
-        try {
-            const response = await axios.get(route('admin.api.search-users'), {
-                params: {
-                    q: query,
-                    type: orderDetails.member_type,
-                },
-            });
-            setOptions(response.data.results || []);
-        } catch (error) {
-            console.error('Error fetching members:', error);
-            setOptions([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
         <>
             <Box
@@ -339,41 +312,7 @@ const ReservationDialog = ({ guestTypes }) => {
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontSize: '14px', color: '#121212' }}>
                             Customer Name or Scan Member Card
                         </Typography>
-                        <Autocomplete
-                            id="customer-search-reservation"
-                            open={autocompleteOpen}
-                            onOpen={() => setAutocompleteOpen(true)}
-                            onClose={() => setAutocompleteOpen(false)}
-                            isOptionEqualToValue={(option, value) => option.id === value?.id}
-                            getOptionLabel={(option) => option.label || ''}
-                            options={options}
-                            loading={loading}
-                            value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null}
-                            onInputChange={(event, newInputValue, reason) => {
-                                if (reason === 'input') {
-                                    handleSearch(event, newInputValue);
-                                }
-                            }}
-                            onChange={(event, newValue) => {
-                                handleOrderDetailChange('member', newValue || {});
-                            }}
-                            renderInput={(params) => (
-                                <TextField
-                                    {...params}
-                                    label="Member / Guest Name"
-                                    placeholder="Search by Name, Membership No, or CNIC..."
-                                    InputProps={{
-                                        ...params.InputProps,
-                                        endAdornment: (
-                                            <>
-                                                {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                {params.InputProps.endAdornment}
-                                            </>
-                                        ),
-                                    }}
-                                />
-                            )}
-                        />
+                        <UserAutocomplete memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                     </Box>
 
                     {/* Customer Qty and Down Payment */}

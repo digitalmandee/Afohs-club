@@ -1,37 +1,12 @@
+import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Autocomplete, Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { Box, Button, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography } from '@mui/material';
+import { useEffect } from 'react';
 
 const TakeAwayDialog = ({ guestTypes }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
-    const [open, setOpen] = useState(false);
-    const [options, setOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
-
-    const handleSearch = async (event, query) => {
-        if (!query) {
-            setOptions([]);
-            return;
-        }
-        setLoading(true);
-        try {
-            const response = await axios.get(route('admin.api.search-users'), {
-                params: {
-                    q: query,
-                    type: orderDetails.member_type,
-                },
-            });
-            setOptions(response.data.results || []);
-        } catch (error) {
-            console.error('Error fetching members:', error);
-            setOptions([]);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const isMemberSelected = !!orderDetails.member && Object.keys(orderDetails.member).length > 0;
     const requiresAddress = orderDetails.order_type === 'delivery';
@@ -122,41 +97,7 @@ const TakeAwayDialog = ({ guestTypes }) => {
                             </RadioGroup>
                         </Grid>
                         <Grid item xs={12}>
-                            <Autocomplete
-                                id="customer-search-takeaway"
-                                open={open}
-                                onOpen={() => setOpen(true)}
-                                onClose={() => setOpen(false)}
-                                isOptionEqualToValue={(option, value) => option.id === value?.id}
-                                getOptionLabel={(option) => option.label || ''}
-                                options={options}
-                                loading={loading}
-                                value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null}
-                                onInputChange={(event, newInputValue, reason) => {
-                                    if (reason === 'input') {
-                                        handleSearch(event, newInputValue);
-                                    }
-                                }}
-                                onChange={(event, newValue) => {
-                                    handleOrderDetailChange('member', newValue || {});
-                                }}
-                                renderInput={(params) => (
-                                    <TextField
-                                        {...params}
-                                        label="Member / Guest Name"
-                                        placeholder="Search by Name, Membership No, or CNIC..."
-                                        InputProps={{
-                                            ...params.InputProps,
-                                            endAdornment: (
-                                                <>
-                                                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                    {params.InputProps.endAdornment}
-                                                </>
-                                            ),
-                                        }}
-                                    />
-                                )}
-                            />
+                            <UserAutocomplete memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                         </Grid>
 
                         {/* Delivery Address */}

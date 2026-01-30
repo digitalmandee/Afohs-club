@@ -38,6 +38,53 @@ class InventoryController extends Controller
     }
 
     /**
+     * API endpoint for filtering products with axios
+     * Optimized for fast performance with debounced frontend calls
+     */
+    public function filter(Request $request)
+    {
+        $query = Product::select([
+            'id', 'name', 'menu_code', 'category_id', 'base_price',
+            'current_stock', 'minimal_stock', 'status', 'images',
+            'discount', 'discount_type', 'description'
+        ])
+            ->with(['category:id,name', 'variants:id,product_id,name,type', 'variants.values'])
+            ->where('tenant_id', tenant()->id);
+
+        // Filter by name (case-insensitive)
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        // Filter by menu_code (case-insensitive)
+        if ($request->filled('menu_code')) {
+            $query->where('menu_code', 'like', '%' . $request->menu_code . '%');
+        }
+
+        // Filter by status (active/inactive)
+        if ($request->filled('status') && $request->status !== 'all') {
+            $isActive = $request->status === 'active';
+            $query->where('status', $isActive);
+        }
+
+        // Filter by category (supports multiple IDs)
+        if ($request->filled('category_ids')) {
+            $categoryIds = explode(',', $request->category_ids);
+            $query->whereIn('category_id', $categoryIds);
+        } elseif ($request->filled('category_id') && $request->category_id !== 'all') {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $products = $query->latest()->get();
+
+        return response()->json([
+            'success' => true,
+            'products' => $products,
+            'count' => $products->count()
+        ]);
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -100,6 +147,12 @@ class InventoryController extends Controller
             'tenant_id' => tenant()->id,
         ]);
 
+        // Auto-generate item code if not provided
+        if (empty($product->menu_code)) {
+            $product->menu_code = 'ITEM-' . str_pad($product->id, 4, '0', STR_PAD_LEFT);
+            $product->save();
+        }
+
         // Handle variants if passed as an object
         if ($request->has('variants')) {
             foreach ($request->input('variants') as $variant) {
@@ -140,7 +193,7 @@ class InventoryController extends Controller
                         'quantity_used' => $ingredientData['quantity_used'],
                         'cost' => $ingredientData['cost'] ?? 0
                     ]);
-                    
+
                     // Don't deduct from ingredient stock yet - only when product is actually made/sold
                 }
             }
@@ -206,11 +259,11 @@ class InventoryController extends Controller
         // Get current product to access existing images
         $product = Product::find($id);
         $oldImages = $product->images ?? [];
-        
+
         // Step 1: Process request images (mix of new files and existing paths)
         $imagePaths = [];
         $requestImages = $request->input('images', []);
-        
+
         // Handle existing images that should be kept FIRST (from deleted_images logic)
         $deletedImages = $request->input('deleted_images', []);
         foreach ($oldImages as $oldImage) {
@@ -218,7 +271,7 @@ class InventoryController extends Controller
                 $imagePaths[] = $oldImage;
             }
         }
-        
+
         // Handle file uploads and add them AFTER existing images
         if ($request->hasFile('images')) {
             $uploadedFiles = $request->file('images');
@@ -227,7 +280,7 @@ class InventoryController extends Controller
                 $imagePaths[] = $path;
             }
         }
-        
+
         // Step 2: Find deleted images by comparing old vs new
         $deletedImagePaths = [];
         foreach ($oldImages as $oldImage) {
@@ -235,11 +288,11 @@ class InventoryController extends Controller
                 $deletedImagePaths[] = $oldImage;
             }
         }
-        
+
         // Step 3: Delete them from filesystem
         foreach ($deletedImagePaths as $imagePath) {
             $absolutePath = public_path(ltrim($imagePath, '/'));
-            
+
             if (file_exists($absolutePath)) {
                 @unlink($absolutePath);
             }
@@ -308,7 +361,7 @@ class InventoryController extends Controller
         if ($request->has('ingredients')) {
             // First, detach all existing ingredients
             $product->ingredients()->detach();
-            
+
             // Then attach new ingredients with pivot data
             foreach ($request->input('ingredients') as $ingredientData) {
                 $product->ingredients()->attach($ingredientData['id'], [

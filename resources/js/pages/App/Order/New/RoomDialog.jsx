@@ -1,6 +1,6 @@
 'use client';
 
-import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -159,7 +159,7 @@ const RoomDialog = ({ guestTypes, roomTypes, loading }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <AsyncSearchTextField placeholder="Enter name or scan member card" name="user" endpoint="user.search" params={{ type: orderDetails.member_type }} onChange={(e) => handleOrderDetailChange('member', e.target.value)} size="small" />
+                    <UserAutocomplete memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                 </Grid>
             </Grid>
 

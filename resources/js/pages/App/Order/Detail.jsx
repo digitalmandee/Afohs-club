@@ -144,7 +144,7 @@ const OrderDetail = ({ handleEditItem }) => {
                 // ✅ Use res.data, not response.data
                 enqueueSnackbar(res.data?.message || 'Your order has been successfully sent to the kitchen!', { variant: 'success' });
 
-                router.visit(route('order.management'));
+                router.visit(route('order.new'));
             })
             .catch((error) => {
                 console.log(error);

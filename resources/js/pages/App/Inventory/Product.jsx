@@ -505,37 +505,36 @@ const AddProduct = ({ product, id }) => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                            Menu Id (Optional)
+                                            Item Code{' '}
+                                            <Typography component="span" color="text.secondary" fontSize="12px">
+                                                (Auto-generated, editable)
+                                            </Typography>
                                         </Typography>
-                                        <TextField fullWidth placeholder="e.g. A001" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" />
+                                        <TextField fullWidth placeholder="e.g. ITEM-001" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" helperText={!id ? 'Will be auto-generated if left empty' : ''} />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Categories
                                         </Typography>
-                                        <TextField
-                                            select
+                                        <Autocomplete
                                             fullWidth
-                                            placeholder="Choose category"
-                                            name="category_id"
-                                            value={data.category_id}
-                                            onChange={handleInputChange}
-                                            variant="outlined"
                                             size="small"
-                                            SelectProps={{
-                                                displayEmpty: true,
+                                            options={categories || []}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            value={categories?.find((cat) => cat.id === data.category_id) || null}
+                                            onChange={(event, newValue) => {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    category_id: newValue ? newValue.id : '',
+                                                }));
+                                                setFieldErrors((prev) => ({ ...prev, category_id: '' }));
                                             }}
-                                            error={!!fieldErrors.category_id}
-                                            helperText={fieldErrors.category_id}
-                                        >
-                                            <MenuItem value="">Choose category</MenuItem>
-                                            {categories?.length > 0 &&
-                                                categories.map(({ id, name }) => (
-                                                    <MenuItem key={id} value={id}>
-                                                        {name}
-                                                    </MenuItem>
-                                                ))}
-                                        </TextField>
+                                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                            renderInput={(params) => <TextField {...params} placeholder="Search or select category" variant="outlined" error={!!fieldErrors.category_id} helperText={fieldErrors.category_id} />}
+                                            ListboxProps={{
+                                                style: { maxHeight: 200 },
+                                            }}
+                                        />
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
