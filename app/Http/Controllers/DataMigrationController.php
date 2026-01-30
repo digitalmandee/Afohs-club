@@ -2333,6 +2333,9 @@ class DataMigrationController extends Controller
 
                         $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
                         $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
+                    } else {
+                        // skip
+                        continue;
                     }
                 }
             }
