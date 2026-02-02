@@ -270,30 +270,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 },
                             }}
                         >
-                            <Box p={2}>
-                                <FormControl fullWidth>
-                                    <InputLabel id="status-label">Status</InputLabel>
-                                    <Select
-                                        labelId="status-label"
-                                        fullWidth
-                                        value={orderStatus}
-                                        onChange={(e) => setOrderStatus(e.target.value)}
-                                        sx={{
-                                            backgroundColor: 'white',
-                                            borderRadius: 1,
-                                            color: '#003153',
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        <MenuItem value="pending">Pending</MenuItem>
-                                        <MenuItem value="in_progress">In Progress</MenuItem>
-                                        <MenuItem value="completed">Completed</MenuItem>
-                                        <MenuItem value="cancelled">Cancelled</MenuItem>
-                                        <MenuItem value="no_show">No Show</MenuItem>
-                                        <MenuItem value="refund">Refund</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Box>
+                            <Box p={2}></Box>
                             <List sx={{ py: 0 }}>
                                 {orderItems.length > 0 &&
                                     orderItems.map((item, index) => (

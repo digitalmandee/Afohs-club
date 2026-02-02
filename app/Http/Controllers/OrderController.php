@@ -203,88 +203,203 @@ class OrderController extends Controller
 
     public function orderManagement(Request $request)
     {
-        $query = Order::with([
-            'table:id,table_no',
-            'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
-            'member:id,member_type_id,full_name,membership_no',
-            'customer:id,name,customer_no',
-            'employee:id,employee_id,name',
-            'member.memberType:id,name'
-        ]);
-        // ✅ Exclude paid orders from Order Management (table is free after payment)
-        $query->where(function ($q) {
-            $q
-                ->whereNull('payment_status')
-                ->orWhere('payment_status', '!=', 'paid');
-        });
+        $filters = $request->only('search_id', 'search_name', 'search_membership', 'time', 'type', 'start_date', 'end_date');
         $allrestaurants = Tenant::select('id', 'name')->get();
 
-        // 🔍 Search By ID
-        if ($request->filled('search_id')) {
-            $query->where('id', $request->search_id);
-        }
+        // Check if request expects JSON (Axios call)
+        if ($request->wantsJson()) {
+            $query = Order::with([
+                'table:id,table_no',
+                'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
+                'member:id,member_type_id,full_name,membership_no',
+                'customer:id,name,customer_no',
+                'employee:id,employee_id,name',
+                'member.memberType:id,name'
+            ]);
 
-        // 🔍 Search By Client Name
-        if ($request->filled('search_name')) {
-            $searchName = trim(preg_replace('/\s+/', ' ', $request->search_name));
-            $query->where(function ($q) use ($searchName) {
+            // ✅ Exclude paid orders from Order Management (table is free after payment)
+            // But INCLUDE 'awaiting' payment status (so generated invoices show up)
+            $query->where(function ($q) {
                 $q
-                    ->whereHas('member', fn($q) => $q->where('full_name', 'like', "%$searchName%"))
-                    ->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%$searchName%"))
-                    ->orWhereHas('employee', fn($q) => $q->where('name', 'like', "%$searchName%"));
+                    ->whereNull('payment_status')
+                    ->orWhere('payment_status', '!=', 'paid');
             });
-        }
 
-        // 🔍 Search By Membership No
-        if ($request->filled('search_membership')) {
-            $searchMembership = trim($request->search_membership);
-            $query->where(function ($q) use ($searchMembership) {
-                $q
-                    ->whereHas('member', fn($q) => $q->where('membership_no', 'like', "%$searchMembership%"))
-                    ->orWhereHas('customer', fn($q) => $q->where('customer_no', 'like', "%$searchMembership%"))
-                    ->orWhereHas('employee', fn($q) => $q->where('employee_id', 'like', "%$searchMembership%"));
-            });
-        }
-
-        // 📅 Time filter
-        if ($request->time && $request->time !== 'all') {
-            $today = now();
-
-            switch ($request->time) {
-                case 'today':
-                    $query->whereDate('start_date', $today->toDateString());
-                    break;
-
-                case 'yesterday':
-                    $query->whereDate('start_date', $today->copy()->subDay()->toDateString());
-                    break;
-
-                case 'this_week':
-                    $query->whereBetween(
-                        DB::raw('DATE(start_date)'),
-                        [$today->copy()->startOfWeek()->toDateString(), $today->copy()->endOfWeek()->toDateString()]
-                    );
-                    break;
+            // 🔍 Search By ID
+            if ($request->filled('search_id')) {
+                $query->where('id', $request->search_id);
             }
+
+            // 🔍 Search By Client Name
+            if ($request->filled('search_name')) {
+                $searchName = trim(preg_replace('/\s+/', ' ', $request->search_name));
+                $query->where(function ($q) use ($searchName) {
+                    $q
+                        ->whereHas('member', fn($q) => $q->where('full_name', 'like', "%$searchName%"))
+                        ->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%$searchName%"))
+                        ->orWhereHas('employee', fn($q) => $q->where('name', 'like', "%$searchName%"));
+                });
+            }
+
+            // 🔍 Search By Membership No
+            if ($request->filled('search_membership')) {
+                $searchMembership = trim($request->search_membership);
+                $query->where(function ($q) use ($searchMembership) {
+                    $q
+                        ->whereHas('member', fn($q) => $q->where('membership_no', 'like', "%$searchMembership%"))
+                        ->orWhereHas('customer', fn($q) => $q->where('customer_no', 'like', "%$searchMembership%"))
+                        ->orWhereHas('employee', fn($q) => $q->where('employee_id', 'like', "%$searchMembership%"));
+                });
+            }
+
+            // 📅 Time filter
+            if ($request->time && $request->time !== 'all') {
+                $today = now();
+                switch ($request->time) {
+                    case 'today':
+                        $query->whereDate('start_date', $today->toDateString());
+                        break;
+                    case 'yesterday':
+                        $query->whereDate('start_date', $today->copy()->subDay()->toDateString());
+                        break;
+                    case 'this_week':
+                        $query->whereBetween(DB::raw('DATE(start_date)'), [$today->copy()->startOfWeek()->toDateString(), $today->copy()->endOfWeek()->toDateString()]);
+                        break;
+                }
+            }
+
+            // 📅 Date range filter
+            if ($request->filled('start_date') && $request->filled('end_date')) {
+                $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
+            }
+
+            // 🍽 Order type
+            if ($request->type && $request->type !== 'all') {
+                $query->where('order_type', $request->type);
+            }
+
+            $orders = $query->latest()->paginate(20)->withQueryString();
+
+            // Attach Invoice Data
+            $orders->getCollection()->transform(function ($order) {
+                // Optimization: In a real high-load scenario, fetch all invoices for these IDs in one go.
+                // For now, keeping logic but moving to async call to unblock page load.
+                $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
+                $order->invoice = $invoice;
+                return $order;
+            });
+
+            return response()->json($orders);
         }
 
-        // 📅 Date range filter
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
-        }
-
-        // 🍽 Order type
-        if ($request->type && $request->type !== 'all') {
-            $query->where('order_type', $request->type);
-        }
-
-        $orders = $query->latest()->paginate(20)->withQueryString();
-
+        // Return Inertia Shell (Immediate Load)
         return Inertia::render('App/Order/Management/Dashboard', [
-            'orders' => $orders,
+            'initialOrders' => null,  // Frontend will fetch
             'allrestaurants' => $allrestaurants,
-            'filters' => $request->only('search_id', 'search_name', 'search_membership', 'time', 'type', 'start_date', 'end_date')
+            'filters' => $filters  // Pass filters to populate inputs
         ]);
+    }
+
+    public function generateInvoice($id)
+    {
+        DB::beginTransaction();
+        try {
+            $order = Order::with('orderItems', 'member', 'customer', 'employee')->findOrFail($id);
+
+            // Check if invoice already exists
+            $existingInvoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
+            if ($existingInvoice) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Invoice already exists.',
+                    'invoice' => $existingInvoice,
+                    'order' => $order
+                ]);
+            }
+
+            $totalPrice = $order->total_price;
+            $items = $order->orderItems;
+
+            $invoiceData = [
+                'invoice_no' => $this->getInvoiceNo(),
+                'invoice_type' => 'food_order',
+                'amount' => $order->amount,  // Subtotal
+                'total_price' => $totalPrice,  // Grand Total
+                'payment_method' => null,
+                'issue_date' => Carbon::now(),
+                'status' => 'unpaid',
+                'data' => [
+                    'order_id' => $order->id,
+                ],
+            ];
+
+            // Determine Payer
+            if ($order->member_id) {
+                $invoiceData['member_id'] = $order->member_id;
+            } elseif ($order->customer_id) {
+                $invoiceData['customer_id'] = $order->customer_id;
+            } elseif ($order->employee_id) {
+                $invoiceData['employee_id'] = $order->employee_id;
+            }
+
+            $invoice = FinancialInvoice::create($invoiceData);
+
+            // Create Invoice Items (Aggregated)
+            // Note: We are creating a single line item for the food order.
+            // If detailed items are needed, loop through $items.
+            // For now, consistent with sendToKitchen takeaway logic:
+
+            $description = 'Food Order #' . $order->id;
+
+            FinancialInvoiceItem::create([
+                'invoice_id' => $invoice->id,
+                'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,
+                'description' => $description,
+                'qty' => 1,
+                'amount' => $order->amount,
+                'sub_total' => $order->amount,
+                'discount_type' => 'fixed',
+                'discount_value' => $order->discount ?? 0,
+                'discount_amount' => $order->discount ?? 0,
+                'tax_amount' => $order->tax ?? 0,
+                'total' => $totalPrice,
+            ]);
+
+            // Create Debit Transaction (Unpaid)
+            Transaction::create([
+                'type' => 'debit',
+                'amount' => $totalPrice,
+                'date' => now(),
+                'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - Food Order',
+                'payable_type' => $order->member ? Member::class : ($order->customer ? Customer::class : Employee::class),
+                'payable_id' => $order->member_id ?? ($order->customer_id ?? $order->employee_id),
+                'reference_type' => FinancialInvoice::class,
+                'reference_id' => $invoice->id,
+                'invoice_id' => $invoice->id,
+                'created_by' => Auth::id(),
+            ]);
+
+            // Update Order Status
+            $order->update([
+                'status' => 'completed',
+                'payment_status' => 'awaiting'
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice generated successfully.',
+                'invoice' => $invoice,
+                'order' => $order
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage(),
+            ], 500);
+        }
     }
 
     public function savedOrder()
