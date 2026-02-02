@@ -1,6 +1,6 @@
 'use client';
 
-import AsyncSearchTextField from '@/components/AsyncSearchTextField';
+import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -9,35 +9,10 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Autocomplete, Box, Button, CircularProgress, FormControl, FormControlLabel, Grid, IconButton, InputAdornment, InputBase, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const DineDialog = ({ guestTypes, floorTables }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
-    const [open, setOpen] = useState(false);
-    const [options, setOptions] = useState([]);
-    const [loading, setLoading] = useState(false);
-
-    const handleSearch = async (event, query) => {
-        if (!query) {
-            setOptions([]);
-            return;
-        }
-        setLoading(true);
-        try {
-            const response = await axios.get(route('admin.api.search-users'), {
-                params: {
-                    q: query,
-                    type: orderDetails.member_type,
-                },
-            });
-            setOptions(response.data.results || []);
-        } catch (error) {
-            console.error('Error fetching members:', error);
-            setOptions([]);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const [filterOption, setFilterOption] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
@@ -166,41 +141,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <Autocomplete
-                        id="customer-search"
-                        open={open}
-                        onOpen={() => setOpen(true)}
-                        onClose={() => setOpen(false)}
-                        isOptionEqualToValue={(option, value) => option.id === value?.id}
-                        getOptionLabel={(option) => option.label || ''}
-                        options={options}
-                        loading={loading}
-                        value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null}
-                        onInputChange={(event, newInputValue, reason) => {
-                            if (reason === 'input') {
-                                handleSearch(event, newInputValue);
-                            }
-                        }}
-                        onChange={(event, newValue) => {
-                            handleOrderDetailChange('member', newValue || {});
-                        }}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Member / Guest Name"
-                                placeholder="Search by Name, Membership No, or CNIC..."
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <>
-                                            {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </>
-                                    ),
-                                }}
-                            />
-                        )}
-                    />
+                    <UserAutocomplete memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
@@ -227,22 +168,59 @@ const DineDialog = ({ guestTypes, floorTables }) => {
             <Box sx={{ px: 2, mb: 2 }}>
                 <Autocomplete
                     fullWidth
-                    freeSolo
                     size="small"
                     options={waiters}
                     value={orderDetails.waiter}
                     getOptionLabel={(option) => option?.name || ''}
-                    // onInputChange={(event, value) => handleSearch(event, 'waiter')}
                     onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
                     loading={searchLoading}
                     renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Waiter" variant="outlined" />}
-                    filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
-                    renderOption={(props, option) => (
-                        <li {...props}>
-                            <span>{option.name}</span>
-                            <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
-                        </li>
-                    )}
+                    filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email} ${option.employee_id}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
+                    renderOption={(props, option) => {
+                        const getStatusChipStyles = (status) => {
+                            const s = (status || '').toLowerCase();
+                            if (s === 'active') return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
+                            if (s === 'suspended' || s === 'inactive') return { backgroundColor: '#fff3e0', color: '#ef6c00' };
+                            return { backgroundColor: '#ffebee', color: '#c62828' };
+                        };
+                        return (
+                            <li {...props} key={option.id}>
+                                <Box sx={{ width: '100%' }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="body2" fontWeight="bold">
+                                            {option.employee_id}
+                                        </Typography>
+                                        {option.status && (
+                                            <Box
+                                                component="span"
+                                                sx={{
+                                                    height: '20px',
+                                                    fontSize: '10px',
+                                                    px: 1,
+                                                    borderRadius: '10px',
+                                                    ...getStatusChipStyles(option.status),
+                                                    textTransform: 'capitalize',
+                                                    ml: 1,
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                }}
+                                            >
+                                                {option.status}
+                                            </Box>
+                                        )}
+                                    </Box>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {option.name}
+                                    </Typography>
+                                    {(option.department_name || option.subdepartment_name || option.company) && (
+                                        <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '10px' }}>
+                                            {[option.department_name, option.subdepartment_name, option.company].filter(Boolean).join(' • ')}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </li>
+                        );
+                    }}
                 />
             </Box>
 

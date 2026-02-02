@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem, Grid, Autocomplete, IconButton, List, ListItem, ListItemText, ListItemSecondaryAction, Typography, CircularProgress, Box } from '@mui/material';
 import { Delete as DeleteIcon, AttachFile as AttachFileIcon } from '@mui/icons-material';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import axios from 'axios';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
 
 const Edit = ({ open, onClose, attachment, onSuccess }) => {
     const [data, setData] = useState({
@@ -43,7 +50,8 @@ const Edit = ({ open, onClose, attachment, onSuccess }) => {
             setData({
                 employee_id: selectedEmployee,
                 employee_asset_id: selectedAsset,
-                attachment_date: attachment.attachment_date,
+                // Parse date if it's in DD/MM/YYYY format or YYYY-MM-DD
+                attachment_date: attachment.attachment_date ? (dayjs(attachment.attachment_date, 'DD/MM/YYYY').isValid() ? dayjs(attachment.attachment_date, 'DD/MM/YYYY').format('YYYY-MM-DD') : attachment.attachment_date) : '',
                 comments: attachment.comments || '',
                 status: attachment.status,
                 return_date: attachment.return_date || '',
@@ -133,109 +141,127 @@ const Edit = ({ open, onClose, attachment, onSuccess }) => {
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{ backgroundColor: '#063455', color: 'white' }}>Edit Assignment</DialogTitle>
-            <DialogContent sx={{ pt: 3 }}>
-                {optionsLoading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
-                        <CircularProgress />
-                    </Box>
-                ) : (
-                    <Grid container spacing={2} sx={{ mt: 1 }}>
-                        <Grid item xs={12}>
-                            <Autocomplete options={options.employees} getOptionLabel={(option) => (option ? `${option.name} (${option.employee_id})` : '')} value={data.employee_id} onChange={(e, newVal) => setData({ ...data, employee_id: newVal })} renderInput={(params) => <TextField {...params} label="Employee" error={!!errors.employee_id} helperText={errors.employee_id?.[0]} size="small" />} />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <Autocomplete options={options.assets} getOptionLabel={(option) => (option ? `${option.name} - ${option.type} (${option.classification})` : '')} value={data.employee_asset_id} onChange={(e, newVal) => setData({ ...data, employee_asset_id: newVal })} renderInput={(params) => <TextField {...params} label="Assigned Asset" error={!!errors.employee_asset_id} helperText={errors.employee_asset_id?.[0]} size="small" />} />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField fullWidth label="Attachment Date" type="date" name="attachment_date" value={data.attachment_date} onChange={handleChange} error={!!errors.attachment_date} helperText={errors.attachment_date?.[0]} size="small" InputLabelProps={{ shrink: true }} />
-                        </Grid>
-                        <Grid item xs={6}>
-                            <TextField select fullWidth label="Status" name="status" value={data.status} onChange={handleChange} error={!!errors.status} helperText={errors.status?.[0]} size="small">
-                                <MenuItem value="assigned">Assigned</MenuItem>
-                                <MenuItem value="returned">Returned</MenuItem>
-                            </TextField>
-                        </Grid>
-
-                        {data.status === 'returned' && (
-                            <Grid item xs={6}>
-                                <TextField fullWidth label="Return Date" type="date" name="return_date" value={data.return_date} onChange={handleChange} error={!!errors.return_date} helperText={errors.return_date?.[0]} size="small" InputLabelProps={{ shrink: true }} />
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ backgroundColor: '#063455', color: 'white' }}>Edit Assignment</DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
+                    {optionsLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                            <CircularProgress />
+                        </Box>
+                    ) : (
+                        <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid item xs={12}>
+                                <Autocomplete options={options.employees} getOptionLabel={(option) => (option ? `${option.name} (${option.employee_id})` : '')} value={data.employee_id} onChange={(e, newVal) => setData({ ...data, employee_id: newVal })} renderInput={(params) => <TextField {...params} label="Employee" error={!!errors.employee_id} helperText={errors.employee_id?.[0]} size="small" />} />
                             </Grid>
-                        )}
+                            <Grid item xs={12}>
+                                <Autocomplete options={options.assets} getOptionLabel={(option) => (option ? `${option.name} - ${option.type} (${option.classification})` : '')} value={data.employee_asset_id} onChange={(e, newVal) => setData({ ...data, employee_asset_id: newVal })} renderInput={(params) => <TextField {...params} label="Assigned Asset" error={!!errors.employee_asset_id} helperText={errors.employee_asset_id?.[0]} size="small" />} />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <DatePicker
+                                    label="Attachment Date"
+                                    value={data.attachment_date ? dayjs(data.attachment_date, 'YYYY-MM-DD') : null}
+                                    onChange={(newValue) => setData({ ...data, attachment_date: newValue ? newValue.format('YYYY-MM-DD') : '' })}
+                                    format="DD/MM/YYYY"
+                                    slotProps={{
+                                        textField: { fullWidth: true, size: 'small', error: !!errors.attachment_date, helperText: errors.attachment_date?.[0], InputLabelProps: { shrink: true } },
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={6}>
+                                <TextField select fullWidth label="Status" name="status" value={data.status} onChange={handleChange} error={!!errors.status} helperText={errors.status?.[0]} size="small">
+                                    <MenuItem value="assigned">Assigned</MenuItem>
+                                    <MenuItem value="returned">Returned</MenuItem>
+                                </TextField>
+                            </Grid>
 
-                        <Grid item xs={12}>
-                            <TextField fullWidth label="Comments" name="comments" value={data.comments} onChange={handleChange} multiline rows={3} error={!!errors.comments} helperText={errors.comments?.[0]} size="small" />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                Existing Documents:
-                            </Typography>
-                            {attachment?.media?.filter((file) => !deletedMediaIds.includes(file.id)).length > 0 ? (
-                                <List dense sx={{ bgcolor: 'background.paper', border: '1px solid #e0e0e0', borderRadius: 1 }}>
-                                    {attachment.media
-                                        .filter((file) => !deletedMediaIds.includes(file.id))
-                                        .map((file) => (
-                                            <ListItem key={file.id} divider>
+                            {data.status === 'returned' && (
+                                <Grid item xs={6}>
+                                    <DatePicker
+                                        label="Return Date"
+                                        value={data.return_date ? dayjs(data.return_date, 'YYYY-MM-DD') : null}
+                                        onChange={(newValue) => setData({ ...data, return_date: newValue ? newValue.format('YYYY-MM-DD') : '' })}
+                                        format="DD/MM/YYYY"
+                                        slotProps={{
+                                            textField: { fullWidth: true, size: 'small', error: !!errors.return_date, helperText: errors.return_date?.[0], InputLabelProps: { shrink: true } },
+                                        }}
+                                    />
+                                </Grid>
+                            )}
+
+                            <Grid item xs={12}>
+                                <TextField fullWidth label="Comments" name="comments" value={data.comments} onChange={handleChange} multiline rows={3} error={!!errors.comments} helperText={errors.comments?.[0]} size="small" />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                    Existing Documents:
+                                </Typography>
+                                {attachment?.media?.filter((file) => !deletedMediaIds.includes(file.id)).length > 0 ? (
+                                    <List dense sx={{ bgcolor: 'background.paper', border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                                        {attachment.media
+                                            .filter((file) => !deletedMediaIds.includes(file.id))
+                                            .map((file) => (
+                                                <ListItem key={file.id} divider>
+                                                    <AttachFileIcon sx={{ mr: 2, color: 'action.active' }} />
+                                                    <ListItemText
+                                                        primary={file.file_name}
+                                                        secondary={
+                                                            <a href={`/storage/${file.file_path}`} target="_blank" rel="noopener noreferrer">
+                                                                View File
+                                                            </a>
+                                                        }
+                                                    />
+                                                    <ListItemSecondaryAction>
+                                                        <IconButton edge="end" aria-label="delete" onClick={() => handleMarkForDeletion(file.id)}>
+                                                            <DeleteIcon color="error" />
+                                                        </IconButton>
+                                                    </ListItemSecondaryAction>
+                                                </ListItem>
+                                            ))}
+                                    </List>
+                                ) : (
+                                    <Typography variant="caption" color="textSecondary" display="block" sx={{ mb: 1 }}>
+                                        No existing documents.
+                                    </Typography>
+                                )}
+
+                                <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+                                    New Documents:
+                                </Typography>
+                                {data.documents.length > 0 && (
+                                    <List dense sx={{ bgcolor: 'background.paper', border: '1px solid #e0e0e0', borderRadius: 1, mb: 1 }}>
+                                        {data.documents.map((file, index) => (
+                                            <ListItem key={index} divider>
                                                 <AttachFileIcon sx={{ mr: 2, color: 'action.active' }} />
-                                                <ListItemText
-                                                    primary={file.file_name}
-                                                    secondary={
-                                                        <a href={`/storage/${file.file_path}`} target="_blank" rel="noopener noreferrer">
-                                                            View File
-                                                        </a>
-                                                    }
-                                                />
+                                                <ListItemText primary={file.name} secondary={`${(file.size / 1024).toFixed(2)} KB`} />
                                                 <ListItemSecondaryAction>
-                                                    <IconButton edge="end" aria-label="delete" onClick={() => handleMarkForDeletion(file.id)}>
-                                                        <DeleteIcon color="error" />
+                                                    <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveNewFile(index)}>
+                                                        <DeleteIcon />
                                                     </IconButton>
                                                 </ListItemSecondaryAction>
                                             </ListItem>
                                         ))}
-                                </List>
-                            ) : (
-                                <Typography variant="caption" color="textSecondary" display="block" sx={{ mb: 1 }}>
-                                    No existing documents.
-                                </Typography>
-                            )}
+                                    </List>
+                                )}
 
-                            <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
-                                New Documents:
-                            </Typography>
-                            {data.documents.length > 0 && (
-                                <List dense sx={{ bgcolor: 'background.paper', border: '1px solid #e0e0e0', borderRadius: 1, mb: 1 }}>
-                                    {data.documents.map((file, index) => (
-                                        <ListItem key={index} divider>
-                                            <AttachFileIcon sx={{ mr: 2, color: 'action.active' }} />
-                                            <ListItemText primary={file.name} secondary={`${(file.size / 1024).toFixed(2)} KB`} />
-                                            <ListItemSecondaryAction>
-                                                <IconButton edge="end" aria-label="delete" onClick={() => handleRemoveNewFile(index)}>
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </ListItemSecondaryAction>
-                                        </ListItem>
-                                    ))}
-                                </List>
-                            )}
-
-                            <Button variant="outlined" component="label" fullWidth startIcon={<AttachFileIcon />}>
-                                Upload Documents
-                                <input type="file" hidden multiple onChange={handleFileChange} />
-                            </Button>
+                                <Button variant="outlined" component="label" fullWidth startIcon={<AttachFileIcon />}>
+                                    Upload Documents
+                                    <input type="file" hidden multiple onChange={handleFileChange} />
+                                </Button>
+                            </Grid>
                         </Grid>
-                    </Grid>
-                )}
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose} color="inherit">
-                    Cancel
-                </Button>
-                <Button onClick={handleSubmit} variant="contained" style={{ backgroundColor: '#063455' }} disabled={loading}>
-                    {loading ? 'Update' : 'Update Assignment'}
-                </Button>
-            </DialogActions>
-        </Dialog>
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={onClose} color="inherit">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleSubmit} variant="contained" style={{ backgroundColor: '#063455' }} disabled={loading}>
+                        {loading ? 'Update' : 'Update Assignment'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </LocalizationProvider>
     );
 };
 

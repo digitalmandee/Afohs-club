@@ -165,7 +165,7 @@ class EmployeeReportController extends Controller
     {
         return Inertia::render('App/Admin/Employee/Reports/EmployeeDetailsPrint', [
             'filters' => $request->only(['department_id', 'status', 'employment_type']),
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 
@@ -218,7 +218,7 @@ class EmployeeReportController extends Controller
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo
             ],
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 
@@ -270,7 +270,7 @@ class EmployeeReportController extends Controller
         return Inertia::render('App/Admin/Employee/Reports/SalarySheetPrint', [
             'period' => $period,
             'filters' => ['period_id' => $periodId],
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 
@@ -331,7 +331,7 @@ class EmployeeReportController extends Controller
         return Inertia::render('App/Admin/Employee/Reports/DeductionsPrint', [
             'period' => $period,
             'filters' => ['period_id' => $periodId],
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 
@@ -396,7 +396,7 @@ class EmployeeReportController extends Controller
     {
         return Inertia::render('App/Admin/Employee/Reports/AdvancesPrint', [
             'filters' => $request->only(['employee_id', 'status', 'date_from', 'date_to']),
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 
@@ -461,7 +461,7 @@ class EmployeeReportController extends Controller
     {
         return Inertia::render('App/Admin/Employee/Reports/LoansPrint', [
             'filters' => $request->only(['employee_id', 'status', 'date_from', 'date_to']),
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 
@@ -517,7 +517,7 @@ class EmployeeReportController extends Controller
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo
             ],
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 
@@ -577,7 +577,7 @@ class EmployeeReportController extends Controller
         return Inertia::render('App/Admin/Employee/Reports/BankTransferPrint', [
             'period' => $period,
             'filters' => ['period_id' => $periodId],
-            'generatedAt' => now()->format('d M Y, h:i A')
+            'generatedAt' => now()->format('d/m/Y, h:i A')
         ]);
     }
 }

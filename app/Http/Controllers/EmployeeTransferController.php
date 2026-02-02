@@ -23,7 +23,14 @@ class EmployeeTransferController extends Controller
             'fromBranch', 'toBranch',
             'fromDesignation', 'toDesignation',
             'fromShift', 'toShift'
-        ])->latest()->paginate(20);
+        ])->latest()->paginate(20)->through(function ($transfer) {
+            $transferArray = $transfer->toArray();
+            try {
+                $transferArray['transfer_date'] = $transferArray['transfer_date'] ? \Carbon\Carbon::parse($transferArray['transfer_date'])->format('d/m/Y') : '-';
+            } catch (\Exception $e) {
+            }
+            return $transferArray;
+        });
 
         return Inertia::render('App/Admin/Employee/Transfers/Index', [
             'transfers' => $transfers

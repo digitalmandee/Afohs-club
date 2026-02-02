@@ -27,4 +27,9 @@ class Branch extends BaseModel
     {
         return $this->hasMany(Employee::class);
     }
+
+    public function departments()
+    {
+        return $this->hasMany(Department::class);
+    }
 }

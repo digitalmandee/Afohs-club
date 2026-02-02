@@ -357,7 +357,7 @@ class EmployeeController extends Controller
                     'employee_id' => $log->employee_id,
                     'type' => $log->type,
                     // Format as string without timezone conversion
-                    'logged_at' => $log->logged_at->format('Y-m-d H:i:s'),
+                    'logged_at' => $log->logged_at->format('d/m/Y h:i A'),
                     'created_at' => $log->created_at,
                     'updated_at' => $log->updated_at,
                 ];

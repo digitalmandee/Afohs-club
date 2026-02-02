@@ -120,9 +120,7 @@ const LeaveApplication = () => {
                 <div style={{ padding: '2rem' }}>
                     {/* Header */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
-                            Leave Applications
-                        </Typography>
+                        <Typography style={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>Leave Applications</Typography>
                         <Button
                             variant="contained"
                             startIcon={<Add />}
@@ -131,15 +129,13 @@ const LeaveApplication = () => {
                                 backgroundColor: '#063455',
                                 color: 'white',
                                 textTransform: 'none',
-                                borderRadius: '16px'
+                                borderRadius: '16px',
                             }}
                         >
                             New Application
                         </Button>
                     </div>
-                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>
-                        Approve, reject, or hold applications with proper tracking
-                    </Typography>
+                    <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Approve, reject, or hold applications with proper tracking</Typography>
                     <Box sx={{ mb: 2, mt: '2rem' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -218,23 +214,23 @@ const LeaveApplication = () => {
                                     Search
                                 </Button>
                                 {/* {searchTerm && ( */}
-                                    <Button
-                                        variant="outlined"
-                                        onClick={handleClearSearch}
-                                        sx={{
-                                            color: '#063455',
-                                            borderColor: '#063455',
-                                            textTransform: 'none',
-                                            borderRadius: '16px',
-                                            px:3,
-                                            '&:hover': {
-                                                borderColor: '#052d45',
-                                                // backgroundColor: 'rgba(6, 52, 85, 0.04)',
-                                            },
-                                        }}
-                                    >
-                                        Reset
-                                    </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleClearSearch}
+                                    sx={{
+                                        color: '#063455',
+                                        borderColor: '#063455',
+                                        textTransform: 'none',
+                                        borderRadius: '16px',
+                                        px: 3,
+                                        '&:hover': {
+                                            borderColor: '#052d45',
+                                            // backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                                        },
+                                    }}
+                                >
+                                    Reset
+                                </Button>
                                 {/* )} */}
                             </Box>
 
@@ -264,15 +260,15 @@ const LeaveApplication = () => {
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455', height: 30 }}>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>ID</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff' }}>ID</TableCell>
                                     <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Employee Name</TableCell>
                                     <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Start Date</TableCell>
                                     <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>End Date</TableCell>
                                     <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Leave Days</TableCell>
                                     <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Leave Category</TableCell>
                                     <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Created At</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Status</TableCell>
-                                    <TableCell sx={{ fontWeight: '600', color: '#fff', }}>Action</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Status</TableCell>
+                                    <TableCell sx={{ fontWeight: '600', color: '#fff' }}>Action</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -294,8 +290,9 @@ const LeaveApplication = () => {
                                                     textOverflow: 'ellipsis',
                                                     overflow: 'hidden',
                                                     maxWidth: '150px',
-                                                    whiteSpace: 'nowrap'
-                                                }}>
+                                                    whiteSpace: 'nowrap',
+                                                }}
+                                            >
                                                 <Tooltip title={application.employee?.name} arrow>
                                                     {application.employee?.name}
                                                 </Tooltip>
@@ -304,7 +301,7 @@ const LeaveApplication = () => {
                                             <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.end_date}</TableCell>
                                             <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.number_of_days}</TableCell>
                                             <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{application.leave_category?.name}</TableCell>
-                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{dayjs(application.created_at).format('YYYY-MM-DD')}</TableCell>
+                                            <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>{dayjs(application.created_at).format('DD/MM/YYYY')}</TableCell>
                                             <TableCell>
                                                 <span
                                                     style={{

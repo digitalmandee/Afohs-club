@@ -841,16 +841,21 @@ class PayrollApiController extends Controller
             $netSalary = $basicSalary + $totalAllowances - $totalDeductions;
 
             $preview[] = [
-                'employee' => $employee,
+                'employee_id' => $employee->id,
+                'employee_name' => $employee->name,
+                'employee_number' => $employee->employee_id,
+                'department' => $employee->department->name ?? 'N/A',
                 'basic_salary' => $basicSalary,
-                'total_allowances' => $totalAllowances + $ctsDeductions->sum('amount') * 0,  // CTS is deduction not allowance
+                'total_allowances' => $totalAllowances,  // CTS is not an allowance
                 'total_deductions' => $totalDeductions,
+                'total_order_deductions' => $ctsDeductions->sum('amount'),  // Explicit separate field
+                'gross_salary' => $basicSalary + $totalAllowances,  // Explicitly send gross
                 'net_salary' => $netSalary,
                 'allowances' => $employee->allowances,
                 'deductions' => $employee->deductions,
                 'loan_deductions' => $loanDeductions,
                 'advance_deductions' => $advanceDeductions,
-                'cts_deductions' => $ctsDeductions
+                'order_deductions' => $ctsDeductions->values()  // Send as details
             ];
         }
 

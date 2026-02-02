@@ -118,6 +118,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         ]);
 
         // Assets
+        Route::get('assets/list', [EmployeeAssetController::class, 'getAssets'])->name('employees.assets.list')->middleware('permission:employees.assets.view');
         Route::resource('assets', EmployeeAssetController::class)->middleware([
             'index' => 'permission:employees.assets.view',
             'create' => 'permission:employees.assets.create',
@@ -651,10 +652,6 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::get('/employee/monthly/attendance/report', function () {
         return Inertia::render('App/Admin/Employee/MonthlyReport');
     })->name('employee.monthlyreport');
-
-    Route::get('/employee/payroll/dashboard', function () {
-        return Inertia::render('App/Admin/Employee/Payroll/Dashboard');
-    })->name('employee.payroll');
 
     Route::get('/employee/payroll/monthly/summary', function () {
         return Inertia::render('App/Admin/Employee/Payroll/Summary');

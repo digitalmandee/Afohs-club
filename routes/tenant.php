@@ -148,6 +148,8 @@ Route::group([
         Route::post('/inventory/products/create', [InventoryController::class, 'store'])->name('inventory.store');
         // Get Single Product
         Route::get('/inventory/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
+        // API route for product filtering
+        Route::get('/api/inventory/products/filter', [InventoryController::class, 'filter'])->name('api.products.filter');
 
         Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
         Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');

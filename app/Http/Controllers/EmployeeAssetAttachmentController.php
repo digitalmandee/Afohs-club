@@ -39,7 +39,14 @@ class EmployeeAssetAttachmentController extends Controller
             });
         }
 
-        $attachments = $query->orderBy('created_at', 'desc')->paginate($limit);
+        $attachments = $query->orderBy('created_at', 'desc')->paginate($limit)->through(function ($att) {
+            $attArray = $att->toArray();
+            try {
+                $attArray['attachment_date'] = $att->attachment_date ? \Carbon\Carbon::parse($att->attachment_date)->format('d/m/Y') : '-';
+            } catch (\Exception $e) {
+            }
+            return $attArray;
+        });
 
         return response()->json([
             'success' => true,

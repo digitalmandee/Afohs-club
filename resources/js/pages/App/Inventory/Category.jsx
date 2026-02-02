@@ -256,7 +256,7 @@ export default function Category({ categoriesList }) {
                                         <CardContent sx={{ p: 2 }}>
                                             {/* <Grid container alignItems="center" justifyContent="space-between" sx={{bgcolor:'pink'}}> */}
                                             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
-                                                <div style={{display:'flex'}}>
+                                                <div style={{ display: 'flex' }}>
                                                     <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                         <img
                                                             src={category.image ? tenantAsset(category.image) : '/assets/dish.png'}
@@ -275,10 +275,20 @@ export default function Category({ categoriesList }) {
                                                     </Box>
                                                 </div>
                                                 <div style={{ display: 'flex' }}>
-                                                    <IconButton onClick={() => handleEdit(category)}>
+                                                    <IconButton
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEdit(category);
+                                                        }}
+                                                    >
                                                         <EditIcon />
                                                     </IconButton>
-                                                    <IconButton onClick={() => handleDeleteClick(category)}>
+                                                    <IconButton
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteClick(category);
+                                                        }}
+                                                    >
                                                         <DeleteIcon color="error" />
                                                     </IconButton>
                                                 </div>

@@ -11,13 +11,24 @@ class EmployeeDepartmentController extends Controller
 {
     public function index(Request $request)
     {
-        $departments = Department::select('id', 'name', 'status')
+        $departments = Department::select('id', 'name', 'status', 'branch_id')
+            ->with(['branch:id,name'])
             ->withCount('employees')
+            ->when($request->branch_id, function ($query, $branchId) {
+                return $query->where('branch_id', $branchId);
+            })
+            ->when($request->search, function ($query, $search) {
+                return $query->where('name', 'like', "%{$search}%");
+            })
             ->paginate(10)
             ->withQueryString();
 
+        $branches = \App\Models\Branch::where('status', true)->select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('App/Admin/Employee/Department/Index', [
             'departments' => $departments,
+            'branches' => $branches,
+            'filters' => $request->only(['branch_id', 'search']),
         ]);
     }
 
@@ -26,13 +37,18 @@ class EmployeeDepartmentController extends Controller
         try {
             $type = $request->query('type', 'list');
             $query = $request->query('query');
-            $status = $request->query('status', 'active');  // Default to active
+            $status = $request->query('status', 'active');
+            $branchId = $request->query('branch_id');  // Add branch filter
 
             if ($type == 'search') {
-                $deptQuery = Department::select('id', 'name', 'status');
+                $deptQuery = Department::select('id', 'name', 'status', 'branch_id');
 
                 if ($status !== 'all') {
                     $deptQuery->where('status', $status);
+                }
+
+                if ($branchId) {
+                    $deptQuery->where('branch_id', $branchId);
                 }
 
                 if (empty($query)) {
@@ -45,10 +61,14 @@ class EmployeeDepartmentController extends Controller
             } else {
                 $limit = $request->query('limit') ?? 10;
 
-                $deptQuery = Department::select('id', 'name', 'status');
+                $deptQuery = Department::select('id', 'name', 'status', 'branch_id');
 
                 if ($status !== 'all') {
                     $deptQuery->where('status', $status);
+                }
+
+                if ($branchId) {
+                    $deptQuery->where('branch_id', $branchId);
                 }
 
                 $departments = $deptQuery->withCount('employees')->paginate($limit);
@@ -69,13 +89,16 @@ class EmployeeDepartmentController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
+            'branch_id' => 'required|exists:branches,id',
             'status' => 'nullable|in:active,inactive',
         ]);
 
         try {
             $department = Department::create([
                 'name' => $request->name,
+                'branch_id' => $request->branch_id,
                 'status' => $request->status ?? 'active',
+                'created_by' => auth()->id(),
             ]);
 
             return response()->json(['success' => true, 'message' => 'Department created successfully', 'department' => $department], 200);
@@ -95,6 +118,7 @@ class EmployeeDepartmentController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
+            'branch_id' => 'required|exists:branches,id',
             'status' => 'nullable|in:active,inactive',
         ]);
 
@@ -102,7 +126,9 @@ class EmployeeDepartmentController extends Controller
             $department = Department::find($id);
             $department->update([
                 'name' => $request->name,
+                'branch_id' => $request->branch_id,
                 'status' => $request->status ?? $department->status,
+                'updated_by' => auth()->id(),
             ]);
 
             return response()->json(['success' => true, 'message' => 'Department updated successfully', 'department' => $department], 200);

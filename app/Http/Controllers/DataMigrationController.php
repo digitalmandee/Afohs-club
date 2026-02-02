@@ -342,7 +342,8 @@ class DataMigrationController extends Controller
             DB::beginTransaction();
 
             // Get batch of old family members
-            $oldFamilies = DB::table('mem_families')
+            $oldFamilies = DB::connection('old_afohs')
+                ->table('mem_families')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -406,10 +407,6 @@ class DataMigrationController extends Controller
         $existingFamily = Member::where('old_family_id', $oldFamily->id)
             ->first();
 
-        if ($existingFamily) {
-            return;  // Skip if already migrated
-        }
-
         // Generate unique membership number for family member
         $familyMembershipNo = $oldFamily->sup_card_no;
 
@@ -417,9 +414,11 @@ class DataMigrationController extends Controller
         $familyData = [
             'old_family_id' => $oldFamily->id,
             'parent_id' => $parentMember->id,
-            'full_name' => trim(preg_replace('/\s+/', ' ', $oldFamily->title . ' ' . $oldFamily->first_name . ' ' . $oldFamily->middle_name)),
+            'full_name' => trim(preg_replace('/\s+/', ' ', ($oldFamily->title ?? '') . ' ' . ($oldFamily->first_name ?? '') . ' ' . ($oldFamily->middle_name ?? '') . ' ' . ($oldFamily->name ?? ''))),
             'first_name' => $oldFamily->first_name,
             'middle_name' => $oldFamily->middle_name,
+            // Map applicant_name to last_name as requested
+            'last_name' => $oldFamily->name,
             'date_of_birth' => $this->validateDate($oldFamily->date_of_birth),
             'relation' => $this->mapFamilyRelation($oldFamily->fam_relationship),
             'nationality' => $oldFamily->nationality,
@@ -429,10 +428,13 @@ class DataMigrationController extends Controller
             'gender' => $oldFamily->gender ?? null,
             'membership_no' => $familyMembershipNo,
             'card_status' => $this->mapCardStatus($oldFamily->card_status),
+            'status' => $this->mapMemberStatus($oldFamily->status),
             'card_issue_date' => $this->validateDate($oldFamily->sup_card_issue),
             'card_expiry_date' => $this->validateDate($oldFamily->sup_card_exp),
             'barcode_no' => $oldFamily->sup_barcode,
-            'status' => $this->mapMemberStatus($oldFamily->status),
+        ];
+
+        $timestamps = [
             'created_at' => $this->validateDate($oldFamily->created_at),
             'updated_at' => $this->validateDate($oldFamily->updated_at),
             'deleted_at' => $this->validateDate($oldFamily->deleted_at),
@@ -441,8 +443,19 @@ class DataMigrationController extends Controller
             'deleted_by' => $oldFamily->deleted_by,
         ];
 
-        // Create family member
-        Member::create($familyData);
+        // Create or Update
+        if ($existingFamily) {
+            $existingFamily->fill($familyData);
+            $existingFamily->forceFill($timestamps);
+            $existingFamily->timestamps = false;  // Prevent auto-update of updated_at
+            $existingFamily->save();
+            Log::info("Updated existing family member {$existingFamily->id} (Old ID: {$oldFamily->id})");
+        } else {
+            $family = new Member($familyData);
+            $family->forceFill($timestamps);
+            $family->timestamps = false;  // Prevent auto-set of created_at/updated_at
+            $family->save();
+        }
     }
 
     private function getMemberCategoryId($oldCategoryId)
@@ -2333,6 +2346,9 @@ class DataMigrationController extends Controller
 
                         $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
                         $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
+                    } else {
+                        // skip
+                        continue;
                     }
                 }
             }

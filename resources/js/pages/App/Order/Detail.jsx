@@ -14,7 +14,10 @@ import { objectToFormData } from '@/helpers/objectToFormData';
 const OrderDetail = ({ handleEditItem }) => {
     const { orderDetails, handleOrderDetailChange, clearOrderItems } = useOrderStore();
 
+    const [editingDiscountIndex, setEditingDiscountIndex] = useState(null);
+    const [itemDiscountForm, setItemDiscountForm] = useState({ value: '', type: 'percentage' });
     const [openDiscountModal, setOpenDiscountModal] = useState(false);
+
     const [editingQtyIndex, setEditingQtyIndex] = useState(null);
     const [tempQty, setTempQty] = useState(null);
     const [setting, setSetting] = useState(null);
@@ -31,7 +34,6 @@ const OrderDetail = ({ handleEditItem }) => {
     });
 
     const [isPopupOpen, setIsPopupOpen] = useState(false);
-
     const [openPaymentModal, setOpenPaymentModal] = useState(false);
 
     const handleOpenPopup = () => setIsPopupOpen(true);
@@ -50,10 +52,7 @@ const OrderDetail = ({ handleEditItem }) => {
     };
 
     const handleInputChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
+        // No global discount form data needed anymore
     };
 
     const handleOpen = () => setOpen(true);
@@ -81,32 +80,24 @@ const OrderDetail = ({ handleEditItem }) => {
             });
     }, []);
 
-    const [formData, setFormData] = useState({
-        discountValue: '',
-        discountType: 'percentage',
-    });
-
-    const [tempFormData, setTempFormData] = useState({
-        discountValue: '',
-        discountType: 'percentage',
-    });
-
-    const openDiscountDialog = () => {
-        setTempFormData(formData);
+    const handleOpenItemDiscount = (index, item) => {
+        setEditingDiscountIndex(index);
+        setItemDiscountForm({
+            value: item.discount_value || '',
+            type: item.discount_type || 'percentage',
+        });
         setOpenDiscountModal(true);
     };
 
     const handleAutocompleteChange = (event, value, field) => {
         handleOrderDetailChange(field, value);
-        // setErrors({ ...errors, [field]: '' }); // Clear error on change
     };
 
-    const rawSubtotal = orderDetails.order_items.reduce((total, item) => total + item.total_price, 0);
+    // Calculate totals based on item discounts
+    const subtotal = Math.round(orderDetails.order_items.reduce((total, item) => total + item.total_price, 0));
 
-    const subtotal = Math.round(rawSubtotal);
-
-    // Calculate discount first
-    const discountAmount = formData.discountType === 'percentage' ? Math.round(subtotal * (Number(formData.discountValue || 0) / 100)) : Math.round(Number(formData.discountValue || 0));
+    // Sum of all item discounts
+    const discountAmount = orderDetails.order_items.reduce((total, item) => total + (item.discount_amount || 0), 0);
 
     // Subtotal after discount
     const discountedSubtotal = subtotal - discountAmount;
@@ -126,8 +117,8 @@ const OrderDetail = ({ handleEditItem }) => {
             ...extra, // include waiter + time if passed
             price: subtotal,
             tax: taxRate,
-            discount_type: formData.discountType,
-            discount_value: formData.discountValue,
+            discount_type: 'amount', // global discount is now just the sum amount
+            discount_value: discountAmount,
             discount: discountAmount,
             total_price: total,
             kitchen_note: notes.kitchen_note,
@@ -141,22 +132,17 @@ const OrderDetail = ({ handleEditItem }) => {
             .post(route('order.send-to-kitchen'), payload)
             .then((res) => {
                 console.log('Server response:', res.data);
-                // ✅ Use res.data, not response.data
                 enqueueSnackbar(res.data?.message || 'Your order has been successfully sent to the kitchen!', { variant: 'success' });
-
-                router.visit(route('order.management'));
+                router.visit(route('order.new'));
             })
             .catch((error) => {
                 console.log(error);
-
                 if (error.response) {
                     if (error.response.status === 422) {
-                        // Validation errors
                         const errors = error.response.data.errors;
                         const errorMessage = Object.values(errors).flat().join(', ');
                         enqueueSnackbar(`Validation failed: ${errorMessage}`, { variant: 'error' });
                     } else {
-                        // Other server-side error
                         enqueueSnackbar(error.response.data?.message || 'Something went wrong on server.', { variant: 'error' });
                     }
                 } else {
@@ -205,11 +191,38 @@ const OrderDetail = ({ handleEditItem }) => {
         setNotes({ kitchen_note: '', staff_note: '', payment_note: '' });
     };
 
-    const handleApplyDiscount = () => {
-        const val = Number(tempFormData.discountValue || 0);
-        const calcDiscount = tempFormData.discountType === 'percentage' ? (subtotal * val) / 100 : val;
-        setFormData(tempFormData);
+    const handleApplyItemDiscount = () => {
+        if (editingDiscountIndex === null) return;
+
+        const updatedItems = [...orderDetails.order_items];
+        const item = updatedItems[editingDiscountIndex];
+
+        const val = Number(itemDiscountForm.value || 0);
+        const type = itemDiscountForm.type;
+
+        // Update item with new discount settings
+        item.discount_value = val;
+        item.discount_type = type;
+
+        // Recalculate discount amount
+        const grossTotal = item.quantity * item.price;
+        let discountAmount = 0;
+
+        if (type === 'percentage') {
+            discountAmount = Math.round(grossTotal * (val / 100));
+        } else {
+            // Fixed amount is per unit, so multiply by qty
+            discountAmount = Math.round(val * item.quantity);
+        }
+
+        // Cap discount at gross total
+        if (discountAmount > grossTotal) discountAmount = grossTotal;
+
+        item.discount_amount = discountAmount;
+
+        handleOrderDetailChange('order_items', updatedItems);
         setOpenDiscountModal(false);
+        setEditingDiscountIndex(null);
     };
 
     useEffect(() => {
@@ -218,15 +231,15 @@ const OrderDetail = ({ handleEditItem }) => {
         const handleKeyDown = (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                handleApplyDiscount();
+                handleApplyItemDiscount();
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [openDiscountModal, tempFormData, subtotal]);
+    }, [openDiscountModal, itemDiscountForm, editingDiscountIndex]);
 
-    // keyboard shortcuts
+    // Keyboard shortcuts - updated
     useEffect(() => {
         const handleKeyDown = (e) => {
             const tag = document.activeElement.tagName.toLowerCase();
@@ -236,10 +249,6 @@ const OrderDetail = ({ handleEditItem }) => {
 
             if (e.ctrlKey && !e.shiftKey) {
                 switch (key) {
-                    case 'd':
-                        e.preventDefault();
-                        openDiscountDialog();
-                        break;
                     case 'e':
                         e.preventDefault();
                         handleTaxEditClick();
@@ -267,7 +276,7 @@ const OrderDetail = ({ handleEditItem }) => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [openDiscountDialog, handleTaxEditClick, handleSendToKitchen, handleClearOrderItems, handleOpen, orderDetails]);
+    }, [handleTaxEditClick, handleSendToKitchen, handleClearOrderItems, handleOpen, orderDetails]);
 
     useEffect(() => {
         axios.get(route('waiters.all')).then((res) => setWaiters(res.data.waiters));
@@ -428,6 +437,19 @@ const OrderDetail = ({ handleEditItem }) => {
                                         updatedItems[index].quantity = newQty;
                                         updatedItems[index].total_price = newQty * updatedItems[index].price;
 
+                                        // Recalculate discount if exists
+                                        if (updatedItems[index].discount_value > 0) {
+                                            const gross = updatedItems[index].total_price;
+                                            let disc = 0;
+                                            if (updatedItems[index].discount_type === 'percentage') {
+                                                disc = Math.round(gross * (updatedItems[index].discount_value / 100));
+                                            } else {
+                                                disc = Math.round(updatedItems[index].discount_value * newQty);
+                                            }
+                                            if (disc > gross) disc = gross;
+                                            updatedItems[index].discount_amount = disc;
+                                        }
+
                                         handleOrderDetailChange('order_items', updatedItems);
                                     }
                                     setEditingQtyIndex(null);
@@ -449,9 +471,29 @@ const OrderDetail = ({ handleEditItem }) => {
                                                 <Typography variant="body2" fontWeight="medium">
                                                     {item.name}
                                                 </Typography>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {item.category}
-                                                </Typography>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {item.category}
+                                                    </Typography>
+                                                    {item.is_discountable && (
+                                                        <Chip
+                                                            label={item.discount_value > 0 ? `-${item.discount_type === 'percentage' ? item.discount_value + '%' : 'Rs ' + item.discount_value}` : 'Add Disc.'}
+                                                            size="small"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenItemDiscount(index, item);
+                                                            }}
+                                                            sx={{
+                                                                height: '18px',
+                                                                fontSize: '0.65rem',
+                                                                bgcolor: item.discount_value > 0 ? '#ffebee' : '#f5f5f5',
+                                                                color: item.discount_value > 0 ? '#c62828' : '#757575',
+                                                                cursor: 'pointer',
+                                                                '&:hover': { bgcolor: '#e0e0e0' },
+                                                            }}
+                                                        />
+                                                    )}
+                                                </Box>
                                             </Box>
                                             <Box sx={{ textAlign: 'right' }}>
                                                 <Typography variant="caption" color="text.secondary" onClick={handleQtyClick}>
@@ -484,8 +526,13 @@ const OrderDetail = ({ handleEditItem }) => {
                                                     x Rs {item.price}
                                                 </Typography>
                                                 <Typography variant="body2" fontWeight="medium">
-                                                    Rs. {item.total_price.toFixed(2)}
+                                                    Rs. {(item.total_price - (item.discount_amount || 0)).toFixed(2)}
                                                 </Typography>
+                                                {item.discount_amount > 0 && (
+                                                    <Typography variant="caption" sx={{ color: '#ef5350', display: 'block' }}>
+                                                        (Saved Rs {item.discount_amount})
+                                                    </Typography>
+                                                )}
                                             </Box>
                                         </Box>
                                         {item.variants.length > 0 &&
@@ -527,11 +574,9 @@ const OrderDetail = ({ handleEditItem }) => {
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <Typography variant="body2" color="#4caf50">
-                                    {formData.discountType === 'percentage' ? `${formData.discountValue || 0}%` : `Rs ${formData.discountValue || 0}`}
+                                    Rs {discountAmount}
                                 </Typography>
-                                <IconButton size="small" onClick={openDiscountDialog}>
-                                    <EditIcon fontSize="small" />
-                                </IconButton>
+                                {/* Removed Edit button for global discount */}
                             </Box>
                         </Box>
 
@@ -594,26 +639,26 @@ const OrderDetail = ({ handleEditItem }) => {
                 >
                     <Box sx={{ padding: 3 }}>
                         <Typography variant="h5" sx={{ fontWeight: 500, color: '#063455', fontSize: '30px', mb: 3 }}>
-                            Apply Discount
+                            Apply Item Discount
                         </Typography>
 
                         <Box mb={2}>
                             <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
                                 Discount Rate
                             </Typography>
-                            <TextField fullWidth name="discountValue" type="number" value={tempFormData.discountValue} onChange={(e) => setTempFormData((prev) => ({ ...prev, discountValue: e.target.value }))} placeholder={tempFormData.discountType === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs'} size="small" />
+                            <TextField fullWidth name="value" type="number" value={itemDiscountForm.value} onChange={(e) => setItemDiscountForm((prev) => ({ ...prev, value: e.target.value }))} placeholder={itemDiscountForm.type === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs (per unit)'} size="small" />
                         </Box>
 
                         <Box mb={3}>
                             <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
                                 Discount Method
                             </Typography>
-                            <TextField select fullWidth name="discountType" value={tempFormData.discountType} onChange={(e) => setTempFormData((prev) => ({ ...prev, discountType: e.target.value }))} size="small">
+                            <TextField select fullWidth name="type" value={itemDiscountForm.type} onChange={(e) => setItemDiscountForm((prev) => ({ ...prev, type: e.target.value }))} size="small">
                                 <MenuItem key="percentage" value="percentage">
                                     Percentage (%)
                                 </MenuItem>
                                 <MenuItem key="amount" value="amount">
-                                    Fixed Amount (Rs)
+                                    Fixed Amount (Rs per unit)
                                 </MenuItem>
                             </TextField>
                         </Box>
@@ -636,7 +681,7 @@ const OrderDetail = ({ handleEditItem }) => {
 
                             <Button
                                 variant="contained"
-                                onClick={handleApplyDiscount}
+                                onClick={handleApplyItemDiscount}
                                 sx={{
                                     backgroundColor: '#063455',
                                     color: '#FFFFFF',
@@ -789,7 +834,7 @@ const OrderDetail = ({ handleEditItem }) => {
             </Dialog>
 
             {/* Payment Modal */}
-            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: formData.discountType, discount_value: formData.discountValue, discount: discountAmount, price: subtotal, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
+            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: 'amount', discount_value: discountAmount, discount: discountAmount, price: subtotal, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
         </>
     );
 };

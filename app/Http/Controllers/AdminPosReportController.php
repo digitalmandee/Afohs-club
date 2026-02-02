@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Models\Employee;
 use App\Models\FinancialInvoice;
 use App\Models\Order;

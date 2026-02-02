@@ -34,7 +34,14 @@ class EmployeeAssetController extends Controller
             });
         }
 
-        $assets = $query->orderBy('created_at', 'desc')->paginate($limit);
+        $assets = $query->orderBy('created_at', 'desc')->paginate($limit)->through(function ($asset) {
+            $assetArray = $asset->toArray();
+            try {
+                $assetArray['acquisition_date'] = $assetArray['acquisition_date'] ? \Carbon\Carbon::parse($assetArray['acquisition_date'])->format('d/m/Y') : '-';
+            } catch (\Exception $e) {
+            }
+            return $assetArray;
+        });
 
         return response()->json([
             'success' => true,

@@ -277,7 +277,7 @@ const ManageAttendance = () => {
                                             actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
                                         }}
                                         sx={{
-                                            width:'250px',
+                                            width: '250px',
                                             '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
                                                 borderRadius: '16px !important',
                                             },
@@ -306,9 +306,7 @@ const ManageAttendance = () => {
                                     }}
                                     sx={{ width: 250, borderRadius: '16px' }}
                                 >
-                                    <MenuItem value="">
-                                        None
-                                    </MenuItem>
+                                    <MenuItem value="">None</MenuItem>
                                     {branches.map((b) => (
                                         <MenuItem key={b.id} value={b}>
                                             {b.name}
@@ -327,9 +325,7 @@ const ManageAttendance = () => {
                                     }}
                                     sx={{ width: 250, borderRadius: '16px' }}
                                 >
-                                    <MenuItem value="">
-                                        None
-                                    </MenuItem>
+                                    <MenuItem value="">None</MenuItem>
                                     {designations.map((d) => (
                                         <MenuItem key={d.id} value={d}>
                                             {d.name}
@@ -348,9 +344,7 @@ const ManageAttendance = () => {
                                     }}
                                     sx={{ width: 250, borderRadius: '16px' }}
                                 >
-                                    <MenuItem value="">
-                                        None
-                                    </MenuItem>
+                                    <MenuItem value="">None</MenuItem>
                                     {departments.map((d) => (
                                         <MenuItem key={d.id} value={d}>
                                             {d.name}
@@ -368,11 +362,9 @@ const ManageAttendance = () => {
                                         return selected.name;
                                     }}
                                     disabled={!filters.department_id}
-                                    sx={{ width: 250, borderRadius: '16px', }}
+                                    sx={{ width: 250, borderRadius: '16px' }}
                                 >
-                                    <MenuItem value="">
-                                        None
-                                    </MenuItem>
+                                    <MenuItem value="">None</MenuItem>
                                     {subdepartments.map((d) => (
                                         <MenuItem key={d.id} value={d}>
                                             {d.name}
@@ -434,7 +426,7 @@ const ManageAttendance = () => {
                                 <Table>
                                     <TableHead style={{ backgroundColor: '#063455' }}>
                                         <TableRow>
-                                            <TableCell sx={{ fontWeight: '600', color: '#fff', }}>ID</TableCell>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>ID</TableCell>
                                             <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Employee Name</TableCell>
                                             <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Designation</TableCell>
                                             <TableCell sx={{ fontWeight: '600', color: '#fff', whiteSpace: 'nowrap' }}>Attendance</TableCell>
@@ -455,13 +447,17 @@ const ManageAttendance = () => {
                                             attendances.map((row, index) => (
                                                 <TableRow key={row.id}>
                                                     <TableCell sx={{ fontWeight: '600', color: '#000', fontSize: '14px' }}>{(currentPage - 1) * limit + index + 1}</TableCell>
-                                                    <TableCell sx={{
-                                                        fontWeight: '400', color: '#7f7f7f', fontSize: '14px',
-                                                        textOverflow: 'ellipsis',
-                                                        overflow: 'hidden',
-                                                        maxWidth: '120px',
-                                                        whiteSpace: 'nowrap'
-                                                    }}>
+                                                    <TableCell
+                                                        sx={{
+                                                            fontWeight: '400',
+                                                            color: '#7f7f7f',
+                                                            fontSize: '14px',
+                                                            textOverflow: 'ellipsis',
+                                                            overflow: 'hidden',
+                                                            maxWidth: '120px',
+                                                            whiteSpace: 'nowrap',
+                                                        }}
+                                                    >
                                                         <Tooltip title={row.employee.name} arrow>
                                                             {row.employee.name}
                                                         </Tooltip>
@@ -499,10 +495,10 @@ const ManageAttendance = () => {
                                                     </TableCell>
 
                                                     <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>
-                                                        <TextField size="small" type="time" value={row.check_in || ''} onChange={(e) => handleInputChange(row.id, 'check_in', e.target.value)} style={{ width: '100px' }} />
+                                                        <TextField size="small" type="time" value={row.check_in || ''} onChange={(e) => handleInputChange(row.id, 'check_in', e.target.value)} style={{ width: '140px' }} />
                                                     </TableCell>
                                                     <TableCell sx={{ fontWeight: '400', color: '#7f7f7f', fontSize: '14px' }}>
-                                                        <TextField size="small" type="time" value={row.check_out || ''} onChange={(e) => handleInputChange(row.id, 'check_out', e.target.value)} style={{ width: '100px' }} />
+                                                        <TextField size="small" type="time" value={row.check_out || ''} onChange={(e) => handleInputChange(row.id, 'check_out', e.target.value)} style={{ width: '140px' }} />
                                                     </TableCell>
                                                     <TableCell>
                                                         <Button

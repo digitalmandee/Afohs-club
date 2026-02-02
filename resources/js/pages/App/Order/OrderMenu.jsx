@@ -128,6 +128,10 @@ const OrderMenu = () => {
                     tenant_id: product.tenant_id,
                     category: product.category?.name || '',
                     variants: [],
+                    is_discountable: product.is_discountable !== false,
+                    discount_value: 0,
+                    discount_type: 'percentage',
+                    discount_amount: 0,
                 };
 
                 handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);

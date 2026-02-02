@@ -131,9 +131,24 @@ class UserController extends Controller
     // get waiters
     public function waiters()
     {
-        $waiters = Employee::whereHas('subdepartment', function ($q) {
-            $q->where('name', 'Waiter');
-        })->select('id', 'employee_id', 'name', 'email')->get();
+        $waiters = Employee::with(['department', 'subdepartment'])
+            ->whereHas('subdepartment', function ($q) {
+                $q->where('name', 'Waiter');
+            })
+            ->select('id', 'employee_id', 'name', 'email', 'status', 'department_id', 'subdepartment_id', 'company')
+            ->get()
+            ->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'employee_id' => $employee->employee_id,
+                    'name' => $employee->name,
+                    'email' => $employee->email,
+                    'status' => $employee->status ?? 'active',
+                    'department_name' => $employee->department->name ?? null,
+                    'subdepartment_name' => $employee->subdepartment->name ?? null,
+                    'company' => $employee->company,
+                ];
+            });
 
         return response()->json([
             'success' => true,
@@ -162,14 +177,15 @@ class UserController extends Controller
         // Case 1: bookingType = 0 => Search in Users table (members)
         // Case 4: bookingType = 'employee' => Search in Employees table
         if ($bookingType === 'employee' || $bookingType == '3') {
-            $employees = Employee::select('id', 'name', 'employee_id', 'email', 'designation', 'phone_no')
+            $employees = Employee::with(['department', 'subdepartment'])
+                ->select('id', 'name', 'employee_id', 'email', 'designation', 'phone_no', 'department_id', 'subdepartment_id', 'company', 'status')
                 ->where(function ($q) use ($query) {
                     $q
                         ->where('name', 'like', "%{$query}%")
                         ->orWhere('employee_id', 'like', "%{$query}%")
                         ->orWhere('email', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(40)
                 ->get();
 
             $results = $employees->map(function ($employee) {
@@ -182,6 +198,10 @@ class UserController extends Controller
                     'email' => $employee->email,
                     'phone' => $employee->phone_no,
                     'designation' => $employee->designation,
+                    'status' => $employee->status ?? 'active',
+                    'department_name' => $employee->department->name ?? null,
+                    'subdepartment_name' => $employee->subdepartment->name ?? null,
+                    'company' => $employee->company,
                 ];
             });
         } elseif ($bookingType === '0') {
@@ -205,7 +225,7 @@ class UserController extends Controller
                         ->orWhere('members.membership_no', 'like', "%{$query}%");
                 });
 
-            $members = $members->limit(10)->get();
+            $members = $members->limit(40)->get();
 
             $results = $members->map(function ($user) {
                 return [
@@ -243,7 +263,7 @@ class UserController extends Controller
                         ->orWhere('corporate_members.membership_no', 'like', "%{$query}%");
                 });
 
-            $members = $members->limit(10)->get();
+            $members = $members->limit(40)->get();
 
             $results = $members->map(function ($user) {
                 return [
@@ -283,7 +303,7 @@ class UserController extends Controller
                         ->orWhere('customer_no', 'like', "%{$query}%")
                         ->orWhere('cnic', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(40)
                 ->get();
 
             $results = $customers->map(function ($customer) {
@@ -324,7 +344,7 @@ class UserController extends Controller
                         ->orWhere('customer_no', 'like', "%{$query}%")
                         ->orWhere('cnic', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(40)
                 ->get();
 
             $results = $customers->map(function ($customer) {

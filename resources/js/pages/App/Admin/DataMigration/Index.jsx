@@ -393,7 +393,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                 departments: '/admin/data-migration/migrate-departments',
             };
             const endpoint = endpointMap[type];
-            const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : type === 'invoices' || type === 'financials' ? 80 : 100;
+            const batchSize = type === 'qr_codes' || type === 'corporate_qr_codes' ? 20 : type === 'invoices' || type === 'financials' ? 80 : 150;
             const response = await axios.post(endpoint, {
                 batch_size: batchSize,
                 offset: offset,

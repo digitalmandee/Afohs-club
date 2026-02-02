@@ -16,7 +16,7 @@ const AddProduct = ({ product, id }) => {
     const [open, setOpen] = useState(true);
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
-            ? { ...product, description: product.description || '', discountValue: product.discount || '', discountType: product.discount_type || 'percentage' }
+            ? { ...product, description: product.description || '', is_discountable: product.is_discountable !== false }
             : {
                   name: '',
                   menu_code: '',
@@ -28,8 +28,7 @@ const AddProduct = ({ product, id }) => {
                   cost_of_goods_sold: '',
                   base_price: '',
                   profit: '0.00',
-                  discountValue: '',
-                  discountType: 'percentage',
+                  is_discountable: true,
                   variants: [
                       {
                           name: 'Size',
@@ -57,14 +56,7 @@ const AddProduct = ({ product, id }) => {
     // Ingredients state
     const [ingredients, setIngredients] = useState([]);
     const [selectedIngredients, setSelectedIngredients] = useState([]);
-    const [formData, setFormData] = useState({
-        discountValue: data.discountValue || '',
-        discountType: data.discountType || 'percentage',
-    });
-    const [tempFormData, setTempFormData] = useState({
-        discountValue: data.discountValue || '',
-        discountType: data.discountType || 'percentage',
-    });
+    // Removed old discount formData/tempFormData - now using is_discountable toggle in main data
     const fileInputRef = useRef(null);
     const [fieldErrors, setFieldErrors] = useState({}); // State to store field-specific errors
 
@@ -505,37 +497,36 @@ const AddProduct = ({ product, id }) => {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                            Menu Id (Optional)
+                                            Item Code{' '}
+                                            <Typography component="span" color="text.secondary" fontSize="12px">
+                                                (Auto-generated, editable)
+                                            </Typography>
                                         </Typography>
-                                        <TextField fullWidth placeholder="e.g. A001" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" />
+                                        <TextField fullWidth placeholder="e.g. ITEM-001" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" helperText={!id ? 'Will be auto-generated if left empty' : ''} />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Categories
                                         </Typography>
-                                        <TextField
-                                            select
+                                        <Autocomplete
                                             fullWidth
-                                            placeholder="Choose category"
-                                            name="category_id"
-                                            value={data.category_id}
-                                            onChange={handleInputChange}
-                                            variant="outlined"
                                             size="small"
-                                            SelectProps={{
-                                                displayEmpty: true,
+                                            options={categories || []}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            value={categories?.find((cat) => cat.id === data.category_id) || null}
+                                            onChange={(event, newValue) => {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    category_id: newValue ? newValue.id : '',
+                                                }));
+                                                setFieldErrors((prev) => ({ ...prev, category_id: '' }));
                                             }}
-                                            error={!!fieldErrors.category_id}
-                                            helperText={fieldErrors.category_id}
-                                        >
-                                            <MenuItem value="">Choose category</MenuItem>
-                                            {categories?.length > 0 &&
-                                                categories.map(({ id, name }) => (
-                                                    <MenuItem key={id} value={id}>
-                                                        {name}
-                                                    </MenuItem>
-                                                ))}
-                                        </TextField>
+                                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                            renderInput={(params) => <TextField {...params} placeholder="Search or select category" variant="outlined" error={!!fieldErrors.category_id} helperText={fieldErrors.category_id} />}
+                                            ListboxProps={{
+                                                style: { maxHeight: 200 },
+                                            }}
+                                        />
                                     </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
@@ -597,46 +588,39 @@ const AddProduct = ({ product, id }) => {
                                             )}
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
-                                        <Box mb={2}>
-                                            <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
-                                                Discount Rate
-                                            </Typography>
-                                            <TextField
-                                                fullWidth
-                                                name="discountValue"
-                                                type="number"
-                                                value={tempFormData.discountValue}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    setTempFormData((prev) => ({ ...prev, discountValue: value }));
-                                                    setData((prev) => ({ ...prev, discountValue: value }));
-                                                }}
-                                                placeholder={tempFormData.discountType === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs'}
-                                                size="small"
-                                            />
-                                        </Box>
-                                    </Grid>
-                                    <Grid item xs={6}>
-                                        <Box mb={3}>
-                                            <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
-                                                Discount Method
-                                            </Typography>
-                                            <TextField
-                                                select
-                                                fullWidth
-                                                name="discountType"
-                                                value={tempFormData.discountType}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    setTempFormData((prev) => ({ ...prev, discountType: value }));
-                                                    setData((prev) => ({ ...prev, discountType: value }));
-                                                }}
-                                                size="small"
-                                            >
-                                                <MenuItem value="percentage">Percentage (%)</MenuItem>
-                                                <MenuItem value="amount">Fixed Amount (Rs)</MenuItem>
-                                            </TextField>
+                                    <Grid item xs={12}>
+                                        <Box
+                                            sx={{
+                                                p: 2,
+                                                border: '1px solid #063455',
+                                                borderRadius: 1,
+                                                backgroundColor: '#D0E2F2',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                            }}
+                                        >
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <Box sx={{ mr: 2 }}>
+                                                    <img src="/placeholder.svg" alt="Discountable" style={{ width: 40, height: 40 }} />
+                                                </Box>
+                                                <Box>
+                                                    <Typography
+                                                        variant="body1"
+                                                        fontWeight="medium"
+                                                        sx={{
+                                                            color: '#121212',
+                                                            fontSize: '16px',
+                                                        }}
+                                                    >
+                                                        Discountable Item
+                                                    </Typography>
+                                                    <Typography variant="body2" color="text.secondary">
+                                                        Allow discount on this item during order
+                                                    </Typography>
+                                                </Box>
+                                            </Box>
+                                            <Switch checked={data.is_discountable !== false} onChange={() => setData((prev) => ({ ...prev, is_discountable: prev.is_discountable === false ? true : false }))} color="primary" />
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12}>
