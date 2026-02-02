@@ -222,24 +222,6 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                 Order Management
                             </h2>
                         </Box>
-
-                        {/* Right - Search + Filter */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Button
-                                variant="outlined"
-                                startIcon={<FilterIcon />}
-                                style={{
-                                    borderRadius: '0px',
-                                    color: '#063455',
-                                    border: '1px solid #063455',
-                                    textTransform: 'none',
-                                    height: '40px',
-                                }}
-                                onClick={openFilter}
-                            >
-                                Filter
-                            </Button>
-                        </Box>
                     </Box>
 
                     {/* New Filter Design */}
@@ -410,8 +392,22 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                                             border: '1px solid #E3E3E3',
                                         }}
                                     >
-                                        {/* Header */}
-                                        <Box sx={{ bgcolor: card.status === 'cancelled' ? '#FF0000' : card.status === 'refund' ? '#FFA500' : card.status === 'in_progress' ? '#E6E6E6' : card.status === 'completed' ? '#4BB543' : '#063455', color: card.status === 'cancelled' ? '#FFFFFF' : card.status === 'refund' ? '#FFFFFF' : card.status === 'in_progress' ? '#000000' : card.status === 'completed' ? '#FFFFFF' : '#FFFFFF', p: 2, position: 'relative' }}>
+                                        {/* Header - Color Logic: RED=in kitchen, BLUE=awaiting payment */}
+                                        <Box
+                                            sx={{
+                                                bgcolor:
+                                                    card.status === 'cancelled'
+                                                        ? '#FF0000'
+                                                        : card.status === 'refund'
+                                                          ? '#FFA500'
+                                                          : card.payment_status === 'awaiting'
+                                                            ? '#1976D2' // BLUE - invoice generated, awaiting payment
+                                                            : '#D32F2F', // RED - in kitchen (no invoice yet)
+                                                color: '#FFFFFF',
+                                                p: 2,
+                                                position: 'relative',
+                                            }}
+                                        >
                                             <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
                                             <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
                                                 {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer ? card.customer.name : card.employee?.name}`}

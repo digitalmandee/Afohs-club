@@ -211,6 +211,12 @@ class OrderController extends Controller
             'employee:id,employee_id,name',
             'member.memberType:id,name'
         ]);
+        // ✅ Exclude paid orders from Order Management (table is free after payment)
+        $query->where(function ($q) {
+            $q
+                ->whereNull('payment_status')
+                ->orWhere('payment_status', '!=', 'paid');
+        });
         $allrestaurants = Tenant::select('id', 'name')->get();
 
         // 🔍 Search By ID
@@ -619,148 +625,152 @@ class OrderController extends Controller
                 'cost_price' => $totalCostPrice,
             ]);
 
-            $invoiceData = [
-                'invoice_no' => $this->getInvoiceNo(),
-                'invoice_type' => 'food_order',
-                'amount' => $request->price,
-                'total_price' => $request->total_price,
-                // discount logic moved to items
-                'payment_method' => null,
-                'issue_date' => Carbon::now(),
-                'status' => 'unpaid',
-                'data' => [
-                    'order_id' => $order->id,
-                ],
-            ];
+            // ✅ Create Invoice ONLY for takeaway (immediate payment flow)
+            // For dine-in, delivery, reservation, room_service: invoice created when order marked 'completed'
+            if ($orderType === 'takeaway') {
+                $invoiceData = [
+                    'invoice_no' => $this->getInvoiceNo(),
+                    'invoice_type' => 'food_order',
+                    'amount' => $request->price,
+                    'total_price' => $request->total_price,
+                    // discount logic moved to items
+                    'payment_method' => null,
+                    'issue_date' => Carbon::now(),
+                    'status' => 'unpaid',
+                    'data' => [
+                        'order_id' => $order->id,
+                    ],
+                ];
 
-            if ($request->member['booking_type'] == 'member') {
-                $invoiceData['member_id'] = $request->member['id'];
-                $payerType = \App\Models\Member::class;
-                $payerId = $request->member['id'];
-            } elseif ($request->member['booking_type'] == 'guest') {
-                $invoiceData['customer_id'] = $request->member['id'];
-                $payerType = \App\Models\Customer::class;
-                $payerId = $request->member['id'];
-            } else {
-                $invoiceData['employee_id'] = $request->member['id'];
-                $payerType = \App\Models\Employee::class;
-                $payerId = $request->member['id'];
-            }
-
-            if ($orderType == 'takeaway') {
-                $invoiceData['status'] = 'paid';
-                $invoiceData['payment_date'] = now();
-                $invoiceData['payment_method'] = $request->payment['payment_method'];
-                $invoiceData['paid_amount'] = $request->payment['paid_amount'];
-                $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
-                $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
-                $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
-            }
-
-            $invoice = FinancialInvoice::create($invoiceData);
-
-            // ✅ Create Invoice Items & DEBIT Transactions (Aggregated)
-            if (!empty($request->order_items)) {
-                $totalGross = 0;
-                $totalDiscount = 0;
-                $totalTax = 0;
-                $itemNames = [];
-
-                $taxRate = $request->tax ?? 0;  // Tax rate (e.g. 0.16)
-
-                foreach ($request->order_items as $item) {
-                    $qty = $item['quantity'] ?? 1;
-                    $price = $item['price'] ?? 0;
-                    $subTotal = $qty * $price;
-
-                    // Use item discount as sum source
-                    $itemDiscountAmount = $item['discount_amount'] ?? 0;
-
-                    // Tax Calculation per item (consistent with previous logic)
-                    $netAmount = $subTotal - $itemDiscountAmount;
-                    $itemTaxAmount = $netAmount * $taxRate;
-
-                    $totalGross += $subTotal;
-                    $totalDiscount += $itemDiscountAmount;
-                    $totalTax += $itemTaxAmount;
-
-                    if (count($itemNames) < 3) {
-                        $itemNames[] = $item['name'] ?? 'Item';
-                    }
+                if ($request->member['booking_type'] == 'member') {
+                    $invoiceData['member_id'] = $request->member['id'];
+                    $payerType = \App\Models\Member::class;
+                    $payerId = $request->member['id'];
+                } elseif ($request->member['booking_type'] == 'guest') {
+                    $invoiceData['customer_id'] = $request->member['id'];
+                    $payerType = \App\Models\Customer::class;
+                    $payerId = $request->member['id'];
+                } else {
+                    $invoiceData['employee_id'] = $request->member['id'];
+                    $payerType = \App\Models\Employee::class;
+                    $payerId = $request->member['id'];
                 }
 
-                $totalNet = $totalGross - $totalDiscount + $totalTax;
+                if ($orderType == 'takeaway') {
+                    $invoiceData['status'] = 'paid';
+                    $invoiceData['payment_date'] = now();
+                    $invoiceData['payment_method'] = $request->payment['payment_method'];
+                    $invoiceData['paid_amount'] = $request->payment['paid_amount'];
+                    $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
+                    $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
+                    $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
+                }
 
-                $description = 'Food Order Items (' . count($request->order_items) . ') - ' . implode(', ', $itemNames) . (count($request->order_items) > 3 ? '...' : '');
+                $invoice = FinancialInvoice::create($invoiceData);
 
-                $invoiceItem = FinancialInvoiceItem::create([
-                    'invoice_id' => $invoice->id,
-                    'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,  // Food Order / Room Service
-                    'description' => $description,
-                    'qty' => 1,  // Aggregated item count as 1 block
-                    'amount' => $totalGross,
-                    'sub_total' => $totalGross,
-                    'discount_type' => 'fixed',  // Aggregated discount is always an amount
-                    'discount_value' => $totalDiscount,
-                    'discount_amount' => $totalDiscount,
-                    'tax_amount' => $totalTax,
-                    'total' => $totalNet,
-                ]);
+                // ✅ Create Invoice Items & DEBIT Transactions (Aggregated)
+                if (!empty($request->order_items)) {
+                    $totalGross = 0;
+                    $totalDiscount = 0;
+                    $totalTax = 0;
+                    $itemNames = [];
 
-                // Create Debit Transaction for THIS aggregated invoice item
-                Transaction::create([
-                    'type' => 'debit',
-                    'amount' => $totalNet,
-                    'date' => now(),
-                    'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - Food Order',
-                    'payable_type' => $payerType,
-                    'payable_id' => $payerId,
-                    'reference_type' => FinancialInvoiceItem::class,
-                    'reference_id' => $invoiceItem->id,
-                    'invoice_id' => $invoice->id,
-                    'created_by' => Auth::id(),
-                ]);
-            }
+                    $taxRate = $request->tax ?? 0;  // Tax rate (e.g. 0.16)
 
-            // If Paid (Takeaway) -> Receipt + Credit + Allocation
-            if ($orderType == 'takeaway') {
-                $receiptImg = $orderData['receipt'] ?? null;
+                    foreach ($request->order_items as $item) {
+                        $qty = $item['quantity'] ?? 1;
+                        $price = $item['price'] ?? 0;
+                        $subTotal = $qty * $price;
 
-                // 1. Create Receipt
-                $receipt = FinancialReceipt::create([
-                    'receipt_no' => time(),
-                    'payer_type' => $payerType,
-                    'payer_id' => $payerId,
-                    'amount' => $request->payment['paid_amount'],
-                    'payment_method' => $request->payment['payment_method'],
-                    'receipt_date' => now(),
-                    'status' => 'active',
-                    'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
-                    'created_by' => Auth::id(),
-                    'receipt_image' => $receiptImg,
-                ]);
+                        // Use item discount as sum source
+                        $itemDiscountAmount = $item['discount_amount'] ?? 0;
 
-                // 2. Link Receipt to Invoice
-                TransactionRelation::create([
-                    'invoice_id' => $invoice->id,
-                    'receipt_id' => $receipt->id,
-                    'amount' => $request->payment['paid_amount'],
-                ]);
+                        // Tax Calculation per item (consistent with previous logic)
+                        $netAmount = $subTotal - $itemDiscountAmount;
+                        $itemTaxAmount = $netAmount * $taxRate;
 
-                // 3. Create SINGLE Credit Transaction (Amount Paid)
-                Transaction::create([
-                    'type' => 'credit',
-                    'amount' => $request->payment['paid_amount'],
-                    'date' => now(),
-                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-                    'payable_type' => $payerType,
-                    'payable_id' => $payerId,
-                    'reference_type' => FinancialInvoiceItem::class,
-                    'reference_id' => $invoiceItem->id,  // Link to the summary item
-                    'invoice_id' => $invoice->id,
-                    'receipt_id' => $receipt->id,
-                    'created_by' => Auth::id(),
-                ]);
+                        $totalGross += $subTotal;
+                        $totalDiscount += $itemDiscountAmount;
+                        $totalTax += $itemTaxAmount;
+
+                        if (count($itemNames) < 3) {
+                            $itemNames[] = $item['name'] ?? 'Item';
+                        }
+                    }
+
+                    $totalNet = $totalGross - $totalDiscount + $totalTax;
+
+                    $description = 'Food Order Items (' . count($request->order_items) . ') - ' . implode(', ', $itemNames) . (count($request->order_items) > 3 ? '...' : '');
+
+                    $invoiceItem = FinancialInvoiceItem::create([
+                        'invoice_id' => $invoice->id,
+                        'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,  // Food Order / Room Service
+                        'description' => $description,
+                        'qty' => 1,  // Aggregated item count as 1 block
+                        'amount' => $totalGross,
+                        'sub_total' => $totalGross,
+                        'discount_type' => 'fixed',  // Aggregated discount is always an amount
+                        'discount_value' => $totalDiscount,
+                        'discount_amount' => $totalDiscount,
+                        'tax_amount' => $totalTax,
+                        'total' => $totalNet,
+                    ]);
+
+                    // Create Debit Transaction for THIS aggregated invoice item
+                    Transaction::create([
+                        'type' => 'debit',
+                        'amount' => $totalNet,
+                        'date' => now(),
+                        'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - Food Order',
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        'reference_type' => FinancialInvoiceItem::class,
+                        'reference_id' => $invoiceItem->id,
+                        'invoice_id' => $invoice->id,
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+
+                // If Paid (Takeaway) -> Receipt + Credit + Allocation
+                if ($orderType == 'takeaway') {
+                    $receiptImg = $orderData['receipt'] ?? null;
+
+                    // 1. Create Receipt
+                    $receipt = FinancialReceipt::create([
+                        'receipt_no' => time(),
+                        'payer_type' => $payerType,
+                        'payer_id' => $payerId,
+                        'amount' => $request->payment['paid_amount'],
+                        'payment_method' => $request->payment['payment_method'],
+                        'receipt_date' => now(),
+                        'status' => 'active',
+                        'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
+                        'created_by' => Auth::id(),
+                        'receipt_image' => $receiptImg,
+                    ]);
+
+                    // 2. Link Receipt to Invoice
+                    TransactionRelation::create([
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,
+                        'amount' => $request->payment['paid_amount'],
+                    ]);
+
+                    // 3. Create SINGLE Credit Transaction (Amount Paid)
+                    Transaction::create([
+                        'type' => 'credit',
+                        'amount' => $request->payment['paid_amount'],
+                        'date' => now(),
+                        'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        'reference_type' => FinancialInvoiceItem::class,
+                        'reference_id' => $invoiceItem->id,  // Link to the summary item
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,
+                        'created_by' => Auth::id(),
+                    ]);
+                }
             }
 
             DB::commit();
@@ -890,13 +900,119 @@ class OrderController extends Controller
                 ]);
             }
 
-            // Update financial invoice if exists and not paid
-            $financialInvoice = FinancialInvoice::where('member_id', $order->member_id)
-                ->where('invoice_type', 'food_order')
+            // Update financial invoice if exists and not paid (lookup by order_id, not member_id)
+            $financialInvoice = FinancialInvoice::where('invoice_type', 'food_order')
                 ->whereJsonContains('data', ['order_id' => $order->id])
                 ->first();
 
-            if ($financialInvoice && $financialInvoice->status !== 'paid') {
+            // ✅ AUTO-CREATE INVOICE when order marked 'completed' (for dine-in, delivery, reservation, room_service)
+            // Only if a payer exists (member, customer, or employee)
+            $hasPayer = $order->member_id || $order->customer_id || $order->employee_id;
+            if (
+                $validated['status'] === 'completed' &&
+                !$financialInvoice &&
+                $hasPayer &&
+                in_array($order->order_type, ['dineIn', 'delivery', 'reservation', 'room_service'])
+            ) {
+                // Determine payer type
+                if ($order->member_id) {
+                    $payerType = \App\Models\Member::class;
+                    $payerId = $order->member_id;
+                } elseif ($order->customer_id) {
+                    $payerType = \App\Models\Customer::class;
+                    $payerId = $order->customer_id;
+                } else {
+                    $payerType = \App\Models\Employee::class;
+                    $payerId = $order->employee_id;
+                }
+
+                $invoiceData = [
+                    'invoice_no' => $this->getInvoiceNo(),
+                    'invoice_type' => 'food_order',
+                    'amount' => $order->amount ?? 0,
+                    'total_price' => $order->total_price ?? 0,
+                    'payment_method' => null,
+                    'issue_date' => Carbon::now(),
+                    'status' => 'unpaid',
+                    'data' => [
+                        'order_id' => $order->id,
+                    ],
+                ];
+
+                if ($order->member_id) {
+                    $invoiceData['member_id'] = $order->member_id;
+                } elseif ($order->customer_id) {
+                    $invoiceData['customer_id'] = $order->customer_id;
+                } else {
+                    $invoiceData['employee_id'] = $order->employee_id;
+                }
+
+                $financialInvoice = FinancialInvoice::create($invoiceData);
+
+                // Update order payment_status to 'awaiting'
+                $order->update(['payment_status' => 'awaiting']);
+
+                // Create Invoice Items & Debit Transaction (Aggregated)
+                $orderItems = $order->orderItems()->where('status', '!=', 'cancelled')->get();
+                if ($orderItems->isNotEmpty()) {
+                    $totalGross = 0;
+                    $totalDiscount = 0;
+                    $totalTax = 0;
+                    $itemNames = [];
+
+                    $taxRate = $order->tax ?? 0;
+
+                    foreach ($orderItems as $orderItem) {
+                        $item = $orderItem->order_item;
+                        $qty = $item['quantity'] ?? 1;
+                        $price = $item['price'] ?? 0;
+                        $subTotal = $qty * $price;
+
+                        $itemDiscountAmount = $item['discount_amount'] ?? 0;
+                        $netAmount = $subTotal - $itemDiscountAmount;
+                        $itemTaxAmount = $netAmount * $taxRate;
+
+                        $totalGross += $subTotal;
+                        $totalDiscount += $itemDiscountAmount;
+                        $totalTax += $itemTaxAmount;
+
+                        if (count($itemNames) < 3) {
+                            $itemNames[] = $item['name'] ?? 'Item';
+                        }
+                    }
+
+                    $totalNet = $totalGross - $totalDiscount + $totalTax;
+
+                    $description = 'Food Order Items (' . $orderItems->count() . ') - ' . implode(', ', $itemNames) . ($orderItems->count() > 3 ? '...' : '');
+
+                    $invoiceItem = FinancialInvoiceItem::create([
+                        'invoice_id' => $financialInvoice->id,
+                        'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,
+                        'description' => $description,
+                        'qty' => 1,
+                        'amount' => $totalGross,
+                        'sub_total' => $totalGross,
+                        'discount_type' => 'fixed',
+                        'discount_value' => $totalDiscount,
+                        'discount_amount' => $totalDiscount,
+                        'tax_amount' => $totalTax,
+                        'total' => $totalNet,
+                    ]);
+
+                    Transaction::create([
+                        'type' => 'debit',
+                        'amount' => $totalNet,
+                        'date' => now(),
+                        'description' => 'Invoice #' . $invoiceData['invoice_no'] . ' - Food Order',
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        'reference_type' => FinancialInvoiceItem::class,
+                        'reference_id' => $invoiceItem->id,
+                        'invoice_id' => $financialInvoice->id,
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+            } elseif ($financialInvoice && $financialInvoice->status !== 'paid') {
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
@@ -1120,5 +1236,69 @@ class OrderController extends Controller
         }
 
         return response()->json($results);
+    }
+
+    /**
+     * Order History - Shows all completed/paid orders
+     */
+    public function orderHistory(Request $request)
+    {
+        $query = Order::with([
+            'table:id,table_no',
+            'orderItems:id,order_id,order_item,status',
+            'member:id,full_name,membership_no',
+            'customer:id,name,customer_no',
+            'employee:id,employee_id,name',
+            'cashier:id,name',
+            'waiter:id,name',
+        ])
+            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
+            ->where(function ($q) {
+                $q
+                    ->where('status', 'completed')
+                    ->orWhere('payment_status', 'paid');
+            });
+
+        // 🔍 Search by Order ID
+        if ($request->filled('search_id')) {
+            $query->where('id', $request->search_id);
+        }
+
+        // 🔍 Search by Client Name
+        if ($request->filled('search_name')) {
+            $searchName = trim($request->search_name);
+            $query->where(function ($q) use ($searchName) {
+                $q
+                    ->whereHas('member', fn($q) => $q->where('full_name', 'like', "%$searchName%"))
+                    ->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%$searchName%"))
+                    ->orWhereHas('employee', fn($q) => $q->where('name', 'like', "%$searchName%"));
+            });
+        }
+
+        // 📅 Date range filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
+        } elseif ($request->filled('start_date')) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->whereDate('start_date', '<=', $request->end_date);
+        }
+
+        // 🍽 Order type filter
+        if ($request->filled('type') && $request->type !== 'all') {
+            $query->where('order_type', $request->type);
+        }
+
+        // 💰 Payment status filter
+        if ($request->filled('payment_status') && $request->payment_status !== 'all') {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        $orders = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
+
+        return Inertia::render('App/Order/History/Dashboard', [
+            'orders' => $orders,
+            'filters' => $request->all(),
+        ]);
     }
 }
