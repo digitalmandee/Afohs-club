@@ -623,7 +623,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 },
                                             }}
                                             key={order.id}
-                                            onClick={() => handleOpenOrderDetail(order)}
+                                            onClick={() => handleOpenPayment(order)}
                                         >
                                             <CardContent>
                                                 <Box display="flex" alignItems="center">
@@ -1208,7 +1208,7 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                     </Dialog>
 
                     {/* Order Detail Modal */}
-                    <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} handleOpenTrackOrder={handleOpenTrackOrder} />
+                    {/* <OrderDetail invoiceId={selectedOrder?.id} openModal={openOrderDetailModal} closeModal={handleCloseOrderDetail} handleOpenTrackOrder={handleOpenTrackOrder} /> */}
 
                     {/* Payment Modal */}
                     <PaymentNow invoiceData={selectedOrder} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} setSelectedOrder={setSelectedOrder} />

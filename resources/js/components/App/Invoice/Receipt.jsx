@@ -179,8 +179,8 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
               <div style="margin-bottom: 10px;">
                 <div><strong>${item.order_item?.name || item.name}</strong></div>
                 <div class="row">
-                  <div>${item.order_item?.quantity || item.quantity} x Rs ${item.order_item?.total_price || item.price}</div>
-                  <div>Rs ${(item.order_item?.quantity || item.quantity) * (item.order_item?.total_price || item.price)}</div>
+                  <div>${item.order_item?.quantity || item.quantity} x Rs ${item.order_item?.price || item.price}</div>
+                  <div>Rs ${item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}</div>
                 </div>
               </div>
             `,
@@ -313,9 +313,9 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                         </Typography>
                         <Box sx={styles.receiptRow}>
                             <Typography variant="caption" color="text.secondary">
-                                {item.order_item?.quantity || item.quantity} x Rs {item.order_item?.total_price || item.price}
+                                {item.order_item?.quantity || item.quantity} x Rs {item.order_item?.price || item.price}
                             </Typography>
-                            <Typography variant="caption">Rs {(item.order_item?.quantity || item.quantity) * (item.order_item?.total_price || item.price)}</Typography>
+                            <Typography variant="caption">Rs {item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}</Typography>
                         </Box>
                     </Box>
                 ))}

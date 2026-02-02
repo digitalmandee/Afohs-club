@@ -513,7 +513,7 @@ class OrderController extends Controller
             $totalDue = $request->price;
             $orderType = $request->order_type;
 
-            if ($orderType == 'takeaway' && $request->payment['paid_amount'] < $totalDue) {
+            if ($orderType == 'takeaway' && !in_array($request->payment['payment_method'], ['ent', 'cts']) && $request->payment['paid_amount'] < $totalDue) {
                 return back()->withErrors(['paid_amount' => 'The paid amount is not enough to cover the total price of the invoice.']);
             }
 
@@ -526,7 +526,7 @@ class OrderController extends Controller
                 'start_time' => $request->time,
                 'down_payment' => $request->down_payment,
                 'amount' => $request->price,
-                'status' => 'pending',
+                'status' => 'in_progress',
                 'kitchen_note' => $request->kitchen_note,
                 'staff_note' => $request->staff_note,
                 'payment_note' => $request->payment_note,
@@ -613,7 +613,7 @@ class OrderController extends Controller
                         'order_id' => $order->id,
                         'tenant_id' => $safeKitchenId,
                         'order_item' => $item,
-                        'status' => 'pending',
+                        'status' => 'in_progress',
                     ]);
                 }
             }

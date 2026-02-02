@@ -126,8 +126,8 @@ const Dashboard = ({ orders, filters, totals }) => {
                     order_item: item.order_item,
                     name: item.order_item?.name || 'Item',
                     quantity: item.order_item?.quantity || 1,
-                    price: item.order_item?.total_price || 0,
-                    total_price: (item.order_item?.quantity || 1) * (item.order_item?.total_price || 0),
+                    price: item.order_item?.price || 0,
+                    total_price: item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0),
                 })) || [],
         };
     };
@@ -143,8 +143,8 @@ const Dashboard = ({ orders, filters, totals }) => {
                 ?.map((item) => {
                     const name = item.order_item?.name || 'Item';
                     const qty = item.order_item?.quantity || 1;
-                    const price = item.order_item?.total_price || 0;
-                    const total = qty * price;
+                    const price = item.order_item?.price || 0;
+                    const total = item.order_item?.total_price || qty * price;
                     return `
               <div style="margin-bottom: 10px;">
                 <div><strong>${name}</strong></div>
@@ -612,8 +612,8 @@ const Dashboard = ({ orders, filters, totals }) => {
                                                 <TableRow key={index}>
                                                     <TableCell>{item.order_item?.name || 'Item'}</TableCell>
                                                     <TableCell align="right">{item.order_item?.quantity || 1}</TableCell>
-                                                    <TableCell align="right">Rs. {item.order_item?.total_price || 0}</TableCell>
-                                                    <TableCell align="right">Rs. {(item.order_item?.quantity || 1) * (item.order_item?.total_price || 0)}</TableCell>
+                                                    <TableCell align="right">Rs. {item.order_item?.price || 0}</TableCell>
+                                                    <TableCell align="right">Rs. {item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0)}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
