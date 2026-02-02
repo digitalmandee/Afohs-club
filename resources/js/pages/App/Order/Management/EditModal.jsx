@@ -50,7 +50,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             prev.map((item, i) => {
                 if (i !== index) return item;
 
-                const currentQty = item.order_item.quantity;
+                const currentQty = parseInt(item.order_item.quantity, 10) || 1;
                 const updatedQty = currentQty + delta;
 
                 let updatedId = item.id;
@@ -58,13 +58,15 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     updatedId = `update-${item.id}`;
                 }
 
+                const price = parseFloat(item.order_item.price) || 0;
+
                 return {
                     ...item,
                     id: updatedId,
                     order_item: {
                         ...item.order_item,
                         quantity: updatedQty > 0 ? updatedQty : 1, // prevent quantity going below 1
-                        total_price: item.order_item.price * (updatedQty > 0 ? updatedQty : 1),
+                        total_price: price * (updatedQty > 0 ? updatedQty : 1),
                     },
                 };
             }),
