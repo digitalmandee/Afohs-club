@@ -124,10 +124,10 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label {
-            margin-top: 20px;
+            margin-top: 15px;
             font-size: 10px;
             font-weight: 700;
-            padding-left: 70px;
+            padding-left: 40px;
             color: #000;
             white-space: nowrap;
         }
@@ -142,7 +142,7 @@ export const handlePrintMembershipCard = (member) => {
         /* RIGHT COLUMN - Perfect MUI replica */
         .right {
             padding-right: 15px;
-            padding-top: 45px;
+            padding-top: 40px;
             align-items: flex-end;
         }
 
@@ -164,12 +164,48 @@ export const handlePrintMembershipCard = (member) => {
             height: 100%;
         }
 
-        .label-valid-until {
-            margin-top: 9px;
-            font-size: 10px;
-            font-weight: 700;
-            color: #000;
-        }
+        .label-month-year {
+    margin-top: 4px;
+    font-size: 8px;
+    font-weight: 700;
+    color: #000;
+}
+
+.valid-row-box {
+    display: inline-flex;
+  align-items: center;   /* 🔥 KEY FIX */
+  gap: 6px;
+  padding-top: 3px;
+    align-items: center;
+width: 80%;
+}
+
+
+.label-valid-until {
+   display: flex;   /* 🔥 shrink to content */
+    flex-direction: column;
+    font-size: 10px;
+    font-weight: 700;
+    color: #000;
+    line-height: 1;
+    margin-top: 0;
+    padding: 0;
+}
+
+.label-valid-until span {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.value {
+    font-size: 12px;
+    font-weight: 700;
+    color: #000;
+    line-height: 1;
+  align-self: flex-start;
+  white-space: nowrap;
+  margin-top: -20px
+}
 
         .footer {
             background-color: #063455;
@@ -231,11 +267,21 @@ export const handlePrintMembershipCard = (member) => {
 
                 <!-- RIGHT COLUMN -->
                 <div class="col right">
-                    <div class="qr-wrapper">
+                 <div class="qr-wrapper">
                         <img class="qr-img" src="/${member?.qr_code || ''}" alt="QR Code" />
+                 </div>
+                   <div class="label-month-year">
+                   MONTH/YEAR
+                   </div>
+                    <div class="valid-row-box">
+                      <div class="label-valid-until">
+                        <span>Valid</span>
+                        <span>Until</span>
+                        <div class="value">
+                          ${formatExpiryDate(member?.card_expiry_date)}
+                        </div>
+                       </div>
                     </div>
-                    <div class="label-valid-until">Valid Until</div>
-                    <div class="value">${formatExpiryDate(member?.card_expiry_date)}</div>
                 </div>
             </div>
         </div>
@@ -314,7 +360,7 @@ export const MembershipCardContent = ({ member, id }) => {
                         </Box>
                     </Grid>
                     <Grid item xs={12} sm={4}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pt: 14, pr: 0.1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', pt: 11, pr: 0.1 }}>
                             <Box
                                 sx={{
                                     width: '90px',
@@ -323,29 +369,30 @@ export const MembershipCardContent = ({ member, id }) => {
                                     borderRadius: 1,
                                     p: '4px',
                                     bgcolor: '#fff',
-                                    // display: 'flex',
-                                    // alignItems: 'center',
-                                    // justifyContent: 'center',
-                                    // overflow: 'hidden',
                                 }}
                             >
-                                {/* <Box
-                                    component="img"
-                                    src={member?.profile_photo?.file_path}
-                                    alt="Member Photo"
-                                    sx={{
-                                        width: '100%',
-                                        height: '100%',
-                                    }}
-                                /> */}
                                 <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: "100%", height: "100%" }} />
                             </Box>
-                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 0.4, color: '#000' }}>
-                                Valid Until
+                            <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#000', pt: 1 }}>
+                                MONTH/YEAR
                             </Typography>
-                            <Typography variant="subtitle1" fontWeight="bold" color="#000">
-                                {formatExpiryDate(member?.card_expiry_date)}
-                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 3 }}>
+                                <Typography
+                                    sx={{
+                                        fontSize: '16px',
+                                        fontWeight: 700,
+                                        pt: 0.1,
+                                        color: '#000',
+                                        // lineHeight: 1.2,
+                                    }}
+                                >
+                                    Valid<br />
+                                    Until
+                                </Typography>
+                                <Typography variant="subtitle1" fontWeight="bold" color="#000">
+                                    {formatExpiryDate(member?.card_expiry_date)}
+                                </Typography>
+                            </Box>
                         </Box>
                     </Grid>
                 </Grid>
