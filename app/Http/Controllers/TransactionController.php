@@ -17,6 +17,8 @@ class TransactionController extends Controller
     {
         $query = Order::query()
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
+            // ✅ Only show orders with invoices waiting for payment
+            ->where('payment_status', 'awaiting')
             ->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'table:id,table_no', 'orderItems:id,order_id', 'roomBooking.room:id,name']);
 
         // ===============================
@@ -176,9 +178,8 @@ class TransactionController extends Controller
         $order->payment_status = 'paid';
         $order->save();
 
-        // 2. Update Financial Invoice
-        $invoice = FinancialInvoice::where('member_id', $order->member_id)
-            ->whereJsonContains('data', ['order_id' => $order->id])
+        // 2. Update Financial Invoice (lookup by order_id, not just member_id)
+        $invoice = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])
             ->first();
 
         if ($invoice) {
@@ -245,5 +246,77 @@ class TransactionController extends Controller
         }
 
         return back()->with('success', 'Payment successful');
+    }
+
+    /**
+     * Transaction History - Shows all paid transactions
+     */
+    public function transactionHistory(Request $request)
+    {
+        $query = Order::query()
+            ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
+            ->where('payment_status', 'paid')
+            ->with([
+                'member:id,full_name,membership_no',
+                'customer:id,name,customer_no',
+                'employee:id,employee_id,name',
+                'table:id,table_no',
+                'cashier:id,name',
+                'waiter:id,name',
+                'orderItems:id,order_id,order_item,status',
+            ]);
+
+        // 🔍 Search by Order ID
+        if ($request->filled('search_id')) {
+            $query->where('id', $request->search_id);
+        }
+
+        // 🔍 Search by Client Name
+        if ($request->filled('search_name')) {
+            $searchName = trim($request->search_name);
+            $query->where(function ($q) use ($searchName) {
+                $q
+                    ->whereHas('member', fn($q) => $q->where('full_name', 'like', "%$searchName%"))
+                    ->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%$searchName%"))
+                    ->orWhereHas('employee', fn($q) => $q->where('name', 'like', "%$searchName%"));
+            });
+        }
+
+        // 📅 Date range filter (by paid_at)
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('paid_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+        } elseif ($request->filled('start_date')) {
+            $query->whereDate('paid_at', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->whereDate('paid_at', '<=', $request->end_date);
+        }
+
+        // 💳 Payment method filter
+        if ($request->filled('payment_method') && $request->payment_method !== 'all') {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // 🍽 Order type filter
+        if ($request->filled('type') && $request->type !== 'all') {
+            $query->where('order_type', $request->type);
+        }
+
+        // Clone query for totals before pagination
+        $totalsQuery = clone $query;
+
+        $orders = $query->orderBy('paid_at', 'desc')->paginate(15)->withQueryString();
+
+        // Calculate totals for summary (from cloned query)
+        $totals = [
+            'total_amount' => $totalsQuery->sum('total_price'),
+            'total_paid' => $totalsQuery->sum('paid_amount'),
+            'count' => $totalsQuery->count(),
+        ];
+
+        return Inertia::render('App/Transaction/History/Dashboard', [
+            'orders' => $orders,
+            'filters' => $request->all(),
+            'totals' => $totals,
+        ]);
     }
 }

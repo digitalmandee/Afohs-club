@@ -32,11 +32,24 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     // CTS
     const [ctsComment, setCtsComment] = useState('');
 
+    // Helper to parse price safely
+    const parsePrice = (price) => {
+        if (typeof price === 'number') return price;
+        if (!price) return 0;
+        return parseFloat(price.toString().replace(/,/g, ''));
+    };
+
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
+        const total = parsePrice(invoiceData.total_price);
         if (method == 'ent' || method == 'cts') {
-            setInputAmount(invoiceData.total_price);
+            setInputAmount(total.toString());
             setCustomerChanges('0');
+        } else {
+            // Reset input amount to 0 when switching back to other methods, or keep it?
+            // Usually valid UX is to reset or keep. Let's reset to 0 to be safe
+            setInputAmount('0');
+            setCustomerChanges((0 - total).toFixed(2));
         }
     };
 
@@ -47,10 +60,13 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const handleQuickAmountClick = (amount) => {
         if (activePaymentMethod === 'ent' || activePaymentMethod === 'cts') return;
 
-        setInputAmount(amount);
+        // Sanitize the input amount (remove commas if present)
+        const cleanAmount = parsePrice(amount).toString();
+        setInputAmount(cleanAmount);
+
         // Calculate customer changes
-        const total = invoiceData.total_price;
-        const changes = amount - total;
+        const total = parsePrice(invoiceData.total_price);
+        const changes = parseFloat(cleanAmount) - total;
         setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
     };
 
@@ -58,16 +74,22 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         if (activePaymentMethod === 'ent' || activePaymentMethod === 'cts') return;
 
         let newAmount;
-        if (inputAmount === invoiceData.total_price) {
+        const currentAmount = parseFloat(inputAmount);
+        const total = parsePrice(invoiceData.total_price);
+
+        if (currentAmount === 0 && !inputAmount.includes('.')) {
+            newAmount = number;
+        } else if (parseFloat(inputAmount) === total) {
+            // If currently equal to total (e.g. from Exact Money), start fresh
             newAmount = number;
         } else {
             newAmount = inputAmount + number;
         }
+
         setInputAmount(newAmount);
 
         // Calculate customer changes
-        const total = invoiceData.total_price;
-        const changes = Number.parseFloat(newAmount) - total;
+        const changes = parseFloat(newAmount) - total;
         setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
     };
 
@@ -77,13 +99,14 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             setInputAmount(newAmount);
 
             // Calculate customer changes
-            const total = invoiceData.total_price;
-            const changes = Number.parseFloat(newAmount) - total;
+            const total = parsePrice(invoiceData.total_price);
+            const changes = parseFloat(newAmount) - total;
             setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         } else {
             setInputAmount('0');
-            const total = 0 - invoiceData.total_price;
-            setCustomerChanges((total < 0 ? 0 : total).toFixed(2));
+            const total = parsePrice(invoiceData.total_price);
+            const changes = 0 - total;
+            setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         }
     };
 
@@ -103,10 +126,14 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleOrderAndPay = async () => {
-        // Amount validation
-        if (parseFloat(inputAmount) < invoiceData.total_price) {
-            enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
-            return;
+        const total = parsePrice(invoiceData.total_price);
+
+        // Amount validation (skip for ENT/CTS)
+        if (!['ent', 'cts'].includes(activePaymentMethod)) {
+            if (parseFloat(inputAmount) < total) {
+                enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
+                return;
+            }
         }
 
         if (activePaymentMethod === 'credit_card' && !receiptFile) {
@@ -147,20 +174,26 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         if (activePaymentMethod === 'ent') {
             payload.payment.ent_reason = entReason;
             payload.payment.ent_comment = entComment;
+            payload.payment.paid_amount = 0; // ENT is 0 paid
         }
 
         if (activePaymentMethod === 'cts') {
             payload.payment.cts_comment = ctsComment;
+            payload.payment.paid_amount = 0; // CTS is 0 paid
         }
 
         await handleSendToKitchen(payload);
     };
 
     const handlePayNow = () => {
-        // Amount validation
-        if (parseFloat(inputAmount) < invoiceData.total_price) {
-            enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
-            return;
+        const total = parsePrice(invoiceData.total_price);
+
+        // Amount validation (skip for ENT/CTS)
+        if (!['ent', 'cts'].includes(activePaymentMethod)) {
+            if (parseFloat(inputAmount) < total) {
+                enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
+                return;
+            }
         }
 
         if (activePaymentMethod === 'credit_card' && !receiptFile) {
@@ -216,10 +249,12 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             if (activePaymentMethod === 'ent') {
                 payload.ent_reason = entReason;
                 payload.ent_comment = entComment;
+                payload.paid_amount = 0;
             }
 
             if (activePaymentMethod === 'cts') {
                 payload.cts_comment = ctsComment;
+                payload.paid_amount = 0;
             }
 
             router.post(route('order.payment'), payload, {
@@ -257,9 +292,10 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     useEffect(() => {
         if (activePaymentMethod === 'split_payment') {
             const totalPaid = Number(cashAmount) + Number(creditCardAmount) + Number(bankTransferAmount);
-            const change = totalPaid - Number(invoiceData?.total_price);
+            const total = parsePrice(invoiceData?.total_price);
+            const change = totalPaid - total;
             setCustomerChanges((change < 0 ? 0 : change).toFixed(2));
-            setInputAmount(totalPaid); // Optional: track total paid in inputAmount too
+            setInputAmount(totalPaid.toString()); // Optional: track total paid in inputAmount too
         }
     }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData?.total_price, activePaymentMethod]);
 

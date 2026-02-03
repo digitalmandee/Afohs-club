@@ -114,15 +114,21 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Ingredients', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('ingredients.index') },
         { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index') },
-        {
-            text: 'Table Management',
-            icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" />,
-            path: route('table.management'),
-        },
+        { text: 'Transaction History', icon: <PaymentsIcon />, path: route('transaction.history') },
         {
             text: 'Order Management',
             icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
             path: route('order.management'),
+        },
+        {
+            text: 'Order History',
+            icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
+            path: route('order.history'),
+        },
+        {
+            text: 'Table Management',
+            icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" />,
+            path: route('table.management'),
         },
         // {
         //     text: 'Members',

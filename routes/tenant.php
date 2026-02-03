@@ -72,6 +72,8 @@ Route::group([
         Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
 
         Route::get('/order/management', [OrderController::class, 'orderManagement'])->name('order.management');
+        Route::get('/order/history', [OrderController::class, 'orderHistory'])->name('order.history');
+        Route::post('/order/{id}/generate-invoice', [OrderController::class, 'generateInvoice'])->name('order.generate-invoice');
         // Send to kitchen order
         Route::post('/order/send/kitchen', [OrderController::class, 'sendToKitchen'])->name('order.send-to-kitchen');
 
@@ -157,6 +159,7 @@ Route::group([
 
         // Transaction
         Route::get('/transaction', [TransactionController::class, 'index'])->name('transaction.index');
+        Route::get('/transaction/history', [TransactionController::class, 'transactionHistory'])->name('transaction.history');
         Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
         Route::post('/order-payment', [TransactionController::class, 'OrderPayment'])->name('order.payment');
 

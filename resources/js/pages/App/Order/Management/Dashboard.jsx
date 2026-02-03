@@ -1,7 +1,7 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography, Autocomplete, TextField, Chip } from '@mui/material';
+import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography, Autocomplete, TextField, Chip, Dialog, DialogContent, DialogTitle } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
 import CancelOrder from './Cancel';
 import EditOrderModal from './EditModal';
@@ -10,11 +10,17 @@ import { router } from '@inertiajs/react';
 import { enqueueSnackbar } from 'notistack';
 import debounce from 'lodash.debounce';
 import axios from 'axios';
+import PaymentNow from '@/components/App/Invoice/PaymentNow';
+import Receipt from '@/components/App/Invoice/Receipt';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ orders, allrestaurants, filters }) => {
+const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
+    // Orders State loaded via Axios
+    const [orders, setOrders] = useState(initialOrders || { data: [], current_page: 1, last_page: 1 });
+    const [loading, setLoading] = useState(true);
+
     const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
@@ -25,6 +31,10 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
     const [searchName, setSearchName] = useState(filters.search_name || '');
     const [searchMembership, setSearchMembership] = useState(filters.search_membership || '');
     const [customerType, setCustomerType] = useState(filters.customer_type || 'all');
+    const [type, setType] = useState(filters.type || 'all');
+    const [time, setTime] = useState(filters.time || 'all');
+    const [startDate, setStartDate] = useState(filters.start_date || '');
+    const [endDate, setEndDate] = useState(filters.end_date || '');
 
     // Suggestions State
     const [suggestions, setSuggestions] = useState([]);
@@ -133,56 +143,45 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
             }, 300),
         [],
     );
+    // ------------- Data Fetching Logic -------------
 
-    // Fetch Membership Suggestions
-    const fetchMembershipSuggestions = useMemo(
-        () =>
-            debounce(async (query) => {
-                if (!query) {
-                    setMembershipSuggestions([]);
-                    return;
-                }
-                try {
-                    const response = await axios.get(route('api.orders.search-customers'), {
-                        params: { query, type: 'all' },
-                    });
-                    setMembershipSuggestions(response.data);
-                } catch (error) {
-                    console.error('Error fetching membership suggestions:', error);
-                }
-            }, 300),
-        [],
-    );
+    const fetchOrders = (page = 1) => {
+        setLoading(true);
+        axios
+            .get(route('order.management'), {
+                params: {
+                    page,
+                    search_id: searchId,
+                    search_name: searchName,
+                    search_membership: searchMembership,
+                    time: time,
+                    type: type === 'all' ? undefined : type,
+                    customer_type: customerType === 'all' ? undefined : customerType,
+                    start_date: startDate,
+                    end_date: endDate,
+                },
+                headers: {
+                    Accept: 'application/json', // Force JSON response
+                },
+            })
+            .then((res) => {
+                setOrders(res.data);
+                setLoading(false);
+            })
+            .catch((err) => {
+                console.error(err);
+                setLoading(false);
+                enqueueSnackbar('Failed to load orders', { variant: 'error' });
+            });
+    };
 
     useEffect(() => {
-        if (searchName) {
-            fetchSuggestions(searchName, customerType);
-        } else {
-            setSuggestions([]);
-        }
-    }, [searchName, customerType]);
-
-    useEffect(() => {
-        if (searchMembership) {
-            fetchMembershipSuggestions(searchMembership);
-        } else {
-            setMembershipSuggestions([]);
-        }
-    }, [searchMembership]);
+        // Initial load
+        fetchOrders();
+    }, []); // Only on mount
 
     const handleApply = () => {
-        router.get(
-            route('order.management'),
-            {
-                ...filters,
-                search_id: searchId,
-                search_name: searchName,
-                search_membership: searchMembership,
-                customer_type: customerType,
-                page: 1,
-            },
-            { preserveState: true },
-        );
+        fetchOrders(1);
     };
 
     const handleReset = () => {
@@ -190,7 +189,124 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
         setSearchName('');
         setSearchMembership('');
         setCustomerType('all');
-        router.get(route('order.management'), {}, { preserveState: true });
+        setType('all');
+        setTime('all');
+        setStartDate('');
+        setEndDate('');
+        setLoading(true);
+        axios.get(route('order.management')).then((res) => {
+            setOrders(res.data);
+            setLoading(false);
+        });
+    };
+
+    const handleSuggestionFetch = useMemo(
+        () =>
+            debounce((inputValue, type) => {
+                if (!inputValue) return;
+                setLoadingSuggestions(true);
+                axios
+                    .get(route('api.orders.search-customers'), { params: { query: inputValue, type } })
+                    .then((response) => {
+                        const formatted = response.data.map((item) => ({
+                            ...item,
+                            label: item.name || item.full_name,
+                        }));
+                        if (type === 'membership') {
+                            setMembershipSuggestions(formatted);
+                        } else {
+                            setSuggestions(formatted);
+                        }
+                    })
+                    .catch((error) => console.error(error))
+                    .finally(() => setLoadingSuggestions(false));
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        if (searchName) handleSuggestionFetch(searchName, customerType);
+        else setSuggestions([]);
+    }, [searchName, customerType]);
+
+    useEffect(() => {
+        if (searchMembership)
+            handleSuggestionFetch(searchMembership, 'all'); // Assuming membership search is for all types
+        else setMembershipSuggestions([]);
+    }, [searchMembership]);
+
+    // ------------------------------------------------
+
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [billModalOpen, setBillModalOpen] = useState(false); // For Bill/Receipt Print
+    const [selectedInvoice, setSelectedInvoice] = useState(null); // For PaymentNow
+
+    // For Receipt Component
+    const getReceiptData = (order) => {
+        if (!order) return null;
+        // If order has invoice attach it or map data
+        // For Generate Invoice print -> show "Bill" / "Unpaid Invoice"
+        return {
+            id: order.id,
+            order_no: order.id,
+            start_date: order.start_date,
+            date: order.paid_at || new Date().toISOString(),
+            amount: order.amount || 0, // subtotal
+            discount: order.discount || 0,
+            tax: order.tax_rate || order.tax || 0,
+            total_price: order.total_price, // grand total
+            order_type: order.order_type,
+            member: order.member,
+            customer: order.customer,
+            employee: order.employee,
+            table: order.table,
+            // Items need to be mapped if structure differs
+            order_items: order.order_items?.map((item) => ({
+                order_item: item.order_item || item, // handle structure variations
+                name: (item.order_item || item).name,
+                quantity: (item.order_item || item).quantity,
+                price: (item.order_item || item).price,
+                total_price: (item.order_item || item).total_price,
+            })),
+            invoice_no: order.invoice?.invoice_no || 'DRAFT', // Show invoice no if exists
+            status: order.payment_status === 'paid' ? 'Paid' : 'Unpaid',
+        };
+    };
+
+    const handleGenerateInvoice = (order) => {
+        axios
+            .post(route('order.generate-invoice', { id: order.id }))
+            .then((response) => {
+                const { invoice, order: updatedOrder } = response.data;
+                enqueueSnackbar('Invoice generated successfully!', { variant: 'success' });
+
+                // Update local state without reload
+                fetchOrders(orders.current_page);
+
+                // Show Print Modal
+                setSelectedCard({ ...updatedOrder, invoice }); // Ensure updated order is selected
+                setBillModalOpen(true);
+            })
+            .catch((error) => {
+                console.error(error);
+                enqueueSnackbar('Failed to generate invoice.', { variant: 'error' });
+            });
+    };
+
+    const handlePayNow = (order) => {
+        if (!order.invoice) {
+            enqueueSnackbar('No invoice found for this order.', { variant: 'error' });
+            return;
+        }
+        // Prepare data for PaymentNow
+        // PaymentNow expects `invoiceData` which matches FinancialInvoice structure
+        // PaymentNow expects the Order object (or object with Order ID)
+        const invoiceData = {
+            ...order,
+            invoice_no: order.invoice?.invoice_no, // Attach invoice no specifically
+        };
+        setSelectedInvoice(invoiceData);
+        setPaymentModalOpen(true);
     };
 
     return (
@@ -221,24 +337,6 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                             <h2 className="fw-normal mb-0" style={{ color: '#063455', fontSize: '30px' }}>
                                 Order Management
                             </h2>
-                        </Box>
-
-                        {/* Right - Search + Filter */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Button
-                                variant="outlined"
-                                startIcon={<FilterIcon />}
-                                style={{
-                                    borderRadius: '0px',
-                                    color: '#063455',
-                                    border: '1px solid #063455',
-                                    textTransform: 'none',
-                                    height: '40px',
-                                }}
-                                onClick={openFilter}
-                            >
-                                Filter
-                            </Button>
                         </Box>
                     </Box>
 
@@ -390,160 +488,190 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                         </Grid>
                     </Box>
 
-                    <Grid
-                        container
-                        spacing={3}
-                        sx={{
-                            mt: 2,
-                        }}
-                    >
-                        {orders.data.length > 0 ? (
-                            orders.data.map((card, index) => (
-                                <Grid item xs={12} sm={6} md={4} key={index}>
-                                    <Paper
-                                        elevation={1}
-                                        sx={{
-                                            maxWidth: 360,
-                                            mx: 'auto',
-                                            borderRadius: 1,
-                                            overflow: 'hidden',
-                                            border: '1px solid #E3E3E3',
-                                        }}
-                                    >
-                                        {/* Header */}
-                                        <Box sx={{ bgcolor: card.status === 'cancelled' ? '#FF0000' : card.status === 'refund' ? '#FFA500' : card.status === 'in_progress' ? '#E6E6E6' : card.status === 'completed' ? '#4BB543' : '#063455', color: card.status === 'cancelled' ? '#FFFFFF' : card.status === 'refund' ? '#FFFFFF' : card.status === 'in_progress' ? '#000000' : card.status === 'completed' ? '#FFFFFF' : '#FFFFFF', p: 2, position: 'relative' }}>
-                                            <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
-                                            <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
-                                                {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer ? card.customer.name : card.employee?.name}`}
-                                                <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
-                                                    ({card.order_type})
-                                                </Typography>
-                                            </Typography>
+                    {/* Orders Grid */}
+                    {/* Add Loading Indicator */}
+                    {loading && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                            <Typography variant="h6" color="text.secondary">
+                                Loading orders...
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {!loading && (
+                        <Grid
+                            container
+                            spacing={3}
+                            sx={{
+                                mt: 2,
+                            }}
+                        >
+                            {orders.data && orders.data.length > 0 ? (
+                                orders.data.map((card, index) => (
+                                    <Grid item xs={12} sm={6} md={4} key={index}>
+                                        <Paper
+                                            elevation={1}
+                                            sx={{
+                                                maxWidth: 360,
+                                                mx: 'auto',
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                                border: '1px solid #E3E3E3',
+                                            }}
+                                        >
+                                            {/* Header - Color Logic: RED=in kitchen/pending, BLUE=completed/awaiting payment */}
                                             <Box
                                                 sx={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    bgcolor: '#0066cc',
-                                                    width: 'fit-content',
-                                                    px: 1,
-                                                    py: 0.5,
-                                                    borderRadius: 0.5,
+                                                    bgcolor:
+                                                        card.status === 'cancelled'
+                                                            ? '#FF0000'
+                                                            : card.status === 'refund'
+                                                              ? '#FFA500'
+                                                              : card.status === 'completed' || card.payment_status === 'awaiting'
+                                                                ? '#1976D2' // BLUE - invoice generated, awaiting payment
+                                                                : '#D32F2F', // RED - in kitchen / active
+                                                    color: '#FFFFFF',
+                                                    p: 2,
+                                                    position: 'relative',
                                                 }}
                                             >
-                                                <AccessTime fontSize="small" sx={{ fontSize: 16, color: '#fff', mr: 0.5 }} />
-                                                <Typography variant="caption" sx={{ color: '#fff' }}>
-                                                    {card.start_time}
+                                                <Typography sx={{ fontWeight: 500, mb: 0.5, fontSize: '18px' }}>#{card.id}</Typography>
+                                                <Typography sx={{ fontWeight: 500, mb: 2, fontSize: '18px' }}>
+                                                    {card.member ? `${card.member?.full_name} (${card.member?.membership_no})` : `${card.customer ? card.customer.name : card.employee?.name}`}
+                                                    <Typography component="span" variant="body2" textTransform="capitalize" sx={{ ml: 0.3, opacity: 0.8 }}>
+                                                        ({card.order_type})
+                                                    </Typography>
                                                 </Typography>
-                                            </Box>
-                                            <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                                                <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member?.member_type?.name}</Typography>
-                                                <Box display="flex">
-                                                    <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
-                                                    <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>
-                                                        <img
-                                                            src="/assets/food-tray.png"
-                                                            alt=""
-                                                            style={{
-                                                                width: 24,
-                                                                height: 24,
-                                                            }}
-                                                        />
-                                                    </Avatar>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        bgcolor: '#0066cc',
+                                                        width: 'fit-content',
+                                                        px: 1,
+                                                        py: 0.5,
+                                                        borderRadius: 0.5,
+                                                    }}
+                                                >
+                                                    <AccessTime fontSize="small" sx={{ fontSize: 16, color: '#fff', mr: 0.5 }} />
+                                                    <Typography variant="caption" sx={{ color: '#fff' }}>
+                                                        {card.start_time}
+                                                    </Typography>
+                                                </Box>
+                                                <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                                                    <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member?.member_type?.name}</Typography>
+                                                    <Box display="flex">
+                                                        <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
+                                                        <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>
+                                                            <img
+                                                                src="/assets/food-tray.png"
+                                                                alt=""
+                                                                style={{
+                                                                    width: 24,
+                                                                    height: 24,
+                                                                }}
+                                                            />
+                                                        </Avatar>
+                                                    </Box>
                                                 </Box>
                                             </Box>
-                                        </Box>
 
-                                        {/* Order Items */}
-                                        <List sx={{ py: 0 }}>
-                                            {card.order_items.slice(0, 4).map((item, index) => (
-                                                <ListItem key={index} divider={index < card.order_items.length - 1} sx={{ py: 1, px: 2, textDecoration: item.status === 'cancelled' ? 'line-through' : 'none', opacity: item.status === 'cancelled' ? 0.6 : 1 }}>
-                                                    <ListItemText
-                                                        sx={{
-                                                            color: '#121212',
-                                                            fontWeight: 500,
-                                                            fontSize: '14px',
+                                            {/* Order Items */}
+                                            <List sx={{ py: 0 }}>
+                                                {card.order_items.slice(0, 4).map((item, index) => (
+                                                    <ListItem key={index} divider={index < card.order_items.length - 1} sx={{ py: 1, px: 2, textDecoration: item.status === 'cancelled' ? 'line-through' : 'none', opacity: item.status === 'cancelled' ? 0.6 : 1 }}>
+                                                        <ListItemText
+                                                            sx={{
+                                                                color: '#121212',
+                                                                fontWeight: 500,
+                                                                fontSize: '14px',
+                                                            }}
+                                                            primary={item.order_item.name}
+                                                        />
+                                                        <Typography variant="body2" sx={{ color: '#121212', fontWeight: 500, fontSize: '14px' }}>
+                                                            {item.order_item.quantity}x
+                                                        </Typography>
+                                                    </ListItem>
+                                                ))}
+
+                                                {/* Show More */}
+                                                {card.order_items.length > 4 && (
+                                                    <ListItem sx={{ py: 1.5, px: 2, color: '#1976d2', cursor: 'pointer' }}>
+                                                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                                            Show More ({card.order_items.length - 4})
+                                                        </Typography>
+                                                    </ListItem>
+                                                )}
+                                            </List>
+
+                                            {/* Action Buttons */}
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', p: 2, gap: 1 }}>
+                                                <Box sx={{ display: 'flex', gap: 2 }}>
+                                                    <Button
+                                                        variant="outlined"
+                                                        fullWidth
+                                                        disabled={card.status === 'cancelled' || card.status === 'completed'} // Disable cancel if completed
+                                                        sx={{ borderColor: '#003153', color: '#003153', bgcolor: card.status === 'cancelled' ? '#E3E3E3' : 'transparent', textTransform: 'none', py: 1 }}
+                                                        onClick={() => {
+                                                            setSelectedCard(card);
+                                                            handleOpenCancelModal();
                                                         }}
-                                                        primary={item.order_item.name}
-                                                    />
-                                                    <Typography variant="body2" sx={{ color: '#121212', fontWeight: 500, fontSize: '14px' }}>
-                                                        {item.order_item.quantity}x
-                                                    </Typography>
-                                                </ListItem>
-                                            ))}
+                                                    >
+                                                        {card.status === 'cancelled' ? 'Cancelled' : 'Cancel'}
+                                                    </Button>
+                                                    <Button
+                                                        variant="contained"
+                                                        fullWidth
+                                                        disabled={card.status === 'completed' || card.status === 'cancelled'} // Disable Edit if completed/cancelled
+                                                        sx={{
+                                                            bgcolor: '#003153',
+                                                            '&:hover': { bgcolor: '#00254d' },
+                                                            textTransform: 'none',
+                                                            py: 1,
+                                                        }}
+                                                        onClick={() => {
+                                                            setSelectedCard(card);
+                                                            setOrderItems(card.order_items);
+                                                            setOpenModal(true);
+                                                        }}
+                                                    >
+                                                        Edit
+                                                    </Button>
+                                                </Box>
 
-                                            {/* Show More */}
-                                            {card.order_items.length > 4 && (
-                                                <ListItem sx={{ py: 1.5, px: 2, color: '#1976d2', cursor: 'pointer' }}>
-                                                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                        Show More ({card.order_items.length - 4})
-                                                    </Typography>
-                                                </ListItem>
-                                            )}
-                                        </List>
-
-                                        {/* Action Buttons */}
-                                        <Box sx={{ display: 'flex', p: 2, gap: 2 }}>
-                                            <Button
-                                                variant="outlined"
-                                                fullWidth
-                                                disabled={card.status === 'cancelled'}
-                                                sx={{ borderColor: '#003153', color: '#003153', bgcolor: card.status === 'cancelled' ? '#E3E3E3' : 'transparent', textTransform: 'none', py: 1 }}
-                                                onClick={() => {
-                                                    setSelectedCard(card);
-                                                    handleOpenCancelModal();
-                                                }}
-                                            >
-                                                {card.status === 'cancelled' ? 'Cancelled' : 'Cancel'}
-                                            </Button>
-                                            <Button
-                                                variant="contained"
-                                                fullWidth
-                                                sx={{
-                                                    bgcolor: '#003153',
-                                                    '&:hover': { bgcolor: '#00254d' },
-                                                    textTransform: 'none',
-                                                    py: 1,
-                                                }}
-                                                onClick={() => {
-                                                    setSelectedCard(card);
-                                                    setOrderItems(card.order_items);
-                                                    setOpenModal(true);
-                                                }}
-                                            >
-                                                Edit
-                                            </Button>
-                                        </Box>
-                                    </Paper>
+                                                {/* Generate Invoice / Pay Now Buttons */}
+                                                {card.status !== 'cancelled' && card.status !== 'refund' && (
+                                                    <Box>
+                                                        {!card.invoice ? (
+                                                            <Button variant="contained" fullWidth color="secondary" sx={{ textTransform: 'none', py: 1, bgcolor: '#ff9800', '&:hover': { bgcolor: '#f57c00' } }} onClick={() => handleGenerateInvoice(card)}>
+                                                                Generate Invoice
+                                                            </Button>
+                                                        ) : (
+                                                            <Button variant="contained" fullWidth color="success" startIcon={<AccessTime />} sx={{ textTransform: 'none', py: 1, bgcolor: '#4caf50', '&:hover': { bgcolor: '#388e3c' } }} onClick={() => handlePayNow(card)}>
+                                                                Pay Now
+                                                            </Button>
+                                                        )}
+                                                    </Box>
+                                                )}
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                ))
+                            ) : (
+                                <Grid item xs={12}>
+                                    <Typography variant="body1" sx={{ textAlign: 'center', mt: 3 }}>
+                                        No orders found.
+                                    </Typography>
                                 </Grid>
-                            ))
-                        ) : (
-                            <Grid item xs={12}>
-                                <Typography variant="body1" sx={{ textAlign: 'center', mt: 3 }}>
-                                    No orders found.
-                                </Typography>
-                            </Grid>
-                        )}
-                    </Grid>
+                            )}
+                        </Grid>
+                    )}
 
-                    <Box sx={{ display: 'flex', justifyContent: 'end', py: 4 }}>
-                        <Pagination
-                            count={orders.last_page}
-                            page={orders.current_page}
-                            onChange={(e, page) =>
-                                router.get(
-                                    route('order.management'),
-                                    {
-                                        page,
-                                        search_id: searchId,
-                                        search_name: searchName,
-                                        search_membership: searchMembership,
-                                        ...filters,
-                                    },
-                                    { preserveState: true },
-                                )
-                            }
-                        />
-                    </Box>
+                    {!loading && (
+                        <Box sx={{ display: 'flex', justifyContent: 'end', py: 4 }}>
+                            <Pagination count={orders.last_page || 1} page={orders.current_page || 1} onChange={(e, page) => fetchOrders(page)} />
+                        </Box>
+                    )}
                     {showCancelModal && <CancelOrder order={selectedCard} onClose={handleCloseCancelModal} onConfirm={handleConfirmCancel} />}
                     <Drawer
                         anchor="right"
@@ -567,6 +695,34 @@ const Dashboard = ({ orders, allrestaurants, filters }) => {
                         setOrderItems={setOrderItems}
                         onSave={(status) => onSave(status)}
                     />
+
+                    {/* PaymentModal */}
+                    {paymentModalOpen && selectedInvoice && (
+                        <PaymentNow
+                            invoiceData={selectedInvoice}
+                            openPaymentModal={paymentModalOpen}
+                            handleClosePayment={() => setPaymentModalOpen(false)}
+                            openSuccessPayment={() => {
+                                setPaymentModalOpen(false);
+                                fetchOrders(orders.current_page); /* Reload current page */
+                            }}
+                            setSelectedOrder={setSelectedCard}
+                        />
+                    )}
+
+                    {/* Receipt/Bill Modal */}
+                    {billModalOpen && selectedCard && (
+                        <Dialog open={billModalOpen} onClose={() => setBillModalOpen(false)} maxWidth="sm" fullWidth>
+                            <Box sx={{ p: 2 }}>
+                                <Receipt invoiceData={getReceiptData(selectedCard)} openModal={true} />
+                                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+                                    <Button onClick={() => setBillModalOpen(false)} variant="outlined">
+                                        Close
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </Dialog>
+                    )}
                 </Box>
             </div>
         </>
