@@ -21,6 +21,7 @@ class Order extends Model
         'event_booking_id',
         'cashier_id',
         'waiter_id',
+        'rider_id',
         'table_id',
         'order_type',
         'person_count',
@@ -97,6 +98,11 @@ class Order extends Model
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id', 'id');
+    }
+
+    public function rider()
+    {
+        return $this->belongsTo(Employee::class, 'rider_id', 'id');
     }
 
     public function deductedInPayslip()

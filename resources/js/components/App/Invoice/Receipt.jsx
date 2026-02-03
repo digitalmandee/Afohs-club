@@ -174,6 +174,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             <div class="divider"></div>
 
             ${data.order_items
+                .filter((item) => item.status !== 'cancelled')
                 .map(
                     (item) => `
               <div style="margin-bottom: 10px;">
@@ -306,19 +307,21 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             <Box sx={styles.receiptDivider} />
 
             {paymentData.order_items &&
-                paymentData.order_items.map((item, index) => (
-                    <Box key={index} mb={1.5}>
-                        <Typography variant="caption" fontWeight="medium">
-                            {item.order_item?.name || item.name}
-                        </Typography>
-                        <Box sx={styles.receiptRow}>
-                            <Typography variant="caption" color="text.secondary">
-                                {item.order_item?.quantity || item.quantity} x Rs {item.order_item?.price || item.price}
+                paymentData.order_items
+                    .filter((item) => item.status !== 'cancelled')
+                    .map((item, index) => (
+                        <Box key={index} mb={1.5}>
+                            <Typography variant="caption" fontWeight="medium">
+                                {item.order_item?.name || item.name}
                             </Typography>
-                            <Typography variant="caption">Rs {item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}</Typography>
+                            <Box sx={styles.receiptRow}>
+                                <Typography variant="caption" color="text.secondary">
+                                    {item.order_item?.quantity || item.quantity} x Rs {item.order_item?.price || item.price}
+                                </Typography>
+                                <Typography variant="caption">Rs {item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}</Typography>
+                            </Box>
                         </Box>
-                    </Box>
-                ))}
+                    ))}
 
             <Box sx={styles.receiptDivider} />
 

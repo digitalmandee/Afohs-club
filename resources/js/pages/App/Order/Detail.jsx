@@ -11,8 +11,14 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import PaymentNow from '@/components/App/Invoice/PaymentNow';
 import { objectToFormData } from '@/helpers/objectToFormData';
 
-const OrderDetail = ({ handleEditItem }) => {
+import CancelItemDialog from './Management/CancelItemDialog';
+
+const OrderDetail = ({ handleEditItem, is_new_order }) => {
     const { orderDetails, handleOrderDetailChange, clearOrderItems } = useOrderStore();
+
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+    const [itemToCancel, setItemToCancel] = useState(null);
+    const [cancelIndex, setCancelIndex] = useState(null);
 
     const [editingDiscountIndex, setEditingDiscountIndex] = useState(null);
     const [itemDiscountForm, setItemDiscountForm] = useState({ value: '', type: 'percentage' });
@@ -223,6 +229,68 @@ const OrderDetail = ({ handleEditItem }) => {
         handleOrderDetailChange('order_items', updatedItems);
         setOpenDiscountModal(false);
         setEditingDiscountIndex(null);
+    };
+
+    const handleOpenCancelDialog = (item, index, e) => {
+        e.stopPropagation();
+
+        // If item is saved (from DB) for a reservation, require cancellation reason.
+        if (orderDetails.reservation_id && item.is_saved) {
+            setItemToCancel({ order_item: item });
+            setCancelIndex(index);
+            setCancelDialogOpen(true);
+        } else {
+            // New item, just remove it directly
+            const updatedItems = [...orderDetails.order_items];
+            updatedItems.splice(index, 1);
+            handleOrderDetailChange('order_items', updatedItems);
+        }
+    };
+
+    const handleConfirmCancel = (cancelData) => {
+        const item = orderDetails.order_items[cancelIndex];
+        const updatedItems = [...orderDetails.order_items];
+
+        // Remove from active list
+        updatedItems.splice(cancelIndex, 1);
+        handleOrderDetailChange('order_items', updatedItems);
+
+        // If it's a reservation order, track as "cancelled" to send to backend
+        if (orderDetails.reservation_id) {
+            const cancelledItem = {
+                ...item,
+                quantity: cancelData.quantity, // actually we removed full item, so full qty
+                // If partial cancel supported, logic is complex. Dialog supports qty input.
+                // For now assume full removal of the line item if quantity matches.
+                // If quantity < item.quantity, we should split item?
+                // Let's assume full line cancellation for simplicity first or handle split.
+            };
+
+            // If cancel qty < item qty, we should keep the remaining in updatedItems!
+            if (cancelData.quantity < item.quantity) {
+                // Add back remaining
+                const remaining = { ...item, quantity: item.quantity - cancelData.quantity };
+                remaining.total_price = remaining.quantity * remaining.price; // simplified recalc
+                updatedItems.splice(cancelIndex, 0, remaining); // put back at index
+                handleOrderDetailChange('order_items', updatedItems);
+            }
+
+            const cancelledRecord = {
+                ...item,
+                quantity: cancelData.quantity,
+                remark: cancelData.remark,
+                instructions: cancelData.instructions,
+                cancelType: cancelData.cancelType,
+                status: 'cancelled',
+            };
+
+            const currentCancelled = orderDetails.cancelled_items || [];
+            handleOrderDetailChange('cancelled_items', [...currentCancelled, cancelledRecord]);
+        }
+
+        setCancelDialogOpen(false);
+        setItemToCancel(null);
+        setCancelIndex(null);
     };
 
     useEffect(() => {
@@ -534,6 +602,9 @@ const OrderDetail = ({ handleEditItem }) => {
                                                     </Typography>
                                                 )}
                                             </Box>
+                                            <IconButton size="small" color="error" onClick={(e) => handleOpenCancelDialog(item, index, e)} sx={{ mt: 1 }}>
+                                                <HighlightOffIcon fontSize="small" />
+                                            </IconButton>
                                         </Box>
                                         {item.variants.length > 0 &&
                                             item.variants.map((variant, variantIndex) => (
@@ -770,7 +841,7 @@ const OrderDetail = ({ handleEditItem }) => {
                         textTransform: 'none',
                     }}
                 >
-                    Send to kitchen
+                    {orderDetails.order_type === 'reservation' ? 'Proceed' : 'Send to kitchen'}
                 </Button>
                 <Button
                     variant="contained"
@@ -795,20 +866,59 @@ const OrderDetail = ({ handleEditItem }) => {
 
                     {/* Select Waiter */}
                     <Autocomplete
-                        label="Select Waiter"
                         fullWidth
+                        size="small"
                         options={waiters}
                         value={orderDetails.waiter}
                         getOptionLabel={(option) => option?.name || ''}
                         onChange={(event, value) => handleAutocompleteChange(event, value, 'waiter')}
                         renderInput={(params) => <TextField {...params} fullWidth sx={{ p: 0 }} placeholder="Select Waiter" variant="outlined" />}
-                        filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
-                        renderOption={(props, option) => (
-                            <li {...props}>
-                                <span>{option.name}</span>
-                                <span style={{ color: 'gray', fontSize: '0.875rem' }}> ({option.email})</span>
-                            </li>
-                        )}
+                        filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email} ${option.employee_id}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
+                        renderOption={(props, option) => {
+                            const getStatusChipStyles = (status) => {
+                                const s = (status || '').toLowerCase();
+                                if (s === 'active') return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
+                                if (s === 'suspended' || s === 'inactive') return { backgroundColor: '#fff3e0', color: '#ef6c00' };
+                                return { backgroundColor: '#ffebee', color: '#c62828' };
+                            };
+                            return (
+                                <li {...props} key={option.id}>
+                                    <Box sx={{ width: '100%' }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {option.employee_id}
+                                            </Typography>
+                                            {option.status && (
+                                                <Box
+                                                    component="span"
+                                                    sx={{
+                                                        height: '20px',
+                                                        fontSize: '10px',
+                                                        px: 1,
+                                                        borderRadius: '10px',
+                                                        ...getStatusChipStyles(option.status),
+                                                        textTransform: 'capitalize',
+                                                        ml: 1,
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    {option.status}
+                                                </Box>
+                                            )}
+                                        </Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {option.name}
+                                        </Typography>
+                                        {(option.department_name || option.subdepartment_name || option.company) && (
+                                            <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '10px' }}>
+                                                {[option.department_name, option.subdepartment_name, option.company].filter(Boolean).join(' • ')}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </li>
+                            );
+                        }}
                     />
 
                     {/* Select Time */}
@@ -819,7 +929,7 @@ const OrderDetail = ({ handleEditItem }) => {
                             Cancel
                         </Button>
                         <Button
-                            disabled={!orderDetails.waiter || !orderDetails.time}
+                            disabled={!orderDetails.time}
                             variant="contained"
                             onClick={() => {
                                 // merge waiter/time into order and send
@@ -827,7 +937,7 @@ const OrderDetail = ({ handleEditItem }) => {
                                 handleClosePopup();
                             }}
                         >
-                            Confirm & Send
+                            {is_new_order ? 'Save Pre-Order' : 'Send to Kitchen'}
                         </Button>
                     </Box>
                 </DialogContent>
@@ -835,6 +945,8 @@ const OrderDetail = ({ handleEditItem }) => {
 
             {/* Payment Modal */}
             <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: 'amount', discount_value: discountAmount, discount: discountAmount, price: subtotal, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
+
+            <CancelItemDialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} onConfirm={handleConfirmCancel} item={itemToCancel} />
         </>
     );
 };

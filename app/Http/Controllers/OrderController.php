@@ -445,6 +445,7 @@ class OrderController extends Controller
                     'member:id,full_name,membership_no',
                     'customer:id,name,customer_no',
                     'table:id,table_no,floor_id',
+                    'order.orderItems'
                 ])
                 ->first();
         }
@@ -580,12 +581,18 @@ class OrderController extends Controller
 
         $orderNo = $this->getOrderNo();
 
+        // Rider
+        if ($request->filled('rider_id')) {
+            $orderContext['rider_id'] = $request->rider_id;
+        }
+
         return Inertia::render('App/Order/OrderMenu', [
             'totalSavedOrders' => $totalSavedOrders,
             'allrestaurants' => $allrestaurants,
             'activeTenantId' => $activeTenantId,
             'firstCategoryId' => $firstCategoryId,
             'reservation' => $reservation,  // Reservation flow
+            'is_new_order' => $request->boolean('is_new_order'),  // Flag to distinguish New Reservation flow
             'orderContext' => $orderContext,  // Direct order flow with related details
             'orderNo' => $orderNo,
         ]);
@@ -620,6 +627,7 @@ class OrderController extends Controller
             'payment_note' => 'nullable|string',
             'reservation_id' => 'nullable|exists:reservations,id',
             'room_booking_id' => 'nullable|exists:room_bookings,id',
+            'rider_id' => 'nullable|exists:employees,id',
         ]);
 
         DB::beginTransaction();
@@ -633,29 +641,33 @@ class OrderController extends Controller
             }
 
             $orderData = [
-                'waiter_id' => $request->waiter['id'] ?? null,
-                'table_id' => $request->table['id'] ?? null,
+                'waiter_id' => $request->input('waiter.id'),
+                'table_id' => $request->input('table.id'),
                 'order_type' => $request->order_type,
                 'person_count' => $request->person_count,
                 'start_date' => Carbon::parse($request->date)->toDateString(),
                 'start_time' => $request->time,
                 'down_payment' => $request->down_payment,
                 'amount' => $request->price,
-                'status' => 'in_progress',
                 'kitchen_note' => $request->kitchen_note,
                 'staff_note' => $request->staff_note,
                 'payment_note' => $request->payment_note,
                 'reservation_id' => $request->reservation_id ?? null,
                 'room_booking_id' => $request->room_booking_id ?? null,
-                'address' => $request->address
+                'address' => $request->address,
+                'rider_id' => $request->rider_id ?? null,
+                'status' => ($request->order_type === 'reservation') ? 'saved' : 'in_progress',
             ];
 
-            if ($request->member['booking_type'] == 'member') {
-                $orderData['member_id'] = $request->member['id'];
-            } elseif ($request->member['booking_type'] == 'guest') {
-                $orderData['customer_id'] = $request->member['id'];
+            $bookingType = $request->input('member.booking_type');
+            $memberId = $request->input('member.id');
+
+            if ($bookingType == 'member') {
+                $orderData['member_id'] = $memberId;
+            } elseif ($bookingType == 'guest') {
+                $orderData['customer_id'] = $memberId;
             } else {
-                $orderData['employee_id'] = $request->member['id'];
+                $orderData['employee_id'] = $memberId;
             }
 
             if ($orderType == 'takeaway') {
@@ -686,21 +698,58 @@ class OrderController extends Controller
                 $orderData
             );
 
-            // Mark reservation completed
-            if ($request->order_type === 'reservation' && $request->filled('reservation_id')) {
+            // If updating a DRAFT (saved) order, wipe items first to allow clean overwrite
+            if (!$order->wasRecentlyCreated && $order->status === 'saved') {
+                foreach ($order->orderItems as $existingItem) {
+                    $itemData = $existingItem->order_item;
+                    $qty = $itemData['quantity'] ?? 1;
+                    $prodId = $itemData['id'] ?? null;
+
+                    if ($prodId) {
+                        \App\Models\Product::where('id', $prodId)->increment('current_stock', $qty);
+                    }
+
+                    if (!empty($itemData['variants'])) {
+                        foreach ($itemData['variants'] as $variant) {
+                            $vId = $variant['id'] ?? null;
+                            if ($vId) {
+                                \App\Models\ProductVariantValue::where('id', $vId)->increment('stock', 1);
+                            }
+                        }
+                    }
+                    $existingItem->delete();
+                }
+            }
+
+            // Mark reservation completed (ONLY if order is active, not saved)
+            if ($orderData['status'] !== 'saved' && $request->order_type === 'reservation' && $request->filled('reservation_id')) {
                 Reservation::where('id', $request->reservation_id)->update([
                     'status' => 'completed'
                 ]);
             }
 
-            $groupedByKitchen = collect($request->order_items)->groupBy('tenant_id');
+            $groupedByKitchen = collect($request->order_items)
+                ->filter(function ($item) {
+                    return !empty($item['id']);
+                })
+                ->groupBy('tenant_id');
             $totalCostPrice = 0;
 
             foreach ($groupedByKitchen as $kitchenId => $items) {
+                // Filter out invalid items (missing ID)
+                $items = collect($items)->filter(function ($item) {
+                    return !empty($item['id']);
+                });
+                if ($items->isEmpty())
+                    continue;
+
                 $safeKitchenId = is_numeric($kitchenId) ? (int) $kitchenId : (string) $kitchenId;
 
                 foreach ($items as $item) {
-                    $productId = $item['id'];
+                    $productId = $item['id'] ?? null;
+                    if (!$productId)
+                        continue;
+
                     $productQty = $item['quantity'] ?? 1;
 
                     $product = Product::find($productId);
@@ -713,7 +762,11 @@ class OrderController extends Controller
 
                     if (!empty($item['variants'])) {
                         foreach ($item['variants'] as $variant) {
-                            $variantValue = ProductVariantValue::find($variant['id']);
+                            $variantId = $variant['id'] ?? null;
+                            if (!$variantId)
+                                continue;
+
+                            $variantValue = ProductVariantValue::find($variantId);
                             if (!$variantValue || $variantValue->stock < 0) {
                                 throw new \Exception('Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown'));
                             }
@@ -730,6 +783,59 @@ class OrderController extends Controller
                         'order_item' => $item,
                         'status' => 'in_progress',
                     ]);
+                }
+            }
+
+            // Handle Cancelled Items (if any)
+            if ($request->has('cancelled_items')) {
+                $groupedCancelled = collect($request->cancelled_items)
+                    ->filter(function ($item) {
+                        return !empty($item['id']);
+                    })
+                    ->groupBy('tenant_id');
+
+                foreach ($groupedCancelled as $kitchenId => $items) {
+                    $safeKitchenId = is_numeric($kitchenId) ? (int) $kitchenId : (string) $kitchenId;
+
+                    foreach ($items as $item) {
+                        // Apply Stock Logic:
+                        // Since we WIPED all items (Restoring Stock), we need to consume stock again unless it's a 'Return'.
+                        // If cancelType is 'return', we do nothing (stock stays restored).
+                        // If cancelType is 'void' or 'complementary', we decrement stock (consumed).
+
+                        $cancelType = $item['cancelType'] ?? 'void';
+
+                        if ($cancelType !== 'return') {
+                            $productId = $item['id'] ?? null;
+                            $productQty = $item['quantity'] ?? 1;
+
+                            if ($productId) {
+                                $product = \App\Models\Product::find($productId);
+                                if ($product) {
+                                    $product->decrement('current_stock', $productQty);
+                                }
+                            }
+
+                            if (!empty($item['variants'])) {
+                                foreach ($item['variants'] as $variant) {
+                                    $vId = $variant['id'] ?? null;
+                                    if ($vId) {
+                                        \App\Models\ProductVariantValue::where('id', $vId)->decrement('stock', 1);
+                                    }
+                                }
+                            }
+                        }
+
+                        OrderItem::create([
+                            'order_id' => $order->id,
+                            'tenant_id' => $safeKitchenId,
+                            'order_item' => $item,
+                            'status' => 'cancelled',  // Explicitly marked
+                            'remark' => $item['remark'] ?? null,
+                            'instructions' => $item['instructions'] ?? null,
+                            'cancelType' => $cancelType,
+                        ]);
+                    }
                 }
             }
 
@@ -757,18 +863,18 @@ class OrderController extends Controller
                     ],
                 ];
 
-                if ($request->member['booking_type'] == 'member') {
-                    $invoiceData['member_id'] = $request->member['id'];
+                if ($bookingType == 'member') {
+                    $invoiceData['member_id'] = $memberId;
                     $payerType = \App\Models\Member::class;
-                    $payerId = $request->member['id'];
-                } elseif ($request->member['booking_type'] == 'guest') {
-                    $invoiceData['customer_id'] = $request->member['id'];
+                    $payerId = $memberId;
+                } elseif ($bookingType == 'guest') {
+                    $invoiceData['customer_id'] = $memberId;
                     $payerType = \App\Models\Customer::class;
-                    $payerId = $request->member['id'];
+                    $payerId = $memberId;
                 } else {
-                    $invoiceData['employee_id'] = $request->member['id'];
+                    $invoiceData['employee_id'] = $memberId;
                     $payerType = \App\Models\Employee::class;
-                    $payerId = $request->member['id'];
+                    $payerId = $memberId;
                 }
 
                 if ($orderType == 'takeaway') {
@@ -1011,7 +1117,10 @@ class OrderController extends Controller
                 $order->orderItems()->create([
                     'tenant_id' => $itemData['order_item']['tenant_id'] ?? null,
                     'order_item' => $itemData['order_item'],
-                    'status' => 'pending',
+                    'status' => $itemData['status'] ?? 'pending',
+                    'remark' => $itemData['remark'] ?? null,
+                    'instructions' => $itemData['instructions'] ?? null,
+                    'cancelType' => $itemData['cancelType'] ?? null,
                 ]);
             }
 
@@ -1066,6 +1175,11 @@ class OrderController extends Controller
 
                 // Update order payment_status to 'awaiting'
                 $order->update(['payment_status' => 'awaiting']);
+
+                // Mark reservation as completed
+                if ($order->order_type === 'reservation' && $order->reservation_id) {
+                    Reservation::where('id', $order->reservation_id)->update(['status' => 'completed']);
+                }
 
                 // Create Invoice Items & Debit Transaction (Aggregated)
                 $orderItems = $order->orderItems()->where('status', '!=', 'cancelled')->get();
@@ -1126,6 +1240,35 @@ class OrderController extends Controller
                         'invoice_id' => $financialInvoice->id,
                         'created_by' => Auth::id(),
                     ]);
+
+                    // If reservation order with advance payment, create credit entry
+                    if ($order->order_type === 'reservation' && $order->reservation_id) {
+                        $reservation = Reservation::find($order->reservation_id);
+                        if ($reservation && $reservation->down_payment > 0) {
+                            // Create credit transaction for advance payment
+                            Transaction::create([
+                                'type' => 'credit',
+                                'amount' => $reservation->down_payment,
+                                'date' => now(),
+                                'description' => 'Advance Payment Adjustment - Reservation #' . $reservation->id,
+                                'payable_type' => $payerType,
+                                'payable_id' => $payerId,
+                                'reference_type' => Reservation::class,
+                                'reference_id' => $reservation->id,
+                                'invoice_id' => $financialInvoice->id,
+                                'created_by' => Auth::id(),
+                            ]);
+
+                            // Update invoice to show advance deducted
+                            $financialInvoice->update([
+                                'advance_payment' => $reservation->down_payment,
+                                'data' => array_merge($financialInvoice->data ?? [], [
+                                    'reservation_id' => $reservation->id,
+                                    'advance_deducted' => $reservation->down_payment,
+                                ]),
+                            ]);
+                        }
+                    }
                 }
             } elseif ($financialInvoice && $financialInvoice->status !== 'paid') {
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
@@ -1361,7 +1504,8 @@ class OrderController extends Controller
         $query = Order::with([
             'table:id,table_no',
             'orderItems:id,order_id,order_item,status',
-            'member:id,full_name,membership_no',
+            'member:id,member_type_id,full_name,membership_no',
+            'member.memberType:id,name',
             'customer:id,name,customer_no',
             'employee:id,employee_id,name',
             'cashier:id,name',
@@ -1390,6 +1534,21 @@ class OrderController extends Controller
             });
         }
 
+        // 👤 Customer Type filter
+        if ($request->filled('customer_type') && $request->customer_type !== 'all') {
+            switch ($request->customer_type) {
+                case 'member':
+                    $query->whereNotNull('member_id');
+                    break;
+                case 'guest':
+                    $query->whereNotNull('customer_id');
+                    break;
+                case 'employee':
+                    $query->whereNotNull('employee_id');
+                    break;
+            }
+        }
+
         // 📅 Date range filter
         if ($request->filled('start_date') && $request->filled('end_date')) {
             $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
@@ -1409,11 +1568,41 @@ class OrderController extends Controller
             $query->where('payment_status', $request->payment_status);
         }
 
+        // 💳 Payment method filter
+        if ($request->filled('payment_method') && $request->payment_method !== 'all') {
+            $query->where('payment_method', $request->payment_method);
+        }
+
+        // 🍽 Table filter
+        if ($request->filled('table_id')) {
+            $query->where('table_id', $request->table_id);
+        }
+
+        // 👨‍🍳 Waiter filter
+        if ($request->filled('waiter_id')) {
+            $query->where('waiter_id', $request->waiter_id);
+        }
+
+        // 💵 Cashier filter
+        if ($request->filled('cashier_id')) {
+            $query->where('cashier_id', $request->cashier_id);
+        }
+
         $orders = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
+
+        // Dropdown Data
+        $tables = Table::select('id', 'table_no')->get();
+        $waiters = Employee::whereHas('designation', fn($q) => $q->whereIn('name', ['Waiter', 'Waiters', 'Captain']))
+            ->select('id', 'name')
+            ->get();
+        $cashiers = User::select('id', 'name')->get();
 
         return Inertia::render('App/Order/History/Dashboard', [
             'orders' => $orders,
             'filters' => $request->all(),
+            'tables' => $tables,
+            'waiters' => $waiters,
+            'cashiers' => $cashiers,
         ]);
     }
 }

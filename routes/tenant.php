@@ -71,6 +71,9 @@ Route::group([
         Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
         Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
 
+        // Delivery Rider
+        Route::get('/riders/all', [UserController::class, 'riders'])->name('riders.all');
+
         Route::get('/order/management', [OrderController::class, 'orderManagement'])->name('order.management');
         Route::get('/order/history', [OrderController::class, 'orderHistory'])->name('order.history');
         Route::post('/order/{id}/generate-invoice', [OrderController::class, 'generateInvoice'])->name('order.generate-invoice');

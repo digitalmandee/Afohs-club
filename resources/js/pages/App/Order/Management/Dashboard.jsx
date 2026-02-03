@@ -309,6 +309,52 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         setPaymentModalOpen(true);
     };
 
+    // Riders State
+    const [riders, setRiders] = useState([]);
+    const [assignRiderOpen, setAssignRiderOpen] = useState(false);
+    const [selectedOrderForRider, setSelectedOrderForRider] = useState(null);
+    const [selectedRider, setSelectedRider] = useState('');
+
+    useEffect(() => {
+        // Fetch riders on mount
+        axios
+            .get(route('riders.all'))
+            .then((res) => {
+                if (res.data.success) {
+                    setRiders(res.data.riders);
+                }
+            })
+            .catch((err) => console.error('Failed to fetch riders', err));
+    }, []);
+
+    const handleAssignRiderClick = (order) => {
+        setSelectedOrderForRider(order);
+        setSelectedRider(order.rider_id || ''); // Pre-select if already assigned
+        setAssignRiderOpen(true);
+    };
+
+    const handleSaveRider = () => {
+        if (!selectedOrderForRider) return;
+
+        router.post(
+            route('orders.update', { id: selectedOrderForRider.id }),
+            {
+                rider_id: selectedRider,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    enqueueSnackbar('Rider assigned successfully!', { variant: 'success' });
+                    setAssignRiderOpen(false);
+                    setSelectedOrderForRider(null);
+                    setSelectedRider('');
+                    fetchOrders(orders.current_page); // Refresh orders
+                },
+                onError: () => enqueueSnackbar('Failed to assign rider.', { variant: 'error' }),
+            },
+        );
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -653,6 +699,12 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                         </>
                                                     )}
                                                 </Box>
+                                                {/* Assign Rider Button for Delivery Orders */}
+                                                {card.order_type === 'delivery' && card.status !== 'cancelled' && card.status !== 'completed' && (
+                                                    <Button variant="outlined" fullWidth color="info" sx={{ textTransform: 'none', mt: 1 }} onClick={() => handleAssignRiderClick(card)}>
+                                                        {card.rider ? `Rider: ${card.rider.name}` : 'Assign Rider'}
+                                                    </Button>
+                                                )}
                                             </Box>
                                         </Paper>
                                     </Grid>
@@ -723,6 +775,32 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                             </Box>
                         </Dialog>
                     )}
+
+                    {/* Assign Rider Dialog */}
+                    <Dialog open={assignRiderOpen} onClose={() => setAssignRiderOpen(false)}>
+                        <DialogTitle>Assign Delivery Rider</DialogTitle>
+                        <DialogContent sx={{ minWidth: 300, py: 2 }}>
+                            <FormControl fullWidth margin="dense">
+                                <InputLabel>Select Rider</InputLabel>
+                                <Select value={selectedRider} label="Select Rider" onChange={(e) => setSelectedRider(e.target.value)}>
+                                    <MenuItem value="">
+                                        <em>None</em>
+                                    </MenuItem>
+                                    {riders.map((rider) => (
+                                        <MenuItem key={rider.id} value={rider.id}>
+                                            {rider.name} ({rider.employee_id})
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                <Button onClick={() => setAssignRiderOpen(false)}>Cancel</Button>
+                                <Button variant="contained" onClick={handleSaveRider} disabled={!selectedRider}>
+                                    Assign
+                                </Button>
+                            </Box>
+                        </DialogContent>
+                    </Dialog>
                 </Box>
             </div>
         </>

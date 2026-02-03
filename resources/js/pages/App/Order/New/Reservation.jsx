@@ -6,7 +6,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { Box, Button, ClickAwayListener, FormControl, FormControlLabel, Grid, InputAdornment, Paper, Popper, Radio, RadioGroup, TextField, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, ClickAwayListener, FormControl, FormControlLabel, Grid, InputAdornment, MenuItem, Paper, Popper, Radio, RadioGroup, Select, TextField, Typography } from '@mui/material';
 import { StaticDatePicker, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -21,15 +21,65 @@ import { useEffect, useState } from 'react';
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-const ReservationDialog = ({ guestTypes }) => {
-    const { selectedFloor, selectedTable } = usePage().props;
+const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
+    // Get from props if available (for table-based navigation)
+    const { selectedFloor: propsFloor, selectedTable: propsTable } = usePage().props;
 
     const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
     const [availableSlots, setAvailableSlots] = useState([]);
+    const [slotsLoading, setSlotsLoading] = useState(false);
+
+    // Read URL params for floor, table, and date
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlFloorId = urlParams.get('floor');
+    const urlTableId = urlParams.get('table');
+    const urlDate = urlParams.get('date');
+
+    // Local floor/table selection - prefer URL params, then props
+    const [selectedFloorId, setSelectedFloorId] = useState('');
+    const [selectedTableId, setSelectedTableId] = useState('');
+    const [initialized, setInitialized] = useState(false);
+
+    // Initialize floor/table/date from URL params when floorTables are loaded
+    useEffect(() => {
+        if (!initialized && floorTables.length > 0) {
+            // Try URL params first, then props
+            const floorId = urlFloorId ? parseInt(urlFloorId) : propsFloor?.id;
+            const tableId = urlTableId ? parseInt(urlTableId) : propsTable?.id;
+
+            if (floorId) {
+                setSelectedFloorId(floorId);
+                if (tableId) {
+                    setSelectedTableId(tableId);
+                }
+            }
+
+            // Set date from URL if available
+            if (urlDate) {
+                handleOrderDetailChange('date', new Date(urlDate));
+            }
+
+            setInitialized(true);
+        }
+    }, [floorTables, initialized, urlFloorId, urlTableId, urlDate, propsFloor, propsTable]);
 
     const [paymentType, setPaymentType] = useState('percentage');
     const [errors, setErrors] = useState({});
     const [Form, setForm] = useState({});
+
+    // Derive selected floor and table objects
+    const selectedFloor = floorTables.find((f) => f.id === selectedFloorId) || propsFloor || null;
+    const selectedTable = selectedFloor?.tables?.find((t) => t.id === selectedTableId) || propsTable || null;
+
+    const handleFloorChange = (floorId) => {
+        setSelectedFloorId(floorId);
+        setSelectedTableId(''); // Reset table when floor changes
+        setAvailableSlots([]);
+    };
+
+    const handleTableChange = (tableId) => {
+        setSelectedTableId(tableId);
+    };
 
     // Day Labels and Open Calendar
     const [anchorEl, setAnchorEl] = useState(null);
@@ -53,9 +103,10 @@ const ReservationDialog = ({ guestTypes }) => {
     const openCalendar = Boolean(anchorEl); // Renamed to avoid conflict with Autocomplete 'open' state
     const id = openCalendar ? 'month-year-picker' : undefined;
 
-    const handleSaveOrder = async () => {
+    const handleSaveOrder = async (redirectToMenu = false) => {
         const newErrors = {};
 
+        if (!selectedTableId) newErrors.table = 'Please select a table.';
         if (!orderDetails.member?.id) newErrors['member.id'] = 'Please select a member.';
         if (!orderDetails.date) newErrors.date = 'Please select a date.';
         if (!orderDetails.start_time) newErrors.start_time = 'Please select start time.';
@@ -77,7 +128,7 @@ const ReservationDialog = ({ guestTypes }) => {
         }
 
         if (!orderDetails.person_count || orderDetails.person_count < 1) newErrors.person_count = 'Please enter a valid number of persons.';
-        if (orderDetails.down_payment !== undefined && orderDetails.down_payment < 0) newErrors.down_payment = 'Please enter a valid down payment.';
+        if (!orderDetails.down_payment || Number(orderDetails.down_payment) < 1) newErrors.down_payment = 'Advance payment is required (minimum Rs. 1).';
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
@@ -88,19 +139,29 @@ const ReservationDialog = ({ guestTypes }) => {
         try {
             const payload = {
                 ...orderDetails,
-                table: selectedTable?.id || null,
+                table: selectedTableId,
             };
             const response = await axios.post(route('order.reservation'), payload);
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
-            setForm({ member: null, date: '', time: '', custom_time: '', person_count: '', down_payment: '', note: '' });
-            handleOrderDetailChange('member', null);
-            handleOrderDetailChange('date', null);
-            handleOrderDetailChange('custom_time', '');
-            handleOrderDetailChange('person_count', '');
-            handleOrderDetailChange('down_payment', '');
-            handleOrderDetailChange('price', '');
-            setErrors({});
-            router.visit(route('order.new'));
+            enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
+
+            if (redirectToMenu) {
+                // If proceeding to menu, clear validation errors but keep details (or maybe not needed if redirecting?)
+                // Actually, store handled redirect. We just need to navigate.
+                // Store table selection in order details before going to menu
+                handleOrderDetailChange('table', selectedTableId);
+                router.visit(route('order.menu', { reservation_id: response.data.order.id, order_type: 'reservation', is_new_order: true }));
+            } else {
+                setForm({ member: null, date: '', time: '', custom_time: '', person_count: '', down_payment: '', note: '' });
+                handleOrderDetailChange('member', null);
+                handleOrderDetailChange('date', null);
+                handleOrderDetailChange('custom_time', '');
+                handleOrderDetailChange('person_count', '');
+                handleOrderDetailChange('down_payment', '');
+                handleOrderDetailChange('price', '');
+                setErrors({});
+                router.visit(route('order.new'));
+            }
         } catch (error) {
             if (error.response?.status === 422) {
                 setErrors(error.response.data.errors);
@@ -118,11 +179,11 @@ const ReservationDialog = ({ guestTypes }) => {
         const handleKeyDown = (e) => {
             if (e.key === 'F10' && !isDisabled) {
                 e.preventDefault(); // Optional: prevent browser behavior
-                router.visit(route('order.menu'));
+                handleSaveOrder(true);
             }
             if (e.key === 'F9') {
                 e.preventDefault(); // Optional: prevent browser behavior
-                handleSaveOrder();
+                handleSaveOrder(false); // Default save
             }
         };
 
@@ -131,15 +192,26 @@ const ReservationDialog = ({ guestTypes }) => {
     }, [isDisabled, router]);
 
     useEffect(() => {
-        if (orderDetails.date && selectedTable?.id) {
+        if (orderDetails.date && selectedTableId) {
+            const formattedDate = dayjs(orderDetails.date).format('YYYY-MM-DD');
+            console.log('Fetching time slots:', { tableId: selectedTableId, date: formattedDate, originalDate: orderDetails.date });
+
+            setSlotsLoading(true);
             axios
-                .get(route('tables.available-times', selectedTable.id), {
-                    params: { date: dayjs(orderDetails.date).format('YYYY-MM-DD') },
+                .get(route('tables.available-times', selectedTableId), {
+                    params: { date: formattedDate },
                 })
-                .then((res) => setAvailableSlots(res.data))
-                .catch((err) => console.error('Error fetching slots:', err));
+                .then((res) => {
+                    console.log('Time slots response:', res.data);
+                    setAvailableSlots(res.data);
+                })
+                .catch((err) => console.error('Error fetching slots:', err))
+                .finally(() => setSlotsLoading(false));
+        } else {
+            console.log('Cannot fetch slots - missing:', { date: orderDetails.date, tableId: selectedTableId });
+            setAvailableSlots([]);
         }
-    }, [orderDetails.date, selectedTable?.id]);
+    }, [orderDetails.date, selectedTableId]);
 
     const handleStartTimeChange = (newValue) => {
         const newStart = newValue ? newValue.format('HH:mm') : '';
@@ -240,7 +312,7 @@ const ReservationDialog = ({ guestTypes }) => {
                                     #{orderDetails.order_no}
                                 </Typography>
                             </Box>
-                            {selectedFloor?.id && (
+                            {selectedFloor?.id && selectedTable?.id && (
                                 <>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Typography variant="body2" color="text.secondary" sx={{ mr: 1, fontSize: '16px', color: '#7F7F7F' }}>
@@ -255,7 +327,7 @@ const ReservationDialog = ({ guestTypes }) => {
                                             Table:
                                         </Typography>
                                         <Typography variant="body1" fontWeight="600" color="#063455">
-                                            {selectedTable.table_no}
+                                            {selectedTable?.table_no}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -263,7 +335,7 @@ const ReservationDialog = ({ guestTypes }) => {
                                             Capacity:
                                         </Typography>
                                         <Typography variant="body1" fontWeight="600" color="#063455">
-                                            {selectedTable.capacity} Persons
+                                            {selectedTable?.capacity} Persons
                                         </Typography>
                                     </Box>
                                 </>
@@ -306,6 +378,49 @@ const ReservationDialog = ({ guestTypes }) => {
                             </Box>
                         </RadioGroup>
                     </Box>
+
+                    {/* Floor and Table Selection */}
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
+                        <Grid item xs={6}>
+                            <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
+                                Select Floor
+                            </Typography>
+                            <FormControl fullWidth size="small">
+                                <Select value={selectedFloorId} onChange={(e) => handleFloorChange(e.target.value)} displayEmpty sx={{ borderRadius: 1 }}>
+                                    <MenuItem value="" disabled>
+                                        Select Floor
+                                    </MenuItem>
+                                    {floorTables.map((floor) => (
+                                        <MenuItem key={floor.id} value={floor.id}>
+                                            {floor.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={6}>
+                            <Typography variant="body2" color="#121212" sx={{ mb: 1 }}>
+                                Select Table
+                            </Typography>
+                            <FormControl fullWidth size="small" error={!!errors.table}>
+                                <Select value={selectedTableId} onChange={(e) => handleTableChange(e.target.value)} displayEmpty disabled={!selectedFloorId} sx={{ borderRadius: 1 }}>
+                                    <MenuItem value="" disabled>
+                                        {selectedFloorId ? 'Select Table' : 'Select Floor First'}
+                                    </MenuItem>
+                                    {selectedFloor?.tables?.map((table) => (
+                                        <MenuItem key={table.id} value={table.id}>
+                                            Table {table.table_no} (Capacity: {table.capacity})
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                                {errors.table && (
+                                    <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                                        {errors.table}
+                                    </Typography>
+                                )}
+                            </FormControl>
+                        </Grid>
+                    </Grid>
 
                     {/* Customer Name Search */}
                     <Box sx={{ mb: 2 }}>
@@ -361,7 +476,7 @@ const ReservationDialog = ({ guestTypes }) => {
                             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.2 }}>
                                     <Typography variant="body2" color="#121212">
-                                        Reservation Advance
+                                        Advance Amount <span style={{ color: 'red' }}>*</span>
                                     </Typography>
                                     <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
                                         <Radio checked={paymentType === 'percentage'} onChange={() => setPaymentType('percentage')} size="small" sx={{ p: 0.5 }} />
@@ -520,11 +635,21 @@ const ReservationDialog = ({ guestTypes }) => {
                                 </Typography>
                                 <KeyboardArrowDownIcon fontSize="small" sx={{ ml: 1 }} />
                             </Box>
-                            <Popper id={id} open={open} anchorEl={anchorEl} placement="bottom-start">
+                            <Popper id={id} open={openCalendar} anchorEl={anchorEl} placement="bottom-end" sx={{ zIndex: 1300 }}>
                                 <ClickAwayListener onClickAway={() => setAnchorEl(null)}>
                                     <Box sx={{ mt: 1, p: 2, bgcolor: '#fff', boxShadow: 3, borderRadius: 1 }}>
                                         <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                            <StaticDatePicker views={['year', 'month']} value={dayjs(monthYear)} onChange={handleDateChange} minDate={dayjs().add(1, 'day')} maxDate={dayjs().add(5, 'year')} disablePast={true} />
+                                            <StaticDatePicker
+                                                views={['year', 'month']}
+                                                value={dayjs(monthYear)}
+                                                onChange={handleDateChange}
+                                                minDate={dayjs().add(1, 'day')}
+                                                maxDate={dayjs().add(5, 'year')}
+                                                disablePast={true}
+                                                slotProps={{
+                                                    actionBar: { actions: [] }, // Hide OK/Cancel buttons
+                                                }}
+                                            />
                                         </LocalizationProvider>
                                     </Box>
                                 </ClickAwayListener>
@@ -580,7 +705,14 @@ const ReservationDialog = ({ guestTypes }) => {
                             Available Time Slots
                         </Typography>
                         <Grid container spacing={1}>
-                            {availableSlots.length > 0 ? (
+                            {slotsLoading ? (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1 }}>
+                                    <CircularProgress size={20} />
+                                    <Typography variant="caption" color="text.secondary">
+                                        Loading available slots...
+                                    </Typography>
+                                </Box>
+                            ) : availableSlots.length > 0 ? (
                                 availableSlots.slice(0, 4).map(
                                     (
                                         slot,
@@ -699,11 +831,7 @@ const ReservationDialog = ({ guestTypes }) => {
 
                     {/* Footer Buttons */}
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                        <Button
-                            variant="text"
-                            sx={{ color: '#666', textTransform: 'none' }}
-                            onClick={() => router.visit(route('order.cancel'))} // Optional: Define a cancel route
-                        >
+                        <Button variant="text" sx={{ color: '#666', textTransform: 'none' }} onClick={() => router.visit(route('order.new'))}>
                             Cancel
                         </Button>
                         <Button
@@ -713,9 +841,23 @@ const ReservationDialog = ({ guestTypes }) => {
                                 border: '1px solid #063455',
                                 color: '#333',
                             }}
-                            onClick={handleSaveOrder}
+                            onClick={() => handleSaveOrder(false)}
                         >
-                            Save Order
+                            Save Order (F9)
+                        </Button>
+                        <Button
+                            variant="contained"
+                            disabled={!orderDetails.member || !orderDetails.member.id || !selectedTableId}
+                            sx={{
+                                textTransform: 'none',
+                                bgcolor: '#063455',
+                                '&:hover': { bgcolor: '#063455CC' },
+                            }}
+                            onClick={() => {
+                                handleSaveOrder(true);
+                            }}
+                        >
+                            Proceed to Menu (F10)
                         </Button>
                     </Box>
                 </Box>

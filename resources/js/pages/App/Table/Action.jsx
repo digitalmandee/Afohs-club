@@ -5,7 +5,7 @@ import { Box, Dialog, Divider, IconButton, List, ListItem, ListItemIcon, ListIte
 import { useState } from 'react';
 import OrderDetails from './OrderDetails';
 
-const ActiveTable = ({ table = {}, tableName = 'Table', onClose }) => {
+const ActiveTable = ({ table = {}, tableName = 'Table', selectedDate, onClose }) => {
     const { handleOrderTypeChange } = useOrderStore();
     const [notAvailableActive, setNotAvailableActive] = useState(false);
     const [orderDrawerOpen, setOrderDrawerOpen] = useState(false);
@@ -21,6 +21,8 @@ const ActiveTable = ({ table = {}, tableName = 'Table', onClose }) => {
             data: {
                 table: table?.id,
                 floor: table?.floor_id,
+                date: selectedDate?.full_date,
+                type: 'reservation',
             },
             preserveScroll: true,
             preserveState: true,

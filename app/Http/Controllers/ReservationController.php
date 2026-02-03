@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
+use App\Models\Member;
 use App\Models\Order;
 use App\Models\Reservation;
 use App\Models\Table;
+use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class ReservationController extends Controller
@@ -47,7 +51,7 @@ class ReservationController extends Controller
             'date' => 'required|date|after_or_equal:today',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'down_payment' => 'nullable|numeric|min:0',
+            'down_payment' => 'required|numeric|min:1',
             'nature_of_function' => 'nullable|string|max:255',
             'theme_of_function' => 'nullable|string|max:255',
             'special_request' => 'nullable|string|max:1000',
@@ -82,11 +86,28 @@ class ReservationController extends Controller
             $reservationData['customer_id'] = $request->member['id'];
         }
 
-        $order = Reservation::create($reservationData);
+        $reservation = Reservation::create($reservationData);
+
+        // Create advance payment transaction
+        $payerType = $request->member['booking_type'] == 'member' ? Member::class : Customer::class;
+        $payerId = $request->member['id'];
+        $payerName = $request->member['full_name'] ?? $request->member['name'] ?? 'Customer';
+
+        Transaction::create([
+            'type' => 'credit',
+            'amount' => $validated['down_payment'],
+            'date' => now(),
+            'description' => 'Reservation #' . $reservation->id . ' - Advance Payment from ' . $payerName,
+            'payable_type' => $payerType,
+            'payable_id' => $payerId,
+            'reference_type' => Reservation::class,
+            'reference_id' => $reservation->id,
+            'created_by' => Auth::id(),
+        ]);
 
         return response()->json([
-            'message' => 'Order placed successfully.',
-            'order' => $order
+            'message' => 'Reservation created successfully with advance payment.',
+            'order' => $reservation
         ], 200);
     }
 
@@ -110,6 +131,8 @@ class ReservationController extends Controller
             $start->addMinutes(30);
         }
 
+        Log::info('Available times request:', ['tableId' => $tableId, 'date' => $date, 'totalSlots' => count($allSlots)]);
+
         // If table is selected → check only this table
         if ($tableId) {
             $reservations = Reservation::where('table_id', $tableId)
@@ -117,9 +140,11 @@ class ReservationController extends Controller
                 ->whereDate('date', $date)
                 ->select('start_time', 'end_time')
                 ->get();
+
+            Log::info('Found reservations for table:', ['count' => $reservations->count()]);
         } else {
             // No table selected → get reservations for all tables in floor or restaurant
-            $query = Reservation::whereDate('start_date', $date);
+            $query = Reservation::whereDate('date', $date);
 
             if ($floorId) {
                 $query->whereHas('table', function ($q) use ($floorId) {
@@ -153,6 +178,8 @@ class ReservationController extends Controller
             }
             return true;
         });
+
+        Log::info('Available slots after filtering:', ['count' => count($availableSlots)]);
 
         return response()->json(array_values($availableSlots));
     }
