@@ -130,6 +130,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
             kitchen_note: notes.kitchen_note,
             staff_note: notes.staff_note,
             payment_note: notes.payment_note,
+            is_new_order: is_new_order,
         };
 
         const payload = objectToFormData(newPayload);

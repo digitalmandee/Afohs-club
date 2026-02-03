@@ -656,7 +656,7 @@ class OrderController extends Controller
                 'room_booking_id' => $request->room_booking_id ?? null,
                 'address' => $request->address,
                 'rider_id' => $request->rider_id ?? null,
-                'status' => ($request->order_type === 'reservation') ? 'saved' : 'in_progress',
+                'status' => ($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress',
             ];
 
             $bookingType = $request->input('member.booking_type');
@@ -693,14 +693,32 @@ class OrderController extends Controller
                 $orderData['payment_status'] = 'paid';
             }
 
+            // 🔎 DEBUG: Log Request Status Logic
+            Log::info('SendToKitchen Request:', [
+                'order_type' => $request->order_type,
+                'is_new_order' => $request->input('is_new_order'),
+                'resolved_status' => $orderData['status']
+            ]);
+
+            // Capture existing order state BEFORE update to correctly handle item wiping
+            $existingOrder = null;
+            if ($request->id) {
+                $existingOrder = Order::find($request->id);
+            }
+
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
                 $orderData
             );
 
             // If updating a DRAFT (saved) order, wipe items first to allow clean overwrite
-            if (!$order->wasRecentlyCreated && $order->status === 'saved') {
-                foreach ($order->orderItems as $existingItem) {
+            // We check $existingOrder->status because $order->status might now be 'in_progress'
+            $wasSaved = $existingOrder && $existingOrder->status === 'saved';
+            // Fallback: if no existing order (new creation), it's not "previously saved", so we don't wipe (nothing to wipe)
+            // Check if we found an existing order that was saved
+            if ($wasSaved) {
+                Log::info('Wiping items for previously saved order #' . $existingOrder->id);
+                foreach ($existingOrder->orderItems as $existingItem) {
                     $itemData = $existingItem->order_item;
                     $qty = $itemData['quantity'] ?? 1;
                     $prodId = $itemData['id'] ?? null;
