@@ -624,6 +624,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                         fullWidth
                                                         disabled={card.status === 'completed' || card.status === 'cancelled'} // Disable Edit if completed/cancelled
                                                         sx={{
+                                                            px: 0,
                                                             bgcolor: '#003153',
                                                             '&:hover': { bgcolor: '#00254d' },
                                                             textTransform: 'none',
@@ -637,22 +638,21 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                     >
                                                         Edit
                                                     </Button>
+                                                    {/* Generate Invoice / Pay Now Buttons */}
+                                                    {card.status !== 'cancelled' && card.status !== 'refund' && (
+                                                        <>
+                                                            {!card.invoice ? (
+                                                                <Button variant="contained" fullWidth color="secondary" sx={{ textTransform: 'none', px: 0, py: 1, bgcolor: '#003153', '&:hover': { bgcolor: '#00254d' } }} onClick={() => handleGenerateInvoice(card)}>
+                                                                    Generate Invoice
+                                                                </Button>
+                                                            ) : (
+                                                                <Button variant="contained" fullWidth color="success" sx={{ textTransform: 'none', px: 0, py: 1, bgcolor: '#003153', '&:hover': { bgcolor: '#00254d' } }} onClick={() => handlePayNow(card)}>
+                                                                    Pay Now
+                                                                </Button>
+                                                            )}
+                                                        </>
+                                                    )}
                                                 </Box>
-
-                                                {/* Generate Invoice / Pay Now Buttons */}
-                                                {card.status !== 'cancelled' && card.status !== 'refund' && (
-                                                    <Box>
-                                                        {!card.invoice ? (
-                                                            <Button variant="contained" fullWidth color="secondary" sx={{ textTransform: 'none', py: 1, bgcolor: '#ff9800', '&:hover': { bgcolor: '#f57c00' } }} onClick={() => handleGenerateInvoice(card)}>
-                                                                Generate Invoice
-                                                            </Button>
-                                                        ) : (
-                                                            <Button variant="contained" fullWidth color="success" startIcon={<AccessTime />} sx={{ textTransform: 'none', py: 1, bgcolor: '#4caf50', '&:hover': { bgcolor: '#388e3c' } }} onClick={() => handlePayNow(card)}>
-                                                                Pay Now
-                                                            </Button>
-                                                        )}
-                                                    </Box>
-                                                )}
                                             </Box>
                                         </Paper>
                                     </Grid>
