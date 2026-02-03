@@ -3,6 +3,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Chip, Box, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
+import dayjs from "dayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const NewYearEveReport = () => {
     // Get props first
@@ -175,6 +179,7 @@ const NewYearEveReport = () => {
                             backgroundColor: '#063455',
                             color: 'white',
                             textTransform: 'none',
+                            borderRadius: '16px',
                             '&:hover': {
                                 backgroundColor: '#052d47',
                             },
@@ -185,7 +190,7 @@ const NewYearEveReport = () => {
                 </div>
 
                 {/* Search and Filters */}
-                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ mb: 3, pt: 2 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
 
                     {/* Search Fields */}
@@ -199,7 +204,7 @@ const NewYearEveReport = () => {
                                 onChange={(e) => handleFilterChange('member_search', e.target.value)}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
+                                        borderRadius: '16px',
                                     },
                                 }}
                             />
@@ -213,13 +218,13 @@ const NewYearEveReport = () => {
                                 onChange={(e) => handleFilterChange('invoice_search', e.target.value)}
                                 sx={{
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: 2,
+                                        borderRadius: '16px',
                                     },
                                 }}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
-                            <TextField
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -234,10 +239,37 @@ const NewYearEveReport = () => {
                                         borderRadius: 2,
                                     },
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="From Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_from ? dayjs(allFilters.date_from, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_from",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} md={2.4}>
-                            <TextField
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -252,24 +284,79 @@ const NewYearEveReport = () => {
                                         borderRadius: 2,
                                     },
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="To Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_to ? dayjs(allFilters.date_to, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_to",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} md={2.4}>
-                            <Button
+                            <Autocomplete
+                                size="small"
                                 fullWidth
-                                variant="contained"
-                                onClick={handleSearch}
-                                sx={{
-                                    backgroundColor: '#059669',
-                                    height: '40px',
-                                    textTransform: 'none',
-                                    '&:hover': {
-                                        backgroundColor: '#047857',
+                                options={all_cities || []}
+                                value={allFilters.city || null}
+                                onChange={(event, newValue) => {
+                                    handleFilterChange('city', newValue || '');
+                                }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
                                     },
                                 }}
-                            >
-                                Search
-                            </Button>
+                                isOptionEqualToValue={(option, value) => option === value}
+                                renderInput={(params) =>
+                                    <TextField {...params}
+                                        label="Search by City"
+                                        placeholder="All Cities"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />}
+                            />
                         </Grid>
                     </Grid>
 
@@ -293,14 +380,47 @@ const NewYearEveReport = () => {
                             <Autocomplete
                                 size="small"
                                 fullWidth
-                                options={all_cities || []}
-                                value={allFilters.city || null}
+                                options={all_payment_methods || []}
+                                value={allFilters.payment_method || null}
                                 onChange={(event, newValue) => {
-                                    handleFilterChange('city', newValue || '');
+                                    handleFilterChange('payment_method', newValue || '');
+                                }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
                                 }}
                                 isOptionEqualToValue={(option, value) => option === value}
-                                renderInput={(params) => <TextField {...params} label="Search by City" placeholder="All Cities" />}
+                                renderInput={(params) =>
+                                    <TextField {...params}
+                                        label="Choose Payment Method"
+                                        placeholder="All Methods"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />}
                             />
+
                         </Grid>
                         <Grid item xs={12} md={2.4}>
                             {/* <FormControl fullWidth size="small">
@@ -318,15 +438,53 @@ const NewYearEveReport = () => {
                                 </Select>
                             </FormControl> */}
                             <Autocomplete
+                                multiple
                                 size="small"
                                 fullWidth
-                                options={all_payment_methods || []}
-                                value={allFilters.payment_method || null}
+                                options={all_categories || []}
+                                getOptionLabel={(option) => option.name}
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                value={all_categories?.filter((cat) => allFilters.categories.includes(cat.id)) || []}
                                 onChange={(event, newValue) => {
-                                    handleFilterChange('payment_method', newValue || '');
+                                    handleFilterChange(
+                                        'categories',
+                                        newValue.map((cat) => cat.id),
+                                    );
                                 }}
-                                isOptionEqualToValue={(option, value) => option === value}
-                                renderInput={(params) => <TextField {...params} label="Choose Payment Method" placeholder="All Methods" />}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
+                                renderTags={(value, getTagProps) => value.map((option, index) => <Chip key={option.id} label={option.name} size="small" {...getTagProps({ index })} />)}
+                                renderInput={(params) =>
+                                    <TextField {...params}
+                                        label="Choose Categories"
+                                        placeholder="Select categories"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />}
                             />
                         </Grid>
                         <Grid item xs={12} md={2.4}>
@@ -353,46 +511,112 @@ const NewYearEveReport = () => {
                                 </Select>
                             </FormControl> */}
                             <Autocomplete
-                                multiple
+                                fullWidth
                                 size="small"
-                                fullWidth
-                                options={all_categories || []}
-                                getOptionLabel={(option) => option.name}
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                value={all_categories?.filter((cat) => allFilters.categories.includes(cat.id)) || []}
-                                onChange={(event, newValue) => {
-                                    handleFilterChange(
-                                        'categories',
-                                        newValue.map((cat) => cat.id),
-                                    );
+                                options={all_genders || []}
+                                value={allFilters.gender || ''}
+                                onChange={(e, value) => handleFilterChange('gender', value)}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
                                 }}
-                                renderTags={(value, getTagProps) => value.map((option, index) => <Chip key={option.id} label={option.name} size="small" {...getTagProps({ index })} />)}
-                                renderInput={(params) => <TextField {...params} label="Choose Categories" placeholder="Select categories" />}
-                            />
+                                renderInput={(params) => <TextField {...params} label="Choose Gender" placeholder="Select gender" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />} freeSolo />
                         </Grid>
+
                         <Grid item xs={12} md={2.4}>
-                            <Autocomplete fullWidth size="small" options={all_genders || []} value={allFilters.gender || ''} onChange={(e, value) => handleFilterChange('gender', value)} renderInput={(params) => <TextField {...params} label="Choose Gender" placeholder="Select gender" />} freeSolo />
-                        </Grid>
-                        <Grid item xs={12} md={2.4}>
-                            <Autocomplete fullWidth size="small" options={all_cashiers || []} getOptionLabel={(option) => option.name || ''} value={all_cashiers?.find((c) => c.id === allFilters.cashier) || null} onChange={(e, value) => handleFilterChange('cashier', value?.id || '')} isOptionEqualToValue={(option, value) => option.id === value?.id} renderInput={(params) => <TextField {...params} label="Cashier" placeholder="Select cashier" />} />
-                        </Grid>
-                        <Grid item xs={12} md={2.4}>
-                            <Button
+                            <Autocomplete
                                 fullWidth
+                                size="small"
+                                options={all_cashiers || []} getOptionLabel={(option) => option.name || ''}
+                                value={all_cashiers?.find((c) => c.id === allFilters.cashier) || null}
+                                onChange={(e, value) => handleFilterChange('cashier', value?.id || '')}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
+                                isOptionEqualToValue={(option, value) => option.id === value?.id} renderInput={(params) => <TextField {...params} label="Cashier" placeholder="Select cashier" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />} />
+                        </Grid>
+                        <Grid item xs={12} md={2.4} sx={{display:'flex', justifyContent:'space-between'}}>
+                            <Button
+                                small
                                 variant="outlined"
                                 onClick={handleReset}
                                 sx={{
-                                    borderColor: '#dc2626',
-                                    color: '#dc2626',
+                                    borderColor: '#063455',
+                                    color: '#063455',
                                     height: '40px',
+                                    borderRadius: '16px',
                                     textTransform: 'none',
                                     '&:hover': {
-                                        backgroundColor: '#fef2f2',
-                                        borderColor: '#dc2626',
+                                        // backgroundColor: '#fef2f2',
+                                        borderColor: '#063455',
                                     },
                                 }}
                             >
                                 Reset
+                            </Button>
+                            <Button
+                                small
+                                variant="contained"
+                                startIcon={<Search/>}
+                                onClick={handleSearch}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    height: '40px',
+                                    textTransform: 'none',
+                                    borderRadius: '16px',
+                                    '&:hover': {
+                                        backgroundColor: '#063455',
+                                    },
+                                }}
+                            >
+                                Search
                             </Button>
                         </Grid>
                     </Grid>
@@ -401,20 +625,20 @@ const NewYearEveReport = () => {
                 {/* New Year Eve Subscriptions Table */}
                 <Box sx={{ mb: 3 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>New Year Eve Subscriptions List</Typography>
-                    <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, overflowX: 'auto' }}>
+                    <TableContainer sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Invoice #</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Address (City)</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Member Name</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Amount Received</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Payment Method</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Category</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Dated</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Duration</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Membership #</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>User</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Invoice</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>City</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Member Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Amount Received</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Payment Method</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Category</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Dated</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Duration</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Membership</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>User</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

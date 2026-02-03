@@ -63,6 +63,7 @@ const MaintenanceFeeRevenue = () => {
                                 backgroundColor: '#063455',
                                 color: 'white',
                                 textTransform: 'none',
+                                borderRadius:'16px',
                                 '&:hover': {
                                     backgroundColor: '#052d47',
                                 },
@@ -80,19 +81,19 @@ const MaintenanceFeeRevenue = () => {
                         <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>
                             Maintenance Fee Revenue Details
                         </Typography>
-                        <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                        <TableContainer sx={{ borderRadius: '16px' }}>
                             <Table>
                                 <TableHead>
                                     <TableRow style={{ backgroundColor: '#063455' }}>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>SR #</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Category</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Code</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Members</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Paying Members</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Payment Rate</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Revenue</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Avg per Member</TableCell>
-                                        <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Amount In Words</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, }}>SR</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, }}>Category</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600,}}>Code</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Total Members</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Paying Members</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Payment Rate</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Total Revenue</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap'}}> per Member</TableCell>
+                                        <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Amount In Words</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -110,19 +111,19 @@ const MaintenanceFeeRevenue = () => {
                                                     borderBottom: '1px solid #e5e7eb'
                                                 }}
                                             >
-                                                <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '14px' }}>
                                                     {index + 1}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#000', fontWeight: 400, fontSize: '14px' }}>
                                                     {categoryFee.name}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#000', fontWeight: 400, fontSize: '14px', whiteSpace:'nowrap' }}>
                                                     {categoryFee.code}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#000', fontWeight: 400, fontSize: '14px' }}>
                                                     {categoryFee.total_members}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#059669', fontWeight: 400, fontSize: '14px' }}>
                                                     {categoryFee.members_with_maintenance}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '14px' }}>
@@ -136,13 +137,13 @@ const MaintenanceFeeRevenue = () => {
                                                         }}
                                                     />
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#dc2626', fontWeight: 700, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#dc2626', fontWeight: 400, fontSize: '14px' }}>
                                                     {formatCurrency(categoryFee.total_maintenance_fee).replace('PKR', 'Rs.')}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#7c3aed', fontWeight: 600, fontSize: '14px' }}>
+                                                <TableCell sx={{ color: '#7c3aed', fontWeight: 400, fontSize: '14px' }}>
                                                     {formatCurrency(categoryFee.average_fee_per_member).replace('PKR', 'Rs.')}
                                                 </TableCell>
-                                                <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '12px', fontStyle: 'italic' }}>
+                                                <TableCell sx={{ color: '#000', fontWeight: 400, fontSize: '12px' }}>
                                                     {categoryFee.total_maintenance_fee > 0 ? toWords(categoryFee.total_maintenance_fee) : 'Zero'}
                                                 </TableCell>
                                             </TableRow>

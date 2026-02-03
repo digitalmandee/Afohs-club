@@ -127,6 +127,7 @@ const SleepingMembersReport = () => {
                             backgroundColor: '#063455',
                             color: 'white',
                             textTransform: 'none',
+                            borderRadius:'16px',
                             '&:hover': {
                                 backgroundColor: '#052d47',
                             },
@@ -137,14 +138,14 @@ const SleepingMembersReport = () => {
                 </div>
 
                 {/* Filter Options */}
-                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ mb: 3, pt: 2 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>
                         Filter Options
                     </Typography>
 
                     {/* Filter Fields */}
                     <Grid container spacing={3} alignItems="center">
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                     <InputLabel>Member Category</InputLabel>
                                     <Select
@@ -176,6 +177,33 @@ const SleepingMembersReport = () => {
                                     const categoryIds = newValue.map(cat => cat.id);
                                     handleFilterChange('categories', categoryIds);
                                 }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
                                 options={all_categories || []}
                                 getOptionLabel={(option) => option.name || ''}
                                 isOptionEqualToValue={(option, value) => option.id === value?.id}
@@ -196,11 +224,12 @@ const SleepingMembersReport = () => {
                                         placeholder="Select categories"
                                         size="small"
                                         fullWidth
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                                     />
                                 )}
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                 <InputLabel>Member Status</InputLabel>
                                 <Select
@@ -237,6 +266,33 @@ const SleepingMembersReport = () => {
                                     const statusValues = newValue.map(status => status);
                                     handleFilterChange('status', statusValues);
                                 }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
                                 options={all_member_statuses || []}
                                 getOptionLabel={(option) => option.replace('_', ' ').toUpperCase()}
                                 isOptionEqualToValue={(option, value) => option === value}
@@ -261,6 +317,7 @@ const SleepingMembersReport = () => {
                                         placeholder="Select statuses"
                                         size="small"
                                         fullWidth
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                                     />
                                 )}
                             />
@@ -269,27 +326,30 @@ const SleepingMembersReport = () => {
                             <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Button
                                     variant="contained"
+                                    startIcon={<Search />}
                                     onClick={handleSearch}
                                     sx={{
-                                        backgroundColor: '#059669',
+                                        backgroundColor: '#063455',
                                         textTransform: 'none',
+                                        borderRadius: '16px',
                                         '&:hover': {
-                                            backgroundColor: '#047857',
+                                            backgroundColor: '#063455',
                                         },
                                     }}
                                 >
-                                    Apply Filters
+                                    Search
                                 </Button>
                                 <Button
                                     variant="outlined"
                                     onClick={handleReset}
                                     sx={{
-                                        borderColor: '#dc2626',
-                                        color: '#dc2626',
+                                        borderColor: '#063455',
+                                        color: '#063455',
                                         textTransform: 'none',
+                                        borderRadius: '16px',
                                         '&:hover': {
-                                            backgroundColor: '#fef2f2',
-                                            borderColor: '#dc2626',
+                                            // backgroundColor: '#fef2f2',
+                                            borderColor: '#063455',
                                         },
                                     }}
                                 >
@@ -305,19 +365,19 @@ const SleepingMembersReport = () => {
                     <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>
                         Sleeping Members Details
                     </Typography>
-                    <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, overflowX: 'auto' }}>
+                    <TableContainer sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>SR #</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>ID</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Membership No</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Member Name</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Category</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Membership Date</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Member Type</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Status</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Last Updated</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>SR</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>ID</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Membership No</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Member Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Category</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Membership Date</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Member Type</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Status</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Last Updated</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
