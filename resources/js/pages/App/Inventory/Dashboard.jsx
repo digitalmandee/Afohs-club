@@ -178,42 +178,42 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
             >
                 <div className="container-fluid bg-light py-4">
                     {/* Filter Section */}
+                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<DeleteSweepIcon />}
+                            onClick={() => router.visit(route('inventory.trashed'))}
+                            sx={{
+                                borderRadius: '16px',
+                                px: 3,
+                                bgcolor: 'white',
+                                '&:hover': {
+                                    bgcolor: '#ffebee',
+                                },
+                            }}
+                        >
+                            Trash
+                        </Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => router.visit(route('product.create'))}
+                            sx={{
+                                borderRadius: '16px',
+                                backgroundColor: '#003B5C',
+                                px: 3,
+                                '&:hover': {
+                                    backgroundColor: '#002A41',
+                                },
+                            }}
+                        >
+                            Add Product
+                        </Button>
+                    </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ flex: 1 }}>
+                        <Box>
                             <MenuFilter categories={categoriesList} onProductsLoaded={(products) => setFilteredProducts(products)} onLoadingChange={(loading) => setIsFilterLoading(loading)} />
-                        </Box>
-                        <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-                            <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={<DeleteSweepIcon />}
-                                onClick={() => router.visit(route('inventory.trashed'))}
-                                sx={{
-                                    borderRadius: '16px',
-                                    px: 3,
-                                    bgcolor: 'white',
-                                    '&:hover': {
-                                        bgcolor: '#ffebee',
-                                    },
-                                }}
-                            >
-                                Trash
-                            </Button>
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => router.visit(route('product.create'))}
-                                sx={{
-                                    borderRadius: '16px',
-                                    backgroundColor: '#003B5C',
-                                    px: 3,
-                                    '&:hover': {
-                                        backgroundColor: '#002A41',
-                                    },
-                                }}
-                            >
-                                Add Product
-                            </Button>
                         </Box>
                     </Box>
 
@@ -388,29 +388,6 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                             </Grid>
                         </Box>
                     </div>
-                    {/* Filter Modal */}
-                    <Dialog
-                        open={openFilter}
-                        onClose={handleFilterClose}
-                        fullWidth
-                        maxWidth="sm"
-                        PaperProps={{
-                            sx: {
-                                borderRadius: 1,
-                                m: 0,
-                                position: 'fixed',
-                                right: 10,
-                                top: 10,
-                                bottom: 0,
-                                height: 'calc(100% - 25px)',
-                                maxHeight: '100%',
-                            },
-                        }}
-                    >
-                        <Box sx={{ p: 3, height: '100%' }}>
-                            <MenuFilter handleFilterClose={handleFilterClose} />
-                        </Box>
-                    </Dialog>
 
                     {/* Product Detail Modal */}
                     <Dialog

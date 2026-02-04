@@ -118,7 +118,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
                 </Grid>
 
                 {/* Menu Code Filter */}
-                <Grid item xs={12} md={2}>
+                <Grid item xs={12} md={1.5}>
                     <RoundedTextField fullWidth size="small" label="Item Code" placeholder="Search code..." value={menuCodeFilter} onChange={(e) => setMenuCodeFilter(e.target.value)} />
                 </Grid>
 
@@ -310,16 +310,14 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
                 </Grid>
 
                 {/* Reset Button */}
-                <Grid item xs={12} md={0.5} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Grid item xs={12} md={1} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                     <Tooltip title="Reset Filters">
                         <Button
                             variant="outlined"
                             onClick={handleReset}
                             disabled={isLoading}
                             sx={{
-                                borderRadius: '50%',
-                                minWidth: '40px',
-                                width: '40px',
+                                borderRadius: '10px',
                                 height: '40px',
                                 p: 0,
                                 color: '#063455',
@@ -329,7 +327,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
                                 },
                             }}
                         >
-                            <div style={{ transform: 'rotate(0deg)', display: 'flex' }}>🔄</div>
+                            Reset
                         </Button>
                     </Tooltip>
                 </Grid>
