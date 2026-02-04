@@ -27,6 +27,9 @@ class Product extends BaseModel
         'available_order_types',
         'status',
         'tenant_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     protected $casts = [

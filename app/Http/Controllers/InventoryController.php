@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use App\Models\ProductVariantValue;
 use App\Rules\KitchenRole;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -159,6 +160,7 @@ class InventoryController extends Controller
             'description' => $request->input('description'),
             'images' => $imagePaths,
             'tenant_id' => tenant()->id,
+            'created_by' => Auth::id(),
         ]);
 
         // Auto-generate item code if not provided
@@ -327,6 +329,7 @@ class InventoryController extends Controller
             'base_price' => $request->input('base_price'),
             'description' => $request->input('description'),
             'images' => $imagePaths,
+            'updated_by' => Auth::id(),
         ]);
 
         if ($request->has('variants')) {
@@ -396,11 +399,60 @@ class InventoryController extends Controller
     public function destroy(string $id)
     {
         try {
-            Product::where('id', $id)->delete();
+            $product = Product::findOrFail($id);
+            $product->update(['deleted_by' => Auth::id()]);
+            $product->delete();
             return response()->json(['success' => true, 'message' => 'Product deleted.']);
         } catch (\Throwable $th) {
             Log::info($th);
             return response()->json(['success' => false, 'message' => 'Failed to delete product.']);
         }
+    }
+
+    public function trashed(Request $request)
+    {
+        $trashedProducts = Product::onlyTrashed()
+            ->where('tenant_id', tenant()->id)
+            ->with(['category'])
+            ->when($request->search, function ($query, $search) {
+                $query
+                    ->where('name', 'like', "%{$search}%")
+                    ->orWhere('menu_code', 'like', "%{$search}%");
+            })
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('App/Inventory/Trashed', [
+            'trashedProducts' => $trashedProducts,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $product = Product::withTrashed()->where('tenant_id', tenant()->id)->findOrFail($id);
+        $product->restore();
+
+        return redirect()->back()->with('success', 'Product restored successfully.');
+    }
+
+    public function forceDelete($id)
+    {
+        $product = Product::withTrashed()->where('tenant_id', tenant()->id)->findOrFail($id);
+
+        // Delete images from storage
+        if ($product->images) {
+            foreach ($product->images as $imagePath) {
+                $absolutePath = public_path(ltrim($imagePath, '/'));
+                if (file_exists($absolutePath)) {
+                    @unlink($absolutePath);
+                }
+            }
+        }
+
+        $product->forceDelete();
+
+        return redirect()->back()->with('success', 'Product permanently deleted.');
     }
 }

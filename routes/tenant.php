@@ -172,6 +172,12 @@ Route::group([
         Route::delete('/inventory/sub-categories/{id}/force-delete', [App\Http\Controllers\PosSubCategoryController::class, 'forceDelete'])->name('sub-categories.force-delete');
 
         Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
+
+        // Product Trash Routes
+        Route::get('/inventory/products/trashed', [InventoryController::class, 'trashed'])->name('inventory.trashed');
+        Route::post('/inventory/products/{id}/restore', [InventoryController::class, 'restore'])->name('inventory.restore');
+        Route::delete('/inventory/products/{id}/force-delete', [InventoryController::class, 'forceDelete'])->name('inventory.force-delete');
+
         Route::get('/inventory/products', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/products/add', function () {
             return Inertia::render('App/Inventory/Product');

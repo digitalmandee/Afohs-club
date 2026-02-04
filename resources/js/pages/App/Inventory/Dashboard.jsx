@@ -5,7 +5,7 @@ import SideNav from '@/components/App/SideBar/SideNav';
 import MenuFilter from '@/components/MenuFilter';
 import { tenantAsset } from '@/helpers/asset';
 import { router, usePage } from '@inertiajs/react';
-import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
@@ -182,22 +182,39 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         <Box sx={{ flex: 1 }}>
                             <MenuFilter categories={categoriesList} onProductsLoaded={(products) => setFilteredProducts(products)} onLoadingChange={(loading) => setIsFilterLoading(loading)} />
                         </Box>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => router.visit(route('product.create'))}
-                            sx={{
-                                borderRadius: '16px',
-                                backgroundColor: '#003B5C',
-                                mt: 3,
-                                px: 3,
-                                '&:hover': {
-                                    backgroundColor: '#002A41',
-                                },
-                            }}
-                        >
-                            Add Product
-                        </Button>
+                        <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                startIcon={<DeleteSweepIcon />}
+                                onClick={() => router.visit(route('inventory.trashed'))}
+                                sx={{
+                                    borderRadius: '16px',
+                                    px: 3,
+                                    bgcolor: 'white',
+                                    '&:hover': {
+                                        bgcolor: '#ffebee',
+                                    },
+                                }}
+                            >
+                                Trash
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => router.visit(route('product.create'))}
+                                sx={{
+                                    borderRadius: '16px',
+                                    backgroundColor: '#003B5C',
+                                    px: 3,
+                                    '&:hover': {
+                                        backgroundColor: '#002A41',
+                                    },
+                                }}
+                            >
+                                Add Product
+                            </Button>
+                        </Box>
                     </Box>
 
                     {/* Product Count and List */}
