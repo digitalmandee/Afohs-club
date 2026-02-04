@@ -2,11 +2,23 @@ import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { Box, Button, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography } from '@mui/material';
-import { useEffect } from 'react';
+import { Box, Button, FormControl, FormControlLabel, Grid, Radio, RadioGroup, TextField, Typography, Autocomplete } from '@mui/material';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const TakeAwayDialog = ({ guestTypes }) => {
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
+    const [riders, setRiders] = useState([]);
+
+    useEffect(() => {
+        if (orderDetails.order_type === 'delivery') {
+            axios.get(route('riders.all')).then((res) => {
+                if (res.data.success) {
+                    setRiders(res.data.riders);
+                }
+            });
+        }
+    }, [orderDetails.order_type]);
 
     const isMemberSelected = !!orderDetails.member && Object.keys(orderDetails.member).length > 0;
     const requiresAddress = orderDetails.order_type === 'delivery';
@@ -109,6 +121,72 @@ const TakeAwayDialog = ({ guestTypes }) => {
                                 <TextField placeholder="Enter delivery address" fullWidth size="small" value={orderDetails.address || ''} onChange={(e) => handleOrderDetailChange('address', e.target.value)} />
                             </Grid>
                         )}
+
+                        {/* Rider Selection for Delivery */}
+                        {orderDetails.order_type === 'delivery' && (
+                            <Grid item xs={12}>
+                                <Typography variant="body2" sx={{ mb: 0.5, fontSize: '14px', color: '#121212' }}>
+                                    Assign Rider
+                                </Typography>
+                                <Autocomplete
+                                    fullWidth
+                                    size="small"
+                                    options={riders}
+                                    value={riders.find((r) => r.id === orderDetails.rider_id) || null}
+                                    getOptionLabel={(option) => option.name || ''}
+                                    onChange={(event, newValue) => {
+                                        handleOrderDetailChange('rider_id', newValue ? newValue.id : null);
+                                    }}
+                                    filterOptions={(options, state) => options.filter((option) => `${option.name} ${option.email} ${option.employee_id}`.toLowerCase().includes(state.inputValue.toLowerCase()))}
+                                    renderInput={(params) => <TextField {...params} fullWidth placeholder="Select Rider" variant="outlined" size="small" />}
+                                    renderOption={(props, option) => {
+                                        const getStatusChipStyles = (status) => {
+                                            const s = (status || '').toLowerCase();
+                                            if (s === 'active') return { backgroundColor: '#e8f5e9', color: '#2e7d32' };
+                                            if (s === 'suspended' || s === 'inactive') return { backgroundColor: '#fff3e0', color: '#ef6c00' };
+                                            return { backgroundColor: '#ffebee', color: '#c62828' };
+                                        };
+                                        return (
+                                            <li {...props} key={option.id}>
+                                                <Box sx={{ width: '100%' }}>
+                                                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                        <Typography variant="body2" fontWeight="bold">
+                                                            {option.employee_id}
+                                                        </Typography>
+                                                        {option.status && (
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    height: '20px',
+                                                                    fontSize: '10px',
+                                                                    px: 1,
+                                                                    borderRadius: '10px',
+                                                                    ...getStatusChipStyles(option.status),
+                                                                    textTransform: 'capitalize',
+                                                                    ml: 1,
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                }}
+                                                            >
+                                                                {option.status}
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {option.name}
+                                                    </Typography>
+                                                    {(option.department_name || option.subdepartment_name || option.company) && (
+                                                        <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '10px' }}>
+                                                            {[option.department_name, option.subdepartment_name, option.company].filter(Boolean).join(' • ')}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </li>
+                                        );
+                                    }}
+                                />
+                            </Grid>
+                        )}
                     </Grid>
                 </FormControl>
             </Box>
@@ -132,6 +210,7 @@ const TakeAwayDialog = ({ guestTypes }) => {
                                 member_type: orderDetails.member_type,
                                 order_type: orderDetails.order_type,
                                 address: orderDetails.address || null,
+                                rider_id: orderDetails.rider_id || null, // Pass rider_id
                             }),
                         )
                     }

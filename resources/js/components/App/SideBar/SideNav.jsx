@@ -30,6 +30,7 @@ import NotificationsPanel from './Notification';
 import EmployeeProfileScreen from './Profile';
 import { Modal, Slide } from '@mui/material';
 import CategoryIcon from '@mui/icons-material/Category';
+import ScaleIcon from '@mui/icons-material/Scale';
 import { MdManageHistory } from 'react-icons/md';
 import { MdRestaurantMenu } from 'react-icons/md';
 import { MdMenuBook } from 'react-icons/md';
@@ -112,6 +113,7 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Menu', icon: <MdRestaurantMenu style={{ height: '25px', width: '25px' }} />, path: route('inventory.index') },
         { text: 'Menu Category', icon: <CategoryIcon />, path: route('inventory.category') },
         { text: 'Ingredients', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('ingredients.index') },
+        { text: 'Units of Measurement', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('units.index') },
         { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index') },
         { text: 'Transaction History', icon: <PaymentsIcon />, path: route('transaction.history') },

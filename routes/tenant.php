@@ -71,6 +71,9 @@ Route::group([
         Route::get('/order/savedOrder', [OrderController::class, 'savedOrder'])->name('order.savedOrder');
         Route::post('/order/{id}/update', [OrderController::class, 'update'])->name('orders.update');
 
+        // Delivery Rider
+        Route::get('/riders/all', [UserController::class, 'riders'])->name('riders.all');
+
         Route::get('/order/management', [OrderController::class, 'orderManagement'])->name('order.management');
         Route::get('/order/history', [OrderController::class, 'orderHistory'])->name('order.history');
         Route::post('/order/{id}/generate-invoice', [OrderController::class, 'generateInvoice'])->name('order.generate-invoice');
@@ -139,6 +142,14 @@ Route::group([
         Route::post('/api/ingredients/check-availability', [IngredientController::class, 'checkAvailability'])->name('api.ingredients.check-availability');
 
         // Inventory Items
+        Route::get('/inventory/units', [App\Http\Controllers\PosUnitController::class, 'index'])->name('units.index');
+        Route::get('/inventory/units/trashed', [App\Http\Controllers\PosUnitController::class, 'trashed'])->name('units.trashed');
+        Route::post('/inventory/units', [App\Http\Controllers\PosUnitController::class, 'store'])->name('units.store');
+        Route::put('/inventory/units/{id}', [App\Http\Controllers\PosUnitController::class, 'update'])->name('units.update');
+        Route::post('/inventory/units/{id}/restore', [App\Http\Controllers\PosUnitController::class, 'restore'])->name('units.restore');
+        Route::delete('/inventory/units/{id}', [App\Http\Controllers\PosUnitController::class, 'destroy'])->name('units.destroy');
+        Route::delete('/inventory/units/{id}/force-delete', [App\Http\Controllers\PosUnitController::class, 'forceDelete'])->name('units.force-delete');
+
         Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
         Route::get('/inventory/products', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/products/add', function () {

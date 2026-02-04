@@ -617,7 +617,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                                             overflow: 'auto', // or remove if you want to hide scroll
                                         }}
                                     >
-                                        <AddReservation table={selectedTable} onClose={handleCloseReservation} />
+                                        <AddReservation table={selectedTable} selectedDate={selectedDate} onClose={handleCloseReservation} />
                                     </Box>
                                 </Modal>
                                 <Modal open={openAvailableOrder} onClose={handleCloseReservation}>

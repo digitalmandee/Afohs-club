@@ -15,7 +15,7 @@ const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 const OrderMenu = () => {
-    const { orderNo, orderContext, totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId, reservation } = usePage().props;
+    const { orderNo, orderContext, totalSavedOrders, allrestaurants, activeTenantId, firstCategoryId, reservation, is_new_order } = usePage().props;
 
     const { orderDetails, handleOrderDetailChange } = useOrderStore();
 
@@ -143,7 +143,33 @@ const OrderMenu = () => {
         let updatedItems = [...orderDetails.order_items];
 
         if (editingItemIndex !== null) {
-            updatedItems[editingItemIndex] = item;
+            const oldItem = updatedItems[editingItemIndex];
+
+            const mergedItem = {
+                ...oldItem,
+                ...item,
+                // Preserve critical fields
+                is_saved: oldItem.is_saved,
+                discount_value: oldItem.discount_value,
+                discount_type: oldItem.discount_type,
+            };
+
+            // Recalculate discount
+            if (mergedItem.discount_value > 0) {
+                const gross = mergedItem.total_price;
+                let disc = 0;
+                if (mergedItem.discount_type === 'percentage') {
+                    disc = Math.round(gross * (mergedItem.discount_value / 100));
+                } else {
+                    disc = Math.round(mergedItem.discount_value * mergedItem.quantity);
+                }
+                if (disc > gross) disc = gross;
+                mergedItem.discount_amount = disc;
+            } else {
+                mergedItem.discount_amount = 0;
+            }
+
+            updatedItems[editingItemIndex] = mergedItem;
         } else {
             updatedItems.push(item);
         }
@@ -174,15 +200,46 @@ const OrderMenu = () => {
     }, [selectedCategory]);
 
     useEffect(() => {
-        if (reservation && (reservation.member || reservation.customer)) {
-            const memberData = { id: reservation.member ? reservation.member.user_id : reservation.customer.id, name: reservation.member ? reservation.member.full_name : reservation.customer.name, membership_no: reservation.member ? reservation.member.membership_no : reservation.customer.customer_no, booking_type: reservation.member ? 'member' : 'guest' };
-            handleOrderDetailChange('member', memberData);
-            handleOrderDetailChange('person_count', reservation.person_count);
-            handleOrderDetailChange('table', reservation.table);
+        if (reservation) {
             handleOrderDetailChange('reservation_id', reservation.id);
             handleOrderDetailChange('order_type', 'reservation');
+
+            if (reservation.member || reservation.customer) {
+                const memberData = { id: reservation.member ? reservation.member.user_id : reservation.customer.id, name: reservation.member ? reservation.member.full_name : reservation.customer.name, membership_no: reservation.member ? reservation.member.membership_no : reservation.customer.customer_no, booking_type: reservation.member ? 'member' : 'guest' };
+                handleOrderDetailChange('member', memberData);
+            }
+            handleOrderDetailChange('person_count', reservation.person_count);
+            handleOrderDetailChange('table', reservation.table);
+
+            // Load existing order items if available
+
+            // Load existing order items if available
+            if (reservation.order) {
+                handleOrderDetailChange('id', reservation.order.id);
+                handleOrderDetailChange('order_no', reservation.order.order_no);
+
+                if (reservation.order.order_items && reservation.order.order_items.length > 0) {
+                    const mappedItems = reservation.order.order_items.map((item) => {
+                        const productData = item.order_item || {};
+                        return {
+                            ...productData,
+                            quantity: productData.quantity,
+                            total_price: productData.quantity * (productData.price || 0),
+                            // Restore other fields if necessary
+                            discount_value: productData.discount_value,
+                            discount_type: productData.discount_type,
+                            discount_amount: productData.discount_amount,
+                            variants: productData.variants || [],
+                            is_saved: true, // Mark as existing in DB
+                        };
+                    });
+                    handleOrderDetailChange('order_items', mappedItems);
+                }
+            }
         }
-        handleOrderDetailChange('order_no', orderNo);
+        if (!reservation || !reservation.order) {
+            handleOrderDetailChange('order_no', orderNo);
+        }
         if (orderContext) {
             Object.entries(orderContext).forEach(([key, value]) => {
                 handleOrderDetailChange(key, value);
@@ -683,7 +740,7 @@ const OrderMenu = () => {
                             </Box>
 
                             {/* Conditional rendering based on active view */}
-                            {activeView === 'orderDetail' ? <OrderDetail handleEditItem={handleEditItem} /> : <OrderSaved setActiveView={setActiveView} />}
+                            {activeView === 'orderDetail' ? <OrderDetail handleEditItem={handleEditItem} is_new_order={is_new_order} /> : <OrderSaved setActiveView={setActiveView} />}
                         </Paper>
                     </Box>
                 </Box>

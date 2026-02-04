@@ -1,18 +1,19 @@
 import SideNav from '@/components/App/SideBar/SideNav';
 import Receipt from '@/components/App/Invoice/Receipt';
-import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, MenuItem, Select, FormControl, InputLabel, Pagination, Typography, Chip, InputAdornment, CircularProgress, IconButton, Tooltip, Dialog, DialogContent, DialogTitle, Button } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, MenuItem, Select, FormControl, InputLabel, Pagination, Typography, Chip, InputAdornment, CircularProgress, IconButton, Tooltip, Dialog, DialogContent, DialogTitle, Button, Grid, Autocomplete } from '@mui/material';
+import { Search } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import debounce from 'lodash.debounce';
+import axios from 'axios';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-const Dashboard = ({ orders, filters }) => {
+const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }) => {
     const { auth } = usePage().props;
     const user = auth.user;
 
@@ -23,13 +24,53 @@ const Dashboard = ({ orders, filters }) => {
     const [endDate, setEndDate] = useState(filters?.end_date || '');
     const [orderType, setOrderType] = useState(filters?.type || 'all');
     const [paymentStatus, setPaymentStatus] = useState(filters?.payment_status || 'all');
+    const [customerType, setCustomerType] = useState(filters?.customer_type || 'all');
+    const [paymentMethod, setPaymentMethod] = useState(filters?.payment_method || 'all');
+    const [tableId, setTableId] = useState(filters?.table_id || '');
+    const [waiterId, setWaiterId] = useState(filters?.waiter_id || '');
+    const [cashierId, setCashierId] = useState(filters?.cashier_id || '');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Suggestions State
+    const [suggestions, setSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
     // Modal state
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState(null);
 
-    const applyFilters = debounce(() => {
+    // Fetch Suggestions
+    const fetchSuggestions = useMemo(
+        () =>
+            debounce(async (query, type) => {
+                if (!query) {
+                    setSuggestions([]);
+                    return;
+                }
+                setLoadingSuggestions(true);
+                try {
+                    const response = await axios.get(route('api.orders.search-customers'), {
+                        params: { query, type },
+                    });
+                    setSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching suggestions:', error);
+                } finally {
+                    setLoadingSuggestions(false);
+                }
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        if (searchName) {
+            fetchSuggestions(searchName, customerType);
+        } else {
+            setSuggestions([]);
+        }
+    }, [searchName, customerType]);
+
+    const handleApply = () => {
         setIsLoading(true);
         router.get(
             route('order.history'),
@@ -40,6 +81,11 @@ const Dashboard = ({ orders, filters }) => {
                 end_date: endDate || undefined,
                 type: orderType !== 'all' ? orderType : undefined,
                 payment_status: paymentStatus !== 'all' ? paymentStatus : undefined,
+                customer_type: customerType !== 'all' ? customerType : undefined,
+                payment_method: paymentMethod !== 'all' ? paymentMethod : undefined,
+                table_id: tableId || undefined,
+                waiter_id: waiterId || undefined,
+                cashier_id: cashierId || undefined,
             },
             {
                 preserveState: true,
@@ -47,7 +93,32 @@ const Dashboard = ({ orders, filters }) => {
                 onFinish: () => setIsLoading(false),
             },
         );
-    }, 500);
+    };
+
+    const handleReset = () => {
+        setSearchId('');
+        setSearchName('');
+        setStartDate('');
+        setEndDate('');
+        setOrderType('all');
+        setPaymentStatus('all');
+        setCustomerType('all');
+        setPaymentMethod('all');
+        setTableId('');
+        setWaiterId('');
+        setCashierId('');
+
+        setIsLoading(true);
+        router.get(
+            route('order.history'),
+            {},
+            {
+                preserveState: true,
+                preserveScroll: true,
+                onFinish: () => setIsLoading(false),
+            },
+        );
+    };
 
     const handlePageChange = (event, page) => {
         setIsLoading(true);
@@ -126,13 +197,15 @@ const Dashboard = ({ orders, filters }) => {
             waiter: order.waiter,
             paid_amount: order.paid_amount,
             order_items:
-                order.order_items?.map((item) => ({
-                    order_item: item.order_item,
-                    name: item.order_item?.name || 'Item',
-                    quantity: item.order_item?.quantity || 1,
-                    price: item.order_item?.price || 0,
-                    total_price: item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0),
-                })) || [],
+                order.order_items
+                    ?.filter((item) => item.status !== 'cancelled')
+                    .map((item) => ({
+                        order_item: item.order_item,
+                        name: item.order_item?.name || 'Item',
+                        quantity: item.order_item?.quantity || 1,
+                        price: item.order_item?.price || 0,
+                        total_price: item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0),
+                    })) || [],
         };
     };
 
@@ -141,10 +214,10 @@ const Dashboard = ({ orders, filters }) => {
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
 
-        // Calculate items HTML
         const itemsHtml =
             order.order_items
-                ?.map((item) => {
+                ?.filter((item) => item.status !== 'cancelled')
+                .map((item) => {
                     const name = item.order_item?.name || 'Item';
                     const qty = item.order_item?.quantity || 1;
                     const price = item.order_item?.price || 0;
@@ -177,114 +250,33 @@ const Dashboard = ({ orders, filters }) => {
             </style>
           </head>
           <body>
-            <div class="header">
-              <div><img src='/assets/Logo.png' class="logo"/></div>
-            </div>
-            <div class="header">
-              <div>${order.start_date ? new Date(order.start_date).toLocaleString() : ''}</div>
-            </div>
-
-            <div class="order-id">
-              <div>Order Id</div>
-              <div><strong>#${order.id}</strong></div>
-            </div>
-
-            <div class="row">
-              <div>Cashier</div>
-              <div>${order.cashier?.name || user?.name || 'N/A'}</div>
-            </div>
-
-            ${
-                order.waiter
-                    ? `
-            <div class="row">
-              <div>Waiter</div>
-              <div>${order.waiter.name}</div>
-            </div>
-            `
-                    : ''
-            }
-
+            <div class="header"><img src='/assets/Logo.png' class="logo"/></div>
+            <div class="header"><div>${order.start_date ? new Date(order.start_date).toLocaleString() : ''}</div></div>
+            <div class="order-id"><div>Order Id</div><div><strong>#${order.id}</strong></div></div>
+            <div class="row"><div>Cashier</div><div>${order.cashier?.name || user?.name || 'N/A'}</div></div>
+            ${order.waiter ? `<div class="row"><div>Waiter</div><div>${order.waiter.name}</div></div>` : ''}
             <div class="divider"></div>
-
-            <div class="row">
-              <div>Customer Name</div>
-              <div>${customerName}</div>
-            </div>
-
-            ${
-                memberNo
-                    ? `
-            <div class="row">
-              <div>Member Id</div>
-              <div>${memberNo}</div>
-            </div>
-            `
-                    : ''
-            }
-
-            <div class="row">
-              <div>Order Type</div>
-              <div>${formatOrderType(order.order_type)}</div>
-            </div>
-
-            ${
-                order.table
-                    ? `
-            <div class="row">
-              <div>Table Number</div>
-              <div>${order.table.table_no}</div>
-            </div>
-            `
-                    : ''
-            }
-
+            <div class="row"><div>Customer Name</div><div>${customerName}</div></div>
+            ${memberNo ? `<div class="row"><div>Member Id</div><div>${memberNo}</div></div>` : ''}
+            <div class="row"><div>Order Type</div><div>${formatOrderType(order.order_type)}</div></div>
+            ${order.table ? `<div class="row"><div>Table Number</div><div>${order.table.table_no}</div></div>` : ''}
             <div class="divider"></div>
-
             ${itemsHtml}
-
             <div class="divider"></div>
-
-            <div class="row">
-              <div>Subtotal</div>
-              <div>Rs ${order.amount || order.total_price || 0}</div>
-            </div>
-
-            <div class="row">
-              <div>Discount</div>
-              <div>Rs ${order.discount || 0}</div>
-            </div>
-
-            <div class="row">
-              <div>Tax</div>
-              <div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div>
-            </div>
-
+            <div class="row"><div>Subtotal</div><div>Rs ${order.amount || order.total_price || 0}</div></div>
+            <div class="row"><div>Discount</div><div>Rs ${order.discount || 0}</div></div>
+            <div class="row"><div>Tax</div><div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div></div>
             <div class="divider"></div>
-
-            <div class="row total">
-              <div>Total Amount</div>
-              <div>Rs ${order.total_price || 0}</div>
-            </div>
-
+            <div class="row total"><div>Total Amount</div><div>Rs ${order.total_price || 0}</div></div>
             ${
                 order.paid_amount
                     ? `
-            <div class="row">
-              <div>Paid Amount</div>
-              <div>Rs ${order.paid_amount}</div>
-            </div>
-            <div class="row">
-              <div>Change</div>
-              <div>Rs ${order.paid_amount - order.total_price}</div>
-            </div>
+            <div class="row"><div>Paid Amount</div><div>Rs ${order.paid_amount}</div></div>
+            <div class="row"><div>Change</div><div>Rs ${order.paid_amount - order.total_price}</div></div>
             `
                     : ''
             }
-
-            <div class="footer">
-              <p>Thanks for having our passion. Drop by again!</p>
-            </div>
+            <div class="footer"><p>Thanks for having our passion. Drop by again!</p></div>
           </body>
         </html>
         `;
@@ -298,6 +290,26 @@ const Dashboard = ({ orders, filters }) => {
         }, 250);
     };
 
+    // MenuProps for styled dropdowns
+    const menuProps = {
+        sx: {
+            '& .MuiPaper-root': {
+                borderRadius: '16px',
+                boxShadow: 'none !important',
+                marginTop: '4px',
+                maxHeight: '180px',
+                overflowY: 'auto',
+            },
+            '& .MuiMenuItem-root': {
+                borderRadius: '16px',
+                '&:hover': {
+                    backgroundColor: '#063455 !important',
+                    color: '#fff !important',
+                },
+            },
+        },
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -306,6 +318,7 @@ const Dashboard = ({ orders, filters }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
+                    padding: '0 16px',
                 }}
             >
                 <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#063455' }}>
@@ -313,99 +326,176 @@ const Dashboard = ({ orders, filters }) => {
                 </Typography>
 
                 {/* Filters */}
-                <Paper sx={{ p: 2, mb: 3 }}>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <TextField
-                            size="small"
-                            label="Order ID"
-                            value={searchId}
-                            onChange={(e) => {
-                                setSearchId(e.target.value);
-                                applyFilters();
-                            }}
-                            sx={{ width: 120 }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-                        <TextField
-                            size="small"
-                            label="Client Name"
-                            value={searchName}
-                            onChange={(e) => {
-                                setSearchName(e.target.value);
-                                applyFilters();
-                            }}
-                            sx={{ width: 200 }}
-                        />
-                        <TextField
-                            size="small"
-                            type="date"
-                            label="Start Date"
-                            value={startDate}
-                            onChange={(e) => {
-                                setStartDate(e.target.value);
-                                applyFilters();
-                            }}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ width: 160 }}
-                        />
-                        <TextField
-                            size="small"
-                            type="date"
-                            label="End Date"
-                            value={endDate}
-                            onChange={(e) => {
-                                setEndDate(e.target.value);
-                                applyFilters();
-                            }}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ width: 160 }}
-                        />
-                        <FormControl size="small" sx={{ width: 140 }}>
-                            <InputLabel>Order Type</InputLabel>
-                            <Select
-                                value={orderType}
-                                label="Order Type"
-                                onChange={(e) => {
-                                    setOrderType(e.target.value);
-                                    applyFilters();
+                <Box sx={{ mb: 3 }}>
+                    <Grid container spacing={2} alignItems="center">
+                        {/* Customer Type */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={customerType} onChange={(e) => setCustomerType(e.target.value)} MenuProps={menuProps}>
+                                    <MenuItem value="all">All Types</MenuItem>
+                                    <MenuItem value="member">Member</MenuItem>
+                                    <MenuItem value="guest">Guest</MenuItem>
+                                    <MenuItem value="employee">Employee</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Search by Name with Autocomplete */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={suggestions}
+                                getOptionLabel={(option) => option.value || option.name || option.full_name || option}
+                                inputValue={searchName}
+                                onInputChange={(event, newInputValue) => {
+                                    setSearchName(newInputValue);
                                 }}
-                            >
-                                <MenuItem value="all">All</MenuItem>
-                                <MenuItem value="dineIn">Dine-In</MenuItem>
-                                <MenuItem value="delivery">Delivery</MenuItem>
-                                <MenuItem value="takeaway">Takeaway</MenuItem>
-                                <MenuItem value="reservation">Reservation</MenuItem>
-                                <MenuItem value="room_service">Room Service</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <FormControl size="small" sx={{ width: 140 }}>
-                            <InputLabel>Payment</InputLabel>
-                            <Select
-                                value={paymentStatus}
-                                label="Payment"
-                                onChange={(e) => {
-                                    setPaymentStatus(e.target.value);
-                                    applyFilters();
-                                }}
-                            >
-                                <MenuItem value="all">All</MenuItem>
-                                <MenuItem value="paid">Paid</MenuItem>
-                                <MenuItem value="awaiting">Awaiting</MenuItem>
-                                <MenuItem value="unpaid">Unpaid</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </Paper>
+                                loading={loadingSuggestions}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Customer Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no || option.employee_id}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.full_name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                            />
+                        </Grid>
+
+                        {/* Order ID */}
+                        <Grid item xs={12} md={2}>
+                            <TextField fullWidth size="small" label="Order ID" placeholder="Order ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        </Grid>
+
+                        {/* Start Date */}
+                        <Grid item xs={12} md={2}>
+                            <TextField fullWidth size="small" type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        </Grid>
+
+                        {/* End Date */}
+                        <Grid item xs={12} md={2}>
+                            <TextField fullWidth size="small" type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        </Grid>
+
+                        {/* Status */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="all">All Status</MenuItem>
+                                    <MenuItem value="paid">Paid</MenuItem>
+                                    <MenuItem value="awaiting">Awaiting</MenuItem>
+                                    <MenuItem value="unpaid">Unpaid</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Payment Method */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="all">All Methods</MenuItem>
+                                    <MenuItem value="cash">Cash</MenuItem>
+                                    <MenuItem value="credit_card">Credit Card</MenuItem>
+                                    <MenuItem value="bank">Bank</MenuItem>
+                                    <MenuItem value="ent">ENT</MenuItem>
+                                    <MenuItem value="cts">CTS</MenuItem>
+                                    <MenuItem value="split">Split</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Table */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={tableId} onChange={(e) => setTableId(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="">All Tables</MenuItem>
+                                    {tables.map((t) => (
+                                        <MenuItem key={t.id} value={t.id}>
+                                            {t.table_no}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Waiter */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={waiterId} onChange={(e) => setWaiterId(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="">All Waiters</MenuItem>
+                                    {waiters.map((w) => (
+                                        <MenuItem key={w.id} value={w.id}>
+                                            {w.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Cashier */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={cashierId} onChange={(e) => setCashierId(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="">All Cashiers</MenuItem>
+                                    {cashiers.map((c) => (
+                                        <MenuItem key={c.id} value={c.id}>
+                                            {c.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Order Type */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={orderType} onChange={(e) => setOrderType(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="all">All Types</MenuItem>
+                                    <MenuItem value="dineIn">Dine-In</MenuItem>
+                                    <MenuItem value="delivery">Delivery</MenuItem>
+                                    <MenuItem value="takeaway">Takeaway</MenuItem>
+                                    <MenuItem value="reservation">Reservation</MenuItem>
+                                    <MenuItem value="room_service">Room Service</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Action Buttons */}
+                        <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 2 }}>
+                            <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455', px: 4 }}>
+                                Reset
+                            </Button>
+                            <Button variant="contained" startIcon={<Search />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none', px: 4 }}>
+                                Search
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Box>
 
                 {/* Table */}
                 <TableContainer component={Paper} sx={{ position: 'relative' }}>
-                    {/* Loading Overlay */}
                     {isLoading && (
                         <Box
                             sx={{
@@ -424,57 +514,75 @@ const Dashboard = ({ orders, filters }) => {
                             <CircularProgress size={40} />
                         </Box>
                     )}
-                    <Table>
+                    <Table size="small">
                         <TableHead sx={{ backgroundColor: '#063455' }}>
                             <TableRow>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order #</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Items</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Gross</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Disc</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Tax</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Payment</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {orders?.data?.length > 0 ? (
-                                orders.data.map((order) => (
-                                    <TableRow key={order.id} hover>
-                                        <TableCell>#{order.id}</TableCell>
-                                        <TableCell>{new Date(order.start_date).toLocaleDateString()}</TableCell>
-                                        <TableCell>{formatOrderType(order.order_type)}</TableCell>
-                                        <TableCell>{getClientName(order)}</TableCell>
-                                        <TableCell>{order.table?.table_no || '-'}</TableCell>
-                                        <TableCell>{order.order_items?.length || 0}</TableCell>
-                                        <TableCell>Rs. {order.total_price?.toLocaleString()}</TableCell>
-                                        <TableCell>
-                                            <Chip label={order.status} size="small" color={order.status === 'completed' ? 'success' : 'default'} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                <Tooltip title="View Details">
-                                                    <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
-                                                        <VisibilityIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Print Receipt">
-                                                    <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
-                                                        <PrintIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                orders.data.map((order) => {
+                                    const gross = order.amount || 0;
+                                    const discount = order.discount || 0;
+                                    const taxRate = order.tax || 0;
+                                    const taxAmount = Math.round((gross - discount) * taxRate);
+                                    const total = order.total_price || 0;
+                                    const paid = order.paid_amount || 0;
+                                    const balance = total - paid;
+
+                                    return (
+                                        <TableRow key={order.id} hover>
+                                            <TableCell>#{order.id}</TableCell>
+                                            <TableCell>{new Date(order.start_date).toLocaleDateString()}</TableCell>
+                                            <TableCell>{getClientName(order)}</TableCell>
+                                            <TableCell>{formatOrderType(order.order_type)}</TableCell>
+                                            <TableCell>{order.table?.table_no || '-'}</TableCell>
+                                            <TableCell>{gross}</TableCell>
+                                            <TableCell>{discount}</TableCell>
+                                            <TableCell>{taxAmount}</TableCell>
+                                            <TableCell>{total}</TableCell>
+                                            <TableCell>{paid}</TableCell>
+                                            <TableCell sx={{ color: balance > 0 ? 'red' : 'green' }}>{balance}</TableCell>
+                                            <TableCell>{order.payment_method || '-'}</TableCell>
+                                            <TableCell>
+                                                <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
+                                            </TableCell>
+                                            <TableCell>{order.cashier?.name || '-'}</TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                    <Tooltip title="View Details">
+                                                        <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
+                                                            <VisibilityIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Print Receipt">
+                                                        <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
+                                                            <PrintIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={10} align="center">
+                                    <TableCell colSpan={15} align="center">
                                         No orders found
                                     </TableCell>
                                 </TableRow>
@@ -502,15 +610,11 @@ const Dashboard = ({ orders, filters }) => {
                 <DialogContent sx={{ p: 0 }}>
                     {selectedOrder && (
                         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
-                            {/* Receipt Preview */}
                             <Receipt invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} />
-
-                            {/* Order Details */}
                             <Box sx={{ flex: 1, p: 3 }}>
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Order Information
                                 </Typography>
-
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
                                     <Box>
                                         <Typography variant="caption" color="text.secondary">
@@ -565,7 +669,6 @@ const Dashboard = ({ orders, filters }) => {
                                         </Box>
                                     )}
                                 </Box>
-
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Order Items
                                 </Typography>
@@ -580,18 +683,19 @@ const Dashboard = ({ orders, filters }) => {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {selectedOrder.order_items?.map((item, index) => (
-                                                <TableRow key={index}>
-                                                    <TableCell>{item.order_item?.name || 'Item'}</TableCell>
-                                                    <TableCell align="right">{item.order_item?.quantity || 1}</TableCell>
-                                                    <TableCell align="right">Rs. {item.order_item?.price || 0}</TableCell>
-                                                    <TableCell align="right">Rs. {item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0)}</TableCell>
-                                                </TableRow>
-                                            ))}
+                                            {selectedOrder.order_items
+                                                ?.filter((item) => item.status !== 'cancelled')
+                                                .map((item, index) => (
+                                                    <TableRow key={index}>
+                                                        <TableCell>{item.order_item?.name || 'Item'}</TableCell>
+                                                        <TableCell align="right">{item.order_item?.quantity || 1}</TableCell>
+                                                        <TableCell align="right">Rs. {item.order_item?.price || 0}</TableCell>
+                                                        <TableCell align="right">Rs. {item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0)}</TableCell>
+                                                    </TableRow>
+                                                ))}
                                         </TableBody>
                                     </Table>
                                 </TableContainer>
-
                                 <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                                     <Button variant="outlined" onClick={handleCloseModal}>
                                         Close

@@ -34,6 +34,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
         const query = new URLSearchParams(window.location.search);
         const table = query.get('table');
         const floor = query.get('floor');
+        const type = query.get('type');
 
         resetOrderDetails();
 
@@ -44,6 +45,11 @@ const NewOrder = ({ orderNo, guestTypes }) => {
             table: table ? table : null,
             time: dayjs().format('HH:mm'),
         });
+
+        // Auto-select order type from URL
+        if (type) {
+            handleOrderTypeChange(type);
+        }
     }, []);
 
     const loadFloorTables = async () => {
@@ -418,7 +424,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
                         {/* =====  */}
                         {orderDetails.order_type === 'dineIn' && <DineDialog guestTypes={guestTypes} floorTables={floorTables} />}
                         {(orderDetails.order_type === 'takeaway' || orderDetails.order_type === 'delivery') && <TakeAwayDialog guestTypes={guestTypes} />}
-                        {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} />}
+                        {orderDetails.order_type === 'reservation' && <ReservationDialog guestTypes={guestTypes} floorTables={floorTables} />}
                         {orderDetails.order_type === 'room' && <RoomDialog guestTypes={guestTypes} roomTypes={roomTypes} loading={loading} />}
                     </Paper>
                 </Box>

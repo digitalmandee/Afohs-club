@@ -1,8 +1,9 @@
-import { AccessTime, Add } from '@mui/icons-material';
+import { AccessTime, Add, Block, Restore } from '@mui/icons-material';
 import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide, Select, MenuItem, InputLabel, FormControl, FormControlLabel, Radio, TextField, RadioGroup, Collapse } from '@mui/material';
 import { useEffect, useState } from 'react';
 import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
+import CancelItemDialog from './CancelItemDialog';
 
 function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSave, allrestaurants }) {
     const [showAddItem, setShowAddItem] = useState(false);
@@ -12,6 +13,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [orderStatus, setOrderStatus] = useState(order?.status || 'pending');
     const [loading, setLoading] = useState(false);
+
+    // Cancel Item State
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+    const [itemToCancel, setItemToCancel] = useState(null);
 
     const [openCancelDetails, setOpenCancelDetails] = useState({});
 
@@ -73,7 +78,12 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         );
     };
 
-    const handleRemoveToggle = (index) => {
+    const handleCancelClick = (item) => {
+        setItemToCancel(item);
+        setCancelDialogOpen(true);
+    };
+
+    const handleRestoreItem = (index) => {
         setOrderItems((prev) =>
             prev.map((item, i) => {
                 if (i !== index) return item;
@@ -83,26 +93,81 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     updatedId = `update-${item.id}`;
                 }
 
-                if (item.status === 'cancelled') {
-                    // Unchecking → restore + clear cancel fields
-                    return {
-                        ...item,
-                        id: updatedId,
-                        status: 'pending',
-                        remark: 'CANCELLED BY CUSTOMER',
-                        instructions: '',
-                        cancelType: 'void',
-                    };
-                } else {
-                    // Checking → cancel
-                    return {
-                        ...item,
-                        id: updatedId,
-                        status: 'cancelled',
-                    };
-                }
+                return {
+                    ...item,
+                    id: updatedId,
+                    status: 'pending',
+                    remark: null,
+                    instructions: null,
+                    cancelType: null,
+                };
             }),
         );
+    };
+
+    const handleConfirmCancel = (data) => {
+        const { quantity: cancelQty, remark, instructions, cancelType } = data;
+        if (!itemToCancel) return;
+
+        const index = orderItems.findIndex((i) => i === itemToCancel);
+        if (index === -1) return;
+
+        const originalItem = orderItems[index];
+
+        // Ensure we are working with numbers
+        const currentQty = parseInt(originalItem.order_item.quantity, 10);
+        const safeCancelQty = parseInt(cancelQty, 10);
+
+        if (safeCancelQty >= currentQty) {
+            // Cancel Entire Item
+            updateItem(index, {
+                status: 'cancelled',
+                remark,
+                instructions,
+                cancelType,
+            });
+        } else {
+            // Partial Cancel -> Split
+            // 1. Reduce quantity of original item
+            const reducedQty = currentQty - safeCancelQty;
+            const reducedPrice = parseFloat(originalItem.order_item.price) * reducedQty;
+
+            const updatedOriginal = {
+                ...originalItem,
+                id: originalItem.id && typeof originalItem.id === 'number' ? `update-${originalItem.id}` : originalItem.id,
+                order_item: {
+                    ...originalItem.order_item,
+                    quantity: reducedQty,
+                    total_price: reducedPrice,
+                },
+            };
+
+            // 2. Create NEW item for cancelled part
+            const cancelledPrice = parseFloat(originalItem.order_item.price) * safeCancelQty;
+            const cancelledItem = {
+                ...originalItem,
+                id: 'new', // Treat as new item
+                status: 'cancelled',
+                remark,
+                instructions,
+                cancelType,
+                order_item: {
+                    ...originalItem.order_item,
+                    quantity: safeCancelQty,
+                    total_price: cancelledPrice,
+                },
+            };
+
+            setOrderItems((prev) => {
+                const newItems = [...prev];
+                newItems[index] = updatedOriginal; // Replace original with reduced
+                newItems.splice(index + 1, 0, cancelledItem); // Insert cancelled right after
+                return newItems;
+            });
+        }
+
+        setCancelDialogOpen(false);
+        setItemToCancel(null);
     };
 
     const handleItemClick = async (item, index) => {
@@ -169,6 +234,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                 >
                     {/* Variant Popup */}
                     {variantPopupOpen && <VariantSelectorDialog open={variantPopupOpen} onClose={resetVariantState} productId={variantProductId} initialItem={initialEditItem} onConfirm={handleVariantConfirm} />}
+                    {cancelDialogOpen && <CancelItemDialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} onConfirm={handleConfirmCancel} item={itemToCancel} />}
 
                     {/* Order Info Panel */}
                     <Paper
@@ -306,20 +372,14 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                         >
                                                             ✕
                                                         </IconButton>
+                                                    ) : item.status === 'cancelled' ? (
+                                                        <IconButton size="small" onClick={() => handleRestoreItem(index)} sx={{ color: '#2e7d32' }} title="Restore Item">
+                                                            <Restore />
+                                                        </IconButton>
                                                     ) : (
-                                                        <Checkbox
-                                                            checked={item.status === 'cancelled'}
-                                                            onChange={() => {
-                                                                handleRemoveToggle(index);
-                                                                toggleCancelDetails(index);
-                                                            }}
-                                                            sx={{
-                                                                color: '#ccc',
-                                                                '&.Mui-checked': {
-                                                                    color: '#003153',
-                                                                },
-                                                            }}
-                                                        />
+                                                        <IconButton size="small" onClick={() => handleCancelClick(item)} sx={{ color: '#d32f2f' }} title="Cancel Item">
+                                                            <Block />
+                                                        </IconButton>
                                                     )}
 
                                                     {item.status === 'cancelled' && (

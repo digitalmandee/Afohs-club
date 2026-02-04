@@ -132,7 +132,7 @@ class UserController extends Controller
     public function waiters()
     {
         $waiters = Employee::with(['department', 'subdepartment'])
-            ->whereHas('subdepartment', function ($q) {
+            ->whereHas('designation', function ($q) {
                 $q->where('name', 'Waiter');
             })
             ->select('id', 'employee_id', 'name', 'email', 'status', 'department_id', 'subdepartment_id', 'company')
@@ -153,6 +153,34 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'waiters' => $waiters
+        ], 200);
+    }
+
+    // get riders
+    public function riders()
+    {
+        $riders = Employee::with(['department', 'subdepartment'])
+            ->whereHas('designation', function ($q) {
+                $q->where('name', 'Rider');
+            })
+            ->select('id', 'employee_id', 'name', 'email', 'status', 'department_id', 'subdepartment_id', 'company')
+            ->get()
+            ->map(function ($employee) {
+                return [
+                    'id' => $employee->id,
+                    'employee_id' => $employee->employee_id,
+                    'name' => $employee->name,
+                    'email' => $employee->email,
+                    'status' => $employee->status ?? 'active',
+                    'department_name' => $employee->department->name ?? null,
+                    'subdepartment_name' => $employee->subdepartment->name ?? null,
+                    'company' => $employee->company,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'riders' => $riders
         ], 200);
     }
 
