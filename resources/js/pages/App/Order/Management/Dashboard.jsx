@@ -355,6 +355,14 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         );
     };
 
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        if (timeStr.match(/AM|PM/i)) return timeStr;
+        const date = new Date(`2000-01-01 ${timeStr}`);
+        if (isNaN(date.getTime())) return timeStr;
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -426,6 +434,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                         <MenuItem value="all">All Types</MenuItem>
                                         <MenuItem value="member">Member</MenuItem>
                                         <MenuItem value="corporate">Corporate</MenuItem>
+                                        <MenuItem value="employee">Employee</MenuItem>
                                         <MenuItem value="guest">Guest</MenuItem>
                                     </Select>
                                 </FormControl>
@@ -601,11 +610,11 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                 >
                                                     <AccessTime fontSize="small" sx={{ fontSize: 16, color: '#fff', mr: 0.5 }} />
                                                     <Typography variant="caption" sx={{ color: '#fff' }}>
-                                                        {card.start_time}
+                                                        {formatTime(card.start_time)}
                                                     </Typography>
                                                 </Box>
                                                 <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                                                    <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member?.member_type?.name}</Typography>
+                                                    <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member ? 'Member' : card.customer ? 'Guest' : card.employee ? 'Employee' : 'Guest'}</Typography>
                                                     <Box display="flex">
                                                         <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
                                                         <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>
@@ -639,6 +648,29 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                         </Typography>
                                                     </ListItem>
                                                 ))}
+
+                                                {/* Totals Section */}
+                                                <ListItem sx={{ py: 1, px: 2, display: 'flex', justifyContent: 'space-between', bgcolor: '#f5f5f5' }}>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        Discount:
+                                                    </Typography>
+                                                    <Typography variant="body2">{Number(card.discount || 0).toFixed(2)}</Typography>
+                                                </ListItem>
+                                                <ListItem sx={{ py: 1, px: 2, display: 'flex', justifyContent: 'space-between', bgcolor: '#e0e0e0' }}>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        Total:
+                                                    </Typography>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {Number(card.total_price || 0).toLocaleString()}
+                                                    </Typography>
+                                                </ListItem>
+                                                {card.waiter && (
+                                                    <ListItem sx={{ py: 0.5, px: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Waiter: {card.waiter.name}
+                                                        </Typography>
+                                                    </ListItem>
+                                                )}
 
                                                 {/* Show More */}
                                                 {card.order_items.length > 4 && (

@@ -132,6 +132,9 @@ const OrderMenu = () => {
                     discount_value: 0,
                     discount_type: 'percentage',
                     discount_amount: 0,
+                    is_taxable: product.is_taxable, // Add is_taxable flag
+                    max_discount: product.max_discount,
+                    max_discount_type: product.max_discount_type,
                 };
 
                 handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);

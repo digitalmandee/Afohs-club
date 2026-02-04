@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PosUnit extends Model
+class PosManufacturer extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['tenant_id', 'name', 'code', 'status', 'created_by', 'updated_by', 'deleted_by'];
+    protected $fillable = ['tenant_id', 'name', 'status', 'created_by', 'updated_by', 'deleted_by'];
 }

@@ -1073,6 +1073,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
         // Removed duplicate/incorrect lines and referencing correct public method
         // Route::post('/data-migration/migrate-invoices', ...); // Removed duplicate
         Route::post('/data-migration/migrate-financials', [DataMigrationController::class, 'migrateFinancials'])->name('data-migration.migrate-financials');  // Added this route
+        Route::post('/migrate-fnb', [DataMigrationController::class, 'migrateFnB'])->name('data-migration.migrate-fnb');  // Added FnB migration route
 
         // Atomic Financial Migration Routes
         Route::get('/old-transaction-types', [DataMigrationController::class, 'getOldTransactionTypesPublic'])->name('data-migration.old-transaction-types');

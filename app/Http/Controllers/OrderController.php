@@ -212,9 +212,11 @@ class OrderController extends Controller
                 'table:id,table_no',
                 'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
                 'member:id,member_type_id,full_name,membership_no',
-                'customer:id,name,customer_no',
+                'customer:id,name,customer_no,guest_type_id',
+                'customer.guestType:id,name',
                 'employee:id,employee_id,name',
-                'member.memberType:id,name'
+                'member.memberType:id,name',
+                'waiter:id,name',  // Waiter relation
             ]);
 
             // ✅ Exclude paid orders from Order Management (table is free after payment)
@@ -273,9 +275,24 @@ class OrderController extends Controller
                 $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
             }
 
-            // 🍽 Order type
+            // 🍽 Order type (Smart Filter)
             if ($request->type && $request->type !== 'all') {
-                $query->where('order_type', $request->type);
+                if ($request->type === 'member') {
+                    $query->whereNotNull('member_id');
+                } elseif ($request->type === 'employee') {
+                    $query->whereNotNull('employee_id');
+                } elseif ($request->type === 'guest') {
+                    $query
+                        ->whereNotNull('customer_id')
+                        ->whereNull('member_id')
+                        ->whereNull('employee_id');
+                } elseif ($request->type === 'corporate') {
+                    $query->whereHas('member.memberType', function ($q) {
+                        $q->where('name', 'Corporate');
+                    });
+                } else {
+                    $query->where('order_type', $request->type);
+                }
             }
 
             $orders = $query->latest()->paginate(20)->withQueryString();
@@ -772,11 +789,13 @@ class OrderController extends Controller
 
                     $product = Product::find($productId);
 
-                    if (!$product || $product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
-                        throw new \Exception('Insufficient stock for product: ' . ($product->name ?? 'Unknown'));
+                    // Only check stock if management is enabled
+                    if ($product && $product->manage_stock) {
+                        if ($product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
+                            throw new \Exception('Insufficient stock for product: ' . ($product->name ?? 'Unknown'));
+                        }
+                        $product->decrement('current_stock', $productQty);
                     }
-
-                    $product->decrement('current_stock', $productQty);
 
                     if (!empty($item['variants'])) {
                         foreach ($item['variants'] as $variant) {
@@ -1365,6 +1384,8 @@ class OrderController extends Controller
             $productsQuery->whereJsonContains('available_order_types', $order_type);
         }
 
+        $productsQuery->where('is_salable', true);
+
         $products = $productsQuery->get();
 
         return response()->json(['success' => true, 'products' => $products], 200);
@@ -1396,6 +1417,7 @@ class OrderController extends Controller
                     ->orWhere('name', 'like', "%{$searchTerm}%");
             })
             ->where('current_stock', '>', 0)  // Only show products with stock
+            ->where('is_salable', true)  // Only show salable products
             ->limit(20)  // Limit results for performance
             ->get();
 
@@ -1524,17 +1546,15 @@ class OrderController extends Controller
             'orderItems:id,order_id,order_item,status',
             'member:id,member_type_id,full_name,membership_no',
             'member.memberType:id,name',
-            'customer:id,name,customer_no',
+            'customer:id,name,customer_no,guest_type_id',
+            'customer.guestType:id,name',
             'employee:id,employee_id,name',
             'cashier:id,name',
+            'user:id,name',  // Order Creator
             'waiter:id,name',
         ])
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
-            ->where(function ($q) {
-                $q
-                    ->where('status', 'completed')
-                    ->orWhere('payment_status', 'paid');
-            });
+            ->where('status', '!=', 'pending');
 
         // 🔍 Search by Order ID
         if ($request->filled('search_id')) {
@@ -1552,18 +1572,24 @@ class OrderController extends Controller
             });
         }
 
-        // 👤 Customer Type filter
-        if ($request->filled('customer_type') && $request->customer_type !== 'all') {
-            switch ($request->customer_type) {
-                case 'member':
-                    $query->whereNotNull('member_id');
-                    break;
-                case 'guest':
-                    $query->whereNotNull('customer_id');
-                    break;
-                case 'employee':
-                    $query->whereNotNull('employee_id');
-                    break;
+        // 🔍 Unified Type Filter (Member, Corporate, Employee, Guest, Order Types)
+        if ($request->filled('type') && $request->type !== 'all') {
+            if ($request->type === 'member') {
+                $query->whereNotNull('member_id');
+            } elseif ($request->type === 'employee') {
+                $query->whereNotNull('employee_id');
+            } elseif ($request->type === 'guest') {
+                $query
+                    ->whereNotNull('customer_id')
+                    ->whereNull('member_id')
+                    ->whereNull('employee_id');
+            } elseif ($request->type === 'corporate') {
+                $query->whereHas('member.memberType', function ($q) {
+                    $q->where('name', 'Corporate');
+                });
+            } else {
+                // Assume it's a specific order_type (dineIn, delivery, etc.)
+                $query->where('order_type', $request->type);
             }
         }
 
@@ -1574,11 +1600,6 @@ class OrderController extends Controller
             $query->whereDate('start_date', '>=', $request->start_date);
         } elseif ($request->filled('end_date')) {
             $query->whereDate('start_date', '<=', $request->end_date);
-        }
-
-        // 🍽 Order type filter
-        if ($request->filled('type') && $request->type !== 'all') {
-            $query->where('order_type', $request->type);
         }
 
         // 💰 Payment status filter

@@ -55,8 +55,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             prev.map((item, i) => {
                 if (i !== index) return item;
 
-                const currentQty = parseInt(item.order_item.quantity, 10) || 1;
-                const updatedQty = currentQty + delta;
+                const currentQty = Number(item.order_item.quantity) || 1;
+                const updatedQty = currentQty + Number(delta);
 
                 let updatedId = item.id;
                 if (item.id && typeof item.id === 'number') {

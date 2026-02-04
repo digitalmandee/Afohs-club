@@ -110,7 +110,18 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     // Now apply tax on the discounted amount
     const taxRate = setting?.tax ? setting.tax / 100 : 0;
-    const taxAmount = Math.round(discountedSubtotal * taxRate);
+
+    // Calculate taxable amount (sum of discounted price of taxable items)
+    const taxableAmount = orderDetails.order_items.reduce((acc, item) => {
+        if (item.is_taxable) {
+            // Only apply if item is taxable
+            const itemTotal = item.total_price - (item.discount_amount || 0);
+            return acc + itemTotal;
+        }
+        return acc;
+    }, 0);
+
+    const taxAmount = Math.round(taxableAmount * taxRate);
 
     // Final total
     const total = Math.round(discountedSubtotal + taxAmount);
@@ -121,7 +132,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         const newPayload = {
             ...orderDetails,
             ...extra, // include waiter + time if passed
-            price: subtotal,
+            price: total,
             tax: taxRate,
             discount_type: 'amount', // global discount is now just the sum amount
             discount_value: discountAmount,
@@ -206,6 +217,38 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
         const val = Number(itemDiscountForm.value || 0);
         const type = itemDiscountForm.type;
+
+        // Check for max discount limit
+        if (item.max_discount != null && parseFloat(item.max_discount) > 0) {
+            const maxDisc = parseFloat(item.max_discount);
+            const maxDiscType = item.max_discount_type || 'percentage';
+
+            let exceedsLimit = false;
+
+            if (maxDiscType === 'percentage') {
+                if (type === 'percentage') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    // type is amount, check if amount is > maxDisc% of price
+                    const equivalentPercent = (val / item.price) * 100;
+                    if (equivalentPercent > maxDisc) exceedsLimit = true;
+                }
+            } else {
+                // maxDiscType is amount (Fixed Amount per unit)
+                if (type === 'amount') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    // type is percentage, check if calculated amount > maxDisc
+                    const calculatedAmount = (val / 100) * item.price;
+                    if (calculatedAmount > maxDisc) exceedsLimit = true;
+                }
+            }
+
+            if (exceedsLimit) {
+                enqueueSnackbar(`Maximum discount allowed is ${maxDisc}${maxDiscType === 'percentage' ? '%' : ' Rs'}`, { variant: 'error' });
+                return;
+            }
+        }
 
         // Update item with new discount settings
         item.discount_value = val;
