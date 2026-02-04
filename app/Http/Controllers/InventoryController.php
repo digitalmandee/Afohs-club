@@ -30,10 +30,10 @@ class InventoryController extends Controller
             $query->where('category_id', $category_id);
         }
 
-        $query->where('tenant_id', tenant()->id);
+        // $query->where('tenant_id', tenant()->id);
 
         $productLists = $query->get();
-        $categoriesList = Category::select('id', 'name')->where('tenant_id', tenant()->id)->get();
+        $categoriesList = Category::select('id', 'name')->get();
 
         return Inertia::render('App/Inventory/Dashboard', compact('productLists', 'categoriesList'));
     }
@@ -49,8 +49,8 @@ class InventoryController extends Controller
             'current_stock', 'minimal_stock', 'status', 'images',
             'description'
         ])
-            ->with(['category:id,name', 'variants:id,product_id,name,type', 'variants.values'])
-            ->where('tenant_id', tenant()->id);
+            ->with(['category:id,name', 'variants:id,product_id,name,type', 'variants.values']);
+        // ->where('tenant_id', tenant()->id);
 
         // Filter by name (case-insensitive)
         if ($request->filled('name')) {
@@ -448,7 +448,7 @@ class InventoryController extends Controller
     public function trashed(Request $request)
     {
         $trashedProducts = Product::onlyTrashed()
-            ->where('tenant_id', tenant()->id)
+            // ->where('tenant_id', tenant()->id)
             ->with(['category'])
             ->when($request->search, function ($query, $search) {
                 $query
@@ -467,7 +467,7 @@ class InventoryController extends Controller
 
     public function restore($id)
     {
-        $product = Product::withTrashed()->where('tenant_id', tenant()->id)->findOrFail($id);
+        $product = Product::withTrashed()->findOrFail($id);
         $product->restore();
 
         return redirect()->back()->with('success', 'Product restored successfully.');
@@ -475,7 +475,7 @@ class InventoryController extends Controller
 
     public function forceDelete($id)
     {
-        $product = Product::withTrashed()->where('tenant_id', tenant()->id)->findOrFail($id);
+        $product = Product::withTrashed()->findOrFail($id);
 
         // Delete images from storage
         if ($product->images) {

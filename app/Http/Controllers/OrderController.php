@@ -741,14 +741,17 @@ class OrderController extends Controller
                     $prodId = $itemData['id'] ?? null;
 
                     if ($prodId) {
-                        \App\Models\Product::where('id', $prodId)->increment('current_stock', $qty);
-                    }
+                        $prod = \App\Models\Product::find($prodId);
+                        if ($prod && $prod->manage_stock) {
+                            $prod->increment('current_stock', $qty);
 
-                    if (!empty($itemData['variants'])) {
-                        foreach ($itemData['variants'] as $variant) {
-                            $vId = $variant['id'] ?? null;
-                            if ($vId) {
-                                \App\Models\ProductVariantValue::where('id', $vId)->increment('stock', 1);
+                            if (!empty($itemData['variants'])) {
+                                foreach ($itemData['variants'] as $variant) {
+                                    $vId = $variant['id'] ?? null;
+                                    if ($vId) {
+                                        \App\Models\ProductVariantValue::where('id', $vId)->increment('stock', 1);
+                                    }
+                                }
                             }
                         }
                     }
@@ -804,11 +807,20 @@ class OrderController extends Controller
                                 continue;
 
                             $variantValue = ProductVariantValue::find($variantId);
-                            if (!$variantValue || $variantValue->stock < 0) {
-                                throw new \Exception('Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown'));
+
+                            if (!$variantValue) {
+                                throw new \Exception('Invalid variant ID: ' . $variantId);
                             }
+
+                            // Only check and decrement stock if management is enabled
+                            if ($product->manage_stock) {
+                                if ($variantValue->stock < 0) {
+                                    throw new \Exception('Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown'));
+                                }
+                                $variantValue->decrement('stock', 1);
+                            }
+
                             $totalCostPrice += $variantValue->additional_price;
-                            $variantValue->decrement('stock', 1);
                         }
                     }
 
@@ -848,16 +860,16 @@ class OrderController extends Controller
 
                             if ($productId) {
                                 $product = \App\Models\Product::find($productId);
-                                if ($product) {
+                                if ($product && $product->manage_stock) {
                                     $product->decrement('current_stock', $productQty);
-                                }
-                            }
 
-                            if (!empty($item['variants'])) {
-                                foreach ($item['variants'] as $variant) {
-                                    $vId = $variant['id'] ?? null;
-                                    if ($vId) {
-                                        \App\Models\ProductVariantValue::where('id', $vId)->decrement('stock', 1);
+                                    if (!empty($item['variants'])) {
+                                        foreach ($item['variants'] as $variant) {
+                                            $vId = $variant['id'] ?? null;
+                                            if ($vId) {
+                                                \App\Models\ProductVariantValue::where('id', $vId)->decrement('stock', 1);
+                                            }
+                                        }
                                     }
                                 }
                             }

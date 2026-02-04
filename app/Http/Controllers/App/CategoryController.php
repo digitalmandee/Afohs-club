@@ -16,7 +16,7 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $categoriesList = Category::query()
-            ->where('tenant_id', tenant()->id)
+            // ->where('tenant_id', tenant()->id)
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })
@@ -112,7 +112,7 @@ class CategoryController extends Controller
     public function trashed(Request $request)
     {
         $trashedCategories = Category::onlyTrashed()
-            ->where('tenant_id', tenant()->id)
+            // ->where('tenant_id', tenant()->id)
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%");
             })

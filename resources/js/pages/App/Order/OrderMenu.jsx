@@ -95,7 +95,8 @@ const OrderMenu = () => {
 
     // This would be called when user clicks a product
     const handleProductClick = (product) => {
-        if (product.minimal_stock > product.current_stock - 1) return;
+        // Only check stock if management is enabled
+        if (product.manage_stock && product.minimal_stock > product.current_stock - 1) return;
 
         if (product.variants && product.variants.length > 0) {
             setVariantProductId(product.id);
@@ -135,6 +136,9 @@ const OrderMenu = () => {
                     is_taxable: product.is_taxable, // Add is_taxable flag
                     max_discount: product.max_discount,
                     max_discount_type: product.max_discount_type,
+                    manage_stock: product.manage_stock,
+                    current_stock: product.current_stock,
+                    minimal_stock: product.minimal_stock,
                 };
 
                 handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);
@@ -516,12 +520,11 @@ const OrderMenu = () => {
                                                                 flexDirection: 'column',
                                                                 alignItems: 'center',
                                                                 border: product.tenant_id !== selectedRestaurant ? '2px solid #ff9800' : '1px solid #eee',
-                                                                opacity: product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
-                                                                cursor: product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
+                                                                opacity: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
+                                                                cursor: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
                                                                 borderRadius: 2,
                                                                 height: '100%',
                                                                 width: 100,
-                                                                cursor: 'pointer',
                                                                 position: 'relative',
                                                                 '&:hover': {
                                                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -621,8 +624,8 @@ const OrderMenu = () => {
                                                             borderRadius: 2,
                                                             height: '100%',
                                                             width: 100,
-                                                            opacity: product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
-                                                            cursor: product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
+                                                            opacity: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
+                                                            cursor: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
                                                             // bgcolor: 'pink',
                                                             '&:hover': {
                                                                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
