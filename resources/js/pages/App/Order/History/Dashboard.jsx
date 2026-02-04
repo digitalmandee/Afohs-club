@@ -24,7 +24,6 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     const [endDate, setEndDate] = useState(filters?.end_date || '');
     const [orderType, setOrderType] = useState(filters?.type || 'all');
     const [paymentStatus, setPaymentStatus] = useState(filters?.payment_status || 'all');
-    const [customerType, setCustomerType] = useState(filters?.customer_type || 'all');
     const [paymentMethod, setPaymentMethod] = useState(filters?.payment_method || 'all');
     const [tableId, setTableId] = useState(filters?.table_id || '');
     const [waiterId, setWaiterId] = useState(filters?.waiter_id || '');
@@ -64,11 +63,11 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
 
     useEffect(() => {
         if (searchName) {
-            fetchSuggestions(searchName, customerType);
+            fetchSuggestions(searchName, orderType);
         } else {
             setSuggestions([]);
         }
-    }, [searchName, customerType]);
+    }, [searchName, orderType]);
 
     const handleApply = () => {
         setIsLoading(true);
@@ -81,7 +80,6 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                 end_date: endDate || undefined,
                 type: orderType !== 'all' ? orderType : undefined,
                 payment_status: paymentStatus !== 'all' ? paymentStatus : undefined,
-                customer_type: customerType !== 'all' ? customerType : undefined,
                 payment_method: paymentMethod !== 'all' ? paymentMethod : undefined,
                 table_id: tableId || undefined,
                 waiter_id: waiterId || undefined,
@@ -102,7 +100,6 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
         setEndDate('');
         setOrderType('all');
         setPaymentStatus('all');
-        setCustomerType('all');
         setPaymentMethod('all');
         setTableId('');
         setWaiterId('');
@@ -328,14 +325,20 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                 {/* Filters */}
                 <Box sx={{ mb: 3 }}>
                     <Grid container spacing={2} alignItems="center">
-                        {/* Customer Type */}
+                        {/* Unified Type Selection */}
                         <Grid item xs={12} md={2}>
                             <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                <Select value={customerType} onChange={(e) => setCustomerType(e.target.value)} MenuProps={menuProps}>
+                                <Select value={orderType} onChange={(e) => setOrderType(e.target.value)} MenuProps={menuProps}>
                                     <MenuItem value="all">All Types</MenuItem>
                                     <MenuItem value="member">Member</MenuItem>
-                                    <MenuItem value="guest">Guest</MenuItem>
+                                    <MenuItem value="corporate">Corporate</MenuItem>
                                     <MenuItem value="employee">Employee</MenuItem>
+                                    <MenuItem value="guest">Guest</MenuItem>
+                                    <MenuItem value="dineIn">Dine-In</MenuItem>
+                                    <MenuItem value="delivery">Delivery</MenuItem>
+                                    <MenuItem value="takeaway">Takeaway</MenuItem>
+                                    <MenuItem value="reservation">Reservation</MenuItem>
+                                    <MenuItem value="room_service">Room Service</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -468,20 +471,6 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                             </FormControl>
                         </Grid>
 
-                        {/* Order Type */}
-                        <Grid item xs={12} md={2}>
-                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                <Select value={orderType} onChange={(e) => setOrderType(e.target.value)} displayEmpty MenuProps={menuProps}>
-                                    <MenuItem value="all">All Types</MenuItem>
-                                    <MenuItem value="dineIn">Dine-In</MenuItem>
-                                    <MenuItem value="delivery">Delivery</MenuItem>
-                                    <MenuItem value="takeaway">Takeaway</MenuItem>
-                                    <MenuItem value="reservation">Reservation</MenuItem>
-                                    <MenuItem value="room_service">Room Service</MenuItem>
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
                         {/* Action Buttons */}
                         <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 2 }}>
                             <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455', px: 4 }}>
@@ -519,8 +508,10 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                             <TableRow>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order #</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership #</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order Type</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Gross</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Disc</TableCell>
@@ -545,11 +536,28 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     const paid = order.paid_amount || 0;
                                     const balance = total - paid;
 
+                                    // Determine Client Type
+                                    let clientType = 'Guest';
+                                    if (order.employee) clientType = 'Employee';
+                                    else if (order.member) {
+                                        clientType = order.member.member_type?.name === 'Corporate' ? 'Corporate' : 'Member';
+                                    } else if (order.customer && order.customer.guest_type) {
+                                        clientType = order.customer.guest_type.name || 'Guest';
+                                    }
+
+                                    // Determine ID
+                                    let clientId = '-';
+                                    if (order.member) clientId = order.member.membership_no;
+                                    else if (order.customer) clientId = order.customer.customer_no;
+                                    else if (order.employee) clientId = order.employee.employee_id;
+
                                     return (
                                         <TableRow key={order.id} hover>
                                             <TableCell>#{order.id}</TableCell>
                                             <TableCell>{new Date(order.start_date).toLocaleDateString()}</TableCell>
+                                            <TableCell>{clientId}</TableCell>
                                             <TableCell>{getClientName(order)}</TableCell>
+                                            <TableCell>{clientType}</TableCell>
                                             <TableCell>{formatOrderType(order.order_type)}</TableCell>
                                             <TableCell>{order.table?.table_no || '-'}</TableCell>
                                             <TableCell>{gross}</TableCell>
