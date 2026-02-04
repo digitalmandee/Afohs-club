@@ -3188,21 +3188,22 @@ class DataMigrationController extends Controller
 
     public function migrateFnB(Request $request)
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        // Truncate tables (DDL causes implicit commit, so must be outside transaction)
+        \App\Models\Category::truncate();
+        \App\Models\PosSubCategory::truncate();
+        \App\Models\PosManufacturer::truncate();
+        \App\Models\PosUnit::truncate();
+        \App\Models\ProductIngredient::truncate();
+        \App\Models\ProductVariantValue::truncate();
+        \App\Models\ProductVariant::truncate();
+        \App\Models\Product::truncate();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         try {
             DB::beginTransaction();
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-
-            // Truncate tables
-            \App\Models\Category::truncate();
-            \App\Models\PosSubCategory::truncate();
-            \App\Models\PosManufacturer::truncate();
-            \App\Models\PosUnit::truncate();
-            \App\Models\ProductIngredient::truncate();
-            \App\Models\ProductVariantValue::truncate();
-            \App\Models\ProductVariant::truncate();
-            \App\Models\Product::truncate();
-
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
             // Migrate Categories and get map
             $catResult = $this->migrateCategories();
@@ -3237,7 +3238,6 @@ class DataMigrationController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
             Log::error('FnB Migration Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
