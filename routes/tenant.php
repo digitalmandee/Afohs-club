@@ -150,6 +150,15 @@ Route::group([
         Route::delete('/inventory/units/{id}', [App\Http\Controllers\PosUnitController::class, 'destroy'])->name('units.destroy');
         Route::delete('/inventory/units/{id}/force-delete', [App\Http\Controllers\PosUnitController::class, 'forceDelete'])->name('units.force-delete');
 
+        // Manufacturers
+        Route::get('/inventory/manufacturers', [App\Http\Controllers\PosManufacturerController::class, 'index'])->name('manufacturers.index');
+        Route::get('/inventory/manufacturers/trashed', [App\Http\Controllers\PosManufacturerController::class, 'trashed'])->name('manufacturers.trashed');
+        Route::post('/inventory/manufacturers', [App\Http\Controllers\PosManufacturerController::class, 'store'])->name('manufacturers.store');
+        Route::put('/inventory/manufacturers/{id}', [App\Http\Controllers\PosManufacturerController::class, 'update'])->name('manufacturers.update');
+        Route::post('/inventory/manufacturers/{id}/restore', [App\Http\Controllers\PosManufacturerController::class, 'restore'])->name('manufacturers.restore');
+        Route::delete('/inventory/manufacturers/{id}', [App\Http\Controllers\PosManufacturerController::class, 'destroy'])->name('manufacturers.destroy');
+        Route::delete('/inventory/manufacturers/{id}/force-delete', [App\Http\Controllers\PosManufacturerController::class, 'forceDelete'])->name('manufacturers.force-delete');
+
         Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
         Route::get('/inventory/products', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/products/add', function () {

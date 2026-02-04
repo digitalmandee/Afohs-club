@@ -114,6 +114,7 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Menu Category', icon: <CategoryIcon />, path: route('inventory.category') },
         { text: 'Ingredients', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('ingredients.index') },
         { text: 'Units of Measurement', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('units.index') },
+        { text: 'Manufacturers', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('manufacturers.index') },
         { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },
         { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index') },
         { text: 'Transaction History', icon: <PaymentsIcon />, path: route('transaction.history') },
