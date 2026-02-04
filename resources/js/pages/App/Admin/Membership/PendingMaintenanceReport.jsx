@@ -5,6 +5,10 @@ import axios from 'axios';
 import debounce from 'lodash.debounce';
 import { TextField, Chip, IconButton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, InputAdornment, Grid, FormControl, InputLabel, Select, MenuItem, Pagination, Autocomplete } from '@mui/material';
 import { Search, Print, ArrowBack } from '@mui/icons-material';
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 
 const PendingMaintenanceReport = () => {
     // Get props first
@@ -289,22 +293,23 @@ const PendingMaintenanceReport = () => {
                                 backgroundColor: '#063455',
                                 color: 'white',
                                 textTransform: 'none',
+                                borderRadius: '16px',
                                 '&:hover': {
                                     backgroundColor: '#052d47',
                                 },
                             }}
                         >
-                            Print Report
+                            Print
                         </Button>
                     </Box>
                 </div>
 
                 {/* Search and Filters */}
-                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ mb: 3, pt: 2 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>Search & Filter Options</Typography>
 
                     {/* Search Fields */}
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                    <Grid container spacing={2} sx={{ mb: 2 }}>
                         {/* 1. Search Name */}
                         <Grid item xs={12} md={3}>
                             <Autocomplete
@@ -449,7 +454,11 @@ const PendingMaintenanceReport = () => {
                                     handleFilterChange('contact_search', newInputValue);
                                     fetchContactSuggestions(newInputValue);
                                 }}
-                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Contact" placeholder="Mobile..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderInput={(params) => <TextField {...params}
+                                    fullWidth size="small"
+                                    label="Search Contact"
+                                    placeholder="Mobile..."
+                                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                                 renderOption={(props, option) => (
                                     <li {...props} key={option.id || option.label}>
                                         <Box sx={{ width: '100%' }}>
@@ -484,7 +493,7 @@ const PendingMaintenanceReport = () => {
 
                     {/* Filter Fields */}
                     <Grid container spacing={2}>
-                        <Grid item xs={12} md={2.5}>
+                        <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                     <InputLabel>Member Status</InputLabel>
                                     <Select
@@ -517,11 +526,48 @@ const PendingMaintenanceReport = () => {
                                 onChange={(event, newValue) => {
                                     handleFilterChange('status', newValue);
                                 }}
-                                renderTags={(value, getTagProps) => value.map((option, index) => <Chip label={option.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())} size="small" {...getTagProps({ index })} key={option} />)}
-                                renderInput={(params) => <TextField {...params} label="Member Status" placeholder="Select status" />}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) =>
+                                        <Chip label={option.replace(/_/g, ' ').replace(/\b\w/g,
+                                            (c) => c.toUpperCase())}
+                                            size="small" {...getTagProps({ index })}
+                                            key={option} />)}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
+                                renderInput={(params) =>
+                                    <TextField {...params}
+                                        label="Member Status"
+                                        placeholder="Select status"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />}
                             />
                         </Grid>
-                        <Grid item xs={12} md={2.5}>
+                        <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                 <InputLabel>Member Category</InputLabel>
                                 <Select
@@ -559,16 +605,95 @@ const PendingMaintenanceReport = () => {
                                         newValue.map((cat) => cat.id),
                                     );
                                 }}
-                                renderTags={(value, getTagProps) => value.map((option, index) => <Chip key={option.id} label={option.name} size="small" {...getTagProps({ index })} />)}
-                                renderInput={(params) => <TextField {...params} label="Member Category" placeholder="Select categories" />}
+                                renderTags={(value, getTagProps) =>
+                                    value.map((option, index) =>
+                                        <Chip key={option.id}
+                                            label={option.name}
+                                            size="small" {...getTagProps({ index })} />)}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
+                                renderInput={(params) =>
+                                    <TextField {...params}
+                                        label="Member Category"
+                                        placeholder="Select categories"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />}
                             />
                         </Grid>
 
                         {/* New Quarters Filter */}
-                        <Grid item xs={12} md={2.5}>
-                            <FormControl fullWidth size="small">
+                        <Grid item xs={12} md={3}>
+                            <FormControl
+                                fullWidth
+                                size="small"
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: "16px",
+                                    },
+                                    "& fieldset": {
+                                        borderRadius: "16px",
+                                    },
+                                }}
+                            >
                                 <InputLabel>Quarters Pending</InputLabel>
-                                <Select value={allFilters.quarters_pending || ''} label="Quarters Pending" onChange={(e) => handleFilterChange('quarters_pending', e.target.value)}>
+                                <Select value={allFilters.quarters_pending || ''}
+                                    label="Quarters Pending"
+                                    onChange={(e) => handleFilterChange('quarters_pending', e.target.value)}
+                                    MenuProps={{
+                                        PaperProps: {
+                                            sx: {
+                                                maxHeight: 300,
+                                                p: 1,
+
+                                                "& .MuiMenuItem-root": {
+                                                    borderRadius: "16px",
+                                                    mx: 0.5,
+                                                    my: 0.5
+                                                },
+
+                                                "& .MuiMenuItem-root:hover": {
+                                                    backgroundColor: "#063455",
+                                                    color: "#fff",
+                                                },
+
+                                                "& .MuiMenuItem-root.Mui-selected": {
+                                                    backgroundColor: "#063455",
+                                                    color: "#fff",
+                                                },
+
+                                                "& .MuiMenuItem-root.Mui-selected:hover": {
+                                                    backgroundColor: "#063455",
+                                                    color: "#fff",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                >
                                     <MenuItem value="">All</MenuItem>
                                     {quartersOptions.map((opt) => (
                                         <MenuItem key={opt.value} value={opt.value}>
@@ -579,8 +704,8 @@ const PendingMaintenanceReport = () => {
                             </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} md={2.5}>
-                            <TextField
+                        <Grid item xs={12} md={3}>
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -590,10 +715,37 @@ const PendingMaintenanceReport = () => {
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="From Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_from ? dayjs(allFilters.date_from, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_from",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
-                        <Grid item xs={12} md={2.5}>
-                            <TextField
+                        <Grid item xs={12} md={3}>
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -603,10 +755,37 @@ const PendingMaintenanceReport = () => {
                                 InputLabelProps={{
                                     shrink: true,
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="To Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_to ? dayjs(allFilters.date_to, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_to",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         {/* Buttons: Reset and Search */}
-                        <Grid item xs={12} md={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 1 }}>
+                        <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 2 }}>
                             <Button
                                 variant="outlined"
                                 color="error"
@@ -616,12 +795,15 @@ const PendingMaintenanceReport = () => {
                                     height: '40px',
                                     minWidth: '120px',
                                     textTransform: 'none',
+                                    color: '#063455',
+                                    border: '1px solid #063455'
                                 }}
                             >
                                 Reset
                             </Button>
                             <Button
                                 variant="contained"
+                                startIcon={<Search />}
                                 onClick={handleSearch}
                                 sx={{
                                     backgroundColor: '#063455',
@@ -643,21 +825,21 @@ const PendingMaintenanceReport = () => {
                 {/* Pending Maintenance Table */}
                 <Box sx={{ mb: 3 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>Pending Maintenance Details</Typography>
-                    <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2 }}>
+                    <TableContainer sx={{ borderRadius: '16px' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
                                     <TableCell padding="checkbox">
                                         <input type="checkbox" onChange={handleSelectAll} checked={members?.data?.length > 0 && selectedMembers.length === members?.data?.length} style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
                                     </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>SR #</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>ID</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Member #</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Name</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Maintenance Per Quarter</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Pending</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Status</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Print</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>SR</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>ID</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Member</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Per Quarter</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Total Pending</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Status</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Print</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

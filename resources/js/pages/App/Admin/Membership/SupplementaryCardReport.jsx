@@ -123,6 +123,7 @@ const SupplementaryCardReport = () => {
                             backgroundColor: '#063455',
                             color: 'white',
                             textTransform: 'none',
+                            borderRadius: '16px',
                             '&:hover': {
                                 backgroundColor: '#052d47',
                             },
@@ -133,14 +134,14 @@ const SupplementaryCardReport = () => {
                 </div>
 
                 {/* Filter Options */}
-                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ mb: 3, pt: 2 }}>
                     <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>
                         Filter Options
                     </Typography>
 
                     {/* Filter Fields */}
                     <Grid container spacing={3} alignItems="center">
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                     <InputLabel>Member Category</InputLabel>
                                     <Select
@@ -172,6 +173,33 @@ const SupplementaryCardReport = () => {
                                     const categoryIds = newValue.map(cat => cat.id);
                                     handleFilterChange('categories', categoryIds);
                                 }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
                                 options={safeAllCategories}
                                 getOptionLabel={(option) => option.name || ''}
                                 isOptionEqualToValue={(option, value) => option.id === value?.id}
@@ -182,11 +210,12 @@ const SupplementaryCardReport = () => {
                                         placeholder="Select categories"
                                         size="small"
                                         fullWidth
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                                     />
                                 )}
                             />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                 <InputLabel>Card Status</InputLabel>
                                 <Select
@@ -223,6 +252,33 @@ const SupplementaryCardReport = () => {
                                     const statusValues = newValue.map(status => status);
                                     handleFilterChange('card_status', statusValues);
                                 }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
                                 options={safeAllCardStatuses}
                                 getOptionLabel={(option) => option}
                                 isOptionEqualToValue={(option, value) => option === value}
@@ -247,6 +303,7 @@ const SupplementaryCardReport = () => {
                                         placeholder="Select statuses"
                                         size="small"
                                         fullWidth
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                                     />
                                 )}
                             />
@@ -255,28 +312,31 @@ const SupplementaryCardReport = () => {
                             <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Button
                                     variant="contained"
+                                    startIcon={<Search />}
                                     onClick={handleSearch}
                                     disabled={loading}
                                     sx={{
-                                        backgroundColor: '#059669',
+                                        backgroundColor: '#063455',
                                         textTransform: 'none',
+                                        borderRadius: '16px',
                                         '&:hover': {
-                                            backgroundColor: '#047857',
+                                            backgroundColor: '#063455',
                                         },
                                     }}
                                 >
-                                    {loading ? <CircularProgress size={20} color="inherit" /> : 'Apply Filters'}
+                                    {loading ? <CircularProgress size={20} color="inherit" /> : 'Search'}
                                 </Button>
                                 <Button
                                     variant="outlined"
                                     onClick={handleReset}
                                     sx={{
-                                        borderColor: '#dc2626',
-                                        color: '#dc2626',
+                                        borderColor: '#063455',
+                                        color: '#063455',
                                         textTransform: 'none',
+                                        borderRadius: '16px',
                                         '&:hover': {
-                                            backgroundColor: '#fef2f2',
-                                            borderColor: '#dc2626',
+                                            // backgroundColor: '#fef2f2',
+                                            borderColor: '#063455',
                                         },
                                     }}
                                 >
@@ -292,15 +352,15 @@ const SupplementaryCardReport = () => {
                     <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2 }}>
                         AFOHS Supplementary Card Detail Report
                     </Typography>
-                    <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, overflowX: 'auto' }}>
+                    <TableContainer sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Category</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Total Cards Applied</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Issued Supplementary Members</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Printed Supplementary Members</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>Re-Printed Supplementary Members</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Category</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Total Cards Applied</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Issued Supplementary Members</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Printed Supplementary Members</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Re-Printed Supplementary Members</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>

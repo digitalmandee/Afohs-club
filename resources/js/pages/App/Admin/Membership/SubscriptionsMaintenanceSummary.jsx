@@ -3,7 +3,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage } from '@inertiajs/react';
 import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem, Autocomplete } from '@mui/material';
 import { Print, Search, ArrowBack } from '@mui/icons-material';
-
+import dayjs from "dayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const SubscriptionsMaintenanceSummary = () => {
     // Get props first
@@ -99,8 +102,9 @@ const SubscriptionsMaintenanceSummary = () => {
                             backgroundColor: '#063455',
                             color: 'white',
                             textTransform: 'none',
+                            borderRadius: '16px',
                             '&:hover': {
-                                backgroundColor: '#052d47',
+                                backgroundColor: '#063455',
                             },
                         }}
                     >
@@ -109,10 +113,10 @@ const SubscriptionsMaintenanceSummary = () => {
                 </div>
 
                 {/* Search and Filters */}
-                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ mb: 3, pt: 2 }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} md={3}>
-                            <TextField
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -127,10 +131,37 @@ const SubscriptionsMaintenanceSummary = () => {
                                         borderRadius: 2,
                                     },
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="From Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_from ? dayjs(allFilters.date_from, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_from",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <TextField
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -145,7 +176,34 @@ const SubscriptionsMaintenanceSummary = () => {
                                         borderRadius: 2,
                                     },
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="To Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_to ? dayjs(allFilters.date_to, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_to",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
@@ -169,6 +227,33 @@ const SubscriptionsMaintenanceSummary = () => {
                                     const categoryIds = newValue.map(cat => cat.id);
                                     handleFilterChange('category', categoryIds);
                                 }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
                                 options={all_categories || []}
                                 getOptionLabel={(option) => option.name || ''}
                                 isOptionEqualToValue={(option, value) => option.id === value?.id}
@@ -179,6 +264,7 @@ const SubscriptionsMaintenanceSummary = () => {
                                         placeholder="All Categories"
                                         size="small"
                                         fullWidth
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
                                     />
                                 )}
                             />
@@ -191,10 +277,11 @@ const SubscriptionsMaintenanceSummary = () => {
                                     onClick={handleSearch}
                                     sx={{
                                         backgroundColor: '#063455',
-                                        flex: 1,
+                                        // flex: 1,
                                         textTransform: 'none',
+                                        borderRadius:'16px',
                                         '&:hover': {
-                                            backgroundColor: '#047857',
+                                            backgroundColor: '#063455',
                                         },
                                     }}
                                 >
@@ -204,12 +291,13 @@ const SubscriptionsMaintenanceSummary = () => {
                                     variant="outlined"
                                     onClick={handleReset}
                                     sx={{
-                                        borderColor: '#dc2626',
-                                        color: '#dc2626',
+                                        borderColor: '#063455',
+                                        color: '#063455',
                                         textTransform: 'none',
+                                        borderRadius:'16px',
                                         '&:hover': {
-                                            backgroundColor: '#fef2f2',
-                                            borderColor: '#dc2626',
+                                            // backgroundColor: '#fef2f2',
+                                            borderColor: '#063455',
                                         },
                                     }}
                                 >
@@ -222,27 +310,27 @@ const SubscriptionsMaintenanceSummary = () => {
 
                 {/* Summary Table */}
                 <Box sx={{ mb: 3 }}>
-                    <TableContainer component={Paper} sx={{ boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', borderRadius: 2, overflowX: 'auto' }}>
+                    <TableContainer sx={{ borderRadius: '16px', overflowX: 'auto' }}>
                         <Table>
                             <TableHead>
                                 <TableRow style={{ backgroundColor: '#063455' }}>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', width: '50px' }}>
-                                        SR #
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>
+                                        SR
                                     </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase' }}>
-                                        CATEGORY
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>
+                                        Category
                                     </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                        CASH
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>
+                                        Cash
                                     </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                        CREDIT CARD
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>
+                                        Credit Card
                                     </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                        BANK / ONLINE
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>
+                                    Bank/Online
                                     </TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, textTransform: 'uppercase', textAlign: 'center' }}>
-                                        TOTAL REVENUE
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>
+                                        Total Revenue
                                     </TableCell>
                                 </TableRow>
                             </TableHead>

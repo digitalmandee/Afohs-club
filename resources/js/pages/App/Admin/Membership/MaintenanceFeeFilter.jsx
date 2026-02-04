@@ -3,6 +3,10 @@ import { Box, Typography, TextField, MenuItem, Button, Grid, FormControl, InputL
 import { Search } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import OutlinedInput from '@mui/material/OutlinedInput';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
     const { all_categories } = usePage().props;
@@ -42,14 +46,14 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
     };
 
     return (
-        <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+        <Box sx={{ mb: 3, pt: 2, }}>
             <Typography sx={{ fontWeight: 600, fontSize: '18px', color: '#063455', mb: 3 }}>
                 Search & Filter Options
             </Typography>
 
             <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} md={3}>
-                    <TextField
+                    {/* <TextField
                         fullWidth
                         size="small"
                         type="date"
@@ -64,10 +68,38 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                                 borderRadius: 2,
                             },
                         }}
-                    />
+                    /> */}
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="From Date"
+                            format="DD-MM-YYYY"
+                            value={filters.date_from ? dayjs(filters.date_from, "DD-MM-YYYY") : null}
+                            onChange={(newValue) =>
+                                handleFilterChange(
+                                    "date_from",
+                                    newValue ? newValue.format("DD-MM-YYYY") : ""
+                                )
+                            }
+                            slotProps={{
+                                textField: {
+                                    fullWidth: true,
+                                    size: "small",
+                                    sx: {
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: "16px",
+                                        },
+                                        "& fieldset": {
+                                            borderRadius: "16px",
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </LocalizationProvider>
+
                 </Grid>
                 <Grid item xs={12} md={3}>
-                    <TextField
+                    {/* <TextField
                         fullWidth
                         size="small"
                         type="date"
@@ -82,7 +114,34 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                                 borderRadius: 2,
                             },
                         }}
-                    />
+                    /> */}
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                            label="To Date"
+                            format="DD-MM-YYYY"
+                            value={filters.date_to ? dayjs(filters.date_to, "DD-MM-YYYY") : null}
+                            onChange={(newValue) =>
+                                handleFilterChange(
+                                    "date_to",
+                                    newValue ? newValue.format("DD-MM-YYYY") : ""
+                                )
+                            }
+                            slotProps={{
+                                textField: {
+                                    fullWidth: true,
+                                    size: "small",
+                                    sx: {
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: "16px",
+                                        },
+                                        "& fieldset": {
+                                            borderRadius: "16px",
+                                        },
+                                    },
+                                },
+                            }}
+                        />
+                    </LocalizationProvider>
                 </Grid>
                 <Grid item xs={12} md={3}>
                     {/* <FormControl fullWidth size="small" variant="outlined">
@@ -109,7 +168,7 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                             ))}
                         </Select>
                     </FormControl> */}
-                    <TextField
+                    {/* <TextField
                         select
                         label="Member Status"
                         size="small"
@@ -131,15 +190,95 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                                     })}
                                 </Box>
                             ),
+                            
                         }}
                         onChange={(e) => handleFilterChange("status", e.target.value)}
+                        
                     >
                         {all_statuses?.map((status) => (
                             <MenuItem key={status.value} value={status.value}>
                                 {status.label}
                             </MenuItem>
                         ))}
+                    </TextField> */}
+                    <TextField
+                        select
+                        label="Member Status"
+                        size="small"
+                        fullWidth
+                        value={filters.status}
+                        onChange={(e) => handleFilterChange("status", e.target.value)}
+                        SelectProps={{
+                            multiple: true,
+                            renderValue: (selected) => (
+                                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                    {selected.map((value) => {
+                                        const statusObj = all_statuses.find(
+                                            (s) => s.value === value
+                                        );
+                                        return (
+                                            <Chip
+                                                key={value}
+                                                label={statusObj?.label || value}
+                                                size="small"
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            ),
+                            MenuProps: {
+                                PaperProps: {
+                                    sx: {
+                                        maxHeight: 300, mt: 0.1,
+                                        borderRadius: "16px",
+                                    },
+                                },
+                                MenuListProps: {
+                                    sx: {
+                                        px: 1,
+                                    },
+                                },
+                            },
+                        }}
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "16px",
+                            },
+                            "& fieldset": {
+                                borderRadius: "16px",
+                            },
+                        }}
+                    >
+                        {all_statuses?.map((status) => (
+                            <MenuItem
+                                key={status.value}
+                                value={status.value}
+                                sx={{
+                                    borderRadius: "16px",
+                                    mx: 1,
+                                    my: 0.5,
+
+                                    "&:hover": {
+                                        backgroundColor: "#063455",
+                                        color: "#fff",
+                                    },
+
+                                    "&.Mui-selected": {
+                                        backgroundColor: "#063455",
+                                        color: "#fff",
+                                    },
+
+                                    "&.Mui-selected:hover": {
+                                        backgroundColor: "#063455",
+                                        color: "#fff",
+                                    },
+                                }}
+                            >
+                                {status.label}
+                            </MenuItem>
+                        ))}
                     </TextField>
+
                 </Grid>
                 <Grid item xs={12} md={3}>
                     <TextField
@@ -148,6 +287,7 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                         size="small"
                         fullWidth
                         value={filters.categories}
+                        onChange={(e) => handleFilterChange("categories", e.target.value)}
                         SelectProps={{
                             multiple: true,
                             renderValue: (selected) => (
@@ -164,11 +304,54 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                                     })}
                                 </Box>
                             ),
+                            MenuProps: {
+                                PaperProps: {
+                                    sx: {
+                                        maxHeight: 300, mt: 0.1,
+                                        borderRadius: "16px",
+                                    },
+                                },
+                                MenuListProps: {
+                                    sx: {
+                                        px: 1,
+                                    },
+                                },
+                            },
                         }}
-                        onChange={(e) => handleFilterChange("categories", e.target.value)}
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: "16px",
+                            },
+                            "& fieldset": {
+                                borderRadius: "16px",
+                            },
+                        }}
                     >
                         {all_categories?.map((category) => (
-                            <MenuItem key={category.id} value={category.id}>
+                            <MenuItem
+                                key={category.id}
+                                value={category.id}
+                                sx={{
+                                    borderRadius: "16px",
+                                    mx: 1,
+                                    my: 0.5,
+
+                                    "&:hover": {
+                                        backgroundColor: "#063455",
+                                        color: "#fff",
+                                    },
+
+                                    "&.Mui-selected": {
+                                        backgroundColor: "#063455",
+                                        color: "#fff",
+                                    },
+
+                                    "&.Mui-selected:hover": {
+                                        backgroundColor: "#063455",
+                                        color: "#fff",
+                                    },
+                                }}
+                            >
                                 {category.name}
                             </MenuItem>
                         ))}
@@ -181,12 +364,12 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                     variant="outlined"
                     onClick={handleReset}
                     sx={{
-                        borderColor: '#dc2626',
-                        color: '#dc2626',
+                        borderColor: '#063455',
+                        color: '#063455',
                         textTransform: 'none',
+                        borderRadius:'16px',
                         '&:hover': {
-                            backgroundColor: '#fef2f2',
-                            borderColor: '#dc2626',
+                            borderColor: '#063455',
                         },
                     }}
                 >
@@ -199,6 +382,7 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                     sx={{
                         backgroundColor: '#063455',
                         textTransform: 'none',
+                        borderRadius:'16px',
                         '&:hover': {
                             backgroundColor: '#047857',
                         },

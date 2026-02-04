@@ -3,6 +3,10 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { router, usePage, Link } from '@inertiajs/react';
 import { TextField, Box, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Button, Grid, FormControl, InputLabel, Select, MenuItem, Autocomplete, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { Search, Print, ArrowBack, InfoOutlined } from '@mui/icons-material';
+import dayjs from "dayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const PendingMaintenanceQuartersReport = () => {
     // Get props first
@@ -131,6 +135,7 @@ const PendingMaintenanceQuartersReport = () => {
                             backgroundColor: '#063455',
                             color: 'white',
                             textTransform: 'none',
+                            borderRadius: '16px',
                             '&:hover': {
                                 backgroundColor: '#052d47',
                             },
@@ -141,10 +146,10 @@ const PendingMaintenanceQuartersReport = () => {
                 </div>
 
                 {/* Search and Filters */}
-                <Box sx={{ mb: 3, p: 3, backgroundColor: 'white', borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+                <Box sx={{ mb: 3, pt: 2 }}>
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} md={3}>
-                            <TextField
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -159,10 +164,37 @@ const PendingMaintenanceQuartersReport = () => {
                                         borderRadius: 2,
                                     },
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="From Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_from ? dayjs(allFilters.date_from, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_from",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <TextField
+                            {/* <TextField
                                 fullWidth
                                 size="small"
                                 type="date"
@@ -177,7 +209,34 @@ const PendingMaintenanceQuartersReport = () => {
                                         borderRadius: 2,
                                     },
                                 }}
-                            />
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="To Date"
+                                    format="DD-MM-YYYY"
+                                    value={allFilters.date_to ? dayjs(allFilters.date_to, "DD-MM-YYYY") : null}
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "date_to",
+                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            fullWidth: true,
+                                            size: "small",
+                                            sx: {
+                                                "& .MuiOutlinedInput-root": {
+                                                    borderRadius: "16px",
+                                                },
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
@@ -201,10 +260,44 @@ const PendingMaintenanceQuartersReport = () => {
                                     const categoryIds = newValue.map((cat) => cat.id);
                                     handleFilterChange('category', categoryIds);
                                 }}
+                                ListboxProps={{
+                                    sx: {
+                                        maxHeight: 300, // optional height
+                                        px: 1,
+
+                                        "& .MuiAutocomplete-option": {
+                                            borderRadius: "16px",
+                                            mx: 0.5,
+                                            my: 0.5,
+                                        },
+
+                                        "& .MuiAutocomplete-option:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+
+                                        "& .MuiAutocomplete-option[aria-selected='true']:hover": {
+                                            backgroundColor: "#063455",
+                                            color: "#fff",
+                                        },
+                                    },
+                                }}
                                 options={all_categories || []}
                                 getOptionLabel={(option) => option.name || ''}
                                 isOptionEqualToValue={(option, value) => option.id === value?.id}
-                                renderInput={(params) => <TextField {...params} label="Choose Categories" placeholder="All Categories" size="small" fullWidth />}
+                                renderInput={(params) =>
+                                    <TextField {...params}
+                                        label="Choose Categories"
+                                        placeholder="All Categories"
+                                        size="small"
+                                        fullWidth
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />}
                             />
                         </Grid>
                         <Grid item xs={12} md={3}>
@@ -215,10 +308,11 @@ const PendingMaintenanceQuartersReport = () => {
                                     onClick={handleSearch}
                                     sx={{
                                         backgroundColor: '#063455',
-                                        flex: 1,
+                                        // flex: 1,
+                                        borderRadius:'16px',
                                         textTransform: 'none',
                                         '&:hover': {
-                                            backgroundColor: '#047857',
+                                            backgroundColor: '#063455',
                                         },
                                     }}
                                 >
@@ -228,12 +322,13 @@ const PendingMaintenanceQuartersReport = () => {
                                     variant="outlined"
                                     onClick={handleReset}
                                     sx={{
-                                        borderColor: '#dc2626',
-                                        color: '#dc2626',
+                                        borderColor: '#063455',
+                                        color: '#063455',
+                                        borderRadius:'16px',
                                         textTransform: 'none',
                                         '&:hover': {
-                                            backgroundColor: '#fef2f2',
-                                            borderColor: '#dc2626',
+                                            // backgroundColor: '#fef2f2',
+                                            borderColor: '#063455',
                                         },
                                     }}
                                 >
