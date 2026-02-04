@@ -36,6 +36,8 @@ class Product extends BaseModel
         'created_by',
         'updated_by',
         'deleted_by',
+        'max_discount',
+        'max_discount_type',
     ];
 
     protected $casts = [
@@ -45,6 +47,7 @@ class Product extends BaseModel
         'is_purchasable' => 'boolean',
         'is_returnable' => 'boolean',
         'is_taxable' => 'boolean',
+        'max_discount' => 'float',
     ];
 
     public function variants()

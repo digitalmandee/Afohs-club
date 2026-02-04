@@ -218,6 +218,38 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         const val = Number(itemDiscountForm.value || 0);
         const type = itemDiscountForm.type;
 
+        // Check for max discount limit
+        if (item.max_discount != null && parseFloat(item.max_discount) > 0) {
+            const maxDisc = parseFloat(item.max_discount);
+            const maxDiscType = item.max_discount_type || 'percentage';
+
+            let exceedsLimit = false;
+
+            if (maxDiscType === 'percentage') {
+                if (type === 'percentage') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    // type is amount, check if amount is > maxDisc% of price
+                    const equivalentPercent = (val / item.price) * 100;
+                    if (equivalentPercent > maxDisc) exceedsLimit = true;
+                }
+            } else {
+                // maxDiscType is amount (Fixed Amount per unit)
+                if (type === 'amount') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    // type is percentage, check if calculated amount > maxDisc
+                    const calculatedAmount = (val / 100) * item.price;
+                    if (calculatedAmount > maxDisc) exceedsLimit = true;
+                }
+            }
+
+            if (exceedsLimit) {
+                enqueueSnackbar(`Maximum discount allowed is ${maxDisc}${maxDiscType === 'percentage' ? '%' : ' Rs'}`, { variant: 'error' });
+                return;
+            }
+        }
+
         // Update item with new discount settings
         item.discount_value = val;
         item.discount_type = type;

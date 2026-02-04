@@ -138,6 +138,8 @@ class InventoryController extends Controller
             'ingredients.*.id' => 'required_with:ingredients|exists:ingredients,id',
             'ingredients.*.quantity_used' => 'required_with:ingredients|numeric|min:0',
             'ingredients.*.cost' => 'nullable|numeric|min:0',
+            'max_discount' => 'nullable|numeric|min:0',
+            'max_discount_type' => 'required_with:max_discount|string|in:percentage,amount',
         ]);
 
         DB::beginTransaction();
@@ -173,6 +175,8 @@ class InventoryController extends Controller
             'images' => $imagePaths,
             'tenant_id' => tenant()->id,
             'created_by' => Auth::id(),
+            'max_discount' => $request->input('max_discount'),
+            'max_discount_type' => $request->input('max_discount_type', 'percentage'),
         ]);
 
         // Auto-generate item code if not provided
@@ -289,6 +293,8 @@ class InventoryController extends Controller
             'ingredients.*.id' => 'required_with:ingredients|exists:ingredients,id',
             'ingredients.*.quantity_used' => 'required_with:ingredients|numeric|min:0',
             'ingredients.*.cost' => 'nullable|numeric|min:0',
+            'max_discount' => 'nullable|numeric|min:0',
+            'max_discount_type' => 'required_with:max_discount|string|in:percentage,amount',
         ]);
 
         // Get current product to access existing images
@@ -354,6 +360,8 @@ class InventoryController extends Controller
             'description' => $request->input('description'),
             'images' => $imagePaths,
             'updated_by' => Auth::id(),
+            'max_discount' => $request->input('max_discount'),
+            'max_discount_type' => $request->input('max_discount_type', 'percentage'),
         ]);
 
         if ($request->has('variants')) {

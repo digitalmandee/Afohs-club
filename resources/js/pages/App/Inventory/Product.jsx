@@ -37,6 +37,8 @@ const AddProduct = ({ product, id }) => {
                   base_price: '',
                   profit: '0.00',
                   is_discountable: true,
+                  max_discount: '',
+                  max_discount_type: 'percentage',
                   variants: [
                       {
                           name: 'Size',
@@ -739,31 +741,53 @@ const AddProduct = ({ product, id }) => {
                                                 borderRadius: 1,
                                                 backgroundColor: '#D0E2F2',
                                                 display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
+                                                flexDirection: 'column',
+                                                gap: 2,
                                             }}
                                         >
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <Box sx={{ mr: 2 }}>
-                                                    <img src="/placeholder.svg" alt="Discountable" style={{ width: 40, height: 40 }} />
+                                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                    <Box sx={{ mr: 2 }}>
+                                                        <img src="/placeholder.svg" alt="Discountable" style={{ width: 40, height: 40 }} />
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography
+                                                            variant="body1"
+                                                            fontWeight="medium"
+                                                            sx={{
+                                                                color: '#121212',
+                                                                fontSize: '16px',
+                                                            }}
+                                                        >
+                                                            Discountable Item
+                                                        </Typography>
+                                                        <Typography variant="body2" color="text.secondary">
+                                                            Allow discount on this item during order
+                                                        </Typography>
+                                                    </Box>
                                                 </Box>
-                                                <Box>
-                                                    <Typography
-                                                        variant="body1"
-                                                        fontWeight="medium"
-                                                        sx={{
-                                                            color: '#121212',
-                                                            fontSize: '16px',
-                                                        }}
-                                                    >
-                                                        Discountable Item
-                                                    </Typography>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Allow discount on this item during order
-                                                    </Typography>
-                                                </Box>
+                                                <Switch checked={data.is_discountable !== false} onChange={() => setData((prev) => ({ ...prev, is_discountable: prev.is_discountable === false ? true : false }))} color="primary" />
                                             </Box>
-                                            <Switch checked={data.is_discountable !== false} onChange={() => setData((prev) => ({ ...prev, is_discountable: prev.is_discountable === false ? true : false }))} color="primary" />
+
+                                            {data.is_discountable !== false && (
+                                                <Box sx={{ display: 'flex', gap: 2, mt: 1, pl: 7 }}>
+                                                    <TextField
+                                                        label="Max Discount"
+                                                        type="number"
+                                                        value={data.max_discount || ''}
+                                                        onChange={(e) => setData('max_discount', e.target.value)}
+                                                        size="small"
+                                                        sx={{ width: '150px' }}
+                                                        InputProps={{
+                                                            endAdornment: <InputAdornment position="end">{data.max_discount_type === 'percentage' ? '%' : 'Rs'}</InputAdornment>,
+                                                        }}
+                                                    />
+                                                    <TextField select label="Type" value={data.max_discount_type || 'percentage'} onChange={(e) => setData('max_discount_type', e.target.value)} size="small" sx={{ width: '150px' }}>
+                                                        <MenuItem value="percentage">Percentage</MenuItem>
+                                                        <MenuItem value="amount">Fixed Amount</MenuItem>
+                                                    </TextField>
+                                                </Box>
+                                            )}
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12}>
