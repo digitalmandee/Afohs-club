@@ -4,13 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
-class Order extends Model
+class Order extends BaseModel
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, BelongsToTenant, SoftDeletes;
 
     // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     protected $fillable = [
         'reservation_id',
@@ -58,6 +64,9 @@ class Order extends Model
         'tenant_id',
         'deducted_in_payslip_id',
         'deducted_at',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function orderItems()

@@ -1548,6 +1548,7 @@ class OrderController extends Controller
             'customer.guestType:id,name',
             'employee:id,employee_id,name',
             'cashier:id,name',
+            'user:id,name',  // Order Creator
             'waiter:id,name',
         ])
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])

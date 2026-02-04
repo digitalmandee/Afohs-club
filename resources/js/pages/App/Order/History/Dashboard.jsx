@@ -570,7 +570,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                             <TableCell>
                                                 <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
                                             </TableCell>
-                                            <TableCell>{order.cashier?.name || '-'}</TableCell>
+                                            <TableCell>{order.cashier?.name || order.user?.name || '-'}</TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 0.5 }}>
                                                     <Tooltip title="View Details">
