@@ -140,6 +140,7 @@ class InventoryController extends Controller
             'ingredients.*.cost' => 'nullable|numeric|min:0',
             'max_discount' => 'nullable|numeric|min:0',
             'max_discount_type' => 'required_with:max_discount|string|in:percentage,amount',
+            'manage_stock' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -177,6 +178,7 @@ class InventoryController extends Controller
             'created_by' => Auth::id(),
             'max_discount' => $request->input('max_discount'),
             'max_discount_type' => $request->input('max_discount_type', 'percentage'),
+            'manage_stock' => $request->input('manage_stock', false),
         ]);
 
         // Auto-generate item code if not provided
@@ -295,6 +297,7 @@ class InventoryController extends Controller
             'ingredients.*.cost' => 'nullable|numeric|min:0',
             'max_discount' => 'nullable|numeric|min:0',
             'max_discount_type' => 'required_with:max_discount|string|in:percentage,amount',
+            'manage_stock' => 'nullable|boolean',
         ]);
 
         // Get current product to access existing images
@@ -362,6 +365,7 @@ class InventoryController extends Controller
             'updated_by' => Auth::id(),
             'max_discount' => $request->input('max_discount'),
             'max_discount_type' => $request->input('max_discount_type', 'percentage'),
+            'manage_stock' => $request->input('manage_stock', false),
         ]);
 
         if ($request->has('variants')) {

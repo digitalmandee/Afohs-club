@@ -789,11 +789,13 @@ class OrderController extends Controller
 
                     $product = Product::find($productId);
 
-                    if (!$product || $product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
-                        throw new \Exception('Insufficient stock for product: ' . ($product->name ?? 'Unknown'));
+                    // Only check stock if management is enabled
+                    if ($product && $product->manage_stock) {
+                        if ($product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
+                            throw new \Exception('Insufficient stock for product: ' . ($product->name ?? 'Unknown'));
+                        }
+                        $product->decrement('current_stock', $productQty);
                     }
-
-                    $product->decrement('current_stock', $productQty);
 
                     if (!empty($item['variants'])) {
                         foreach ($item['variants'] as $variant) {

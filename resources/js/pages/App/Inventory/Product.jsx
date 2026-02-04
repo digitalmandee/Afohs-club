@@ -31,6 +31,7 @@ const AddProduct = ({ product, id }) => {
                   is_taxable: false,
                   current_stock: '',
                   minimal_stock: '',
+                  manage_stock: false,
                   outOfStock: false,
                   available_order_types: [],
                   cost_of_goods_sold: '',
@@ -110,8 +111,10 @@ const AddProduct = ({ product, id }) => {
         const errors = [];
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.category_id) errors.push('Category is required');
-        if (!menu.current_stock || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
-        if (!menu.minimal_stock || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
+        if (menu.manage_stock) {
+            if (!menu.current_stock || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
+            if (!menu.minimal_stock || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
+        }
         if (!menu.available_order_types || menu.available_order_types.length === 0) errors.push('At least one order type must be selected');
         if (!menu.cost_of_goods_sold || isNaN(menu.cost_of_goods_sold)) errors.push('COGS must be a valid number');
         if (!menu.base_price || isNaN(menu.base_price)) errors.push('Base price must be a valid number');
@@ -649,66 +652,90 @@ const AddProduct = ({ product, id }) => {
                                             ))}
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                            Current Ready Stock
-                                        </Typography>
-                                        <Box>
-                                            <Box sx={{ display: 'flex' }}>
-                                                <TextField fullWidth placeholder="10" name="current_stock" value={data.current_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" error={!!fieldErrors.current_stock} />
-                                                <Box
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        border: '1px solid #e0e0e0',
-                                                        borderLeft: 'none',
-                                                        px: 2,
-                                                        borderTopRightRadius: 4,
-                                                        borderBottomRightRadius: 4,
-                                                        borderColor: fieldErrors.current_stock ? 'error.main' : '#e0e0e0', // Highlight border if error
-                                                    }}
-                                                >
-                                                    <Typography variant="body2">Pcs</Typography>
-                                                </Box>
-                                            </Box>
-                                            {fieldErrors.current_stock && (
-                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
-                                                    {fieldErrors.current_stock}
-                                                </Typography>
-                                            )}
+                                            ))}
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={6}>
-                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
-                                            Minimal Stock
-                                        </Typography>
-                                        <Box>
-                                            <Box sx={{ display: 'flex' }}>
-                                                <TextField fullWidth placeholder="10" name="minimal_stock" value={data.minimal_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" error={!!fieldErrors.minimal_stock} />
-                                                <Box
-                                                    sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        border: '1px solid #e0e0e0',
-                                                        borderLeft: 'none',
-                                                        px: 2,
-                                                        borderTopRightRadius: 4,
-                                                        borderBottomRightRadius: 4,
-                                                        borderColor: fieldErrors.minimal_stock ? 'error.main' : '#e0e0e0', // Highlight border if error
-                                                    }}
-                                                >
-                                                    <Typography variant="body2">Pcs</Typography>
-                                                </Box>
-                                            </Box>
-                                            {fieldErrors.minimal_stock && (
-                                                <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
-                                                    {fieldErrors.minimal_stock}
+                                    <Grid item xs={12}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                            <Switch
+                                                checked={data.manage_stock}
+                                                onChange={(e) => setData('manage_stock', e.target.checked)}
+                                                color="primary"
+                                            />
+                                            <Box sx={{ ml: 1 }}>
+                                                <Typography variant="body1" sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>
+                                                    Manage Stock
                                                 </Typography>
-                                            )}
+                                                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                                    Enable to track stock levels and prevent sales when out of stock
+                                                </Typography>
+                                            </Box>
                                         </Box>
                                     </Grid>
+                                    {data.manage_stock && (
+                                        <>
+                                            <Grid item xs={6}>
+                                                <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                                    Current Ready Stock
+                                                </Typography>
+                                                <Box>
+                                                    <Box sx={{ display: 'flex' }}>
+                                                        <TextField fullWidth placeholder="10" name="current_stock" value={data.current_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" error={!!fieldErrors.current_stock} />
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                border: '1px solid #e0e0e0',
+                                                                borderLeft: 'none',
+                                                                px: 2,
+                                                                borderTopRightRadius: 4,
+                                                                borderBottomRightRadius: 4,
+                                                                borderColor: fieldErrors.current_stock ? 'error.main' : '#e0e0e0', // Highlight border if error
+                                                            }}
+                                                        >
+                                                            <Typography variant="body2">Pcs</Typography>
+                                                        </Box>
+                                                    </Box>
+                                                    {fieldErrors.current_stock && (
+                                                        <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                                                            {fieldErrors.current_stock}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                                    Minimal Stock
+                                                </Typography>
+                                                <Box>
+                                                    <Box sx={{ display: 'flex' }}>
+                                                        <TextField fullWidth placeholder="10" name="minimal_stock" value={data.minimal_stock} onChange={handleInputChange} variant="outlined" size="small" type="number" error={!!fieldErrors.minimal_stock} />
+                                                        <Box
+                                                            sx={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                border: '1px solid #e0e0e0',
+                                                                borderLeft: 'none',
+                                                                px: 2,
+                                                                borderTopRightRadius: 4,
+                                                                borderBottomRightRadius: 4,
+                                                                borderColor: fieldErrors.minimal_stock ? 'error.main' : '#e0e0e0', // Highlight border if error
+                                                            }}
+                                                        >
+                                                            <Typography variant="body2">Pcs</Typography>
+                                                        </Box>
+                                                    </Box>
+                                                    {fieldErrors.minimal_stock && (
+                                                        <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1 }}>
+                                                            {fieldErrors.minimal_stock}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </Grid>
+                                        </>
+                                    )}
                                     <Grid item xs={12} container spacing={2}>
                                         {[
                                             { label: 'Salable', field: 'is_salable' },
