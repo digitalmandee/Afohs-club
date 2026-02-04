@@ -32,7 +32,7 @@ class PosManufacturerController extends Controller
             'status' => 'required|in:active,inactive',
         ]);
 
-        PosManufacturer::create($request->merge(['created_by' => Auth::id()])->all());
+        PosManufacturer::create($request->merge(['created_by' => Auth::id(), 'tenant_id' => tenant()->id])->all());
 
         return redirect()->back()->with('success', 'Manufacturer created successfully.');
     }
@@ -46,7 +46,7 @@ class PosManufacturerController extends Controller
             'status' => 'required|in:active,inactive',
         ]);
 
-        $manufacturer->update($request->merge(['updated_by' => Auth::id()])->all());
+        $manufacturer->update($request->merge(['updated_by' => Auth::id(), 'tenant_id' => tenant()->id])->all());
 
         return redirect()->back()->with('success', 'Manufacturer updated successfully.');
     }
@@ -90,5 +90,13 @@ class PosManufacturerController extends Controller
         $manufacturer->forceDelete();
 
         return redirect()->back()->with('success', 'Manufacturer permanently deleted.');
+    }
+
+    public function getManufacturers()
+    {
+        $manufacturers = PosManufacturer::select('id', 'name')
+            ->get();
+
+        return response()->json(['manufacturers' => $manufacturers]);
     }
 }

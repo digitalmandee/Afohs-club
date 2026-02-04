@@ -21,6 +21,8 @@ const AddProduct = ({ product, id }) => {
                   name: '',
                   menu_code: '',
                   category_id: '',
+                  sub_category_id: '',
+                  manufacturer_id: '',
                   current_stock: '',
                   minimal_stock: '',
                   outOfStock: false,
@@ -48,6 +50,8 @@ const AddProduct = ({ product, id }) => {
     );
 
     const [categories, setCategories] = useState([]);
+    const [subCategories, setSubCategories] = useState([]);
+    const [manufacturers, setManufacturers] = useState([]);
     const [addMenuStep, setAddMenuStep] = useState(1);
     const [uploadedImages, setUploadedImages] = useState([]);
     const [existingImages, setExistingImages] = useState([]); // For existing images from server
@@ -304,15 +308,8 @@ const AddProduct = ({ product, id }) => {
 
     // Save new menu
     const handleSaveMenu = () => {
-        setData((prev) => ({
-            ...prev,
-            discountValue: tempFormData.discountValue,
-            discountType: tempFormData.discountType,
-        }));
         transform((data) => ({
             ...data,
-            discount: data.discountValue || null,
-            discountType: data.discountType || null,
             deleted_images: deletedImages, // Include deleted images for backend processing
             ingredients: selectedIngredients.map((ing) => ({
                 id: ing.id,
@@ -353,13 +350,37 @@ const AddProduct = ({ product, id }) => {
 
     const fetchCategories = () => {
         axios.get(route('inventory.categories')).then((response) => {
-            console.log(response.data);
             setCategories(response.data.categories);
         });
     };
 
+    const fetchManufacturers = () => {
+        axios.get(route('api.manufacturers.list')).then((response) => {
+            setManufacturers(response.data.manufacturers);
+        });
+    };
+
+    const fetchSubCategories = (categoryId) => {
+        if (!categoryId) {
+            setSubCategories([]);
+            return;
+        }
+        axios.get(route('api.sub-categories.by-category', categoryId)).then((response) => {
+            setSubCategories(response.data.subCategories);
+        });
+    };
+
+    useEffect(() => {
+        if (data.category_id) {
+            fetchSubCategories(data.category_id);
+        } else {
+            setSubCategories([]);
+        }
+    }, [data.category_id]);
+
     useEffect(() => {
         fetchCategories();
+        fetchManufacturers();
         loadIngredients();
 
         // Load existing images when editing
@@ -386,6 +407,7 @@ const AddProduct = ({ product, id }) => {
 
     useEffect(() => {
         fetchCategories();
+        fetchManufacturers();
     }, []);
 
     // Render
@@ -518,11 +540,59 @@ const AddProduct = ({ product, id }) => {
                                                 setData((prev) => ({
                                                     ...prev,
                                                     category_id: newValue ? newValue.id : '',
+                                                    sub_category_id: '', // Reset sub-category on category change
                                                 }));
                                                 setFieldErrors((prev) => ({ ...prev, category_id: '' }));
                                             }}
                                             isOptionEqualToValue={(option, value) => option.id === value?.id}
                                             renderInput={(params) => <TextField {...params} placeholder="Search or select category" variant="outlined" error={!!fieldErrors.category_id} helperText={fieldErrors.category_id} />}
+                                            ListboxProps={{
+                                                style: { maxHeight: 200 },
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                            Sub Category
+                                        </Typography>
+                                        <Autocomplete
+                                            fullWidth
+                                            size="small"
+                                            options={subCategories || []}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            value={subCategories?.find((sub) => sub.id === data.sub_category_id) || null}
+                                            disabled={!data.category_id}
+                                            onChange={(event, newValue) => {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    sub_category_id: newValue ? newValue.id : '',
+                                                }));
+                                            }}
+                                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                            renderInput={(params) => <TextField {...params} placeholder={data.category_id ? 'Select sub category' : 'Select main category first'} variant="outlined" />}
+                                            ListboxProps={{
+                                                style: { maxHeight: 200 },
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                            Manufacturer (Optional)
+                                        </Typography>
+                                        <Autocomplete
+                                            fullWidth
+                                            size="small"
+                                            options={manufacturers || []}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            value={manufacturers?.find((m) => m.id === data.manufacturer_id) || null}
+                                            onChange={(event, newValue) => {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    manufacturer_id: newValue ? newValue.id : '',
+                                                }));
+                                            }}
+                                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                            renderInput={(params) => <TextField {...params} placeholder="Select manufacturer" variant="outlined" />}
                                             ListboxProps={{
                                                 style: { maxHeight: 200 },
                                             }}

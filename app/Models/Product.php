@@ -16,6 +16,8 @@ class Product extends BaseModel
         'description',
         'images',
         'category_id',
+        'sub_category_id',
+        'manufacturer_id',
         'base_price',
         'cost_of_goods_sold',
         'current_stock',
@@ -40,6 +42,16 @@ class Product extends BaseModel
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function subCategory()
+    {
+        return $this->belongsTo(PosSubCategory::class, 'sub_category_id');
+    }
+
+    public function manufacturer()
+    {
+        return $this->belongsTo(PosManufacturer::class, 'manufacturer_id');
     }
 
     public function kitchen()

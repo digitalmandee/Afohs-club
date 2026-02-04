@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
@@ -15,10 +15,19 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $categoriesList = Category::where('tenant_id', tenant()->id)->select('id', 'name', 'image')->withCount('products')->get();  // ← Make sure this line is present
+        $categoriesList = Category::query()
+            ->where('tenant_id', tenant()->id)
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->withCount('products')
+            ->latest()
+            ->paginate(10)  // Changed to pagination to match other modules
+            ->withQueryString();
 
-        return Inertia::render('App/Inventory/Category', [
-            'categoriesList' => $categoriesList,  // ← Make sure this key matches the React destructuring
+        return Inertia::render('App/Inventory/Categories/Index', [
+            'categories' => $categoriesList,
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -32,7 +41,8 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
+            'name' => 'required|string|max:255|unique:pos_categories,name',
+            'status' => 'required|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
@@ -42,6 +52,7 @@ class CategoryController extends Controller
         }
 
         $validated['tenant_id'] = tenant()->id;
+        $validated['created_by'] = Auth::id();
 
         Category::create($validated);
 
@@ -51,8 +62,9 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'name' => "required|string|max:255|unique:categories,name,{$category->id}",
-            'image' => 'nullable|image |mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'name' => "required|string|max:255|unique:pos_categories,name,{$category->id}",
+            'status' => 'required|in:active,inactive',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'existingImage' => 'nullable|string',
         ]);
 
@@ -71,6 +83,8 @@ class CategoryController extends Controller
             $validated['image'] = null;
         }
 
+        $validated['updated_by'] = Auth::id();
+
         $category->update($validated);
 
         return redirect()->back()->with('success', 'Category updated.');
@@ -80,7 +94,7 @@ class CategoryController extends Controller
     {
         $newCategoryId = $request->input('new_category_id');
 
-        // Reassign products if a new category is selected
+        // Reassign products logic
         if ($newCategoryId) {
             Product::where('category_id', $category->id)
                 ->update(['category_id' => $newCategoryId]);
@@ -89,12 +103,47 @@ class CategoryController extends Controller
                 ->update(['category_id' => null]);
         }
 
+        $category->update(['deleted_by' => Auth::id()]);
+        $category->delete();
+
+        return redirect()->back()->with('success', 'Category deleted.');
+    }
+
+    public function trashed(Request $request)
+    {
+        $trashedCategories = Category::onlyTrashed()
+            ->where('tenant_id', tenant()->id)
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('App/Inventory/Categories/Trashed', [
+            'trashedCategories' => $trashedCategories,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $category = Category::withTrashed()->findOrFail($id);
+        $category->restore();
+
+        return redirect()->back()->with('success', 'Category restored successfully.');
+    }
+
+    public function forceDelete($id)
+    {
+        $category = Category::withTrashed()->findOrFail($id);
+
         if ($category->image && Storage::disk('public')->exists($category->image)) {
             Storage::disk('public')->delete($category->image);
         }
 
-        $category->delete();
+        $category->forceDelete();
 
-        return redirect()->back()->with('success', 'Category deleted.');
+        return redirect()->back()->with('success', 'Category permanently deleted.');
     }
 }

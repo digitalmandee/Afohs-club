@@ -46,7 +46,7 @@ class InventoryController extends Controller
         $query = Product::select([
             'id', 'name', 'menu_code', 'category_id', 'base_price',
             'current_stock', 'minimal_stock', 'status', 'images',
-            'discount', 'discount_type', 'description'
+            'description'
         ])
             ->with(['category:id,name', 'variants:id,product_id,name,type', 'variants.values'])
             ->where('tenant_id', tenant()->id);
@@ -73,6 +73,18 @@ class InventoryController extends Controller
             $query->whereIn('category_id', $categoryIds);
         } elseif ($request->filled('category_id') && $request->category_id !== 'all') {
             $query->where('category_id', $request->category_id);
+        }
+
+        // Filter by sub_category (supports multiple IDs)
+        if ($request->filled('sub_category_ids')) {
+            $subCategoryIds = explode(',', $request->sub_category_ids);
+            $query->whereIn('sub_category_id', $subCategoryIds);
+        }
+
+        // Filter by manufacturer (supports multiple IDs)
+        if ($request->filled('manufacturer_ids')) {
+            $manufacturerIds = explode(',', $request->manufacturer_ids);
+            $query->whereIn('manufacturer_id', $manufacturerIds);
         }
 
         $products = $query->latest()->get();
@@ -102,6 +114,8 @@ class InventoryController extends Controller
             'name' => 'nullable|string|max:255',
             'menu_code' => 'nullable|string|max:100',
             'category_id' => 'required',
+            'sub_category_id' => 'nullable|exists:pos_sub_categories,id',
+            'manufacturer_id' => 'nullable|exists:pos_manufacturers,id',
             'current_stock' => 'required|integer|min:0',
             'minimal_stock' => 'required|integer|min:0',
             'is_discountable' => 'nullable|boolean',
@@ -134,6 +148,8 @@ class InventoryController extends Controller
             'name' => $request->input('name'),
             'menu_code' => $request->input('menu_code'),
             'category_id' => $request->input('category_id'),
+            'sub_category_id' => $request->input('sub_category_id'),
+            'manufacturer_id' => $request->input('manufacturer_id'),
             'current_stock' => $request->input('current_stock'),
             'minimal_stock' => $request->input('minimal_stock'),
             'is_discountable' => $request->input('is_discountable', true),
@@ -235,6 +251,8 @@ class InventoryController extends Controller
             'name' => 'required|string|max:255',
             'menu_code' => 'required|string|max:100',
             'category_id' => 'required',
+            'sub_category_id' => 'nullable|exists:pos_sub_categories,id',
+            'manufacturer_id' => 'nullable|exists:pos_manufacturers,id',
             'current_stock' => 'required|integer|min:0',
             'minimal_stock' => 'required|integer|min:0',
             'is_discountable' => 'nullable|boolean',
@@ -299,6 +317,8 @@ class InventoryController extends Controller
             'name' => $request->input('name'),
             'menu_code' => $request->input('menu_code'),
             'category_id' => $request->input('category_id'),
+            'sub_category_id' => $request->input('sub_category_id'),
+            'manufacturer_id' => $request->input('manufacturer_id'),
             'current_stock' => $request->input('current_stock'),
             'minimal_stock' => $request->input('minimal_stock'),
             'is_discountable' => $request->input('is_discountable', true),

@@ -32,7 +32,7 @@ class PosUnitController extends Controller
             'status' => 'required|in:active,inactive',
         ]);
 
-        PosUnit::create($request->merge(['created_by' => Auth::id()])->all());
+        PosUnit::create($request->merge(['created_by' => Auth::id(), 'tenant_id' => tenant()->id])->all());
 
         return redirect()->back()->with('success', 'Unit created successfully.');
     }
@@ -46,7 +46,7 @@ class PosUnitController extends Controller
             'status' => 'required|in:active,inactive',
         ]);
 
-        $unit->update($request->merge(['updated_by' => Auth::id()])->all());
+        $unit->update($request->merge(['updated_by' => Auth::id(), 'tenant_id' => tenant()->id])->all());
 
         return redirect()->back()->with('success', 'Unit updated successfully.');
     }

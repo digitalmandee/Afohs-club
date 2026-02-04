@@ -1,7 +1,7 @@
 import SideNav from '@/Components/App/SideBar/SideNav';
 import { tenantAsset } from '@/helpers/asset';
 import { router, useForm, usePage } from '@inertiajs/react';
-import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material';
 import { Alert, Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Select, Snackbar, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
@@ -10,7 +10,14 @@ import { useCallback, useEffect, useState } from 'react';
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
-export default function Category({ categoriesList }) {
+export default function CategoryIndex({ categories }) {
+    // Note: Converted categoriesList to categories (paginated object) from controller
+    // If controller sends 'categories' variable as pagination object: { data: [...], ... }
+
+    // To maintain compatibility if the controller was updated to match other modules:
+    const categoriesList = categories.data || [];
+    const categoriesMeta = categories;
+
     const [open, setOpen] = useState(true);
     const [openAddMenu, setOpenAddMenu] = useState(false);
     const [editingCategoryId, setEditingCategoryId] = useState(null);
@@ -29,6 +36,7 @@ export default function Category({ categoriesList }) {
 
     const { data, setData, post, reset, errors, processing } = useForm({
         name: '',
+        status: 'active',
         image: null,
         existingImage: null,
     });
@@ -79,6 +87,7 @@ export default function Category({ categoriesList }) {
 
             const formData = new FormData();
             formData.append('name', data.name);
+            formData.append('status', data.status);
             if (data.image) {
                 formData.append('image', data.image);
             } else if (data.existingImage) {
@@ -122,6 +131,7 @@ export default function Category({ categoriesList }) {
         (category) => {
             setData({
                 name: category.name,
+                status: category.status || 'active',
                 image: null,
                 existingImage: category.image,
             });
@@ -134,6 +144,7 @@ export default function Category({ categoriesList }) {
     const handleDeleteClick = useCallback((category) => {
         setPendingDeleteCategory(category);
         setReassignCategoryId(null); // reset on each delete open
+        // Remove strict null check for reassignCategoryId if necessary, logic below handles it
     }, []);
 
     const handleConfirmDelete = useCallback(() => {
@@ -166,13 +177,13 @@ export default function Category({ categoriesList }) {
         setPendingDeleteCategory(null);
     }, []);
 
-    // const handleCloseConfirmation = useCallback(() => {
-    //     setTimeout(() => {
-    //       setShowConfirmation(false);  // Close the Snackbar after 10 seconds
-    //     }, 10000);
-    //   }, []);
     const handleCloseSnackbar = () => {
         setSnackbar({ ...snackbar, open: false });
+    };
+
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+        router.get(route('inventory.category'), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     useEffect(() => {
@@ -185,7 +196,8 @@ export default function Category({ categoriesList }) {
         }
     }, [flash]);
 
-    const filteredCategories = categoriesList.filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    // Client-side filtering is no longer primary due to pagination, but keeping for immediate feedback if needed or replace with server search
+    // const filteredCategories = categoriesList.filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
         <>
@@ -201,7 +213,7 @@ export default function Category({ categoriesList }) {
                     <div style={{ background: '#ffff', padding: '20px', borderRadius: '10px' }}>
                         <div className="d-flex align-items-center mb-4">
                             <Typography variant="h4" sx={{ mr: 2 }}>
-                                {filteredCategories.length}
+                                {categoriesMeta.total}
                             </Typography>
                             <Typography variant="body1" color="#7F7F7F">
                                 Categories
@@ -211,7 +223,7 @@ export default function Category({ categoriesList }) {
                                 variant="outlined"
                                 size="small"
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={handleSearch}
                                 sx={{
                                     ml: 3,
                                     width: 450,
@@ -226,6 +238,9 @@ export default function Category({ categoriesList }) {
                                 }}
                             />
                             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                                <Button variant="outlined" color="error" startIcon={<DeleteSweepIcon />} onClick={() => router.visit(route('category.trashed'))} sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#ffebee' } }}>
+                                    Trash
+                                </Button>
                                 <Button
                                     variant="contained"
                                     startIcon={<AddIcon />}
@@ -241,7 +256,7 @@ export default function Category({ categoriesList }) {
                             </Box>
                         </div>
                         <Grid container spacing={2}>
-                            {filteredCategories.map((category) => (
+                            {categoriesList.map((category) => (
                                 <Grid item xs={12} sm={6} md={4} key={category.id}>
                                     <Card
                                         key={category.id}
@@ -254,7 +269,6 @@ export default function Category({ categoriesList }) {
                                         }}
                                     >
                                         <CardContent sx={{ p: 2 }}>
-                                            {/* <Grid container alignItems="center" justifyContent="space-between" sx={{bgcolor:'pink'}}> */}
                                             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }} onClick={() => router.visit(route('inventory.index', { category_id: category.id }))}>
                                                 <div style={{ display: 'flex' }}>
                                                     <Box sx={{ width: 70, height: 70, mr: 2 }}>
@@ -293,7 +307,6 @@ export default function Category({ categoriesList }) {
                                                     </IconButton>
                                                 </div>
                                             </Grid>
-                                            {/* </Grid> */}
                                         </CardContent>
                                     </Card>
                                 </Grid>
@@ -337,6 +350,15 @@ export default function Category({ categoriesList }) {
                                     Category Name
                                 </Typography>
                                 <TextField fullWidth placeholder="Enter category name" name="name" value={data.name} onChange={handleInputChange} variant="outlined" size="small" error={!!errors.name} helperText={errors.name} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <FormControl fullWidth margin="normal">
+                                    <InputLabel>Status</InputLabel>
+                                    <Select value={data.status} label="Status" onChange={(e) => setData('status', e.target.value)}>
+                                        <MenuItem value="active">Active</MenuItem>
+                                        <MenuItem value="inactive">Inactive</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </Grid>
                             <Grid item xs={12}>
                                 <Typography variant="body1" sx={{ mb: 1 }}>
@@ -402,7 +424,7 @@ export default function Category({ categoriesList }) {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleCancelDelete}>Cancel</Button>
-                    <Button onClick={handleConfirmDelete} sx={{ color: '#c62828' }} disabled={deleting} loading={deleting} loadingPosition="start">
+                    <Button onClick={handleConfirmDelete} sx={{ color: '#c62828' }} disabled={deleting}>
                         Delete
                     </Button>
                 </DialogActions>
@@ -417,4 +439,4 @@ export default function Category({ categoriesList }) {
         </>
     );
 }
-Category.layout = (page) => page;
+CategoryIndex.layout = (page) => page;
