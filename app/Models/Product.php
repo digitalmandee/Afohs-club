@@ -38,6 +38,7 @@ class Product extends BaseModel
         'deleted_by',
         'max_discount',
         'max_discount_type',
+        'manage_stock',
     ];
 
     protected $casts = [

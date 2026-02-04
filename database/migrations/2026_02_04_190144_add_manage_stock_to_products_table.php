@@ -11,8 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->decimal('max_discount', 10, 2)->nullable()->after('is_discountable');
-            $table->string('max_discount_type')->default('percentage')->after('max_discount');
+            $table->boolean('manage_stock')->default(false)->after('current_stock');
         });
     }
 
@@ -22,7 +21,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn(['max_discount', 'max_discount_type']);
+            $table->dropColumn('manage_stock');
         });
     }
 };
