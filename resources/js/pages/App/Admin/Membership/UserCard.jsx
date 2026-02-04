@@ -124,7 +124,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label {
-            margin-top: 15px;
+            margin-top: 22px;
             font-size: 10px;
             font-weight: 700;
             padding-left: 40px;
@@ -132,11 +132,12 @@ export const handlePrintMembershipCard = (member) => {
             white-space: nowrap;
         }
 
-        .value {
+        .value-no {
             font-size: 10px;
             font-weight: 700;
             color: #000;
-            padding-left: 50px
+            padding-left: 50px;
+            padding-top: 2px
         }
 
         /* RIGHT COLUMN - Perfect MUI replica */
@@ -172,12 +173,11 @@ export const handlePrintMembershipCard = (member) => {
 }
 
 .valid-row-box {
-    display: inline-flex;
+    display: flex;
+    justify-content: space-between;
   align-items: center;   /* 🔥 KEY FIX */
-  gap: 6px;
+  gap: 10px;
   padding-top: 3px;
-    align-items: center;
-width: 80%;
 }
 
 
@@ -201,10 +201,6 @@ width: 80%;
     font-size: 12px;
     font-weight: 700;
     color: #000;
-    line-height: 1;
-  align-self: flex-start;
-  white-space: nowrap;
-  margin-top: -20px
 }
 
         .footer {
@@ -262,7 +258,7 @@ width: 80%;
                 <div class="col center">
                     <img src="/assets/Logo.png" class="logo" alt="AFOHS CLUB" />
                     <div class="label">Membership No</div>
-                    <div class="value">${member?.membership_no || 'N/A'}</div>
+                    <div class="value-no">${member?.membership_no || 'N/A'}</div>
                 </div>
 
                 <!-- RIGHT COLUMN -->
@@ -277,10 +273,10 @@ width: 80%;
                       <div class="label-valid-until">
                         <span>Valid</span>
                         <span>Until</span>
-                        <div class="value">
+                       </div>
+                       <div class="value">
                           ${formatExpiryDate(member?.card_expiry_date)}
                         </div>
-                       </div>
                     </div>
                 </div>
             </div>
