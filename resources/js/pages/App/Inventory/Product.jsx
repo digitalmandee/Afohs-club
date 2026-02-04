@@ -23,6 +23,12 @@ const AddProduct = ({ product, id }) => {
                   category_id: '',
                   sub_category_id: '',
                   manufacturer_id: '',
+                  unit_id: '',
+                  item_type: 'finished_product',
+                  is_salable: true,
+                  is_purchasable: true,
+                  is_returnable: true,
+                  is_taxable: false,
                   current_stock: '',
                   minimal_stock: '',
                   outOfStock: false,
@@ -52,6 +58,7 @@ const AddProduct = ({ product, id }) => {
     const [categories, setCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
     const [manufacturers, setManufacturers] = useState([]);
+    const [units, setUnits] = useState([]);
     const [addMenuStep, setAddMenuStep] = useState(1);
     const [uploadedImages, setUploadedImages] = useState([]);
     const [existingImages, setExistingImages] = useState([]); // For existing images from server
@@ -360,6 +367,12 @@ const AddProduct = ({ product, id }) => {
         });
     };
 
+    const fetchUnits = () => {
+        axios.get(route('api.units.list')).then((response) => {
+            setUnits(response.data.units);
+        });
+    };
+
     const fetchSubCategories = (categoryId) => {
         if (!categoryId) {
             setSubCategories([]);
@@ -408,6 +421,7 @@ const AddProduct = ({ product, id }) => {
     useEffect(() => {
         fetchCategories();
         fetchManufacturers();
+        fetchUnits();
     }, []);
 
     // Render
@@ -598,6 +612,41 @@ const AddProduct = ({ product, id }) => {
                                             }}
                                         />
                                     </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                            Unit (Optional)
+                                        </Typography>
+                                        <Autocomplete
+                                            fullWidth
+                                            size="small"
+                                            options={units || []}
+                                            getOptionLabel={(option) => option.name || ''}
+                                            value={units?.find((u) => u.id === data.unit_id) || null}
+                                            onChange={(event, newValue) => {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    unit_id: newValue ? newValue.id : '',
+                                                }));
+                                            }}
+                                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                            renderInput={(params) => <TextField {...params} placeholder="Select unit" variant="outlined" />}
+                                            ListboxProps={{
+                                                style: { maxHeight: 200 },
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
+                                            Item Type
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', gap: 2 }}>
+                                            {['finished_product', 'raw_material'].map((type) => (
+                                                <Button key={type} variant={data.item_type === type ? 'contained' : 'outlined'} onClick={() => setData('item_type', type)} sx={{ textTransform: 'capitalize' }}>
+                                                    {type.replace('_', ' ')}
+                                                </Button>
+                                            ))}
+                                        </Box>
+                                    </Grid>
                                     <Grid item xs={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
                                             Current Ready Stock
@@ -657,6 +706,30 @@ const AddProduct = ({ product, id }) => {
                                                 </Typography>
                                             )}
                                         </Box>
+                                    </Grid>
+                                    <Grid item xs={12} container spacing={2}>
+                                        {[
+                                            { label: 'Salable', field: 'is_salable' },
+                                            { label: 'Purchasable', field: 'is_purchasable' },
+                                            { label: 'Returnable', field: 'is_returnable' },
+                                            { label: 'Taxable', field: 'is_taxable' },
+                                        ].map(({ label, field }) => (
+                                            <Grid item xs={6} md={3} key={field}>
+                                                <Box
+                                                    sx={{
+                                                        p: 1.5,
+                                                        border: '1px solid #e0e0e0',
+                                                        borderRadius: 1,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'space-between',
+                                                    }}
+                                                >
+                                                    <Typography variant="body2">{label}</Typography>
+                                                    <Switch checked={!!data[field]} onChange={(e) => setData(field, e.target.checked)} color="primary" size="small" />
+                                                </Box>
+                                            </Grid>
+                                        ))}
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Box

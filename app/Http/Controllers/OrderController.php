@@ -1365,6 +1365,8 @@ class OrderController extends Controller
             $productsQuery->whereJsonContains('available_order_types', $order_type);
         }
 
+        $productsQuery->where('is_salable', true);
+
         $products = $productsQuery->get();
 
         return response()->json(['success' => true, 'products' => $products], 200);
@@ -1396,6 +1398,7 @@ class OrderController extends Controller
                     ->orWhere('name', 'like', "%{$searchTerm}%");
             })
             ->where('current_stock', '>', 0)  // Only show products with stock
+            ->where('is_salable', true)  // Only show salable products
             ->limit(20)  // Limit results for performance
             ->get();
 

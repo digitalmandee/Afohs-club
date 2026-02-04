@@ -110,7 +110,18 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     // Now apply tax on the discounted amount
     const taxRate = setting?.tax ? setting.tax / 100 : 0;
-    const taxAmount = Math.round(discountedSubtotal * taxRate);
+
+    // Calculate taxable amount (sum of discounted price of taxable items)
+    const taxableAmount = orderDetails.order_items.reduce((acc, item) => {
+        if (item.is_taxable) {
+            // Only apply if item is taxable
+            const itemTotal = item.total_price - (item.discount_amount || 0);
+            return acc + itemTotal;
+        }
+        return acc;
+    }, 0);
+
+    const taxAmount = Math.round(taxableAmount * taxRate);
 
     // Final total
     const total = Math.round(discountedSubtotal + taxAmount);
@@ -121,7 +132,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         const newPayload = {
             ...orderDetails,
             ...extra, // include waiter + time if passed
-            price: subtotal,
+            price: total,
             tax: taxRate,
             discount_type: 'amount', // global discount is now just the sum amount
             discount_value: discountAmount,

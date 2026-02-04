@@ -25,6 +25,12 @@ class Product extends BaseModel
         'is_discountable',
         'notify_when_out_of_stock',
         'available_order_types',
+        'is_salable',
+        'is_purchasable',
+        'is_returnable',
+        'is_taxable',
+        'item_type',
+        'unit_id',
         'status',
         'tenant_id',
         'created_by',
@@ -35,6 +41,10 @@ class Product extends BaseModel
     protected $casts = [
         'images' => 'array',
         'available_order_types' => 'array',
+        'is_salable' => 'boolean',
+        'is_purchasable' => 'boolean',
+        'is_returnable' => 'boolean',
+        'is_taxable' => 'boolean',
     ];
 
     public function variants()
@@ -84,6 +94,11 @@ class Product extends BaseModel
     public function productIngredients()
     {
         return $this->hasMany(ProductIngredient::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(PosUnit::class, 'unit_id');
     }
 
     public function tenant()

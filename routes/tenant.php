@@ -191,6 +191,7 @@ Route::group([
         // API route for product filtering
         Route::get('/api/inventory/sub-categories/{category_id}', [App\Http\Controllers\PosSubCategoryController::class, 'getByCategory'])->name('api.sub-categories.by-category');
         Route::get('/api/inventory/manufacturers', [App\Http\Controllers\PosManufacturerController::class, 'getManufacturers'])->name('api.manufacturers.list');
+        Route::get('/api/inventory/units', [App\Http\Controllers\PosUnitController::class, 'getUnits'])->name('api.units.list');
         Route::get('/api/inventory/products/filter', [InventoryController::class, 'filter'])->name('api.products.filter');
 
         Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
