@@ -25,6 +25,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
 import LoginActivityScreen from './Activity';
+import ShiftActivityScreen from './ShiftActivity';
 import LogoutScreen from './Logout';
 import NotificationsPanel from './Notification';
 import EmployeeProfileScreen from './Profile';
@@ -330,7 +331,7 @@ export default function SideNav({ open, setOpen }) {
                                 }}
                             >
                                 {/* Profile Modal Content */}
-                                {profileView === 'profile' ? <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} /> : profileView === 'loginActivity' ? <LoginActivityScreen setProfileView={setProfileView} /> : profileView === 'logoutSuccess' ? <LogoutScreen setProfileView={setProfileView} /> : null}
+                                {profileView === 'profile' ? <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} /> : profileView === 'loginActivity' ? <LoginActivityScreen setProfileView={setProfileView} /> : profileView === 'shiftActivity' ? <ShiftActivityScreen setProfileView={setProfileView} /> : profileView === 'logoutSuccess' ? <LogoutScreen setProfileView={setProfileView} /> : null}
                             </Box>
                         </Modal>
                     </Box>

@@ -372,7 +372,7 @@ const BookingDetails = ({ formData, handleChange, errors, guestTypes, onAddGuest
                         <DatePicker
                             label="Check-In Date"
                             format="DD-MM-YYYY"
-                            disablePast
+                            minDate={dayjs().subtract(1, 'day')}
                             value={formData.checkInDate ? dayjs(formData.checkInDate) : null}
                             onChange={(newValue) => handleChange({ target: { name: 'checkInDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
                             slotProps={{

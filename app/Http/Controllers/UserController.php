@@ -41,7 +41,7 @@ class UserController extends Controller
                         ->orWhere('members.membership_no', 'like', "%{$query}%");
                 });
 
-            $members = $members->limit(10)->get();
+            $members = $members->limit(40)->get();
 
             $results = $members->map(function ($user) {
                 return [
@@ -109,7 +109,7 @@ class UserController extends Controller
                         ->orWhere('email', 'like', "%{$query}%")
                         ->orWhere('employee_id', 'like', "%{$query}%");
                 })
-                ->limit(10)
+                ->limit(40)
                 ->get();
 
             $results = $employees->map(function ($employee) {

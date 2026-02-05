@@ -13,6 +13,7 @@ import RoomDialog from './RoomDialog';
 import axios from 'axios';
 import { CiDeliveryTruck } from 'react-icons/ci';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import ShiftGate from '@/components/Pos/ShiftGate';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -87,7 +88,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     }, [orderDetails.order_type]);
 
     return (
-        <>
+        <ShiftGate>
             <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
@@ -445,7 +446,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
                 <div style={{ width: '40px', height: '40px', backgroundColor: 'red', borderRadius: '50%', cursor: 'pointer' }} onClick={() => setShowData(!showData)}></div>
                 {showData && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(orderDetails, null, 2)}</pre>}
             </div> */}
-        </>
+        </ShiftGate>
     );
 };
 NewOrder.layout = (page) => page;

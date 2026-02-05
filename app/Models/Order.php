@@ -9,7 +9,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Order extends BaseModel
 {
-    use HasFactory, BelongsToTenant, SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
 

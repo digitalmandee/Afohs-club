@@ -194,6 +194,12 @@ Route::group([
         Route::get('/api/inventory/units', [App\Http\Controllers\PosUnitController::class, 'getUnits'])->name('api.units.list');
         Route::get('/api/inventory/products/filter', [InventoryController::class, 'filter'])->name('api.products.filter');
 
+        // POS Shifts
+        Route::get('/pos-shifts/history', [App\Http\Controllers\PosShiftController::class, 'history'])->name('pos-shifts.history');
+        Route::get('/pos-shifts/status', [App\Http\Controllers\PosShiftController::class, 'status'])->name('pos-shifts.status');
+        Route::post('/pos-shifts/start', [App\Http\Controllers\PosShiftController::class, 'start'])->name('pos-shifts.start');
+        Route::post('/pos-shifts/end', [App\Http\Controllers\PosShiftController::class, 'end'])->name('pos-shifts.end');
+
         Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
         Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
         Route::post('/kitchen/{order}/item/{item}/update-status', [KitchenController::class, 'updateItemStatus'])->name('kitchen.item.update-status');

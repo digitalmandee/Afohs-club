@@ -420,7 +420,7 @@ class RoomBookingController extends Controller
         $req->validate([
             // 'bookingNo' => 'required|string|unique:room_bookings,booking_no',
             'bookingDate' => 'nullable|date',
-            'checkInDate' => 'nullable|date',
+            'checkInDate' => 'nullable|date|after_or_equal:yesterday',
             'checkOutDate' => 'nullable|date',
             'arrivalDetails' => 'nullable|string',
             'departureDetails' => 'nullable|string',

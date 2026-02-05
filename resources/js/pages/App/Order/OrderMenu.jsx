@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import OrderDetail from './Detail';
 import OrderSaved from './Saved';
 import VariantSelectorDialog from './VariantSelectorDialog';
+import ShiftGate from '@/components/Pos/ShiftGate';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;

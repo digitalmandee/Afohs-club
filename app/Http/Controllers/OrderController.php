@@ -19,6 +19,7 @@ use App\Models\Member;
 use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PosShift;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
 use App\Models\Reservation;
@@ -208,16 +209,17 @@ class OrderController extends Controller
 
         // Check if request expects JSON (Axios call)
         if ($request->wantsJson()) {
-            $query = Order::with([
-                'table:id,table_no',
-                'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
-                'member:id,member_type_id,full_name,membership_no',
-                'customer:id,name,customer_no,guest_type_id',
-                'customer.guestType:id,name',
-                'employee:id,employee_id,name',
-                'member.memberType:id,name',
-                'waiter:id,name',  // Waiter relation
-            ]);
+            $query = Order::where('created_by', Auth::id())
+                ->with([
+                    'table:id,table_no',
+                    'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
+                    'member:id,member_type_id,full_name,membership_no',
+                    'customer:id,name,customer_no,guest_type_id',
+                    'customer.guestType:id,name',
+                    'employee:id,employee_id,name',
+                    'member.memberType:id,name',
+                    'waiter:id,name',  // Waiter relation
+                ]);
 
             // ✅ Exclude paid orders from Order Management (table is free after payment)
             // But INCLUDE 'awaiting' payment status (so generated invoices show up)
@@ -452,8 +454,9 @@ class OrderController extends Controller
     public function savedOrder()
     {
         $today = Carbon::today()->toDateString();
-        $orders = Reservation::whereDate('date', $today)
-            ->with('member:idfull_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no')
+        $orders = Reservation::where('created_by', Auth::id())
+            ->whereDate('date', $today)
+            ->with('member:id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no')
             ->get();
 
         return response()->json([
@@ -660,8 +663,32 @@ class OrderController extends Controller
         return $invoicNo;
     }
 
+    private function checkActiveShift()
+    {
+        $user = Auth::user();
+        if (!$user)
+            return false;
+
+        $tenantId = tenant('id');
+        $today = Carbon::today()->toDateString();
+
+        return PosShift::where('user_id', $user->id)
+            ->where('tenant_id', $tenantId)
+            ->where('status', 'active')
+            ->whereDate('start_date', $today)
+            ->exists();
+    }
+
     public function sendToKitchen(Request $request)
     {
+        // Enforce Active Shift
+        if (!$this->checkActiveShift()) {
+            return response()->json([
+                'message' => 'You must start a shift before creating orders.',
+                'error_code' => 'NO_ACTIVE_SHIFT'
+            ], 403);
+        }
+
         $request->validate([
             // 'member.id' => 'required|exists:members,user_id',
             'order_items' => 'required|array',
@@ -1135,6 +1162,17 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Enforce Active Shift for updates too (mostly adding items)
+        // If just changing status to paid, maybe allow?
+        // User said "start shift... everyday before taking his first order".
+        // Let's enforce for safety.
+        if (!$this->checkActiveShift()) {
+            return response()->json([
+                'message' => 'You must have an active shift to update orders.',
+                'error_code' => 'NO_ACTIVE_SHIFT'
+            ], 403);
+        }
+
         // Validate status and items first
         $validated = $request->validate([
             'updated_items' => 'nullable|array',
@@ -1624,18 +1662,19 @@ class OrderController extends Controller
      */
     public function orderHistory(Request $request)
     {
-        $query = Order::with([
-            'table:id,table_no',
-            'orderItems:id,order_id,order_item,status',
-            'member:id,member_type_id,full_name,membership_no',
-            'member.memberType:id,name',
-            'customer:id,name,customer_no,guest_type_id',
-            'customer.guestType:id,name',
-            'employee:id,employee_id,name',
-            'cashier:id,name',
-            'user:id,name',  // Order Creator
-            'waiter:id,name',
-        ])
+        $query = Order::where('created_by', Auth::id())
+            ->with([
+                'table:id,table_no',
+                'orderItems:id,order_id,order_item,status',
+                'member:id,member_type_id,full_name,membership_no',
+                'member.memberType:id,name',
+                'customer:id,name,customer_no,guest_type_id',
+                'customer.guestType:id,name',
+                'employee:id,employee_id,name',
+                'cashier:id,name',
+                'user:id,name',  // Order Creator
+                'waiter:id,name',
+            ])
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
             ->where('status', '!=', 'pending');
 

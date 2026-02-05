@@ -15,7 +15,7 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::query()
+        $query = Order::where('created_by', Auth::id())
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
             // ✅ Only show orders with invoices waiting for payment
             ->where('payment_status', 'awaiting')
@@ -253,7 +253,7 @@ class TransactionController extends Controller
      */
     public function transactionHistory(Request $request)
     {
-        $query = Order::query()
+        $query = Order::where('created_by', Auth::id())
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
             ->where('payment_status', 'paid')
             ->with([

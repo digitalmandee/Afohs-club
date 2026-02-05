@@ -9,6 +9,7 @@ import dayjs from 'dayjs'; // Added for duration calculation
 import BookingInvoiceModal from '@/components/App/Rooms/BookingInvoiceModal';
 import ViewDocumentsModal from '@/components/App/Rooms/ViewDocumentsModal';
 import BookingActionModal from '@/components/App/Rooms/BookingActionModal';
+import RoomCheckInModal from '@/components/App/Rooms/CheckInModal';
 import debounce from 'lodash.debounce';
 import { FaEdit } from 'react-icons/fa';
 
@@ -150,6 +151,23 @@ const RoomScreen = ({ bookings }) => {
     const handleCloseDocs = () => {
         setShowDocsModal(false);
         setSelectedBookingForDocs(null);
+    };
+
+    // Check-In Modal State
+    const [checkInModalOpen, setCheckInModalOpen] = useState(false);
+    const [selectedCheckInBooking, setSelectedCheckInBooking] = useState(null);
+
+    const handleOpenCheckIn = (booking) => {
+        setSelectedCheckInBooking(booking);
+        setCheckInModalOpen(true);
+    };
+
+    const handleCloseCheckIn = (result) => {
+        setCheckInModalOpen(false);
+        setSelectedCheckInBooking(null);
+        if (result === 'success') {
+            router.reload();
+        }
     };
 
     // Action Modal State
@@ -354,6 +372,11 @@ const RoomScreen = ({ bookings }) => {
                                                         <Button variant="outlined" size="small" color="#063455" onClick={() => handleShowInvoice(booking)} style={{ textTransform: 'none' }}>
                                                             View
                                                         </Button>
+                                                        {['pending', 'confirmed'].includes(booking.status) && (
+                                                            <Button variant="outlined" size="small" color="#063455" onClick={() => handleOpenCheckIn(booking)} style={{ textTransform: 'none', whiteSpace: 'nowrap' }}>
+                                                                Check In
+                                                            </Button>
+                                                        )}
                                                         {!['cancelled', 'refunded'].includes(booking.status) && (
                                                             <Button
                                                                 size="small"
@@ -413,6 +436,9 @@ const RoomScreen = ({ bookings }) => {
 
                     {/* View Documents Modal */}
                     <ViewDocumentsModal open={showDocsModal} onClose={handleCloseDocs} bookingId={selectedBookingForDocs?.id} />
+
+                    {/* Check-In Modal */}
+                    <RoomCheckInModal open={checkInModalOpen} onClose={handleCloseCheckIn} bookingId={selectedCheckInBooking?.id} />
 
                     <BookingActionModal open={actionModalOpen} onClose={() => setActionModalOpen(false)} booking={selectedActionBooking} action={actionType} onConfirm={handleConfirmAction} />
                 </Container>

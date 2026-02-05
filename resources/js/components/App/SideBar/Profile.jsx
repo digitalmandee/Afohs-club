@@ -107,6 +107,24 @@ const EmployeeProfileScreen = ({ setProfileView, onClose }) => {
                     Login Activity
                 </Button>
 
+                <Button
+                    fullWidth
+                    variant="outlined"
+                    startIcon={<HistoryIcon />}
+                    endIcon={<ChevronRight />}
+                    sx={{
+                        justifyContent: 'space-between',
+                        textTransform: 'none',
+                        color: '#4b5563',
+                        borderColor: '#0f0f0f',
+                        mb: 2,
+                        py: 1.5,
+                    }}
+                    onClick={() => setProfileView('shiftActivity')}
+                >
+                    Shift Activity
+                </Button>
+
                 <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                         variant="outlined"
