@@ -25,6 +25,22 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     const [floorTables, setFloorTables] = useState([]);
     const [roomTypes, setRoomTypes] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [shiftInfo, setShiftInfo] = useState(null);
+
+    // Fetch Active Shift Info
+    useEffect(() => {
+        const fetchShiftInfo = async () => {
+            try {
+                const response = await axios.get(route('pos-shifts.status'));
+                if (response.data.has_active_shift) {
+                    setShiftInfo(response.data.shift);
+                }
+            } catch (error) {
+                console.error('Failed to fetch shift info:', error);
+            }
+        };
+        fetchShiftInfo();
+    }, []);
 
     // get weeks in month
     useEffect(() => {
@@ -98,6 +114,41 @@ const NewOrder = ({ orderNo, guestTypes }) => {
                     backgroundColor: '#f5f5f5',
                 }}
             >
+                {/* Active Shift Info */}
+                {shiftInfo && (
+                    <Paper
+                        elevation={0}
+                        sx={{
+                            p: 2,
+                            mb: -3,
+                            mt: 5,
+                            mx: 'auto',
+                            maxWidth: orderDetails.order_type === 'reservation' ? '1000px' : '732px',
+                            border: '1px solid #E3E3E3',
+                            bgcolor: '#fff',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box>
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                    Operational Date (Shift)
+                                </Typography>
+                                <Typography variant="h6" color="primary.main" fontWeight="bold">
+                                    {dayjs(shiftInfo.start_date).format('DD MMM YYYY')}
+                                </Typography>
+                            </Box>
+                            <Box sx={{ textAlign: 'right' }}>
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                    POS Location
+                                </Typography>
+                                <Typography variant="h6" color="primary.main" fontWeight="bold">
+                                    {shiftInfo.tenant?.name || 'Unknown Location'}
+                                </Typography>
+                            </Box>
+                        </Box>
+                    </Paper>
+                )}
+
                 {/* Order Detailss */}
                 <Box
                     sx={{

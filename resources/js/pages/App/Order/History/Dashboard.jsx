@@ -522,6 +522,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Location</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -571,6 +572,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                                 <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
                                             </TableCell>
                                             <TableCell>{order.cashier?.name || order.user?.name || '-'}</TableCell>
+                                            <TableCell>{order.tenant?.name || '-'}</TableCell>
                                             <TableCell>
                                                 <Box sx={{ display: 'flex', gap: 0.5 }}>
                                                     <Tooltip title="View Details">

@@ -66,6 +66,8 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
     // Track if we are viewing filtered results
     const [isFiltered, setIsFiltered] = useState(false);
+    const [filteredPage, setFilteredPage] = useState(1);
+    const [filteredTotalPages, setFilteredTotalPages] = useState(1);
 
     // Add new state variables for Stock and Update Stock modals
     const [openStockModal, setOpenStockModal] = useState(false);
@@ -221,12 +223,22 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         <Box>
                             <MenuFilter
                                 categories={categoriesList}
-                                onProductsLoaded={(loadedProducts) => {
-                                    if (loadedProducts === null) {
+                                page={filteredPage}
+                                onFiltersChange={() => setFilteredPage(1)}
+                                onProductsLoaded={(response) => {
+                                    if (response === null) {
                                         setFilteredProducts(productLists?.data || productLists || []);
                                         setIsFiltered(false);
                                     } else {
-                                        setFilteredProducts(loadedProducts);
+                                        // Handle paginated response or flat array (fallback)
+                                        if (response.data) {
+                                            setFilteredProducts(response.data);
+                                            setFilteredTotalPages(response.last_page);
+                                            // Ensure current page sync if needed, but we manage it via state
+                                        } else {
+                                            setFilteredProducts(response);
+                                            setFilteredTotalPages(1);
+                                        }
                                         setIsFiltered(true);
                                     }
                                 }}
@@ -407,23 +419,29 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         </Box>
 
                         {/* Pagination */}
-                        {!isFiltered && productLists?.links && (
+                        {(isFiltered ? filteredTotalPages > 1 : productLists?.links) && (
                             <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
                                 <Pagination
-                                    count={productLists.last_page}
-                                    page={productLists.current_page}
+                                    count={isFiltered ? filteredTotalPages : productLists.last_page}
+                                    page={isFiltered ? filteredPage : productLists.current_page}
                                     onChange={(event, value) => {
-                                        router.get(
-                                            url.split('?')[0],
-                                            {
-                                                ...Object.fromEntries(queryParams),
-                                                page: value,
-                                            },
-                                            {
-                                                preserveState: true,
-                                                preserveScroll: true,
-                                            },
-                                        );
+                                        if (isFiltered) {
+                                            setFilteredPage(value);
+                                            // Scroll to top of list?
+                                            // window.scrollTo(0, 0);
+                                        } else {
+                                            router.get(
+                                                url.split('?')[0],
+                                                {
+                                                    ...Object.fromEntries(queryParams),
+                                                    page: value,
+                                                },
+                                                {
+                                                    preserveState: true,
+                                                    preserveScroll: true,
+                                                },
+                                            );
+                                        }
                                     }}
                                     color="primary"
                                     shape="rounded"

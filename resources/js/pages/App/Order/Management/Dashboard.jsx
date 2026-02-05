@@ -640,6 +640,9 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                         ({card.order_type})
                                                     </Typography>
                                                 </Typography>
+                                                <Typography sx={{ mb: 2, fontSize: '14px', opacity: 0.9 }}>
+                                                    Location: <strong>{card.tenant?.name || 'Unknown'}</strong>
+                                                </Typography>
                                                 <Box
                                                     sx={{
                                                         display: 'flex',

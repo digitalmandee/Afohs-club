@@ -19,7 +19,7 @@ class TransactionController extends Controller
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
             // ✅ Only show orders with invoices waiting for payment
             ->where('payment_status', 'awaiting')
-            ->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'table:id,table_no', 'orderItems:id,order_id', 'roomBooking.room:id,name']);
+            ->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'table:id,table_no', 'orderItems:id,order_id', 'roomBooking.room:id,name', 'tenant:id,name']);
 
         // ===============================
         // FILTER: Search by member name or membership_no
@@ -263,6 +263,7 @@ class TransactionController extends Controller
                 'table:id,table_no',
                 'cashier:id,name',
                 'waiter:id,name',
+                'tenant:id,name',  // ✅ Load Tenant Name
                 'orderItems:id,order_id,order_item,status',
             ]);
 

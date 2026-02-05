@@ -55,4 +55,9 @@ class Reservation extends BaseModel
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'id');
     }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 }

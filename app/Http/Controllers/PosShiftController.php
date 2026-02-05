@@ -39,7 +39,8 @@ class PosShiftController extends Controller
         $activeShift = PosShift::where('user_id', $user->id)
             // ->where('tenant_id', $tenantId)
             ->where('status', 'active')
-            ->whereDate('start_date', $today)
+            // ->whereDate('start_date', $today) // Allow persistent shifts across dates
+            ->with('tenant:id,name')  // Load tenant name
             ->latest()
             ->first();
 

@@ -212,6 +212,7 @@ class OrderController extends Controller
             $query = Order::where('created_by', Auth::id())
                 ->with([
                     'table:id,table_no',
+                    'tenant:id,name',  // ✅ Load Tenant Name
                     'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
                     'member:id,member_type_id,full_name,membership_no',
                     'customer:id,name,customer_no,guest_type_id',
@@ -663,26 +664,20 @@ class OrderController extends Controller
         return $invoicNo;
     }
 
-    private function checkActiveShift()
+    // Helper to get active shift (Global Scope, ignoring date restriction)
+    private function getActiveShift()
     {
-        $user = Auth::user();
-        if (!$user)
-            return false;
-
-        $tenantId = tenant('id');
-        $today = Carbon::today()->toDateString();
-
-        return PosShift::where('user_id', $user->id)
-            ->where('tenant_id', $tenantId)
+        return PosShift::where('user_id', Auth::id())
             ->where('status', 'active')
-            ->whereDate('start_date', $today)
-            ->exists();
+            ->latest()
+            ->first();
     }
 
     public function sendToKitchen(Request $request)
     {
-        // Enforce Active Shift
-        if (!$this->checkActiveShift()) {
+        // Enforce Active Shift (Global)
+        $activeShift = $this->getActiveShift();
+        if (!$activeShift) {
             return response()->json([
                 'message' => 'You must start a shift before creating orders.',
                 'error_code' => 'NO_ACTIVE_SHIFT'
@@ -695,8 +690,6 @@ class OrderController extends Controller
             'order_items.*.id' => 'required|exists:products,id',
             'price' => 'required|numeric',
             'kitchen_note' => 'nullable|string',
-            'staff_note' => 'nullable|string',
-            'payment_note' => 'nullable|string',
             'staff_note' => 'nullable|string',
             'payment_note' => 'nullable|string',
             'reservation_id' => 'nullable|exists:reservations,id',
@@ -719,7 +712,9 @@ class OrderController extends Controller
                 'table_id' => $request->input('table.id'),
                 'order_type' => $request->order_type,
                 'person_count' => $request->person_count,
-                'start_date' => Carbon::parse($request->date)->toDateString(),
+                // ✅ Use Persistent Shift Date and Tenant
+                'start_date' => $activeShift->start_date,  // Force usage of shift date
+                'tenant_id' => $activeShift->tenant_id,  // Force usage of shift tenant
                 'start_time' => $request->time,
                 'down_payment' => $request->down_payment,
                 'amount' => $request->price,
@@ -1665,6 +1660,7 @@ class OrderController extends Controller
         $query = Order::where('created_by', Auth::id())
             ->with([
                 'table:id,table_no',
+                'tenant:id,name',  // ✅ Load Tenant Name
                 'orderItems:id,order_id,order_item,status',
                 'member:id,member_type_id,full_name,membership_no',
                 'member.memberType:id,name',

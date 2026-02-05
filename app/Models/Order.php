@@ -123,4 +123,9 @@ class Order extends BaseModel
     {
         return $this->belongsTo(RoomBooking::class, 'room_booking_id');
     }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 }

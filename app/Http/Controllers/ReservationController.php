@@ -18,7 +18,7 @@ class ReservationController extends Controller
     public function index(Request $request)
     {
         $query = Reservation::where('created_by', Auth::id())
-            ->with(['member:id,full_name,membership_no,mobile_number_a', 'customer:id,name,customer_no,contact', 'table']);
+            ->with(['member:id,full_name,membership_no,mobile_number_a', 'customer:id,name,customer_no,contact', 'table', 'tenant:id,name']);  // ✅ Load Tenant Name
 
         // ✅ Apply filters
         if ($request->filled('status')) {

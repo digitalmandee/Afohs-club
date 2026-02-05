@@ -10,7 +10,7 @@ const RoundedTextField = styled(TextField)({
     },
 });
 
-const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
+const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page = 1, onFiltersChange }) => {
     // Filter states
     const [nameFilter, setNameFilter] = useState('');
     const [menuCodeFilter, setMenuCodeFilter] = useState('');
@@ -24,12 +24,12 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
 
     // Debounced fetch function
     const fetchProducts = useCallback(
-        debounce(async (filters) => {
+        debounce(async (filters, pageNum) => {
             setIsLoading(true);
             onLoadingChange?.(true);
 
             try {
-                const params = {};
+                const params = { page: pageNum };
                 if (filters.name) params.name = filters.name;
                 if (filters.menu_code) params.menu_code = filters.menu_code;
                 if (filters.status && filters.status !== 'all') params.status = filters.status;
@@ -103,15 +103,18 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
             return;
         }
 
-        fetchProducts({
-            name: nameFilter,
-            menu_code: menuCodeFilter,
-            status: statusFilter,
-            category_ids: categoryFilter,
-            sub_category_ids: subCategoryFilter,
-            manufacturer_ids: manufacturerFilter,
-        });
-    }, [nameFilter, menuCodeFilter, statusFilter, categoryFilter, subCategoryFilter, manufacturerFilter]);
+        fetchProducts(
+            {
+                name: nameFilter,
+                menu_code: menuCodeFilter,
+                status: statusFilter,
+                category_ids: categoryFilter,
+                sub_category_ids: subCategoryFilter,
+                manufacturer_ids: manufacturerFilter,
+            },
+            page,
+        );
+    }, [nameFilter, menuCodeFilter, statusFilter, categoryFilter, subCategoryFilter, manufacturerFilter, page]);
 
     // Reset all filters
     const handleReset = () => {
@@ -121,6 +124,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
         setCategoryFilter([]);
         setSubCategoryFilter([]);
         setManufacturerFilter([]);
+        onFiltersChange?.();
     };
 
     return (
@@ -128,12 +132,32 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
             <Grid container spacing={2} alignItems="center">
                 {/* Name Filter */}
                 <Grid item xs={12} md={2}>
-                    <RoundedTextField fullWidth size="small" label="Product Name" placeholder="Search name..." value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} />
+                    <RoundedTextField
+                        fullWidth
+                        size="small"
+                        label="Product Name"
+                        placeholder="Search name..."
+                        value={nameFilter}
+                        onChange={(e) => {
+                            setNameFilter(e.target.value);
+                            onFiltersChange?.();
+                        }}
+                    />
                 </Grid>
 
                 {/* Menu Code Filter */}
                 <Grid item xs={12} md={1.5}>
-                    <RoundedTextField fullWidth size="small" label="Item Code" placeholder="Search code..." value={menuCodeFilter} onChange={(e) => setMenuCodeFilter(e.target.value)} />
+                    <RoundedTextField
+                        fullWidth
+                        size="small"
+                        label="Item Code"
+                        placeholder="Search code..."
+                        value={menuCodeFilter}
+                        onChange={(e) => {
+                            setMenuCodeFilter(e.target.value);
+                            onFiltersChange?.();
+                        }}
+                    />
                 </Grid>
 
                 {/* Status Filter */}
@@ -149,7 +173,10 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
                     >
                         <Select
                             value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
+                            onChange={(e) => {
+                                setStatusFilter(e.target.value);
+                                onFiltersChange?.();
+                            }}
                             displayEmpty
                             MenuProps={{
                                 sx: {
@@ -196,6 +223,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
                             setCategoryFilter(newValue.map((cat) => cat.id));
                             // Reset sub-category filter if category changes
                             setSubCategoryFilter([]);
+                            onFiltersChange?.();
                         }}
                         renderTags={(value, getTagProps) =>
                             value.length > 1 ? (
@@ -242,6 +270,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
                         disabled={subCategories.length === 0}
                         onChange={(event, newValue) => {
                             setSubCategoryFilter(newValue.map((sub) => sub.id));
+                            onFiltersChange?.();
                         }}
                         renderTags={(value, getTagProps) =>
                             value.length > 1 ? (
@@ -287,6 +316,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
                         value={manufacturers.filter((m) => manufacturerFilter.includes(m.id))}
                         onChange={(event, newValue) => {
                             setManufacturerFilter(newValue.map((m) => m.id));
+                            onFiltersChange?.();
                         }}
                         renderTags={(value, getTagProps) =>
                             value.length > 1 ? (

@@ -14,8 +14,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import { enqueueSnackbar } from 'notistack';
 
 const Reservations = () => {
-    const { reservations, filters,tenant } = usePage().props;
-
+    const { reservations, filters, tenant } = usePage().props;
 
     const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
@@ -175,6 +174,7 @@ const Reservations = () => {
                                         <TableCell sx={{ fontWeight: 600 }}>Theme</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Special Request</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
@@ -193,16 +193,11 @@ const Reservations = () => {
                                                 <TableCell>Rs {reservation.down_payment || '0'}</TableCell>
                                                 <TableCell>{reservation.nature_of_function || '-'}</TableCell>
                                                 <TableCell>{reservation.theme_of_function || '-'}</TableCell>
-                                                <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {reservation.special_request || '-'}
-                                                </TableCell>
+                                                <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{reservation.special_request || '-'}</TableCell>
                                                 <TableCell>
-                                                    <Chip 
-                                                        label={reservation.status} 
-                                                        size="small"
-                                                        color={reservation.status === 'pending' ? 'warning' : reservation.status === 'confirmed' ? 'success' : 'error'}
-                                                    />
+                                                    <Chip label={reservation.status} size="small" color={reservation.status === 'pending' ? 'warning' : reservation.status === 'confirmed' ? 'success' : 'error'} />
                                                 </TableCell>
+                                                <TableCell>{reservation.tenant?.name || '-'}</TableCell>
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         {/* Show only if pending */}
