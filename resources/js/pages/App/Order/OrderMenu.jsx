@@ -3,7 +3,7 @@ import { tenantAsset } from '@/helpers/asset';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
-import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
+import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
@@ -46,6 +46,13 @@ const OrderMenu = () => {
     const [variantPopupOpen, setVariantPopupOpen] = useState(false);
     const [variantProduct, setVariantProduct] = useState(null);
     const [initialEditItem, setInitialEditItem] = useState(null);
+
+    // Booking Search State
+    const [bookingSearchOpen, setBookingSearchOpen] = useState(false);
+    const [bookingSearchTerm, setBookingSearchTerm] = useState('');
+    const [bookingSearchResult, setBookingSearchResult] = useState(null);
+    const [bookingSearchLoading, setBookingSearchLoading] = useState(false);
+    const [bookingSearchError, setBookingSearchError] = useState('');
 
     // Search functionality
     const handleSearch = async (value) => {
@@ -255,6 +262,108 @@ const OrderMenu = () => {
         }
     }, [reservation, orderContext]);
 
+    const handleOpenBookingSearch = () => {
+        setBookingSearchOpen(true);
+        setBookingSearchTerm('');
+        setBookingSearchResult(null);
+        setBookingSearchError('');
+    };
+
+    const handleCloseBookingSearch = () => {
+        setBookingSearchOpen(false);
+    };
+
+    const searchBooking = async () => {
+        if (!bookingSearchTerm.trim()) return;
+
+        setBookingSearchLoading(true);
+        setBookingSearchError('');
+        setBookingSearchResult(null);
+
+        try {
+            const response = await axios.get(route('api.cake-bookings.search'), {
+                params: { query: bookingSearchTerm },
+            });
+
+            if (response.data && response.data.id) {
+                setBookingSearchResult(response.data);
+            } else {
+                setBookingSearchError('No booking found.');
+            }
+        } catch (error) {
+            console.error('Booking search error:', error);
+            setBookingSearchError('Error searching for booking.');
+        } finally {
+            setBookingSearchLoading(false);
+        }
+    };
+
+    const loadBookingToOrder = () => {
+        if (!bookingSearchResult) return;
+
+        const booking = bookingSearchResult;
+        const product = booking.cake_type;
+
+        if (!product) {
+            alert('This booking has no associated product/cake type.');
+            return;
+        }
+
+        const bookedPrice = parseFloat(booking.total_price);
+        const advanceAmount = parseFloat(booking.advance_amount || 0);
+
+        const newItem = {
+            id: product.id,
+            name: product.name + ` (Booking #${booking.booking_number || booking.id})`,
+            price: bookedPrice,
+            total_price: bookedPrice,
+            quantity: 1,
+            tenant_id: product.tenant_id,
+            category: product.category?.name || 'Cakes',
+            variants: [],
+            is_discountable: false,
+            discount_value: 0,
+            discount_type: 'percentage',
+            discount_amount: 0,
+            is_taxable: product.is_taxable,
+            booking_id: booking.id,
+        };
+
+        const details = [];
+        if (booking.weight) details.push({ value: `Weight: ${booking.weight}` });
+        if (booking.flavor) details.push({ value: `Flavor: ${booking.flavor}` });
+        if (booking.message) details.push({ value: `Msg: ${booking.message}` });
+
+        if (details.length > 0) {
+            newItem.variants = details;
+        }
+
+        handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);
+
+        const existingAdvance = parseFloat(orderDetails.advance_amount || 0);
+        handleOrderDetailChange('advance_amount', existingAdvance + advanceAmount);
+
+        if (booking.member && !orderDetails.member) {
+            const memberData = {
+                id: booking.member.user_id,
+                name: booking.member.full_name,
+                membership_no: booking.member.membership_no,
+                booking_type: 'member',
+            };
+            handleOrderDetailChange('member', memberData);
+        } else if (booking.customer && !orderDetails.member) {
+            const custData = {
+                id: booking.customer.id,
+                name: booking.customer.name,
+                membership_no: booking.customer.customer_no,
+                booking_type: 'guest',
+            };
+            handleOrderDetailChange('member', custData);
+        }
+
+        handleCloseBookingSearch();
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -318,6 +427,49 @@ const OrderMenu = () => {
                             onConfirm={handleVariantConfirm}
                         />
                     )}
+
+                    <Dialog open={bookingSearchOpen} onClose={handleCloseBookingSearch} fullWidth maxWidth="sm">
+                        <Box sx={{ p: 3 }}>
+                            <Typography variant="h6" sx={{ mb: 2, color: '#063455' }}>
+                                Search Cake Booking
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                                <TextField fullWidth size="small" label="Booking Number or Phone" value={bookingSearchTerm} onChange={(e) => setBookingSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchBooking()} />
+                                <Button variant="contained" onClick={searchBooking} disabled={bookingSearchLoading} sx={{ bgcolor: '#063455' }}>
+                                    {bookingSearchLoading ? '...' : 'Search'}
+                                </Button>
+                            </Box>
+
+                            {bookingSearchError && (
+                                <Typography color="error" variant="body2">
+                                    {bookingSearchError}
+                                </Typography>
+                            )}
+
+                            {bookingSearchResult && (
+                                <Box sx={{ mt: 2, p: 2, border: '1px solid #ddd', borderRadius: 2 }}>
+                                    <Typography variant="subtitle1" fontWeight="bold">
+                                        Booking #{bookingSearchResult.booking_number}
+                                    </Typography>
+                                    <Typography variant="body2">Customer: {bookingSearchResult.customer_name}</Typography>
+                                    <Typography variant="body2">
+                                        Cake: {bookingSearchResult.cake_type?.name} ({bookingSearchResult.weight || '-'} lbs)
+                                    </Typography>
+                                    <Typography variant="body2">Total: Rs {bookingSearchResult.total_price}</Typography>
+                                    <Typography variant="body2" color="primary">
+                                        Advance: Rs {bookingSearchResult.advance_amount}
+                                    </Typography>
+                                    <Typography variant="body2" color="error">
+                                        Balance: Rs {bookingSearchResult.balance_amount}
+                                    </Typography>
+
+                                    <Button variant="contained" fullWidth sx={{ mt: 2, bgcolor: '#2e7d32' }} onClick={loadBookingToOrder}>
+                                        Load to Order
+                                    </Button>
+                                </Box>
+                            )}
+                        </Box>
+                    </Dialog>
 
                     {/* Main Content */}
                     <Box
@@ -443,6 +595,9 @@ const OrderMenu = () => {
                                         alignItems: 'center',
                                     }}
                                 >
+                                    <Button variant="outlined" size="small" onClick={handleOpenBookingSearch} sx={{ mr: 2, textTransform: 'none', borderColor: '#063455', color: '#063455' }}>
+                                        Load Booking
+                                    </Button>
                                     <TextField
                                         placeholder="Search by ID, menu code or name"
                                         variant="outlined"

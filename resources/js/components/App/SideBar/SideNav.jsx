@@ -115,6 +115,8 @@ export default function SideNav({ open, setOpen }) {
         { text: 'Categories', icon: <CategoryIcon />, path: route('inventory.category') },
         { text: 'Sub Categories', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('sub-categories.index') },
         { text: 'Ingredients', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('ingredients.index') },
+        { text: 'Cake Types', icon: <MdRestaurantMenu style={{ height: '25px', width: '25px' }} />, path: route('cake-types.index') },
+        { text: 'Cake Bookings', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('cake-bookings.index') },
         { text: 'Units of Measurement', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('units.index') },
         { text: 'Manufacturers', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('manufacturers.index') },
         { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },

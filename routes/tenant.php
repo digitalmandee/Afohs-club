@@ -210,6 +210,12 @@ Route::group([
         Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
         Route::post('/order-payment', [TransactionController::class, 'OrderPayment'])->name('order.payment');
 
+        // POS Cake Bookings
+        Route::resource('cake-bookings', \App\Http\Controllers\PosCakeBookingController::class);
+        Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('api.cake-bookings.search');
+        Route::get('cake-bookings/{id}/print', [\App\Http\Controllers\PosCakeBookingController::class, 'printInvoice'])->name('cake-bookings.print');
+        Route::resource('cake-types', \App\Http\Controllers\CakeTypeController::class);
+
         // Kitchen Dashboard
         // Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');
         Route::get('/kitchens/create', [KitchenController::class, 'create'])->name('kitchens.create');

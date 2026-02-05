@@ -737,6 +737,16 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                         </Box>
 
                         <Divider sx={{ my: 1 }} />
+                        {orderDetails.advance_amount > 0 && (
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2" color="primary">
+                                    Advance
+                                </Typography>
+                                <Typography variant="body2" color="primary">
+                                    - Rs {orderDetails.advance_amount}
+                                </Typography>
+                            </Box>
+                        )}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="subtitle2">Total</Typography>
                             <Typography variant="subtitle2">Rs {total.toFixed(2)}</Typography>
@@ -996,7 +1006,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
             </Dialog>
 
             {/* Payment Modal */}
-            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: 'amount', discount_value: discountAmount, discount: discountAmount, price: subtotal, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
+            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: 'amount', discount_value: discountAmount, discount: discountAmount, price: subtotal, total_price: total - (orderDetails.advance_amount || 0) }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
 
             <CancelItemDialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} onConfirm={handleConfirmCancel} item={itemToCancel} />
         </>
