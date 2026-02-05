@@ -142,6 +142,7 @@ class RoomBookingController extends Controller
 
         $bookings = $query
             ->orderBy('check_in_date', 'desc')
+            ->orderBy('check_in_time', 'desc')
             ->latest()
             ->paginate(50)
             ->withQueryString();
@@ -188,6 +189,7 @@ class RoomBookingController extends Controller
 
         $bookings = $query
             ->orderBy('check_out_date', 'desc')
+            ->orderBy('check_out_time', 'desc')
             ->latest()
             ->paginate(10)
             ->withQueryString();
@@ -705,7 +707,7 @@ class RoomBookingController extends Controller
                 $invoice->update([
                     'paid_amount' => $advanceAmount,
                     'advance_payment' => 0,
-                    // 'status' => ($advanceAmount >= $booking->grand_total) ? 'paid' : 'unpaid'
+                    'status' => ($advanceAmount >= $booking->grand_total) ? 'paid' : 'unpaid'
                 ]);
             }
 
@@ -856,7 +858,8 @@ class RoomBookingController extends Controller
             // 🔄 Update Invoice using polymorphic relationship
             $invoice = $booking->invoice;
 
-            if ($invoice && $invoice->status === 'unpaid') {
+            // Update status logic in update method too
+            if ($invoice) {
                 $updateData = [
                     'discount_type' => $data['discountType'] ?? null,
                     'discount_value' => $data['discount'] ?? 0,
@@ -879,17 +882,66 @@ class RoomBookingController extends Controller
                     $updateData['corporate_member_id'] = null;
                 }
 
+                // Also update status based on new grand_total if not paid yet or became unpaid
+                // We'll update it properly at the end after potential payments
+
                 $invoice->update($updateData);
+
+                // ✅ 1. Update Financial Item Details
+                $invoiceItem = FinancialInvoiceItem::where('invoice_id', $invoice->id)->first();
+                if ($invoiceItem) {
+                    $grossAmount = (float) $booking->room_charge + (float) $booking->total_other_charges + (float) $booking->total_mini_bar;
+
+                    // Recalculate discount based on potentially new type/value
+                    $discountType = $data['discountType'] ?? null;
+                    $discountValue = $data['discount'] ?? 0;
+                    $discountAmount = 0;
+
+                    if ($discountType === 'percentage') {
+                        $discountAmount = ($grossAmount * $discountValue) / 100;
+                    } elseif ($discountType === 'fixed') {
+                        $discountAmount = $discountValue;
+                    }
+
+                    $invoiceItem->update([
+                        'amount' => $grossAmount,
+                        'discount_type' => $discountType,
+                        'discount_value' => $discountValue,
+                        'discount_amount' => $discountAmount,
+                        'sub_total' => $grossAmount,
+                        'total' => $booking->grand_total
+                    ]);
+
+                    // ✅ 2. Update Related Debit Transaction (Ledger)
+                    // We need to find the transaction linked to this Invoice Item
+                    Transaction::where('reference_type', FinancialInvoiceItem::class)
+                        ->where('reference_id', $invoiceItem->id)
+                        ->where('type', 'debit')
+                        ->update([
+                            'amount' => $booking->grand_total,
+                            // Verify payer updates too if needed, but primary concern is Amount
+                            'payable_type' => $updateData['customer_id'] ? \App\Models\Customer::class : ($updateData['member_id'] ? \App\Models\Member::class : \App\Models\CorporateMember::class),
+                            'payable_id' => $updateData['customer_id'] ?? $updateData['member_id'] ?? $updateData['corporate_member_id'],
+                        ]);
+                }
             }
 
             // Calculate Payment Difference and Create Receipt if needed
             $newSecurity = $data['securityDeposit'] ?? 0;
             $newAdvance = $data['advanceAmount'] ?? 0;
-            $diffSecurity = max(0, $newSecurity - $oldSecurity);
-            $diffAdvance = max(0, $newAdvance - $oldAdvance);
+
+            // Allow Negative difference (Correction/Refund)
+            $diffSecurity = $newSecurity - $oldSecurity;
+
+            // ✅ Fix: Calculate Advance Difference based on INVOICE PAID AMOUNT to ensure sync
+            // If we use $oldAdvance (Booking DB), we miss cases where Invoice is desynced.
+            // We treat the Invoice's Paid Amount as the "Current State" we are transitioning FROM.
+            $currentInvoicePaid = $invoice ? $invoice->paid_amount : $oldAdvance;
+            $diffAdvance = $newAdvance - $currentInvoicePaid;
+
             $toBePaid = $diffSecurity + $diffAdvance;
 
-            if ($toBePaid > 0) {
+            if ($toBePaid != 0) {
                 // Determine Payer
                 $payerType = null;
                 $payerId = null;
@@ -904,53 +956,86 @@ class RoomBookingController extends Controller
                     $payerId = $booking->customer_id;
                 }
 
-                // Create Receipt
-                $receipt = FinancialReceipt::create([
-                    'receipt_no' => time(),
-                    'payer_type' => $payerType,
-                    'payer_id' => $payerId,
-                    'amount' => $toBePaid,
-                    'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
-                        'Bank Transfer' => 'bank',
-                        'Credit Card' => 'credit_card',
-                        'Online' => 'bank',
-                        default => 'cash',
-                    },
-                    'payment_details' => $data['paymentAccount'] ?? null,
-                    'receipt_date' => now(),
-                    'status' => 'active',
-                    'remarks' => 'Additional Payment (Security: ' . $diffSecurity . ', Advance: ' . $diffAdvance . ') for Room Booking #' . $booking->booking_no,
-                    'created_by' => Auth::id(),
-                ]);
+                if ($toBePaid > 0) {
+                    // POSITIVE: Additional Payment
 
-                // Create Ledger Entry (Credit)
-                Transaction::create([
-                    'type' => 'credit',
-                    'amount' => $toBePaid,
-                    'date' => now(),
-                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-                    'payable_type' => $payerType,
-                    'payable_id' => $payerId,
-                    'reference_type' => FinancialReceipt::class,
-                    'reference_id' => $receipt->id,
-                    'created_by' => Auth::id(),
-                ]);
-
-                // Link Receipt to Invoice (ONLY Advance Amount Difference)
-                if ($diffAdvance > 0 && $invoice) {
-                    TransactionRelation::create([
-                        'invoice_id' => $invoice->id,
-                        'receipt_id' => $receipt->id,
-                        'amount' => $diffAdvance,
+                    // Create Receipt
+                    $receipt = FinancialReceipt::create([
+                        'receipt_no' => time(),
+                        'payer_type' => $payerType,
+                        'payer_id' => $payerId,
+                        'amount' => $toBePaid,
+                        'payment_method' => match ($data['paymentMode'] ?? 'Cash') {
+                            'Bank Transfer' => 'bank',
+                            'Credit Card' => 'credit_card',
+                            'Online' => 'bank',
+                            default => 'cash',
+                        },
+                        'payment_details' => $data['paymentAccount'] ?? null,
+                        'receipt_date' => now(),
+                        'status' => 'active',
+                        'remarks' => 'Additional Payment (Security: ' . $diffSecurity . ', Advance: ' . $diffAdvance . ') for Room Booking #' . $booking->booking_no,
+                        'created_by' => Auth::id(),
                     ]);
+
+                    // Create Ledger Entry (Credit)
+                    Transaction::create([
+                        'type' => 'credit',
+                        'amount' => $toBePaid,
+                        'date' => now(),
+                        'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        'reference_type' => FinancialReceipt::class,
+                        'reference_id' => $receipt->id,
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    // Link Receipt to Invoice (ONLY Advance Amount Difference)
+                    if ($diffAdvance > 0 && $invoice) {
+                        TransactionRelation::create([
+                            'invoice_id' => $invoice->id,
+                            'receipt_id' => $receipt->id,
+                            'amount' => $diffAdvance,
+                        ]);
+                    }
+                } else {
+                    // NEGATIVE: Correction / Refund logic
+                    // We need to Debit the customer (Reverse the Credit) and reduce the Invoice Paid Amount
+                    $refundAmount = abs($toBePaid);
+
+                    Transaction::create([
+                        'type' => 'debit',
+                        'amount' => $refundAmount,
+                        'date' => now(),
+                        'description' => 'Payment Adjustment/Correction for Room Booking #' . $booking->booking_no,
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        // No reference receipt for correction, or could link to original if tracked?
+                        'created_by' => Auth::id(),
+                    ]);
+
+                    // Note: We are not deleting the original Receipt, just adding a counter-transaction to the ledger.
                 }
 
-                // Update Invoice Paid Amount
+                // Update Invoice Paid Amount (Add signed difference, so subtracts if negative)
                 if ($invoice) {
-                    $invoice->paid_amount += $diffAdvance;
-                    $invoice->status = ($invoice->paid_amount >= $booking->grand_total) ? 'paid' : 'unpaid';
-                    $invoice->save();
+                    // Only apply Advance difference to Invoice Paid Amount (Security usually held separately?)
+                    // The previous logic applied ALL advance difference to invoice.
+                    // The original code passed 'advanceAmount' into 'paid_amount' at creation.
+                    if ($diffAdvance != 0) {
+                        $invoice->paid_amount += $diffAdvance;
+                        // Ensure it doesn't go below zero
+                        if ($invoice->paid_amount < 0)
+                            $invoice->paid_amount = 0;
+                    }
                 }
+            }
+
+            // Final check on Invoice Status
+            if ($invoice) {
+                $invoice->status = ($invoice->paid_amount >= $booking->grand_total) ? 'paid' : 'unpaid';
+                $invoice->save();
             }
 
             DB::commit();
@@ -1016,7 +1101,7 @@ class RoomBookingController extends Controller
     {
         $booking = RoomBooking::with('room', 'customer', 'member:id,membership_no,full_name,personal_email', 'corporateMember:id,membership_no,full_name,personal_email', 'room', 'room.roomType')->findOrFail($id);
         $invoice = FinancialInvoice::where('invoice_type', 'room_booking')
-            ->select('id', 'customer_id', 'data', 'status')
+            ->select('id', 'customer_id', 'data', 'status', 'paid_amount', 'total_price')
             ->where('customer_id', $booking->customer_id)
             ->whereJsonContains('data', [['booking_id' => $booking->id]])
             ->first();

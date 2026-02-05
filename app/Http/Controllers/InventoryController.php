@@ -88,7 +88,7 @@ class InventoryController extends Controller
             $query->whereIn('manufacturer_id', $manufacturerIds);
         }
 
-        $products = $query->latest()->get();
+        $products = $query->latest()->limit(50)->get();
 
         return response()->json([
             'success' => true,

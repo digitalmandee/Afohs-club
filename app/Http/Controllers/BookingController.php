@@ -97,11 +97,15 @@ class BookingController extends Controller
     {
         $checkin = $request->query('checkin');  // Y-m-d
         $checkout = $request->query('checkout');  // Y-m-d
-        $persons = (int) $request->query('persons', 0);  // Optional - default to 0
+        $persons = (int) $request->query('persons', 0);
+        $excludeBookingId = $request->query('exclude_booking_id');
 
         // Find conflicted rooms (already booked)
         $conflicted = RoomBooking::query()
             ->whereNotIn('status', ['cancelled', 'refunded', 'checked_out', 'Cancelled', 'Refunded'])
+            ->when($excludeBookingId, function ($query, $id) {
+                $query->where('id', '!=', $id);
+            })
             ->where(function ($query) use ($checkin, $checkout) {
                 $query
                     ->where('check_in_date', '<', $checkout)

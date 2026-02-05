@@ -232,7 +232,7 @@ const EditRoomBooking = ({ booking, room, bookingNo, roomCategories }) => {
             case 0:
                 return <BookingDetails formData={formData} handleChange={handleChange} isCheckout={isCheckout} errors={errors} />;
             case 1:
-                return <RoomSelection formData={formData} handleChange={handleChange} isCheckout={isCheckout} errors={errors} />;
+                return <RoomSelection formData={formData} handleChange={handleChange} isCheckout={isCheckout} errors={errors} bookingId={booking.id} />;
             case 2:
                 return <ChargesInfo formData={formData} handleChange={handleChange} isCheckout={isCheckout} />;
             case 3:
@@ -608,15 +608,55 @@ const BookingDetails = ({ formData, handleChange, errors, isCheckout }) => {
     );
 };
 
-const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
+const RoomSelection = ({ formData, handleChange, errors, isCheckout, bookingId }) => {
     const { props } = usePage();
+    const [availableRooms, setAvailableRooms] = useState([]);
+    const [loadingRooms, setLoadingRooms] = useState(false);
 
     // Automatically calculate nights between check-in and check-out
     const nights = formData.checkInDate && formData.checkOutDate ? Math.max(1, dayjs(formData.checkOutDate).diff(dayjs(formData.checkInDate), 'day')) : 0;
 
+    // Fetch available rooms when dates change
+    useEffect(() => {
+        if (formData.checkInDate && formData.checkOutDate) {
+            setLoadingRooms(true);
+            axios
+                .get(route('rooms.booking.search'), {
+                    params: {
+                        checkin: formData.checkInDate,
+                        checkout: formData.checkOutDate,
+                        exclude_booking_id: bookingId,
+                    },
+                })
+                .then((res) => {
+                    setAvailableRooms(res.data);
+
+                    // If the currently selected room is NOT in the available list (e.g. date conflict created elsewhere),
+                    // we might want to warn or handle it.
+                    // However, because we exclude the current booking ID, the current room *should* appear in the list
+                    // if it's not booked by *another* overlapping booking.
+                })
+                .catch((err) => {
+                    console.error('Error fetching rooms', err);
+                })
+                .finally(() => {
+                    setLoadingRooms(false);
+                });
+        }
+    }, [formData.checkInDate, formData.checkOutDate, bookingId]);
+
+    // Handle Room Change
+    const handleRoomChange = (e) => {
+        const roomId = e.target.value;
+        const selectedRoom = availableRooms.find((r) => r.id === roomId);
+        if (selectedRoom) {
+            handleChange({ target: { name: 'room', value: selectedRoom } });
+        }
+    };
+
     // Find charge by selected booking category
     const selectedCategory = props.roomCategories.find((cat) => cat.id == formData.bookingCategory);
-    const matchedCharge = formData.room.category_charges.find((charge) => charge.room_category_id == formData.bookingCategory);
+    const matchedCharge = formData.room?.category_charges?.find((charge) => charge.room_category_id == formData.bookingCategory);
 
     const perDayCharge = matchedCharge?.amount || 0;
     const totalCharge = nights * perDayCharge;
@@ -633,9 +673,33 @@ const RoomSelection = ({ formData, handleChange, errors, isCheckout }) => {
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
-                <Typography variant="h6">
-                    <b>Selected Room:</b> {formData.room?.name} ({formData.room?.room_type?.name})
-                </Typography>
+                <FormControl fullWidth disabled={isCheckout || loadingRooms}>
+                    <InputLabel id="select-room-label">Select Room</InputLabel>
+                    <Select labelId="select-room-label" value={formData.room?.id || ''} label="Select Room" onChange={handleRoomChange}>
+                        {loadingRooms ? (
+                            <MenuItem disabled>Loading available rooms...</MenuItem>
+                        ) : availableRooms.length > 0 ? (
+                            availableRooms.map((room) => (
+                                <MenuItem key={room.id} value={room.id}>
+                                    {room.name} ({room.room_type?.name})
+                                </MenuItem>
+                            ))
+                        ) : (
+                            <MenuItem disabled>No rooms available for these dates</MenuItem>
+                        )}
+
+                        {/* Fallback to show current room if list is empty or doesn't contain it yet (e.g. initial load lag) */}
+                        {!loadingRooms && formData.room && !availableRooms.find((r) => r.id === formData.room.id) && (
+                            <MenuItem value={formData.room.id}>
+                                {formData.room.name} ({formData.room.room_type?.name}) - <em>(Current)</em>
+                            </MenuItem>
+                        )}
+                    </Select>
+                </FormControl>
+                {/* Debug Info or Helper Text */}
+                {/* <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                    <b>Current:</b> {formData.room?.name} ({formData.room?.room_type?.name})
+                </Typography> */}
             </Grid>
 
             <Grid item xs={12} sm={4}>
