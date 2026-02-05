@@ -21,21 +21,34 @@ class PosCakeBookingController extends Controller
     public function index(Request $request)
     {
         $query = PosCakeBooking::query()
-            ->with(['member', 'customer', 'employee', 'cakeType', 'createdBy']);
+            ->with(['member', 'corporateMember', 'customer', 'employee', 'cakeType', 'createdBy']);
 
         // Search Filters
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q
-                    ->where('booking_number', 'like', "%{$search}%")
-                    ->orWhere('customer_name', 'like', "%{$search}%")
-                    ->orWhere('customer_phone', 'like', "%{$search}%");
+                    ->where('customer_name', 'like', "%{$search}%")
+                    ->orWhereHas('member', fn($q) => $q->where('full_name', 'like', "%{$search}%"))
+                    ->orWhereHas('corporateMember', fn($q) => $q->where('full_name', 'like', "%{$search}%"))
+                    ->orWhereHas('employee', fn($q) => $q->where('name', 'like', "%{$search}%"));
             });
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+        if ($request->filled('booking_number')) {
+            $query->where('booking_number', 'like', "%{$request->booking_number}%");
+        }
+
+        // Customer Type Filter
+        if ($request->filled('customer_type')) {
+            if ($request->customer_type == 'Member')
+                $query->where('customer_type', '0');
+            elseif ($request->customer_type == 'Corporate')
+                $query->where('customer_type', '2');  // Corporate
+            elseif ($request->customer_type == 'Employee')
+                $query->where('customer_type', '3');
+            elseif ($request->customer_type == 'Guest')
+                $query->where('customer_type', 'Guest')->orWhere('customer_type', 'like', 'guest-%');
         }
 
         if ($request->filled('start_date')) {
@@ -44,17 +57,34 @@ class PosCakeBookingController extends Controller
         if ($request->filled('end_date')) {
             $query->whereDate('booking_date', '<=', $request->end_date);
         }
+        if ($request->filled('delivery_date')) {
+            $query->whereDate('delivery_date', $request->delivery_date);
+        }
+
+        if ($request->filled('discounted_taxed')) {
+            if ($request->discounted_taxed == 'discounted') {
+                $query->where('discount_amount', '>', 0);
+            } elseif ($request->discounted_taxed == 'taxed') {
+                $query->where('tax_amount', '>', 0);
+            }
+        }
+
+        if ($request->filled('cashier_id')) {
+            $query->where('created_by', $request->cashier_id);
+        }
 
         // Apply Tenant Scope if needed (assuming trait or manual scope)
         if (session()->has('tenant_id')) {
             $query->where('tenant_id', session('tenant_id'));
         }
 
-        $bookings = $query->latest()->paginate(20)->withQueryString();
+        $bookings = $query->latest()->paginate(50)->withQueryString();
+        $cashiers = User::select('id', 'name')->get();
 
         return Inertia::render('App/CakeBooking/Index', [
             'bookings' => $bookings,
-            'filters' => $request->only(['search', 'status', 'start_date', 'end_date']),
+            'cashiers' => $cashiers,
+            'filters' => $request->all(),
         ]);
     }
 
@@ -67,11 +97,10 @@ class PosCakeBookingController extends Controller
         // Assuming we need to find products in 'Cakes' category.
         // For now, I'll fetch all products or filter by category if I knew the ID.
         // I'll fetch generic products for now, user might need to configure category.
-        $cakeTypes = Product::where('status', 'active')->get();  // This might be too many. Ideally filter by Category 'Cakes'.
+        $cakeTypes = \App\Models\CakeType::where('status', 'active')->get();
         // Better: Fetch Category 'Cakes' first.
 
-        $members = Member::select('id', 'full_name', 'membership_no', 'mobile_number_a as phone_number')->limit(50)->get();
-        $guestTypes = \App\Models\GuestType::all();
+        $guestTypes = \App\Models\GuestType::where('status', 1)->select('id', 'name')->get();
 
         return Inertia::render('App/CakeBooking/Create', [
             'cakeTypes' => $cakeTypes,
@@ -145,7 +174,7 @@ class PosCakeBookingController extends Controller
     {
         $booking = PosCakeBooking::with(['member', 'corporateMember', 'employee'])->findOrFail($id);
         // Same data as Create
-        $cakeTypes = Product::all();
+        $cakeTypes = \App\Models\CakeType::where('status', 'active')->get();
         $guestTypes = \App\Models\GuestType::all();
 
         return Inertia::render('App/CakeBooking/Create', [

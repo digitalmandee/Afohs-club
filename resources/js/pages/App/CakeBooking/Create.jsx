@@ -17,7 +17,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
     // Initial Form State
     const { data, setData, post, put, processing, errors } = useForm({
         booking_number: booking?.booking_number || nextBookingNumber || '',
-        customer_type: booking?.customer_type || 'Member',
+        customer_type: booking?.customer_type || '0',
         member_id: booking?.member_id || '',
         customer_id: booking?.customer_id || '', // Guest ID if exists
         customer_name: booking?.customer_name || '', // For Guest
@@ -107,6 +107,9 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
             <SideNav open={open} setOpen={setOpen} />
             <Box
                 sx={{
+                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    transition: 'margin-left 0.3s ease-in-out',
+                    marginTop: '5.5rem',
                     p: 3,
                 }}
             >
@@ -253,16 +256,19 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                             </Grid>
 
                             <Grid item xs={12} md={6}>
-                                <FormControl fullWidth required error={!!errors.cake_type_id}>
-                                    <InputLabel>Cake Type</InputLabel>
-                                    <Select value={data.cake_type_id} label="Cake Type" onChange={(e) => setData('cake_type_id', e.target.value)}>
-                                        {cakeTypes.map((type) => (
-                                            <MenuItem key={type.id} value={type.id}>
-                                                {type.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                                <Grid item xs={12} md={6}>
+                                    <Autocomplete
+                                        fullWidth
+                                        options={cakeTypes}
+                                        getOptionLabel={(option) => option.name}
+                                        value={cakeTypes.find((c) => c.id === data.cake_type_id) || null}
+                                        onChange={(event, newValue) => {
+                                            setData('cake_type_id', newValue ? newValue.id : '');
+                                            // Optional: Auto-fill price or other details if needed
+                                        }}
+                                        renderInput={(params) => <TextField {...params} label="Cake Type" required error={!!errors.cake_type_id} helperText={errors.cake_type_id} />}
+                                    />
+                                </Grid>
                             </Grid>
 
                             <Grid item xs={12} md={6}>
@@ -377,3 +383,5 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
         </>
     );
 }
+
+Create.layout = (page) => page;
