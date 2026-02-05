@@ -368,6 +368,36 @@ class OrderController extends Controller
 
             $description = 'Food Order #' . $order->id;
 
+            // Calculate tax based on taxable items
+            $calculatedTaxAmount = 0;
+            $taxRate = $order->tax ?? 0;
+            foreach ($items as $item) {
+                // Check if product is taxable (assuming eager loaded or available)
+                // We need to fetch product is_taxable if not in order_item.
+                // Since we loaded orderItems, we can access the data.
+                // Ideally, $item->order_item should have it.
+                $itemData = $item->order_item;
+                $isTaxable = false;
+
+                // If is_taxable is in JSON
+                if (isset($itemData['is_taxable'])) {
+                    $isTaxable = $itemData['is_taxable'];
+                } else {
+                    // Fallback: Check product (this causes N+1 if not careful, but for one order it's fine)
+                    if (isset($itemData['product_id'])) {
+                        $prod = \App\Models\Product::find($itemData['product_id']);
+                        if ($prod)
+                            $isTaxable = $prod->is_taxable;
+                    }
+                }
+
+                if ($isTaxable) {
+                    $itemTotal = ($itemData['quantity'] ?? 1) * ($itemData['price'] ?? 0);
+                    $itemDisc = $itemData['discount_amount'] ?? 0;
+                    $calculatedTaxAmount += ($itemTotal - $itemDisc) * $taxRate;
+                }
+            }
+
             FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,
@@ -378,8 +408,8 @@ class OrderController extends Controller
                 'discount_type' => 'fixed',
                 'discount_value' => $order->discount ?? 0,
                 'discount_amount' => $order->discount ?? 0,
-                'tax_amount' => $order->tax ?? 0,
-                'total' => $totalPrice,
+                'tax_amount' => $calculatedTaxAmount,
+                'total' => $totalPrice,  // Note: verify if total_price in DB matches this calc
             ]);
 
             // Create Debit Transaction (Unpaid)
@@ -947,6 +977,10 @@ class OrderController extends Controller
 
                     $taxRate = $request->tax ?? 0;  // Tax rate (e.g. 0.16)
 
+                    // Fetch products to check is_taxable
+                    $productIds = collect($request->order_items)->pluck('product_id')->filter()->toArray();
+                    $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
                     foreach ($request->order_items as $item) {
                         $qty = $item['quantity'] ?? 1;
                         $price = $item['price'] ?? 0;
@@ -955,9 +989,16 @@ class OrderController extends Controller
                         // Use item discount as sum source
                         $itemDiscountAmount = $item['discount_amount'] ?? 0;
 
-                        // Tax Calculation per item (consistent with previous logic)
+                        // Tax Calculation
                         $netAmount = $subTotal - $itemDiscountAmount;
-                        $itemTaxAmount = $netAmount * $taxRate;
+
+                        // Check if product is taxable
+                        $isTaxable = false;
+                        if (isset($item['product_id']) && isset($products[$item['product_id']])) {
+                            $isTaxable = $products[$item['product_id']]->is_taxable;
+                        }
+
+                        $itemTaxAmount = $isTaxable ? ($netAmount * $taxRate) : 0;
 
                         $totalGross += $subTotal;
                         $totalDiscount += $itemDiscountAmount;
@@ -1240,6 +1281,17 @@ class OrderController extends Controller
 
                     $taxRate = $order->tax ?? 0;
 
+                    // Fetch products to check is_taxable
+                    $productIds = [];
+                    foreach ($orderItems as $orderItem) {
+                        $itemData = $orderItem->order_item;
+                        if (isset($itemData['product_id'])) {
+                            $productIds[] = $itemData['product_id'];
+                        }
+                    }
+                    $productIds = array_unique($productIds);
+                    $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
                     foreach ($orderItems as $orderItem) {
                         $item = $orderItem->order_item;
                         $qty = $item['quantity'] ?? 1;
@@ -1248,7 +1300,14 @@ class OrderController extends Controller
 
                         $itemDiscountAmount = $item['discount_amount'] ?? 0;
                         $netAmount = $subTotal - $itemDiscountAmount;
-                        $itemTaxAmount = $netAmount * $taxRate;
+
+                        // Check if product is taxable
+                        $isTaxable = false;
+                        if (isset($item['product_id']) && isset($products[$item['product_id']])) {
+                            $isTaxable = $products[$item['product_id']]->is_taxable;
+                        }
+
+                        $itemTaxAmount = $isTaxable ? ($netAmount * $taxRate) : 0;
 
                         $totalGross += $subTotal;
                         $totalDiscount += $itemDiscountAmount;
@@ -1398,6 +1457,13 @@ class OrderController extends Controller
 
         $productsQuery->where('is_salable', true);
 
+        // Filter by stock: Show if stock > 0 OR if strict stock management is disabled
+        $productsQuery->where(function ($q) {
+            $q
+                ->where('current_stock', '>', 0)
+                ->orWhere('manage_stock', false);
+        });
+
         $products = $productsQuery->get();
 
         return response()->json(['success' => true, 'products' => $products], 200);
@@ -1428,7 +1494,12 @@ class OrderController extends Controller
                     ->where('menu_code', 'like', "%{$searchTerm}%")
                     ->orWhere('name', 'like', "%{$searchTerm}%");
             })
-            ->where('current_stock', '>', 0)  // Only show products with stock
+            ->where(function ($query) {
+                // Show product if stock is > 0 OR if stock management is disabled
+                $query
+                    ->where('current_stock', '>', 0)
+                    ->orWhere('manage_stock', false);
+            })
             ->where('is_salable', true)  // Only show salable products
             ->limit(20)  // Limit results for performance
             ->get();

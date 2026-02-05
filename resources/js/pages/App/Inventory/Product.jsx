@@ -16,7 +16,7 @@ const AddProduct = ({ product, id }) => {
     const [open, setOpen] = useState(true);
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
-            ? { ...product, description: product.description || '', is_discountable: product.is_discountable !== false }
+            ? { ...product, description: product.description || '', is_discountable: product.is_discountable !== false, available_order_types: product.available_order_types || [], images: product.images || [], variants: product.variants || [] }
             : {
                   name: '',
                   menu_code: '',
@@ -32,7 +32,7 @@ const AddProduct = ({ product, id }) => {
                   current_stock: '',
                   minimal_stock: '',
                   manage_stock: false,
-                  outOfStock: false,
+                  notify_when_out_of_stock: false,
                   available_order_types: [],
                   cost_of_goods_sold: '',
                   base_price: '',
@@ -652,16 +652,9 @@ const AddProduct = ({ product, id }) => {
                                             ))}
                                         </Box>
                                     </Grid>
-                                            ))}
-                                        </Box>
-                                    </Grid>
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                                            <Switch
-                                                checked={data.manage_stock}
-                                                onChange={(e) => setData('manage_stock', e.target.checked)}
-                                                color="primary"
-                                            />
+                                            <Switch checked={data.manage_stock} onChange={(e) => setData('manage_stock', e.target.checked)} color="primary" />
                                             <Box sx={{ ml: 1 }}>
                                                 <Typography variant="body1" sx={{ color: '#121212', fontSize: '14px', fontWeight: 500 }}>
                                                     Manage Stock
@@ -672,7 +665,7 @@ const AddProduct = ({ product, id }) => {
                                             </Box>
                                         </Box>
                                     </Grid>
-                                    {data.manage_stock && (
+                                    {data.manage_stock == 1 && (
                                         <>
                                             <Grid item xs={6}>
                                                 <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
@@ -849,7 +842,7 @@ const AddProduct = ({ product, id }) => {
                                                     </Typography>
                                                 </Box>
                                             </Box>
-                                            <Switch checked={data.outOfStock} onChange={() => setData((prev) => ({ ...prev, outOfStock: !prev.outOfStock }))} color="primary" />
+                                            <Switch checked={data.notify_when_out_of_stock} onChange={() => setData((prev) => ({ ...prev, notify_when_out_of_stock: !prev.notify_when_out_of_stock }))} color="primary" />
                                         </Box>
                                     </Grid>
                                     <Grid item xs={12}>

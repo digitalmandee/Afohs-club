@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Box, Button, TextField, FormControl, Select, MenuItem, Grid, Typography, Autocomplete, Chip, Tooltip } from '@mui/material';
 import axios from 'axios';
 import debounce from 'lodash.debounce';
@@ -88,7 +88,21 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange }) => {
     }, [categoryFilter]);
 
     // Auto-fetch on filter changes
+    const isMounted = useRef(false);
+
     useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+            return;
+        }
+
+        const hasFilters = nameFilter || menuCodeFilter || statusFilter !== 'all' || categoryFilter.length > 0 || subCategoryFilter.length > 0 || manufacturerFilter.length > 0;
+
+        if (!hasFilters) {
+            onProductsLoaded?.(null);
+            return;
+        }
+
         fetchProducts({
             name: nameFilter,
             menu_code: menuCodeFilter,

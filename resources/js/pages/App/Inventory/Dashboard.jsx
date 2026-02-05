@@ -6,7 +6,7 @@ import MenuFilter from '@/components/MenuFilter';
 import { tenantAsset } from '@/helpers/asset';
 import { router, usePage } from '@inertiajs/react';
 import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Pagination, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -62,7 +62,10 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
     });
 
     // Product data
-    const [products, setProducts] = useState(productLists || []);
+    const [products, setProducts] = useState(productLists?.data || productLists || []);
+
+    // Track if we are viewing filtered results
+    const [isFiltered, setIsFiltered] = useState(false);
 
     // Add new state variables for Stock and Update Stock modals
     const [openStockModal, setOpenStockModal] = useState(false);
@@ -72,8 +75,11 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
     // Initialize products from props
     useEffect(() => {
-        setFilteredProducts(products);
-    }, [products]);
+        const data = productLists?.data || productLists || [];
+        setProducts(data);
+        setFilteredProducts(data);
+        setIsFiltered(false); // Reset filtered state when props change (e.g. pagination)
+    }, [productLists]);
 
     // Handle category button click
     const handleCategoryClick = (category) => {
@@ -213,7 +219,19 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Box>
-                            <MenuFilter categories={categoriesList} onProductsLoaded={(products) => setFilteredProducts(products)} onLoadingChange={(loading) => setIsFilterLoading(loading)} />
+                            <MenuFilter
+                                categories={categoriesList}
+                                onProductsLoaded={(loadedProducts) => {
+                                    if (loadedProducts === null) {
+                                        setFilteredProducts(productLists?.data || productLists || []);
+                                        setIsFiltered(false);
+                                    } else {
+                                        setFilteredProducts(loadedProducts);
+                                        setIsFiltered(true);
+                                    }
+                                }}
+                                onLoadingChange={(loading) => setIsFilterLoading(loading)}
+                            />
                         </Box>
                     </Box>
 
@@ -290,7 +308,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                                         <div>
                                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                                 <img
-                                                                    src={product.images.length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
+                                                                    src={(product.images || []).length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
                                                                     alt={product.name}
                                                                     style={{
                                                                         width: '100%',
@@ -318,7 +336,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
                                                     <Grid item xs={12} sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
                                                         <Box>
-                                                            {product.current_stock === 0 ? (
+                                                            {product.manage_stock == 1 && product.current_stock === 0 ? (
                                                                 <Typography
                                                                     variant="body2"
                                                                     component="span"
@@ -336,11 +354,11 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                                                 </Typography>
                                                             )}
                                                             <Typography variant="body1" fontWeight="500" sx={{ fontSize: '18px' }}>
-                                                                {product.current_stock}
+                                                                {product.manage_stock == 1 ? product.current_stock : ''}
                                                             </Typography>
                                                         </Box>
                                                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                            {product.variants.length > 0
+                                                            {(product.variants || []).length > 0
                                                                 ? product.variants.map((variant, index) => {
                                                                       return (
                                                                           <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
@@ -387,6 +405,41 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                 ))}
                             </Grid>
                         </Box>
+
+                        {/* Pagination */}
+                        {!isFiltered && productLists?.links && (
+                            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+                                <Pagination
+                                    count={productLists.last_page}
+                                    page={productLists.current_page}
+                                    onChange={(event, value) => {
+                                        router.get(
+                                            url.split('?')[0],
+                                            {
+                                                ...Object.fromEntries(queryParams),
+                                                page: value,
+                                            },
+                                            {
+                                                preserveState: true,
+                                                preserveScroll: true,
+                                            },
+                                        );
+                                    }}
+                                    color="primary"
+                                    shape="rounded"
+                                    size="large"
+                                    sx={{
+                                        '& .MuiPaginationItem-root': {
+                                            borderRadius: '8px',
+                                        },
+                                        '& .Mui-selected': {
+                                            backgroundColor: '#003B5C !important',
+                                            color: '#fff',
+                                        },
+                                    }}
+                                />
+                            </Box>
+                        )}
                     </div>
 
                     {/* Product Detail Modal */}
@@ -435,7 +488,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                     <Box sx={{ px: 3, pb: 3 }}>
                                         {/* Product Images */}
                                         <Box sx={{ display: 'flex', gap: 2, mb: 3, overflowX: 'auto', pb: 1 }}>
-                                            {selectedProduct.images.map((image, index) => (
+                                            {(selectedProduct.images || []).map((image, index) => (
                                                 <Box
                                                     key={index}
                                                     sx={{
