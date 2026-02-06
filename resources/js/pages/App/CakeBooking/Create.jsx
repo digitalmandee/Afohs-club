@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import SideNav from '@/components/App/SideBar/SideNav';
 import UserAutocomplete from '@/components/UserAutocomplete';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { Box, Paper, Typography, Button, Grid, TextField, MenuItem, Select, FormControl, InputLabel, Divider, Autocomplete, RadioGroup, FormControlLabel, Radio, FormLabel, InputAdornment } from '@mui/material';
-import { Save, ArrowBack, AttachFile } from '@mui/icons-material';
+import { Box, Paper, Typography, Button, Grid, TextField, MenuItem, Select, FormControl, InputLabel, Divider, Autocomplete, RadioGroup, FormControlLabel, Radio, FormLabel, InputAdornment, IconButton } from '@mui/material';
+import { Save, ArrowBack, AttachFile, Close } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from 'axios';
 
@@ -39,7 +39,8 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
         special_instructions: booking?.special_instructions || '',
         special_display: booking?.special_display || '',
 
-        attachment: null, // File upload
+        documents: [], // Array of files
+        attachment: null, // Legacy support
         has_attachment: booking?.has_attachment || false,
         attachment_path: booking?.attachment_path || '',
 
@@ -48,20 +49,21 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
 
         total_price: booking?.total_price || '',
         advance_amount: booking?.advance_amount || '',
-        payment_method: booking?.payment_method || 'cash',
-        branch_id: booking?.branch_id || props.auth.user.branch_id || '', // Assuming branch_id is available
+        payment_mode: booking?.payment_mode || 'cash', // Renamed from payment_method
+        branch_id: booking?.branch_id || props.auth.user.branch_id || '',
+        deleted_media_ids: [], // Track deleted existing media
     });
 
     const [members, setMembers] = useState([]);
     const [memberSearch, setMemberSearch] = useState('');
     const [familyMembers, setFamilyMembers] = useState([]);
 
-    // Fetch members for autocomplete - Legacy fallback if needed, but UserAutocomplete handles search now
+    // Fetch members for autocomplete loop (Legacy but kept)
     useEffect(() => {
         if (memberSearch.length > 2) {
             const timeoutId = setTimeout(() => {
                 axios
-                    .get(route('api.members.search', { query: memberSearch })) // Need endpoint
+                    .get(route('api.members.search', { query: memberSearch }))
                     .then((res) => {
                         setMembers(res.data);
                     })
@@ -75,7 +77,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
     useEffect(() => {
         if (data.member_id) {
             axios
-                .get(route('api.members.family', { id: data.member_id })) // Need endpoint
+                .get(route('api.members.family', { id: data.member_id, type: data.customer_type }))
                 .then((res) => {
                     setFamilyMembers(res.data);
                 })
@@ -83,10 +85,34 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
         } else {
             setFamilyMembers([]);
         }
-    }, [data.member_id]);
+    }, [data.member_id, data.customer_type]);
 
     const handleFileChange = (e) => {
-        setData('attachment', e.target.files[0]);
+        const files = Array.from(e.target.files);
+        // Add new files to existing documents array
+        setData('documents', [...data.documents, ...files]);
+    };
+
+    const handleRemoveNewFile = (indexToRemove) => {
+        setData(
+            'documents',
+            data.documents.filter((_, index) => index !== indexToRemove),
+        );
+    };
+
+    const handleRemoveExistingFile = (mediaId) => {
+        // Add to deleted_media_ids
+        setData((prev) => ({
+            ...prev,
+            deleted_media_ids: [...prev.deleted_media_ids, mediaId],
+        }));
+    };
+
+    const getPreviewUrl = (file) => {
+        if (file.type && file.type.startsWith('image/')) {
+            return URL.createObjectURL(file);
+        }
+        return null; // Handle other types if needed
     };
 
     const handleSubmit = (e) => {
@@ -221,8 +247,8 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                 />
                             </Grid>
 
-                            {/* Family Member Selection (Only for Members) */}
-                            {(data.customer_type === '0' || data.customer_type === 'Member') && (
+                            {/* Family Member Selection (For Members & Corporate Members) */}
+                            {['0', 'Member', '2', 'Corporate Member'].includes(String(data.customer_type)) && (
                                 <Grid item xs={12} md={6}>
                                     <FormControl fullWidth>
                                         <InputLabel>Family Member (Optional)</InputLabel>
@@ -232,7 +258,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                             </MenuItem>
                                             {familyMembers.map((fm) => (
                                                 <MenuItem key={fm.id} value={fm.id}>
-                                                    {fm.name} ({fm.relation})
+                                                    {fm.name || fm.full_name} ({fm.relation})
                                                 </MenuItem>
                                             ))}
                                         </Select>
@@ -264,7 +290,6 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                         value={cakeTypes.find((c) => c.id === data.cake_type_id) || null}
                                         onChange={(event, newValue) => {
                                             setData('cake_type_id', newValue ? newValue.id : '');
-                                            // Optional: Auto-fill price or other details if needed
                                         }}
                                         renderInput={(params) => <TextField {...params} label="Cake Type" required error={!!errors.cake_type_id} helperText={errors.cake_type_id} />}
                                     />
@@ -298,23 +323,55 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                 <TextField label="Special Instructions" fullWidth multiline rows={2} value={data.special_instructions} onChange={(e) => setData('special_instructions', e.target.value)} />
                             </Grid>
 
-                            {/* Attachment */}
+                            {/* Attachment (Documents / Media) */}
                             <Grid item xs={12}>
                                 <Typography variant="subtitle2" gutterBottom>
-                                    Reference Image (Optional)
+                                    Reference Images / Documents (Optional)
                                 </Typography>
                                 <Button variant="outlined" component="label" startIcon={<AttachFile />}>
-                                    Upload File
-                                    <input type="file" hidden accept="image/*" onChange={handleFileChange} />
+                                    Upload Files
+                                    <input type="file" hidden multiple onChange={handleFileChange} />
                                 </Button>
-                                {data.attachment && (
-                                    <Typography variant="caption" sx={{ ml: 2 }}>
-                                        {data.attachment.name}
-                                    </Typography>
+                                {data.documents && data.documents.length > 0 && (
+                                    <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                                        {data.documents.map((file, index) => (
+                                            <Box key={index} sx={{ position: 'relative', border: '1px solid #ddd', borderRadius: 1, p: 1, width: 100, height: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                                <IconButton size="small" sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'error.main', color: 'white', '&:hover': { bgcolor: 'error.dark' } }} onClick={() => handleRemoveNewFile(index)}>
+                                                    <Close fontSize="small" sx={{ fontSize: 14 }} />
+                                                </IconButton>
+                                                {file.type && file.type.startsWith('image/') ? <img src={URL.createObjectURL(file)} alt={file.name} style={{ width: '100%', height: '60px', objectFit: 'cover', borderRadius: '4px' }} /> : <AttachFile fontSize="large" color="action" />}
+                                                <Typography variant="caption" noWrap sx={{ width: '100%', textAlign: 'center', mt: 0.5, fontSize: '10px' }}>
+                                                    {file.name}
+                                                </Typography>
+                                            </Box>
+                                        ))}
+                                    </Box>
                                 )}
-                                {isEdit && data.has_attachment && !data.attachment && (
+                                {isEdit && booking.media && booking.media.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Typography variant="caption" sx={{ ml: 1, fontWeight: 'bold' }} color="primary">
+                                            Existing Files:
+                                        </Typography>
+                                        <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                                            {booking.media
+                                                .filter((m) => !data.deleted_media_ids.includes(m.id))
+                                                .map((file, index) => (
+                                                    <Box key={file.id} sx={{ position: 'relative', border: '1px solid #ddd', borderRadius: 1, p: 1, width: 100, height: 100, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                                        <IconButton size="small" sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'error.main', color: 'white', '&:hover': { bgcolor: 'error.dark' } }} onClick={() => handleRemoveExistingFile(file.id)}>
+                                                            <Close fontSize="small" sx={{ fontSize: 14 }} />
+                                                        </IconButton>
+                                                        {file.mime_type && file.mime_type.startsWith('image/') ? <img src={`/${file.file_path}`} alt={file.file_name} style={{ width: '100%', height: '60px', objectFit: 'cover', borderRadius: '4px' }} /> : <AttachFile fontSize="large" color="action" />}
+                                                        <Typography variant="caption" noWrap sx={{ width: '100%', textAlign: 'center', mt: 0.5, fontSize: '10px' }}>
+                                                            {file.file_name}
+                                                        </Typography>
+                                                    </Box>
+                                                ))}
+                                        </Box>
+                                    </Box>
+                                )}
+                                {isEdit && data.has_attachment && !data.attachment && (!booking.media || booking.media.length === 0) && (
                                     <Typography variant="caption" sx={{ ml: 2 }} color="primary">
-                                        Existing attachment present
+                                        Existing legacy attachment present
                                     </Typography>
                                 )}
                             </Grid>
@@ -341,7 +398,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                 <TextField label="Receiver Phone" fullWidth value={data.receiver_phone} onChange={(e) => setData('receiver_phone', e.target.value)} />
                             </Grid>
 
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} md={3}>
                                 <TextField
                                     label="Total Price"
                                     fullWidth
@@ -356,7 +413,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                     helperText={errors.total_price}
                                 />
                             </Grid>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} md={3}>
                                 <TextField
                                     label="Advance Amount"
                                     fullWidth
@@ -368,6 +425,30 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                     }}
                                     error={!!errors.advance_amount}
                                     helperText={errors.advance_amount}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <FormControl fullWidth>
+                                    <InputLabel>Payment Mode</InputLabel>
+                                    <Select value={data.payment_mode} label="Payment Mode" onChange={(e) => setData('payment_mode', e.target.value)} required={parseFloat(data.advance_amount) > 0}>
+                                        <MenuItem value="cash">Cash</MenuItem>
+                                        <MenuItem value="credit_card">Credit Card</MenuItem>
+                                        <MenuItem value="online">Online Transfer</MenuItem>
+                                        <MenuItem value="cheque">Cheque</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={3}>
+                                <TextField
+                                    label="Remaining Balance"
+                                    fullWidth
+                                    type="number"
+                                    value={data.total_price - data.advance_amount}
+                                    InputProps={{
+                                        readOnly: true,
+                                        startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                    }}
+                                    disabled
                                 />
                             </Grid>
 

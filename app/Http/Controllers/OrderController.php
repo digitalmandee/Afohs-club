@@ -1064,6 +1064,65 @@ class OrderController extends Controller
                     ]);
                 }
 
+                if ($orderType == 'takeaway') {
+                    // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
+                    $entAmount = 0;
+                    $entDetails = '';
+                    $ctsAmount = 0;
+                    $paymentData = $request->payment;
+
+                    // ENT Calculation
+                    if (($paymentData['payment_method'] ?? '') === 'ent') {
+                        if (array_key_exists('ent_items', $paymentData)) {
+                            // New Flow: Key exists. Calculate from items.
+                            if (!empty($paymentData['ent_items'])) {
+                                // ent_items contains IDs. For New Order, these are Product IDs (from OrderMenu).
+                                $entIds = $paymentData['ent_items'];
+                                foreach ($request->order_items as $item) {
+                                    if (in_array($item['id'], $entIds)) {
+                                        $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
+                                        $entAmount += $iPrice;
+                                        $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
+                                    }
+                                }
+                            }
+                            // If empty, entAmount remains 0.
+                        } else {
+                            // Legacy Flow: No ent_items key -> Assume Full
+                            $entAmount = $request->total_price;
+                        }
+                    }
+
+                    // CTS Calculation
+                    if (($paymentData['payment_method'] ?? '') === 'cts') {
+                        $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : $request->total_price;
+                    }
+
+                    // Verify Total (Paid + ENT + CTS >= Total)
+                    // Note: paid_amount in request is only the Cash portion.
+                    $paidCash = $paymentData['paid_amount'] ?? 0;
+                    // Allow small float variance
+                    if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
+                        throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
+                    }
+
+                    // Update Invoice Comment with Details
+                    $updateData = [];
+                    if (($paymentData['payment_method'] ?? '') === 'ent') {
+                        $comment = $invoiceData['ent_comment'] ?? '';
+                        if ($entDetails) {
+                            $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
+                        }
+                        $invoice->update(['ent_comment' => $comment]);
+                    } elseif (($paymentData['payment_method'] ?? '') === 'cts') {
+                        $comment = $invoiceData['cts_comment'] ?? '';
+                        if ($ctsAmount < $request->total_price) {
+                            $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
+                        }
+                        $invoice->update(['cts_comment' => $comment]);
+                    }
+                }
+
                 // If Paid (Takeaway) -> Receipt + Credit + Allocation
                 if ($orderType == 'takeaway') {
                     $receiptImg = $orderData['receipt'] ?? null;
@@ -1505,8 +1564,7 @@ class OrderController extends Controller
     public function getCategories(Request $request)
     {
         $tenantId = $request->query('tenant_id');
-        Log::info($tenantId);
-        $categories = Category::where('tenant_id', $tenantId)->latest()->get();
+        $categories = Category::latest()->get();
 
         return response()->json(['categories' => $categories]);
     }

@@ -215,7 +215,10 @@ Route::group([
         Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('api.cake-bookings.search');
         Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('api.members.family');
         Route::get('cake-bookings/{id}/print', [\App\Http\Controllers\PosCakeBookingController::class, 'printInvoice'])->name('cake-bookings.print');
-        Route::resource('cake-types', \App\Http\Controllers\CakeTypeController::class);
+        Route::get('cake-types/trashed', [App\Http\Controllers\CakeTypeController::class, 'trashed'])->name('cake-types.trashed');
+        Route::post('cake-types/{id}/restore', [App\Http\Controllers\CakeTypeController::class, 'restore'])->name('cake-types.restore');
+        Route::delete('cake-types/{id}/force-delete', [App\Http\Controllers\CakeTypeController::class, 'forceDelete'])->name('cake-types.force-delete');
+        Route::resource('cake-types', App\Http\Controllers\CakeTypeController::class);
 
         // Kitchen Dashboard
         // Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');

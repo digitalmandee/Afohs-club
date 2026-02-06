@@ -26,11 +26,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const [bankTransferAmount, setBankTransferAmount] = useState('0');
 
     // ENT
+    // ENT
     const [entReason, setEntReason] = useState('');
     const [entComment, setEntComment] = useState('');
+    const [selectedEntItems, setSelectedEntItems] = useState([]);
+    const [entAmount, setEntAmount] = useState('0');
+    const [remainingEntBalance, setRemainingEntBalance] = useState('0');
 
     // CTS
     const [ctsComment, setCtsComment] = useState('');
+    const [ctsAmount, setCtsAmount] = useState('0');
+    const [remainingCtsBalance, setRemainingCtsBalance] = useState('0');
 
     // Helper to parse price safely
     const parsePrice = (price) => {
@@ -39,15 +45,45 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         return parseFloat(price.toString().replace(/,/g, ''));
     };
 
+    // Calculate ENT Balance
+    useEffect(() => {
+        if (activePaymentMethod === 'ent') {
+            if (!invoiceData?.order_items) return;
+            const selected = invoiceData.order_items.filter((item) => selectedEntItems.includes(item.id));
+            const totalEnt = selected.reduce((sum, item) => {
+                const itemTotal = item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price);
+                return sum + parseFloat(itemTotal || 0);
+            }, 0);
+            setEntAmount(totalEnt.toFixed(2));
+
+            const grandTotal = parsePrice(invoiceData.total_price);
+            const remainder = grandTotal - totalEnt;
+            setRemainingEntBalance((remainder < 0 ? 0 : remainder).toFixed(2));
+            setInputAmount((remainder < 0 ? 0 : remainder).toFixed(2));
+        }
+    }, [selectedEntItems, invoiceData, activePaymentMethod]);
+
+    // Calculate CTS Balance
+    useEffect(() => {
+        if (activePaymentMethod === 'cts') {
+            const grandTotal = parsePrice(invoiceData.total_price);
+            const ctsVal = parseFloat(ctsAmount || 0);
+            const remainder = grandTotal - ctsVal;
+            setRemainingCtsBalance((remainder < 0 ? 0 : remainder).toFixed(2));
+            setInputAmount((remainder < 0 ? 0 : remainder).toFixed(2));
+        }
+    }, [ctsAmount, invoiceData, activePaymentMethod]);
+
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
         const total = parsePrice(invoiceData.total_price);
-        if (method == 'ent' || method == 'cts') {
-            setInputAmount(total.toString());
+        if (method == 'ent') {
+            setSelectedEntItems([]);
+            setCustomerChanges('0');
+        } else if (method == 'cts') {
+            setCtsAmount(total.toString());
             setCustomerChanges('0');
         } else {
-            // Reset input amount to 0 when switching back to other methods, or keep it?
-            // Usually valid UX is to reset or keep. Let's reset to 0 to be safe
             setInputAmount('0');
             setCustomerChanges((0 - total).toFixed(2));
         }
@@ -58,29 +94,31 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleQuickAmountClick = (amount) => {
-        if (activePaymentMethod === 'ent' || activePaymentMethod === 'cts') return;
-
         // Sanitize the input amount (remove commas if present)
         const cleanAmount = parsePrice(amount).toString();
         setInputAmount(cleanAmount);
 
         // Calculate customer changes
         const total = parsePrice(invoiceData.total_price);
-        const changes = parseFloat(cleanAmount) - total;
+        let dueAmount = total;
+        if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
+        if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
+
+        const changes = parseFloat(cleanAmount) - dueAmount;
         setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
     };
 
     const handleNumberClick = (number) => {
-        if (activePaymentMethod === 'ent' || activePaymentMethod === 'cts') return;
-
         let newAmount;
-        const currentAmount = parseFloat(inputAmount);
         const total = parsePrice(invoiceData.total_price);
+        let dueAmount = total;
+        if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
+        if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
 
-        if (currentAmount === 0 && !inputAmount.includes('.')) {
+        if (parseFloat(inputAmount) === 0 && !inputAmount.includes('.')) {
             newAmount = number;
-        } else if (parseFloat(inputAmount) === total) {
-            // If currently equal to total (e.g. from Exact Money), start fresh
+        } else if (parseFloat(inputAmount) === dueAmount) {
+            // If currently equal to total, start fresh
             newAmount = number;
         } else {
             newAmount = inputAmount + number;
@@ -89,7 +127,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         setInputAmount(newAmount);
 
         // Calculate customer changes
-        const changes = parseFloat(newAmount) - total;
+        const changes = parseFloat(newAmount) - dueAmount;
         setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
     };
 
@@ -100,12 +138,20 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
             // Calculate customer changes
             const total = parsePrice(invoiceData.total_price);
-            const changes = parseFloat(newAmount) - total;
+            let dueAmount = total;
+            if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
+            if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
+
+            const changes = parseFloat(newAmount) - dueAmount;
             setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         } else {
             setInputAmount('0');
             const total = parsePrice(invoiceData.total_price);
-            const changes = 0 - total;
+            let dueAmount = total;
+            if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
+            if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
+
+            const changes = 0 - dueAmount;
             setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         }
     };
@@ -174,12 +220,14 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         if (activePaymentMethod === 'ent') {
             payload.payment.ent_reason = entReason;
             payload.payment.ent_comment = entComment;
-            payload.payment.paid_amount = 0; // ENT is 0 paid
+            payload.payment.ent_items = selectedEntItems;
+            payload.payment.paid_amount = inputAmount; // Cash paid for remainder
         }
 
         if (activePaymentMethod === 'cts') {
             payload.payment.cts_comment = ctsComment;
-            payload.payment.paid_amount = 0; // CTS is 0 paid
+            payload.payment.cts_amount = ctsAmount;
+            payload.payment.paid_amount = inputAmount; // Cash paid for remainder
         }
 
         await handleSendToKitchen(payload);
@@ -249,12 +297,14 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             if (activePaymentMethod === 'ent') {
                 payload.ent_reason = entReason;
                 payload.ent_comment = entComment;
-                payload.paid_amount = 0;
+                payload.ent_items = selectedEntItems;
+                payload.paid_amount = inputAmount;
             }
 
             if (activePaymentMethod === 'cts') {
                 payload.cts_comment = ctsComment;
-                payload.paid_amount = 0;
+                payload.cts_amount = ctsAmount;
+                payload.paid_amount = inputAmount;
             }
 
             router.post(route('order.payment'), payload, {
@@ -645,10 +695,119 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     {activePaymentMethod === 'ent' && (
                         <Grid container spacing={3}>
                             <Grid item xs={12}>
-                                <Typography variant="subtitle1">Amount</Typography>
-                                <TextField fullWidth value={invoiceData.total_price} disabled sx={{ mb: 1 }} size="small" />
+                                <Typography variant="subtitle1" mb={1}>
+                                    Select Items for ENT
+                                </Typography>
+                                {/* Item Selection List */}
+                                <Box sx={{ maxHeight: '200px', overflowY: 'auto', mb: 2, border: '1px solid #ddd', borderRadius: 1, p: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, borderBottom: '1px solid #eee', pb: 1 }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedEntItems.length === (invoiceData?.order_items?.length || 0) && (invoiceData?.order_items?.length || 0) > 0}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedEntItems(invoiceData?.order_items?.map((item) => item.id) || []);
+                                                } else {
+                                                    setSelectedEntItems([]);
+                                                }
+                                            }}
+                                            style={{ marginRight: '10px' }}
+                                        />
+                                        <Typography variant="body2" fontWeight="bold">
+                                            Select All
+                                        </Typography>
+                                    </Box>
+                                    {invoiceData?.order_items?.map((item, index) => (
+                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedEntItems.includes(item.id)}
+                                                    onChange={(e) => {
+                                                        const id = item.id;
+                                                        if (e.target.checked) {
+                                                            setSelectedEntItems([...selectedEntItems, id]);
+                                                        } else {
+                                                            setSelectedEntItems(selectedEntItems.filter((i) => i !== id));
+                                                        }
+                                                    }}
+                                                    style={{ marginRight: '10px' }}
+                                                />
+                                                <Typography variant="body2">
+                                                    {item.order_item?.name || item.name} (x{item.order_item?.quantity || item.quantity})
+                                                </Typography>
+                                            </Box>
+                                            <Typography variant="body2" fontWeight="bold">
+                                                Rs {item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}
+                                            </Typography>
+                                        </Box>
+                                    ))}
+                                </Box>
 
-                                <Typography variant="subtitle1">Reason</Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                    <Typography variant="subtitle2">ENT Amount:</Typography>
+                                    <Typography variant="subtitle2" fontWeight="bold">
+                                        Rs {entAmount}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                                    <Typography variant="subtitle2">Remaining Balance:</Typography>
+                                    <Typography variant="subtitle2" fontWeight="bold" color="error">
+                                        Rs {remainingEntBalance}
+                                    </Typography>
+                                </Box>
+
+                                {/* Only show remaining payment inputs if there is a balance */}
+                                {Number(remainingEntBalance) > 0 && (
+                                    <>
+                                        <Typography variant="subtitle1" mb={1} color="text.secondary">
+                                            Pay Remaining Balance (Cash)
+                                        </Typography>
+                                        <WholeNumberInput value={inputAmount} onChange={handleQuickAmountClick} />
+
+                                        <Typography variant="subtitle1" mt={2} mb={1}>
+                                            Customer Changes
+                                        </Typography>
+                                        <Typography variant="h5" fontWeight="bold" color={Number.parseFloat(customerChanges) < 0 ? '#f44336' : '#333'}>
+                                            Rs {customerChanges}
+                                        </Typography>
+
+                                        {/* Quick Buttons for ENT Remainder */}
+                                        <Box sx={{ display: 'flex', gap: 1, my: 1, flexWrap: 'wrap' }}>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick(remainingEntBalance.toString())} sx={styles.quickAmountButton}>
+                                                Exact
+                                            </Button>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('100')} sx={styles.quickAmountButton}>
+                                                100
+                                            </Button>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('500')} sx={styles.quickAmountButton}>
+                                                500
+                                            </Button>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('1000')} sx={styles.quickAmountButton}>
+                                                1000
+                                            </Button>
+                                        </Box>
+                                        {/* Numpad for ENT Remainder */}
+                                        <Grid container spacing={1} sx={{ mt: 1 }}>
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0].map((num) => (
+                                                <Grid item xs={4} key={num}>
+                                                    <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px' }} onClick={() => (num === '.' ? handleDecimalClick() : handleNumberClick(num.toString()))}>
+                                                        {num}
+                                                    </Button>
+                                                </Grid>
+                                            ))}
+                                            <Grid item xs={4}>
+                                                <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px', bgcolor: '#ffebee', color: '#f44336' }} onClick={handleDeleteClick}>
+                                                    <BackspaceIcon fontSize="small" />
+                                                </Button>
+                                            </Grid>
+                                        </Grid>
+                                    </>
+                                )}
+
+                                <Typography variant="subtitle1" mt={2}>
+                                    Reason
+                                </Typography>
                                 <Select fullWidth value={entReason} onChange={(e) => setEntReason(e.target.value)} sx={{ mb: 1 }} size="small">
                                     <MenuItem value="Marketing">Marketing</MenuItem>
                                     <MenuItem value="Director/CEO">Director/CEO</MenuItem>
@@ -665,7 +824,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 </Select>
 
                                 <Typography variant="subtitle1">Comment</Typography>
-                                <TextField fullWidth multiline rows={3} value={entComment} onChange={(e) => setEntComment(e.target.value)} size="small" />
+                                <TextField fullWidth multiline rows={2} value={entComment} onChange={(e) => setEntComment(e.target.value)} size="small" />
                             </Grid>
                         </Grid>
                     )}
@@ -674,10 +833,67 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                     {activePaymentMethod === 'cts' && (
                         <Grid container spacing={3}>
                             <Grid item xs={12}>
-                                <Typography variant="subtitle1">Amount</Typography>
-                                <TextField fullWidth value={invoiceData.total_price} disabled sx={{ mb: 3 }} />
+                                <Typography variant="subtitle1">CTS Amount</Typography>
+                                <WholeNumberInput value={ctsAmount} onChange={(val) => setCtsAmount(val)} />
 
-                                <Typography variant="subtitle1">Comment</Typography>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, mt: 1 }}>
+                                    <Typography variant="subtitle2">Remaining Balance:</Typography>
+                                    <Typography variant="subtitle2" fontWeight="bold" color="error">
+                                        Rs {remainingCtsBalance}
+                                    </Typography>
+                                </Box>
+
+                                {/* Only show remaining payment inputs if there is a balance */}
+                                {Number(remainingCtsBalance) > 0 && (
+                                    <>
+                                        <Typography variant="subtitle1" mb={1} color="text.secondary">
+                                            Pay Remaining Balance (Cash)
+                                        </Typography>
+                                        <WholeNumberInput value={inputAmount} onChange={handleQuickAmountClick} />
+
+                                        <Typography variant="subtitle1" mt={2} mb={1}>
+                                            Customer Changes
+                                        </Typography>
+                                        <Typography variant="h5" fontWeight="bold" color={Number.parseFloat(customerChanges) < 0 ? '#f44336' : '#333'}>
+                                            Rs {customerChanges}
+                                        </Typography>
+
+                                        {/* Quick Buttons for CTS Remainder */}
+                                        <Box sx={{ display: 'flex', gap: 1, my: 1, flexWrap: 'wrap' }}>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick(remainingCtsBalance.toString())} sx={styles.quickAmountButton}>
+                                                Exact
+                                            </Button>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('100')} sx={styles.quickAmountButton}>
+                                                100
+                                            </Button>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('500')} sx={styles.quickAmountButton}>
+                                                500
+                                            </Button>
+                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('1000')} sx={styles.quickAmountButton}>
+                                                1000
+                                            </Button>
+                                        </Box>
+                                        {/* Numpad for CTS Remainder */}
+                                        <Grid container spacing={1} sx={{ mt: 1 }}>
+                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0].map((num) => (
+                                                <Grid item xs={4} key={num}>
+                                                    <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px' }} onClick={() => (num === '.' ? handleDecimalClick() : handleNumberClick(num.toString()))}>
+                                                        {num}
+                                                    </Button>
+                                                </Grid>
+                                            ))}
+                                            <Grid item xs={4}>
+                                                <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px', bgcolor: '#ffebee', color: '#f44336' }} onClick={handleDeleteClick}>
+                                                    <BackspaceIcon fontSize="small" />
+                                                </Button>
+                                            </Grid>
+                                        </Grid>
+                                    </>
+                                )}
+
+                                <Typography variant="subtitle1" mt={2}>
+                                    Comment
+                                </Typography>
                                 <TextField fullWidth multiline rows={3} value={ctsComment} onChange={(e) => setCtsComment(e.target.value)} />
                             </Grid>
                         </Grid>

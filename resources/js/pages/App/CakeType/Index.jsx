@@ -40,9 +40,14 @@ function Index({ cakeTypes, filters }) {
                     <Typography variant="h5" fontWeight="bold" sx={{ color: '#003B5C' }}>
                         Cake Types List
                     </Typography>
-                    <Button variant="contained" startIcon={<Add />} component={Link} href={route('cake-types.create')} sx={{ bgcolor: '#003B5C', '&:hover': { bgcolor: '#002a41' } }}>
-                        Add Cake Type
-                    </Button>
+                    <Box>
+                        <Button variant="outlined" color="error" startIcon={<Delete />} component={Link} href={route('cake-types.trashed')} sx={{ mr: 2 }}>
+                            Trash
+                        </Button>
+                        <Button variant="contained" startIcon={<Add />} component={Link} href={route('cake-types.create')} sx={{ bgcolor: '#003B5C', '&:hover': { bgcolor: '#002a41' } }}>
+                            Add Cake Type
+                        </Button>
+                    </Box>
                 </Box>
 
                 <Paper sx={{ p: 2, mb: 3 }}>

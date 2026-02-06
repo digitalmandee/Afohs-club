@@ -1,21 +1,26 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import SideNav from '@/components/App/SideBar/SideNav';
+import ViewDocumentsModal from '@/components/App/CakeBooking/ViewDocumentsModal';
 import { Head, Link, router } from '@inertiajs/react';
-import { Box, Paper, Typography, Button, Grid, TextField, MenuItem, Select, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, InputAdornment, Chip, Pagination, RadioGroup, FormControlLabel, Radio, Checkbox, ListItemText, Autocomplete } from '@mui/material';
+import { Box, Paper, Typography, Button, Grid, TextField, MenuItem, Select, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, InputAdornment, Chip, Pagination, ListItemText, Autocomplete } from '@mui/material';
 import { Add, Search, Edit, Delete, Print, Close } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { debounce } from 'lodash';
+import axios from 'axios';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
 
 export default function Index({ bookings, filters, cashiers }) {
     const [open, setOpen] = React.useState(true);
+    const [docsModalOpen, setDocsModalOpen] = useState(false);
+    const [selectedDocs, setSelectedDocs] = useState([]);
 
     // Filter State
     const [filterState, setFilterState] = useState({
-        search: filters.search || '',
-        booking_number: filters.booking_number || '',
+        search: filters.search || '', // Search by Name
+        membership_no: filters.membership_no || '', // Search by Membership No
+        booking_number: filters.booking_number || '', // Search by Booking ID
         customer_type: filters.customer_type || 'All',
         start_date: filters.start_date || '',
         end_date: filters.end_date || '',
@@ -24,18 +29,18 @@ export default function Index({ bookings, filters, cashiers }) {
         cashier_id: filters.cashier_id || '',
     });
 
-    const debouncedApplyFilters = useMemo(
-        () =>
-            debounce((filters) => {
-                router.get(route('cake-bookings.index'), { ...filters, page: 1 }, { preserveState: true, replace: true });
-            }, 500),
-        [],
-    );
+    // Suggestions State
+    const [suggestions, setSuggestions] = useState([]);
+    const [membershipSuggestions, setMembershipSuggestions] = useState([]);
+    const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
     const handleFilterChange = (field, value) => {
         const newFilters = { ...filterState, [field]: value };
         setFilterState(newFilters);
-        debouncedApplyFilters(newFilters);
+    };
+
+    const handleApplyFilters = () => {
+        router.get(route('cake-bookings.index'), { ...filterState, page: 1 }, { preserveState: true, replace: true });
     };
 
     const handlePageChange = (event, value) => {
@@ -49,19 +54,46 @@ export default function Index({ bookings, filters, cashiers }) {
                 total: acc.total + parseFloat(curr.total_price || 0),
                 discount: acc.discount + parseFloat(curr.discount_amount || 0),
                 tax: acc.tax + parseFloat(curr.tax_amount || 0),
-                grandTotal: acc.grandTotal + parseFloat(curr.balance_amount || 0), // Typically Grand Total is (Total - Discount + Tax), but screenshot header says "Grand Total". Adjusting based on common sense or existing fields.
-                // Screenshot: Total, Discount, Tax, Grand Total.
-                // Often Grand Total = Net Payable. Let's assume it's the final amount.
-                // Wait, screenshot shows "Grand Total" column. Let's check model.
-                // Model has total_price, tax_amount, discount_amount, balance_amount.
-                // Let's assume Grand Total = Total - Discount + Tax.
+                grandTotal: acc.grandTotal + parseFloat(curr.balance_amount || 0),
             }),
             { total: 0, discount: 0, tax: 0, grandTotal: 0 },
         );
     }, [bookings.data]);
 
-    // Correction: Let's calculate Grand Total row based on formula if column doesn't exist directly or use model accessor if available.
-    // For now: Total - Discount + Tax.
+    // Handle Suggestions Fetch
+    const handleSuggestionFetch = useMemo(
+        () =>
+            debounce((inputValue, type) => {
+                if (!inputValue) return;
+                setLoadingSuggestions(true);
+                axios
+                    .get(route('api.orders.search-customers'), { params: { query: inputValue, type } })
+                    .then((response) => {
+                        const formatted = response.data.map((item) => ({
+                            ...item,
+                            label: item.name || item.full_name,
+                        }));
+                        if (type === 'membership') {
+                            setMembershipSuggestions(formatted);
+                        } else {
+                            setSuggestions(formatted);
+                        }
+                    })
+                    .catch((error) => console.error(error))
+                    .finally(() => setLoadingSuggestions(false));
+            }, 300),
+        [],
+    );
+
+    useEffect(() => {
+        if (filterState.search) handleSuggestionFetch(filterState.search, filterState.customer_type === 'All' ? 'all' : filterState.customer_type.toLowerCase());
+        else setSuggestions([]);
+    }, [filterState.search, filterState.customer_type]);
+
+    useEffect(() => {
+        if (filterState.membership_no) handleSuggestionFetch(filterState.membership_no, 'all');
+        else setMembershipSuggestions([]);
+    }, [filterState.membership_no]);
 
     return (
         <>
@@ -77,38 +109,159 @@ export default function Index({ bookings, filters, cashiers }) {
                     minHeight: '100vh',
                 }}
             >
-                {/* Header/Breadcrumbs would go here similar to screenshot "Home >> Food & Beverage >> Cake Bookings List" */}
-                <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 1 }}>
-                    Home &gt;&gt; Food & Beverage &gt;&gt; Cake Bookings List
-                </Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#063455' }}>
+                        Cake Bookings List
+                    </Typography>
+                    <Box>
+                        <Button variant="contained" startIcon={<Add />} component={Link} href={route('cake-bookings.create')} sx={{ bgcolor: '#063455', '&:hover': { bgcolor: '#04243a' } }}>
+                            Create Booking
+                        </Button>
+                    </Box>
+                </Box>
 
                 <Paper sx={{ p: 2, mb: 2 }}>
-                    {/* Top Row Filters: Customer Type */}
+                    {/* Top Row Filters */}
                     <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                        <Grid item xs={12} md={5}>
-                            <RadioGroup row value={filterState.customer_type} onChange={(e) => handleFilterChange('customer_type', e.target.value)}>
-                                <FormControlLabel value="All" control={<Radio size="small" />} label="All" />
-                                <FormControlLabel value="Member" control={<Radio size="small" />} label="Mem" />
-                                <FormControlLabel value="Corporate" control={<Radio size="small" />} label="Corporate Mem" />
-                                <FormControlLabel value="Guest" control={<Radio size="small" />} label="Guest" />
-                                <FormControlLabel value="Employee" control={<Radio size="small" />} label="Emp" />
-                            </RadioGroup>
+                        {/* Customer Type Select */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl
+                                size="small"
+                                sx={{
+                                    width: '100%',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
+                            >
+                                <Select
+                                    value={filterState.customer_type || 'All'}
+                                    onChange={(e) => handleFilterChange('customer_type', e.target.value)}
+                                    displayEmpty
+                                    MenuProps={{
+                                        sx: {
+                                            '& .MuiPaper-root': {
+                                                borderRadius: '16px',
+                                                boxShadow: 'none !important',
+                                                marginTop: '4px',
+                                                maxHeight: '180px',
+                                                overflowY: 'auto',
+                                            },
+                                            '& .MuiMenuItem-root': {
+                                                borderRadius: '16px',
+                                                '&:hover': {
+                                                    backgroundColor: '#063455 !important',
+                                                    color: '#fff !important',
+                                                },
+                                            },
+                                        },
+                                    }}
+                                >
+                                    <MenuItem value="All">All Types</MenuItem>
+                                    <MenuItem value="Member">Member</MenuItem>
+                                    <MenuItem value="Corporate">Corporate</MenuItem>
+                                    <MenuItem value="Guest">Guest</MenuItem>
+                                    <MenuItem value="Employee">Employee</MenuItem>
+                                </Select>
+                            </FormControl>
                         </Grid>
 
-                        <Grid item xs={12} md={7} container spacing={2} alignItems="center">
-                            {/* Other small inputs can go here or below */}
-                            <Grid item xs={12}>
-                                <TextField fullWidth placeholder="Search by Name..." value={filterState.search} onChange={(e) => handleFilterChange('search', e.target.value)} size="small" />
-                            </Grid>
+                        {/* Search by Name with Autocomplete */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                filterOptions={(x) => x}
+                                options={suggestions}
+                                getOptionLabel={(option) => option.value || option}
+                                inputValue={filterState.search}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('search', newInputValue);
+                                }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no || option.employee_id}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                            />
+                        </Grid>
+
+                        {/* Search by Membership Number */}
+                        <Grid item xs={12} md={2}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                filterOptions={(x) => x}
+                                options={membershipSuggestions}
+                                getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
+                                inputValue={filterState.membership_no}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('membership_no', newInputValue);
+                                }}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Membership #" placeholder="Number..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no || option.employee_id}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                            />
+                        </Grid>
+
+                        {/* Search by ID */}
+                        <Grid item xs={12} md={2}>
+                            <TextField fullWidth label="Booking No." placeholder="Search Id..." size="small" value={filterState.booking_number} onChange={(e) => handleFilterChange('booking_number', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
                         </Grid>
                     </Grid>
 
                     {/* Second Row Filters */}
-                    <Grid container spacing={2}>
-                        <Grid item xs={6} md={2}>
-                            <Typography variant="caption">Booking No.</Typography>
-                            <TextField fullWidth placeholder="Search Id..." size="small" value={filterState.booking_number} onChange={(e) => handleFilterChange('booking_number', e.target.value)} />
-                        </Grid>
+                    <Grid container spacing={2} alignItems="center">
                         <Grid item xs={6} md={2}>
                             <Typography variant="caption">Begin Date:</Typography>
                             <TextField fullWidth type="date" size="small" value={filterState.start_date} onChange={(e) => handleFilterChange('start_date', e.target.value)} />
@@ -121,6 +274,7 @@ export default function Index({ bookings, filters, cashiers }) {
                             <Typography variant="caption">Delivery Date:</Typography>
                             <TextField fullWidth type="date" size="small" value={filterState.delivery_date} onChange={(e) => handleFilterChange('delivery_date', e.target.value)} />
                         </Grid>
+
                         <Grid item xs={6} md={2}>
                             <Typography variant="caption">Discounted/Taxed:</Typography>
                             <Select fullWidth size="small" value={filterState.discounted_taxed} onChange={(e) => handleFilterChange('discounted_taxed', e.target.value)} displayEmpty>
@@ -131,20 +285,46 @@ export default function Index({ bookings, filters, cashiers }) {
                         </Grid>
                         <Grid item xs={6} md={2}>
                             <Typography variant="caption">Cashier:</Typography>
-                            <Autocomplete
-                                options={cashiers || []} // Handling undefined cashiers prop safely
-                                getOptionLabel={(option) => option.name}
-                                value={cashiers?.find((c) => c.id == filterState.cashier_id) || null}
-                                onChange={(event, newValue) => handleFilterChange('cashier_id', newValue ? newValue.id : '')}
-                                renderInput={(params) => <TextField {...params} placeholder="Choose Options" size="small" />}
-                            />
+                            <Autocomplete options={cashiers || []} getOptionLabel={(option) => option.name} value={cashiers?.find((c) => c.id == filterState.cashier_id) || null} onChange={(event, newValue) => handleFilterChange('cashier_id', newValue ? newValue.id : '')} renderInput={(params) => <TextField {...params} placeholder="Choose Options" size="small" />} />
+                        </Grid>
+
+                        {/* Action Buttons */}
+                        <Grid item xs={12} display="flex" justifyContent="flex-end" gap={1} mt={1}>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => {
+                                    setFilterState({
+                                        search: '',
+                                        membership_no: '',
+                                        booking_number: '',
+                                        customer_type: 'All',
+                                        start_date: '',
+                                        end_date: '',
+                                        delivery_date: '',
+                                        discounted_taxed: 'All',
+                                        cashier_id: '',
+                                    });
+                                    router.get(route('cake-bookings.index')); // Reset
+                                }}
+                            >
+                                Clear Filter
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={<Search />}
+                                onClick={() => handleApplyFilters()} // Manual search trigger
+                                sx={{ bgcolor: '#063455', '&:hover': { bgcolor: '#04243a' } }}
+                            >
+                                Search
+                            </Button>
                         </Grid>
                     </Grid>
                 </Paper>
 
                 <TableContainer component={Paper}>
                     <Table size="small">
-                        <TableHead sx={{ bgcolor: '#391678' }}>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
                                 {['SR #', 'BOOKING #', 'BOOKING DATE', 'NAME', 'CUSTOMER TYPE', 'TOTAL', 'DISCOUNT', 'TAX', 'GRAND TOTAL', 'USER', 'DOC', 'INVOICE', 'CANCEL', 'EDIT', 'DELETE'].map((head) => (
                                     <TableCell key={head} sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.8rem', py: 1 }}>
@@ -164,16 +344,40 @@ export default function Index({ bookings, filters, cashiers }) {
                                             <TableCell>{booking.booking_number}</TableCell>
                                             <TableCell>{dayjs(booking.booking_date).format('DD/MM/YYYY')}</TableCell>
                                             <TableCell>{booking.customer_name || booking.member?.full_name || 'N/A'}</TableCell>
-                                            <TableCell>
-                                                {/* Logic to show Member (AS/D 625) - Expired style text */}
-                                                {booking.customer_type === '0' ? `Member (${booking.member?.membership_no || ''})` : booking.customer_type === '2' ? `Corporate (${booking.corporate_member?.membership_no || ''})` : booking.customer_type}
-                                            </TableCell>
+                                            <TableCell>{booking.customer_type === '0' ? `Member (${booking.member?.membership_no || ''})` : booking.customer_type === '2' ? `Corporate (${booking.corporate_member?.membership_no || ''})` : booking.customer_type}</TableCell>
                                             <TableCell>{parseFloat(booking.total_price).toLocaleString()}</TableCell>
                                             <TableCell>{parseFloat(booking.discount_amount || 0).toLocaleString()}</TableCell>
                                             <TableCell>{parseFloat(booking.tax_amount || 0).toLocaleString()}</TableCell>
                                             <TableCell>{grandTotal.toLocaleString()}</TableCell>
                                             <TableCell>{booking.created_by?.name || 'N/A'}</TableCell>
-                                            <TableCell>{/* Attachment Icon */}</TableCell>
+                                            <TableCell align="center">
+                                                {booking.media?.length > 0 || booking.attachment_path ? (
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => {
+                                                            const mediaList = booking.media || [];
+                                                            // Legacy support: if attachment_path exists and not in media, add it?
+                                                            // For now, just pass media. But if legacy path exists, maybe we wrap it.
+                                                            // Let's create a temporary object for legacy path if media is empty?
+                                                            // Or just append legacy if exists.
+                                                            let effectiveMedia = [...mediaList];
+                                                            if (booking.attachment_path && mediaList.length === 0) {
+                                                                effectiveMedia.push({
+                                                                    file_path: 'storage/' + booking.attachment_path,
+                                                                    file_name: 'Attachment',
+                                                                    mime_type: 'image/jpeg', // Guess
+                                                                });
+                                                            }
+                                                            setSelectedDocs(effectiveMedia);
+                                                            setDocsModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <Search fontSize="small" color="primary" />
+                                                    </IconButton>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </TableCell>
                                             <TableCell align="center">
                                                 <a href={route('cake-bookings.print', booking.id)} target="_blank" rel="noreferrer">
                                                     <Print fontSize="small" color="action" />
@@ -211,7 +415,7 @@ export default function Index({ bookings, filters, cashiers }) {
                             )}
 
                             {/* Summary Footer Row */}
-                            <TableRow sx={{ bgcolor: '#512DA8' }}>
+                            <TableRow sx={{ bgcolor: '#063455' }}>
                                 <TableCell colSpan={5} align="right" sx={{ color: 'white', fontWeight: 'bold' }}>
                                     TOTAL :
                                 </TableCell>
@@ -227,12 +431,14 @@ export default function Index({ bookings, filters, cashiers }) {
 
                 <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
                     <Pagination count={bookings.last_page} page={bookings.current_page} onChange={handlePageChange} color="primary" shape="rounded" />
-                    {/* Per Page dropdown could go here */}
                     <Select size="small" value={50} sx={{ ml: 2, height: 32 }}>
                         <MenuItem value={50}>50</MenuItem>
                     </Select>
                 </Box>
             </Box>
+
+            {/* Document View Modal */}
+            <ViewDocumentsModal open={docsModalOpen} onClose={() => setDocsModalOpen(false)} media={selectedDocs} />
         </>
     );
 }

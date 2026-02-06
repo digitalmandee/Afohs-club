@@ -133,27 +133,75 @@ class TransactionController extends Controller
             // ENT
             'ent_reason' => 'nullable|string',
             'ent_comment' => 'nullable|string',
+            'ent_items' => 'nullable|array',
+            'ent_items.*' => 'exists:order_items,id',
             // CTS
             'cts_comment' => 'nullable|string',
+            'cts_amount' => 'nullable|numeric',
         ]);
 
         $order = Order::findOrFail($request->order_id);
         $totalDue = $order->total_price;
+        $paidAmount = $request->paid_amount;
+        $entAmount = 0;
+        $ctsAmount = 0;
+        $entDetails = '';
 
-        // ENT & CTS allow 0 amount
-        if (!in_array($request->payment_method, ['ent', 'cts'])) {
-            if ($request->paid_amount < $totalDue) {
-                return back()->withErrors([
-                    'paid_amount' => 'The paid amount is not enough to cover the total price of the invoice.'
-                ]);
+        // Calculate ENT Value if specific items selected
+        if ($request->payment_method === 'ent') {
+            if ($request->has('ent_items')) {
+                // New Flow: Key exists. Calculate from items (empty array = 0).
+                if ($request->filled('ent_items')) {
+                    $entItems = $order->orderItems()->whereIn('id', $request->ent_items)->get();
+                    foreach ($entItems as $item) {
+                        // Calculate item total (price * quantity)
+                        $itemData = $item->order_item;  // JSON column
+                        $iPrice = $itemData['total_price'] ?? (($itemData['price'] ?? 0) * ($itemData['quantity'] ?? 1));
+                        $entAmount += $iPrice;
+                        $entDetails .= ($itemData['name'] ?? 'Item') . ' (x' . ($itemData['quantity'] ?? 1) . '), ';
+                    }
+                }
+                // If ent_items empty, entAmount remains 0. Correct.
+            } else {
+                // Legacy Flow: No ent_items key -> Assume Full
+                $entAmount = $totalDue;
             }
+        }
+
+        // CTS Amount
+        if ($request->payment_method === 'cts') {
+            $ctsAmount = $request->filled('cts_amount') ? $request->cts_amount : $totalDue;
+        }
+
+        // Verification
+        // Allow variance of 1.0 for float rounding
+        if (($paidAmount + $entAmount + $ctsAmount) < ($totalDue - 1.0)) {
+            return back()->withErrors([
+                'paid_amount' => 'Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidAmount + $entAmount + $ctsAmount) . ' < ' . $totalDue . ')'
+            ]);
         }
 
         // 1. Update Order Status
         $order->cashier_id = Auth::id();
         $order->payment_method = $request->payment_method;
-        $order->paid_amount = $request->paid_amount;
+        $order->paid_amount = $paidAmount;  // Only actual money paid
         $order->paid_at = now();
+
+        // Update Comments with Details
+        if ($request->payment_method === 'ent') {
+            $order->ent_reason = $request->ent_reason;
+            $comment = $request->ent_comment;
+            if ($entDetails) {
+                $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
+            }
+            $order->ent_comment = $comment;
+        } elseif ($request->payment_method === 'cts') {
+            $comment = $request->cts_comment;
+            if ($request->filled('cts_amount') && $ctsAmount < $totalDue) {
+                $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
+            }
+            $order->cts_comment = $comment;
+        }
 
         $receiptPath = null;
         if ($request->payment_method === 'credit_card') {
@@ -166,13 +214,6 @@ class TransactionController extends Controller
             $order->cash_amount = $request->cash;
             $order->credit_card_amount = $request->credit_card;
             $order->bank_amount = $request->bank_transfer;
-        } elseif ($request->payment_method === 'ent') {
-            $order->ent_reason = $request->ent_reason;
-            $order->ent_comment = $request->ent_comment;
-            $order->paid_amount = 0;  // ENT = 0
-        } elseif ($request->payment_method === 'cts') {
-            $order->cts_comment = $request->cts_comment;
-            $order->paid_amount = 0;  // CTS = 0
         }
 
         $order->payment_status = 'paid';
@@ -188,13 +229,14 @@ class TransactionController extends Controller
                 'payment_date' => now(),
                 'payment_method' => $request->payment_method,
                 'paid_amount' => $order->paid_amount,
-                'ent_reason' => $request->ent_reason,
-                'ent_comment' => $request->ent_comment,
-                'cts_comment' => $request->cts_comment,
+                'ent_reason' => $order->ent_reason,
+                'ent_comment' => $order->ent_comment,
+                'cts_comment' => $order->cts_comment,
             ]);
 
             // 3. Create Financial Receipt & Transaction (Credits)
-            if (!in_array($request->payment_method, ['ent', 'cts'])) {
+            // Always create receipt for the PAID portion (if > 0)
+            if ($paidAmount > 0) {
                 // Find the single summary item for this order
                 $invoiceItem = \App\Models\FinancialInvoiceItem::where('invoice_id', $invoice->id)
                     ->where('fee_type', '7')  // Food Order
@@ -213,7 +255,7 @@ class TransactionController extends Controller
                         'payer_type' => 'App\Models\Member',  // Assuming Member payer for now
                         'payer_id' => $invoice->member_id,
                         'receipt_no' => 'REC-' . time(),  // Simple generation or use helper if available
-                        'amount' => $order->paid_amount,
+                        'amount' => $paidAmount,
                         'receipt_date' => now(),
                         'payment_method' => $request->payment_method,
                         'payment_details' => json_encode([
@@ -223,7 +265,9 @@ class TransactionController extends Controller
                                 'credit_card' => $request->credit_card,
                                 'bank' => $request->bank_transfer
                             ] : null,
-                            'receipt_path' => $receiptPath
+                            'receipt_path' => $receiptPath,
+                            'ent_details' => $entDetails ? "ENT Value: $entAmount" : null,
+                            'cts_details' => $ctsAmount > 0 ? "CTS Value: $ctsAmount" : null,
                         ]),
                         // 'receipt_path' => $receiptPath, // Model doesn't have receipt_path in fillable? Wait, I didn't see it.
                         'created_by' => Auth::id(),
@@ -234,7 +278,7 @@ class TransactionController extends Controller
                         'financial_invoice_item_id' => $invoiceItem->id,
                         'financial_receipt_id' => $receipt->id,
                         'type' => 'credit',
-                        'amount' => $order->paid_amount,  // Total amount credited
+                        'amount' => $paidAmount,  // Total amount credited
                         'date' => now(),
                         'payment_method' => $request->payment_method,
                         'transaction_type_id' => 1,  // Payment

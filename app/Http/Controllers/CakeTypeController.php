@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\PosUnit;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CakeTypeController extends Controller
@@ -69,7 +70,7 @@ class CakeTypeController extends Controller
             'status' => $request->status,
             'manage_stock' => false,  // Default for cakes usually? Or let user decide? Screenshot didn't show stock.
             'is_taxable' => true,  // Default
-            'created_by' => auth()->id(),
+            'created_by' => Auth::id(),
         ]);
 
         return redirect()->route('cake-types.index')->with('success', 'Cake Type created successfully.');
@@ -90,6 +91,8 @@ class CakeTypeController extends Controller
         ]);
     }
 
+    /** Update the specified resource in storage. */
+
     /**
      * Update the specified resource in storage.
      */
@@ -109,6 +112,7 @@ class CakeTypeController extends Controller
             'price' => $request->price,
             'unit_id' => $request->unit_id,
             'status' => $request->status,
+            'updated_by' => Auth::id(),
         ]);
 
         return redirect()->route('cake-types.index')->with('success', 'Cake Type updated successfully.');
@@ -120,8 +124,47 @@ class CakeTypeController extends Controller
     public function destroy($id)
     {
         $cakeType = Product::findOrFail($id);
+        $cakeType->update(['deleted_by' => Auth::id()]);
         $cakeType->delete();
 
         return redirect()->back()->with('success', 'Cake Type deleted successfully.');
+    }
+
+    public function trashed(Request $request)
+    {
+        // Ensure 'Cakes' category exists to filter correctly even in trash
+        $category = Category::where('name', 'Cakes')->first();
+        if (!$category)
+            return Inertia::render('App/CakeType/Trashed', ['trashedTypes' => []]);
+
+        $trashedTypes = Product::onlyTrashed()
+            ->where('category_id', $category->id)
+            ->when($request->search, function ($query, $search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('deleted_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return Inertia::render('App/CakeType/Trashed', [
+            'trashedTypes' => $trashedTypes,
+            'filters' => $request->only(['search']),
+        ]);
+    }
+
+    public function restore($id)
+    {
+        $cakeType = Product::withTrashed()->findOrFail($id);
+        $cakeType->restore();
+
+        return redirect()->back()->with('success', 'Cake Type restored successfully.');
+    }
+
+    public function forceDelete($id)
+    {
+        $cakeType = Product::withTrashed()->findOrFail($id);
+        $cakeType->forceDelete();
+
+        return redirect()->back()->with('success', 'Cake Type permanently deleted.');
     }
 }

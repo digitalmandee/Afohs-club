@@ -488,6 +488,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                 <Autocomplete
                                     freeSolo
                                     disablePortal
+                                    filterOptions={(x) => x}
                                     options={suggestions}
                                     getOptionLabel={(option) => option.value || option}
                                     inputValue={searchName}
@@ -531,6 +532,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                 <Autocomplete
                                     freeSolo
                                     disablePortal
+                                    filterOptions={(x) => x}
                                     options={membershipSuggestions}
                                     getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
                                     inputValue={searchMembership}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Employee;
+use App\Models\Media;
 use App\Models\Member;
 use App\Models\PosCakeBooking;
 use App\Models\Product;
@@ -11,6 +12,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class PosCakeBookingController extends Controller
@@ -21,7 +24,7 @@ class PosCakeBookingController extends Controller
     public function index(Request $request)
     {
         $query = PosCakeBooking::query()
-            ->with(['member', 'corporateMember', 'customer', 'employee', 'cakeType', 'createdBy']);
+            ->with(['member', 'corporateMember', 'customer', 'employee', 'cakeType', 'createdBy', 'media']);
 
         // Search Filters
         if ($request->filled('search')) {
@@ -37,6 +40,17 @@ class PosCakeBookingController extends Controller
 
         if ($request->filled('booking_number')) {
             $query->where('booking_number', 'like', "%{$request->booking_number}%");
+        }
+
+        if ($request->filled('membership_no')) {
+            $searchMembership = $request->membership_no;
+            $query->where(function ($q) use ($searchMembership) {
+                $q
+                    ->whereHas('member', fn($q) => $q->where('membership_no', 'like', "%{$searchMembership}%"))
+                    ->orWhereHas('corporateMember', fn($q) => $q->where('membership_no', 'like', "%{$searchMembership}%"))
+                    ->orWhereHas('customer', fn($q) => $q->where('customer_no', 'like', "%{$searchMembership}%"))
+                    ->orWhereHas('employee', fn($q) => $q->where('employee_id', 'like', "%{$searchMembership}%"));
+            });
         }
 
         // Customer Type Filter
@@ -138,6 +152,15 @@ class PosCakeBookingController extends Controller
             $booking->tenant_id = session('tenant_id');
             $booking->created_by = Auth::id();
 
+            // Map ID based on Type
+            if ($request->customer_type == '2' || $request->customer_type == 'Corporate') {
+                $booking->corporate_id = $request->member_id;
+                $booking->member_id = null;
+            } else if ($request->customer_type == '0' || $request->customer_type == 'Member') {
+                $booking->member_id = $request->member_id;
+                $booking->corporate_id = null;
+            }
+
             // Calculate Balance
             $total = $request->total_price ?? 0;
             $tax = $request->tax_amount ?? 0;
@@ -146,11 +169,36 @@ class PosCakeBookingController extends Controller
 
             $booking->balance_amount = ($total + $tax - $discount) - $advance;
 
-            // Handle Attachment
+            // Handle Attachment (Legacy single file - optionally keep or migrate)
             if ($request->hasFile('attachment')) {
                 $path = $request->file('attachment')->store('cake_attachments', 'public');
                 $booking->attachment_path = $path;
                 $booking->has_attachment = true;
+            }
+
+            // Handle Multiple Documents (Media)
+            if ($request->hasFile('documents')) {
+                foreach ($request->file('documents') as $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $extension = $file->getClientOriginalExtension();
+                    $fileSize = $file->getSize();
+                    $mimeType = $file->getMimeType();
+
+                    $fileName = Str::uuid() . '.' . $extension;
+                    $path = $file->storeAs('cake-bookings/' . $booking->id, $fileName, 'public');
+
+                    Media::create([
+                        'mediable_type' => PosCakeBooking::class,
+                        'mediable_id' => $booking->id,
+                        'type' => 'document',
+                        'file_name' => $originalName,
+                        'file_path' => 'storage/' . $path,  // Ensure public access path
+                        'mime_type' => $mimeType,
+                        'file_size' => $fileSize,
+                        'disk' => 'public',
+                        'created_by' => Auth::id(),
+                    ]);
+                }
             }
 
             $booking->save();
@@ -172,7 +220,7 @@ class PosCakeBookingController extends Controller
      */
     public function edit($id)
     {
-        $booking = PosCakeBooking::with(['member', 'corporateMember', 'employee'])->findOrFail($id);
+        $booking = PosCakeBooking::with(['member', 'corporateMember', 'employee', 'media'])->findOrFail($id);
         // Same data as Create
         $cakeTypes = \App\Models\CakeType::where('status', 'active')->get();
         $guestTypes = \App\Models\GuestType::all();
@@ -194,6 +242,15 @@ class PosCakeBookingController extends Controller
 
         $booking->fill($request->except(['booking_number']));  // Don't change booking number
 
+        // Map ID based on Type
+        if ($request->customer_type == '2' || $request->customer_type == 'Corporate') {
+            $booking->corporate_id = $request->member_id;
+            $booking->member_id = null;
+        } else if ($request->customer_type == '0' || $request->customer_type == 'Member') {
+            $booking->member_id = $request->member_id;
+            $booking->corporate_id = null;
+        }
+
         // Recalculate Balance
         $total = $request->total_price ?? $booking->total_price;
         $tax = $request->tax_amount ?? $booking->tax_amount;
@@ -206,6 +263,50 @@ class PosCakeBookingController extends Controller
             $path = $request->file('attachment')->store('cake_attachments', 'public');
             $booking->attachment_path = $path;
             $booking->has_attachment = true;
+        }
+
+        // Handle Media Deletion
+        if ($request->filled('deleted_media_ids')) {
+            $idsToDelete = $request->input('deleted_media_ids');
+            if (is_array($idsToDelete)) {
+                $mediaToDelete = Media::whereIn('id', $idsToDelete)
+                    ->where('mediable_id', $booking->id)
+                    ->where('mediable_type', PosCakeBooking::class)
+                    ->get();
+
+                foreach ($mediaToDelete as $media) {
+                    // Delete file from storage
+                    if ($media->file_path && Storage::disk('public')->exists(str_replace('storage/', '', $media->file_path))) {
+                        Storage::disk('public')->delete(str_replace('storage/', '', $media->file_path));
+                    }
+                    $media->delete();
+                }
+            }
+        }
+
+        // Handle Multiple Documents (Media)
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $file) {
+                $originalName = $file->getClientOriginalName();
+                $extension = $file->getClientOriginalExtension();
+                $fileSize = $file->getSize();
+                $mimeType = $file->getMimeType();
+
+                $fileName = Str::uuid() . '.' . $extension;
+                $path = $file->storeAs('cake-bookings/' . $booking->id, $fileName, 'public');
+
+                Media::create([
+                    'mediable_type' => PosCakeBooking::class,
+                    'mediable_id' => $booking->id,
+                    'type' => 'document',
+                    'file_name' => $originalName,
+                    'file_path' => 'storage/' . $path,
+                    'mime_type' => $mimeType,
+                    'file_size' => $fileSize,
+                    'disk' => 'public',
+                    'created_by' => Auth::id(),
+                ]);
+            }
         }
 
         $booking->save();
@@ -262,9 +363,16 @@ class PosCakeBookingController extends Controller
         ]);
     }
 
-    public function getFamilyMembers($id)
+    public function getFamilyMembers(Request $request, $id)
     {
-        $member = Member::with('familyMembers')->find($id);
+        $type = $request->query('type', '0');  // Default to Member if not provided
+
+        if ($type == '2' || $type == 'Corporate') {
+            $member = \App\Models\CorporateMember::with('familyMembers')->find($id);
+        } else {
+            $member = Member::with('familyMembers')->find($id);
+        }
+
         if (!$member) {
             return response()->json([]);
         }

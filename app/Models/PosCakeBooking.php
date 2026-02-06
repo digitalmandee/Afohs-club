@@ -105,6 +105,11 @@ class PosCakeBooking extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
     // Optional: Local scope for tenant or branch if not using Global Scopes
     public function scopeTenant($query)
     {
