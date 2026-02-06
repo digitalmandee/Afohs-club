@@ -261,4 +261,13 @@ class PosCakeBookingController extends Controller
             'booking' => $booking
         ]);
     }
+
+    public function getFamilyMembers($id)
+    {
+        $member = Member::with('familyMembers')->find($id);
+        if (!$member) {
+            return response()->json([]);
+        }
+        return response()->json($member->familyMembers);
+    }
 }

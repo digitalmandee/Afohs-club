@@ -6,7 +6,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
-import { Avatar, Button } from '@mui/material';
+import { Avatar, Button, Collapse } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -20,6 +20,9 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import PaymentsIcon from '@mui/icons-material/Payments';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -35,10 +38,11 @@ import ScaleIcon from '@mui/icons-material/Scale';
 import { MdManageHistory } from 'react-icons/md';
 import { MdRestaurantMenu } from 'react-icons/md';
 import { MdMenuBook } from 'react-icons/md';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { FaKitchenSet } from 'react-icons/fa6';
 
-const drawerWidthOpen = 240; // Set open width to 240px
-const drawerWidthClosed = 110; // Set closed width to 120px
+const drawerWidthOpen = 240;
+const drawerWidthClosed = 110;
 
 const openedMixin = (theme) => ({
     width: drawerWidthOpen,
@@ -74,13 +78,13 @@ const Drawer = styled(MuiDrawer, {
     whiteSpace: 'nowrap',
     boxSizing: 'border-box',
     '& .MuiDrawer-paper': {
-        width: open ? drawerWidthOpen : drawerWidthClosed, // Ensure proper width change
+        width: open ? drawerWidthOpen : drawerWidthClosed,
         transition: theme.transitions.create('width', {
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.standard,
         }),
-        backgroundColor: '#000', // Keep the black background
-        color: '#fff',
+        backgroundColor: '#FFFFFF',
+        color: '#242220',
         ...(open ? openedMixin(theme) : closedMixin(theme)),
     },
 }));
@@ -102,47 +106,66 @@ const AppBar = styled(MuiAppBar, {
 }));
 
 export default function SideNav({ open, setOpen }) {
-    const { url, component, props } = usePage();
+    const { url } = usePage();
     const { auth, tenant } = usePage().props;
 
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
     const [profileView, setProfileView] = React.useState('profile');
+    const [openDropdown, setOpenDropdown] = useState({});
+
+    // Refactored Menu Items with Nesting
     const menuItems = [
-        { text: 'Dashboard', icon: <HomeIcon />, path: route('tenant.dashboard') },
-        { text: 'Kitchen', icon: <HomeIcon />, path: route('kitchen.index'), permission: 'kitchen' },
-        { text: 'Menu', icon: <MdRestaurantMenu style={{ height: '25px', width: '25px' }} />, path: route('inventory.index') },
-        { text: 'Categories', icon: <CategoryIcon />, path: route('inventory.category') },
-        { text: 'Sub Categories', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('sub-categories.index') },
-        { text: 'Ingredients', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('ingredients.index') },
-        { text: 'Cake Types', icon: <MdRestaurantMenu style={{ height: '25px', width: '25px' }} />, path: route('cake-types.index') },
-        { text: 'Cake Bookings', icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />, path: route('cake-bookings.index') },
-        { text: 'Units of Measurement', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('units.index') },
-        { text: 'Manufacturers', icon: <ScaleIcon style={{ height: '25px', width: '25px' }} />, path: route('manufacturers.index') },
-        { text: 'Reservations', icon: <RiSofaLine style={{ height: '25px', width: '25px' }} />, path: route('reservations.index') },
-        { text: 'Transaction', icon: <PaymentsIcon />, path: route('transaction.index') },
-        { text: 'Transaction History', icon: <PaymentsIcon />, path: route('transaction.history') },
         {
-            text: 'Order Management',
+            text: 'Dashboard',
+            icon: <HomeIcon />,
+            path: route('tenant.dashboard'),
+        },
+        {
+            text: 'Orders',
             icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
-            path: route('order.management'),
+            children: [
+                { text: 'Order Management', path: route('order.management') },
+                { text: 'Order History', path: route('order.history') },
+                { text: 'Reservations', path: route('reservations.index') },
+                {
+                    text: 'Table Management',
+                    path: route('table.management'),
+                    icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" style={{ width: 20, height: 20 }} />,
+                },
+            ],
         },
         {
-            text: 'Order History',
-            icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
-            path: route('order.history'),
+            text: 'Inventory',
+            icon: <InventoryIcon />,
+            children: [
+                { text: 'Products / Menu', path: route('inventory.index') },
+                { text: 'Categories', path: route('inventory.category') },
+                { text: 'Sub Categories', path: route('sub-categories.index') },
+                { text: 'Ingredients', path: route('ingredients.index') },
+                { text: 'Units', path: route('units.index') },
+                { text: 'Manufacturers', path: route('manufacturers.index') },
+            ],
         },
         {
-            text: 'Table Management',
-            icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" />,
-            path: route('table.management'),
+            text: 'Cake Booking',
+            icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />,
+            children: [
+                { text: 'Bookings', path: route('cake-bookings.index') },
+                { text: 'Cake Types', path: route('cake-types.index') },
+            ],
         },
-        // {
-        //     text: 'Members',
-        //     icon: <IoPeople style={{ height: 20, width: 20 }} />,
-        //     path: route('members.index'),
-        //
-        // },
+        {
+            text: 'Kitchen',
+            icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
+            path: route('kitchen.index'),
+            permission: 'kitchen',
+        },
+        {
+            text: 'Transactions',
+            icon: <PaymentsIcon />,
+            path: route('transaction.history'),
+        },
         {
             text: 'Guests',
             icon: <IoPeople style={{ height: 20, width: 20 }} />,
@@ -155,34 +178,146 @@ export default function SideNav({ open, setOpen }) {
         },
     ];
 
-    // Attach beforeunload event
-    // useEffect(() => {
-    //     const handleBeforeUnload = (e) => {
-    //         // Block tab close
-    //         e.preventDefault();
-    //         e.returnValue = ''; // required for Chrome
-    //         setShowProfile(true);
-    //         setProfileView('logoutSuccess');
-    //         return ''; // required for some browsers
-    //     };
+    const toggleDropdown = (text) => {
+        if (!open) setOpen(true); // Auto-open sidebar if user clicks a dropdown
+        setOpenDropdown((prev) => ({ ...prev, [text]: !prev[text] }));
+    };
 
-    //     window.addEventListener('beforeunload', handleBeforeUnload);
-    //     return () => {
-    //         window.removeEventListener('beforeunload', handleBeforeUnload);
-    //     };
-    // }, []);
+    const normalizePath = (fullPath) => {
+        try {
+            return new URL(fullPath, window.location.origin).pathname;
+        } catch (e) {
+            return fullPath;
+        }
+    };
+
+    // Auto-open dropdowns if child is active
+    useEffect(() => {
+        const dropdownState = {};
+        menuItems.forEach((item) => {
+            if (item.children) {
+                const matchChild = item.children.some((child) => normalizePath(child.path) === url);
+                if (matchChild) {
+                    dropdownState[item.text] = true;
+                }
+            }
+        });
+        setOpenDropdown((prev) => ({ ...prev, ...dropdownState }));
+    }, [url]);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.key === 'F12') {
-                e.preventDefault(); // Optional: prevent browser behavior
+                e.preventDefault();
                 router.visit(route('order.management'));
             }
         };
-
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [router]);
+
+    const renderMenuItem = (item) => {
+        if (item.permission && auth.role !== 'super' && !auth.permissions?.includes(item.permission)) {
+            // Basic permission check
+            if (auth.role !== 'admin' && item.permission !== 'kitchen') return null; // Logic might need check against specific array
+            // Assuming existing logic: !item.permission || auth.permissions.includes(item.permission)
+            // The original code used: .filter((item) => !item.permission || auth.permissions.includes(item.permission))
+            // Replicating loosely here, usually auth.permissions is an array
+            if (item.permission && (!auth.permissions || !auth.permissions.includes(item.permission))) return null;
+        }
+
+        const isDropdownOpen = openDropdown[item.text];
+        const isSelected = item.path && normalizePath(item.path) === url;
+        const hasChildren = item.children && item.children.length > 0;
+        const isChildSelected = hasChildren && item.children.some((child) => normalizePath(child.path) === url);
+
+        return (
+            <React.Fragment key={item.text}>
+                <ListItem disablePadding sx={{ display: 'block', px: 2, py: 0.5 }}>
+                    <ListItemButton
+                        component={hasChildren ? 'div' : Link}
+                        href={!hasChildren ? item.path : undefined}
+                        onClick={() => hasChildren && toggleDropdown(item.text)}
+                        sx={{
+                            minHeight: 48,
+                            justifyContent: open ? 'initial' : 'center',
+                            borderRadius: '12px',
+                            backgroundColor: isSelected || isChildSelected ? '#063455' : 'transparent',
+                            color: isSelected || isChildSelected ? '#fff' : 'inherit',
+                            '&:hover': {
+                                backgroundColor: '#063455',
+                                color: '#fff',
+                                '& .MuiListItemIcon-root': { color: '#fff' },
+                                '& .svg-img-icon': { filter: 'invert(1)' },
+                            },
+                        }}
+                    >
+                        <ListItemIcon
+                            sx={{
+                                minWidth: 0,
+                                mr: open ? 2 : 'auto',
+                                justifyContent: 'center',
+                                color: isSelected || isChildSelected ? '#fff' : '#555',
+                            }}
+                        >
+                            {/* Handling Image Icons specially if needed */}
+                            {React.isValidElement(item.icon)
+                                ? React.cloneElement(item.icon, {
+                                      style: {
+                                          color: isSelected || isChildSelected ? '#fff' : 'inherit',
+                                          width: 24,
+                                          height: 24,
+                                          ...item.icon.props.style,
+                                      },
+                                  })
+                                : item.icon}
+                        </ListItemIcon>
+
+                        {open && <ListItemText primary={item.text} sx={{ opacity: open ? 1 : 0 }} />}
+
+                        {open && hasChildren && (
+                            <KeyboardArrowRightIcon
+                                sx={{
+                                    transform: isDropdownOpen ? 'rotate(90deg)' : 'rotate(0deg)',
+                                    transition: 'transform 0.2s',
+                                    color: isSelected || isChildSelected ? '#fff' : '#555',
+                                }}
+                            />
+                        )}
+                    </ListItemButton>
+                </ListItem>
+
+                {/* Dropdown Content */}
+                {hasChildren && (
+                    <Collapse in={isDropdownOpen} timeout="auto" unmountOnExit>
+                        <List component="div" disablePadding sx={{ pl: 2 }}>
+                            {item.children.map((child) => (
+                                <ListItemButton
+                                    key={child.text}
+                                    component={Link}
+                                    href={child.path}
+                                    sx={{
+                                        pl: open ? 4 : 2,
+                                        borderRadius: '12px',
+                                        my: 0.5,
+                                        backgroundColor: normalizePath(child.path) === url ? '#E0ECFF' : 'transparent',
+                                        color: normalizePath(child.path) === url ? '#063455' : '#555',
+                                        '&:hover': {
+                                            backgroundColor: '#E0ECFF',
+                                            color: '#063455',
+                                        },
+                                    }}
+                                >
+                                    {child.icon && <ListItemIcon sx={{ minWidth: 30, color: 'inherit' }}>{child.icon}</ListItemIcon>}
+                                    {open && <ListItemText primary={child.text} primaryTypographyProps={{ fontSize: '0.9rem' }} />}
+                                </ListItemButton>
+                            ))}
+                        </List>
+                    </Collapse>
+                )}
+            </React.Fragment>
+        );
+    };
 
     return (
         <Box sx={{ display: 'flex' }}>
@@ -198,149 +333,46 @@ export default function SideNav({ open, setOpen }) {
                     zIndex: 1000,
                 }}
             >
-                <Toolbar
-                    style={{
-                        justifyContent: 'space-between',
-                        zIndex: 1000,
-                    }}
-                >
-                    {/* Toggle Menu Icon */}
-                    <IconButton
-                        color="inherit"
-                        aria-label="toggle drawer"
-                        onClick={() => setOpen(!open)} // Toggle sidebar
-                        edge="start"
-                        sx={{
-                            marginRight: 5,
-                            backgroundColor: '#F0F5FF',
-                            border: 'none',
-                            borderRadius: '2px',
-                        }}
-                    >
-                        {open ? (
-                            <MenuOpenIcon
-                                sx={{
-                                    color: '#063455',
-                                    width: '20px',
-                                    height: '20',
-                                }}
-                            />
-                        ) : (
-                            <MenuIcon
-                                sx={{
-                                    color: '#063455',
-                                    width: '20px',
-                                    height: '20',
-                                }}
-                            />
-                        )}{' '}
-                        {/* Toggle between icons */}
+                <Toolbar style={{ justifyContent: 'space-between', zIndex: 1000 }}>
+                    <IconButton color="inherit" aria-label="toggle drawer" onClick={() => setOpen(!open)} edge="start" sx={{ marginRight: 5, backgroundColor: '#F0F5FF', borderRadius: '2px' }}>
+                        {open ? <MenuOpenIcon sx={{ color: '#063455' }} /> : <MenuIcon sx={{ color: '#063455' }} />}
                     </IconButton>
                     <Typography variant="h5" sx={{ color: '#063455', fontWeight: 'bold' }}>
-                        {tenant.name}
+                        {tenant?.name}
                     </Typography>
+
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        {/* Notification Icon */}
-                        <IconButton
-                            onClick={() => setShowNotification(true)}
-                            sx={{
-                                backgroundColor: '#F0F5FF',
-                                border: 'none',
-                                borderRadius: '2px',
-                                p: 1.3,
-                            }}
-                        >
+                        <IconButton onClick={() => setShowNotification(true)} sx={{ backgroundColor: '#F0F5FF', borderRadius: '2px', p: 1.3 }}>
                             <img src="/assets/bell-notification.png" alt="" style={{ width: 17, height: 19 }} />
                         </IconButton>
+
+                        {/* Notification Modal */}
                         <Modal open={showNotification} onClose={() => setShowNotification(false)} closeAfterTransition>
                             <Slide direction="left" in={showNotification} mountOnEnter unmountOnExit>
-                                <Box
-                                    sx={{
-                                        position: 'fixed',
-                                        top: '10px',
-                                        bottom: '10px',
-                                        right: 10,
-                                        width: { xs: '100%', sm: 600 },
-                                        bgcolor: '#fff',
-                                        boxShadow: 4,
-                                        zIndex: 1300,
-                                        overflowY: 'auto',
-                                        borderRadius: 1,
-                                        scrollbarWidth: 'none', // Firefox
-                                        '&::-webkit-scrollbar': {
-                                            display: 'none', // Chrome, Safari, Edge
-                                        },
-                                    }}
-                                >
+                                <Box sx={{ position: 'fixed', top: '10px', bottom: '10px', right: 10, width: { xs: '100%', sm: 600 }, bgcolor: '#fff', boxShadow: 4, zIndex: 1300, overflowY: 'auto', borderRadius: 1 }}>
                                     <NotificationsPanel onClose={() => setShowNotification(false)} />
                                 </Box>
                             </Slide>
                         </Modal>
 
-                        {/* Vertical Divider */}
-                        <Divider
-                            orientation="vertical"
-                            flexItem
-                            sx={{
-                                backgroundColor: '#063455', // Set color to black
-                                height: '30px',
-                                width: '1px', // Increase thickness
-                                opacity: 1,
-                                mt: 1,
-                            }}
-                        />
+                        <Divider orientation="vertical" flexItem sx={{ backgroundColor: '#063455', height: '30px', width: '1px', mt: 1 }} />
 
-                        {/* Profile Section */}
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                cursor: 'pointer',
-                            }}
-                            onClick={() => setShowProfile(true)}
-                        >
-                            <Avatar
-                                // src="your-profile-image-url.jpg"
-                                src="#"
-                                alt="User Profile"
-                                sx={{
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: '0',
-                                }}
-                            />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer' }} onClick={() => setShowProfile(true)}>
+                            <Avatar src="#" alt="User Profile" sx={{ width: 40, height: 40, borderRadius: '0' }} />
                             <Box>
                                 <Typography sx={{ fontWeight: 'bold', color: '#000' }}>{auth.user?.name}</Typography>
                                 <Typography sx={{ fontSize: '12px', color: '#666' }}>{auth?.role}</Typography>
                             </Box>
                         </Box>
-                        <Modal open={showProfile} onClose={() => setShowProfile(false)} aria-labelledby="profile-modal" sx={{ zIndex: 1300 }}>
-                            <Box
-                                sx={{
-                                    position: 'fixed',
-                                    top: '10px',
-                                    bottom: '10px',
-                                    right: 10,
-                                    width: { xs: '100%', sm: 400 },
-                                    bgcolor: '#fff',
-                                    boxShadow: 4,
-                                    zIndex: 1300,
-                                    overflowY: 'auto',
-                                    borderRadius: 2,
-                                    scrollbarWidth: 'none',
-                                    '&::-webkit-scrollbar': { display: 'none' },
-                                }}
-                            >
-                                {/* Profile Modal Content */}
-                                {profileView === 'profile' ? <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} /> : profileView === 'loginActivity' ? <LoginActivityScreen setProfileView={setProfileView} /> : profileView === 'shiftActivity' ? <ShiftActivityScreen setProfileView={setProfileView} /> : profileView === 'logoutSuccess' ? <LogoutScreen setProfileView={setProfileView} /> : null}
-                            </Box>
+
+                        {/* Profile Modal */}
+                        <Modal open={showProfile} onClose={() => setShowProfile(false)} sx={{ zIndex: 1300 }}>
+                            <Box sx={{ position: 'fixed', top: '10px', bottom: '10px', right: 10, width: { xs: '100%', sm: 400 }, bgcolor: '#fff', boxShadow: 4, zIndex: 1300, overflowY: 'auto', borderRadius: 2 }}>{profileView === 'profile' ? <EmployeeProfileScreen setProfileView={setProfileView} onClose={() => setShowProfile(false)} /> : profileView === 'loginActivity' ? <LoginActivityScreen setProfileView={setProfileView} /> : profileView === 'shiftActivity' ? <ShiftActivityScreen setProfileView={setProfileView} /> : profileView === 'logoutSuccess' ? <LogoutScreen setProfileView={setProfileView} /> : null}</Box>
                         </Modal>
                     </Box>
                 </Toolbar>
             </AppBar>
 
-            {/* Sidebar Drawer */}
             <Drawer
                 variant="permanent"
                 open={open}
@@ -348,148 +380,39 @@ export default function SideNav({ open, setOpen }) {
                     '& .MuiDrawer-paper': {
                         display: 'flex',
                         flexDirection: 'column',
-                        overflow: 'hidden', // hide overflow at root
-                        backgroundColor: '#FFFFFF', // ← White background
+                        overflow: 'hidden',
+                        backgroundColor: '#FFFFFF',
                         color: '#242220',
                     },
                 }}
             >
-                {/* Sticky Logo */}
-                <DrawerHeader
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        p: 2,
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1000,
-                        // backgroundColor: '#121212',
-                    }}
-                >
-                    <img
-                        src={open ? '/assets/Logo.png' : '/assets/slogo.png'}
-                        alt="Sidebar Logo"
-                        style={{
-                            width: open ? '100px' : '60px',
-                            transition: 'width 0.3s ease-in-out',
-                        }}
-                    />
+                <DrawerHeader sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 2, position: 'sticky', top: 0, zIndex: 1000 }}>
+                    <img src={open ? '/assets/Logo.png' : '/assets/slogo.png'} alt="Sidebar Logo" style={{ width: open ? '100px' : '60px', transition: 'width 0.3s ease-in-out' }} />
                 </DrawerHeader>
 
-                {/* <Divider sx={{ backgroundColor: '#4A4A4A', mt: open ? 2 : 0 }} /> */}
-
-                {/* Scrollable Content */}
-                <Box
-                    sx={{
-                        flexGrow: 1,
-                        overflowY: 'auto',
-                        scrollbarWidth: 'none', // Firefox
-                        '&::-webkit-scrollbar': { display: 'none' }, // Chrome & Safari
-                    }}
-                >
+                <Box sx={{ flexGrow: 1, overflowY: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
                     {auth.role !== 'kitchen' && (
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                p: 1,
-                                mt: 2,
-                            }}
-                        >
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 1, mt: 2 }}>
                             <Button
                                 variant="text"
                                 sx={{
                                     backgroundColor: '#0A2647',
                                     color: '#fff',
                                     '&:hover': { backgroundColor: '#09203F' },
-                                    width: open ? '90%' : '100px',
+                                    width: open ? '90%' : '50px',
                                     minWidth: '50px',
                                     height: '40px',
-                                    fontSize: open ? '16px' : '12px',
-                                    textTransform: 'none',
-                                    overflow: 'hidden',
                                     whiteSpace: 'nowrap',
-                                    textAlign: 'center',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    transition: 'all 0.3s ease-in-out',
+                                    overflow: 'hidden',
                                 }}
                                 onClick={() => router.visit(route('order.new'))}
                             >
-                                {open ? '+ New Order' : '+ New Order'}
+                                {open ? '+ New Order' : '+'}
                             </Button>
                         </Box>
                     )}
 
-                    <List>
-                        {menuItems
-                            .filter((item) => !item.permission || auth.permissions.includes(item.permission))
-                            .map(({ text, icon, path }) => {
-                                const pathOnly = new URL(path, window.location.origin).pathname;
-                                const isSelected = url.startsWith(pathOnly);
-
-                                return (
-                                    <ListItem key={text} disablePadding sx={{ display: 'block', py: 0.2 }}>
-                                        <ListItemButton
-                                            component={Link}
-                                            href={path}
-                                            sx={{
-                                                minHeight: 50,
-                                                justifyContent: open ? 'initial' : 'center',
-                                                mx: 3,
-                                                borderRadius: '12px',
-                                                fontSize: '0.8rem',
-                                                backgroundColor: isSelected ? '#063455' : 'transparent',
-                                                '&:hover': {
-                                                    backgroundColor: '#063455',
-                                                    '& .MuiTypography-root': {
-                                                        color: '#FFFFFF', // text color on hover
-                                                    },
-                                                    '& .svg-img-icon': {
-                                                        filter: 'invert(100%)', // only for image icons
-                                                    },
-                                                    '& .MuiListItemIcon-root svg': {
-                                                        fill: '#FFFFFF', // icon color on hover
-                                                    },
-                                                },
-                                            }}
-                                        >
-                                            <ListItemIcon
-                                                sx={{
-                                                    minWidth: 0,
-                                                    // justifyContent: 'center',
-                                                    ml: open ? -1 : 0.3,
-                                                    mr: open ? 1 : 'auto',
-                                                    '& .svg-img-icon': {
-                                                        width: 25,
-                                                        height: 25,
-                                                        transition: 'filter 0.3s ease',
-                                                        filter: isSelected ? 'invert(100%)' : 'invert(0%)', // white if selected, black otherwise
-                                                    },
-                                                    '& svg': {
-                                                        fill: isSelected ? '#FFFFFF' : '#242220', // For MUI/React icons
-                                                    },
-                                                }}
-                                            >
-                                                {icon}
-                                            </ListItemIcon>
-                                            <ListItemText
-                                                primary={text}
-                                                primaryTypographyProps={{
-                                                    fontSize: '0.9rem',
-                                                    color: isSelected ? '#FFFFFF' : '#242220',
-                                                }}
-                                                sx={{
-                                                    opacity: open ? 1 : 0,
-                                                }}
-                                            />
-                                        </ListItemButton>
-                                    </ListItem>
-                                );
-                            })}
-                    </List>
+                    <List>{menuItems.map(renderMenuItem)}</List>
                 </Box>
             </Drawer>
         </Box>

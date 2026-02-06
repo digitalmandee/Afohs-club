@@ -213,6 +213,7 @@ Route::group([
         // POS Cake Bookings
         Route::resource('cake-bookings', \App\Http\Controllers\PosCakeBookingController::class);
         Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('api.cake-bookings.search');
+        Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('api.members.family');
         Route::get('cake-bookings/{id}/print', [\App\Http\Controllers\PosCakeBookingController::class, 'printInvoice'])->name('cake-bookings.print');
         Route::resource('cake-types', \App\Http\Controllers\CakeTypeController::class);
 
