@@ -34,7 +34,8 @@ class PosUnitController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:pos_units,name|max:50',
+            'name' => 'required|string|max:50',
+            'code' => 'required|string|max:20',
             'status' => 'required|in:active,inactive',
         ]);
 
@@ -48,7 +49,8 @@ class PosUnitController extends Controller
         $unit = PosUnit::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:50|unique:pos_units,name,' . $unit->id,
+            'name' => 'required|string|max:50',
+            'code' => 'required|string|max:20',
             'status' => 'required|in:active,inactive',
         ]);
 
