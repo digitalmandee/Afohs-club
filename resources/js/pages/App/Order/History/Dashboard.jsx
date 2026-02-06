@@ -25,6 +25,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     const [orderType, setOrderType] = useState(filters?.type || 'all');
     const [paymentStatus, setPaymentStatus] = useState(filters?.payment_status || 'all');
     const [paymentMethod, setPaymentMethod] = useState(filters?.payment_method || 'all');
+    const [adjustmentType, setAdjustmentType] = useState(filters?.adjustment_type || 'all');
     const [tableId, setTableId] = useState(filters?.table_id || '');
     const [waiterId, setWaiterId] = useState(filters?.waiter_id || '');
     const [cashierId, setCashierId] = useState(filters?.cashier_id || '');
@@ -81,6 +82,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                 type: orderType !== 'all' ? orderType : undefined,
                 payment_status: paymentStatus !== 'all' ? paymentStatus : undefined,
                 payment_method: paymentMethod !== 'all' ? paymentMethod : undefined,
+                adjustment_type: adjustmentType !== 'all' ? adjustmentType : undefined,
                 table_id: tableId || undefined,
                 waiter_id: waiterId || undefined,
                 cashier_id: cashierId || undefined,
@@ -101,6 +103,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
         setOrderType('all');
         setPaymentStatus('all');
         setPaymentMethod('all');
+        setAdjustmentType('all');
         setTableId('');
         setWaiterId('');
         setCashierId('');
@@ -150,6 +153,33 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             default:
                 return 'default';
         }
+    };
+
+    const getOrderStatusColor = (status) => {
+        switch (status) {
+            case 'in_progress':
+                return 'info';
+            case 'completed':
+                return 'success';
+            case 'cancelled':
+            case 'refund':
+                return 'error';
+            case 'saved':
+                return 'warning';
+            default:
+                return 'default';
+        }
+    };
+
+    const formatOrderStatus = (status) => {
+        const statuses = {
+            in_progress: 'In Progress',
+            completed: 'Completed',
+            cancelled: 'Cancelled',
+            saved: 'Saved',
+            refund: 'Refund',
+        };
+        return statuses[status] || status;
     };
 
     const formatOrderType = (type) => {
@@ -421,10 +451,20 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     <MenuItem value="all">All Methods</MenuItem>
                                     <MenuItem value="cash">Cash</MenuItem>
                                     <MenuItem value="credit_card">Credit Card</MenuItem>
-                                    <MenuItem value="bank">Bank</MenuItem>
-                                    <MenuItem value="ent">ENT</MenuItem>
-                                    <MenuItem value="cts">CTS</MenuItem>
-                                    <MenuItem value="split">Split</MenuItem>
+                                    <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                                    <MenuItem value="split_payment">Split Payment</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Adjustment Type (ENT/CTS) */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={adjustmentType} onChange={(e) => setAdjustmentType(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="all">All Adjustments</MenuItem>
+                                    <MenuItem value="ent">ENT Only</MenuItem>
+                                    <MenuItem value="cts">CTS Only</MenuItem>
+                                    <MenuItem value="none">No Adjustments</MenuItem>
                                 </Select>
                             </FormControl>
                         </Grid>
@@ -520,7 +560,10 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Payment Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Location</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
@@ -569,7 +612,28 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                             <TableCell sx={{ color: balance > 0 ? 'red' : 'green' }}>{balance}</TableCell>
                                             <TableCell>{order.payment_method || '-'}</TableCell>
                                             <TableCell>
+                                                <Chip label={formatOrderStatus(order.status)} size="small" color={getOrderStatusColor(order.status)} />
+                                            </TableCell>
+                                            <TableCell>
                                                 <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
+                                            </TableCell>
+                                            <TableCell>
+                                                {order.invoice_ent_amount > 0 ? (
+                                                    <Tooltip title={order.invoice_ent_reason || 'ENT Applied'}>
+                                                        <Chip label={`Rs ${order.invoice_ent_amount}`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1565c0' }} />
+                                                    </Tooltip>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {order.invoice_cts_amount > 0 ? (
+                                                    <Tooltip title={order.invoice_cts_comment || 'CTS Applied'}>
+                                                        <Chip label={`Rs ${order.invoice_cts_amount}`} size="small" sx={{ bgcolor: '#fff3e0', color: '#ef6c00' }} />
+                                                    </Tooltip>
+                                                ) : (
+                                                    '-'
+                                                )}
                                             </TableCell>
                                             <TableCell>{order.cashier?.name || order.user?.name || '-'}</TableCell>
                                             <TableCell>{order.tenant?.name || '-'}</TableCell>
@@ -640,15 +704,15 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" color="text.secondary">
-                                            Status
+                                            Order Status
                                         </Typography>
                                         <Box>
-                                            <Chip label={selectedOrder.status} size="small" color={selectedOrder.status === 'completed' ? 'success' : 'default'} />
+                                            <Chip label={formatOrderStatus(selectedOrder.status)} size="small" color={getOrderStatusColor(selectedOrder.status)} />
                                         </Box>
                                     </Box>
                                     <Box>
                                         <Typography variant="caption" color="text.secondary">
-                                            Payment
+                                            Payment Status
                                         </Typography>
                                         <Box>
                                             <Chip label={selectedOrder.payment_status || 'unpaid'} size="small" color={getStatusColor(selectedOrder.payment_status)} />
@@ -662,6 +726,14 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                             <Typography variant="body1">{selectedOrder.table.table_no}</Typography>
                                         </Box>
                                     )}
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Payment Method
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+                                            {selectedOrder.payment_method?.replace('_', ' ') || '-'}
+                                        </Typography>
+                                    </Box>
                                     {selectedOrder.cashier && (
                                         <Box>
                                             <Typography variant="caption" color="text.secondary">
@@ -679,6 +751,64 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                         </Box>
                                     )}
                                 </Box>
+
+                                {/* ENT/CTS Details Section */}
+                                {(selectedOrder.invoice_ent_amount > 0 || selectedOrder.invoice_cts_amount > 0) && (
+                                    <>
+                                        <Typography variant="h6" sx={{ mb: 2 }}>
+                                            Adjustments & Deductions
+                                        </Typography>
+                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                                            {selectedOrder.invoice_ent_amount > 0 && (
+                                                <>
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            ENT Amount
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ color: '#1565c0', fontWeight: 600 }}>
+                                                            Rs {selectedOrder.invoice_ent_amount}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            ENT Reason
+                                                        </Typography>
+                                                        <Typography variant="body1">{selectedOrder.invoice_ent_reason || '-'}</Typography>
+                                                    </Box>
+                                                    {selectedOrder.invoice_ent_comment && (
+                                                        <Box sx={{ gridColumn: 'span 2' }}>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                ENT Comment
+                                                            </Typography>
+                                                            <Typography variant="body2">{selectedOrder.invoice_ent_comment}</Typography>
+                                                        </Box>
+                                                    )}
+                                                </>
+                                            )}
+                                            {selectedOrder.invoice_cts_amount > 0 && (
+                                                <>
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            CTS Amount
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ color: '#ef6c00', fontWeight: 600 }}>
+                                                            Rs {selectedOrder.invoice_cts_amount}
+                                                        </Typography>
+                                                    </Box>
+                                                    {selectedOrder.invoice_cts_comment && (
+                                                        <Box>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                CTS Comment
+                                                            </Typography>
+                                                            <Typography variant="body2">{selectedOrder.invoice_cts_comment}</Typography>
+                                                        </Box>
+                                                    )}
+                                                </>
+                                            )}
+                                        </Box>
+                                    </>
+                                )}
+
                                 <Typography variant="h6" sx={{ mb: 2 }}>
                                     Order Items
                                 </Typography>

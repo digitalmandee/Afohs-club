@@ -99,11 +99,16 @@ class Order extends BaseModel
         return $this->belongsTo(Employee::class, 'waiter_id', 'id');
     }
 
-    // public function invoice()
+    /**
+     * Note: Order-Invoice relationship is via JSON column (data->order_id).
+     * Use whereExists queries when filtering by invoice properties.
+     * This relationship is for reference only and may not work with eager loading.
+     */
+    // public function invoices()
     // {
-    //     return $this->hasOne(FinancialInvoice::class)->whereJsonContains('data->order_id', $this->id);
+    //     return $this->hasMany(FinancialInvoice::class, 'id', 'id')
+    //         ->whereRaw("JSON_EXTRACT(data, '$.order_id') = ?", [$this->id]);
     // }
-
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id', 'id');

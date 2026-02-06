@@ -79,6 +79,13 @@ class FinancialInvoice extends BaseModel
         'is_auto_generated',
         'coa_code',
         'corporate_member_id',
+        // ENT/CTS fields
+        'ent_reason',
+        'ent_comment',
+        'ent_amount',
+        'cts_comment',
+        'cts_amount',
+        'cts_payment_method',
     ];
 
     protected $casts = [

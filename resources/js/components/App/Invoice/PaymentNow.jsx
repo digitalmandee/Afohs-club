@@ -1,6 +1,6 @@
 import { router } from '@inertiajs/react';
 import { AccountBalance as AccountBalanceIcon, ArrowForward as ArrowForwardIcon, Backspace as BackspaceIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
-import { Box, Button, Dialog, Grid, InputAdornment, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { Box, Button, Dialog, Grid, InputAdornment, MenuItem, Select, Switch, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import Receipt from './Receipt';
@@ -25,18 +25,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const [creditCardAmount, setCreditCardAmount] = useState('0');
     const [bankTransferAmount, setBankTransferAmount] = useState('0');
 
-    // ENT
-    // ENT
+    // ENT - Now as toggle, not payment method
+    const [entEnabled, setEntEnabled] = useState(false);
     const [entReason, setEntReason] = useState('');
     const [entComment, setEntComment] = useState('');
     const [selectedEntItems, setSelectedEntItems] = useState([]);
     const [entAmount, setEntAmount] = useState('0');
-    const [remainingEntBalance, setRemainingEntBalance] = useState('0');
 
-    // CTS
+    // CTS - Now as toggle, not payment method
+    const [ctsEnabled, setCtsEnabled] = useState(false);
     const [ctsComment, setCtsComment] = useState('');
     const [ctsAmount, setCtsAmount] = useState('0');
-    const [remainingCtsBalance, setRemainingCtsBalance] = useState('0');
 
     // Helper to parse price safely
     const parsePrice = (price) => {
@@ -45,48 +44,36 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         return parseFloat(price.toString().replace(/,/g, ''));
     };
 
-    // Calculate ENT Balance
+    // Calculate ENT Amount when items selected
     useEffect(() => {
-        if (activePaymentMethod === 'ent') {
-            if (!invoiceData?.order_items) return;
+        if (entEnabled && invoiceData?.order_items) {
             const selected = invoiceData.order_items.filter((item) => selectedEntItems.includes(item.id));
             const totalEnt = selected.reduce((sum, item) => {
                 const itemTotal = item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price);
                 return sum + parseFloat(itemTotal || 0);
             }, 0);
             setEntAmount(totalEnt.toFixed(2));
-
-            const grandTotal = parsePrice(invoiceData.total_price);
-            const remainder = grandTotal - totalEnt;
-            setRemainingEntBalance((remainder < 0 ? 0 : remainder).toFixed(2));
-            setInputAmount((remainder < 0 ? 0 : remainder).toFixed(2));
+        } else {
+            setEntAmount('0');
         }
-    }, [selectedEntItems, invoiceData, activePaymentMethod]);
+    }, [selectedEntItems, invoiceData, entEnabled]);
 
-    // Calculate CTS Balance
+    // Calculate Remaining Balance after ENT/CTS deductions
     useEffect(() => {
-        if (activePaymentMethod === 'cts') {
-            const grandTotal = parsePrice(invoiceData.total_price);
-            const ctsVal = parseFloat(ctsAmount || 0);
-            const remainder = grandTotal - ctsVal;
-            setRemainingCtsBalance((remainder < 0 ? 0 : remainder).toFixed(2));
-            setInputAmount((remainder < 0 ? 0 : remainder).toFixed(2));
-        }
-    }, [ctsAmount, invoiceData, activePaymentMethod]);
+        const grandTotal = parsePrice(invoiceData?.total_price);
+        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
+        const remainder = grandTotal - entDeduction - ctsDeduction;
+        const finalRemainder = remainder < 0 ? 0 : remainder;
+
+        // Update input amount to remaining balance
+        setInputAmount(finalRemainder.toFixed(2));
+        setCustomerChanges('0');
+    }, [entAmount, ctsAmount, entEnabled, ctsEnabled, invoiceData]);
 
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
-        const total = parsePrice(invoiceData.total_price);
-        if (method == 'ent') {
-            setSelectedEntItems([]);
-            setCustomerChanges('0');
-        } else if (method == 'cts') {
-            setCtsAmount(total.toString());
-            setCustomerChanges('0');
-        } else {
-            setInputAmount('0');
-            setCustomerChanges((0 - total).toFixed(2));
-        }
+        // No special handling needed - due amount is calculated based on ENT/CTS toggles
     };
 
     const handleBankSelection = (bank) => {
@@ -98,11 +85,11 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         const cleanAmount = parsePrice(amount).toString();
         setInputAmount(cleanAmount);
 
-        // Calculate customer changes
-        const total = parsePrice(invoiceData.total_price);
-        let dueAmount = total;
-        if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
-        if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
+        // Calculate customer changes based on remaining after ENT/CTS
+        const grandTotal = parsePrice(invoiceData.total_price);
+        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
+        const dueAmount = grandTotal - entDeduction - ctsDeduction;
 
         const changes = parseFloat(cleanAmount) - dueAmount;
         setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
@@ -110,10 +97,10 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     const handleNumberClick = (number) => {
         let newAmount;
-        const total = parsePrice(invoiceData.total_price);
-        let dueAmount = total;
-        if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
-        if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
+        const grandTotal = parsePrice(invoiceData.total_price);
+        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
+        const dueAmount = grandTotal - entDeduction - ctsDeduction;
 
         if (parseFloat(inputAmount) === 0 && !inputAmount.includes('.')) {
             newAmount = number;
@@ -132,25 +119,19 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleDeleteClick = () => {
+        const grandTotal = parsePrice(invoiceData.total_price);
+        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
+        const dueAmount = grandTotal - entDeduction - ctsDeduction;
+
         if (inputAmount.length > 1) {
             const newAmount = inputAmount.slice(0, -1);
             setInputAmount(newAmount);
-
-            // Calculate customer changes
-            const total = parsePrice(invoiceData.total_price);
-            let dueAmount = total;
-            if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
-            if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
 
             const changes = parseFloat(newAmount) - dueAmount;
             setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         } else {
             setInputAmount('0');
-            const total = parsePrice(invoiceData.total_price);
-            let dueAmount = total;
-            if (activePaymentMethod === 'ent') dueAmount = parseFloat(remainingEntBalance);
-            if (activePaymentMethod === 'cts') dueAmount = parseFloat(remainingCtsBalance);
-
             const changes = 0 - dueAmount;
             setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         }
@@ -172,14 +153,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleOrderAndPay = async () => {
-        const total = parsePrice(invoiceData.total_price);
+        const grandTotal = parsePrice(invoiceData.total_price);
+        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
+        const remainingBalance = grandTotal - entDeduction - ctsDeduction;
 
-        // Amount validation (skip for ENT/CTS)
-        if (!['ent', 'cts'].includes(activePaymentMethod)) {
-            if (parseFloat(inputAmount) < total) {
-                enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
-                return;
-            }
+        // Amount validation - input should cover remaining balance
+        if (remainingBalance > 0 && parseFloat(inputAmount) < remainingBalance) {
+            enqueueSnackbar('Please enter amount to cover remaining balance of Rs ' + remainingBalance.toFixed(2), { variant: 'warning' });
+            return;
         }
 
         if (activePaymentMethod === 'credit_card' && !receiptFile) {
@@ -217,31 +199,35 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             };
         }
 
-        if (activePaymentMethod === 'ent') {
+        // Add ENT data if enabled
+        if (entEnabled) {
+            payload.payment.ent_enabled = true;
             payload.payment.ent_reason = entReason;
             payload.payment.ent_comment = entComment;
             payload.payment.ent_items = selectedEntItems;
-            payload.payment.paid_amount = inputAmount; // Cash paid for remainder
+            payload.payment.ent_amount = entDeduction;
         }
 
-        if (activePaymentMethod === 'cts') {
+        // Add CTS data if enabled
+        if (ctsEnabled) {
+            payload.payment.cts_enabled = true;
             payload.payment.cts_comment = ctsComment;
-            payload.payment.cts_amount = ctsAmount;
-            payload.payment.paid_amount = inputAmount; // Cash paid for remainder
+            payload.payment.cts_amount = ctsDeduction;
         }
 
         await handleSendToKitchen(payload);
     };
 
     const handlePayNow = () => {
-        const total = parsePrice(invoiceData.total_price);
+        const grandTotal = parsePrice(invoiceData.total_price);
+        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
+        const remainingBalance = grandTotal - entDeduction - ctsDeduction;
 
-        // Amount validation (skip for ENT/CTS)
-        if (!['ent', 'cts'].includes(activePaymentMethod)) {
-            if (parseFloat(inputAmount) < total) {
-                enqueueSnackbar('Please enter a correct amount', { variant: 'warning' });
-                return;
-            }
+        // Amount validation - input should cover remaining balance
+        if (remainingBalance > 0 && parseFloat(inputAmount) < remainingBalance) {
+            enqueueSnackbar('Please enter amount to cover remaining balance of Rs ' + remainingBalance.toFixed(2), { variant: 'warning' });
+            return;
         }
 
         if (activePaymentMethod === 'credit_card' && !receiptFile) {
@@ -257,6 +243,20 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             formData.append('payment_method', 'credit_card');
             formData.append('credit_card_type', creditCardType);
             formData.append('receipt', receiptFile);
+
+            // Add ENT/CTS data to FormData
+            if (entEnabled) {
+                formData.append('ent_enabled', 'true');
+                formData.append('ent_reason', entReason);
+                formData.append('ent_comment', entComment);
+                formData.append('ent_amount', entDeduction);
+                selectedEntItems.forEach((item, idx) => formData.append(`ent_items[${idx}]`, item));
+            }
+            if (ctsEnabled) {
+                formData.append('cts_enabled', 'true');
+                formData.append('cts_comment', ctsComment);
+                formData.append('cts_amount', ctsDeduction);
+            }
 
             router.post(route('order.payment'), formData, {
                 onSuccess: () => {
@@ -294,17 +294,20 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                 }),
             };
 
-            if (activePaymentMethod === 'ent') {
+            // Add ENT data if enabled
+            if (entEnabled) {
+                payload.ent_enabled = true;
                 payload.ent_reason = entReason;
                 payload.ent_comment = entComment;
                 payload.ent_items = selectedEntItems;
-                payload.paid_amount = inputAmount;
+                payload.ent_amount = entDeduction;
             }
 
-            if (activePaymentMethod === 'cts') {
+            // Add CTS data if enabled
+            if (ctsEnabled) {
+                payload.cts_enabled = true;
                 payload.cts_comment = ctsComment;
-                payload.cts_amount = ctsAmount;
-                payload.paid_amount = inputAmount;
+                payload.cts_amount = ctsDeduction;
             }
 
             router.post(route('order.payment'), payload, {
@@ -443,16 +446,181 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         </Box>
                     </Box>
 
-                    <Box sx={{ display: 'flex', borderBottom: '1px solid #e0e0e0', mb: 2 }}>
-                        <Box sx={activePaymentMethod === 'ent' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('ent')}>
-                            <Typography variant="body1" fontWeight={activePaymentMethod === 'ent' ? 'medium' : 'normal'}>
-                                ENT
-                            </Typography>
+                    {/* ENT/CTS Toggles - Deductions Section */}
+                    <Box sx={{ mb: 3, pt: 2, borderTop: '1px dashed #e0e0e0' }}>
+                        <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ fontWeight: 'bold' }}>
+                            Deductions & Adjustments
+                        </Typography>
+
+                        {/* ENT and CTS Toggles - Side by Side */}
+                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                            {/* ENT Toggle */}
+                            <Box
+                                sx={{
+                                    flex: 1,
+                                    p: 1.5,
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: 1,
+                                    backgroundColor: entEnabled ? '#f5f9fc' : 'transparent',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                }}
+                            >
+                                <Switch
+                                    checked={entEnabled}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setEntEnabled(checked);
+                                        if (checked) {
+                                            setCtsEnabled(false);
+                                            setCtsAmount('0');
+                                        } else {
+                                            setSelectedEntItems([]);
+                                        }
+                                    }}
+                                    size="small"
+                                    sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#0a3d62' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#0a3d62' } }}
+                                />
+                                <Typography variant="body2" fontWeight="medium">
+                                    ENT
+                                </Typography>
+                            </Box>
+
+                            {/* CTS Toggle - Only for employees */}
+                            {(invoiceData?.employee_id || invoiceData?.member?.booking_type === 'employee') && (
+                                <Box
+                                    sx={{
+                                        flex: 1,
+                                        p: 1.5,
+                                        border: '1px solid #e0e0e0',
+                                        borderRadius: 1,
+                                        backgroundColor: ctsEnabled ? '#f5f9fc' : 'transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                    }}
+                                >
+                                    <Switch
+                                        checked={ctsEnabled}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setCtsEnabled(checked);
+                                            if (checked) {
+                                                setEntEnabled(false);
+                                                setSelectedEntItems([]);
+                                                setCtsAmount(parsePrice(invoiceData.total_price).toString());
+                                            } else {
+                                                setCtsAmount('0');
+                                            }
+                                        }}
+                                        size="small"
+                                        sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#0a3d62' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#0a3d62' } }}
+                                    />
+                                    <Typography variant="body2" fontWeight="medium">
+                                        CTS
+                                    </Typography>
+                                </Box>
+                            )}
                         </Box>
-                        {(invoiceData?.employee_id || invoiceData?.member?.booking_type === 'employee') && (
-                            <Box sx={activePaymentMethod === 'cts' ? styles.activePaymentMethodTab : styles.paymentMethodTab} onClick={() => handlePaymentMethodChange('cts')}>
-                                <Typography variant="body1" fontWeight={activePaymentMethod === 'cts' ? 'medium' : 'normal'}>
-                                    CTS
+
+                        {/* ENT Item Selection - Shows when enabled */}
+                        {entEnabled && invoiceData?.order_items && (
+                            <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: '#f5f9fc' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Select Items for ENT:
+                                    </Typography>
+                                    <Typography variant="body2" color="success.main" fontWeight="bold">
+                                        Rs {entAmount}
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedEntItems.length === invoiceData.order_items.length}
+                                        onChange={(e) => {
+                                            if (e.target.checked) {
+                                                setSelectedEntItems(invoiceData.order_items.map((item) => item.id));
+                                            } else {
+                                                setSelectedEntItems([]);
+                                            }
+                                        }}
+                                        style={{ marginRight: 8 }}
+                                    />
+                                    <Typography variant="body2" fontWeight="medium">
+                                        Select All
+                                    </Typography>
+                                </Box>
+                                {invoiceData.order_items.map((item) => (
+                                    <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 0.5 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedEntItems.includes(item.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedEntItems([...selectedEntItems, item.id]);
+                                                    } else {
+                                                        setSelectedEntItems(selectedEntItems.filter((id) => id !== item.id));
+                                                    }
+                                                }}
+                                                style={{ marginRight: 8 }}
+                                            />
+                                            <Typography variant="body2">
+                                                {item.order_item?.product?.name || item.name} (x{item.order_item?.quantity || item.quantity})
+                                            </Typography>
+                                        </Box>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            Rs {item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                                <Select fullWidth value={entReason} onChange={(e) => setEntReason(e.target.value)} size="small" sx={{ mt: 2 }} displayEmpty>
+                                    <MenuItem value="" disabled>
+                                        Select ENT Reason
+                                    </MenuItem>
+                                    <MenuItem value="Marketing">Marketing</MenuItem>
+                                    <MenuItem value="Director/CEO">Director/CEO</MenuItem>
+                                    <MenuItem value="Club Guest">Club Guest</MenuItem>
+                                    <MenuItem value="Rooms Guest">Rooms Guest</MenuItem>
+                                    <MenuItem value="Others">Others</MenuItem>
+                                    <MenuItem value="Discover Pakistan">Discover Pakistan</MenuItem>
+                                    <MenuItem value="FnB Management">FnB Management</MenuItem>
+                                    <MenuItem value="Front Office">Front Office</MenuItem>
+                                    <MenuItem value="Front Vouchers">Front Vouchers</MenuItem>
+                                    <MenuItem value="Labour ENT">Labour ENT</MenuItem>
+                                    <MenuItem value="iTRIP ENT">iTRIP ENT</MenuItem>
+                                    <MenuItem value="Food Complain">Food Complain</MenuItem>
+                                </Select>
+                                <TextField fullWidth label="ENT Comment" value={entComment} onChange={(e) => setEntComment(e.target.value)} size="small" multiline rows={2} sx={{ mt: 1 }} />
+                            </Box>
+                        )}
+
+                        {/* CTS Amount Input - Shows when enabled */}
+                        {ctsEnabled && (
+                            <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: '#f5f9fc' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        CTS Amount:
+                                    </Typography>
+                                    <Typography variant="body2" color="success.main" fontWeight="bold">
+                                        Rs {ctsAmount}
+                                    </Typography>
+                                </Box>
+                                <WholeNumberInput value={ctsAmount} onChange={(val) => setCtsAmount(val)} sx={{ mb: 1 }} />
+                                <TextField fullWidth label="CTS Comment" value={ctsComment} onChange={(e) => setCtsComment(e.target.value)} size="small" multiline rows={2} sx={{ mt: 1 }} />
+                            </Box>
+                        )}
+
+                        {/* Remaining Balance Display */}
+                        {(entEnabled || ctsEnabled) && (
+                            <Box sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1" fontWeight="medium">
+                                    Remaining Balance to Pay:
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold" color="warning.main">
+                                    Rs {(parsePrice(invoiceData?.total_price) - (entEnabled ? parseFloat(entAmount || 0) : 0) - (ctsEnabled ? parseFloat(ctsAmount || 0) : 0)).toFixed(2)}
                                 </Typography>
                             </Box>
                         )}
@@ -491,7 +659,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         flexWrap: 'wrap',
                                     }}
                                 >
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick(invoiceData.total_price.toString())} sx={styles.quickAmountButton}>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => {
+                                            const grandTotal = parsePrice(invoiceData.total_price);
+                                            const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
+                                            const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
+                                            const remainingBalance = grandTotal - entDeduction - ctsDeduction;
+                                            handleQuickAmountClick(remainingBalance.toString());
+                                        }}
+                                        sx={styles.quickAmountButton}
+                                    >
                                         Exact money
                                     </Button>
                                     <Button variant="outlined" onClick={() => handleQuickAmountClick('10')} sx={styles.quickAmountButton}>
@@ -687,214 +865,6 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         Rs {customerChanges}
                                     </Typography>
                                 </Box>
-                            </Grid>
-                        </Grid>
-                    )}
-
-                    {/* Entertainment (ENT) */}
-                    {activePaymentMethod === 'ent' && (
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle1" mb={1}>
-                                    Select Items for ENT
-                                </Typography>
-                                {/* Item Selection List */}
-                                <Box sx={{ maxHeight: '200px', overflowY: 'auto', mb: 2, border: '1px solid #ddd', borderRadius: 1, p: 1 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, borderBottom: '1px solid #eee', pb: 1 }}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedEntItems.length === (invoiceData?.order_items?.length || 0) && (invoiceData?.order_items?.length || 0) > 0}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    setSelectedEntItems(invoiceData?.order_items?.map((item) => item.id) || []);
-                                                } else {
-                                                    setSelectedEntItems([]);
-                                                }
-                                            }}
-                                            style={{ marginRight: '10px' }}
-                                        />
-                                        <Typography variant="body2" fontWeight="bold">
-                                            Select All
-                                        </Typography>
-                                    </Box>
-                                    {invoiceData?.order_items?.map((item, index) => (
-                                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedEntItems.includes(item.id)}
-                                                    onChange={(e) => {
-                                                        const id = item.id;
-                                                        if (e.target.checked) {
-                                                            setSelectedEntItems([...selectedEntItems, id]);
-                                                        } else {
-                                                            setSelectedEntItems(selectedEntItems.filter((i) => i !== id));
-                                                        }
-                                                    }}
-                                                    style={{ marginRight: '10px' }}
-                                                />
-                                                <Typography variant="body2">
-                                                    {item.order_item?.name || item.name} (x{item.order_item?.quantity || item.quantity})
-                                                </Typography>
-                                            </Box>
-                                            <Typography variant="body2" fontWeight="bold">
-                                                Rs {item.order_item?.total_price || (item.order_item?.quantity || item.quantity) * (item.order_item?.price || item.price)}
-                                            </Typography>
-                                        </Box>
-                                    ))}
-                                </Box>
-
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                    <Typography variant="subtitle2">ENT Amount:</Typography>
-                                    <Typography variant="subtitle2" fontWeight="bold">
-                                        Rs {entAmount}
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                                    <Typography variant="subtitle2">Remaining Balance:</Typography>
-                                    <Typography variant="subtitle2" fontWeight="bold" color="error">
-                                        Rs {remainingEntBalance}
-                                    </Typography>
-                                </Box>
-
-                                {/* Only show remaining payment inputs if there is a balance */}
-                                {Number(remainingEntBalance) > 0 && (
-                                    <>
-                                        <Typography variant="subtitle1" mb={1} color="text.secondary">
-                                            Pay Remaining Balance (Cash)
-                                        </Typography>
-                                        <WholeNumberInput value={inputAmount} onChange={handleQuickAmountClick} />
-
-                                        <Typography variant="subtitle1" mt={2} mb={1}>
-                                            Customer Changes
-                                        </Typography>
-                                        <Typography variant="h5" fontWeight="bold" color={Number.parseFloat(customerChanges) < 0 ? '#f44336' : '#333'}>
-                                            Rs {customerChanges}
-                                        </Typography>
-
-                                        {/* Quick Buttons for ENT Remainder */}
-                                        <Box sx={{ display: 'flex', gap: 1, my: 1, flexWrap: 'wrap' }}>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick(remainingEntBalance.toString())} sx={styles.quickAmountButton}>
-                                                Exact
-                                            </Button>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('100')} sx={styles.quickAmountButton}>
-                                                100
-                                            </Button>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('500')} sx={styles.quickAmountButton}>
-                                                500
-                                            </Button>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('1000')} sx={styles.quickAmountButton}>
-                                                1000
-                                            </Button>
-                                        </Box>
-                                        {/* Numpad for ENT Remainder */}
-                                        <Grid container spacing={1} sx={{ mt: 1 }}>
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0].map((num) => (
-                                                <Grid item xs={4} key={num}>
-                                                    <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px' }} onClick={() => (num === '.' ? handleDecimalClick() : handleNumberClick(num.toString()))}>
-                                                        {num}
-                                                    </Button>
-                                                </Grid>
-                                            ))}
-                                            <Grid item xs={4}>
-                                                <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px', bgcolor: '#ffebee', color: '#f44336' }} onClick={handleDeleteClick}>
-                                                    <BackspaceIcon fontSize="small" />
-                                                </Button>
-                                            </Grid>
-                                        </Grid>
-                                    </>
-                                )}
-
-                                <Typography variant="subtitle1" mt={2}>
-                                    Reason
-                                </Typography>
-                                <Select fullWidth value={entReason} onChange={(e) => setEntReason(e.target.value)} sx={{ mb: 1 }} size="small">
-                                    <MenuItem value="Marketing">Marketing</MenuItem>
-                                    <MenuItem value="Director/CEO">Director/CEO</MenuItem>
-                                    <MenuItem value="Club Guest">Club Guest</MenuItem>
-                                    <MenuItem value="Rooms Guest">Rooms Guest</MenuItem>
-                                    <MenuItem value="Others">Others</MenuItem>
-                                    <MenuItem value="Discover Pakistan">Discover Pakistan</MenuItem>
-                                    <MenuItem value="FnB Management">FnB Management</MenuItem>
-                                    <MenuItem value="Front Office">Front Office</MenuItem>
-                                    <MenuItem value="Front Vouchers">Front Vouchers</MenuItem>
-                                    <MenuItem value="Labour ENT">Labour ENT</MenuItem>
-                                    <MenuItem value="iTRIP ENT">iTRIP ENT</MenuItem>
-                                    <MenuItem value="Food Complain">Food Complain</MenuItem>
-                                </Select>
-
-                                <Typography variant="subtitle1">Comment</Typography>
-                                <TextField fullWidth multiline rows={2} value={entComment} onChange={(e) => setEntComment(e.target.value)} size="small" />
-                            </Grid>
-                        </Grid>
-                    )}
-
-                    {/* CTS */}
-                    {activePaymentMethod === 'cts' && (
-                        <Grid container spacing={3}>
-                            <Grid item xs={12}>
-                                <Typography variant="subtitle1">CTS Amount</Typography>
-                                <WholeNumberInput value={ctsAmount} onChange={(val) => setCtsAmount(val)} />
-
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, mt: 1 }}>
-                                    <Typography variant="subtitle2">Remaining Balance:</Typography>
-                                    <Typography variant="subtitle2" fontWeight="bold" color="error">
-                                        Rs {remainingCtsBalance}
-                                    </Typography>
-                                </Box>
-
-                                {/* Only show remaining payment inputs if there is a balance */}
-                                {Number(remainingCtsBalance) > 0 && (
-                                    <>
-                                        <Typography variant="subtitle1" mb={1} color="text.secondary">
-                                            Pay Remaining Balance (Cash)
-                                        </Typography>
-                                        <WholeNumberInput value={inputAmount} onChange={handleQuickAmountClick} />
-
-                                        <Typography variant="subtitle1" mt={2} mb={1}>
-                                            Customer Changes
-                                        </Typography>
-                                        <Typography variant="h5" fontWeight="bold" color={Number.parseFloat(customerChanges) < 0 ? '#f44336' : '#333'}>
-                                            Rs {customerChanges}
-                                        </Typography>
-
-                                        {/* Quick Buttons for CTS Remainder */}
-                                        <Box sx={{ display: 'flex', gap: 1, my: 1, flexWrap: 'wrap' }}>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick(remainingCtsBalance.toString())} sx={styles.quickAmountButton}>
-                                                Exact
-                                            </Button>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('100')} sx={styles.quickAmountButton}>
-                                                100
-                                            </Button>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('500')} sx={styles.quickAmountButton}>
-                                                500
-                                            </Button>
-                                            <Button variant="outlined" onClick={() => handleQuickAmountClick('1000')} sx={styles.quickAmountButton}>
-                                                1000
-                                            </Button>
-                                        </Box>
-                                        {/* Numpad for CTS Remainder */}
-                                        <Grid container spacing={1} sx={{ mt: 1 }}>
-                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0].map((num) => (
-                                                <Grid item xs={4} key={num}>
-                                                    <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px' }} onClick={() => (num === '.' ? handleDecimalClick() : handleNumberClick(num.toString()))}>
-                                                        {num}
-                                                    </Button>
-                                                </Grid>
-                                            ))}
-                                            <Grid item xs={4}>
-                                                <Button fullWidth sx={{ ...styles.numpadButton, height: '40px', fontSize: '18px', bgcolor: '#ffebee', color: '#f44336' }} onClick={handleDeleteClick}>
-                                                    <BackspaceIcon fontSize="small" />
-                                                </Button>
-                                            </Grid>
-                                        </Grid>
-                                    </>
-                                )}
-
-                                <Typography variant="subtitle1" mt={2}>
-                                    Comment
-                                </Typography>
-                                <TextField fullWidth multiline rows={3} value={ctsComment} onChange={(e) => setCtsComment(e.target.value)} />
                             </Grid>
                         </Grid>
                     )}

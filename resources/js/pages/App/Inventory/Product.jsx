@@ -16,7 +16,35 @@ const AddProduct = ({ product, id }) => {
     const [open, setOpen] = useState(true);
     const { data, setData, submit, processing, errors, reset, transform } = useForm(
         id
-            ? { ...product, description: product.description || '', is_discountable: product.is_discountable !== false, available_order_types: product.available_order_types || [], images: product.images || [], variants: product.variants || [] }
+            ? {
+                  id: product.id,
+                  name: product.name || '',
+                  // Auto-generate menu_code if missing for existing items effectively
+                  menu_code: product.menu_code || `ITEM-${String(product.id).padStart(4, '0')}`,
+                  category_id: product.category_id || '',
+                  sub_category_id: product.sub_category_id || '',
+                  manufacturer_id: product.manufacturer_id || '',
+                  unit_id: product.unit_id || '',
+                  item_type: product.item_type || 'finished_product',
+                  is_salable: product.is_salable ?? true,
+                  is_purchasable: product.is_purchasable ?? true,
+                  is_returnable: product.is_returnable ?? true,
+                  is_taxable: product.is_taxable ?? false,
+                  current_stock: product.current_stock || 0,
+                  minimal_stock: product.minimal_stock || 0,
+                  manage_stock: product.manage_stock ?? false,
+                  notify_when_out_of_stock: product.notify_when_out_of_stock ?? false,
+                  available_order_types: product.available_order_types || [],
+                  cost_of_goods_sold: product.cost_of_goods_sold || '',
+                  base_price: product.base_price || '',
+                  profit: product.profit || '0.00',
+                  is_discountable: product.is_discountable ?? true,
+                  max_discount: product.max_discount || '',
+                  max_discount_type: product.max_discount_type || 'percentage',
+                  variants: product.variants || [],
+                  description: product.description || '',
+                  images: product.images || [],
+              }
             : {
                   name: '',
                   menu_code: '',
@@ -100,6 +128,7 @@ const AddProduct = ({ product, id }) => {
                     if (error.includes('Profit')) newFieldErrors.profit = error;
                 });
                 setFieldErrors(newFieldErrors);
+                enqueueSnackbar('Please fix the errors before proceeding', { variant: 'error' });
                 return;
             }
             setFieldErrors({}); // Clear errors if validation passes
@@ -112,13 +141,14 @@ const AddProduct = ({ product, id }) => {
         if (!menu.name.trim()) errors.push('Name is required');
         if (!menu.category_id) errors.push('Category is required');
         if (menu.manage_stock) {
-            if (!menu.current_stock || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
-            if (!menu.minimal_stock || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
+            if (menu.current_stock === '' || menu.current_stock === null || isNaN(menu.current_stock)) errors.push('Current stock must be a valid number');
+            if (menu.minimal_stock === '' || menu.minimal_stock === null || isNaN(menu.minimal_stock)) errors.push('Minimal stock must be a valid number');
         }
         if (!menu.available_order_types || menu.available_order_types.length === 0) errors.push('At least one order type must be selected');
-        if (!menu.cost_of_goods_sold || isNaN(menu.cost_of_goods_sold)) errors.push('COGS must be a valid number');
-        if (!menu.base_price || isNaN(menu.base_price)) errors.push('Base price must be a valid number');
-        if (!menu.profit || isNaN(menu.profit)) errors.push('Profit must be a valid number');
+        if (menu.cost_of_goods_sold === '' || menu.cost_of_goods_sold === null || isNaN(menu.cost_of_goods_sold)) errors.push('COGS must be a valid number');
+        if (menu.base_price === '' || menu.base_price === null || isNaN(menu.base_price)) errors.push('Base price must be a valid number');
+        // Profit is calculated, usually fine, but good to check
+        // if (!menu.profit || isNaN(menu.profit)) errors.push('Profit must be a valid number');
         return errors;
     };
 
@@ -256,8 +286,8 @@ const AddProduct = ({ product, id }) => {
     const handleDeleteExistingImage = (imageUrl) => {
         setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
 
-        // Convert full URL back to path for backend (remove origin, keep the full path)
-        const imagePath = imageUrl.replace(window.location.origin, '');
+        // Convert full URL back to path for backend (remove origin, keep the full path but remove leading slash if present matching DB)
+        const imagePath = imageUrl.replace(window.location.origin, '').replace(/^\/+/, '');
         setDeletedImages((prev) => [...prev, imagePath]);
     };
 
@@ -404,7 +434,12 @@ const AddProduct = ({ product, id }) => {
         // Load existing images when editing
         if (id && product && product.images) {
             // Images already have full paths from FileHelper
-            const imageUrls = product.images.map((image) => (image.startsWith('http') ? image : `${window.location.origin}${image}`));
+            const imageUrls = product.images.map((image) => {
+                if (image.startsWith('http')) return image;
+                // Ensure leading slash for relative paths before prepending origin
+                const path = image.startsWith('/') ? image : `/${image}`;
+                return `${window.location.origin}${path}`;
+            });
             setExistingImages(imageUrls);
         }
 

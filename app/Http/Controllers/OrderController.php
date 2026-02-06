@@ -19,6 +19,7 @@ use App\Models\Member;
 use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PosCakeBooking;
 use App\Models\PosShift;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
@@ -552,6 +553,36 @@ class OrderController extends Controller
             }
         }
 
+        // 🔎 Case 1c: Cake Booking flow
+        if ($request->has('cake_booking_id')) {
+            $booking = PosCakeBooking::with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'cakeType'])->find($request->cake_booking_id);
+
+            if ($booking) {
+                $memberData = [];
+                if ($booking->member) {
+                    $memberData = [
+                        'id' => $booking->member->id,
+                        'booking_type' => 'member',
+                        'name' => $booking->member->full_name,
+                        'membership_no' => $booking->member->membership_no,
+                    ];
+                } elseif ($booking->customer) {
+                    $memberData = [
+                        'id' => $booking->customer->id,
+                        'customer_no' => $booking->customer->customer_no,
+                        'booking_type' => 'guest',
+                        'name' => $booking->customer->name,
+                    ];
+                }
+
+                $orderContext = [
+                    'order_type' => 'takeaway',
+                    'cake_booking' => $booking,
+                    'member' => $memberData
+                ];
+            }
+        }
+
         // 🔎 Case 2: Direct order flow (via query params)
         if (!$orderContext && $request->has('order_type')) {
             if ($request->filled('order_type')) {
@@ -703,8 +734,19 @@ class OrderController extends Controller
             $totalDue = $request->price;
             $orderType = $request->order_type;
 
-            if ($orderType == 'takeaway' && !in_array($request->payment['payment_method'], ['ent', 'cts']) && $request->payment['paid_amount'] < $totalDue) {
-                return back()->withErrors(['paid_amount' => 'The paid amount is not enough to cover the total price of the invoice.']);
+            // Validate Takeaway Payment
+            if ($orderType == 'takeaway') {
+                $entEnabled = $request->payment['ent_enabled'] ?? false;
+                $ctsEnabled = $request->payment['cts_enabled'] ?? false;
+                $entDeduction = $entEnabled ? ($request->payment['ent_amount'] ?? 0) : 0;
+                $ctsDeduction = $ctsEnabled ? ($request->payment['cts_amount'] ?? 0) : 0;
+                $paidAmount = $request->payment['paid_amount'] ?? 0;
+                $remainingDue = $totalDue - $entDeduction - $ctsDeduction;
+
+                // Allow small float variance (1.0)
+                if ($paidAmount < ($remainingDue - 1.0)) {
+                    return back()->withErrors(['paid_amount' => 'The paid amount (' . $paidAmount . ') is not enough to cover the remaining balance (' . $remainingDue . ') after deductions.']);
+                }
             }
 
             $orderData = [
@@ -725,7 +767,12 @@ class OrderController extends Controller
                 'room_booking_id' => $request->room_booking_id ?? null,
                 'address' => $request->address,
                 'rider_id' => $request->rider_id ?? null,
-                'status' => ($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress',
+                // Takeaway orders are paid immediately and completed at point of sale
+                // Reservations that are new are saved as drafts
+                // All other orders go to in_progress for kitchen processing
+                'status' => $request->order_type === 'takeaway'
+                    ? 'completed'
+                    : (($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress'),
             ];
 
             $bookingType = $request->input('member.booking_type');
@@ -1071,55 +1118,65 @@ class OrderController extends Controller
                     $ctsAmount = 0;
                     $paymentData = $request->payment;
 
-                    // ENT Calculation
-                    if (($paymentData['payment_method'] ?? '') === 'ent') {
-                        if (array_key_exists('ent_items', $paymentData)) {
-                            // New Flow: Key exists. Calculate from items.
-                            if (!empty($paymentData['ent_items'])) {
-                                // ent_items contains IDs. For New Order, these are Product IDs (from OrderMenu).
-                                $entIds = $paymentData['ent_items'];
-                                foreach ($request->order_items as $item) {
-                                    if (in_array($item['id'], $entIds)) {
-                                        $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
-                                        $entAmount += $iPrice;
-                                        $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
-                                    }
+                    // Check if ENT is enabled (new toggle-based flow)
+                    $entEnabled = $paymentData['ent_enabled'] ?? false;
+                    $ctsEnabled = $paymentData['cts_enabled'] ?? false;
+
+                    // ENT Calculation - Only if enabled
+                    if ($entEnabled) {
+                        if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
+                            // Calculate from items
+                            $entIds = $paymentData['ent_items'];
+                            foreach ($request->order_items as $item) {
+                                if (in_array($item['id'], $entIds)) {
+                                    $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
+                                    $entAmount += $iPrice;
+                                    $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
                                 }
                             }
-                            // If empty, entAmount remains 0.
-                        } else {
-                            // Legacy Flow: No ent_items key -> Assume Full
-                            $entAmount = $request->total_price;
+                        } elseif (isset($paymentData['ent_amount'])) {
+                            // Use provided ENT amount
+                            $entAmount = $paymentData['ent_amount'];
                         }
                     }
 
-                    // CTS Calculation
-                    if (($paymentData['payment_method'] ?? '') === 'cts') {
-                        $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : $request->total_price;
+                    // CTS Calculation - Only if enabled
+                    if ($ctsEnabled) {
+                        $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : 0;
                     }
 
                     // Verify Total (Paid + ENT + CTS >= Total)
-                    // Note: paid_amount in request is only the Cash portion.
+                    // Note: paid_amount in request is the amount paid via selected payment method
                     $paidCash = $paymentData['paid_amount'] ?? 0;
                     // Allow small float variance
                     if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
                         throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
                     }
 
-                    // Update Invoice Comment with Details
+                    // Update Invoice with ENT/CTS Details
                     $updateData = [];
-                    if (($paymentData['payment_method'] ?? '') === 'ent') {
+
+                    if ($entEnabled && $entAmount > 0) {
                         $comment = $invoiceData['ent_comment'] ?? '';
                         if ($entDetails) {
                             $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
                         }
-                        $invoice->update(['ent_comment' => $comment]);
-                    } elseif (($paymentData['payment_method'] ?? '') === 'cts') {
+                        $updateData['ent_comment'] = $comment;
+                        $updateData['ent_amount'] = $entAmount;
+                        $updateData['ent_reason'] = $paymentData['ent_reason'] ?? null;
+                    }
+
+                    if ($ctsEnabled && $ctsAmount > 0) {
                         $comment = $invoiceData['cts_comment'] ?? '';
                         if ($ctsAmount < $request->total_price) {
                             $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
                         }
-                        $invoice->update(['cts_comment' => $comment]);
+                        $updateData['cts_comment'] = $comment;
+                        $updateData['cts_amount'] = $ctsAmount;
+                    }
+
+                    if (!empty($updateData)) {
+                        $invoice->update($updateData);
                     }
                 }
 
@@ -1133,7 +1190,9 @@ class OrderController extends Controller
                         'payer_type' => $payerType,
                         'payer_id' => $payerId,
                         'amount' => $request->payment['paid_amount'],
-                        'payment_method' => $request->payment['payment_method'],
+                        'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
+                            ? $request->payment['cts_payment_method']
+                            : $request->payment['payment_method'],
                         'receipt_date' => now(),
                         'status' => 'active',
                         'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
@@ -1729,6 +1788,25 @@ class OrderController extends Controller
                 'user:id,name',  // Order Creator
                 'waiter:id,name',
             ])
+            // Load invoice ENT/CTS data via subquery (since relationship is via JSON column)
+            ->addSelect([
+                'orders.*',
+                'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_ent_reason' => FinancialInvoice::select('ent_reason')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_ent_comment' => FinancialInvoice::select('ent_comment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_cts_comment' => FinancialInvoice::select('cts_comment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+            ])
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
             ->where('status', '!=', 'pending');
 
@@ -1786,6 +1864,30 @@ class OrderController extends Controller
         // 💳 Payment method filter
         if ($request->filled('payment_method') && $request->payment_method !== 'all') {
             $query->where('payment_method', $request->payment_method);
+        }
+
+        // 🎯 Adjustment Type filter (ENT/CTS) - Query via linked invoice's JSON data
+        if ($request->filled('adjustment_type') && $request->adjustment_type !== 'all') {
+            $adjustmentType = $request->adjustment_type;
+            $query->whereExists(function ($subQuery) use ($adjustmentType) {
+                $subQuery
+                    ->select(DB::raw(1))
+                    ->from('financial_invoices')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->when($adjustmentType === 'ent', function ($q) {
+                        $q->where('ent_amount', '>', 0);
+                    })
+                    ->when($adjustmentType === 'cts', function ($q) {
+                        $q->where('cts_amount', '>', 0);
+                    })
+                    ->when($adjustmentType === 'none', function ($q) {
+                        $q->where(function ($inner) {
+                            $inner->whereNull('ent_amount')->orWhere('ent_amount', 0);
+                        })->where(function ($inner) {
+                            $inner->whereNull('cts_amount')->orWhere('cts_amount', 0);
+                        });
+                    });
+            });
         }
 
         // 🍽 Table filter

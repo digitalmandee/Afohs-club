@@ -332,21 +332,19 @@ class PosCakeBookingController extends Controller
         if (!$query)
             return response()->json([]);
 
-        $booking = PosCakeBooking::with(['member', 'cakeType'])
+        $bookings = PosCakeBooking::with(['member', 'cakeType'])
             ->where(function ($q) use ($query) {
                 $q
-                    ->where('booking_number', $query)
-                    ->orWhere('customer_phone', 'like', "%{$query}%");
+                    ->where('booking_number', 'like', "%{$query}%")
+                    ->orWhere('customer_phone', 'like', "%{$query}%")
+                    ->orWhere('customer_name', 'like', "%{$query}%");
             })
             ->where('status', '!=', 'completed')  // Only pending/active bookings
             ->where('status', '!=', 'cancelled')
-            ->first();
+            ->limit(20)
+            ->get();
 
-        if (!$booking) {
-            return response()->json(['error' => 'Booking not found or already completed.'], 404);
-        }
-
-        return response()->json($booking);
+        return response()->json($bookings);
     }
 
     private function getNextBookingNumber()
