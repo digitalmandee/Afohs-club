@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress, Stack, Typography, Box, IconButton } from '@mui/material';
+import React from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, IconButton } from '@mui/material';
 import { Button } from 'react-bootstrap';
 import { Close, Visibility } from '@mui/icons-material';
-import { enqueueSnackbar } from 'notistack';
 
 const ViewDocumentsModal = ({ open, onClose, media = [] }) => {
     // If media is passed directly, we don't need to fetch.
