@@ -344,7 +344,7 @@ class MemberTransactionController extends Controller
                         $legacyConflict = FinancialInvoice::query()
                             ->where($scopeMember)
                             ->where('status', '!=', 'cancelled')
-                            ->where('fee_type', 'maintenance_fee')
+                            ->whereIn('fee_type', ['maintenance_fee', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE])
                             ->where(function ($q) use ($validFrom, $validTo) {
                                 $q
                                     ->where('valid_from', '<=', $validTo)
@@ -356,7 +356,7 @@ class MemberTransactionController extends Controller
                         $itemConflict = \App\Models\FinancialInvoiceItem::whereHas('invoice', function ($q) use ($scopeMember) {
                             $q->where('status', '!=', 'cancelled')->where($scopeMember);
                         })
-                            ->where('fee_type', 'maintenance_fee')
+                            ->whereIn('fee_type', ['maintenance_fee', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE])
                             ->where(function ($q) use ($validFrom, $validTo) {
                                 // Overlap: Start <= End2 AND End >= Start2
                                 $q
