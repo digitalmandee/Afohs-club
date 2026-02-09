@@ -541,23 +541,6 @@ const OrderMenu = () => {
                                     }}
                                 >
                                     <Box sx={{ display: 'flex' }}>
-                                        <Select
-                                            value={searchMode}
-                                            onChange={(e) => {
-                                                setSearchMode(e.target.value);
-                                                setSearchTerm('');
-                                                setSearchResults([]);
-                                            }}
-                                            size="small"
-                                            sx={{
-                                                mr: 1,
-                                                bgcolor: 'white',
-                                                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
-                                            }}
-                                        >
-                                            <MenuItem value="product">Products</MenuItem>
-                                            <MenuItem value="booking">Bookings</MenuItem>
-                                        </Select>
                                         <TextField
                                             placeholder={searchMode === 'booking' ? 'Search Booking # or Name' : 'Search by ID, menu code or name'}
                                             variant="outlined"

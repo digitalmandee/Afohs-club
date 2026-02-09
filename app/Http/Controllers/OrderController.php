@@ -1641,7 +1641,7 @@ class OrderController extends Controller
             ->where(function ($query) use ($searchTerm) {
                 $query
                     ->where('id', 'like', "%{$searchTerm}%")
-                    ->where('menu_code', 'like', "%{$searchTerm}%")
+                    ->orWhere('menu_code', 'like', "%{$searchTerm}%")
                     ->orWhere('name', 'like', "%{$searchTerm}%");
             })
             ->where(function ($query) {
