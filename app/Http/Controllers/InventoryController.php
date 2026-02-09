@@ -185,7 +185,7 @@ class InventoryController extends Controller
 
         // Auto-generate item code if not provided
         if (empty($product->menu_code)) {
-            $product->menu_code = 'ITEM-' . str_pad($product->id, 4, '0', STR_PAD_LEFT);
+            $product->menu_code = (string) $product->id;
             $product->save();
         }
 

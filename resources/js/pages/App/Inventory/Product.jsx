@@ -20,7 +20,7 @@ const AddProduct = ({ product, id }) => {
                   id: product.id,
                   name: product.name || '',
                   // Auto-generate menu_code if missing for existing items effectively
-                  menu_code: product.menu_code || `ITEM-${String(product.id).padStart(4, '0')}`,
+                  menu_code: product.menu_code || String(product.id),
                   category_id: product.category_id || '',
                   sub_category_id: product.sub_category_id || '',
                   manufacturer_id: product.manufacturer_id || '',
@@ -578,7 +578,7 @@ const AddProduct = ({ product, id }) => {
                                                 (Auto-generated, editable)
                                             </Typography>
                                         </Typography>
-                                        <TextField fullWidth placeholder="e.g. ITEM-001" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" helperText={!id ? 'Will be auto-generated if left empty' : ''} />
+                                        <TextField fullWidth placeholder="e.g. 101" name="menu_code" value={data.menu_code} onChange={handleInputChange} variant="outlined" size="small" helperText={!id ? 'Will be auto-generated if left empty' : ''} />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Typography variant="body1" sx={{ mb: 1, color: '#121212', fontSize: '14px' }}>
