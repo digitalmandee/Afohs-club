@@ -15,7 +15,7 @@ import React, { useCallback, useState } from 'react';
  * @param {string} [props.error] - Error message to display
  * @param {string} [props.helperText] - Helper text to display
  */
-const UserAutocomplete = ({ memberType, value, onChange, label = 'Customer Name', placeholder = 'Search...', error, helperText, ...rest }) => {
+const UserAutocomplete = ({ memberType, value, onChange, label = 'Customer Name', placeholder = 'Search...', error, helperText, routeUri, ...rest }) => {
     const [open, setOpen] = useState(false);
     const [options, setOptions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ const UserAutocomplete = ({ memberType, value, onChange, label = 'Customer Name'
             }
             setLoading(true);
             try {
-                const response = await axios.get(route('admin.api.search-users'), {
+                const response = await axios.get(routeUri || route('admin.api.search-users'), {
                     params: {
                         q: query,
                         type: memberType,
@@ -42,7 +42,7 @@ const UserAutocomplete = ({ memberType, value, onChange, label = 'Customer Name'
                 setLoading(false);
             }
         },
-        [memberType],
+        [memberType, routeUri],
     );
 
     const getStatusChipStyles = (status) => {

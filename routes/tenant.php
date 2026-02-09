@@ -42,6 +42,7 @@ Route::group([
         Route::get('/order/queue', [OrderController::class, 'orderQueue'])->name('order.queue');
 
         // for member and waiter
+        Route::get('/api/users/global-search', [UserController::class, 'searchUsers'])->name('api.users.global-search');
         Route::get('/user/search', [UserController::class, 'searchMember'])->name('user.search');
         Route::get('/waiters/all', [UserController::class, 'waiters'])->name('waiters.all');
         Route::get('/kitchens/all', [UserController::class, 'kitchens'])->name('kitchens.all');

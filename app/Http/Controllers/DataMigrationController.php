@@ -3382,6 +3382,13 @@ class DataMigrationController extends Controller
                 // 'id' => $oldProd->id, // Letting DB auto-increment
                 'name' => $oldProd->item_details,
                 'menu_code' => $oldProd->item_code,
+                'available_order_types' => [
+                    'dineIn',
+                    'pickUp',
+                    'delivery',
+                    'takeaway',
+                    'reservation'
+                ],
                 'category_id' => $newCatId,
                 'sub_category_id' => $newSubId,
                 'manufacturer_id' => $newManId,

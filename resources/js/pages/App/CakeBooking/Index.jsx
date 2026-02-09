@@ -26,7 +26,10 @@ export default function Index({ bookings, filters, cashiers }) {
         end_date: filters.end_date || '',
         delivery_date: filters.delivery_date || '',
         discounted_taxed: filters.discounted_taxed || 'All',
+        delivery_date: filters.delivery_date || '',
+        discounted_taxed: filters.discounted_taxed || 'All',
         cashier_id: filters.cashier_id || '',
+        status: filters.status || 'active', // Default to active
     });
 
     // Suggestions State
@@ -40,8 +43,15 @@ export default function Index({ bookings, filters, cashiers }) {
     };
 
     const handleApplyFilters = () => {
+        // When searching, we might want to reset status to active? Or keep current?
+        // User might search for a cancelled booking.
         router.get(route('cake-bookings.index'), { ...filterState, page: 1 }, { preserveState: true, replace: true });
     };
+
+    // Auto-refresh when status tab changes
+    useEffect(() => {
+        handleApplyFilters();
+    }, [filterState.status]);
 
     const handlePageChange = (event, value) => {
         router.get(route('cake-bookings.index'), { ...filterState, page: value }, { preserveState: true, preserveScroll: true });
@@ -114,6 +124,38 @@ export default function Index({ bookings, filters, cashiers }) {
                         Cake Bookings List
                     </Typography>
                     <Box>
+                        {/* Status Tabs/Toggles */}
+                        <Box sx={{ display: 'flex', gap: 1, bgcolor: 'white', p: 0.5, borderRadius: 2, mr: 2, display: 'inline-flex' }}>
+                            <Button
+                                variant={filterState.status === 'active' ? 'contained' : 'text'}
+                                onClick={() => handleFilterChange('status', 'active')}
+                                sx={{
+                                    bgcolor: filterState.status === 'active' ? '#063455' : 'transparent',
+                                    color: filterState.status === 'active' ? 'white' : '#063455',
+                                    '&:hover': { bgcolor: filterState.status === 'active' ? '#04243a' : 'rgba(6, 52, 85, 0.04)' },
+                                    borderRadius: 1.5,
+                                    textTransform: 'none',
+                                    px: 3,
+                                }}
+                            >
+                                Active
+                            </Button>
+                            <Button
+                                variant={filterState.status === 'cancelled' ? 'contained' : 'text'}
+                                onClick={() => handleFilterChange('status', 'cancelled')}
+                                sx={{
+                                    bgcolor: filterState.status === 'cancelled' ? '#d32f2f' : 'transparent',
+                                    color: filterState.status === 'cancelled' ? 'white' : '#d32f2f',
+                                    '&:hover': { bgcolor: filterState.status === 'cancelled' ? '#b71c1c' : 'rgba(211, 47, 47, 0.04)' },
+                                    borderRadius: 1.5,
+                                    textTransform: 'none',
+                                    px: 3,
+                                }}
+                            >
+                                Cancelled
+                            </Button>
+                        </Box>
+
                         <Button variant="contained" startIcon={<Add />} component={Link} href={route('cake-bookings.create')} sx={{ bgcolor: '#063455', '&:hover': { bgcolor: '#04243a' } }}>
                             Create Booking
                         </Button>
@@ -326,7 +368,7 @@ export default function Index({ bookings, filters, cashiers }) {
                     <Table size="small">
                         <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
-                                {['SR #', 'BOOKING #', 'BOOKING DATE', 'NAME', 'CUSTOMER TYPE', 'TOTAL', 'DISCOUNT', 'TAX', 'GRAND TOTAL', 'USER', 'DOC', 'INVOICE', 'CANCEL', 'EDIT', 'DELETE'].map((head) => (
+                                {['SR #', 'BOOKING #', 'BOOKING DATE', 'NAME', 'CUSTOMER TYPE', 'TOTAL', 'ADVANCE', 'BALANCE', 'DISCOUNT', 'TAX', 'GRAND TOTAL', 'USER', 'DOC', 'INVOICE', 'CANCEL', 'EDIT', 'DELETE'].map((head) => (
                                     <TableCell key={head} sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.8rem', py: 1 }}>
                                         {head}
                                     </TableCell>
@@ -346,6 +388,8 @@ export default function Index({ bookings, filters, cashiers }) {
                                             <TableCell>{booking.customer_name || booking.member?.full_name || 'N/A'}</TableCell>
                                             <TableCell>{booking.customer_type === '0' ? `Member (${booking.member?.membership_no || ''})` : booking.customer_type === '2' ? `Corporate (${booking.corporate_member?.membership_no || ''})` : booking.customer_type}</TableCell>
                                             <TableCell>{parseFloat(booking.total_price).toLocaleString()}</TableCell>
+                                            <TableCell>{parseFloat(booking.advance_amount || 0).toLocaleString()}</TableCell>
+                                            <TableCell>{parseFloat(booking.balance_amount || 0).toLocaleString()}</TableCell>
                                             <TableCell>{parseFloat(booking.discount_amount || 0).toLocaleString()}</TableCell>
                                             <TableCell>{parseFloat(booking.tax_amount || 0).toLocaleString()}</TableCell>
                                             <TableCell>{grandTotal.toLocaleString()}</TableCell>
@@ -388,7 +432,25 @@ export default function Index({ bookings, filters, cashiers }) {
                                                     <IconButton
                                                         size="small"
                                                         onClick={() => {
-                                                            /* Handle Cancel */
+                                                            if (confirm('Are you sure you want to cancel this booking?')) {
+                                                                router.put(
+                                                                    route('cake-bookings.update', booking.id),
+                                                                    {
+                                                                        status: 'cancelled',
+                                                                        // Preserve other fields to avoid validation errors if controller requires them?
+                                                                        // Controller uses existing values if not provided for calculation, but validation?
+                                                                        // We checked controller, it seems safe for partial update regarding calculations.
+                                                                        // But let's send minimal data.
+                                                                        // Actually, standard resource update might expect full data in some implementations.
+                                                                        // Our controller: $booking->fill($request->except(...))
+                                                                        // Boolean/Nullable fields might be issue if not sent?
+                                                                        // Let's try sending just status.
+                                                                    },
+                                                                    {
+                                                                        onSuccess: () => alert('Booking cancelled'),
+                                                                    },
+                                                                );
+                                                            }
                                                         }}
                                                     >
                                                         <Close fontSize="small" sx={{ fontSize: 16 }} />

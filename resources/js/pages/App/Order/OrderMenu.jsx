@@ -34,6 +34,7 @@ const OrderMenu = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
     const [showSearchResults, setShowSearchResults] = useState(false);
+    const [searchMode, setSearchMode] = useState('product'); // 'product' or 'booking'
 
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
@@ -62,13 +63,20 @@ const OrderMenu = () => {
 
         setIsSearching(true);
         try {
-            const response = await axios.get(route('order.search.products'), {
-                params: { search: value.trim() },
-            });
+            const url = searchMode === 'booking' ? route('api.cake-bookings.search') : route('order.search.products');
+            const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim() };
 
-            if (response.data.success) {
-                setSearchResults(response.data.products);
+            const response = await axios.get(url, { params });
+
+            if (searchMode === 'booking') {
+                // Booking API returns array directly
+                setSearchResults(response.data);
                 setShowSearchResults(true);
+            } else {
+                if (response.data.success) {
+                    setSearchResults(response.data.products);
+                    setShowSearchResults(true);
+                }
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -89,6 +97,54 @@ const OrderMenu = () => {
 
         // Add product to order
         handleProductClick(product);
+
+        // Clear search
+        setSearchTerm('');
+        setShowSearchResults(false);
+        setSearchResults([]);
+    };
+
+    const handleBookingClick = (booking) => {
+        const product = booking.cake_type;
+        if (!product) {
+            alert('Booking has no associated product/cake type.');
+            return;
+        }
+
+        const bookedPrice = parseFloat(booking.total_price);
+        const advanceAmount = parseFloat(booking.advance_amount || 0);
+
+        const newItem = {
+            id: product.id,
+            name: product.name + ` (Booking #${booking.booking_number || booking.id})`,
+            price: bookedPrice,
+            total_price: bookedPrice,
+            quantity: 1,
+            tenant_id: product.tenant_id,
+            category: product.category?.name || 'Cakes',
+            variants: [],
+            is_discountable: false, // Usually fixed price
+            discount_value: 0,
+            discount_type: 'percentage',
+            discount_amount: 0,
+            is_taxable: product.is_taxable,
+            booking_id: booking.id,
+        };
+
+        const details = [];
+        if (booking.weight) details.push({ value: `Weight: ${booking.weight}` });
+        if (booking.flavor) details.push({ value: `Flavor: ${booking.flavor}` });
+
+        if (details.length > 0) {
+            newItem.variants = details;
+        }
+
+        handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);
+
+        // Update Advance Amount in Order Store (assuming store supports it, if not need to add handling)
+        // Check if advance_amount exists in store or just add to notes/deduction
+        // Based on previous task, we might used 'advance_amount' in order details
+        handleOrderDetailChange('advance_amount', (orderDetails.advance_amount || 0) + advanceAmount);
 
         // Clear search
         setSearchTerm('');
@@ -484,39 +540,57 @@ const OrderMenu = () => {
                                         alignItems: 'center',
                                     }}
                                 >
-                                    <TextField
-                                        placeholder="Search by ID, menu code or name"
-                                        variant="outlined"
-                                        size="small"
-                                        value={searchTerm}
-                                        onChange={(e) => handleSearch(e.target.value)}
-                                        sx={{
-                                            width: 300,
-                                            // height:44,
-                                            mr: 2,
-                                            borderRadius: 0,
-                                            '& .MuiOutlinedInput-root': {
+                                    <Box sx={{ display: 'flex' }}>
+                                        <Select
+                                            value={searchMode}
+                                            onChange={(e) => {
+                                                setSearchMode(e.target.value);
+                                                setSearchTerm('');
+                                                setSearchResults([]);
+                                            }}
+                                            size="small"
+                                            sx={{
+                                                mr: 1,
+                                                bgcolor: 'white',
+                                                '& .MuiOutlinedInput-notchedOutline': { border: 'none' },
+                                            }}
+                                        >
+                                            <MenuItem value="product">Products</MenuItem>
+                                            <MenuItem value="booking">Bookings</MenuItem>
+                                        </Select>
+                                        <TextField
+                                            placeholder={searchMode === 'booking' ? 'Search Booking # or Name' : 'Search by ID, menu code or name'}
+                                            variant="outlined"
+                                            size="small"
+                                            value={searchTerm}
+                                            onChange={(e) => handleSearch(e.target.value)}
+                                            sx={{
+                                                width: 300,
+                                                mr: 2,
                                                 borderRadius: 0,
-                                                backgroundColor: '#FFFFFF',
-                                                '& fieldset': {
-                                                    border: '1px solid #121212',
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: 0,
+                                                    backgroundColor: '#FFFFFF',
+                                                    '& fieldset': {
+                                                        border: '1px solid #121212',
+                                                    },
+                                                    '&:hover fieldset': {
+                                                        border: '1px solid #121212',
+                                                    },
+                                                    '&.Mui-focused fieldset': {
+                                                        border: '1px solid #121212',
+                                                    },
                                                 },
-                                                '&:hover fieldset': {
-                                                    border: '1px solid #121212',
-                                                },
-                                                '&.Mui-focused fieldset': {
-                                                    border: '1px solid #121212',
-                                                },
-                                            },
-                                        }}
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <Search />
-                                                </InputAdornment>
-                                            ),
-                                        }}
-                                    />
+                                            }}
+                                            InputProps={{
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <Search />
+                                                    </InputAdornment>
+                                                ),
+                                            }}
+                                        />
+                                    </Box>
                                     <img
                                         src="/assets/right.png"
                                         alt=""
@@ -551,96 +625,136 @@ const OrderMenu = () => {
                                             </Box>
                                         ) : searchResults.length > 0 ? (
                                             <Grid container spacing={0} sx={{ flexWrap: 'wrap', gap: 1 }}>
-                                                {searchResults.map((product, index) => (
-                                                    <Grid item key={product.id} sx={{ width: '15%' }}>
-                                                        <Paper
-                                                            elevation={0}
-                                                            onClick={() => handleSearchProductClick(product)}
-                                                            sx={{
-                                                                p: 2,
-                                                                display: 'flex',
-                                                                flexDirection: 'column',
-                                                                alignItems: 'center',
-                                                                border: product.tenant_id !== selectedRestaurant ? '2px solid #ff9800' : '1px solid #eee',
-                                                                opacity: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
-                                                                cursor: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
-                                                                borderRadius: 2,
-                                                                height: '100%',
-                                                                width: 100,
-                                                                position: 'relative',
-                                                                '&:hover': {
-                                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                                                },
-                                                            }}
-                                                        >
-                                                            {/* Restaurant indicator */}
-                                                            {product.tenant_id !== selectedRestaurant && (
-                                                                <Box
+                                                {searchResults.map((item, index) => {
+                                                    // Determine if it's a product or booking based on searchMode
+                                                    if (searchMode === 'booking') {
+                                                        return (
+                                                            <Grid item key={item.id} sx={{ width: '20%' }}>
+                                                                <Paper
+                                                                    elevation={0}
+                                                                    onClick={() => handleBookingClick(item)}
                                                                     sx={{
-                                                                        position: 'absolute',
-                                                                        top: -5,
-                                                                        right: -5,
-                                                                        bgcolor: '#ff9800',
-                                                                        color: 'white',
-                                                                        borderRadius: '50%',
-                                                                        width: 20,
-                                                                        height: 20,
+                                                                        p: 2,
                                                                         display: 'flex',
+                                                                        flexDirection: 'column',
                                                                         alignItems: 'center',
-                                                                        justifyContent: 'center',
-                                                                        fontSize: '10px',
-                                                                        fontWeight: 'bold',
+                                                                        border: '1px solid #063455',
+                                                                        bgcolor: '#e3f2fd',
+                                                                        cursor: 'pointer',
+                                                                        borderRadius: 2,
+                                                                        height: '100%',
+                                                                        '&:hover': {
+                                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                                        },
                                                                     }}
                                                                 >
-                                                                    !
-                                                                </Box>
-                                                            )}
+                                                                    <Typography variant="subtitle2" fontWeight="bold">
+                                                                        #{item.booking_number}
+                                                                    </Typography>
+                                                                    <Typography variant="caption">{item.customer_name || item.member?.full_name}</Typography>
+                                                                    <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
+                                                                        {item.cake_type?.name}
+                                                                    </Typography>
+                                                                    <Typography variant="caption">Total: {item.total_price}</Typography>
+                                                                    <Typography variant="caption">Adv: {item.advance_amount || 0}</Typography>
+                                                                </Paper>
+                                                            </Grid>
+                                                        );
+                                                    }
 
-                                                            {product.images && product.images.length > 0 && (
-                                                                <Box
-                                                                    sx={{
-                                                                        width: 40,
-                                                                        height: 40,
-                                                                        borderRadius: '50%',
-                                                                        overflow: 'hidden',
-                                                                        mb: 1,
-                                                                    }}
-                                                                >
-                                                                    <Box
-                                                                        component="img"
-                                                                        src={tenantAsset(product.images[0])}
-                                                                        alt={product.name}
-                                                                        sx={{
-                                                                            width: '100%',
-                                                                            height: '100%',
-                                                                            objectFit: 'cover',
-                                                                        }}
-                                                                    />
-                                                                </Box>
-                                                            )}
-
-                                                            <Typography
-                                                                variant="body2"
+                                                    // Product Render
+                                                    const product = item;
+                                                    return (
+                                                        <Grid item key={product.id} sx={{ width: '15%' }}>
+                                                            <Paper
+                                                                elevation={0}
+                                                                onClick={() => handleSearchProductClick(product)}
                                                                 sx={{
-                                                                    fontWeight: 500,
-                                                                    mb: 0.5,
-                                                                    textAlign: 'center',
-                                                                    fontSize: '11px',
+                                                                    p: 2,
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    alignItems: 'center',
+                                                                    border: product.tenant_id !== selectedRestaurant ? '2px solid #ff9800' : '1px solid #eee',
+                                                                    opacity: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
+                                                                    cursor: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
+                                                                    borderRadius: 2,
+                                                                    height: '100%',
+                                                                    width: 100,
+                                                                    position: 'relative',
+                                                                    '&:hover': {
+                                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                                                                    },
                                                                 }}
                                                             >
-                                                                {product.name}
-                                                            </Typography>
-                                                            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '10px' }}>
-                                                                Rs {product.base_price}
-                                                            </Typography>
-                                                            {product.tenant && product.tenant_id !== selectedRestaurant && (
-                                                                <Typography variant="caption" sx={{ textAlign: 'center', color: '#ff9800', fontSize: '9px', mt: 0.5 }}>
-                                                                    {product.tenant.name}
+                                                                {/* Restaurant indicator */}
+                                                                {product.tenant_id !== selectedRestaurant && (
+                                                                    <Box
+                                                                        sx={{
+                                                                            position: 'absolute',
+                                                                            top: -5,
+                                                                            right: -5,
+                                                                            bgcolor: '#ff9800',
+                                                                            color: 'white',
+                                                                            borderRadius: '50%',
+                                                                            width: 20,
+                                                                            height: 20,
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'center',
+                                                                            fontSize: '10px',
+                                                                            fontWeight: 'bold',
+                                                                        }}
+                                                                    >
+                                                                        !
+                                                                    </Box>
+                                                                )}
+
+                                                                {product.images && product.images.length > 0 && (
+                                                                    <Box
+                                                                        sx={{
+                                                                            width: 40,
+                                                                            height: 40,
+                                                                            borderRadius: '50%',
+                                                                            overflow: 'hidden',
+                                                                            mb: 1,
+                                                                        }}
+                                                                    >
+                                                                        <Box
+                                                                            component="img"
+                                                                            src={tenantAsset(product.images[0])}
+                                                                            alt={product.name}
+                                                                            sx={{
+                                                                                width: '100%',
+                                                                                height: '100%',
+                                                                                objectFit: 'cover',
+                                                                            }}
+                                                                        />
+                                                                    </Box>
+                                                                )}
+
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    sx={{
+                                                                        fontWeight: 500,
+                                                                        mb: 0.5,
+                                                                        textAlign: 'center',
+                                                                        fontSize: '11px',
+                                                                    }}
+                                                                >
+                                                                    {product.name}
                                                                 </Typography>
-                                                            )}
-                                                        </Paper>
-                                                    </Grid>
-                                                ))}
+                                                                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '10px' }}>
+                                                                    Rs {product.base_price}
+                                                                </Typography>
+                                                                {product.tenant && product.tenant_id !== selectedRestaurant && (
+                                                                    <Typography variant="caption" sx={{ textAlign: 'center', color: '#ff9800', fontSize: '9px', mt: 0.5 }}>
+                                                                        {product.tenant.name}
+                                                                    </Typography>
+                                                                )}
+                                                            </Paper>
+                                                        </Grid>
+                                                    );
+                                                })}
                                             </Grid>
                                         ) : (
                                             <Box sx={{ textAlign: 'center', p: 4 }}>

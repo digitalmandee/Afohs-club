@@ -259,21 +259,112 @@ const Reservations = () => {
                                         <p style={{ fontSize: '12px' }}>PAF Falcon Complex</p>
                                     </div>
 
-                                    <h6 style={{ textAlign: 'center', margin: '10px 0' }}>RESERVATION INVOICE</h6>
+                                    <h6 style={{ textAlign: 'center', margin: '10px 0' }}>RESERVATION ESTIMATE</h6>
 
-                                    <p>Reservation #: {selectedInvoice.id}</p>
-                                    <p>Invoice Date: {selectedInvoice.date}</p>
-                                    <p>
-                                        Time: {selectedInvoice.start_time} - {selectedInvoice.end_time}
-                                    </p>
-                                    <p>Restaurant: {tenant.name}</p>
-                                    <p>Table: {selectedInvoice.table?.table_no || 'N/A'}</p>
-                                    <p>Name: {selectedInvoice.member?.full_name || selectedInvoice.customer?.name}</p>
-                                    <p>Type: {selectedInvoice.member?.member_type?.name || 'Member'}</p>
-                                    <p>Contact: {selectedInvoice.member?.mobile_number_a || selectedInvoice.customer?.contact}</p>
-                                    <hr />
-                                    <h6>Advance Paid: {selectedInvoice.down_payment || '0'}</h6>
-                                    <p style={{ fontSize: '12px', marginTop: '10px' }}>Thank you for making a reservation at AFOHS Club!</p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '10px' }}>
+                                        <div>
+                                            <p style={{ margin: '2px 0' }}>
+                                                <strong>Res #:</strong> {selectedInvoice.id}
+                                            </p>
+                                            <p style={{ margin: '2px 0' }}>
+                                                <strong>Date:</strong> {selectedInvoice.date}
+                                            </p>
+                                            <p style={{ margin: '2px 0' }}>
+                                                <strong>Time:</strong> {selectedInvoice.start_time} - {selectedInvoice.end_time}
+                                            </p>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <p style={{ margin: '2px 0' }}>
+                                                <strong>Table:</strong> {selectedInvoice.table?.table_no || 'N/A'}
+                                            </p>
+                                            <p style={{ margin: '2px 0' }}>
+                                                <strong>Covers:</strong> {selectedInvoice.person_count}
+                                            </p>
+                                            <p style={{ margin: '2px 0' }}>
+                                                <strong>Server:</strong> {selectedInvoice.tenant?.name}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ borderTop: '1px dashed #000', borderBottom: '1px dashed #000', padding: '5px 0', fontSize: '12px', marginBottom: '10px' }}>
+                                        <p style={{ margin: '2px 0' }}>
+                                            <strong>Name:</strong> {selectedInvoice.member?.full_name || selectedInvoice.customer?.name || selectedInvoice.employee?.name}
+                                        </p>
+                                        <p style={{ margin: '2px 0' }}>
+                                            <strong>Membership #:</strong> {selectedInvoice.member?.membership_no || selectedInvoice.employee?.employee_id || selectedInvoice.customer?.customer_no || 'N/A'}
+                                        </p>
+                                        <p style={{ margin: '2px 0' }}>
+                                            <strong>Type:</strong> {selectedInvoice.member ? selectedInvoice.member.memberType?.name || 'Member' : selectedInvoice.employee ? 'Employee' : 'Guest'}
+                                        </p>
+                                        <p style={{ margin: '2px 0' }}>
+                                            <strong>Contact:</strong> {selectedInvoice.member?.mobile_number_a || selectedInvoice.customer?.contact || selectedInvoice.employee?.phone_no || 'N/A'}
+                                        </p>
+                                    </div>
+
+                                    {selectedInvoice.order && selectedInvoice.order.order_items && selectedInvoice.order.order_items.length > 0 && (
+                                        <>
+                                            <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse', marginBottom: '10px' }}>
+                                                <thead>
+                                                    <tr style={{ borderBottom: '1px solid #000' }}>
+                                                        <th style={{ textAlign: 'left', padding: '5px 0' }}>Item</th>
+                                                        <th style={{ textAlign: 'right', padding: '5px 0' }}>Rate</th>
+                                                        <th style={{ textAlign: 'center', padding: '5px 0' }}>Qty</th>
+                                                        <th style={{ textAlign: 'right', padding: '5px 0' }}>Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedInvoice.order.order_items.map((item, index) => {
+                                                        const details = item.order_item || {};
+                                                        const name = item.order_item?.name || details.name || details.item_name || 'Item';
+                                                        const rate = Math.round(details.price || details.unit_price || 0);
+                                                        const qty = details.qty || details.quantity || 0;
+                                                        const total = Math.round(item.amount || rate * qty || 0);
+
+                                                        return (
+                                                            <tr key={index}>
+                                                                <td style={{ padding: '2px 0' }}>{name}</td>
+                                                                <td style={{ textAlign: 'right', padding: '2px 0' }}>{rate}</td>
+                                                                <td style={{ textAlign: 'center', padding: '2px 0' }}>{qty}</td>
+                                                                <td style={{ textAlign: 'right', padding: '2px 0' }}>{total}</td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                            <hr style={{ borderTop: '1px dashed #000' }} />
+                                        </>
+                                    )}
+
+                                    <div style={{ fontSize: '12px', marginTop: '10px' }}>
+                                        {selectedInvoice.order ? (
+                                            <>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>Subtotal:</span>
+                                                    <span>{Math.round(selectedInvoice.order.total_price || 0)}</span>
+                                                </div>
+                                                {/* Add Discount/Tax if needed */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', marginTop: '5px' }}>
+                                                    <span>Grand Total:</span>
+                                                    <span>{Math.round(selectedInvoice.order.total_price || 0)}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>Paid Amount:</span>
+                                                    <span>{Math.round(selectedInvoice.order.paid_amount || selectedInvoice.down_payment || 0)}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>Remaining:</span>
+                                                    <span>{Math.round((selectedInvoice.order.total_price || 0) - (selectedInvoice.order.paid_amount || selectedInvoice.down_payment || 0))}</span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                                <span>Advance Paid:</span>
+                                                <span>{selectedInvoice.down_payment || 0}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <p style={{ fontSize: '10px', textAlign: 'center', marginTop: '20px' }}>Thank you for visiting AFOHS Club!</p>
                                 </div>
                             )}
                         </DialogContent>

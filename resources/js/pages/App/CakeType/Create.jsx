@@ -11,7 +11,7 @@ function Create({ cakeType, isEdit, units }) {
     const [open, setOpen] = React.useState(true);
     const { data, setData, post, put, processing, errors } = useForm({
         name: cakeType?.name || '',
-        price: cakeType?.price || '',
+        base_price: cakeType?.base_price || '',
         unit_id: cakeType?.unit_id || '',
         status: cakeType?.status || 'active',
     });
@@ -65,13 +65,13 @@ function Create({ cakeType, isEdit, units }) {
                                     fullWidth
                                     required
                                     type="number"
-                                    value={data.price}
-                                    onChange={(e) => setData('price', e.target.value)}
+                                    value={data.base_price}
+                                    onChange={(e) => setData('base_price', e.target.value)}
                                     InputProps={{
                                         startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
                                     }}
-                                    error={!!errors.price}
-                                    helperText={errors.price}
+                                    error={!!errors.base_price}
+                                    helperText={errors.base_price}
                                 />
                             </Grid>
 

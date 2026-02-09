@@ -76,7 +76,7 @@ function Index({ cakeTypes, filters }) {
                                 cakeTypes.data.map((type) => (
                                     <TableRow key={type.id}>
                                         <TableCell>{type.name}</TableCell>
-                                        <TableCell>Rs {type.price}</TableCell>
+                                        <TableCell>Rs {type.base_price}</TableCell>
                                         <TableCell>
                                             <Chip label={type.status} color={type.status === 'active' ? 'success' : 'default'} size="small" variant="outlined" sx={{ textTransform: 'capitalize' }} />
                                         </TableCell>

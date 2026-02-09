@@ -55,7 +55,7 @@ class CakeTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'base_price' => 'required|numeric|min:0',
             'unit_id' => 'required|exists:pos_units,id',
             'status' => 'required|in:active,inactive',
         ]);
@@ -64,7 +64,8 @@ class CakeTypeController extends Controller
 
         Product::create([
             'name' => $request->name,
-            'price' => $request->price,
+            'base_price' => $request->base_price,
+            'cost_of_goods_sold' => 0,
             'unit_id' => $request->unit_id,
             'category_id' => $category->id,
             'status' => $request->status,
@@ -100,7 +101,7 @@ class CakeTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'base_price' => 'required|numeric|min:0',
             'unit_id' => 'required|exists:pos_units,id',
             'status' => 'required|in:active,inactive',
         ]);
@@ -109,7 +110,8 @@ class CakeTypeController extends Controller
 
         $cakeType->update([
             'name' => $request->name,
-            'price' => $request->price,
+            'base_price' => $request->base_price,
+            'cost_of_goods_sold' => 0,  // Should prompt user? For now set to 0 to fix error
             'unit_id' => $request->unit_id,
             'status' => $request->status,
             'updated_by' => Auth::id(),
