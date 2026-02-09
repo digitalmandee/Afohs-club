@@ -238,6 +238,13 @@ class TransactionController extends Controller
             ->first();
 
         if ($invoice) {
+            // Merge ENT/CTS amounts into usage data since columns don't exist
+            $invoiceData = $invoice->data ?? [];
+            if ($entAmount > 0)
+                $invoiceData['ent_amount'] = $entAmount;
+            if ($ctsAmount > 0)
+                $invoiceData['cts_amount'] = $ctsAmount;
+
             $invoice->update([
                 'status' => 'paid',
                 'payment_date' => now(),
@@ -246,6 +253,7 @@ class TransactionController extends Controller
                 'ent_reason' => $order->ent_reason,
                 'ent_comment' => $order->ent_comment,
                 'cts_comment' => $order->cts_comment,
+                'data' => $invoiceData,  // Save updated JSON
             ]);
 
             // 3. Create Financial Receipt & Transaction (Credits)
