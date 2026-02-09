@@ -122,38 +122,64 @@ export default function SideNav({ open, setOpen }) {
             path: route('tenant.dashboard'),
         },
         {
-            text: 'Orders',
+            text: 'Order Management',
             icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
-            children: [
-                { text: 'Order Management', path: route('order.management') },
-                { text: 'Order History', path: route('order.history') },
-                { text: 'Reservations', path: route('reservations.index') },
-                {
-                    text: 'Table Management',
-                    path: route('table.management'),
-                    icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" style={{ width: 20, height: 20 }} />,
-                },
-            ],
+            path: route('order.management'),
         },
         {
-            text: 'Inventory',
+            text: 'Order History',
+            icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
+            path: route('order.history'),
+        },
+        {
+            text: 'Reservations',
+            icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
+            path: route('reservations.index'),
+        },
+        {
+            text: 'Table Management',
+            path: route('table.management'),
+            icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" style={{ width: 20, height: 20 }} />,
+        },
+        {
+            text: 'Products / Menu',
             icon: <InventoryIcon />,
-            children: [
-                { text: 'Products / Menu', path: route('inventory.index') },
-                { text: 'Categories', path: route('inventory.category') },
-                { text: 'Sub Categories', path: route('sub-categories.index') },
-                { text: 'Ingredients', path: route('ingredients.index') },
-                { text: 'Units', path: route('units.index') },
-                { text: 'Manufacturers', path: route('manufacturers.index') },
-            ],
+            path: route('inventory.index'),
         },
         {
-            text: 'Cake Booking',
+            text: 'Categories',
+            icon: <CategoryIcon />,
+            path: route('inventory.category'),
+        },
+        {
+            text: 'Sub Categories',
+            icon: <CategoryIcon />,
+            path: route('sub-categories.index'),
+        },
+        {
+            text: 'Ingredients',
+            icon: <InventoryIcon />,
+            path: route('ingredients.index'),
+        },
+        {
+            text: 'Units',
+            icon: <ScaleIcon />,
+            path: route('units.index'),
+        },
+        {
+            text: 'Manufacturers',
+            icon: <InventoryIcon />,
+            path: route('manufacturers.index'),
+        },
+        {
+            text: 'Cake Bookings',
             icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />,
-            children: [
-                { text: 'Bookings', path: route('cake-bookings.index') },
-                { text: 'Cake Types', path: route('cake-types.index') },
-            ],
+            path: route('cake-bookings.index'),
+        },
+        {
+            text: 'Cake Types',
+            icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />,
+            path: route('cake-types.index'),
         },
         {
             text: 'Kitchen',

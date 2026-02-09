@@ -1774,20 +1774,19 @@ class OrderController extends Controller
      */
     public function orderHistory(Request $request)
     {
-        $query = Order::where('created_by', Auth::id())
-            ->with([
-                'table:id,table_no',
-                'tenant:id,name',  // ✅ Load Tenant Name
-                'orderItems:id,order_id,order_item,status',
-                'member:id,member_type_id,full_name,membership_no',
-                'member.memberType:id,name',
-                'customer:id,name,customer_no,guest_type_id',
-                'customer.guestType:id,name',
-                'employee:id,employee_id,name',
-                'cashier:id,name',
-                'user:id,name',  // Order Creator
-                'waiter:id,name',
-            ])
+        $query = Order::with([
+            'table:id,table_no',
+            'tenant:id,name',  // ✅ Load Tenant Name
+            'orderItems:id,order_id,order_item,status',
+            'member:id,member_type_id,full_name,membership_no',
+            'member.memberType:id,name',
+            'customer:id,name,customer_no,guest_type_id',
+            'customer.guestType:id,name',
+            'employee:id,employee_id,name',
+            'cashier:id,name',
+            'user:id,name',  // Order Creator
+            'waiter:id,name',
+        ])
             // Load invoice ENT/CTS data via subquery (since relationship is via JSON column)
             ->addSelect([
                 'orders.*',

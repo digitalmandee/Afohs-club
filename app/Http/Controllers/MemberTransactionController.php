@@ -1321,12 +1321,45 @@ class MemberTransactionController extends Controller
         $invoice = FinancialInvoice::with(['items.transactions', 'member', 'corporateMember', 'customer'])
             ->findOrFail($id);
 
+        $allTransactionTypes = \App\Models\TransactionType::all();
+
         // Calculate paid_amount for items (same logic as getMemberTransactions)
-        $invoice->items->each(function ($item) {
+        $invoice->items->each(function ($item) use ($allTransactionTypes) {
             $item->paid_amount = $item
                 ->transactions
                 ->where('type', 'credit')
                 ->sum('amount');
+
+            // Fix for Fee Type ID mismatch: Map generic category IDs back to specific Transaction Type ID
+            // This is needed because 'store' saves the Category ID (e.g. 4) instead of the specific Transaction Type ID
+            $categoryIds = [
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_FINANCIAL_CHARGE,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_APPLIED_MEMBER
+            ];
+
+            if (in_array($item->fee_type, $categoryIds)) {
+                // Try to find matching Transaction Type by Category AND Description starting with Name
+                $matchedType = $allTransactionTypes->filter(function ($type) use ($item) {
+                    if ($type->type != $item->fee_type)
+                        return false;
+                    return \Illuminate\Support\Str::startsWith($item->description, $type->name);
+                })->first();
+
+                if ($matchedType) {
+                    $item->fee_type = $matchedType->id;
+                } else {
+                    // Fallback to the first type of this category to ensure SOMETHING is selected in the dropdown
+                    // rather than an invisible category ID
+                    $defaultType = $allTransactionTypes->where('type', $item->fee_type)->first();
+                    if ($defaultType) {
+                        $item->fee_type = $defaultType->id;
+                    }
+                }
+            }
         });
 
         // Attach Ledger Balance to the relevant member entity
@@ -1345,17 +1378,19 @@ class MemberTransactionController extends Controller
             $memberEntity->ledger_balance = $debits - $credits;
         }
 
-        // Also attach member info to props if needed, but Create.jsx might fetch it.
-        // Deep linking requires us to pass initial data so we don't need to search.
-
         return Inertia::render('App/Admin/Membership/Transactions/Create', [
             'invoice' => $invoice,
             'subscriptionTypes' => \App\Models\SubscriptionType::all(),
             'subscriptionCategories' => \App\Models\SubscriptionCategory::where('status', 'active')->with('subscriptionType')->get(),
-            'membershipCharges' => \App\Models\FinancialChargeType::all(),  // Type column missing, passing all
-            'maintenanceCharges' => \App\Models\FinancialChargeType::all(),
-            'subscriptionCharges' => \App\Models\FinancialChargeType::all(),
-            'otherCharges' => \App\Models\FinancialChargeType::all(),
+            'membershipCharges' => $allTransactionTypes->where('type', \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP)->values(),
+            'maintenanceCharges' => $allTransactionTypes->where('type', \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE)->values(),
+            'subscriptionCharges' => $allTransactionTypes->where('type', \App\Constants\AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION)->values(),
+            'otherCharges' => $allTransactionTypes->whereNotIn('type', [
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION,
+                \App\Constants\AppConstants::TRANSACTION_TYPE_ID_FINANCIAL_CHARGE
+            ])->values(),
             'financialChargeTypes' => \App\Models\FinancialChargeType::all(),
         ]);
     }
@@ -1455,6 +1490,52 @@ class MemberTransactionController extends Controller
             DB::rollBack();
             Log::error('Payment failed: ' . $e->getMessage());
             return response()->json(['error' => 'Payment failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // Edit Route (Re-uses pay view logic)
+    public function edit($id)
+    {
+        return $this->payInvoiceView($id);
+    }
+
+    // Update Route (Placeholder for future implementation)
+    public function update(Request $request, $id)
+    {
+        // TODO: Implement update logic
+        return back()->with('info', 'Update functionality not fully implemented.');
+    }
+
+    // Destroy Route
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $invoice = FinancialInvoice::findOrFail($id);
+
+            // Void associated transactions/ledger entries linked to invoice items
+            $itemIds = $invoice->items()->pluck('id');
+
+            if ($itemIds->isNotEmpty()) {
+                \App\Models\Transaction::whereIn('reference_id', $itemIds)
+                    ->where('reference_type', \App\Models\FinancialInvoiceItem::class)
+                    ->delete();
+            }
+
+            // Delete items
+            $invoice->items()->delete();
+
+            // Delete invoice
+            $invoice->delete();
+
+            DB::commit();
+
+            return redirect()->route('finance.transaction')->with('success', 'Invoice deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete invoice: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete invoice.');
         }
     }
 }

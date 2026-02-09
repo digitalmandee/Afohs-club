@@ -462,49 +462,92 @@ const Dashboard = ({ orders, filters, totals }) => {
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Amount</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell> {/* Renamed from Method/etc or added */}
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Location</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {orders?.data?.length > 0 ? (
-                                orders.data.map((order) => (
-                                    <TableRow key={order.id} hover>
-                                        <TableCell>#{order.id}</TableCell>
-                                        <TableCell>{order.paid_at ? new Date(order.paid_at).toLocaleString() : '-'}</TableCell>
-                                        <TableCell>{formatOrderType(order.order_type)}</TableCell>
-                                        <TableCell>{getClientName(order)}</TableCell>
-                                        <TableCell>{order.table?.table_no || '-'}</TableCell>
-                                        <TableCell>Rs. {order.total_price?.toLocaleString()}</TableCell>
-                                        <TableCell>Rs. {order.paid_amount?.toLocaleString()}</TableCell>
-                                        <TableCell>
-                                            <Chip label={formatPaymentMethod(order.payment_method)} size="small" color="primary" variant="outlined" />
-                                        </TableCell>
-                                        <TableCell>{order.cashier?.name || '-'}</TableCell>
-                                        <TableCell>{order.tenant?.name || '-'}</TableCell>
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                <Tooltip title="View Details">
-                                                    <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
-                                                        <VisibilityIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Print Receipt">
-                                                    <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
-                                                        <PrintIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </Box>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
+                                orders.data.map((order) => {
+                                    // Parse ENT/CTS from comments - this is a bit hacky if not in separate columns,
+                                    // but we just added them to DB. Let's assume they might be in comments OR new columns if we reload.
+                                    // Ideally, the backend should return these values.
+                                    // For now, let's extract value from comment string if columns are null (backward comp)
+                                    // OR better, we know we added columns ent_reason, ent_comment etc.
+                                    // Use regex to extract value from brackets [ENT... Value: 100] if needed or use logic similar to controller.
+
+                                    // Actually, we should calculate balance: Total - Paid - ENT_Value - CTS_Value
+                                    // We need to parse the value from the new comment format IF the new columns aren't populous or if we just want to display what was saved.
+                                    // The controller logic: "[ENT Items: ... - Value: 123.00]"
+
+                                    const getEntValue = (o) => {
+                                        if (o.ent_comment) {
+                                            const match = o.ent_comment.match(/Value:\s*([\d,]+\.?\d*)/);
+                                            return match ? parseFloat(match[1].replace(/,/g, '')) : 0;
+                                        }
+                                        return 0;
+                                    };
+                                    const getCtsValue = (o) => {
+                                        if (o.cts_comment) {
+                                            const match = o.cts_comment.match(/Partial CTS Amount:\s*([\d,]+\.?\d*)/);
+                                            // If full CTS, comment is just comment, amount is total - paid (usually 0 if full cts)
+                                            // But wait, if full CTS, paid_amount is 0?
+                                            // Let's rely on the fact that Balance = Total - Paid - ENT - CTS.
+                                            // If balance is 0, then we are good.
+                                            // Let's just try to parse what we can.
+                                            if (match) return parseFloat(match[1].replace(/,/g, ''));
+                                            // If method is CTS and no partial amount, maybe full amount?
+                                            // best to leave 0 if not explicit.
+                                            return 0;
+                                        }
+                                        return 0;
+                                    };
+
+                                    const entVal = getEntValue(order);
+                                    const ctsVal = getCtsValue(order);
+                                    // Balance = Total - Paid - ENT - CTS
+                                    const balance = (order.total_price || 0) - (order.paid_amount || 0) - entVal - ctsVal;
+
+                                    return (
+                                        <TableRow key={order.id} hover>
+                                            <TableCell>#{order.id}</TableCell>
+                                            <TableCell>{order.paid_at ? new Date(order.paid_at).toLocaleString() : '-'}</TableCell>
+                                            <TableCell>{formatOrderType(order.order_type)}</TableCell>
+                                            <TableCell>{getClientName(order)}</TableCell>
+                                            <TableCell>{order.table?.table_no || '-'}</TableCell>
+                                            <TableCell>Rs. {order.total_price?.toLocaleString()}</TableCell>
+                                            <TableCell>Rs. {order.paid_amount?.toLocaleString()}</TableCell>
+                                            <TableCell sx={{ color: balance > 5 ? 'error.main' : 'success.main', fontWeight: 'bold' }}>Rs. {Math.max(0, balance).toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                <Chip label={formatPaymentMethod(order.payment_method)} size="small" color="primary" variant="outlined" />
+                                            </TableCell>
+                                            <TableCell>{entVal > 0 ? `Rs. ${entVal.toLocaleString()}` : '-'}</TableCell>
+                                            <TableCell>{ctsVal > 0 ? `Rs. ${ctsVal.toLocaleString()}` : '-'}</TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                    <Tooltip title="View Details">
+                                                        <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
+                                                            <VisibilityIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Print Receipt">
+                                                        <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
+                                                            <PrintIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={10} align="center">
+                                    <TableCell colSpan={12} align="center">
                                         No transactions found
                                     </TableCell>
                                 </TableRow>
@@ -570,6 +613,28 @@ const Dashboard = ({ orders, filters, totals }) => {
                                             Rs. {selectedOrder.total_price?.toLocaleString()}
                                         </Typography>
                                     </Box>
+                                    {/* Additional Details for ENT/CTS in Modal */}
+                                    {selectedOrder.ent_comment && (
+                                        <Box sx={{ gridColumn: 'span 2' }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                ENT Details
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ backgroundColor: '#f5f5f5', p: 1, borderRadius: 1 }}>
+                                                {selectedOrder.ent_comment}
+                                            </Typography>
+                                        </Box>
+                                    )}
+                                    {selectedOrder.cts_comment && (
+                                        <Box sx={{ gridColumn: 'span 2' }}>
+                                            <Typography variant="caption" color="text.secondary">
+                                                CTS Details
+                                            </Typography>
+                                            <Typography variant="body2" sx={{ backgroundColor: '#f5f5f5', p: 1, borderRadius: 1 }}>
+                                                {selectedOrder.cts_comment}
+                                            </Typography>
+                                        </Box>
+                                    )}
+
                                     {selectedOrder.table && (
                                         <Box>
                                             <Typography variant="caption" color="text.secondary">
