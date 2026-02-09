@@ -83,23 +83,66 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         // Exclude canceled items
         const activeItems = orderItems.filter((item) => item.status !== 'cancelled');
 
-        const subtotal = Math.round(activeItems.reduce((acc, item) => acc + Number(item.order_item.total_price || 0), 0));
-
-        const discount = Number(selectedCard.discount) || 0;
-        const discountedSubtotal = subtotal - discount;
-
-        // Now apply tax on the discounted amount
+        let subtotal = 0;
+        let totalval = 0;
+        let totalTax = 0;
         const taxRate = Number(selectedCard.tax) || 0;
-        const taxAmount = Math.round(discountedSubtotal * taxRate);
 
-        // Final total
-        const total = Math.round(discountedSubtotal + taxAmount);
+        activeItems.forEach((item) => {
+            const itemPrice = Number(item.order_item.price || 0);
+            const itemQty = Number(item.order_item.quantity || 1);
+            const itemTotal = itemPrice * itemQty;
+            const itemDiscount = Number(item.order_item.discount_amount || 0);
+            const netItemAmount = itemTotal - itemDiscount;
+
+            // Check is_taxable from the order_item object (saved from OrderMenu)
+            // If strictly not present, assume false or check product logic if available.
+            // Better to rely on the saved flag.
+            const isTaxable = item.order_item.is_taxable === true || item.order_item.is_taxable === 'true' || item.order_item.is_taxable === 1;
+
+            const itemTax = isTaxable ? netItemAmount * taxRate : 0;
+
+            subtotal += itemTotal;
+            totalTax += itemTax;
+        });
+
+        // Global discount (from Order card) - typically applied before tax?
+        // Logic in OrderMenu applies per-item discount.
+        // Here `selectedCard.discount` seems to be an order-level discount.
+        // If order-level discount exists, it complicates tax if it's not distributed.
+        // However, the previous logic: `discountedSubtotal = subtotal - discount`.
+        // If we have a global discount, we should probably distribute it or deduct it from taxable base?
+        // For simplicity and consistency with previous turn, we'll assume the tax calculation from items is primary.
+        // But wait, `selectedCard.discount` might be the SUM of item discounts?
+        // line 111: `const discount = Number(selectedCard.discount) || 0;`
+        // If it's a fixed value, we subtract it.
+
+        // Let's stick to the previous logic structure but refine tax:
+        // Use the per-item tax calculation if possible.
+        // But if `selectedCard.discount` is a global fixed value, we might calculate tax on (Subtotal - GlobalDiscount).
+        // If `is_taxable` varies, we can't easily apply global discount to tax base without distributing it.
+
+        // RE-EVALUATION:
+        // The backend `update` calculates tax per item (netAmount * taxRate).
+        // `netAmount` is `subTotal - itemDiscountAmount`.
+        // So global `discount` field on Order might just be a cached sum?
+        // If `selectedCard.discount` is editable in this modal? No, it's not editable in the modal, only `tax_rate` is.
+        // Wait, `EditModal` might allow editing items.
+
+        const finalSubtotal = Math.round(subtotal);
+        const finalDiscount = Number(selectedCard.discount) || 0;
+
+        // Recalculate tax:
+        // Since we can edit items in `EditModal`, we should rely on the item-level tax summation.
+        // `totalTax` calculated above respects `is_taxable`.
+
+        const total = Math.round(finalSubtotal - finalDiscount + totalTax);
 
         const payload = {
             updated_items: updatedItems,
             new_items: newItems,
-            subtotal,
-            discount,
+            subtotal: finalSubtotal,
+            discount: finalDiscount,
             tax_rate: taxRate,
             total_price: total,
             status,
@@ -355,6 +398,14 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         );
     };
 
+    const formatTime = (timeStr) => {
+        if (!timeStr) return '';
+        if (timeStr.match(/AM|PM/i)) return timeStr;
+        const date = new Date(`2000-01-01 ${timeStr}`);
+        if (isNaN(date.getTime())) return timeStr;
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
@@ -426,6 +477,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                         <MenuItem value="all">All Types</MenuItem>
                                         <MenuItem value="member">Member</MenuItem>
                                         <MenuItem value="corporate">Corporate</MenuItem>
+                                        <MenuItem value="employee">Employee</MenuItem>
                                         <MenuItem value="guest">Guest</MenuItem>
                                     </Select>
                                 </FormControl>
@@ -436,6 +488,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                 <Autocomplete
                                     freeSolo
                                     disablePortal
+                                    filterOptions={(x) => x}
                                     options={suggestions}
                                     getOptionLabel={(option) => option.value || option}
                                     inputValue={searchName}
@@ -479,6 +532,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                 <Autocomplete
                                     freeSolo
                                     disablePortal
+                                    filterOptions={(x) => x}
                                     options={membershipSuggestions}
                                     getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
                                     inputValue={searchMembership}
@@ -588,6 +642,9 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                         ({card.order_type})
                                                     </Typography>
                                                 </Typography>
+                                                <Typography sx={{ mb: 2, fontSize: '14px', opacity: 0.9 }}>
+                                                    Location: <strong>{card.tenant?.name || 'Unknown'}</strong>
+                                                </Typography>
                                                 <Box
                                                     sx={{
                                                         display: 'flex',
@@ -601,11 +658,11 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                 >
                                                     <AccessTime fontSize="small" sx={{ fontSize: 16, color: '#fff', mr: 0.5 }} />
                                                     <Typography variant="caption" sx={{ color: '#fff' }}>
-                                                        {card.start_time}
+                                                        {formatTime(card.start_time)}
                                                     </Typography>
                                                 </Box>
                                                 <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                                                    <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member?.member_type?.name}</Typography>
+                                                    <Typography sx={{ fontWeight: 500, mb: 1, fontSize: '18px' }}>{card.member ? 'Member' : card.customer ? 'Guest' : card.employee ? 'Employee' : 'Guest'}</Typography>
                                                     <Box display="flex">
                                                         <Avatar sx={{ bgcolor: '#1976D2', width: 36, height: 36, fontSize: 14, fontWeight: 500, mr: 1 }}>{card.table?.table_no}</Avatar>
                                                         <Avatar sx={{ bgcolor: '#E3E3E3', width: 36, height: 36, color: '#666' }}>
@@ -639,6 +696,29 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                         </Typography>
                                                     </ListItem>
                                                 ))}
+
+                                                {/* Totals Section */}
+                                                <ListItem sx={{ py: 1, px: 2, display: 'flex', justifyContent: 'space-between', bgcolor: '#f5f5f5' }}>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        Discount:
+                                                    </Typography>
+                                                    <Typography variant="body2">{Number(card.discount || 0).toFixed(2)}</Typography>
+                                                </ListItem>
+                                                <ListItem sx={{ py: 1, px: 2, display: 'flex', justifyContent: 'space-between', bgcolor: '#e0e0e0' }}>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        Total:
+                                                    </Typography>
+                                                    <Typography variant="body2" fontWeight="bold">
+                                                        {Number(card.total_price || 0).toLocaleString()}
+                                                    </Typography>
+                                                </ListItem>
+                                                {card.waiter && (
+                                                    <ListItem sx={{ py: 0.5, px: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            Waiter: {card.waiter.name}
+                                                        </Typography>
+                                                    </ListItem>
+                                                )}
 
                                                 {/* Show More */}
                                                 {card.order_items.length > 4 && (

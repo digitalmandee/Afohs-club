@@ -698,6 +698,9 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                         <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
                                                             #{order?.id}
                                                         </Typography>
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1, fontSize: '12px', fontWeight: 'bold' }}>
+                                                            {order.tenant?.name || 'Unknown'}
+                                                        </Typography>
 
                                                         <Chip
                                                             label={

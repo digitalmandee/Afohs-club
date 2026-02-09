@@ -19,6 +19,7 @@ const UnitsIndex = ({ units, filters }) => {
     const [editingUnit, setEditingUnit] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
+        code: '',
         status: 'active',
     });
 
@@ -35,10 +36,10 @@ const UnitsIndex = ({ units, filters }) => {
     const handleOpenModal = (unit = null) => {
         if (unit) {
             setEditingUnit(unit);
-            setFormData({ name: unit.name, status: unit.status });
+            setFormData({ name: unit.name, code: unit.code, status: unit.status });
         } else {
             setEditingUnit(null);
-            setFormData({ name: '', status: 'active' });
+            setFormData({ name: '', code: '', status: 'active' });
         }
         setModalOpen(true);
     };
@@ -143,6 +144,7 @@ const UnitsIndex = ({ units, filters }) => {
                         <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Code</TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
@@ -155,6 +157,7 @@ const UnitsIndex = ({ units, filters }) => {
                                 units.data.map((unit) => (
                                     <TableRow key={unit.id} hover>
                                         <TableCell>{unit.name}</TableCell>
+                                        <TableCell>{unit.code}</TableCell>
                                         <TableCell>
                                             <Chip label={unit.status} size="small" color={unit.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
                                         </TableCell>
@@ -190,7 +193,8 @@ const UnitsIndex = ({ units, filters }) => {
                 <DialogTitle>{editingUnit ? 'Edit Unit' : 'Add New Unit'}</DialogTitle>
                 <DialogContent>
                     <Box component="form" sx={{ mt: 1 }}>
-                        <TextField fullWidth label="Unit Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} margin="normal" autoFocus />
+                        <TextField fullWidth label="Unit Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} margin="normal" autoFocus required />
+                        <TextField fullWidth label="Unit Code" value={formData.code} onChange={(e) => setFormData({ ...formData, code: e.target.value })} margin="normal" required />
                         <FormControl fullWidth margin="normal">
                             <InputLabel>Status</InputLabel>
                             <Select value={formData.status} label="Status" onChange={(e) => setFormData({ ...formData, status: e.target.value })}>

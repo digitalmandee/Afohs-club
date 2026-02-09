@@ -4,13 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
-class Order extends Model
+class Order extends BaseModel
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, SoftDeletes;
 
     // protected $dates = ['order_time' => 'datetime:Y-m-d\TH:i:s\Z'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     protected $fillable = [
         'reservation_id',
@@ -58,6 +64,9 @@ class Order extends Model
         'tenant_id',
         'deducted_in_payslip_id',
         'deducted_at',
+        'created_by',
+        'updated_by',
+        'deleted_by',
     ];
 
     public function orderItems()
@@ -90,11 +99,16 @@ class Order extends Model
         return $this->belongsTo(Employee::class, 'waiter_id', 'id');
     }
 
-    // public function invoice()
+    /**
+     * Note: Order-Invoice relationship is via JSON column (data->order_id).
+     * Use whereExists queries when filtering by invoice properties.
+     * This relationship is for reference only and may not work with eager loading.
+     */
+    // public function invoices()
     // {
-    //     return $this->hasOne(FinancialInvoice::class)->whereJsonContains('data->order_id', $this->id);
+    //     return $this->hasMany(FinancialInvoice::class, 'id', 'id')
+    //         ->whereRaw("JSON_EXTRACT(data, '$.order_id') = ?", [$this->id]);
     // }
-
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id', 'id');
@@ -113,5 +127,10 @@ class Order extends Model
     public function roomBooking()
     {
         return $this->belongsTo(RoomBooking::class, 'room_booking_id');
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 }

@@ -122,9 +122,12 @@ Route::group([
 
         // Inventory Category
         Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');
+        Route::get('/inventory/category/trashed', [CategoryController::class, 'trashed'])->name('category.trashed');
         Route::post('/inventory/category', [CategoryController::class, 'store'])->name('inventory.category.store');
         Route::put('/inventory/category/{category}/update', [CategoryController::class, 'update'])->name('category.update');
+        Route::post('/inventory/category/{id}/restore', [CategoryController::class, 'restore'])->name('category.restore');
         Route::delete('/inventory/category/{category}', [CategoryController::class, 'destroy'])->name('category.destroy');
+        Route::delete('/inventory/category/{id}/force-delete', [CategoryController::class, 'forceDelete'])->name('category.force-delete');
 
         // Ingredients Management
         Route::get('/inventory/ingredients', [IngredientController::class, 'index'])->name('ingredients.index');
@@ -150,7 +153,31 @@ Route::group([
         Route::delete('/inventory/units/{id}', [App\Http\Controllers\PosUnitController::class, 'destroy'])->name('units.destroy');
         Route::delete('/inventory/units/{id}/force-delete', [App\Http\Controllers\PosUnitController::class, 'forceDelete'])->name('units.force-delete');
 
+        // Manufacturers
+        Route::get('/inventory/manufacturers', [App\Http\Controllers\PosManufacturerController::class, 'index'])->name('manufacturers.index');
+        Route::get('/inventory/manufacturers/trashed', [App\Http\Controllers\PosManufacturerController::class, 'trashed'])->name('manufacturers.trashed');
+        Route::post('/inventory/manufacturers', [App\Http\Controllers\PosManufacturerController::class, 'store'])->name('manufacturers.store');
+        Route::put('/inventory/manufacturers/{id}', [App\Http\Controllers\PosManufacturerController::class, 'update'])->name('manufacturers.update');
+        Route::post('/inventory/manufacturers/{id}/restore', [App\Http\Controllers\PosManufacturerController::class, 'restore'])->name('manufacturers.restore');
+        Route::delete('/inventory/manufacturers/{id}', [App\Http\Controllers\PosManufacturerController::class, 'destroy'])->name('manufacturers.destroy');
+        Route::delete('/inventory/manufacturers/{id}/force-delete', [App\Http\Controllers\PosManufacturerController::class, 'forceDelete'])->name('manufacturers.force-delete');
+
+        // Sub Categories
+        Route::get('/inventory/sub-categories', [App\Http\Controllers\PosSubCategoryController::class, 'index'])->name('sub-categories.index');
+        Route::get('/inventory/sub-categories/trashed', [App\Http\Controllers\PosSubCategoryController::class, 'trashed'])->name('sub-categories.trashed');
+        Route::post('/inventory/sub-categories', [App\Http\Controllers\PosSubCategoryController::class, 'store'])->name('sub-categories.store');
+        Route::put('/inventory/sub-categories/{id}', [App\Http\Controllers\PosSubCategoryController::class, 'update'])->name('sub-categories.update');
+        Route::post('/inventory/sub-categories/{id}/restore', [App\Http\Controllers\PosSubCategoryController::class, 'restore'])->name('sub-categories.restore');
+        Route::delete('/inventory/sub-categories/{id}', [App\Http\Controllers\PosSubCategoryController::class, 'destroy'])->name('sub-categories.destroy');
+        Route::delete('/inventory/sub-categories/{id}/force-delete', [App\Http\Controllers\PosSubCategoryController::class, 'forceDelete'])->name('sub-categories.force-delete');
+
         Route::get('/inventory/categories', [CategoryController::class, 'getCategories'])->name('inventory.categories');
+
+        // Product Trash Routes
+        Route::get('/inventory/products/trashed', [InventoryController::class, 'trashed'])->name('inventory.trashed');
+        Route::post('/inventory/products/{id}/restore', [InventoryController::class, 'restore'])->name('inventory.restore');
+        Route::delete('/inventory/products/{id}/force-delete', [InventoryController::class, 'forceDelete'])->name('inventory.force-delete');
+
         Route::get('/inventory/products', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/products/add', function () {
             return Inertia::render('App/Inventory/Product');
@@ -162,7 +189,16 @@ Route::group([
         // Get Single Product
         Route::get('/inventory/product/{id}', [InventoryController::class, 'getProduct'])->name('product.single');
         // API route for product filtering
+        Route::get('/api/inventory/sub-categories/{category_id}', [App\Http\Controllers\PosSubCategoryController::class, 'getByCategory'])->name('api.sub-categories.by-category');
+        Route::get('/api/inventory/manufacturers', [App\Http\Controllers\PosManufacturerController::class, 'getManufacturers'])->name('api.manufacturers.list');
+        Route::get('/api/inventory/units', [App\Http\Controllers\PosUnitController::class, 'getUnits'])->name('api.units.list');
         Route::get('/api/inventory/products/filter', [InventoryController::class, 'filter'])->name('api.products.filter');
+
+        // POS Shifts
+        Route::get('/pos-shifts/history', [App\Http\Controllers\PosShiftController::class, 'history'])->name('pos-shifts.history');
+        Route::get('/pos-shifts/status', [App\Http\Controllers\PosShiftController::class, 'status'])->name('pos-shifts.status');
+        Route::post('/pos-shifts/start', [App\Http\Controllers\PosShiftController::class, 'start'])->name('pos-shifts.start');
+        Route::post('/pos-shifts/end', [App\Http\Controllers\PosShiftController::class, 'end'])->name('pos-shifts.end');
 
         Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.index');
         Route::post('/kitchen/{order}/update-all', [KitchenController::class, 'updateAll'])->name('kitchen.update-all');
@@ -173,6 +209,16 @@ Route::group([
         Route::get('/transaction/history', [TransactionController::class, 'transactionHistory'])->name('transaction.history');
         Route::get('/payment-order-data/{invoiceId}', [TransactionController::class, 'PaymentOrderData'])->name('transaction.invoice');
         Route::post('/order-payment', [TransactionController::class, 'OrderPayment'])->name('order.payment');
+
+        // POS Cake Bookings
+        Route::resource('cake-bookings', \App\Http\Controllers\PosCakeBookingController::class);
+        Route::get('api/cake-bookings/search', [\App\Http\Controllers\PosCakeBookingController::class, 'search'])->name('api.cake-bookings.search');
+        Route::get('api/members/{id}/family', [\App\Http\Controllers\PosCakeBookingController::class, 'getFamilyMembers'])->name('api.members.family');
+        Route::get('cake-bookings/{id}/print', [\App\Http\Controllers\PosCakeBookingController::class, 'printInvoice'])->name('cake-bookings.print');
+        Route::get('cake-types/trashed', [App\Http\Controllers\CakeTypeController::class, 'trashed'])->name('cake-types.trashed');
+        Route::post('cake-types/{id}/restore', [App\Http\Controllers\CakeTypeController::class, 'restore'])->name('cake-types.restore');
+        Route::delete('cake-types/{id}/force-delete', [App\Http\Controllers\CakeTypeController::class, 'forceDelete'])->name('cake-types.force-delete');
+        Route::resource('cake-types', App\Http\Controllers\CakeTypeController::class);
 
         // Kitchen Dashboard
         // Route::get('/kitchens', [KitchenController::class, 'indexPage'])->name('kitchens.index');

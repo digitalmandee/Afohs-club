@@ -25,14 +25,21 @@ class PosUnitController extends Controller
         ]);
     }
 
+    public function getUnits()
+    {
+        $units = PosUnit::where('tenant_id', tenant()->id)->where('status', 'active')->select('id', 'name')->get();
+        return response()->json(['units' => $units]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|unique:pos_units,name|max:50',
+            'name' => 'required|string|max:50',
+            'code' => 'required|string|max:20',
             'status' => 'required|in:active,inactive',
         ]);
 
-        PosUnit::create($request->merge(['created_by' => Auth::id()])->all());
+        PosUnit::create($request->merge(['created_by' => Auth::id(), 'tenant_id' => tenant()->id])->all());
 
         return redirect()->back()->with('success', 'Unit created successfully.');
     }
@@ -42,11 +49,12 @@ class PosUnitController extends Controller
         $unit = PosUnit::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:50|unique:pos_units,name,' . $unit->id,
+            'name' => 'required|string|max:50',
+            'code' => 'required|string|max:20',
             'status' => 'required|in:active,inactive',
         ]);
 
-        $unit->update($request->merge(['updated_by' => Auth::id()])->all());
+        $unit->update($request->merge(['updated_by' => Auth::id(), 'tenant_id' => tenant()->id])->all());
 
         return redirect()->back()->with('success', 'Unit updated successfully.');
     }

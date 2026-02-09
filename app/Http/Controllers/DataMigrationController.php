@@ -3185,4 +3185,228 @@ class DataMigrationController extends Controller
             ], 500);
         }
     }
+
+    public function migrateFnB(Request $request)
+    {
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+        // Truncate tables (DDL causes implicit commit, so must be outside transaction)
+        \App\Models\Category::truncate();
+        \App\Models\PosSubCategory::truncate();
+        \App\Models\PosManufacturer::truncate();
+        \App\Models\PosUnit::truncate();
+        \App\Models\ProductIngredient::truncate();
+        \App\Models\ProductVariantValue::truncate();
+        \App\Models\ProductVariant::truncate();
+        \App\Models\Product::truncate();
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        try {
+            DB::beginTransaction();
+
+            // Migrate Categories and get map
+            $catResult = $this->migrateCategories();
+            $catMap = $catResult['map'];
+
+            // Migrate SubCategories (needs catMap)
+            $subResult = $this->migrateSubCategories($catMap);
+            $subMap = $subResult['map'];
+
+            // Migrate Manufacturers
+            $manResult = $this->migrateManufacturers();
+            $manMap = $manResult['map'];
+
+            // Migrate Units
+            $unitResult = $this->migrateUnits();
+            $unitMap = $unitResult['map'];
+
+            // Migrate Products (needs all maps)
+            $prodCount = $this->migrateProducts($catMap, $subMap, $manMap, $unitMap);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'results' => [
+                    'categories' => $catResult['count'],
+                    'sub_categories' => $subResult['count'],
+                    'manufacturers' => $manResult['count'],
+                    'units' => $unitResult['count'],
+                    'products' => $prodCount,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('FnB Migration Error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function migrateUnits()
+    {
+        // Try mapping from 'fnb_measurement_units'
+        $oldUnits = DB::connection('old_afohs')->table('fnb_measurement_units')->get();
+        $count = 0;
+        $map = [];
+
+        foreach ($oldUnits as $oldUnit) {
+            $newUnit = \App\Models\PosUnit::create([
+                'name' => $oldUnit->desc,
+                'code' => $oldUnit->code,
+                'status' => $oldUnit->status == 1 ? 'active' : 'inactive',
+                'created_by' => $oldUnit->created_by,
+                'updated_by' => $oldUnit->updated_by,
+                'created_at' => $oldUnit->created_at,
+                'updated_at' => $oldUnit->updated_at,
+            ]);
+
+            $map[$oldUnit->id] = $newUnit->id;
+            $count++;
+        }
+        return ['count' => $count, 'map' => $map];
+    }
+
+    private function migrateCategories()
+    {
+        $oldCategories = DB::connection('old_afohs')->table('fnb_item_categories')->get();
+        $count = 0;
+        $map = [];
+
+        foreach ($oldCategories as $oldCat) {
+            $newCat = \App\Models\Category::create([
+                'name' => $oldCat->desc,
+                'status' => $oldCat->status == 1 ? 'active' : 'inactive',  // Map to enum
+                'created_by' => $oldCat->created_by,
+                'updated_by' => $oldCat->updated_by,
+                'created_at' => $oldCat->created_at,
+                'updated_at' => $oldCat->updated_at,
+            ]);
+
+            $map[$oldCat->id] = $newCat->id;
+            $count++;
+        }
+        return ['count' => $count, 'map' => $map];
+    }
+
+    private function migrateSubCategories($catMap)
+    {
+        $oldSubCats = DB::connection('old_afohs')->table('fnb_item_sub_categories')->get();
+        $count = 0;
+        $map = [];
+
+        if ($oldSubCats->isNotEmpty()) {
+            // Diagnostic passed: 'item_category' exists
+        }
+
+        foreach ($oldSubCats as $oldSub) {
+            // Find new Category ID
+            $newCatId = $catMap[$oldSub->item_category] ?? null;
+
+            if ($newCatId) {
+                $newSub = \App\Models\PosSubCategory::create([
+                    'category_id' => $newCatId,
+                    'name' => $oldSub->desc,
+                    'status' => $oldSub->status == 1 ? 'active' : 'inactive',  // Map to enum
+                    'created_by' => $oldSub->created_by,
+                    'updated_by' => $oldSub->updated_by,
+                    'created_at' => $oldSub->created_at,
+                    'updated_at' => $oldSub->updated_at,
+                ]);
+
+                $map[$oldSub->id] = $newSub->id;
+                $count++;
+            }
+        }
+        return ['count' => $count, 'map' => $map];
+    }
+
+    private function migrateManufacturers()
+    {
+        $oldMans = DB::connection('old_afohs')->table('fnb_item_manufacturers')->get();
+        $count = 0;
+        $map = [];
+
+        foreach ($oldMans as $oldMan) {
+            $newMan = \App\Models\PosManufacturer::create([
+                'name' => $oldMan->desc,
+                'status' => $oldMan->status == 1 ? 'active' : 'inactive',  // Map to enum
+                'created_by' => $oldMan->created_by,
+                'updated_by' => $oldMan->updated_by,
+                'created_at' => $oldMan->created_at,
+                'updated_at' => $oldMan->updated_at,
+            ]);
+
+            $map[$oldMan->id] = $newMan->id;
+            $count++;
+        }
+        return ['count' => $count, 'map' => $map];
+    }
+
+    private function migrateProducts($catMap, $subMap, $manMap, $unitMap)
+    {
+        $oldProducts = DB::connection('old_afohs')->table('fnb_item_definitions')->get();
+        $count = 0;
+
+        foreach ($oldProducts as $oldProd) {
+            $itemType = 'finished_product';
+            if (isset($oldProd->product_classification)) {
+                if ($oldProd->product_classification == 1) {
+                    $itemType = 'raw_material';
+                } elseif ($oldProd->product_classification == 2) {
+                    $itemType = 'finished_product';
+                }
+            }
+
+            // Map keys
+            $newCatId = $catMap[$oldProd->category] ?? null;
+            $newSubId = $subMap[$oldProd->sub_category] ?? null;
+            $newManId = $manMap[$oldProd->manufacturer] ?? null;
+            $newUnitId = $unitMap[$oldProd->unit] ?? null;  // Added unit mapping
+
+            $maxDiscount = 0;
+            $maxDiscountType = 'percentage';
+
+            if (!empty($oldProd->discount_amount) && $oldProd->discount_amount > 0) {
+                $maxDiscount = $oldProd->discount_amount;
+                $maxDiscountType = 'fixed';
+            } elseif (!empty($oldProd->discount_percentage) && $oldProd->discount_percentage > 0) {
+                $maxDiscount = $oldProd->discount_percentage;
+                $maxDiscountType = 'percentage';
+            }
+
+            \App\Models\Product::create([
+                // 'id' => $oldProd->id, // Letting DB auto-increment
+                'name' => $oldProd->item_details,
+                'menu_code' => $oldProd->item_code,
+                'category_id' => $newCatId,
+                'sub_category_id' => $newSubId,
+                'manufacturer_id' => $newManId,
+                'unit_id' => $newUnitId,
+                'cost_of_goods_sold' => $oldProd->purchase_price ?? 0,
+                'base_price' => $oldProd->sale_price ?? 0,
+                // 'current_stock' => $oldProd->qty ?? 0, // Old qty is unreliable
+                'current_stock' => 0,
+                'manage_stock' => false,  // Default to infinite stock
+                'is_discountable' => $oldProd->discountable ?? 0,
+                'is_taxable' => $oldProd->taxable ?? 0,
+                'is_salable' => $oldProd->salable ?? 1,
+                'is_purchasable' => $oldProd->purchasable ?? 1,
+                'is_returnable' => $oldProd->returnable ?? 1,
+                'status' => $oldProd->status == 1 ? 'active' : 'inactive',
+                'item_type' => $itemType,
+                'created_by' => $oldProd->created_by,
+                'updated_by' => $oldProd->updated_by,
+                'created_at' => $oldProd->created_at,
+                'updated_at' => $oldProd->updated_at,
+                'max_discount' => $maxDiscount,
+                'max_discount_type' => $maxDiscountType,
+            ]);
+            $count++;
+        }
+        return $count;
+    }
 }

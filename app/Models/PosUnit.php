@@ -9,5 +9,5 @@ class PosUnit extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['name', 'status', 'created_by', 'updated_by', 'deleted_by'];
+    protected $fillable = ['tenant_id', 'name', 'code', 'status', 'created_by', 'updated_by', 'deleted_by'];
 }

@@ -19,6 +19,8 @@ use App\Models\Member;
 use App\Models\MemberType;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\PosCakeBooking;
+use App\Models\PosShift;
 use App\Models\Product;
 use App\Models\ProductVariantValue;
 use App\Models\Reservation;
@@ -208,14 +210,18 @@ class OrderController extends Controller
 
         // Check if request expects JSON (Axios call)
         if ($request->wantsJson()) {
-            $query = Order::with([
-                'table:id,table_no',
-                'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
-                'member:id,member_type_id,full_name,membership_no',
-                'customer:id,name,customer_no',
-                'employee:id,employee_id,name',
-                'member.memberType:id,name'
-            ]);
+            $query = Order::where('created_by', Auth::id())
+                ->with([
+                    'table:id,table_no',
+                    'tenant:id,name',  // ✅ Load Tenant Name
+                    'orderItems:id,order_id,tenant_id,order_item,status,remark,instructions,cancelType',
+                    'member:id,member_type_id,full_name,membership_no',
+                    'customer:id,name,customer_no,guest_type_id',
+                    'customer.guestType:id,name',
+                    'employee:id,employee_id,name',
+                    'member.memberType:id,name',
+                    'waiter:id,name',  // Waiter relation
+                ]);
 
             // ✅ Exclude paid orders from Order Management (table is free after payment)
             // But INCLUDE 'awaiting' payment status (so generated invoices show up)
@@ -273,9 +279,24 @@ class OrderController extends Controller
                 $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
             }
 
-            // 🍽 Order type
+            // 🍽 Order type (Smart Filter)
             if ($request->type && $request->type !== 'all') {
-                $query->where('order_type', $request->type);
+                if ($request->type === 'member') {
+                    $query->whereNotNull('member_id');
+                } elseif ($request->type === 'employee') {
+                    $query->whereNotNull('employee_id');
+                } elseif ($request->type === 'guest') {
+                    $query
+                        ->whereNotNull('customer_id')
+                        ->whereNull('member_id')
+                        ->whereNull('employee_id');
+                } elseif ($request->type === 'corporate') {
+                    $query->whereHas('member.memberType', function ($q) {
+                        $q->where('name', 'Corporate');
+                    });
+                } else {
+                    $query->where('order_type', $request->type);
+                }
             }
 
             $orders = $query->latest()->paginate(20)->withQueryString();
@@ -351,6 +372,36 @@ class OrderController extends Controller
 
             $description = 'Food Order #' . $order->id;
 
+            // Calculate tax based on taxable items
+            $calculatedTaxAmount = 0;
+            $taxRate = $order->tax ?? 0;
+            foreach ($items as $item) {
+                // Check if product is taxable (assuming eager loaded or available)
+                // We need to fetch product is_taxable if not in order_item.
+                // Since we loaded orderItems, we can access the data.
+                // Ideally, $item->order_item should have it.
+                $itemData = $item->order_item;
+                $isTaxable = false;
+
+                // If is_taxable is in JSON
+                if (isset($itemData['is_taxable'])) {
+                    $isTaxable = $itemData['is_taxable'];
+                } else {
+                    // Fallback: Check product (this causes N+1 if not careful, but for one order it's fine)
+                    if (isset($itemData['product_id'])) {
+                        $prod = \App\Models\Product::find($itemData['product_id']);
+                        if ($prod)
+                            $isTaxable = $prod->is_taxable;
+                    }
+                }
+
+                if ($isTaxable) {
+                    $itemTotal = ($itemData['quantity'] ?? 1) * ($itemData['price'] ?? 0);
+                    $itemDisc = $itemData['discount_amount'] ?? 0;
+                    $calculatedTaxAmount += ($itemTotal - $itemDisc) * $taxRate;
+                }
+            }
+
             FinancialInvoiceItem::create([
                 'invoice_id' => $invoice->id,
                 'fee_type' => AppConstants::TRANSACTION_TYPE_ID_FOOD_ORDER,
@@ -361,8 +412,8 @@ class OrderController extends Controller
                 'discount_type' => 'fixed',
                 'discount_value' => $order->discount ?? 0,
                 'discount_amount' => $order->discount ?? 0,
-                'tax_amount' => $order->tax ?? 0,
-                'total' => $totalPrice,
+                'tax_amount' => $calculatedTaxAmount,
+                'total' => $totalPrice,  // Note: verify if total_price in DB matches this calc
             ]);
 
             // Create Debit Transaction (Unpaid)
@@ -405,8 +456,9 @@ class OrderController extends Controller
     public function savedOrder()
     {
         $today = Carbon::today()->toDateString();
-        $orders = Reservation::whereDate('date', $today)
-            ->with('member:idfull_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no')
+        $orders = Reservation::where('created_by', Auth::id())
+            ->whereDate('date', $today)
+            ->with('member:id,full_name,membership_no', 'customer:id,name,customer_no', 'table:id,table_no')
             ->get();
 
         return response()->json([
@@ -496,6 +548,36 @@ class OrderController extends Controller
                     'order_type' => 'room_service',
                     'room_booking_id' => $roomBooking->id,
                     'room' => $roomBooking->room,
+                    'member' => $memberData
+                ];
+            }
+        }
+
+        // 🔎 Case 1c: Cake Booking flow
+        if ($request->has('cake_booking_id')) {
+            $booking = PosCakeBooking::with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'cakeType'])->find($request->cake_booking_id);
+
+            if ($booking) {
+                $memberData = [];
+                if ($booking->member) {
+                    $memberData = [
+                        'id' => $booking->member->id,
+                        'booking_type' => 'member',
+                        'name' => $booking->member->full_name,
+                        'membership_no' => $booking->member->membership_no,
+                    ];
+                } elseif ($booking->customer) {
+                    $memberData = [
+                        'id' => $booking->customer->id,
+                        'customer_no' => $booking->customer->customer_no,
+                        'booking_type' => 'guest',
+                        'name' => $booking->customer->name,
+                    ];
+                }
+
+                $orderContext = [
+                    'order_type' => 'takeaway',
+                    'cake_booking' => $booking,
                     'member' => $memberData
                 ];
             }
@@ -613,16 +695,32 @@ class OrderController extends Controller
         return $invoicNo;
     }
 
+    // Helper to get active shift (Global Scope, ignoring date restriction)
+    private function getActiveShift()
+    {
+        return PosShift::where('user_id', Auth::id())
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+    }
+
     public function sendToKitchen(Request $request)
     {
+        // Enforce Active Shift (Global)
+        $activeShift = $this->getActiveShift();
+        if (!$activeShift) {
+            return response()->json([
+                'message' => 'You must start a shift before creating orders.',
+                'error_code' => 'NO_ACTIVE_SHIFT'
+            ], 403);
+        }
+
         $request->validate([
             // 'member.id' => 'required|exists:members,user_id',
             'order_items' => 'required|array',
             'order_items.*.id' => 'required|exists:products,id',
             'price' => 'required|numeric',
             'kitchen_note' => 'nullable|string',
-            'staff_note' => 'nullable|string',
-            'payment_note' => 'nullable|string',
             'staff_note' => 'nullable|string',
             'payment_note' => 'nullable|string',
             'reservation_id' => 'nullable|exists:reservations,id',
@@ -636,8 +734,19 @@ class OrderController extends Controller
             $totalDue = $request->price;
             $orderType = $request->order_type;
 
-            if ($orderType == 'takeaway' && !in_array($request->payment['payment_method'], ['ent', 'cts']) && $request->payment['paid_amount'] < $totalDue) {
-                return back()->withErrors(['paid_amount' => 'The paid amount is not enough to cover the total price of the invoice.']);
+            // Validate Takeaway Payment
+            if ($orderType == 'takeaway') {
+                $entEnabled = $request->payment['ent_enabled'] ?? false;
+                $ctsEnabled = $request->payment['cts_enabled'] ?? false;
+                $entDeduction = $entEnabled ? ($request->payment['ent_amount'] ?? 0) : 0;
+                $ctsDeduction = $ctsEnabled ? ($request->payment['cts_amount'] ?? 0) : 0;
+                $paidAmount = $request->payment['paid_amount'] ?? 0;
+                $remainingDue = $totalDue - $entDeduction - $ctsDeduction;
+
+                // Allow small float variance (1.0)
+                if ($paidAmount < ($remainingDue - 1.0)) {
+                    return back()->withErrors(['paid_amount' => 'The paid amount (' . $paidAmount . ') is not enough to cover the remaining balance (' . $remainingDue . ') after deductions.']);
+                }
             }
 
             $orderData = [
@@ -645,7 +754,9 @@ class OrderController extends Controller
                 'table_id' => $request->input('table.id'),
                 'order_type' => $request->order_type,
                 'person_count' => $request->person_count,
-                'start_date' => Carbon::parse($request->date)->toDateString(),
+                // ✅ Use Persistent Shift Date and Tenant
+                'start_date' => $activeShift->start_date,  // Force usage of shift date
+                'tenant_id' => $activeShift->tenant_id,  // Force usage of shift tenant
                 'start_time' => $request->time,
                 'down_payment' => $request->down_payment,
                 'amount' => $request->price,
@@ -656,7 +767,12 @@ class OrderController extends Controller
                 'room_booking_id' => $request->room_booking_id ?? null,
                 'address' => $request->address,
                 'rider_id' => $request->rider_id ?? null,
-                'status' => ($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress',
+                // Takeaway orders are paid immediately and completed at point of sale
+                // Reservations that are new are saved as drafts
+                // All other orders go to in_progress for kitchen processing
+                'status' => $request->order_type === 'takeaway'
+                    ? 'completed'
+                    : (($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress'),
             ];
 
             $bookingType = $request->input('member.booking_type');
@@ -724,14 +840,17 @@ class OrderController extends Controller
                     $prodId = $itemData['id'] ?? null;
 
                     if ($prodId) {
-                        \App\Models\Product::where('id', $prodId)->increment('current_stock', $qty);
-                    }
+                        $prod = \App\Models\Product::find($prodId);
+                        if ($prod && $prod->manage_stock) {
+                            $prod->increment('current_stock', $qty);
 
-                    if (!empty($itemData['variants'])) {
-                        foreach ($itemData['variants'] as $variant) {
-                            $vId = $variant['id'] ?? null;
-                            if ($vId) {
-                                \App\Models\ProductVariantValue::where('id', $vId)->increment('stock', 1);
+                            if (!empty($itemData['variants'])) {
+                                foreach ($itemData['variants'] as $variant) {
+                                    $vId = $variant['id'] ?? null;
+                                    if ($vId) {
+                                        \App\Models\ProductVariantValue::where('id', $vId)->increment('stock', 1);
+                                    }
+                                }
                             }
                         }
                     }
@@ -772,11 +891,13 @@ class OrderController extends Controller
 
                     $product = Product::find($productId);
 
-                    if (!$product || $product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
-                        throw new \Exception('Insufficient stock for product: ' . ($product->name ?? 'Unknown'));
+                    // Only check stock if management is enabled
+                    if ($product && $product->manage_stock) {
+                        if ($product->current_stock < $productQty || $product->minimal_stock > $product->current_stock - $productQty) {
+                            throw new \Exception('Insufficient stock for product: ' . ($product->name ?? 'Unknown'));
+                        }
+                        $product->decrement('current_stock', $productQty);
                     }
-
-                    $product->decrement('current_stock', $productQty);
 
                     if (!empty($item['variants'])) {
                         foreach ($item['variants'] as $variant) {
@@ -785,11 +906,20 @@ class OrderController extends Controller
                                 continue;
 
                             $variantValue = ProductVariantValue::find($variantId);
-                            if (!$variantValue || $variantValue->stock < 0) {
-                                throw new \Exception('Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown'));
+
+                            if (!$variantValue) {
+                                throw new \Exception('Invalid variant ID: ' . $variantId);
                             }
+
+                            // Only check and decrement stock if management is enabled
+                            if ($product->manage_stock) {
+                                if ($variantValue->stock < 0) {
+                                    throw new \Exception('Insufficient stock for variant: ' . ($variantValue->name ?? 'Unknown'));
+                                }
+                                $variantValue->decrement('stock', 1);
+                            }
+
                             $totalCostPrice += $variantValue->additional_price;
-                            $variantValue->decrement('stock', 1);
                         }
                     }
 
@@ -829,16 +959,16 @@ class OrderController extends Controller
 
                             if ($productId) {
                                 $product = \App\Models\Product::find($productId);
-                                if ($product) {
+                                if ($product && $product->manage_stock) {
                                     $product->decrement('current_stock', $productQty);
-                                }
-                            }
 
-                            if (!empty($item['variants'])) {
-                                foreach ($item['variants'] as $variant) {
-                                    $vId = $variant['id'] ?? null;
-                                    if ($vId) {
-                                        \App\Models\ProductVariantValue::where('id', $vId)->decrement('stock', 1);
+                                    if (!empty($item['variants'])) {
+                                        foreach ($item['variants'] as $variant) {
+                                            $vId = $variant['id'] ?? null;
+                                            if ($vId) {
+                                                \App\Models\ProductVariantValue::where('id', $vId)->decrement('stock', 1);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -916,6 +1046,10 @@ class OrderController extends Controller
 
                     $taxRate = $request->tax ?? 0;  // Tax rate (e.g. 0.16)
 
+                    // Fetch products to check is_taxable
+                    $productIds = collect($request->order_items)->pluck('product_id')->filter()->toArray();
+                    $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
                     foreach ($request->order_items as $item) {
                         $qty = $item['quantity'] ?? 1;
                         $price = $item['price'] ?? 0;
@@ -924,9 +1058,16 @@ class OrderController extends Controller
                         // Use item discount as sum source
                         $itemDiscountAmount = $item['discount_amount'] ?? 0;
 
-                        // Tax Calculation per item (consistent with previous logic)
+                        // Tax Calculation
                         $netAmount = $subTotal - $itemDiscountAmount;
-                        $itemTaxAmount = $netAmount * $taxRate;
+
+                        // Check if product is taxable
+                        $isTaxable = false;
+                        if (isset($item['product_id']) && isset($products[$item['product_id']])) {
+                            $isTaxable = $products[$item['product_id']]->is_taxable;
+                        }
+
+                        $itemTaxAmount = $isTaxable ? ($netAmount * $taxRate) : 0;
 
                         $totalGross += $subTotal;
                         $totalDiscount += $itemDiscountAmount;
@@ -970,6 +1111,75 @@ class OrderController extends Controller
                     ]);
                 }
 
+                if ($orderType == 'takeaway') {
+                    // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
+                    $entAmount = 0;
+                    $entDetails = '';
+                    $ctsAmount = 0;
+                    $paymentData = $request->payment;
+
+                    // Check if ENT is enabled (new toggle-based flow)
+                    $entEnabled = $paymentData['ent_enabled'] ?? false;
+                    $ctsEnabled = $paymentData['cts_enabled'] ?? false;
+
+                    // ENT Calculation - Only if enabled
+                    if ($entEnabled) {
+                        if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
+                            // Calculate from items
+                            $entIds = $paymentData['ent_items'];
+                            foreach ($request->order_items as $item) {
+                                if (in_array($item['id'], $entIds)) {
+                                    $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
+                                    $entAmount += $iPrice;
+                                    $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
+                                }
+                            }
+                        } elseif (isset($paymentData['ent_amount'])) {
+                            // Use provided ENT amount
+                            $entAmount = $paymentData['ent_amount'];
+                        }
+                    }
+
+                    // CTS Calculation - Only if enabled
+                    if ($ctsEnabled) {
+                        $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : 0;
+                    }
+
+                    // Verify Total (Paid + ENT + CTS >= Total)
+                    // Note: paid_amount in request is the amount paid via selected payment method
+                    $paidCash = $paymentData['paid_amount'] ?? 0;
+                    // Allow small float variance
+                    if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
+                        throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
+                    }
+
+                    // Update Invoice with ENT/CTS Details
+                    $updateData = [];
+
+                    if ($entEnabled && $entAmount > 0) {
+                        $comment = $invoiceData['ent_comment'] ?? '';
+                        if ($entDetails) {
+                            $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
+                        }
+                        $updateData['ent_comment'] = $comment;
+                        $updateData['ent_amount'] = $entAmount;
+                        $updateData['ent_reason'] = $paymentData['ent_reason'] ?? null;
+                    }
+
+                    if ($ctsEnabled && $ctsAmount > 0) {
+                        $comment = $invoiceData['cts_comment'] ?? '';
+                        if ($ctsAmount < $request->total_price) {
+                            $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
+                        }
+                        $updateData['cts_comment'] = $comment;
+                        $updateData['cts_amount'] = $ctsAmount;
+                    }
+
+                    if (!empty($updateData)) {
+                        $invoice->update($updateData);
+                    }
+                }
+
                 // If Paid (Takeaway) -> Receipt + Credit + Allocation
                 if ($orderType == 'takeaway') {
                     $receiptImg = $orderData['receipt'] ?? null;
@@ -980,7 +1190,9 @@ class OrderController extends Controller
                         'payer_type' => $payerType,
                         'payer_id' => $payerId,
                         'amount' => $request->payment['paid_amount'],
-                        'payment_method' => $request->payment['payment_method'],
+                        'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
+                            ? $request->payment['cts_payment_method']
+                            : $request->payment['payment_method'],
                         'receipt_date' => now(),
                         'status' => 'active',
                         'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
@@ -1063,6 +1275,17 @@ class OrderController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Enforce Active Shift for updates too (mostly adding items)
+        // If just changing status to paid, maybe allow?
+        // User said "start shift... everyday before taking his first order".
+        // Let's enforce for safety.
+        if (!$this->checkActiveShift()) {
+            return response()->json([
+                'message' => 'You must have an active shift to update orders.',
+                'error_code' => 'NO_ACTIVE_SHIFT'
+            ], 403);
+        }
+
         // Validate status and items first
         $validated = $request->validate([
             'updated_items' => 'nullable|array',
@@ -1209,6 +1432,17 @@ class OrderController extends Controller
 
                     $taxRate = $order->tax ?? 0;
 
+                    // Fetch products to check is_taxable
+                    $productIds = [];
+                    foreach ($orderItems as $orderItem) {
+                        $itemData = $orderItem->order_item;
+                        if (isset($itemData['product_id'])) {
+                            $productIds[] = $itemData['product_id'];
+                        }
+                    }
+                    $productIds = array_unique($productIds);
+                    $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
                     foreach ($orderItems as $orderItem) {
                         $item = $orderItem->order_item;
                         $qty = $item['quantity'] ?? 1;
@@ -1217,7 +1451,14 @@ class OrderController extends Controller
 
                         $itemDiscountAmount = $item['discount_amount'] ?? 0;
                         $netAmount = $subTotal - $itemDiscountAmount;
-                        $itemTaxAmount = $netAmount * $taxRate;
+
+                        // Check if product is taxable
+                        $isTaxable = false;
+                        if (isset($item['product_id']) && isset($products[$item['product_id']])) {
+                            $isTaxable = $products[$item['product_id']]->is_taxable;
+                        }
+
+                        $itemTaxAmount = $isTaxable ? ($netAmount * $taxRate) : 0;
 
                         $totalGross += $subTotal;
                         $totalDiscount += $itemDiscountAmount;
@@ -1365,6 +1606,15 @@ class OrderController extends Controller
             $productsQuery->whereJsonContains('available_order_types', $order_type);
         }
 
+        $productsQuery->where('is_salable', true);
+
+        // Filter by stock: Show if stock > 0 OR if strict stock management is disabled
+        $productsQuery->where(function ($q) {
+            $q
+                ->where('current_stock', '>', 0)
+                ->orWhere('manage_stock', false);
+        });
+
         $products = $productsQuery->get();
 
         return response()->json(['success' => true, 'products' => $products], 200);
@@ -1373,8 +1623,7 @@ class OrderController extends Controller
     public function getCategories(Request $request)
     {
         $tenantId = $request->query('tenant_id');
-        Log::info($tenantId);
-        $categories = Category::where('tenant_id', $tenantId)->latest()->get();
+        $categories = Category::latest()->get();
 
         return response()->json(['categories' => $categories]);
     }
@@ -1395,7 +1644,13 @@ class OrderController extends Controller
                     ->where('menu_code', 'like', "%{$searchTerm}%")
                     ->orWhere('name', 'like', "%{$searchTerm}%");
             })
-            ->where('current_stock', '>', 0)  // Only show products with stock
+            ->where(function ($query) {
+                // Show product if stock is > 0 OR if stock management is disabled
+                $query
+                    ->where('current_stock', '>', 0)
+                    ->orWhere('manage_stock', false);
+            })
+            ->where('is_salable', true)  // Only show salable products
             ->limit(20)  // Limit results for performance
             ->get();
 
@@ -1519,22 +1774,41 @@ class OrderController extends Controller
      */
     public function orderHistory(Request $request)
     {
-        $query = Order::with([
-            'table:id,table_no',
-            'orderItems:id,order_id,order_item,status',
-            'member:id,member_type_id,full_name,membership_no',
-            'member.memberType:id,name',
-            'customer:id,name,customer_no',
-            'employee:id,employee_id,name',
-            'cashier:id,name',
-            'waiter:id,name',
-        ])
+        $query = Order::where('created_by', Auth::id())
+            ->with([
+                'table:id,table_no',
+                'tenant:id,name',  // ✅ Load Tenant Name
+                'orderItems:id,order_id,order_item,status',
+                'member:id,member_type_id,full_name,membership_no',
+                'member.memberType:id,name',
+                'customer:id,name,customer_no,guest_type_id',
+                'customer.guestType:id,name',
+                'employee:id,employee_id,name',
+                'cashier:id,name',
+                'user:id,name',  // Order Creator
+                'waiter:id,name',
+            ])
+            // Load invoice ENT/CTS data via subquery (since relationship is via JSON column)
+            ->addSelect([
+                'orders.*',
+                'invoice_ent_amount' => FinancialInvoice::select('ent_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_ent_reason' => FinancialInvoice::select('ent_reason')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_ent_comment' => FinancialInvoice::select('ent_comment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_cts_comment' => FinancialInvoice::select('cts_comment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+            ])
             ->whereIn('order_type', ['dineIn', 'delivery', 'takeaway', 'reservation', 'room_service'])
-            ->where(function ($q) {
-                $q
-                    ->where('status', 'completed')
-                    ->orWhere('payment_status', 'paid');
-            });
+            ->where('status', '!=', 'pending');
 
         // 🔍 Search by Order ID
         if ($request->filled('search_id')) {
@@ -1552,18 +1826,24 @@ class OrderController extends Controller
             });
         }
 
-        // 👤 Customer Type filter
-        if ($request->filled('customer_type') && $request->customer_type !== 'all') {
-            switch ($request->customer_type) {
-                case 'member':
-                    $query->whereNotNull('member_id');
-                    break;
-                case 'guest':
-                    $query->whereNotNull('customer_id');
-                    break;
-                case 'employee':
-                    $query->whereNotNull('employee_id');
-                    break;
+        // 🔍 Unified Type Filter (Member, Corporate, Employee, Guest, Order Types)
+        if ($request->filled('type') && $request->type !== 'all') {
+            if ($request->type === 'member') {
+                $query->whereNotNull('member_id');
+            } elseif ($request->type === 'employee') {
+                $query->whereNotNull('employee_id');
+            } elseif ($request->type === 'guest') {
+                $query
+                    ->whereNotNull('customer_id')
+                    ->whereNull('member_id')
+                    ->whereNull('employee_id');
+            } elseif ($request->type === 'corporate') {
+                $query->whereHas('member.memberType', function ($q) {
+                    $q->where('name', 'Corporate');
+                });
+            } else {
+                // Assume it's a specific order_type (dineIn, delivery, etc.)
+                $query->where('order_type', $request->type);
             }
         }
 
@@ -1576,11 +1856,6 @@ class OrderController extends Controller
             $query->whereDate('start_date', '<=', $request->end_date);
         }
 
-        // 🍽 Order type filter
-        if ($request->filled('type') && $request->type !== 'all') {
-            $query->where('order_type', $request->type);
-        }
-
         // 💰 Payment status filter
         if ($request->filled('payment_status') && $request->payment_status !== 'all') {
             $query->where('payment_status', $request->payment_status);
@@ -1589,6 +1864,30 @@ class OrderController extends Controller
         // 💳 Payment method filter
         if ($request->filled('payment_method') && $request->payment_method !== 'all') {
             $query->where('payment_method', $request->payment_method);
+        }
+
+        // 🎯 Adjustment Type filter (ENT/CTS) - Query via linked invoice's JSON data
+        if ($request->filled('adjustment_type') && $request->adjustment_type !== 'all') {
+            $adjustmentType = $request->adjustment_type;
+            $query->whereExists(function ($subQuery) use ($adjustmentType) {
+                $subQuery
+                    ->select(DB::raw(1))
+                    ->from('financial_invoices')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->when($adjustmentType === 'ent', function ($q) {
+                        $q->where('ent_amount', '>', 0);
+                    })
+                    ->when($adjustmentType === 'cts', function ($q) {
+                        $q->where('cts_amount', '>', 0);
+                    })
+                    ->when($adjustmentType === 'none', function ($q) {
+                        $q->where(function ($inner) {
+                            $inner->whereNull('ent_amount')->orWhere('ent_amount', 0);
+                        })->where(function ($inner) {
+                            $inner->whereNull('cts_amount')->orWhere('cts_amount', 0);
+                        });
+                    });
+            });
         }
 
         // 🍽 Table filter

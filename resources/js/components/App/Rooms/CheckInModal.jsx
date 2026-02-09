@@ -28,6 +28,7 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
                     roomName: (booking.room?.room_type?.name || '') + ' - ' + (booking.room?.name || ''),
                     charges: booking.grand_total,
                     invoiceStatus: booking.invoice?.status,
+                    paidAmount: booking.invoice?.paid_amount || 0,
                     status: booking.status,
                 });
             })
@@ -95,13 +96,19 @@ const RoomCheckInModal = ({ open, onClose, bookingId }) => {
                                         <strong>Room:</strong> {bookingInfo.roomName}
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <strong>Charges:</strong> {bookingInfo.charges}
+                                        <strong>Charges:</strong> {parseFloat(bookingInfo.charges).toFixed(2)}
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <strong>Invoice:</strong> {bookingInfo.invoiceStatus}
+                                        <strong>Paid Amount:</strong> {parseFloat(bookingInfo.paidAmount || 0).toFixed(2)}
                                     </Grid>
                                     <Grid item xs={6}>
-                                        <strong>Status:</strong> {bookingInfo.status}
+                                        <strong>Balance:</strong> {(parseFloat(bookingInfo.charges) - parseFloat(bookingInfo.paidAmount || 0)).toFixed(2)}
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <strong>Invoice Status:</strong> <span style={{ textTransform: 'capitalize', fontWeight: 'bold', color: parseFloat(bookingInfo.paidAmount || 0) >= parseFloat(bookingInfo.charges) ? 'green' : 'red' }}>{parseFloat(bookingInfo.paidAmount || 0) >= parseFloat(bookingInfo.charges) ? 'Paid' : 'Unpaid'}</span>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <strong>Booking Status:</strong> <span style={{ textTransform: 'capitalize' }}>{bookingInfo.status}</span>
                                     </Grid>
                                 </Grid>
                                 <Divider sx={{ my: 1 }} />

@@ -466,6 +466,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Location</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -484,6 +485,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                                             <Chip label={formatPaymentMethod(order.payment_method)} size="small" color="primary" variant="outlined" />
                                         </TableCell>
                                         <TableCell>{order.cashier?.name || '-'}</TableCell>
+                                        <TableCell>{order.tenant?.name || '-'}</TableCell>
                                         <TableCell>
                                             <Box sx={{ display: 'flex', gap: 0.5 }}>
                                                 <Tooltip title="View Details">

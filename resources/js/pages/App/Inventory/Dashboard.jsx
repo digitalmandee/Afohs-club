@@ -5,8 +5,8 @@ import SideNav from '@/components/App/SideBar/SideNav';
 import MenuFilter from '@/components/MenuFilter';
 import { tenantAsset } from '@/helpers/asset';
 import { router, usePage } from '@inertiajs/react';
-import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
+import { Add as AddIcon, ArrowDownward as ArrowDownwardIcon, ArrowUpward as ArrowUpwardIcon, AttachMoney as AttachMoneyIcon, CheckCircle as CheckCircleIcon, Check as CheckIcon, ChevronRight as ChevronRightIcon, Close as CloseIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon, Edit as EditIcon, ExpandMore as ExpandMoreIcon, Info as InfoIcon, Inventory as InventoryIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog, DialogActions, DialogContent, Divider, Grid, IconButton, InputAdornment, Pagination, Snackbar, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -62,7 +62,12 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
     });
 
     // Product data
-    const [products, setProducts] = useState(productLists || []);
+    const [products, setProducts] = useState(productLists?.data || productLists || []);
+
+    // Track if we are viewing filtered results
+    const [isFiltered, setIsFiltered] = useState(false);
+    const [filteredPage, setFilteredPage] = useState(1);
+    const [filteredTotalPages, setFilteredTotalPages] = useState(1);
 
     // Add new state variables for Stock and Update Stock modals
     const [openStockModal, setOpenStockModal] = useState(false);
@@ -72,8 +77,11 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
     // Initialize products from props
     useEffect(() => {
-        setFilteredProducts(products);
-    }, [products]);
+        const data = productLists?.data || productLists || [];
+        setProducts(data);
+        setFilteredProducts(data);
+        setIsFiltered(false); // Reset filtered state when props change (e.g. pagination)
+    }, [productLists]);
 
     // Handle category button click
     const handleCategoryClick = (category) => {
@@ -178,10 +186,23 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
             >
                 <div className="container-fluid bg-light py-4">
                     {/* Filter Section */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Box sx={{ flex: 1 }}>
-                            <MenuFilter categories={categoriesList} onProductsLoaded={(products) => setFilteredProducts(products)} onLoadingChange={(loading) => setIsFilterLoading(loading)} />
-                        </Box>
+                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<DeleteSweepIcon />}
+                            onClick={() => router.visit(route('inventory.trashed'))}
+                            sx={{
+                                borderRadius: '16px',
+                                px: 3,
+                                bgcolor: 'white',
+                                '&:hover': {
+                                    bgcolor: '#ffebee',
+                                },
+                            }}
+                        >
+                            Trash
+                        </Button>
                         <Button
                             variant="contained"
                             startIcon={<AddIcon />}
@@ -189,7 +210,6 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                             sx={{
                                 borderRadius: '16px',
                                 backgroundColor: '#003B5C',
-                                mt: 3,
                                 px: 3,
                                 '&:hover': {
                                     backgroundColor: '#002A41',
@@ -198,6 +218,33 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         >
                             Add Product
                         </Button>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                        <Box>
+                            <MenuFilter
+                                categories={categoriesList}
+                                page={filteredPage}
+                                onFiltersChange={() => setFilteredPage(1)}
+                                onProductsLoaded={(response) => {
+                                    if (response === null) {
+                                        setFilteredProducts(productLists?.data || productLists || []);
+                                        setIsFiltered(false);
+                                    } else {
+                                        // Handle paginated response or flat array (fallback)
+                                        if (response.data) {
+                                            setFilteredProducts(response.data);
+                                            setFilteredTotalPages(response.last_page);
+                                            // Ensure current page sync if needed, but we manage it via state
+                                        } else {
+                                            setFilteredProducts(response);
+                                            setFilteredTotalPages(1);
+                                        }
+                                        setIsFiltered(true);
+                                    }
+                                }}
+                                onLoadingChange={(loading) => setIsFilterLoading(loading)}
+                            />
+                        </Box>
                     </Box>
 
                     {/* Product Count and List */}
@@ -273,7 +320,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                                         <div>
                                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                                 <img
-                                                                    src={product.images.length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
+                                                                    src={(product.images || []).length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
                                                                     alt={product.name}
                                                                     style={{
                                                                         width: '100%',
@@ -301,7 +348,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
                                                     <Grid item xs={12} sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
                                                         <Box>
-                                                            {product.current_stock === 0 ? (
+                                                            {product.manage_stock == 1 && product.current_stock === 0 ? (
                                                                 <Typography
                                                                     variant="body2"
                                                                     component="span"
@@ -319,11 +366,11 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                                                 </Typography>
                                                             )}
                                                             <Typography variant="body1" fontWeight="500" sx={{ fontSize: '18px' }}>
-                                                                {product.current_stock}
+                                                                {product.manage_stock == 1 ? product.current_stock : ''}
                                                             </Typography>
                                                         </Box>
                                                         <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                            {product.variants.length > 0
+                                                            {(product.variants || []).length > 0
                                                                 ? product.variants.map((variant, index) => {
                                                                       return (
                                                                           <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
@@ -370,30 +417,48 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                 ))}
                             </Grid>
                         </Box>
+
+                        {/* Pagination */}
+                        {(isFiltered ? filteredTotalPages > 1 : productLists?.links) && (
+                            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+                                <Pagination
+                                    count={isFiltered ? filteredTotalPages : productLists.last_page}
+                                    page={isFiltered ? filteredPage : productLists.current_page}
+                                    onChange={(event, value) => {
+                                        if (isFiltered) {
+                                            setFilteredPage(value);
+                                            // Scroll to top of list?
+                                            // window.scrollTo(0, 0);
+                                        } else {
+                                            router.get(
+                                                url.split('?')[0],
+                                                {
+                                                    ...Object.fromEntries(queryParams),
+                                                    page: value,
+                                                },
+                                                {
+                                                    preserveState: true,
+                                                    preserveScroll: true,
+                                                },
+                                            );
+                                        }
+                                    }}
+                                    color="primary"
+                                    shape="rounded"
+                                    size="large"
+                                    sx={{
+                                        '& .MuiPaginationItem-root': {
+                                            borderRadius: '8px',
+                                        },
+                                        '& .Mui-selected': {
+                                            backgroundColor: '#003B5C !important',
+                                            color: '#fff',
+                                        },
+                                    }}
+                                />
+                            </Box>
+                        )}
                     </div>
-                    {/* Filter Modal */}
-                    <Dialog
-                        open={openFilter}
-                        onClose={handleFilterClose}
-                        fullWidth
-                        maxWidth="sm"
-                        PaperProps={{
-                            sx: {
-                                borderRadius: 1,
-                                m: 0,
-                                position: 'fixed',
-                                right: 10,
-                                top: 10,
-                                bottom: 0,
-                                height: 'calc(100% - 25px)',
-                                maxHeight: '100%',
-                            },
-                        }}
-                    >
-                        <Box sx={{ p: 3, height: '100%' }}>
-                            <MenuFilter handleFilterClose={handleFilterClose} />
-                        </Box>
-                    </Dialog>
 
                     {/* Product Detail Modal */}
                     <Dialog
@@ -441,7 +506,7 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                     <Box sx={{ px: 3, pb: 3 }}>
                                         {/* Product Images */}
                                         <Box sx={{ display: 'flex', gap: 2, mb: 3, overflowX: 'auto', pb: 1 }}>
-                                            {selectedProduct.images.map((image, index) => (
+                                            {(selectedProduct.images || []).map((image, index) => (
                                                 <Box
                                                     key={index}
                                                     sx={{

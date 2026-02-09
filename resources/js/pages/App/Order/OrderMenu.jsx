@@ -3,13 +3,14 @@ import { tenantAsset } from '@/helpers/asset';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
-import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
+import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import OrderDetail from './Detail';
 import OrderSaved from './Saved';
 import VariantSelectorDialog from './VariantSelectorDialog';
+import ShiftGate from '@/components/Pos/ShiftGate';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -45,6 +46,8 @@ const OrderMenu = () => {
     const [variantPopupOpen, setVariantPopupOpen] = useState(false);
     const [variantProduct, setVariantProduct] = useState(null);
     const [initialEditItem, setInitialEditItem] = useState(null);
+
+    // Search functionality
 
     // Search functionality
     const handleSearch = async (value) => {
@@ -95,7 +98,8 @@ const OrderMenu = () => {
 
     // This would be called when user clicks a product
     const handleProductClick = (product) => {
-        if (product.minimal_stock > product.current_stock - 1) return;
+        // Only check stock if management is enabled
+        if (product.manage_stock && product.minimal_stock > product.current_stock - 1) return;
 
         if (product.variants && product.variants.length > 0) {
             setVariantProductId(product.id);
@@ -132,6 +136,12 @@ const OrderMenu = () => {
                     discount_value: 0,
                     discount_type: 'percentage',
                     discount_amount: 0,
+                    is_taxable: product.is_taxable, // Add is_taxable flag
+                    max_discount: product.max_discount,
+                    max_discount_type: product.max_discount_type,
+                    manage_stock: product.manage_stock,
+                    current_stock: product.current_stock,
+                    minimal_stock: product.minimal_stock,
                 };
 
                 handleOrderDetailChange('order_items', [...orderDetails.order_items, newItem]);
@@ -244,6 +254,45 @@ const OrderMenu = () => {
             Object.entries(orderContext).forEach(([key, value]) => {
                 handleOrderDetailChange(key, value);
             });
+
+            if (orderContext.cake_booking) {
+                const booking = orderContext.cake_booking;
+                const product = booking.cake_type;
+
+                if (product) {
+                    const bookedPrice = parseFloat(booking.total_price);
+                    const advanceAmount = parseFloat(booking.advance_amount || 0);
+
+                    const newItem = {
+                        id: product.id,
+                        name: product.name + ` (Booking #${booking.booking_number || booking.id})`,
+                        price: bookedPrice,
+                        total_price: bookedPrice,
+                        quantity: 1,
+                        tenant_id: product.tenant_id,
+                        category: product.category?.name || 'Cakes',
+                        variants: [],
+                        is_discountable: false,
+                        discount_value: 0,
+                        discount_type: 'percentage',
+                        discount_amount: 0,
+                        is_taxable: product.is_taxable,
+                        booking_id: booking.id,
+                    };
+
+                    const details = [];
+                    if (booking.weight) details.push({ value: `Weight: ${booking.weight}` });
+                    if (booking.flavor) details.push({ value: `Flavor: ${booking.flavor}` });
+                    if (booking.message) details.push({ value: `Msg: ${booking.message}` });
+
+                    if (details.length > 0) {
+                        newItem.variants = details;
+                    }
+
+                    handleOrderDetailChange('order_items', [newItem]);
+                    handleOrderDetailChange('advance_amount', advanceAmount);
+                }
+            }
         }
     }, [reservation, orderContext]);
 
@@ -513,12 +562,11 @@ const OrderMenu = () => {
                                                                 flexDirection: 'column',
                                                                 alignItems: 'center',
                                                                 border: product.tenant_id !== selectedRestaurant ? '2px solid #ff9800' : '1px solid #eee',
-                                                                opacity: product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
-                                                                cursor: product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
+                                                                opacity: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
+                                                                cursor: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
                                                                 borderRadius: 2,
                                                                 height: '100%',
                                                                 width: 100,
-                                                                cursor: 'pointer',
                                                                 position: 'relative',
                                                                 '&:hover': {
                                                                     boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
@@ -618,8 +666,8 @@ const OrderMenu = () => {
                                                             borderRadius: 2,
                                                             height: '100%',
                                                             width: 100,
-                                                            opacity: product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
-                                                            cursor: product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
+                                                            opacity: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 0.5 : 1,
+                                                            cursor: product.manage_stock && product.minimal_stock > product.current_stock - 1 ? 'not-allowed' : 'pointer',
                                                             // bgcolor: 'pink',
                                                             '&:hover': {
                                                                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',

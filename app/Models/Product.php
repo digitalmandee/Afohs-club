@@ -16,6 +16,8 @@ class Product extends BaseModel
         'description',
         'images',
         'category_id',
+        'sub_category_id',
+        'manufacturer_id',
         'base_price',
         'cost_of_goods_sold',
         'current_stock',
@@ -23,13 +25,30 @@ class Product extends BaseModel
         'is_discountable',
         'notify_when_out_of_stock',
         'available_order_types',
+        'is_salable',
+        'is_purchasable',
+        'is_returnable',
+        'is_taxable',
+        'item_type',
+        'unit_id',
         'status',
         'tenant_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+        'max_discount',
+        'max_discount_type',
+        'manage_stock',
     ];
 
     protected $casts = [
         'images' => 'array',
         'available_order_types' => 'array',
+        'is_salable' => 'boolean',
+        'is_purchasable' => 'boolean',
+        'is_returnable' => 'boolean',
+        'is_taxable' => 'boolean',
+        'max_discount' => 'float',
     ];
 
     public function variants()
@@ -40,6 +59,16 @@ class Product extends BaseModel
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function subCategory()
+    {
+        return $this->belongsTo(PosSubCategory::class, 'sub_category_id');
+    }
+
+    public function manufacturer()
+    {
+        return $this->belongsTo(PosManufacturer::class, 'manufacturer_id');
     }
 
     public function kitchen()
@@ -69,6 +98,11 @@ class Product extends BaseModel
     public function productIngredients()
     {
         return $this->hasMany(ProductIngredient::class);
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(PosUnit::class, 'unit_id');
     }
 
     public function tenant()

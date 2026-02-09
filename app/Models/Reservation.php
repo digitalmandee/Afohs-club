@@ -7,7 +7,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Reservation extends BaseModel
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     protected $fillable = [
         'member_id',
@@ -54,5 +54,10 @@ class Reservation extends BaseModel
     public function employee()
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'id');
+    }
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
     }
 }

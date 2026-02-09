@@ -24,6 +24,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         financials: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add financials state
         deep_migration: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Deep migration state
         departments: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // Add departments state
+        fnb: { running: false, progress: 0, total: 0, migrated: 0, errors: [] }, // FNB state
     });
     const [transactionTypes, setTransactionTypes] = useState([]);
     const [selectedTransactionType, setSelectedTransactionType] = useState('');
@@ -36,7 +37,7 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
     const [cleanupDuplicatesDialog, setCleanupDuplicatesDialog] = useState(false);
     const [globalMigrationStats, setGlobalMigrationStats] = useState({ migrated: 0, distinct_total: 0, remaining: 0 });
     const [deleteLegacyInvoicesDialog, setDeleteLegacyInvoicesDialog] = useState(false);
-    const migrationRunning = useRef({ members: false, families: false, media: false, media_photos: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false });
+    const migrationRunning = useRef({ members: false, families: false, media: false, media_photos: false, invoices: false, customers: false, employees: false, corporate_members: false, corporate_families: false, qr_codes: false, corporate_qr_codes: false, financials: false, departments: false, fnb: false });
 
     useEffect(() => {
         refreshStats();
@@ -349,6 +350,55 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
         }));
 
         await processMigrationBatch('departments', 0);
+    };
+
+    const startFnBMigration = async () => {
+        if (!stats.old_tables_exist) {
+            alert('Old tables not found in database');
+            return;
+        }
+
+        migrationRunning.current.fnb = true;
+        setMigrationStatus((prev) => ({
+            ...prev,
+            fnb: { ...prev.fnb, running: true, progress: 0, migrated: 0, errors: [] },
+        }));
+
+        try {
+            const response = await axios.post('/admin/data-migration/migrate-fnb');
+            const { results, success, error } = response.data;
+
+            if (success) {
+                setStats((prev) => ({
+                    ...prev,
+                    // Update stats if we had fnb specific stats in the response
+                }));
+                setMigrationStatus((prev) => ({
+                    ...prev,
+                    fnb: {
+                        ...prev.fnb,
+                        running: false,
+                        progress: 100,
+                        migrated: results.products, // Showing product count as primary
+                        errors: [],
+                    },
+                }));
+                alert(`FnB Migration Completed!\nCategories: ${results.categories}\nSubCategories: ${results.sub_categories}\nManufacturers: ${results.manufacturers}\nUnits: ${results.units}\nProducts: ${results.products}`);
+            } else {
+                throw new Error(error);
+            }
+        } catch (error) {
+            console.error('Error in FnB migration:', error);
+            migrationRunning.current.fnb = false;
+            setMigrationStatus((prev) => ({
+                ...prev,
+                fnb: {
+                    ...prev.fnb,
+                    running: false,
+                    errors: [...prev.fnb.errors, { error: error.response?.data?.error || error.message }],
+                },
+            }));
+        }
     };
 
     const startFinancialsMigration = async () => {
@@ -847,6 +897,53 @@ const DataMigrationIndex = ({ stats: initialStats }) => {
                                 <Button variant="contained" color="secondary" startIcon={migrationStatus.subscription_types.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={() => startGenericMigration('subscription_types')} disabled={migrationStatus.subscription_types.running}>
                                     {migrationStatus.subscription_types.running ? 'Migrating...' : 'Migrate Subs'}
                                 </Button>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                    {/* FnB Migration */}
+                    <Grid item xs={12} md={6}>
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                                    <Receipt sx={{ mr: 1, color: 'warning.dark' }} />
+                                    <Typography variant="h6">FnB Data Migration</Typography>
+                                </Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Migrates FnB Categories, SubCategories, Manufacturers, Units & Products.
+                                    <br />
+                                    <strong>TRUNCATES:</strong> pos_categories, pos_sub_categories, pos_manufacturers, pos_units, products.
+                                </Typography>
+
+                                <Box sx={{ mb: 2 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Status: {migrationStatus.fnb.running ? 'Running...' : 'Ready'}
+                                    </Typography>
+                                    {migrationStatus.fnb.running && <LinearProgress sx={{ mt: 1 }} />}
+                                </Box>
+
+                                {migrationStatus.fnb.migrated > 0 && (
+                                    <Alert severity="success" sx={{ mb: 2 }}>
+                                        Migrated {migrationStatus.fnb.migrated} products (and related entities).
+                                    </Alert>
+                                )}
+                                <Button variant="contained" color="warning" startIcon={migrationStatus.fnb.running ? <CircularProgress size={20} color="inherit" /> : <PlayArrow />} onClick={startFnBMigration} disabled={migrationStatus.fnb.running}>
+                                    {migrationStatus.fnb.running ? 'Migrating...' : 'Start FnB Migration'}
+                                </Button>
+
+                                {migrationStatus.fnb.errors.length > 0 && (
+                                    <Box sx={{ mt: 2 }}>
+                                        <Alert severity="error" sx={{ mb: 2 }}>
+                                            {migrationStatus.fnb.errors.length} errors occurred
+                                        </Alert>
+                                        <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
+                                            {migrationStatus.fnb.errors.map((error, index) => (
+                                                <Alert key={index} severity="warning" sx={{ mb: 1, fontSize: '0.8rem' }}>
+                                                    {error.error}
+                                                </Alert>
+                                            ))}
+                                        </Box>
+                                    </Box>
+                                )}
                             </CardContent>
                         </Card>
                     </Grid>

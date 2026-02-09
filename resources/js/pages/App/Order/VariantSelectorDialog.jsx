@@ -71,6 +71,9 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
             category: product.category?.name || '',
             variants: selectedVariantItems,
             remarks, // ✅ Include remarks
+            manage_stock: product.manage_stock,
+            current_stock: product.current_stock,
+            minimal_stock: product.minimal_stock,
         };
 
         onConfirm(orderItem);
@@ -96,14 +99,14 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
                                     value={selectedValues[variant.name]?.name || ''}
                                     onChange={(_, valueName) => {
                                         const selected = variant.values.find((v) => v.name === valueName);
-                                        if (selected && selected.stock !== 0) {
+                                        if (selected && (!product.manage_stock || selected.stock !== 0)) {
                                             handleSelect(variant.name, selected);
                                         }
                                     }}
                                     size="small"
                                 >
                                     {variant.values.map((v) => (
-                                        <ToggleButton key={v.name} value={v.name} disabled={v.stock === 0}>
+                                        <ToggleButton key={v.name} value={v.name} disabled={product.manage_stock && v.stock === 0}>
                                             {v.name} (R<span style={{ textTransform: 'lowercase' }}>s </span> +{v.additional_price})
                                         </ToggleButton>
                                     ))}
@@ -124,7 +127,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
 
                     <DialogActions>
                         <Button onClick={onClose}>Cancel</Button>
-                        <Button variant="contained" disabled={Object.values(selectedValues).some((v) => !v || v.stock === 0)} onClick={handleConfirm}>
+                        <Button variant="contained" disabled={Object.values(selectedValues).some((v) => !v || (product.manage_stock && v.stock === 0))} onClick={handleConfirm}>
                             {initialItem ? 'Update' : 'Add'}
                         </Button>
                     </DialogActions>

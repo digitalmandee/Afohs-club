@@ -434,7 +434,7 @@ export const generateInvoiceContent = (booking, type) => {
         ${(() => {
                     const total = parseFloat(booking.grand_total || 0);
                     const paid = parseFloat(booking.invoice?.paid_amount || 0);
-                    return Math.round(Math.max(0, total - paid));
+                    return Math.round(total - paid);
                 })()}
         </td>
       </tr>
@@ -986,7 +986,7 @@ export const generateInvoiceContent = (booking, type) => {
                         .filter(o => o.payment_status === 'paid')
                         .reduce((sum, order) => sum + parseFloat(order.total_price || order.total || order.grand_total || 0), 0);
 
-                    return Math.round(Math.max(0, (parseFloat(booking.grand_total || 0) + orders) - (paidAmount + paidOrders)));
+                    return Math.round((parseFloat(booking.grand_total || 0) + orders) - (paidAmount + paidOrders));
                 })()}
                 </td>
             </tr>

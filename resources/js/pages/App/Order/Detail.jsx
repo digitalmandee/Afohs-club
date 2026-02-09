@@ -110,7 +110,18 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     // Now apply tax on the discounted amount
     const taxRate = setting?.tax ? setting.tax / 100 : 0;
-    const taxAmount = Math.round(discountedSubtotal * taxRate);
+
+    // Calculate taxable amount (sum of discounted price of taxable items)
+    const taxableAmount = orderDetails.order_items.reduce((acc, item) => {
+        if (item.is_taxable) {
+            // Only apply if item is taxable
+            const itemTotal = item.total_price - (item.discount_amount || 0);
+            return acc + itemTotal;
+        }
+        return acc;
+    }, 0);
+
+    const taxAmount = Math.round(taxableAmount * taxRate);
 
     // Final total
     const total = Math.round(discountedSubtotal + taxAmount);
@@ -121,7 +132,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         const newPayload = {
             ...orderDetails,
             ...extra, // include waiter + time if passed
-            price: subtotal,
+            price: total,
             tax: taxRate,
             discount_type: 'amount', // global discount is now just the sum amount
             discount_value: discountAmount,
@@ -206,6 +217,38 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
         const val = Number(itemDiscountForm.value || 0);
         const type = itemDiscountForm.type;
+
+        // Check for max discount limit
+        if (item.max_discount != null && parseFloat(item.max_discount) > 0) {
+            const maxDisc = parseFloat(item.max_discount);
+            const maxDiscType = item.max_discount_type || 'percentage';
+
+            let exceedsLimit = false;
+
+            if (maxDiscType === 'percentage') {
+                if (type === 'percentage') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    // type is amount, check if amount is > maxDisc% of price
+                    const equivalentPercent = (val / item.price) * 100;
+                    if (equivalentPercent > maxDisc) exceedsLimit = true;
+                }
+            } else {
+                // maxDiscType is amount (Fixed Amount per unit)
+                if (type === 'amount') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    // type is percentage, check if calculated amount > maxDisc
+                    const calculatedAmount = (val / 100) * item.price;
+                    if (calculatedAmount > maxDisc) exceedsLimit = true;
+                }
+            }
+
+            if (exceedsLimit) {
+                enqueueSnackbar(`Maximum discount allowed is ${maxDisc}${maxDiscType === 'percentage' ? '%' : ' Rs'}`, { variant: 'error' });
+                return;
+            }
+        }
 
         // Update item with new discount settings
         item.discount_value = val;
@@ -502,6 +545,14 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                                 const handleQtyBlur = () => {
                                     const newQty = Number(tempQty);
                                     if (newQty > 0 && newQty !== item.quantity) {
+                                        // Check stock availability if managed
+                                        if (item.manage_stock && newQty > item.current_stock) {
+                                            enqueueSnackbar(`Insufficient stock. Available: ${item.current_stock}`, { variant: 'error' });
+                                            setTempQty(item.quantity.toString());
+                                            setEditingQtyIndex(null);
+                                            return;
+                                        }
+
                                         const updatedItems = [...orderDetails.order_items];
                                         updatedItems[index].quantity = newQty;
                                         updatedItems[index].total_price = newQty * updatedItems[index].price;
@@ -686,6 +737,16 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                         </Box>
 
                         <Divider sx={{ my: 1 }} />
+                        {orderDetails.advance_amount > 0 && (
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="body2" color="primary">
+                                    Advance
+                                </Typography>
+                                <Typography variant="body2" color="primary">
+                                    - Rs {orderDetails.advance_amount}
+                                </Typography>
+                            </Box>
+                        )}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="subtitle2">Total</Typography>
                             <Typography variant="subtitle2">Rs {total.toFixed(2)}</Typography>
@@ -945,7 +1006,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
             </Dialog>
 
             {/* Payment Modal */}
-            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: 'amount', discount_value: discountAmount, discount: discountAmount, price: subtotal, total_price: total }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
+            <PaymentNow invoiceData={{ ...orderDetails, tax: taxRate, discount_type: 'amount', discount_value: discountAmount, discount: discountAmount, price: subtotal, total_price: total - (orderDetails.advance_amount || 0) }} openSuccessPayment={handleSuccessPayment} openPaymentModal={openPaymentModal} handleClosePayment={handleClosePayment} mode="order" isLoading={isLoading} handleSendToKitchen={handleSendToKitchen} />
 
             <CancelItemDialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} onConfirm={handleConfirmCancel} item={itemToCancel} />
         </>
