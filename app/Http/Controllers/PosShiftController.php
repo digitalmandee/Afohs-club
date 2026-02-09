@@ -77,7 +77,7 @@ class PosShiftController extends Controller
         $shift = PosShift::create([
             'user_id' => $user->id,
             'tenant_id' => $tenantId,
-            'start_date' => Carbon::today(),  // Auto-set to today
+            'start_date' => Carbon::today()->toDateString(),  // Auto-set to today
             'start_time' => Carbon::now(),
             'status' => 'active',
             'created_by' => $user->id,
@@ -120,12 +120,12 @@ class PosShiftController extends Controller
             })
             ->exists();
 
-        if ($incompleteOrders) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot end shift. You have incomplete or unpaid orders.',
-            ], 400);
-        }
+        // if ($incompleteOrders) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Cannot end shift. You have incomplete or unpaid orders.',
+        //     ], 400);
+        // }
 
         if ($activeShift) {
             $activeShift->update([

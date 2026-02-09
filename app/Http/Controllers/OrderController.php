@@ -96,7 +96,7 @@ class OrderController extends Controller
                     ->with([
                         'orders' => function ($orderQuery) use ($today) {
                             $orderQuery
-                                ->select('id', 'table_id', 'status', 'start_date')
+                                ->select('id', 'table_id', 'status', 'payment_status', 'start_date')
                                 ->whereDate('start_date', $today)
                                 ->whereIn('status', ['pending', 'in_progress', 'completed']);
                         },
@@ -114,16 +114,10 @@ class OrderController extends Controller
                     ]);
             }])
             ->get();
+        Log::info($floorTables);
         // 🔗 Attach invoices manually
         $floorTables->each(function ($floor) {
             $floor->tables->each(function ($table) {
-                $table->orders->each(function ($order) {
-                    $invoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)
-                        ->select('id', 'status', 'data')
-                        ->first();
-                    $order->invoice = $invoice;
-                });
-
                 // If you also want reservation’s order invoice
                 $table->reservations->each(function ($reservation) {
                     if ($reservation->order) {
@@ -148,8 +142,8 @@ class OrderController extends Controller
                     // Only block table if current time is within reservation window and reservation not completed
                     if ($reservation->status !== 'completed' && $now->between($startTime, $endTime)) {
                         if ($reservation->order) {
-                            $invoice = $reservation->order->invoice;
-                            if (!$invoice || $invoice->status !== 'paid' || $reservation->order->status !== 'completed') {
+                            $invoice = $reservation->order;
+                            if (!$invoice || $invoice->payment_status !== 'paid' || $reservation->status !== 'completed') {
                                 $isAvailable = false;
                                 break;
                             }
@@ -164,11 +158,11 @@ class OrderController extends Controller
                 // 🔹 If still available, check direct orders (not tied to reservation)
                 if ($isAvailable) {
                     foreach ($table->orders as $order) {
-                        $invoice = $order->invoice;
+                        $invoice = $order;
 
                         if (
                             !$invoice ||
-                            $invoice->status !== 'paid' ||
+                            $invoice->payment_status !== 'paid' ||
                             $order->status !== 'completed'
                         ) {
                             $isAvailable = false;
