@@ -182,6 +182,11 @@ export default function SideNav({ open, setOpen }) {
             path: route('cake-types.index'),
         },
         {
+            text: 'Printer Test',
+            icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />,
+            path: route('printer.index'),
+        },
+        {
             text: 'Kitchen',
             icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
             path: route('kitchen.index'),
