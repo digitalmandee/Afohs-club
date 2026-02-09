@@ -3379,7 +3379,6 @@ class DataMigrationController extends Controller
             }
 
             \App\Models\Product::create([
-                // 'id' => $oldProd->id, // Letting DB auto-increment
                 'name' => $oldProd->item_details,
                 'menu_code' => $oldProd->item_code,
                 'available_order_types' => [
