@@ -13,6 +13,7 @@ use App\Http\Controllers\IngredientController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PrinterTestController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TransactionController;
@@ -88,6 +89,10 @@ Route::group([
         Route::get('/settings', function () {
             return Inertia::render('App/Settings/Dashboard');
         })->name('settings');
+
+        // Printer Test
+        Route::get('/settings/printer-test', [PrinterTestController::class, 'index'])->name('printer.index');
+        Route::post('/settings/printer-test', [PrinterTestController::class, 'testPrint'])->name('printer.test');
 
         // Route::get('/kitchen', function () {
         //     return Inertia::render('App/Kitchen/Dashboard');
