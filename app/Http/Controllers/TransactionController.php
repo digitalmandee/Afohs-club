@@ -150,7 +150,7 @@ class TransactionController extends Controller
         $entDetails = '';
 
         // Calculate ENT Value if specific items selected OR ENT enabled
-        if ($request->boolean('ent_enabled') || $request->payment_method === 'ent' || $request->has('ent_items')) {
+        if ($request->boolean('ent_enabled') || $request->has('ent_items')) {
             if ($request->filled('ent_items')) {
                 // Calculate from items (empty array = 0).
                 $entItems = $order->orderItems()->whereIn('id', $request->ent_items)->get();
@@ -253,6 +253,8 @@ class TransactionController extends Controller
                 'ent_reason' => $order->ent_reason,
                 'ent_comment' => $order->ent_comment,
                 'cts_comment' => $order->cts_comment,
+                'ent_amount' => $entAmount,
+                'cts_amount' => $ctsAmount,
                 'data' => $invoiceData,  // Save updated JSON
             ]);
 
