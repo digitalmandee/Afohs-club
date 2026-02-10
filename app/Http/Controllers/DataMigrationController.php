@@ -2307,7 +2307,7 @@ class DataMigrationController extends Controller
         }
     }
 
-    private function createInvoiceFromLegacy($first, $groupRows)
+    private function createInvoiceFromLegacy($first, $groupRows, $oldTransTypeId = null)
     {
         static $transactionTypeIds = null;
         static $subscriptionCategoryCache = [];
@@ -2512,6 +2512,77 @@ class DataMigrationController extends Controller
         }
     }
 
+    private function migrateInvoiceTransactionsPreloaded($newInvoice, $newItem, $legacyRow, $creditsGrouped, array &$receiptByLegacyId, array $oldReceiptsById)
+    {
+        $payableType = $this->getPayableType($newInvoice);
+        $payableId = $this->getPayableId($newInvoice);
+
+        \App\Models\Transaction::create([
+            'amount' => $newItem->total,
+            'type' => 'debit',
+            'payable_type' => $payableType,
+            'payable_id' => $payableId,
+            'reference_type' => \App\Models\FinancialInvoiceItem::class,
+            'reference_id' => $newItem->id,
+            'invoice_id' => $newInvoice->id,
+            'date' => $newItem->start_date ?? $newInvoice->issue_date,
+            'created_at' => $newItem->created_at,
+            'updated_at' => $newItem->updated_at,
+            'created_by' => $newItem->created_by,
+            'updated_by' => $newItem->updated_by,
+        ]);
+
+        $legacyTrans = $creditsGrouped[$legacyRow->id][$legacyRow->charges_type] ?? [];
+
+        foreach ($legacyTrans as $t) {
+            if (empty($t->receipt_id)) {
+                continue;
+            }
+
+            $receipt = $receiptByLegacyId[$t->receipt_id] ?? null;
+            if (!$receipt && isset($oldReceiptsById[$t->receipt_id])) {
+                $receipt = $this->migrateSingleReceipt($oldReceiptsById[$t->receipt_id], $payableType, $payableId, false);
+                if ($receipt) {
+                    $receiptByLegacyId[$t->receipt_id] = $receipt;
+                }
+            }
+
+            $remarks = $t->remarks ?? 'Legacy Credit';
+            if ($receipt) {
+                $remarks .= " (Receipt #{$receipt->receipt_no})";
+            } elseif ($t->receipt_id) {
+                $remarks .= " (Legacy Receipt ID: {$t->receipt_id} - Not Found)";
+            }
+
+            \App\Models\Transaction::create([
+                'amount' => $t->trans_amount,
+                'type' => 'credit',
+                'payable_type' => $payableType,
+                'payable_id' => $payableId,
+                'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                'reference_id' => $newItem->id,
+                'invoice_id' => $newInvoice->id,
+                'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
+                'date' => $this->validateDate($t->date),
+                'remarks' => $remarks,
+                'created_at' => $this->validateDate($t->created_at),
+                'updated_at' => $this->validateDate($t->updated_at),
+                'created_by' => $t->created_by ?? null,
+                'updated_by' => $t->updated_by ?? null,
+            ]);
+
+            if ($receipt) {
+                \App\Models\TransactionRelation::updateOrCreate([
+                    'invoice_id' => $newInvoice->id,
+                    'receipt_id' => $receipt->id
+                ], [
+                    'amount' => $t->trans_amount,
+                    'legacy_transaction_id' => $t->id
+                ]);
+            }
+        }
+    }
+
     private function migrateRelatedReceipts($invoice)
     {
         // 1. Find relations in legacy DB using Invoice ID (we need the legacy ID)
@@ -2583,6 +2654,65 @@ class DataMigrationController extends Controller
         }
 
         // Update Status
+        if ($totalPaid >= $invoice->total_price) {
+            $invoice->update(['status' => 'paid']);
+        } elseif ($totalPaid > 0) {
+            $invoice->update(['status' => 'partial']);
+        }
+    }
+
+    private function migrateRelatedReceiptsPreloaded($invoice, $legacyInvoiceRow, $relations, array $legacyTransactionsById, array &$receiptByLegacyId, array $oldReceiptsById)
+    {
+        if ($relations instanceof \Illuminate\Support\Collection) {
+            $relationsIterable = $relations;
+        } else {
+            $relationsIterable = collect($relations);
+        }
+
+        if ($relationsIterable->isEmpty()) {
+            return;
+        }
+
+        $totalPaid = 0;
+
+        foreach ($relationsIterable as $rel) {
+            $legacyTransId = $rel->receipt ?? null;
+            if (!$legacyTransId || !isset($legacyTransactionsById[$legacyTransId])) {
+                continue;
+            }
+
+            $legacyTrans = $legacyTransactionsById[$legacyTransId];
+            $legacyReceiptId = $legacyTrans->receipt_id ?? null;
+            if (!$legacyReceiptId) {
+                continue;
+            }
+
+            $receipt = $receiptByLegacyId[$legacyReceiptId] ?? null;
+            if (!$receipt && isset($oldReceiptsById[$legacyReceiptId])) {
+                $receipt = $this->migrateSingleReceipt($oldReceiptsById[$legacyReceiptId]);
+                if ($receipt) {
+                    $receiptByLegacyId[$legacyReceiptId] = $receipt;
+                }
+            }
+
+            if (!$receipt) {
+                continue;
+            }
+
+            $creditTransId = $rel->account ?? null;
+            $creditTrans = $creditTransId && isset($legacyTransactionsById[$creditTransId]) ? $legacyTransactionsById[$creditTransId] : null;
+            $allocatedAmount = $creditTrans ? $creditTrans->trans_amount : $receipt->amount;
+
+            \App\Models\TransactionRelation::updateOrCreate([
+                'invoice_id' => $invoice->id,
+                'receipt_id' => $receipt->id
+            ], [
+                'amount' => $allocatedAmount,
+                'legacy_transaction_id' => $creditTransId
+            ]);
+            $totalPaid += $allocatedAmount;
+        }
+
         if ($totalPaid >= $invoice->total_price) {
             $invoice->update(['status' => 'paid']);
         } elseif ($totalPaid > 0) {
@@ -2883,20 +3013,105 @@ class DataMigrationController extends Controller
                         continue;
                     }
 
-                    DB::transaction(function () use ($invoiceNo, $groupRows) {
-                        $first = $groupRows->first();
+                    $legacyRowIds = $groupRows->pluck('id')->all();
+                    $legacyChargesTypes = $groupRows->pluck('charges_type')->unique()->filter(fn($v) => $v !== null)->values()->all();
 
+                    $legacyCredits = DB::connection('old_afohs')
+                        ->table('transactions')
+                        ->whereIn('trans_type_id', $legacyRowIds)
+                        ->when(!empty($legacyChargesTypes), function ($q) use ($legacyChargesTypes) {
+                            $q->whereIn('trans_type', $legacyChargesTypes);
+                        })
+                        ->where('debit_or_credit', '>', 0)
+                        ->whereNull('deleted_at')
+                        ->orderBy('id', 'asc')
+                        ->get();
+
+                    $creditsGrouped = [];
+                    $receiptIds = [];
+
+                    foreach ($legacyCredits as $t) {
+                        $creditsGrouped[$t->trans_type_id][$t->trans_type][] = $t;
+                        if (!empty($t->receipt_id)) {
+                            $receiptIds[$t->receipt_id] = true;
+                        }
+                    }
+
+                    $first = $groupRows->first();
+
+                    $invoiceTransIds = DB::connection('old_afohs')
+                        ->table('transactions')
+                        ->where('trans_type_id', $first->id)
+                        ->whereNull('deleted_at')
+                        ->pluck('id')
+                        ->all();
+
+                    $relations = collect();
+                    $legacyTransactionsById = [];
+
+                    if (!empty($invoiceTransIds)) {
+                        $relations = DB::connection('old_afohs')
+                            ->table('trans_relations')
+                            ->whereIn('invoice', $invoiceTransIds)
+                            ->get();
+
+                        $relationTransIds = [];
+                        foreach ($relations as $rel) {
+                            if (!empty($rel->receipt)) {
+                                $relationTransIds[$rel->receipt] = true;
+                            }
+                            if (!empty($rel->account)) {
+                                $relationTransIds[$rel->account] = true;
+                            }
+                        }
+
+                        if (!empty($relationTransIds)) {
+                            $legacyTransactionsById = DB::connection('old_afohs')
+                                ->table('transactions')
+                                ->whereIn('id', array_keys($relationTransIds))
+                                ->whereNull('deleted_at')
+                                ->get()
+                                ->keyBy('id')
+                                ->all();
+
+                            foreach ($legacyTransactionsById as $t) {
+                                if (!empty($t->receipt_id)) {
+                                    $receiptIds[$t->receipt_id] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    $receiptIds = array_keys($receiptIds);
+
+                    $oldReceiptsById = [];
+                    if (!empty($receiptIds)) {
+                        $oldReceiptsById = DB::connection('old_afohs')
+                            ->table('finance_cash_receipts')
+                            ->whereIn('id', $receiptIds)
+                            ->whereNull('deleted_at')
+                            ->get()
+                            ->keyBy('id')
+                            ->all();
+                    }
+
+                    $receiptByLegacyId = [];
+                    if (!empty($receiptIds)) {
+                        $receiptByLegacyId = \App\Models\FinancialReceipt::whereIn('legacy_id', $receiptIds)->get()->keyBy('legacy_id')->all();
+                    }
+
+                    DB::transaction(function () use ($invoiceNo, $groupRows, $first, $creditsGrouped, $relations, $legacyTransactionsById, $oldReceiptsById, &$receiptByLegacyId) {
                         $result = $this->createInvoiceFromLegacy($first, $groupRows);
                         $invoice = $result['invoice'];
                         $itemsMap = $result['items_map'];
 
                         foreach ($groupRows as $legacyRow) {
                             if (isset($itemsMap[$legacyRow->id])) {
-                                $this->migrateInvoiceTransactions($invoice, $itemsMap[$legacyRow->id], $legacyRow);
+                                $this->migrateInvoiceTransactionsPreloaded($invoice, $itemsMap[$legacyRow->id], $legacyRow, $creditsGrouped, $receiptByLegacyId, $oldReceiptsById);
                             }
                         }
 
-                        $this->migrateRelatedReceipts($invoice);
+                        $this->migrateRelatedReceiptsPreloaded($invoice, $first, $relations, $legacyTransactionsById, $receiptByLegacyId, $oldReceiptsById);
                         $this->updateInvoiceStatus($invoice);
                     });
 
