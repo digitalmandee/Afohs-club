@@ -105,6 +105,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
         ); // Display loading state until data is fetched
     }
 
+    const round0 = (n) => Math.round(Number(n) || 0);
     const handlePrintReceipt = (data) => {
         if (!data) return;
 
@@ -192,25 +193,25 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
             <div class="row">
               <div>Subtotal</div>
-              <div>Rs ${data.amount}</div>
+              <div>Rs ${round0(data.amount)}</div>
             </div>
 
             <div class="row">
               <div>Discount</div>
-              <div>Rs ${data.discount}</div>
+              <div>Rs ${round0(data.discount)}</div>
             </div>
 
             <div class="row">
               <div>Tax (${(data.tax * 100).toFixed(0)}%)</div>
-              <div>Rs ${data.amount * (data.tax || 0)}</div>
+              <div>Rs ${round0(data.amount * (data.tax || 0))}</div>
             </div>
 
             ${
                 data.data?.bank_charges_amount > 0
                     ? `
                 <div class="row">
-                  <div>Bank Charges (${data.data.bank_charges_type === 'percentage' ? data.data.bank_charges_value + '%' : 'Fixed'})</div>
-                  <div>Rs ${data.data.bank_charges_amount}</div>
+                  <div>Bank Charges (${data.data.bank_charges_type === 'percentage' ? (round0(data.data.bank_charges_value) + '%') : 'Fixed'})</div>
+                  <div>Rs ${round0(data.data.bank_charges_amount)}</div>
                 </div>
                 `
                     : ''
@@ -220,7 +221,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
             <div class="row total">
               <div>Total Amount</div>
-              <div>Rs ${data.total_price}</div>
+              <div>Rs ${round0(round0(data.total_price) + round0(data.data?.bank_charges_amount))}</div>
             </div>
 
             <div class="footer">
@@ -372,13 +373,13 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                         <Typography variant="caption" color="text.secondary">
                             Total Cash
                         </Typography>
-                        <Typography variant="caption">Rs{paymentData.paid_amount}</Typography>
+                        <Typography variant="caption">Rs{round0(paymentData.paid_amount)}</Typography>
                     </Box>
                     <Box sx={styles.receiptRow}>
                         <Typography variant="caption" color="text.secondary">
                             Customer Changes
                         </Typography>
-                        <Typography variant="caption">Rs{paymentData.paid_amount - paymentData.total_price}</Typography>
+                        <Typography variant="caption">Rs{round0(round0(paymentData.paid_amount) - (round0(paymentData.total_price) + round0(paymentData.data?.bank_charges_amount)))}</Typography>
                     </Box>
                 </>
             )}
@@ -388,7 +389,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                     Total Amount
                 </Typography>
                 <Typography variant="body2" fontWeight="bold" color="#0a3d62">
-                    Rs {paymentData.total_price}
+                    Rs {round0(round0(paymentData.total_price) + round0(paymentData.data?.bank_charges_amount))}
                 </Typography>
             </Box>
 

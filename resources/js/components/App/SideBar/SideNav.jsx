@@ -107,7 +107,10 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url } = usePage();
-    const { auth, tenant } = usePage().props;
+    const { auth: rawAuth, tenant } = usePage().props;
+    const auth = rawAuth || {};
+    const role = auth.role || '';
+    const permissions = Array.isArray(auth.permissions) ? auth.permissions : [];
 
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
@@ -248,13 +251,13 @@ export default function SideNav({ open, setOpen }) {
     }, [router]);
 
     const renderMenuItem = (item) => {
-        if (item.permission && auth.role !== 'super' && !auth.permissions?.includes(item.permission)) {
+        if (item.permission && role !== 'super' && !permissions.includes(item.permission)) {
             // Basic permission check
-            if (auth.role !== 'admin' && item.permission !== 'kitchen') return null; // Logic might need check against specific array
+            if (role !== 'admin' && item.permission !== 'kitchen') return null;
             // Assuming existing logic: !item.permission || auth.permissions.includes(item.permission)
             // The original code used: .filter((item) => !item.permission || auth.permissions.includes(item.permission))
             // Replicating loosely here, usually auth.permissions is an array
-            if (item.permission && (!auth.permissions || !auth.permissions.includes(item.permission))) return null;
+            if (item.permission && (!permissions || !permissions.includes(item.permission))) return null;
         }
 
         const isDropdownOpen = openDropdown[item.text];
@@ -422,7 +425,7 @@ export default function SideNav({ open, setOpen }) {
                 </DrawerHeader>
 
                 <Box sx={{ flexGrow: 1, overflowY: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
-                    {auth.role !== 'kitchen' && (
+                    {role !== 'kitchen' && (
                         <Box sx={{ display: 'flex', justifyContent: 'center', p: 1, mt: 2 }}>
                             <Button
                                 variant="text"

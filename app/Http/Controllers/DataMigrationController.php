@@ -46,9 +46,9 @@ class DataMigrationController extends Controller
                 ];
             }
 
-            $oldMembersCount = DB::table('memberships')->count();
-            $oldFamiliesCount = DB::table('mem_families')->count();
-            $oldMediaCount = DB::table('old_media')->count();
+            $oldMembersCount = DB::table('old_afohs.memberships')->count();
+            $oldFamiliesCount = DB::table('old_afohs.mem_families')->count();
+            $oldMediaCount = DB::table('old_afohs.old_media')->count();
             // Employee Stats
             $oldEmployeesCount = DB::table('old_afohs.hr_employments')->count();
             $newEmployeesCount = \App\Models\Employee::whereNotNull('old_employee_id')->count();
@@ -149,8 +149,8 @@ class DataMigrationController extends Controller
     private function checkOldTablesExist()
     {
         try {
-            $tables = DB::select("SHOW TABLES LIKE 'memberships'");
-            $familyTables = DB::select("SHOW TABLES LIKE 'mem_families'");
+            $tables = DB::connection('old_afohs')->select("SHOW TABLES LIKE 'memberships'");
+            $familyTables = DB::connection('old_afohs')->select("SHOW TABLES LIKE 'mem_families'");
 
             // Check for finance_invoices table in old database connection if possible, or just assume it exists if others do
             // Better to check explicitly if we can
@@ -250,7 +250,7 @@ class DataMigrationController extends Controller
             // Construct full name if possible, otherwise just use applicant_name
             'full_name' => trim(preg_replace('/\s+/', ' ', ($oldMember->title ?? '') . ' ' . ($oldMember->first_name ?? '') . ' ' . ($oldMember->middle_name ?? '') . ' ' . ($oldMember->applicant_name ?? ''))),
             'member_category_id' => $memberCategoryId,
-            'member_type_id' => 13,  // Default to a specific type? Or should this be dynamic? Keeping 13 as per previous code.
+            'member_type_id' => 10,  // Default to a specific type? Or should this be dynamic? Keeping 13 as per previous code.
             'classification_id' => $oldMember->mem_classification_id ?? null,
             'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
             'guardian_name' => $oldMember->father_name ?? null,
@@ -524,7 +524,7 @@ class DataMigrationController extends Controller
 
         // Get status from mem_statuses table
         try {
-            $status = DB::table('mem_statuses')->where('id', $oldStatus)->first();
+            $status = DB::table('old_afohs.mem_statuses')->where('id', $oldStatus)->first();
 
             if ($status) {
                 // Map status name to new enum values
@@ -1078,7 +1078,7 @@ class DataMigrationController extends Controller
         try {
             DB::beginTransaction();
 
-            $oldFamilies = DB::table('corporate_mem_families')
+            $oldFamilies = DB::table('old_afohs.corporate_mem_families')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -1178,7 +1178,7 @@ class DataMigrationController extends Controller
             DB::beginTransaction();
 
             // Get batch of old media records
-            $oldMediaRecords = DB::table('old_media')
+            $oldMediaRecords = DB::table('old_afohs.old_media')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -1730,6 +1730,42 @@ class DataMigrationController extends Controller
                     $employee->save();
                     $employeesLinked++;
                 }
+            }
+
+            // 3. Data Migration: Move strings to Designations table
+            $employees = DB::table('employees')->select('id', 'designation')->whereNotNull('designation')->where('designation', '!=', '')->get();
+            $designationMap = [];
+
+            foreach ($employees as $employee) {
+                $designationName = trim($employee->designation);
+                if (empty($designationName))
+                    continue;
+
+                if (!isset($designationMap[$designationName])) {
+                    $id = null;
+                    $existing = DB::table('designations')->where('name', $designationName)->first();
+
+                    if ($existing) {
+                        $id = $existing->id;
+                    } else {
+                        try {
+                            $id = DB::table('designations')->insertGetId([
+                                'name' => $designationName,
+                                'status' => 'active',
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        } catch (\Exception $e) {
+                            // Fallback if concurrency or case sensitivity causes duplicate error
+                            $id = DB::table('designations')->where('name', $designationName)->value('id');
+                        }
+                    }
+                    $designationMap[$designationName] = $id;
+                }
+
+                DB::table('employees')->where('id', $employee->id)->update([
+                    'designation_id' => $designationMap[$designationName]
+                ]);
             }
 
             DB::commit();

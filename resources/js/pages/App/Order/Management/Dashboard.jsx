@@ -846,7 +846,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                     {billModalOpen && selectedCard && (
                         <Dialog open={billModalOpen} onClose={() => setBillModalOpen(false)} maxWidth="sm" fullWidth>
                             <Box sx={{ p: 2 }}>
-                                <Receipt invoiceData={getReceiptData(selectedCard)} openModal={true} />
+                                <Receipt invoiceRoute={'transaction.invoice'} invoiceData={getReceiptData(selectedCard)} openModal={true} />
                                 <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
                                     <Button onClick={() => setBillModalOpen(false)} variant="outlined">
                                         Close

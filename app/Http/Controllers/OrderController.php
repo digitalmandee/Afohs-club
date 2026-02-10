@@ -346,6 +346,8 @@ class OrderController extends Controller
                 'data' => [
                     'order_id' => $order->id,
                 ],
+                'invoiceable_id' => $order->id,
+                'invoiceable_type' => Order::class,
             ];
 
             // Determine Payer
@@ -1035,8 +1037,8 @@ class OrderController extends Controller
                     if ($request->payment['bank_charges_enabled'] ?? false) {
                         $invoiceData['data']['bank_charges_enabled'] = true;
                         $invoiceData['data']['bank_charges_type'] = $request->payment['bank_charges_type'] ?? 'percentage';
-                        $invoiceData['data']['bank_charges_value'] = $request->payment['bank_charges_value'] ?? 0;
-                        $invoiceData['data']['bank_charges_amount'] = $request->payment['bank_charges_amount'] ?? 0;
+                        $invoiceData['data']['bank_charges_value'] = round((float) ($request->payment['bank_charges_value'] ?? 0), 0);
+                        $invoiceData['data']['bank_charges_amount'] = round((float) ($request->payment['bank_charges_amount'] ?? 0), 0);
                     }
                 }
 
@@ -1435,6 +1437,8 @@ class OrderController extends Controller
                     'data' => [
                         'order_id' => $order->id,
                     ],
+                    'invoiceable_id' => $order->id,
+                    'invoiceable_type' => Order::class,
                 ];
 
                 if ($order->member_id) {
@@ -1836,6 +1840,18 @@ class OrderController extends Controller
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->limit(1),
                 'invoice_cts_comment' => FinancialInvoice::select('cts_comment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_amount' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_amount')), '0') AS DECIMAL(10,2))")
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_enabled' => FinancialInvoice::selectRaw("COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_enabled')), '0')")
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_type' => FinancialInvoice::selectRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_type'))")
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_bank_charges_value' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.bank_charges_value')), '0') AS DECIMAL(10,2))")
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->limit(1),
             ])

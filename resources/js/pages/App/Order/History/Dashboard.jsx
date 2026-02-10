@@ -206,6 +206,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
         if (!order) return null;
+        const bankChargesEnabled = order.invoice_bank_charges_enabled === true || order.invoice_bank_charges_enabled === 1 || order.invoice_bank_charges_enabled === '1' || order.invoice_bank_charges_enabled === 'true';
         return {
             id: order.id,
             order_no: order.id,
@@ -215,6 +216,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             discount: order.discount || 0,
             tax: order.tax || 0,
             total_price: order.total_price,
+            data: {
+                bank_charges_enabled: bankChargesEnabled,
+                bank_charges_type: order.invoice_bank_charges_type || 'percentage',
+                bank_charges_value: Number(order.invoice_bank_charges_value || 0),
+                bank_charges_amount: Number(order.invoice_bank_charges_amount || 0),
+            },
             order_type: order.order_type,
             member: order.member,
             customer: order.customer,
@@ -240,6 +247,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
         const printWindow = window.open('', '_blank');
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
+        const bankCharges = parseFloat(order.invoice_bank_charges_amount || 0);
 
         const itemsHtml =
             order.order_items
@@ -293,13 +301,18 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             <div class="row"><div>Subtotal</div><div>Rs ${order.amount || order.total_price || 0}</div></div>
             <div class="row"><div>Discount</div><div>Rs ${order.discount || 0}</div></div>
             <div class="row"><div>Tax</div><div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div></div>
+            ${
+                bankCharges > 0
+                    ? `<div class="row"><div>Bank Charges</div><div>Rs ${bankCharges}</div></div>`
+                    : ''
+            }
             <div class="divider"></div>
-            <div class="row total"><div>Total Amount</div><div>Rs ${order.total_price || 0}</div></div>
+            <div class="row total"><div>Total Amount</div><div>Rs ${(Number(order.total_price || 0) + Number(bankCharges || 0)).toFixed(2)}</div></div>
             ${
                 order.paid_amount
                     ? `
             <div class="row"><div>Paid Amount</div><div>Rs ${order.paid_amount}</div></div>
-            <div class="row"><div>Change</div><div>Rs ${order.paid_amount - order.total_price}</div></div>
+            <div class="row"><div>Change</div><div>Rs ${Number(order.paid_amount || 0) - (Number(order.total_price || 0) + Number(bankCharges || 0))}</div></div>
             `
                     : ''
             }
@@ -572,15 +585,17 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                         <TableBody>
                             {orders?.data?.length > 0 ? (
                                 orders.data.map((order) => {
-                                    const gross = order.amount || 0;
-                                    const discount = order.discount || 0;
-                                    const taxRate = order.tax || 0;
-                                    const taxAmount = Math.round((gross - discount) * taxRate);
-                                    const total = order.total_price || 0;
-                                    const paid = order.paid_amount || 0;
-                                    const entAmount = parseFloat(order.invoice_ent_amount || 0);
-                                    const ctsAmount = parseFloat(order.invoice_cts_amount || 0);
-                                    const balance = total - paid - entAmount - ctsAmount;
+                                    const round0 = (n) => Math.round(Number(n) || 0);
+                                    const gross = round0(order.amount || 0);
+                                    const discount = round0(order.discount || 0);
+                                    const taxRate = Number(order.tax || 0);
+                                    const taxAmount = round0((gross - discount) * taxRate);
+                                    const total = round0(order.total_price || 0);
+                                    const paid = round0(order.paid_amount || 0);
+                                    const entAmount = round0(order.invoice_ent_amount || 0);
+                                    const ctsAmount = round0(order.invoice_cts_amount || 0);
+                                    const bankCharges = round0(order.invoice_bank_charges_amount || 0);
+                                    const balance = round0(total + bankCharges - paid - entAmount - ctsAmount);
 
                                     // Determine Client Type
                                     let clientType = 'Guest';

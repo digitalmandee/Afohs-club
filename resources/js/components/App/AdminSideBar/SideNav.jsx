@@ -102,8 +102,10 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url, component, props } = usePage();
-    const auth = props.auth;
-    const permissions = auth.permissions || [];
+    const rawAuth = (props && props.auth) || {};
+    const auth = rawAuth;
+    const role = auth.role || '';
+    const permissions = Array.isArray(auth.permissions) ? auth.permissions : [];
 
     const normalizePath = (fullPath) => new URL(fullPath, window.location.origin).pathname;
 
@@ -850,10 +852,12 @@ export default function SideNav({ open, setOpen }) {
                                     borderRadius: '50px',
                                 }}
                             />
-                            <Box>
-                                <Typography sx={{ fontWeight: 'bold', color: '#000' }}>{auth.user?.name}</Typography>
-                                <Typography sx={{ fontSize: '12px', color: '#666' }}>{auth.role}</Typography>
-                            </Box>
+                            {auth && (
+                                <Box>
+                                    <Typography sx={{ fontWeight: 'bold', color: '#000' }}>{auth.user?.name || ''}</Typography>
+                                    <Typography sx={{ fontSize: '12px', color: '#666' }}>{role}</Typography>
+                                </Box>
+                            )}
                         </Box>
                     </Box>
                 </Toolbar>

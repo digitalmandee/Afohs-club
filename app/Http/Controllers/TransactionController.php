@@ -114,9 +114,29 @@ class TransactionController extends Controller
         ]);
     }
 
-    public function PaymentOrderData($invoiceId)
+    public function PaymentOrderData($orderId)
     {
-        $order = Order::where('id', $invoiceId)->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no', 'invoice'])->firstOrFail();
+        $order = Order::where('id', $orderId)
+            ->with([
+                'member:id,full_name,membership_no',
+                'customer:id,name,customer_no',
+                'employee:id,employee_id,name',
+                'cashier:id,name',
+                'orderItems:id,order_id,order_item,status',
+                'table:id,table_no',
+                'invoice',
+            ])
+            ->firstOrFail();
+
+        if (!$order->invoice) {
+            $order->setRelation(
+                'invoice',
+                FinancialInvoice::select('id', 'data', 'status', 'paid_amount', 'payment_method', 'payment_date')
+                    ->whereJsonContains('data', ['order_id' => $order->id])
+                    ->first()
+            );
+        }
+
         return $order;
     }
 
@@ -189,16 +209,16 @@ class TransactionController extends Controller
 
         // Bank Charges
         if ($request->boolean('bank_charges_enabled')) {
-            $bankChargesAmount = $request->bank_charges_amount ?? 0;
+            $bankChargesAmount = round((float) ($request->bank_charges_amount ?? 0), 0);
         }
 
         // Verification
         // Ensure values are floats
-        $payVal = (float) $paidAmount;
-        $entVal = (float) $entAmount;
-        $ctsVal = (float) $ctsAmount;
-        $bankVal = (float) $bankChargesAmount;
-        $dueVal = (float) $totalDue;
+        $payVal = round((float) $paidAmount, 0);
+        $entVal = round((float) $entAmount, 0);
+        $ctsVal = round((float) $ctsAmount, 0);
+        $bankVal = round((float) $bankChargesAmount, 0);
+        $dueVal = round((float) $totalDue, 0);
 
         // Allow variance of 1.0 for float rounding
         // Total needed = Due + BankCharges
@@ -257,27 +277,29 @@ class TransactionController extends Controller
             // Merge ENT/CTS amounts into usage data since columns don't exist
             $invoiceData = $invoice->data ?? [];
             if ($entAmount > 0)
-                $invoiceData['ent_amount'] = $entAmount;
+                $invoiceData['ent_amount'] = round($entAmount, 0);
             if ($ctsAmount > 0)
-                $invoiceData['cts_amount'] = $ctsAmount;
+                $invoiceData['cts_amount'] = round($ctsAmount, 0);
 
             if ($bankChargesAmount > 0) {
                 $invoiceData['bank_charges_enabled'] = true;
                 $invoiceData['bank_charges_type'] = $request->bank_charges_type;
                 $invoiceData['bank_charges_value'] = $request->bank_charges_value;
-                $invoiceData['bank_charges_amount'] = $bankChargesAmount;
+                $invoiceData['bank_charges_amount'] = round($bankChargesAmount, 0);
             }
 
             $invoice->update([
                 'status' => 'paid',
                 'payment_date' => now(),
                 'payment_method' => $request->payment_method,
-                'paid_amount' => $order->paid_amount,
+                'paid_amount' => round((float) $order->paid_amount, 0),
                 'ent_reason' => $order->ent_reason,
                 'ent_comment' => $order->ent_comment,
                 'cts_comment' => $order->cts_comment,
-                'ent_amount' => $entAmount,
-                'cts_amount' => $ctsAmount,
+                'ent_amount' => round($entAmount, 0),
+                'cts_amount' => round($ctsAmount, 0),
+                'invoiceable_id' => $order->id,
+                'invoiceable_type' => Order::class,
                 'data' => $invoiceData,  // Save updated JSON
             ]);
 
@@ -290,9 +312,9 @@ class TransactionController extends Controller
                     'fee_type' => 8,  // Assuming 8 is Financial Charges or similar constant, using literal for now or fetch constant if available
                     'description' => 'Bank Charges (' . ($request->bank_charges_type == 'percentage' ? $request->bank_charges_value . '%' : 'Fixed') . ')',
                     'qty' => 1,
-                    'amount' => $bankChargesAmount,
-                    'sub_total' => $bankChargesAmount,
-                    'total' => $bankChargesAmount,
+                    'amount' => round($bankChargesAmount, 0),
+                    'sub_total' => round($bankChargesAmount, 0),
+                    'total' => round($bankChargesAmount, 0),
                 ]);
 
                 \App\Models\Transaction::create([
