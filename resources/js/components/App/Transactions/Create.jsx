@@ -154,7 +154,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         const membershipMonth = new Date(membershipDate).getMonth(); // 0-based
         const currentYear = new Date().getFullYear();
 
-        const maintenanceTransactions = transactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid');
+        const maintenanceTransactions = transactions.filter((t) => (t.fee_type === 'maintenance_fee' || t.fee_type == 4) && t.status === 'paid');
         const sortedTransactions = [...maintenanceTransactions].sort((a, b) => new Date(b.valid_to) - new Date(a.valid_to));
 
         let paidQuarters = [];
@@ -714,7 +714,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         const newEnd = new Date(data.valid_to);
 
         // Get maintenance fee transactions and find the most recent active period
-        const maintenanceTransactions = memberTransactions.filter((t) => t.fee_type === 'maintenance_fee' && t.status === 'paid' && t.valid_from && t.valid_to);
+        const maintenanceTransactions = memberTransactions.filter((t) => (t.fee_type === 'maintenance_fee' || t.fee_type == 4) && t.status === 'paid' && t.valid_from && t.valid_to);
 
         // Sort by end date (latest first) to get the most recent transaction
         const sortedTransactions = [...maintenanceTransactions].sort((a, b) => new Date(b.valid_to) - new Date(a.valid_to));

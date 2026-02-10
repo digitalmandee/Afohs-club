@@ -14,6 +14,7 @@ import RoomDialog from './RoomDialog';
 import axios from 'axios';
 import { CiDeliveryTruck } from 'react-icons/ci';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import CakeIcon from '@mui/icons-material/Cake';
 import ShiftGate from '@/components/Pos/ShiftGate';
 
 const drawerWidthOpen = 240;
@@ -541,10 +542,10 @@ const NewOrder = ({ orderNo, guestTypes }) => {
                                             },
                                         }}
                                     >
-                                        <ShopIcon
+                                        <CakeIcon
                                             sx={{
                                                 mb: 0.5,
-                                                fill: orderDetails.order_type === 'load_booking' ? '#063455' : 'inherit',
+                                                color: orderDetails.order_type === 'load_booking' ? '#063455' : 'inherit',
                                             }}
                                         />
                                         <Typography variant="body2">Load Booking</Typography>

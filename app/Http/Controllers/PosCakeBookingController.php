@@ -65,6 +65,11 @@ class PosCakeBookingController extends Controller
                 $query->where('customer_type', 'Guest')->orWhere('customer_type', 'like', 'guest-%');
         }
 
+        // Status Filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         if ($request->filled('start_date')) {
             $query->whereDate('booking_date', '>=', $request->start_date);
         }
@@ -136,8 +141,8 @@ class PosCakeBookingController extends Controller
             'cake_type_id' => 'required|exists:products,id',
             'weight' => 'nullable|numeric',
             'total_price' => 'required|numeric',
-            'advance_amount' => 'nullable|numeric',
-            'payment_mode' => 'nullable|required_with:advance_amount',
+            'advance_amount' => 'required|numeric|min:1',
+            'payment_mode' => 'required|string',  // Compulsory if advance is there
         ]);
 
         DB::transaction(function () use ($request) {
@@ -153,12 +158,22 @@ class PosCakeBookingController extends Controller
             $booking->created_by = Auth::id();
 
             // Map ID based on Type
+            $booking->member_id = null;
+            $booking->corporate_id = null;
+            $booking->employee_id = null;
+            $booking->customer_id = null;
+
             if ($request->customer_type == '2' || $request->customer_type == 'Corporate') {
                 $booking->corporate_id = $request->member_id;
-                $booking->member_id = null;
             } else if ($request->customer_type == '0' || $request->customer_type == 'Member') {
                 $booking->member_id = $request->member_id;
-                $booking->corporate_id = null;
+            } else if ($request->customer_type == '3' || $request->customer_type == 'Employee') {
+                $booking->employee_id = $request->member_id;
+            } else {
+                // Guests or others
+                if ($request->member_id) {
+                    $booking->customer_id = $request->member_id;
+                }
             }
 
             // Calculate Balance
@@ -243,18 +258,39 @@ class PosCakeBookingController extends Controller
         $booking->fill($request->except(['booking_number']));  // Don't change booking number
 
         // Map ID based on Type
+        $booking->member_id = null;
+        $booking->corporate_id = null;
+        $booking->employee_id = null;
+        $booking->customer_id = null;
+
         if ($request->customer_type == '2' || $request->customer_type == 'Corporate') {
             $booking->corporate_id = $request->member_id;
-            $booking->member_id = null;
         } else if ($request->customer_type == '0' || $request->customer_type == 'Member') {
             $booking->member_id = $request->member_id;
-            $booking->corporate_id = null;
+        } else if ($request->customer_type == '3' || $request->customer_type == 'Employee') {
+            $booking->employee_id = $request->member_id;
+        } else {
+            // Guests or others
+            if ($request->member_id) {
+                $booking->customer_id = $request->member_id;
+            }
         }
 
         // Recalculate Balance
         $total = $request->total_price ?? $booking->total_price;
         $tax = $request->tax_amount ?? $booking->tax_amount;
         $discount = $request->discount_amount ?? $booking->discount_amount;
+        $discount = $request->discount_amount ?? $booking->discount_amount;
+        // Check if advance_amount is present in request, else use existing. Validate it if touched?
+        // Actually, update request might not include all fields if partial update.
+        // But for full edit form it sends everything.
+        // Let's assume validation handles required fields if they are in the request.
+        if ($request->has('advance_amount')) {
+            $request->validate([
+                'advance_amount' => 'required|numeric|min:1',
+                'payment_mode' => 'required|string',
+            ]);
+        }
         $advance = $request->advance_amount ?? $booking->advance_amount;
 
         $booking->balance_amount = ($total + $tax - $discount) - $advance;
@@ -332,7 +368,10 @@ class PosCakeBookingController extends Controller
         if (!$query)
             return response()->json([]);
 
-        $bookings = PosCakeBooking::with(['member', 'cakeType'])
+        if (!$query)
+            return response()->json([]);
+
+        $bookings = PosCakeBooking::with(['member', 'cakeType', 'customer'])
             ->where(function ($q) use ($query) {
                 $q
                     ->where('booking_number', 'like', "%{$query}%")

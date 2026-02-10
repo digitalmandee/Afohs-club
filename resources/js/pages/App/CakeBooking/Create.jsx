@@ -55,23 +55,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
     });
 
     const [members, setMembers] = useState([]);
-    const [memberSearch, setMemberSearch] = useState('');
     const [familyMembers, setFamilyMembers] = useState([]);
-
-    // Fetch members for autocomplete loop (Legacy but kept)
-    useEffect(() => {
-        if (memberSearch.length > 2) {
-            const timeoutId = setTimeout(() => {
-                axios
-                    .get(route('api.members.search', { query: memberSearch }))
-                    .then((res) => {
-                        setMembers(res.data);
-                    })
-                    .catch((err) => console.error(err));
-            }, 500);
-            return () => clearTimeout(timeoutId);
-        }
-    }, [memberSearch]);
 
     // Fetch family members when member is selected
     useEffect(() => {
@@ -218,11 +202,12 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                     Customer Info
                                 </Typography>
                                 <UserAutocomplete
+                                    routeUri={route('api.users.global-search')}
                                     memberType={data.customer_type}
                                     value={data.member_id ? { id: data.member_id, name: data.customer_name } : null}
                                     onChange={(newValue) => {
                                         if (newValue) {
-                                            const phone = newValue.contact || newValue.mobile_number_a || newValue.phone_number || newValue.telephone_number || '';
+                                            const phone = newValue.phone || newValue.contact || newValue.mobile_number_a || newValue.phone_number || newValue.telephone_number || '';
                                             setData((prev) => ({
                                                 ...prev,
                                                 member_id: newValue.id,
@@ -289,7 +274,19 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                         getOptionLabel={(option) => option.name}
                                         value={cakeTypes.find((c) => c.id === data.cake_type_id) || null}
                                         onChange={(event, newValue) => {
-                                            setData('cake_type_id', newValue ? newValue.id : '');
+                                            if (newValue) {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    cake_type_id: newValue.id,
+                                                    total_price: newValue.base_price || '',
+                                                }));
+                                            } else {
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    cake_type_id: '',
+                                                    total_price: '',
+                                                }));
+                                            }
                                         }}
                                         renderInput={(params) => <TextField {...params} label="Cake Type" required error={!!errors.cake_type_id} helperText={errors.cake_type_id} />}
                                     />
@@ -418,6 +415,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                     label="Advance Amount"
                                     fullWidth
                                     type="number"
+                                    required
                                     value={data.advance_amount}
                                     onChange={(e) => setData('advance_amount', e.target.value)}
                                     InputProps={{

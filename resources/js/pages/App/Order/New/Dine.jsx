@@ -141,7 +141,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <UserAutocomplete memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                    <UserAutocomplete routeUri={route('api.users.global-search')} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>

@@ -578,7 +578,9 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     const taxAmount = Math.round((gross - discount) * taxRate);
                                     const total = order.total_price || 0;
                                     const paid = order.paid_amount || 0;
-                                    const balance = total - paid;
+                                    const entAmount = parseFloat(order.invoice_ent_amount || 0);
+                                    const ctsAmount = parseFloat(order.invoice_cts_amount || 0);
+                                    const balance = total - paid - entAmount - ctsAmount;
 
                                     // Determine Client Type
                                     let clientType = 'Guest';

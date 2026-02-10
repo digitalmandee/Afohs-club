@@ -126,16 +126,18 @@ class TransactionController extends Controller
         $request->validate([
             'order_id' => 'required|exists:orders,id',
             'paid_amount' => 'required|numeric',
-            'payment_method' => 'required|in:cash,credit_card,split_payment,ent,cts',
+            'payment_method' => 'required|string',  // Relaxed validation to allow 'split_payment' etc regardless of ENT
             // For credit card
             'credit_card_type' => 'nullable|required_if:payment_method,credit_card|string',
             'receipt' => 'nullable|file|mimes:jpg,jpeg,png,pdf',
             // ENT
+            'ent_enabled' => 'nullable|boolean',
             'ent_reason' => 'nullable|string',
             'ent_comment' => 'nullable|string',
             'ent_items' => 'nullable|array',
             'ent_items.*' => 'exists:order_items,id',
             // CTS
+            'cts_enabled' => 'nullable|boolean',
             'cts_comment' => 'nullable|string',
             'cts_amount' => 'nullable|numeric',
         ]);
@@ -147,57 +149,69 @@ class TransactionController extends Controller
         $ctsAmount = 0;
         $entDetails = '';
 
-        // Calculate ENT Value if specific items selected
-        if ($request->payment_method === 'ent') {
-            if ($request->has('ent_items')) {
-                // New Flow: Key exists. Calculate from items (empty array = 0).
-                if ($request->filled('ent_items')) {
-                    $entItems = $order->orderItems()->whereIn('id', $request->ent_items)->get();
-                    foreach ($entItems as $item) {
-                        // Calculate item total (price * quantity)
-                        $itemData = $item->order_item;  // JSON column
-                        $iPrice = $itemData['total_price'] ?? (($itemData['price'] ?? 0) * ($itemData['quantity'] ?? 1));
-                        $entAmount += $iPrice;
-                        $entDetails .= ($itemData['name'] ?? 'Item') . ' (x' . ($itemData['quantity'] ?? 1) . '), ';
-                    }
+        // Calculate ENT Value if specific items selected OR ENT enabled
+        if ($request->boolean('ent_enabled') || $request->has('ent_items')) {
+            if ($request->filled('ent_items')) {
+                // Calculate from items (empty array = 0).
+                $entItems = $order->orderItems()->whereIn('id', $request->ent_items)->get();
+                foreach ($entItems as $item) {
+                    // Calculate item total (price * quantity)
+                    $itemData = $item->order_item;
+                    $qty = (float) ($itemData['quantity'] ?? 1);
+                    $price = (float) ($itemData['price'] ?? 0);
+                    $iTotal = isset($itemData['total_price']) ? (float) $itemData['total_price'] : ($qty * $price);
+
+                    $entAmount += $iTotal;
+                    $entDetails .= ($itemData['name'] ?? 'Item') . ' (x' . $qty . '), ';
                 }
-                // If ent_items empty, entAmount remains 0. Correct.
-            } else {
+            } elseif ($request->payment_method === 'ent') {
                 // Legacy Flow: No ent_items key -> Assume Full
                 $entAmount = $totalDue;
             }
         }
 
         // CTS Amount
-        if ($request->payment_method === 'cts') {
-            $ctsAmount = $request->filled('cts_amount') ? $request->cts_amount : $totalDue;
+        if ($request->boolean('cts_enabled') || $request->payment_method === 'cts' || $request->filled('cts_amount')) {
+            if ($request->filled('cts_amount')) {
+                $ctsAmount = $request->cts_amount;
+            } elseif ($request->payment_method === 'cts') {
+                $ctsAmount = $totalDue;  // Default to full if method is CTS and amount not specified
+            }
         }
 
         // Verification
+        // Ensure values are floats
+        $payVal = (float) $paidAmount;
+        $entVal = (float) $entAmount;
+        $ctsVal = (float) $ctsAmount;
+        $dueVal = (float) $totalDue;
+
         // Allow variance of 1.0 for float rounding
-        if (($paidAmount + $entAmount + $ctsAmount) < ($totalDue - 1.0)) {
+        if (($payVal + $entVal + $ctsVal) < ($dueVal - 1.0)) {
             return back()->withErrors([
-                'paid_amount' => 'Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidAmount + $entAmount + $ctsAmount) . ' < ' . $totalDue . ')'
+                'paid_amount' => 'Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($payVal + $entVal + $ctsVal) . ' < ' . $dueVal . ')'
             ]);
         }
 
         // 1. Update Order Status
         $order->cashier_id = Auth::id();
-        $order->payment_method = $request->payment_method;
+        $order->payment_method = $request->payment_method;  // Primary method
         $order->paid_amount = $paidAmount;  // Only actual money paid
         $order->paid_at = now();
 
         // Update Comments with Details
-        if ($request->payment_method === 'ent') {
+        if ($entAmount > 0 || $request->boolean('ent_enabled')) {
             $order->ent_reason = $request->ent_reason;
             $comment = $request->ent_comment;
             if ($entDetails) {
                 $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
             }
             $order->ent_comment = $comment;
-        } elseif ($request->payment_method === 'cts') {
+        }
+
+        if ($ctsAmount > 0 || $request->boolean('cts_enabled')) {
             $comment = $request->cts_comment;
-            if ($request->filled('cts_amount') && $ctsAmount < $totalDue) {
+            if ($ctsAmount > 0 && $ctsAmount < $totalDue) {
                 $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
             }
             $order->cts_comment = $comment;
@@ -224,6 +238,13 @@ class TransactionController extends Controller
             ->first();
 
         if ($invoice) {
+            // Merge ENT/CTS amounts into usage data since columns don't exist
+            $invoiceData = $invoice->data ?? [];
+            if ($entAmount > 0)
+                $invoiceData['ent_amount'] = $entAmount;
+            if ($ctsAmount > 0)
+                $invoiceData['cts_amount'] = $ctsAmount;
+
             $invoice->update([
                 'status' => 'paid',
                 'payment_date' => now(),
@@ -232,6 +253,9 @@ class TransactionController extends Controller
                 'ent_reason' => $order->ent_reason,
                 'ent_comment' => $order->ent_comment,
                 'cts_comment' => $order->cts_comment,
+                'ent_amount' => $entAmount,
+                'cts_amount' => $ctsAmount,
+                'data' => $invoiceData,  // Save updated JSON
             ]);
 
             // 3. Create Financial Receipt & Transaction (Credits)
