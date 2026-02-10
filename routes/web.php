@@ -49,6 +49,7 @@ use App\Http\Controllers\RoomChargesTypeController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\RoomMiniBarController;
 use App\Http\Controllers\RoomTypeController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SubscriptionCategoryController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TenantController;
@@ -735,6 +736,7 @@ Route::middleware(['auth:web', 'verified'])->group(function () {
     Route::group(['prefix' => 'admin/finance'], function () {
         // Main Finance Dashboard & Manage
         Route::get('dashboard', [FinancialController::class, 'index'])->name('finance.dashboard')->middleware('super.admin:financial.dashboard.view');
+
         Route::get('manage', [FinancialController::class, 'getAllTransactions'])->name('finance.transaction')->middleware('super.admin:financial.view');
         Route::post('bulk-discount', [FinancialController::class, 'bulkApplyDiscount'])->name('finance.transaction.bulk-discount')->middleware('permission:financial.edit');
         Route::post('bulk-overdue', [FinancialController::class, 'bulkApplyOverdue'])->name('finance.transaction.bulk-overdue')->middleware('permission:financial.edit');

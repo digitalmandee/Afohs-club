@@ -201,9 +201,20 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
             </div>
 
             <div class="row">
-              <div>Tax (12%)</div>
-              <div>Rs ${data.amount * 0.12}</div>
+              <div>Tax (${(data.tax * 100).toFixed(0)}%)</div>
+              <div>Rs ${data.amount * (data.tax || 0)}</div>
             </div>
+
+            ${
+                data.data?.bank_charges_amount > 0
+                    ? `
+                <div class="row">
+                  <div>Bank Charges (${data.data.bank_charges_type === 'percentage' ? data.data.bank_charges_value + '%' : 'Fixed'})</div>
+                  <div>Rs ${data.data.bank_charges_amount}</div>
+                </div>
+                `
+                    : ''
+            }
 
             <div class="divider"></div>
 
@@ -341,12 +352,21 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
             <Box sx={styles.receiptRow}>
                 <Typography variant="caption" color="text.secondary">
-                    Tax ({paymentData.tax * 100}%)
+                    Tax ({(paymentData.tax * 100).toFixed(0)}%)
                 </Typography>
                 <Typography variant="caption">Rs {taxAmount()}</Typography>
             </Box>
+
+            {paymentData.data?.bank_charges_amount > 0 && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        Bank Charges ({paymentData.data.bank_charges_type === 'percentage' ? paymentData.data.bank_charges_value + '%' : 'Fixed'})
+                    </Typography>
+                    <Typography variant="caption">Rs {paymentData.data.bank_charges_amount}</Typography>
+                </Box>
+            )}
             <Box sx={styles.receiptDivider} />
-            {paymentData.paid_amount && (
+            {paymentData.paid_amount > 0 && (
                 <>
                     <Box sx={styles.receiptRow}>
                         <Typography variant="caption" color="text.secondary">

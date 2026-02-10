@@ -1305,6 +1305,23 @@ function TransactionDashboard({ Invoices, totalOrders }) {
                                                 Rs {selectedOrder?.paid_amount - selectedOrder?.total_price}
                                             </Typography>
                                         </Box>
+                                        {/* Bank Charges in Success Modal */}
+                                        {selectedOrder?.invoice?.data?.bank_charges_amount > 0 && (
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    mt: 1,
+                                                }}
+                                            >
+                                                <Typography variant="subtitle2" color="text.secondary">
+                                                    Bank Charges ({selectedOrder.invoice.data.bank_charges_type === 'percentage' ? selectedOrder.invoice.data.bank_charges_value + '%' : 'Fixed'})
+                                                </Typography>
+                                                <Typography variant="body1" fontWeight="medium">
+                                                    Rs {selectedOrder.invoice.data.bank_charges_amount}
+                                                </Typography>
+                                            </Box>
+                                        )}
                                     </Box>
                                 </Box>
                             </Box>

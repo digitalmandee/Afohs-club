@@ -734,8 +734,10 @@ class OrderController extends Controller
                 $ctsEnabled = $request->payment['cts_enabled'] ?? false;
                 $entDeduction = $entEnabled ? ($request->payment['ent_amount'] ?? 0) : 0;
                 $ctsDeduction = $ctsEnabled ? ($request->payment['cts_amount'] ?? 0) : 0;
+                $bankChargesEnabled = $request->payment['bank_charges_enabled'] ?? false;
+                $bankChargesAmount = $bankChargesEnabled ? ($request->payment['bank_charges_amount'] ?? 0) : 0;
                 $paidAmount = $request->payment['paid_amount'] ?? 0;
-                $remainingDue = $totalDue - $entDeduction - $ctsDeduction;
+                $remainingDue = $totalDue + $bankChargesAmount - $entDeduction - $ctsDeduction;
 
                 // Allow small float variance (1.0)
                 if ($paidAmount < ($remainingDue - 1.0)) {
@@ -1003,6 +1005,8 @@ class OrderController extends Controller
                     'data' => [
                         'order_id' => $order->id,
                     ],
+                    'invoiceable_id' => $order->id,
+                    'invoiceable_type' => Order::class,
                 ];
 
                 if ($bookingType == 'member') {
@@ -1027,6 +1031,13 @@ class OrderController extends Controller
                     $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
                     $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
                     $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
+
+                    if ($request->payment['bank_charges_enabled'] ?? false) {
+                        $invoiceData['data']['bank_charges_enabled'] = true;
+                        $invoiceData['data']['bank_charges_type'] = $request->payment['bank_charges_type'] ?? 'percentage';
+                        $invoiceData['data']['bank_charges_value'] = $request->payment['bank_charges_value'] ?? 0;
+                        $invoiceData['data']['bank_charges_amount'] = $request->payment['bank_charges_amount'] ?? 0;
+                    }
                 }
 
                 $invoice = FinancialInvoice::create($invoiceData);
@@ -1103,6 +1114,34 @@ class OrderController extends Controller
                         'invoice_id' => $invoice->id,
                         'created_by' => Auth::id(),
                     ]);
+
+                    // Bank Charges Transaction
+                    if (isset($invoiceData['data']['bank_charges_amount']) && $invoiceData['data']['bank_charges_amount'] > 0) {
+                        $bcAmount = $invoiceData['data']['bank_charges_amount'];
+
+                        $bcItem = FinancialInvoiceItem::create([
+                            'invoice_id' => $invoice->id,
+                            'fee_type' => 8,  // Using literal 8 for Financial Charges/Bank Charges
+                            'description' => 'Bank Charges (' . ($invoiceData['data']['bank_charges_type'] == 'percentage' ? ($invoiceData['data']['bank_charges_value'] ?? 0) . '%' : 'Fixed') . ')',
+                            'qty' => 1,
+                            'amount' => $bcAmount,
+                            'sub_total' => $bcAmount,
+                            'total' => $bcAmount,
+                        ]);
+
+                        Transaction::create([
+                            'type' => 'debit',
+                            'amount' => $bcAmount,
+                            'date' => now(),
+                            'description' => 'Bank Charges for Order #' . $invoiceData['invoice_no'],
+                            'payable_type' => $payerType,
+                            'payable_id' => $payerId,
+                            'reference_type' => FinancialInvoiceItem::class,
+                            'reference_id' => $bcItem->id,
+                            'invoice_id' => $invoice->id,
+                            'created_by' => Auth::id(),
+                        ]);
+                    }
                 }
 
                 if ($orderType == 'takeaway') {

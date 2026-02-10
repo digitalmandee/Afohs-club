@@ -112,6 +112,15 @@ class Order extends BaseModel
     //     return $this->hasMany(FinancialInvoice::class, 'id', 'id')
     //         ->whereRaw("JSON_EXTRACT(data, '$.order_id') = ?", [$this->id]);
     // }
+    public function invoice()
+    {
+        // Ideally this should be a morphOne if we use invoiceable_id/type
+        // But based on current controller logic, it seems to be using JSON or assumed link
+        // Let's try to see if we can use a direct link if one exists, or fallback to a custom hasOne that might not work with standard 'with'
+        // Actually, let's use the polymorphic relationship if the controller sets it.
+        return $this->morphOne(FinancialInvoice::class, 'invoiceable');
+    }
+
     public function cashier()
     {
         return $this->belongsTo(User::class, 'cashier_id', 'id');

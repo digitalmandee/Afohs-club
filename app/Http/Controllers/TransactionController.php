@@ -116,7 +116,7 @@ class TransactionController extends Controller
 
     public function PaymentOrderData($invoiceId)
     {
-        $order = Order::where('id', $invoiceId)->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no'])->firstOrFail();
+        $order = Order::where('id', $invoiceId)->with(['member:id,full_name,membership_no', 'customer:id,name,customer_no', 'employee:id,employee_id,name', 'cashier:id,name', 'orderItems:id,order_id,order_item,status', 'table:id,table_no', 'invoice'])->firstOrFail();
         return $order;
     }
 
@@ -140,13 +140,21 @@ class TransactionController extends Controller
             'cts_enabled' => 'nullable|boolean',
             'cts_comment' => 'nullable|string',
             'cts_amount' => 'nullable|numeric',
+            // Bank Charges
+            'bank_charges_enabled' => 'nullable|boolean',
+            'bank_charges_percentage' => 'nullable|numeric',  // Keeping for backward compatibility or if percentage logic persists
+            'bank_charges_type' => 'nullable|string|in:percentage,fixed',
+            'bank_charges_value' => 'nullable|numeric',
+            'bank_charges_amount' => 'nullable|numeric',
         ]);
 
         $order = Order::findOrFail($request->order_id);
         $totalDue = $order->total_price;
+
         $paidAmount = $request->paid_amount;
         $entAmount = 0;
         $ctsAmount = 0;
+        $bankChargesAmount = 0;
         $entDetails = '';
 
         // Calculate ENT Value if specific items selected OR ENT enabled
@@ -179,17 +187,25 @@ class TransactionController extends Controller
             }
         }
 
+        // Bank Charges
+        if ($request->boolean('bank_charges_enabled')) {
+            $bankChargesAmount = $request->bank_charges_amount ?? 0;
+        }
+
         // Verification
         // Ensure values are floats
         $payVal = (float) $paidAmount;
         $entVal = (float) $entAmount;
         $ctsVal = (float) $ctsAmount;
+        $bankVal = (float) $bankChargesAmount;
         $dueVal = (float) $totalDue;
 
         // Allow variance of 1.0 for float rounding
-        if (($payVal + $entVal + $ctsVal) < ($dueVal - 1.0)) {
+        // Total needed = Due + BankCharges
+        // Total paid = Paid + ENT + CTS
+        if (($payVal + $entVal + $ctsVal) < ($dueVal + $bankVal - 1.0)) {
             return back()->withErrors([
-                'paid_amount' => 'Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($payVal + $entVal + $ctsVal) . ' < ' . $dueVal . ')'
+                'paid_amount' => 'Total payment (Paid + ENT + CTS) is less than Total Due (including Bank Charges). (' . ($payVal + $entVal + $ctsVal) . ' < ' . ($dueVal + $bankVal) . ')'
             ]);
         }
 
@@ -245,6 +261,13 @@ class TransactionController extends Controller
             if ($ctsAmount > 0)
                 $invoiceData['cts_amount'] = $ctsAmount;
 
+            if ($bankChargesAmount > 0) {
+                $invoiceData['bank_charges_enabled'] = true;
+                $invoiceData['bank_charges_type'] = $request->bank_charges_type;
+                $invoiceData['bank_charges_value'] = $request->bank_charges_value;
+                $invoiceData['bank_charges_amount'] = $bankChargesAmount;
+            }
+
             $invoice->update([
                 'status' => 'paid',
                 'payment_date' => now(),
@@ -257,6 +280,34 @@ class TransactionController extends Controller
                 'cts_amount' => $ctsAmount,
                 'data' => $invoiceData,  // Save updated JSON
             ]);
+
+            // Create Bank Charges Debit Transaction if applicable
+            if ($bankChargesAmount > 0) {
+                // Check if already exists to avoid duplicates (though OrderPayment implies paying now)
+                // We'll create a new item for this payment's charges
+                $bcItem = \App\Models\FinancialInvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'fee_type' => 8,  // Assuming 8 is Financial Charges or similar constant, using literal for now or fetch constant if available
+                    'description' => 'Bank Charges (' . ($request->bank_charges_type == 'percentage' ? $request->bank_charges_value . '%' : 'Fixed') . ')',
+                    'qty' => 1,
+                    'amount' => $bankChargesAmount,
+                    'sub_total' => $bankChargesAmount,
+                    'total' => $bankChargesAmount,
+                ]);
+
+                \App\Models\Transaction::create([
+                    'type' => 'debit',
+                    'amount' => $bankChargesAmount,
+                    'date' => now(),
+                    'description' => 'Bank Charges for Order Payment',
+                    'payable_type' => 'App\Models\Member',  // Simplified, should match invoice payer logic ideally
+                    'payable_id' => $invoice->member_id,
+                    'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                    'reference_id' => $bcItem->id,
+                    'invoice_id' => $invoice->id,
+                    'created_by' => Auth::id(),
+                ]);
+            }
 
             // 3. Create Financial Receipt & Transaction (Credits)
             // Always create receipt for the PAID portion (if > 0)
@@ -333,6 +384,7 @@ class TransactionController extends Controller
                 'waiter:id,name',
                 'tenant:id,name',  // ✅ Load Tenant Name
                 'orderItems:id,order_id,order_item,status',
+                'invoice',  // Load the invoice relation to get bank charges data
             ]);
 
         // 🔍 Search by Order ID

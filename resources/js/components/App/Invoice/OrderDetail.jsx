@@ -73,6 +73,13 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                 <p>Subtotal: Rs ${paymentData.amount}</p>
                 <p>Discount: Rs 0.00</p>
                 <p>Tax (12%): Rs ${(paymentData.amount * 0.12).toFixed(2)}</p>
+                ${
+                    paymentData.data?.bank_charges_amount > 0
+                        ? `
+                        <p>Bank Charges (${paymentData.data.bank_charges_type === 'percentage' ? paymentData.data.bank_charges_value + '%' : 'Fixed'}): Rs ${paymentData.data.bank_charges_amount}</p>
+                    `
+                        : ''
+                }
                 <p class="total">Total: Rs ${paymentData.total_price}</p>
               </div>
 
@@ -284,6 +291,16 @@ const OrderDetail = ({ invoiceId, openModal, closeModal, handleOpenTrackOrder })
                             </Typography>
                             <Typography variant="body2">Rs {(paymentData.amount * 0.12).toFixed(2)}</Typography>
                         </Box>
+
+                        {/* Bank Charges */}
+                        {paymentData.data?.bank_charges_amount > 0 && (
+                            <Box display="flex" justifyContent="space-between" mb={1}>
+                                <Typography variant="body2" color="text.secondary">
+                                    Bank Charges ({paymentData.data.bank_charges_type === 'percentage' ? paymentData.data.bank_charges_value + '%' : 'Fixed'})
+                                </Typography>
+                                <Typography variant="body2">Rs {paymentData.data.bank_charges_amount}</Typography>
+                            </Box>
+                        )}
                         <Box display="flex" justifyContent="space-between" mt={2}>
                             <Typography variant="subtitle1" fontWeight="bold">
                                 Total
