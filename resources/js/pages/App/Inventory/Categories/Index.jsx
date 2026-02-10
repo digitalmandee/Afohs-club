@@ -209,7 +209,11 @@ export default function CategoryIndex({ categories }) {
                     marginTop: '5rem',
                 }}
             >
-                <div className="container-fluid bg-light py-4">
+                <div style={{
+                    height:'100vh',
+                    backgroundColor:'#f5f5f5',
+                    padding: '20px'
+                }}>
                     <div style={{ background: '#ffff', padding: '20px', borderRadius: '10px' }}>
                         <div className="d-flex align-items-center mb-4">
                             <Typography variant="h4" sx={{ mr: 2 }}>
@@ -238,20 +242,30 @@ export default function CategoryIndex({ categories }) {
                                 }}
                             />
                             <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
-                                <Button variant="outlined" color="error" startIcon={<DeleteSweepIcon />} onClick={() => router.visit(route('category.trashed'))} sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#ffebee' } }}>
-                                    Trash
-                                </Button>
+
                                 <Button
                                     variant="contained"
                                     startIcon={<AddIcon />}
                                     onClick={handleAddMenuOpen}
                                     sx={{
-                                        borderRadius: 1,
+                                        borderRadius: '16px',
+                                        textTransform: 'none',
+                                        height: 35,
                                         backgroundColor: '#003B5C',
                                         '&:hover': { backgroundColor: '#002A41' },
                                     }}
                                 >
                                     Add Category
+                                </Button>
+                                <Button variant="outlined" color="error" startIcon={<DeleteSweepIcon />} onClick={() => router.visit(route('category.trashed'))}
+                                    sx={{
+                                        bgcolor: 'transparent',
+                                        borderRadius: '16px',
+                                        textTransform: 'none',
+                                        height: 35,
+                                        '&:hover': { bgcolor: 'transparent' }
+                                    }}>
+                                    Trash
                                 </Button>
                             </Box>
                         </div>

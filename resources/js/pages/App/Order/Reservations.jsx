@@ -117,13 +117,13 @@ const Reservations = () => {
                 style={{
                     marginLeft: open ? `240px` : `110px`,
                     transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5.5rem',
+                    marginTop: '5rem',
                 }}
             >
-                <Box sx={{ padding: '20px' }}>
+                <Box sx={{ p: 2, height:'100vh', bgcolor:'#f5f5f5' }}>
                     {/* Header */}
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                        <Typography variant="h4">Reservations</Typography>
+                        <Typography sx={{fontWeight:600, fontSize:'30px', color:'#063455'}}>Reservations</Typography>
                         <Box display="flex" gap={2}>
                             <Box sx={{ position: 'relative', width: '300px' }}>
                                 <input
@@ -159,23 +159,23 @@ const Reservations = () => {
 
                     {/* Table */}
                     <Paper>
-                        <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none' }}>
+                        <TableContainer sx={{ marginTop: '20px' }} component={Paper} style={{ boxShadow: 'none', borderRadius:'12px' }}>
                             <Table>
                                 <TableHead>
-                                    <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                        <TableCell sx={{ fontWeight: 600 }}>ID</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Member</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Time</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Persons</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Table</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Down Payment</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Nature of Function</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Theme</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Special Request</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Location</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
+                                    <TableRow style={{ backgroundColor: '#063455' }}>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>ID</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Member</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Date</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Time</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Persons</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Table</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff', whiteSpace:'nowrap' }}>Down Payment</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff', whiteSpace:'nowrap' }}>Nature of Function</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Theme</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff', whiteSpace:'nowrap' }}>Special Request</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Location</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>

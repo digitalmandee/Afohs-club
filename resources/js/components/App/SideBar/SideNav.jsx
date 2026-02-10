@@ -1,10 +1,10 @@
 import { router, usePage, Link } from '@inertiajs/react';
 import HomeIcon from '@mui/icons-material/Home';
 import InventoryIcon from '@mui/icons-material/Inventory';
-import { RiSofaLine } from 'react-icons/ri';
+import { RiReservedLine } from "react-icons/ri";
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
-import PeopleIcon from '@mui/icons-material/People';
+import { MdOutlineManageAccounts } from "react-icons/md";
 import SettingsIcon from '@mui/icons-material/Settings';
 import { Avatar, Button, Collapse } from '@mui/material';
 import MuiAppBar from '@mui/material/AppBar';
@@ -21,8 +21,8 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import PaymentsIcon from '@mui/icons-material/Payments';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { MdOutlineRestaurantMenu } from "react-icons/md";
+import { MdOutlineCake } from "react-icons/md";
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -40,6 +40,8 @@ import { MdRestaurantMenu } from 'react-icons/md';
 import { MdMenuBook } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 import { FaKitchenSet } from 'react-icons/fa6';
+import { FiPrinter } from "react-icons/fi";
+
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -123,7 +125,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Order Management',
-            icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
+            icon: <MdOutlineManageAccounts style={{ width: 25, height: 25 }} />,
             path: route('order.management'),
         },
         {
@@ -133,7 +135,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Reservations',
-            icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
+            icon: <RiReservedLine style={{ width: 25, height: 25 }} />,
             path: route('reservations.index'),
         },
         {
@@ -143,7 +145,7 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Products / Menu',
-            icon: <InventoryIcon />,
+            icon: <MdOutlineRestaurantMenu />,
             path: route('inventory.index'),
         },
         {
@@ -178,12 +180,12 @@ export default function SideNav({ open, setOpen }) {
         },
         {
             text: 'Cake Types',
-            icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />,
+            icon: <MdOutlineCake style={{ height: '25px', width: '25px' }} />,
             path: route('cake-types.index'),
         },
         {
             text: 'Printer Test',
-            icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />,
+            icon: <FiPrinter style={{ height: '25px', width: '25px' }} />,
             path: route('printer.index'),
         },
         {
@@ -264,7 +266,7 @@ export default function SideNav({ open, setOpen }) {
 
         return (
             <React.Fragment key={item.text}>
-                <ListItem disablePadding sx={{ display: 'block', px: 2, py: 0.5 }}>
+                <ListItem disablePadding sx={{ display: 'block', px: 2, py: 0.2 }}>
                     <ListItemButton
                         component={hasChildren ? 'div' : Link}
                         href={!hasChildren ? item.path : undefined}
@@ -294,13 +296,13 @@ export default function SideNav({ open, setOpen }) {
                             {/* Handling Image Icons specially if needed */}
                             {React.isValidElement(item.icon)
                                 ? React.cloneElement(item.icon, {
-                                      style: {
-                                          color: isSelected || isChildSelected ? '#fff' : 'inherit',
-                                          width: 24,
-                                          height: 24,
-                                          ...item.icon.props.style,
-                                      },
-                                  })
+                                    style: {
+                                        color: isSelected || isChildSelected ? '#fff' : 'inherit',
+                                        width: 24,
+                                        height: 24,
+                                        ...item.icon.props.style,
+                                    },
+                                })
                                 : item.icon}
                         </ListItemIcon>
 
@@ -417,13 +419,24 @@ export default function SideNav({ open, setOpen }) {
                     },
                 }}
             >
-                <DrawerHeader sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', p: 2, position: 'sticky', top: 0, zIndex: 1000 }}>
-                    <img src={open ? '/assets/Logo.png' : '/assets/slogo.png'} alt="Sidebar Logo" style={{ width: open ? '100px' : '60px', transition: 'width 0.3s ease-in-out' }} />
+                <DrawerHeader
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        pt: 6,
+                        pb: 5,
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 1000,
+                        height: open ? 120 : 80,
+                    }}>
+                    <img src={open ? '/assets/Logo.png' : '/assets/slogo.png'} alt="Sidebar Logo" style={{ width: open ? '100px' : '80px', transition: 'width 0.3s ease-in-out' }} />
                 </DrawerHeader>
 
                 <Box sx={{ flexGrow: 1, overflowY: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
                     {auth.role !== 'kitchen' && (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 1, mt: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 1, mt: 4 }}>
                             <Button
                                 variant="text"
                                 sx={{

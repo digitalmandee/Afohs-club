@@ -116,7 +116,6 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
 
     return (
         <>
-            <Head title="Sub Categories" />
             <SideNav open={open} setOpen={setOpen} />
 
             {/* Global Loader */}
@@ -128,71 +127,111 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
                 sx={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
-                    padding: '1rem',
+                    // padding: '1rem',
                     marginTop: '5rem',
                 }}
             >
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Typography variant="h5" fontWeight="bold">
-                        Sub Categories
-                    </Typography>
-                    <Box display="flex" gap={2}>
-                        <TextField size="small" placeholder="Search..." value={search} onChange={handleSearch} sx={{ bgcolor: 'white', borderRadius: 1 }} />
-                        <Button variant="outlined" color="error" startIcon={<DeleteSweepIcon />} onClick={() => router.visit(route('sub-categories.trashed'))} sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#ffebee' } }}>
-                            Trash
-                        </Button>
-                        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenModal()} sx={{ bgcolor: '#063455', '&:hover': { bgcolor: '#04243a' } }}>
-                            Add Sub Category
-                        </Button>
-                    </Box>
-                </Box>
+                <Box sx={{
+                    height: '100vh',
+                    bgcolor: '#f5f5f5',
+                    p: 2
+                }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
+                            Sub Categories
+                        </Typography>
+                        <Box display="flex" gap={2}>
+                            <TextField
+                                size="small"
+                                placeholder="Search..."
+                                value={search}
+                                onChange={handleSearch}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderRadius: '16px',
+                                    },
+                                }} />
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => handleOpenModal()}
+                                sx={{
+                                    bgcolor: '#063455',
+                                    textTransform: 'none',
+                                    borderRadius: '16px',
+                                    height: 35,
+                                    '&:hover': { bgcolor: '#04243a' }
+                                }}>
+                                Add Sub Category
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                startIcon={<DeleteIcon />}
+                                onClick={() => router.visit(route('sub-categories.trashed'))}
+                                sx={{
+                                    bgcolor: 'transparent',
+                                    textTransform: 'none',
+                                    borderRadius: '16px',
+                                    height: 35,
+                                    '&:hover': { bgcolor: 'transparent' }
+                                }}>
+                                Deleted
+                            </Button>
 
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-                    <Table>
-                        <TableHead sx={{ bgcolor: '#063455' }}>
-                            <TableRow>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Main Category</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Sub Category Name</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
-                                    Actions
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {subCategories.data.length > 0 ? (
-                                subCategories.data.map((subCategory) => (
-                                    <TableRow key={subCategory.id} hover>
-                                        <TableCell>{subCategory.category?.name || 'N/A'}</TableCell>
-                                        <TableCell>{subCategory.name}</TableCell>
-                                        <TableCell>
-                                            <Chip label={subCategory.status} size="small" color={subCategory.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
-                                        </TableCell>
-                                        <TableCell>{dayjs(subCategory.updated_at).format('DD MMM YYYY, h:mm A')}</TableCell>
-                                        <TableCell align="right">
-                                            <IconButton onClick={() => handleOpenModal(subCategory)} color="primary">
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton onClick={() => handleOpenDeleteModal(subCategory)} color="error">
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
+                        </Box>
+                    </Box>
+
+                    <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                        <Table>
+                            <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell colSpan={5} align="center">
-                                        No sub categories found.
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Main Category</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Sub Category Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
+                                        Actions
                                     </TableCell>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                            </TableHead>
+                            <TableBody>
+                                {subCategories.data.length > 0 ? (
+                                    subCategories.data.map((subCategory) => (
+                                        <TableRow key={subCategory.id} hover>
+                                            <TableCell>{subCategory.category?.name || 'N/A'}</TableCell>
+                                            <TableCell>{subCategory.name}</TableCell>
+                                            <TableCell>
+                                                <Chip label={subCategory.status} size="small" color={subCategory.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
+                                            </TableCell>
+                                            <TableCell>{dayjs(subCategory.updated_at).format('DD MMM YYYY, h:mm A')}</TableCell>
+                                            <TableCell align="right">
+                                                <IconButton onClick={() => handleOpenModal(subCategory)} color="primary">
+                                                    <EditIcon />
+                                                </IconButton>
+                                                <IconButton onClick={() => handleOpenDeleteModal(subCategory)} color="error">
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={5} align="center">
+                                            No sub categories found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-                <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={subCategories.last_page} page={subCategories.current_page} onChange={(e, p) => router.get(route('sub-categories.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Box mt={3} display="flex" justifyContent="center">
+                        <Pagination count={subCategories.last_page} page={subCategories.current_page} onChange={(e, p) => router.get(route('sub-categories.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                    </Box>
                 </Box>
             </Box>
 

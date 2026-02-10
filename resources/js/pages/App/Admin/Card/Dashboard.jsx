@@ -608,7 +608,7 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                                     <Button
                                                         variant="contained"
                                                         // size="small"
-                                                        style={{ color: '#063455', border: '1px solid #063455', backgroundColor: 'transparent', textTransform: 'none' }}
+                                                        style={{ color: '#063455', border: '1px solid #063455', backgroundColor: 'transparent', boxShadow:'none' }}
                                                         onClick={() => {
                                                             setSelectMember(subscription);
                                                             setOpenCardModal(true);
@@ -809,7 +809,7 @@ const CardsDashboard = ({ members, subscriptions, total_active_members, total_ac
                                             <TableCell>
                                                 <Button
                                                     variant='contained'
-                                                    style={{ color: '#063455', border: '1px solid #063455', backgroundColor: 'transparent', textTransform: 'none' }}
+                                                    style={{ color: '#063455', border: '1px solid #063455', backgroundColor: 'transparent', textTransform: 'none', boxShadow:'none' }}
                                                     onClick={() => {
                                                         setSelectMember(member);
                                                         setOpenCardModal(true);
