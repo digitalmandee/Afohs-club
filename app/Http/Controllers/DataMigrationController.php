@@ -2309,6 +2309,19 @@ class DataMigrationController extends Controller
 
     private function createInvoiceFromLegacy($first, $groupRows)
     {
+        static $transactionTypeIds = null;
+        static $subscriptionCategoryCache = [];
+        static $chargeTypeCache = [];
+
+        if ($transactionTypeIds === null) {
+            $transactionTypeIds = [
+                'membership_fee' => TransactionType::where('name', 'Membership Fee')->value('id') ?? 'membership_fee',
+                'maintenance_fee' => TransactionType::where('name', 'Monthly Maintenance Fee')->value('id') ?? 'maintenance_fee',
+                'subscription_fee' => TransactionType::where('name', 'Subscription Fee')->value('id') ?? 'subscription_fee',
+                'charges_fee' => TransactionType::where('name', 'Charges Fee')->value('id') ?? 'charges_fee',
+            ];
+        }
+
         // Resolve Payer
         $memberId = null;
         $corpId = null;
@@ -2353,34 +2366,33 @@ class DataMigrationController extends Controller
             $feeType = 'custom';
             $finChargeTypeId = null;
             $subTypeId = null;
+            $subCategoryId = null;
 
             if ($typeId == 3) {
-                // $generic = TransactionType::where('name', 'Membership Fee')->first();
-                // Optimization: Hardcode known IDs or use cache if possible, but for now stick to query or simple lookups
-                // To avoid 1000s of queries, we could look up once outside loop, but "typeId" varies.
-                // Re-using the logic:
-                $generic = TransactionType::where('name', 'Membership Fee')->first();
-                $feeType = $generic ? $generic->id : null;
+                $feeType = $transactionTypeIds['membership_fee'];
             } elseif ($typeId == 4) {
-                $generic = TransactionType::where('name', 'Monthly Maintenance Fee')->first();
-                $feeType = $generic ? $generic->id : null;
+                $feeType = $transactionTypeIds['maintenance_fee'];
             } else {
                 // Lookup Legacy Definition to decide strategy
                 $legacyDef = DB::connection('old_afohs')->table('trans_types')->where('id', $typeId)->first();
 
                 if ($legacyDef) {
                     if ($legacyDef->type == 3) {  // Subscription Strategy
-                        $generic = TransactionType::where('name', 'Subscription Fee')->first();
-                        $feeType = $generic ? $generic->id : null;
+                        $feeType = $transactionTypeIds['subscription_fee'];
 
-                        $subTypeModel = \App\Models\SubscriptionCategory::where('name', $legacyDef->name)->first();
+                        if (!array_key_exists($legacyDef->name, $subscriptionCategoryCache)) {
+                            $subscriptionCategoryCache[$legacyDef->name] = \App\Models\SubscriptionCategory::where('name', $legacyDef->name)->first();
+                        }
+                        $subTypeModel = $subscriptionCategoryCache[$legacyDef->name];
                         $subTypeId = $subTypeModel ? $subTypeModel->subscription_type_id : null;
                         $subCategoryId = $subTypeModel ? $subTypeModel->id : null;
                     } elseif ($legacyDef->type == 2) {  // Ad-hoc / Charges Strategy
-                        $generic = TransactionType::where('name', 'Charges Fee')->first();
-                        $feeType = $generic ? $generic->id : null;
+                        $feeType = $transactionTypeIds['charges_fee'];
 
-                        $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
+                        if (!array_key_exists($legacyDef->mod_id, $chargeTypeCache)) {
+                            $chargeTypeCache[$legacyDef->mod_id] = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
+                        }
+                        $ChargeTypeModel = $chargeTypeCache[$legacyDef->mod_id];
                         $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
                     } else {
                         // skip
@@ -2817,11 +2829,11 @@ class DataMigrationController extends Controller
 
     public function migrateInvoicesGlobal(Request $request)
     {
-        $batchSize = $request->get('batch_size', 50);
+        set_time_limit(0);
+        $batchSize = (int) $request->get('batch_size', 50);
+        $batchSize = max(1, min($batchSize, 20));
 
         try {
-            DB::beginTransaction();
-
             // 1. Fetch Batch of Unmigrated Invoices
             // We use the "migrated" flag in the OLD database to track progress.
             // "migrated" = 0 or NULL means not yet migrated.
@@ -2841,12 +2853,13 @@ class DataMigrationController extends Controller
                 ->toArray();
 
             if (empty($invoiceNos)) {
-                DB::commit();
                 return response()->json([
                     'success' => true,
                     'migrated' => 0,
+                    'errors' => [],
                     'has_more' => false,
-                    'message' => 'No more unmigrated invoices found.'
+                    'remaining' => 0,
+                    'message' => 'No more unmigrated invoices found.',
                 ]);
             }
 
@@ -2862,12 +2875,7 @@ class DataMigrationController extends Controller
 
             foreach ($grouped as $invoiceNo => $groupRows) {
                 try {
-                    $first = $groupRows->first();
-                    $typeId = $first->charges_type;
-
-                    // Check if exists locally
                     if (FinancialInvoice::where('invoice_no', $invoiceNo)->exists()) {
-                        // Already exists, just mark as migrated in legacy to fix state
                         DB::connection('old_afohs')
                             ->table('finance_invoices')
                             ->where('invoice_no', $invoiceNo)
@@ -2875,37 +2883,34 @@ class DataMigrationController extends Controller
                         continue;
                     }
 
-                    // --- A. Migrate Invoice Header & Items ---
-                    // --- A. Migrate Invoice Header & Items ---
-                    $result = $this->createInvoiceFromLegacy($first, $groupRows);
-                    $invoice = $result['invoice'];
-                    $itemsMap = $result['items_map'];
+                    DB::transaction(function () use ($invoiceNo, $groupRows) {
+                        $first = $groupRows->first();
 
-                    // --- B. Migrate Transactions Per Item ---
-                    foreach ($groupRows as $legacyRow) {
-                        if (isset($itemsMap[$legacyRow->id])) {
-                            $this->migrateInvoiceTransactions($invoice, $itemsMap[$legacyRow->id], $legacyRow);
+                        $result = $this->createInvoiceFromLegacy($first, $groupRows);
+                        $invoice = $result['invoice'];
+                        $itemsMap = $result['items_map'];
+
+                        foreach ($groupRows as $legacyRow) {
+                            if (isset($itemsMap[$legacyRow->id])) {
+                                $this->migrateInvoiceTransactions($invoice, $itemsMap[$legacyRow->id], $legacyRow);
+                            }
                         }
-                    }
 
-                    // --- C. Related Receipts ---
-                    $this->migrateRelatedReceipts($invoice);
-                    $this->updateInvoiceStatus($invoice);
+                        $this->migrateRelatedReceipts($invoice);
+                        $this->updateInvoiceStatus($invoice);
+                    });
 
-                    // --- D. Mark as Migrated in Legacy DB ---
                     DB::connection('old_afohs')
                         ->table('finance_invoices')
                         ->where('invoice_no', $invoiceNo)
                         ->update(['migrated' => 1]);
 
                     $migratedCount++;
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $errors[] = ['invoice_no' => $invoiceNo, 'error' => $e->getMessage()];
-                    Log::error("Global migration error for invoice $invoiceNo: " . $e->getMessage());
+                    Log::error("Global migration error for invoice {$invoiceNo}: " . $e->getMessage());
                 }
             }
-
-            DB::commit();
 
             // Check if there are more
             $remaining = DB::connection('old_afohs')
@@ -2926,9 +2931,14 @@ class DataMigrationController extends Controller
                 'has_more' => $remaining > 0,
                 'remaining' => $remaining
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'migrated' => 0,
+                'errors' => [['error' => $e->getMessage()]],
+                'has_more' => false,
+                'remaining' => null,
+            ]);
         }
     }
 

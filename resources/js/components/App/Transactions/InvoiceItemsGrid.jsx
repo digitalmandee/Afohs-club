@@ -40,6 +40,7 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                 discount_value: 0,
                 discount_amount: 0,
                 additional_charges: 0,
+                extra_percentage: 0,
                 valid_from: null,
                 valid_to: null,
                 days: '',
@@ -226,19 +227,24 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
         }
 
         // Recalculate Totals
-        const qty = parseFloat(item.qty) || 0;
-        const rate = parseFloat(item.amount) || 0;
-        const addCharges = parseFloat(item.additional_charges) || 0;
-
-        let subTotal = qty * rate + addCharges;
+        const qty = Math.round(parseFloat(item.qty) || 0);
+        const rate = Math.round(parseFloat(item.amount) || 0);
+        const baseSubTotal = qty * rate;
+        const extraPct = Math.round(parseFloat(item.extra_percentage) || 0);
+        let addCharges = Math.round(parseFloat(item.additional_charges) || 0);
+        if (extraPct > 0) {
+            addCharges = Math.round((baseSubTotal * extraPct) / 100);
+            item.additional_charges = addCharges;
+        }
+        let subTotal = baseSubTotal + addCharges;
 
         // Discount
         let discountAmt = 0;
-        const discVal = parseFloat(item.discount_value) || 0;
+        const discVal = Math.round(parseFloat(item.discount_value) || 0);
         if (item.discount_type === 'percent') {
-            discountAmt = (subTotal * discVal) / 100;
+            discountAmt = Math.round((subTotal * discVal) / 100);
         } else {
-            discountAmt = discVal;
+            discountAmt = Math.round(discVal);
         }
         item.discount_amount = discountAmt;
 
@@ -246,12 +252,12 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
         const netAmount = subTotal - discountAmt;
 
         // Tax
-        const taxPct = parseFloat(item.tax_percentage) || 0;
-        const taxAmt = (netAmount * taxPct) / 100;
+        const taxPct = Math.round(parseFloat(item.tax_percentage) || 0);
+        const taxAmt = Math.round((netAmount * taxPct) / 100);
 
         // Overdue
-        const overduePct = parseFloat(item.overdue_percentage) || 0;
-        const overdueAmt = (netAmount * overduePct) / 100;
+        const overduePct = Math.round(parseFloat(item.overdue_percentage) || 0);
+        const overdueAmt = Math.round((netAmount * overduePct) / 100);
 
         item.total = Math.round(netAmount + taxAmt + overdueAmt);
 
@@ -654,6 +660,23 @@ export default function InvoiceItemsGrid({ items, setItems, transactionTypes = [
                                                     borderRadius: '16px',
                                                 },
                                             }}
+                                            disabled={paymentMode}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={6} md={3}>
+                                        <TextField
+                                            type="number"
+                                            fullWidth
+                                            size="small"
+                                            label="Add. %"
+                                            value={item.extra_percentage || 0}
+                                            onChange={(e) => handleChange(index, 'extra_percentage', e.target.value)}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': {
+                                                    borderRadius: '16px',
+                                                },
+                                            }}
+                                            helperText="Percentage of base subtotal"
                                             disabled={paymentMode}
                                         />
                                     </Grid>
