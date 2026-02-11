@@ -1917,9 +1917,12 @@ class MemberFeeRevenueController extends Controller
     public function sportsSubscriptionsReport(Request $request)
     {
         $memberSearch = $request->input('member_search');
+        $membershipNoSearch = $request->input('membership_no_search');
         $invoiceSearch = $request->input('invoice_search');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $dateFromParsed = $this->parseDateToYmd($dateFrom);
+        $dateToParsed = $this->parseDateToYmd($dateTo);
         $cityFilter = $request->input('city');
         $paymentMethodFilter = $request->input('payment_method');
         $categoryFilter = $request->input('categories');
@@ -1931,7 +1934,7 @@ class MemberFeeRevenueController extends Controller
 
         // Get subscription fee transactions only - using Items for Mixed Invoice support
         // Include createdBy for payment receiver and customer for guest subscriptions
-        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.customer', 'invoice.createdBy', 'subscriptionType', 'subscriptionCategory', 'familyMember'])
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.corporateMember', 'invoice.customer', 'invoice.createdBy', 'subscriptionType', 'subscriptionCategory', 'familyMember'])
             ->where('fee_type', '5')  // 5 = Subscription
             // Only paid invoices
             ->whereHas('invoice', function ($q) {
@@ -1941,11 +1944,62 @@ class MemberFeeRevenueController extends Controller
 
         // Apply member search filter
         if ($memberSearch) {
-            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
-                $q
-                    ->where('full_name', 'like', "%{$memberSearch}%")
-                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
-            });
+            if ($customerTypeFilter === 'member') {
+                $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
+                    $q->where('full_name', 'like', "%{$memberSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'corporate') {
+                $query->whereHas('invoice.corporateMember', function ($q) use ($memberSearch) {
+                    $q->where('full_name', 'like', "%{$memberSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'guest') {
+                $query->whereHas('invoice.customer', function ($q) use ($memberSearch) {
+                    $q->where('name', 'like', "%{$memberSearch}%");
+                });
+            } else {
+                $query->whereHas('invoice', function ($q) use ($memberSearch) {
+                    $q
+                        ->whereHas('member', function ($m) use ($memberSearch) {
+                            $m->where('full_name', 'like', "%{$memberSearch}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($m) use ($memberSearch) {
+                            $m->where('full_name', 'like', "%{$memberSearch}%");
+                        })
+                        ->orWhereHas('customer', function ($c) use ($memberSearch) {
+                            $c->where('name', 'like', "%{$memberSearch}%");
+                        });
+                });
+            }
+        }
+
+        // Apply membership number search filter
+        if ($membershipNoSearch) {
+            if ($customerTypeFilter === 'member') {
+                $query->whereHas('invoice.member', function ($q) use ($membershipNoSearch) {
+                    $q->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'corporate') {
+                $query->whereHas('invoice.corporateMember', function ($q) use ($membershipNoSearch) {
+                    $q->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'guest') {
+                $query->whereHas('invoice.customer', function ($q) use ($membershipNoSearch) {
+                    $q->where('customer_no', 'like', "%{$membershipNoSearch}%");
+                });
+            } else {
+                $query->whereHas('invoice', function ($q) use ($membershipNoSearch) {
+                    $q
+                        ->whereHas('member', function ($m) use ($membershipNoSearch) {
+                            $m->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($m) use ($membershipNoSearch) {
+                            $m->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                        })
+                        ->orWhereHas('customer', function ($c) use ($membershipNoSearch) {
+                            $c->where('customer_no', 'like', "%{$membershipNoSearch}%");
+                        });
+                });
+            }
         }
 
         // Apply invoice search filter
@@ -1955,17 +2009,27 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
-        // Apply date range filter (using Invoice date or Item date?)
-        // Usually transaction date is invoice create or payment date.
-        // Let's use Invoice Create Date as before.
-        if ($dateFrom) {
-            $query->whereHas('invoice', function ($q) use ($dateFrom) {
-                $q->whereDate('created_at', '>=', $dateFrom);
+        // Apply date range filter by payment date (fallback to credit transaction date)
+        if ($dateFromParsed) {
+            $query->whereHas('invoice', function ($q) use ($dateFromParsed) {
+                $q->where(function ($sub) use ($dateFromParsed) {
+                    $sub
+                        ->whereDate('payment_date', '>=', $dateFromParsed)
+                        ->orWhereHas('transactions', function ($t) use ($dateFromParsed) {
+                            $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                        });
+                });
             });
         }
-        if ($dateTo) {
-            $query->whereHas('invoice', function ($q) use ($dateTo) {
-                $q->whereDate('created_at', '<=', $dateTo);
+        if ($dateToParsed) {
+            $query->whereHas('invoice', function ($q) use ($dateToParsed) {
+                $q->where(function ($sub) use ($dateToParsed) {
+                    $sub
+                        ->whereDate('payment_date', '<=', $dateToParsed)
+                        ->orWhereHas('transactions', function ($t) use ($dateToParsed) {
+                            $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                        });
+                });
             });
         }
 
@@ -2061,6 +2125,7 @@ class MemberFeeRevenueController extends Controller
             ],
             'filters' => [
                 'member_search' => $memberSearch,
+                'membership_no_search' => $membershipNoSearch,
                 'invoice_search' => $invoiceSearch,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
@@ -2117,18 +2182,24 @@ class MemberFeeRevenueController extends Controller
     public function sportsSubscriptionsReportPrint(Request $request)
     {
         $memberSearch = $request->input('member_search');
+        $membershipNoSearch = $request->input('membership_no_search');
         $invoiceSearch = $request->input('invoice_search');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $dateFromParsed = $this->parseDateToYmd($dateFrom);
+        $dateToParsed = $this->parseDateToYmd($dateTo);
         $cityFilter = $request->input('city');
         $paymentMethodFilter = $request->input('payment_method');
         $categoryFilter = $request->input('categories');
         $genderFilter = $request->input('gender');
         $familyMemberFilter = $request->input('family_member');
+        $customerTypeFilter = $request->input('customer_type');
+        $subscriptionCategoryFilter = $request->input('subscription_category_id');
+        $cashierFilter = $request->input('cashier');
         $page = $request->input('page', 1);
 
         // Get subscription fee transactions with pagination - using Items for Mixed support
-        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice'])
+        $query = \App\Models\FinancialInvoiceItem::with(['invoice.member.memberCategory', 'invoice.corporateMember', 'invoice.customer', 'invoice.createdBy', 'subscriptionType', 'subscriptionCategory', 'familyMember'])
             ->where('fee_type', '5')
             // Only paid invoices
             ->whereHas('invoice', function ($q) {
@@ -2138,11 +2209,62 @@ class MemberFeeRevenueController extends Controller
 
         // Apply member search filter
         if ($memberSearch) {
-            $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
-                $q
-                    ->where('full_name', 'like', "%{$memberSearch}%")
-                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
-            });
+            if ($customerTypeFilter === 'member') {
+                $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
+                    $q->where('full_name', 'like', "%{$memberSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'corporate') {
+                $query->whereHas('invoice.corporateMember', function ($q) use ($memberSearch) {
+                    $q->where('full_name', 'like', "%{$memberSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'guest') {
+                $query->whereHas('invoice.customer', function ($q) use ($memberSearch) {
+                    $q->where('name', 'like', "%{$memberSearch}%");
+                });
+            } else {
+                $query->whereHas('invoice', function ($q) use ($memberSearch) {
+                    $q
+                        ->whereHas('member', function ($m) use ($memberSearch) {
+                            $m->where('full_name', 'like', "%{$memberSearch}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($m) use ($memberSearch) {
+                            $m->where('full_name', 'like', "%{$memberSearch}%");
+                        })
+                        ->orWhereHas('customer', function ($c) use ($memberSearch) {
+                            $c->where('name', 'like', "%{$memberSearch}%");
+                        });
+                });
+            }
+        }
+
+        // Apply membership number search filter
+        if ($membershipNoSearch) {
+            if ($customerTypeFilter === 'member') {
+                $query->whereHas('invoice.member', function ($q) use ($membershipNoSearch) {
+                    $q->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'corporate') {
+                $query->whereHas('invoice.corporateMember', function ($q) use ($membershipNoSearch) {
+                    $q->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                });
+            } elseif ($customerTypeFilter === 'guest') {
+                $query->whereHas('invoice.customer', function ($q) use ($membershipNoSearch) {
+                    $q->where('customer_no', 'like', "%{$membershipNoSearch}%");
+                });
+            } else {
+                $query->whereHas('invoice', function ($q) use ($membershipNoSearch) {
+                    $q
+                        ->whereHas('member', function ($m) use ($membershipNoSearch) {
+                            $m->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($m) use ($membershipNoSearch) {
+                            $m->where('membership_no', 'like', "%{$membershipNoSearch}%");
+                        })
+                        ->orWhereHas('customer', function ($c) use ($membershipNoSearch) {
+                            $c->where('customer_no', 'like', "%{$membershipNoSearch}%");
+                        });
+                });
+            }
         }
 
         // Apply invoice search filter
@@ -2152,15 +2274,27 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
-        // Apply date range filter
-        if ($dateFrom) {
-            $query->whereHas('invoice', function ($q) use ($dateFrom) {
-                $q->whereDate('created_at', '>=', $dateFrom);
+        // Apply date range filter by payment date (fallback to credit transaction date)
+        if ($dateFromParsed) {
+            $query->whereHas('invoice', function ($q) use ($dateFromParsed) {
+                $q->where(function ($sub) use ($dateFromParsed) {
+                    $sub
+                        ->whereDate('payment_date', '>=', $dateFromParsed)
+                        ->orWhereHas('transactions', function ($t) use ($dateFromParsed) {
+                            $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                        });
+                });
             });
         }
-        if ($dateTo) {
-            $query->whereHas('invoice', function ($q) use ($dateTo) {
-                $q->whereDate('created_at', '<=', $dateTo);
+        if ($dateToParsed) {
+            $query->whereHas('invoice', function ($q) use ($dateToParsed) {
+                $q->where(function ($sub) use ($dateToParsed) {
+                    $sub
+                        ->whereDate('payment_date', '<=', $dateToParsed)
+                        ->orWhereHas('transactions', function ($t) use ($dateToParsed) {
+                            $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                        });
+                });
             });
         }
 
@@ -2200,6 +2334,33 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
+        // Apply customer type filter (member, corporate, or guest)
+        if ($customerTypeFilter === 'member') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('member_id');
+            });
+        } elseif ($customerTypeFilter === 'corporate') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('corporate_member_id');
+            });
+        } elseif ($customerTypeFilter === 'guest') {
+            $query->whereHas('invoice', function ($q) {
+                $q->whereNotNull('customer_id');
+            });
+        }
+
+        // Apply subscription category filter
+        if ($subscriptionCategoryFilter) {
+            $query->where('subscription_category_id', $subscriptionCategoryFilter);
+        }
+
+        // Apply cashier filter (user who received payment)
+        if ($cashierFilter) {
+            $query->whereHas('invoice', function ($q) use ($cashierFilter) {
+                $q->where('created_by', $cashierFilter);
+            });
+        }
+
         // Get paginated results (same 15 per page)
         $transactions = $query->orderBy('created_at', 'desc')->paginate(15, ['*'], 'page', $page);
 
@@ -2222,6 +2383,7 @@ class MemberFeeRevenueController extends Controller
             ],
             'filters' => [
                 'member_search' => $memberSearch,
+                'membership_no_search' => $membershipNoSearch,
                 'invoice_search' => $invoiceSearch,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
@@ -2230,6 +2392,9 @@ class MemberFeeRevenueController extends Controller
                 'categories' => $categoryFilter ?? [],
                 'gender' => $genderFilter,
                 'family_member' => $familyMemberFilter,
+                'customer_type' => $customerTypeFilter,
+                'subscription_category_id' => $subscriptionCategoryFilter,
+                'cashier' => $cashierFilter,
             ],
             'all_categories' => MemberCategory::select('id', 'name')->get(),
         ]);

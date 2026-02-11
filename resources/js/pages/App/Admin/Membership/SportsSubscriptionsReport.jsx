@@ -23,6 +23,7 @@ const SportsSubscriptionsReport = () => {
     // const [open, setOpen] = useState(true);
     const [allFilters, setAllFilters] = useState({
         member_search: filters?.member_search || '',
+        membership_no_search: filters?.membership_no_search || '',
         invoice_search: filters?.invoice_search || '',
         date_from: filters?.date_from || '',
         date_to: filters?.date_to || '',
@@ -62,14 +63,14 @@ const SportsSubscriptionsReport = () => {
     // Fetch Membership Suggestions
     const fetchMembershipSuggestions = useMemo(
         () =>
-            debounce(async (query) => {
+            debounce(async (query, type) => {
                 if (!query) {
                     setMembershipSuggestions([]);
                     return;
                 }
                 try {
                     const response = await axios.get(route('api.bookings.search-customers'), {
-                        params: { query, type: 'all' },
+                        params: { query, type },
                     });
                     setMembershipSuggestions(response.data);
                 } catch (error) {
@@ -80,12 +81,13 @@ const SportsSubscriptionsReport = () => {
     );
 
     useEffect(() => {
-        if (allFilters.invoice_search) {
-            fetchMembershipSuggestions(allFilters.invoice_search);
+        if (allFilters.membership_no_search) {
+            const type = allFilters.customer_type && allFilters.customer_type !== 'all' ? allFilters.customer_type : 'all';
+            fetchMembershipSuggestions(allFilters.membership_no_search, type);
         } else {
             setMembershipSuggestions([]);
         }
-    }, [allFilters.invoice_search]);
+    }, [allFilters.membership_no_search, allFilters.customer_type]);
 
     useEffect(() => {
         if (allFilters.member_search) {
@@ -139,6 +141,7 @@ const SportsSubscriptionsReport = () => {
     const handleReset = () => {
         setAllFilters({
             member_search: '',
+            membership_no_search: '',
             invoice_search: '',
             date_from: '',
             date_to: '',
@@ -164,6 +167,7 @@ const SportsSubscriptionsReport = () => {
             case 'debit card':
                 return '#0ea5e9'; // Blue
             case 'bank transfer':
+            case 'bank_online':
             case 'online':
                 return '#8b5cf6'; // Purple
             case 'cheque':
@@ -171,6 +175,18 @@ const SportsSubscriptionsReport = () => {
             default:
                 return '#6b7280';
         }
+    };
+
+    const getPaymentMethodLabel = (method) => {
+        const normalized = (method || '').toString().trim().toLowerCase();
+        if (!normalized) return 'N/A';
+
+        if (normalized === 'cash') return 'Cash';
+        if (['credit_card', 'credit card', 'debit_card', 'debit card'].includes(normalized)) return 'Credit Card';
+        if (['bank_online', 'online', 'bank transfer'].includes(normalized)) return 'Online';
+        if (normalized === 'cheque') return 'Cheque';
+
+        return method;
     };
 
     const getFamilyMemberColor = (relation) => {
@@ -197,6 +213,10 @@ const SportsSubscriptionsReport = () => {
 
         if (allFilters.member_search) {
             params.append('member_search', allFilters.member_search);
+        }
+
+        if (allFilters.membership_no_search) {
+            params.append('membership_no_search', allFilters.membership_no_search);
         }
 
         if (allFilters.invoice_search) {
@@ -345,8 +365,21 @@ const SportsSubscriptionsReport = () => {
                                 freeSolo
                                 disablePortal
                                 options={suggestions}
-                                getOptionLabel={(option) => option.value || option}
+                                getOptionLabel={(option) =>
+                                    typeof option === 'string'
+                                        ? option
+                                        : option?.name || option?.full_name || option?.value || option?.label || ''
+                                }
                                 inputValue={allFilters.member_search || ''}
+                                onChange={(event, selectedOption) => {
+                                    if (typeof selectedOption === 'string') {
+                                        handleFilterChange('member_search', selectedOption);
+                                        return;
+                                    }
+                                    if (selectedOption?.name || selectedOption?.full_name) {
+                                        handleFilterChange('member_search', selectedOption.name || selectedOption.full_name);
+                                    }
+                                }}
                                 onInputChange={(event, newInputValue) => {
                                     handleFilterChange('member_search', newInputValue);
                                 }}
@@ -383,15 +416,28 @@ const SportsSubscriptionsReport = () => {
                         </Grid>
 
                         {/* Search by Membership Number */}
-                        <Grid item xs={12} md={3}>
+                        <Grid item xs={12} md={2}>
                             <Autocomplete
                                 freeSolo
                                 disablePortal
                                 options={membershipSuggestions}
-                                getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
-                                inputValue={allFilters.invoice_search || ''}
+                                getOptionLabel={(option) =>
+                                    typeof option === 'string'
+                                        ? option
+                                        : option?.membership_no || option?.customer_no || option?.label || ''
+                                }
+                                inputValue={allFilters.membership_no_search || ''}
+                                onChange={(event, selectedOption) => {
+                                    if (typeof selectedOption === 'string') {
+                                        handleFilterChange('membership_no_search', selectedOption);
+                                        return;
+                                    }
+                                    if (selectedOption?.membership_no || selectedOption?.customer_no) {
+                                        handleFilterChange('membership_no_search', selectedOption.membership_no || selectedOption.customer_no);
+                                    }
+                                }}
                                 onInputChange={(event, newInputValue) => {
-                                    handleFilterChange('invoice_search', newInputValue);
+                                    handleFilterChange('membership_no_search', newInputValue);
                                 }}
                                 renderInput={(params) => <TextField {...params} fullWidth size="small" label="Membership #" placeholder="Number..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                                 renderOption={(props, option) => (
@@ -422,6 +468,22 @@ const SportsSubscriptionsReport = () => {
                                         </Box>
                                     </li>
                                 )}
+                            />
+                        </Grid>
+
+                        <Grid item xs={12} md={2}>
+                            <TextField
+                                fullWidth
+                                size="small"
+                                label="Invoice #"
+                                placeholder="Invoice No..."
+                                value={allFilters.invoice_search || ''}
+                                onChange={(e) => handleFilterChange('invoice_search', e.target.value)}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                    },
+                                }}
                             />
                         </Grid>
 
@@ -813,8 +875,8 @@ const SportsSubscriptionsReport = () => {
                                             }}
                                         >
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_type?.name || transaction.data?.subscription_type_name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Chip
@@ -830,14 +892,14 @@ const SportsSubscriptionsReport = () => {
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.start_date)}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.end_date)}</TableCell>
                                             <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || transaction.invoice?.corporateMember?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={transaction.payment_method}
+                                                    label={getPaymentMethodLabel(transaction.invoice?.payment_method || transaction.payment_method)}
                                                     size="small"
                                                     sx={{
-                                                        backgroundColor: `${getPaymentMethodColor(transaction.payment_method)}20`,
-                                                        color: getPaymentMethodColor(transaction.payment_method),
+                                                        backgroundColor: `${getPaymentMethodColor(transaction.invoice?.payment_method || transaction.payment_method)}20`,
+                                                        color: getPaymentMethodColor(transaction.invoice?.payment_method || transaction.payment_method),
                                                         fontWeight: 600,
                                                     }}
                                                 />

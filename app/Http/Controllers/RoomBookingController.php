@@ -1457,6 +1457,8 @@ class RoomBookingController extends Controller
             return response()->json([]);
         }
 
+        $normalizedQuery = preg_replace('/[^A-Za-z0-9]/', '', (string) $query);
+
         $results = collect();
 
         // 1. Members
@@ -1471,6 +1473,12 @@ class RoomBookingController extends Controller
                         ->orWhere('mobile_number_b', 'like', "%{$query}%")
                         ->orWhere('telephone_number', 'like', "%{$query}%")
                         ->orWhere('personal_email', 'like', "%{$query}%");
+                })
+                ->when($normalizedQuery, function ($q) use ($normalizedQuery) {
+                    $q->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(membership_no, '-', ''), ' ', ''), '/', '') like ?",
+                        ["%{$normalizedQuery}%"]
+                    );
                 })
                 ->limit(40)
                 ->get()
@@ -1497,6 +1505,12 @@ class RoomBookingController extends Controller
                         ->where('full_name', 'like', "%{$query}%")
                         ->orWhere('membership_no', 'like', "%{$query}%");
                 })
+                ->when($normalizedQuery, function ($q) use ($normalizedQuery) {
+                    $q->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(membership_no, '-', ''), ' ', ''), '/', '') like ?",
+                        ["%{$normalizedQuery}%"]
+                    );
+                })
                 ->limit(40)
                 ->get()
                 ->map(function ($m) {
@@ -1519,6 +1533,12 @@ class RoomBookingController extends Controller
                     $q
                         ->where('name', 'like', "%{$query}%")
                         ->orWhere('customer_no', 'like', "%{$query}%");
+                })
+                ->when($normalizedQuery, function ($q) use ($normalizedQuery) {
+                    $q->orWhereRaw(
+                        "REPLACE(REPLACE(REPLACE(customer_no, '-', ''), ' ', ''), '/', '') like ?",
+                        ["%{$normalizedQuery}%"]
+                    );
                 })
                 ->limit(40)
                 ->get()

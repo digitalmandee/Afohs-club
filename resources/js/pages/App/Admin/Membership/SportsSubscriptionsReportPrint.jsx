@@ -31,6 +31,18 @@ export default function SportsSubscriptionsReportPrint({ transactions, statistic
             .replace('PKR', 'Rs');
     };
 
+    const getPaymentMethodLabel = (method) => {
+        const normalized = (method || '').toString().trim().toLowerCase();
+        if (!normalized) return 'N/A';
+
+        if (normalized === 'cash') return 'Cash';
+        if (['credit_card', 'credit card', 'debit_card', 'debit card'].includes(normalized)) return 'Credit Card';
+        if (['bank_online', 'online', 'bank transfer'].includes(normalized)) return 'Online';
+        if (normalized === 'cheque') return 'Cheque';
+
+        return method;
+    };
+
     const getFilterText = () => {
         let filterText = [];
 
@@ -44,6 +56,10 @@ export default function SportsSubscriptionsReportPrint({ transactions, statistic
 
         if (filters.member_search) {
             filterText.push(`Member: ${filters.member_search}`);
+        }
+
+        if (filters.membership_no_search) {
+            filterText.push(`Membership #: ${filters.membership_no_search}`);
         }
 
         if (filters.invoice_search) {
@@ -260,15 +276,15 @@ export default function SportsSubscriptionsReportPrint({ transactions, statistic
                             transactions.data.map((transaction, index) => (
                                 <tr key={transaction.id}>
                                     <td className="text-center font-bold">{transaction.invoice?.invoice_no}</td>
-                                    <td className="font-bold">{transaction.invoice?.member?.full_name}</td>
-                                    <td>{transaction.invoice?.member?.full_name}</td>
+                                    <td className="font-bold">{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</td>
+                                    <td>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</td>
                                     <td className="text-center">{transaction.subscription_category?.name || transaction.data?.subscription_type_name || 'N/A'}</td>
                                     <td className="text-center">{transaction.family_member?.relation || 'SELF'}</td>
                                     <td className="text-center">{formatDate(transaction.start_date || transaction.valid_from)}</td>
                                     <td className="text-center">{formatDate(transaction.end_date || transaction.valid_to)}</td>
                                     <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
-                                    <td className="text-center">{transaction.invoice?.member?.membership_no}</td>
-                                    <td className="text-center">{transaction.invoice?.payment_method || 'N/A'}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.membership_no || transaction.invoice?.corporateMember?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</td>
+                                    <td className="text-center">{getPaymentMethodLabel(transaction.invoice?.payment_method)}</td>
                                 </tr>
                             ))
                         ) : (
