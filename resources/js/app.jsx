@@ -49,6 +49,30 @@ createInertiaApp({
       return Page;
     });
   },
+
+  // resolve: async (name) => {
+  //   const page = await resolvePageComponent(
+  //     `./pages/${name}.jsx`,
+  //     import.meta.glob('./pages/**/*.jsx')
+  //   );
+
+  //   const Page = page.default;
+
+  //   // 1️⃣ If layout is explicitly set to null → do NOT wrap
+  //   if (Page.layout === null) {
+  //     return Page;
+  //   }
+
+  //   // 2️⃣ If page already has custom layout (like POSLayout) → use it
+  //   if (Page.layout) {
+  //     return Page;
+  //   }
+
+  //   // 3️⃣ Otherwise → apply default Admin Layout
+  //   Page.layout = (page) => <Layout>{page}</Layout>;
+
+  //   return Page;
+  // },
   setup({ el, App, props }) {
     const root = createRoot(el);
 

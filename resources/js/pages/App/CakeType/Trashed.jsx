@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Pagination, Tooltip, Backdrop, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Chip } from '@mui/material';
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const CakeTypesTrashed = ({ trashedTypes, filters }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [processing, setProcessing] = useState(false);
 
@@ -78,38 +78,53 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
 
     return (
         <>
-            <Head title="Trashed Cake Types" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <Head title="Trashed Cake Types" />
+            <SideNav open={open} setOpen={setOpen} /> */}
 
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1000 }} open={processing}>
                 <CircularProgress color="inherit" />
             </Backdrop>
 
-            <Box
+            {/* <Box
                 sx={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     padding: '1rem',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
+            <Box sx={{
+                p: 2,
+                bgcolor: '#f5f5f5',
+                minHeight: '100vh'
+            }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Box display="flex" alignItems="center" gap={2}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('cake-types.index'))} variant="outlined" size="small">
-                            Back
-                        </Button>
-                        <Typography variant="h5" fontWeight="bold">
+                    <Box display="flex" alignItems="center">
+                        <IconButton>
+                            <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('cake-types.index'))} />
+                        </IconButton>
+                        <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
                             Trashed Cake Types
                         </Typography>
                     </Box>
                     <Box display="flex" gap={2}>
-                        <TextField size="small" placeholder="Search..." value={search} onChange={handleSearch} sx={{ bgcolor: 'white', borderRadius: 1 }} />
+                        <TextField
+                            size="small"
+                            placeholder="Search..."
+                            value={search}
+                            onChange={handleSearch}
+                            sx={{
+                                bgcolor: 'transparent',
+                                "& .MuiOutlinedInput-root": {
+                                    borderRadius: "16px",
+                                },
+                            }} />
                     </Box>
                 </Box>
 
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                <TableContainer component={Paper} sx={{ borderRadius: '12px' }}>
                     <Table>
-                        <TableHead sx={{ bgcolor: '#d32f2f' }}>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
                                 <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Price</TableCell>
@@ -156,10 +171,10 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
                 <Box mt={3} display="flex" justifyContent="center">
                     <Pagination count={trashedTypes.last_page} page={trashedTypes.current_page} onChange={(e, p) => router.get(route('cake-types.trashed'), { page: p, search }, { preserveState: true })} color="primary" />
                 </Box>
-            </Box>
+            </Box >
 
             {/* Restore Confirmation Modal */}
-            <Dialog open={restoreModalOpen} onClose={handleCloseRestoreModal}>
+            < Dialog open={restoreModalOpen} onClose={handleCloseRestoreModal} >
                 <DialogTitle>Confirm Restore</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
@@ -174,10 +189,10 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
                         Restore
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
 
             {/* Force Delete Confirmation Modal */}
-            <Dialog open={forceDeleteModalOpen} onClose={handleCloseForceDeleteModal}>
+            < Dialog open={forceDeleteModalOpen} onClose={handleCloseForceDeleteModal} >
                 <DialogTitle sx={{ color: 'error.main' }}>Permanent Delete</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
@@ -193,11 +208,11 @@ const CakeTypesTrashed = ({ trashedTypes, filters }) => {
                         Delete Permanently
                     </Button>
                 </DialogActions>
-            </Dialog>
+            </Dialog >
         </>
     );
 };
 
-CakeTypesTrashed.layout = (page) => page;
+CakeTypesTrashed.layout = (page) => <POSLayout>{page}</POSLayout>;
 
 export default CakeTypesTrashed;

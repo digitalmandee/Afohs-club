@@ -4,12 +4,12 @@ import { IconButton, Button, Typography, Box, TextField, MenuItem } from '@mui/m
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { router, usePage, useForm } from '@inertiajs/react';
 import AsyncSearchTextField from '@/components/AsyncSearchTextField';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 
 const genderOptions = ['male', 'female', 'other'];
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = false }) => {
     const [open, setOpen] = useState(true);
@@ -40,22 +40,25 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <Box
                 sx={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
-                    backgroundColor: '#F6F6F6',
-                    minHeight: '100vh',
-                    padding: '20px',
+                    
                 }}
-            >
-                <Box sx={{ display: 'flex', alignItems: 'center' }} onClick={() => router.visit(route('customers.index'))}>
+            > */}
+            <Box sx={{
+                bgColor: '#F6F6F6',
+                minHeight: '100vh',
+                p: 2,
+            }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton>
-                        <ArrowBackIcon sx={{ color: '#555' }} />
+                        <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('customers.index'))} />
                     </IconButton>
-                    <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                    <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
                         {isEdit ? 'Edit Customer' : 'Add Customer'}
                     </Typography>
                 </Box>
@@ -91,14 +94,19 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                     <AsyncSearchTextField label="Member Name" name="guest" value={data.guest} onChange={handleChange} endpoint="admin.api.search-users" params={{ type: '0' }} placeholder="Search members..." />
 
                     <TextField fullWidth label="Member No" margin="normal" value={data.member_no} onChange={(e) => setData('member_no', e.target.value)} disabled />
-
-                    <Button type="submit" variant="contained" sx={{ mt: 2 }} disabled={processing}>
-                        {isEdit ? 'Update' : 'Save'}
-                    </Button>
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            sx={{ mt: 2, borderRadius: '16px', textTransform: 'none' }}
+                            disabled={processing}>
+                            {isEdit ? 'Update' : 'Save'}
+                        </Button>
+                    </Box>
                 </Box>
             </Box>
         </>
     );
 };
-CustomerForm.layout = (page) => page;
+CustomerForm.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default CustomerForm;

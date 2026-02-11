@@ -1,14 +1,14 @@
 import React from 'react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { Head, useForm, Link } from '@inertiajs/react';
-import { Box, Paper, Typography, Button, TextField, Select, MenuItem, FormControl, InputLabel, Grid, InputAdornment } from '@mui/material';
-import { Save, ArrowBack } from '@mui/icons-material';
+import { Box, Paper, Typography, Button, IconButton, TextField, Select, MenuItem, FormControl, InputLabel, Grid, InputAdornment } from '@mui/material';
+import { Save, ArrowBackIcon } from '@mui/icons-material';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 function Create({ cakeType, isEdit, units }) {
-    const [open, setOpen] = React.useState(true);
+    // const [open, setOpen] = React.useState(true);
     const { data, setData, post, put, processing, errors } = useForm({
         name: cakeType?.name || '',
         base_price: cakeType?.base_price || '',
@@ -27,25 +27,24 @@ function Create({ cakeType, isEdit, units }) {
 
     return (
         <>
-            <Head title={isEdit ? 'Edit Cake Type' : 'Add Cake Type'} />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <Head title={isEdit ? 'Edit Cake Type' : 'Add Cake Type'} /> */}
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    marginTop: '5.5rem',
-                    p: 3,
+                    bgcolor: '#f5f5f5',
+                    minHeight: '100vh',
+                    p: 2,
                 }}
             >
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <IconButton>
+                        <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('cake-types.index'))} />
+                    </IconButton>
+                    <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '30px' }}>
+                        {isEdit ? 'Edit Cake Type' : 'Add Cake Type'}
+                    </Typography>
+                </Box>
                 <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Button startIcon={<ArrowBack />} component={Link} href={route('cake-types.index')} sx={{ mr: 2 }}>
-                            Back
-                        </Button>
-                        <Typography variant="h5" fontWeight="bold" sx={{ color: '#003B5C' }}>
-                            {isEdit ? 'Edit Cake Type' : 'Add Cake Type'}
-                        </Typography>
-                    </Box>
 
                     <Paper sx={{ p: 4 }} component="form" onSubmit={handleSubmit}>
                         <Grid container spacing={3}>
@@ -99,7 +98,18 @@ function Create({ cakeType, isEdit, units }) {
                             </Grid>
 
                             <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                                <Button type="submit" variant="contained" size="large" startIcon={<Save />} disabled={processing} sx={{ bgcolor: '#003B5C', '&:hover': { bgcolor: '#002a41' } }}>
+                                <Button
+                                    type="submit"
+                                    variant="contained"
+                                    size="large"
+                                    // startIcon={<Save />} 
+                                    disabled={processing}
+                                    sx={{
+                                        bgcolor: '#063455',
+                                        textTransform: 'none',
+                                        borderRadius: '16px',
+                                        '&:hover': { bgcolor: '#063455' }
+                                    }}>
                                     {isEdit ? 'Update' : 'Save'}
                                 </Button>
                             </Grid>
@@ -111,5 +121,5 @@ function Create({ cakeType, isEdit, units }) {
     );
 }
 
-Create.layout = (page) => page;
+Create.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default Create;

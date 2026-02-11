@@ -1,4 +1,4 @@
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import AddIcon from '@mui/icons-material/Add';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -110,11 +110,11 @@ const DottedDivider = styled(Box)({
     margin: '16px 0',
 });
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const SettingDashboard = () => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [activeButton, setActiveButton] = useState(null);
     const [activeModal, setActiveModal] = useState(null);
     const [storeImage, setStoreImage] = useState(null);
@@ -454,14 +454,14 @@ const SettingDashboard = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div
                     className="container mt-4"
                     style={{
@@ -2125,9 +2125,9 @@ const SettingDashboard = () => {
                             </StyledDialog>
                         ))}
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 };
-SettingDashboard.layout = (page) => page;
+SettingDashboard.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default SettingDashboard;

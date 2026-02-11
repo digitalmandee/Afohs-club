@@ -1,7 +1,5 @@
-'use client';
-
 import AddMenu from '@/components/App/Inventory/AddMenu';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import MenuFilter from '@/components/MenuFilter';
 import { tenantAsset } from '@/helpers/asset';
 import { router, usePage } from '@inertiajs/react';
@@ -12,15 +10,15 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
-export default function CoffeeShop({ productLists, categoriesList = [] }) {
+const CoffeeShop = ({ productLists, categoriesList = [] }) => {
     const { url } = usePage();
     const queryParams = new URLSearchParams(url.split('?')[1]);
     const categoryId = queryParams.get('category_id');
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openFilter, setOpenFilter] = useState(false);
     const [openProductDetail, setOpenProductDetail] = useState(false);
     const [openAddMenu, setOpenAddMenu] = useState(false);
@@ -176,17 +174,17 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div style={{
                     backgroundColor:'#f5f5f5',
-                    height:'100vh',
+                    // height:'100vh',
                     padding: '20px'
                 }}>
                     {/* Filter Section */}
@@ -1316,8 +1314,9 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                         </Alert>
                     </Snackbar>
                 </div>
-            </div>
+            {/* </div> */}
         </>
     );
 }
-CoffeeShop.layout = (page) => page;
+CoffeeShop.layout = (page) => <POSLayout>{page}</POSLayout>;
+export default CoffeeShop

@@ -4,8 +4,7 @@ import Table1Icon from '@/components/App/Icons/Table1';
 import Table2Icon from '@/components/App/Icons/Table2';
 import Table6Icon from '@/components/App/Icons/Table6';
 import Table8Icon from '@/components/App/Icons/Table8';
-
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { KeyboardArrowDown, Settings } from '@mui/icons-material';
 import { Box, Button, FormControl, MenuItem, Modal, Select, Typography } from '@mui/material';
 import axios from 'axios';
@@ -133,11 +132,11 @@ const DraggableTable = ({ data, index, moveTable, onClick, fill }) => {
     );
 };
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const TableManagement = ({ floorsdata, tablesData }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [selectedFloor, setSelectedFloor] = useState(null);
     const today = new Date();
     const [selectedDate, setSelectedDate] = useState({
@@ -252,17 +251,17 @@ const TableManagement = ({ floorsdata, tablesData }) => {
         <>
             {/* <>{floorsdata}</> */}
 
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
-                        height: '100vh',
+                        // height: '100vh',
                         bgcolor: '#F6F6F6',
                         display: 'flex',
                         flexDirection: 'column',
@@ -283,7 +282,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                             <Typography
                                 variant="h6"
                                 sx={{
-                                    fontWeight: '500',
+                                    fontWeight: '600',
                                     fontSize: '30px',
                                     color: '#063455',
                                 }}
@@ -644,9 +643,9 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                         </Box>
                     </Box>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };
-TableManagement.layout = (page) => page;
+TableManagement.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default TableManagement;

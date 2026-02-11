@@ -5,10 +5,10 @@ import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Delete as DeleteIcon, Add
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const ManageCustomer = ({ customerData }) => {
     const [open, setOpen] = useState(true);
@@ -48,7 +48,7 @@ const ManageCustomer = ({ customerData }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
 
@@ -59,20 +59,27 @@ const ManageCustomer = ({ customerData }) => {
                     backgroundColor: '#f5f5f5',
                     padding: '20px',
                 }}
-            >
+            > */}
+            <Box sx={{
+                bgcolor: '#f5f5f5',
+                p: 2,
+                minHeight: '100vh'
+            }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography sx={{ fontWeight: '600', color: '#063455', fontSize:'30px' }}>
+                        <Typography sx={{ fontWeight: '600', color: '#063455', fontSize: '30px' }}>
                             Customers
                         </Typography>
                     </Box>
-                    <Button 
-                    variant="contained" 
-                    startIcon={<Add/>}
-                    sx={{ backgroundColor: '#063455', 
-                    borderRadius:'16px',
-                    height:35,
-                    textTransform: 'none' }} onClick={() => router.visit(route('customers.create'))}>
+                    <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        sx={{
+                            backgroundColor: '#063455',
+                            borderRadius: '16px',
+                            height: 35,
+                            textTransform: 'none'
+                        }} onClick={() => router.visit(route('customers.create'))}>
                         Add Customer
                     </Button>
                 </Box>
@@ -117,7 +124,8 @@ const ManageCustomer = ({ customerData }) => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-            </div>
+                {/* </div> */}
+            </Box>
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onClose={cancelDelete} aria-labelledby="delete-dialog-title">
@@ -137,5 +145,5 @@ const ManageCustomer = ({ customerData }) => {
         </>
     );
 };
-ManageCustomer.layout = (page) => page;
+ManageCustomer.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default ManageCustomer;

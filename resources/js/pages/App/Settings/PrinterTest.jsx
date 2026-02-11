@@ -2,17 +2,17 @@ import React, { useState } from 'react';
 import { Box, Button, Card, CardContent, TextField, Typography, Alert, CircularProgress, Paper } from '@mui/material';
 import { Print, CheckCircle, Error } from '@mui/icons-material';
 import axios from 'axios';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 export default function PrinterTest() {
     const [printerIp, setPrinterIp] = useState('');
     const [printerPort, setPrinterPort] = useState('9100');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
 
     const handleTestPrint = async () => {
         if (!printerIp) {
@@ -41,15 +41,15 @@ export default function PrinterTest() {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <Box
                 sx={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
-                }}>
+                }}> */}
                 <Box sx={{
-                    height: '100vh',
+                    minHeight: '100vh',
                     bgcolor: '#f5f5f5',
                     p: 2
                 }}>
@@ -91,9 +91,9 @@ export default function PrinterTest() {
                         </CardContent>
                     </Card>
                 </Box>
-            </Box>
+            {/* </Box> */}
         </>
     );
 }
 
-PrinterTest.layout = (page) => page;
+PrinterTest.layout = (page) => <POSLayout>{page}</POSLayout>;

@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, TextField, MenuItem, Grid, InputAdornment, IconButton, Tooltip } from '@mui/material';
 import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon, AddBox as AddStockIcon, Warning as WarningIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const IngredientsIndex = ({ ingredients, stats, filters }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchQuery, setSearchQuery] = useState(filters?.search || '');
     const [statusFilter, setStatusFilter] = useState(filters?.status || 'all');
     const [stockFilter, setStockFilter] = useState(filters?.stock_level || 'all');
@@ -69,16 +69,16 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{
-                    height: '100vh',
+                    minHeight: '100vh',
                     p: 2,
                     backgroundColor: '#f5f5f5'
                 }}>
@@ -402,10 +402,10 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                         )}
                     </Card>
                 </Box>
-            </div >
+            {/* </div > */}
         </>
     );
 };
 
-IngredientsIndex.layout = (page) => page;
+IngredientsIndex.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default IngredientsIndex;

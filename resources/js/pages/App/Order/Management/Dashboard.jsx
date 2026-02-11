@@ -1,4 +1,4 @@
-import SideNav from '@/components/App/SideBar/SideNav';
+// import SideNav from '@/components/App/SideBar/SideNav';
 import { AccessTime, FilterAlt as FilterIcon } from '@mui/icons-material';
 import SearchIcon from '@mui/icons-material/Search';
 import { Avatar, Box, Button, Drawer, FormControl, Grid, InputBase, InputLabel, List, ListItem, ListItemText, MenuItem, Pagination, Paper, Select, Typography, Autocomplete, TextField, Chip, Dialog, DialogContent, DialogTitle } from '@mui/material';
@@ -12,16 +12,17 @@ import debounce from 'lodash.debounce';
 import axios from 'axios';
 import PaymentNow from '@/components/App/Invoice/PaymentNow';
 import Receipt from '@/components/App/Invoice/Receipt';
+import POSLayout from "@/components/POSLayout";
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
     // Orders State loaded via Axios
     const [orders, setOrders] = useState(initialOrders || { data: [], current_page: 1, last_page: 1 });
     const [loading, setLoading] = useState(true);
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -408,19 +409,19 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-            <div
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            {/* <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box
                     sx={{
                         p: 2,
                         bgcolor:'#f5f5f5',
-                        height:'100vh'
+                        minHeight:'100vh'
                     }}
                 >
                     <Box
@@ -883,9 +884,10 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                         </DialogContent>
                     </Dialog>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };
-Dashboard.layout = (page) => page;
+Dashboard.layout = (page) => <POSLayout>{page}</POSLayout>;
+// Dashboard.layout = null;
 export default Dashboard;
