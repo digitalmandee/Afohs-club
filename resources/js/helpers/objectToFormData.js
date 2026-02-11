@@ -1,6 +1,6 @@
 export const objectToFormData = (obj, form = new FormData(), namespace = '') => {
     for (let key in obj) {
-        if (!obj.hasOwnProperty(key) || obj[key] === null || obj[key] === undefined) continue;
+        if (!Object.prototype.hasOwnProperty.call(obj, key) || obj[key] === null || obj[key] === undefined) continue;
 
         const value = obj[key];
         const formKey = namespace ? `${namespace}[${key}]` : key;
@@ -23,4 +23,4 @@ export const objectToFormData = (obj, form = new FormData(), namespace = '') => 
         }
     }
     return form;
-}
+};

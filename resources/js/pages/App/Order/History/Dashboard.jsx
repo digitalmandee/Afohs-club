@@ -702,11 +702,20 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                             <CloseIcon />
                         </IconButton>
                     </DialogTitle>
-                    <DialogContent sx={{ p: 0 }}>
+                    <DialogContent sx={{ p: 0, overflow: 'hidden' }}>
                         {selectedOrder && (
-                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
-                                <Receipt invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} />
-                                <Box sx={{ flex: 1, p: 3 }}>
+                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, height: { xs: 'auto', md: '85vh' } }}>
+                                <Box
+                                    sx={{
+                                        width: { xs: '100%', md: '40%' },
+                                        borderRight: { md: '1px solid #e0e0e0' },
+                                        height: { xs: 'auto', md: '85vh' },
+                                        overflowY: 'auto',
+                                    }}
+                                >
+                                    <Receipt invoiceRoute={'transaction.invoice'} invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} />
+                                </Box>
+                                <Box sx={{ flex: 1, p: 3, height: { xs: 'auto', md: '85vh' }, overflowY: 'auto', overflowX: 'hidden' }}>
                                     <Typography variant="h6" sx={{ mb: 2 }}>
                                         Order Information
                                     </Typography>
@@ -833,14 +842,16 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     <Typography variant="h6" sx={{ mb: 2 }}>
                                         Order Items
                                     </Typography>
-                                    <TableContainer component={Paper} variant="outlined">
-                                        <Table size="small">
+                                    <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+                                        <Table size="small" sx={{ minWidth: 700 }}>
                                             <TableHead>
                                                 <TableRow>
                                                     <TableCell>Item</TableCell>
                                                     <TableCell align="right">Qty</TableCell>
                                                     <TableCell align="right">Price</TableCell>
+                                                    <TableCell align="right">Discount</TableCell>
                                                     <TableCell align="right">Total</TableCell>
+                                                    <TableCell align="right">Net</TableCell>
                                                 </TableRow>
                                             </TableHead>
                                             <TableBody>
@@ -851,12 +862,84 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                                             <TableCell>{item.order_item?.name || 'Item'}</TableCell>
                                                             <TableCell align="right">{item.order_item?.quantity || 1}</TableCell>
                                                             <TableCell align="right">Rs. {item.order_item?.price || 0}</TableCell>
+                                                            <TableCell align="right">Rs. {item.order_item?.discount_amount || 0}</TableCell>
                                                             <TableCell align="right">Rs. {item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0)}</TableCell>
+                                                            <TableCell align="right">Rs. {(Number(item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0)) - Number(item.order_item?.discount_amount || 0)).toFixed(2)}</TableCell>
                                                         </TableRow>
                                                     ))}
                                             </TableBody>
                                         </Table>
                                     </TableContainer>
+
+                                    {selectedOrder.order_items?.some((item) => item.status === 'cancelled') && (
+                                        <Box sx={{ mt: 2 }}>
+                                            <Typography variant="subtitle1" sx={{ mb: 1, color: '#d32f2f', fontWeight: 600 }}>
+                                                Cancelled Items
+                                            </Typography>
+                                            <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+                                                <Table size="small" sx={{ minWidth: 1050 }}>
+                                                    <TableHead>
+                                                        <TableRow>
+                                                            <TableCell>Item</TableCell>
+                                                            <TableCell align="right">Qty</TableCell>
+                                                            <TableCell align="right">Price</TableCell>
+                                                            <TableCell align="right">Discount</TableCell>
+                                                            <TableCell align="right">Total</TableCell>
+                                                            <TableCell align="right">Net</TableCell>
+                                                            <TableCell>Taxable</TableCell>
+                                                            <TableCell>Discountable</TableCell>
+                                                            <TableCell>Cancel Type</TableCell>
+                                                            <TableCell>Remark</TableCell>
+                                                            <TableCell>Instructions</TableCell>
+                                                        </TableRow>
+                                                    </TableHead>
+                                                    <TableBody>
+                                                        {selectedOrder.order_items
+                                                            ?.filter((item) => item.status === 'cancelled')
+                                                            .map((item, index) => {
+                                                                const qty = Number(item.order_item?.quantity || 1);
+                                                                const price = Number(item.order_item?.price || 0);
+                                                                const total = Number(item.order_item?.total_price || qty * price);
+                                                                const disc = Number(item.order_item?.discount_amount || 0);
+                                                                const net = total - disc;
+                                                                const variantsText = Array.isArray(item.order_item?.variants)
+                                                                    ? item.order_item.variants
+                                                                          .map((v) => (v?.name && v?.value ? `${v.name}: ${v.value}` : null))
+                                                                          .filter(Boolean)
+                                                                          .join(', ')
+                                                                    : '';
+                                                                return (
+                                                                    <TableRow key={index} sx={{ '& td': { color: '#d32f2f' } }}>
+                                                                        <TableCell>
+                                                                            <Box>
+                                                                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                                                    {item.order_item?.name || 'Item'}
+                                                                                </Typography>
+                                                                                {variantsText && (
+                                                                                    <Typography variant="caption" color="text.secondary">
+                                                                                        {variantsText}
+                                                                                    </Typography>
+                                                                                )}
+                                                                            </Box>
+                                                                        </TableCell>
+                                                                        <TableCell align="right">{qty}</TableCell>
+                                                                        <TableCell align="right">Rs. {price}</TableCell>
+                                                                        <TableCell align="right">Rs. {disc}</TableCell>
+                                                                        <TableCell align="right">Rs. {total}</TableCell>
+                                                                        <TableCell align="right">Rs. {net.toFixed(2)}</TableCell>
+                                                                        <TableCell>{item.order_item?.is_taxable ? 'Yes' : 'No'}</TableCell>
+                                                                        <TableCell>{item.order_item?.is_discountable ? 'Yes' : 'No'}</TableCell>
+                                                                        <TableCell>{item.cancelType || '-'}</TableCell>
+                                                                        <TableCell>{item.remark || '-'}</TableCell>
+                                                                        <TableCell>{item.instructions || '-'}</TableCell>
+                                                                    </TableRow>
+                                                                );
+                                                            })}
+                                                    </TableBody>
+                                                </Table>
+                                            </TableContainer>
+                                        </Box>
+                                    )}
                                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                                         <Button variant="outlined" onClick={handleCloseModal}>
                                             Close

@@ -1414,15 +1414,45 @@ class OrderController extends Controller
                 return $base + $variantsSum;
             };
 
-            $mergeIncoming = function (array $updated, array $new) use ($itemKey, $unitPrice, $normalizeOrderItem) {
+            $recalcPricing = function ($orderItem) use ($normalizeOrderItem, $unitPrice) {
+                $oi = $normalizeOrderItem($orderItem);
+                $qty = (int) ($oi['quantity'] ?? 1);
+                $qty = $qty > 0 ? $qty : 1;
+                $totalPrice = $unitPrice($oi) * $qty;
+                $oi['total_price'] = $totalPrice;
+
+                $discountValue = isset($oi['discount_value']) ? (float) $oi['discount_value'] : null;
+                $discountType = $oi['discount_type'] ?? null;
+
+                if ($discountValue !== null && $discountValue > 0) {
+                    $disc = 0.0;
+                    if ($discountType === 'percentage') {
+                        $disc = round($totalPrice * ($discountValue / 100));
+                    } else {
+                        $disc = round($discountValue * $qty);
+                    }
+                    if ($disc > $totalPrice) {
+                        $disc = $totalPrice;
+                    }
+                    $oi['discount_amount'] = $disc;
+                } else {
+                    $oi['discount_amount'] = isset($oi['discount_amount']) ? (float) $oi['discount_amount'] : 0.0;
+                }
+
+                return $oi;
+            };
+
+            $mergeIncoming = function (array $updated, array $new) use ($itemKey, $recalcPricing) {
                 $map = [];
 
                 foreach ($updated as $row) {
                     if (!is_array($row) || !isset($row['order_item'])) {
                         continue;
                     }
-                    $row['order_item'] = $normalizeOrderItem($row['order_item']);
-                    $key = $itemKey($row['order_item']);
+                    $row['order_item'] = $recalcPricing($row['order_item']);
+                    $baseKey = $itemKey($row['order_item']);
+                    $status = $row['status'] ?? null;
+                    $key = $status === 'cancelled' ? ('cancelled|' . $baseKey . '|' . uniqid('row_', true)) : $baseKey;
                     if ($key === '|') {
                         $key = uniqid('row_', true);
                     }
@@ -1433,8 +1463,10 @@ class OrderController extends Controller
                     if (!is_array($row) || !isset($row['order_item'])) {
                         continue;
                     }
-                    $row['order_item'] = $normalizeOrderItem($row['order_item']);
-                    $key = $itemKey($row['order_item']);
+                    $row['order_item'] = $recalcPricing($row['order_item']);
+                    $baseKey = $itemKey($row['order_item']);
+                    $status = $row['status'] ?? null;
+                    $key = $status === 'cancelled' ? ('cancelled|' . $baseKey . '|' . uniqid('row_', true)) : $baseKey;
                     if ($key === '|') {
                         $key = uniqid('row_', true);
                     }
@@ -1444,12 +1476,18 @@ class OrderController extends Controller
                         continue;
                     }
 
+                    $existingStatus = $map[$key]['status'] ?? null;
+                    if ($existingStatus === 'cancelled' || $status === 'cancelled') {
+                        $map[uniqid('row_', true)] = $row;
+                        continue;
+                    }
+
                     $existingQty = (int) ($map[$key]['order_item']['quantity'] ?? 1);
                     $incomingQty = (int) ($row['order_item']['quantity'] ?? 1);
                     $nextQty = $existingQty + ($incomingQty > 0 ? $incomingQty : 1);
 
                     $map[$key]['order_item']['quantity'] = $nextQty;
-                    $map[$key]['order_item']['total_price'] = $unitPrice($map[$key]['order_item']) * $nextQty;
+                    $map[$key]['order_item'] = $recalcPricing($map[$key]['order_item']);
                 }
 
                 $mergedUpdated = [];
@@ -1505,8 +1543,7 @@ class OrderController extends Controller
                 if (!$itemId) {
                     continue;
                 }
-                $normalizedOrderItem = $normalizeOrderItem($itemData['order_item'] ?? []);
-                $normalizedOrderItem['total_price'] = $unitPrice($normalizedOrderItem) * (int) ($normalizedOrderItem['quantity'] ?? 1);
+                $normalizedOrderItem = $recalcPricing($itemData['order_item'] ?? []);
                 $order->orderItems()->where('id', $itemId)->update([
                     'order_item' => $normalizedOrderItem,
                     'status' => $itemData['status'],
@@ -1518,8 +1555,7 @@ class OrderController extends Controller
 
             // Add new order items
             foreach ($mergedNewItems as $itemData) {
-                $normalizedOrderItem = $normalizeOrderItem($itemData['order_item'] ?? []);
-                $normalizedOrderItem['total_price'] = $unitPrice($normalizedOrderItem) * (int) ($normalizedOrderItem['quantity'] ?? 1);
+                $normalizedOrderItem = $recalcPricing($itemData['order_item'] ?? []);
                 $order->orderItems()->create([
                     'tenant_id' => $normalizedOrderItem['tenant_id'] ?? null,
                     'order_item' => $normalizedOrderItem,
@@ -1533,6 +1569,7 @@ class OrderController extends Controller
             $freshItems = $order->orderItems()->where('status', '!=', 'cancelled')->get();
             $taxRate = (float) ($order->tax ?? 0);
             $subtotal = 0.0;
+            $totalDiscount = 0.0;
             $totalTax = 0.0;
             foreach ($freshItems as $row) {
                 $oi = is_array($row->order_item) ? $row->order_item : [];
@@ -1556,17 +1593,19 @@ class OrderController extends Controller
                 }
 
                 $subtotal += $lineTotal;
+                $totalDiscount += $lineDiscount;
                 $totalTax += $isTaxable ? ($net * $taxRate) : 0.0;
             }
 
-            $orderDiscount = (float) ($order->discount ?? 0);
             $computedAmount = (float) round($subtotal);
-            $computedTotal = (float) round($subtotal - $orderDiscount + $totalTax);
+            $computedDiscount = (float) round($totalDiscount);
+            $computedTotal = (float) round($subtotal - $totalDiscount + $totalTax);
 
             $shouldSyncTotals = !empty($mergedUpdatedItems) || !empty($mergedNewItems) || ($request->has('subtotal') || $request->has('total_price'));
             if ($shouldSyncTotals) {
                 $order->update([
                     'amount' => $computedAmount,
+                    'discount' => $computedDiscount,
                     'total_price' => $computedTotal,
                 ]);
             }
@@ -1652,10 +1691,10 @@ class OrderController extends Controller
                     $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
                     foreach ($orderItems as $orderItem) {
-                        $item = $orderItem->order_item;
-                        $qty = $item['quantity'] ?? 1;
-                        $price = $item['price'] ?? 0;
-                        $subTotal = $qty * $price;
+                        $item = is_array($orderItem->order_item) ? $orderItem->order_item : [];
+                        $item = $normalizeOrderItem($item);
+                        $qty = (int) ($item['quantity'] ?? 1);
+                        $subTotal = $unitPrice($item) * ($qty > 0 ? $qty : 1);
 
                         $itemDiscountAmount = $item['discount_amount'] ?? 0;
                         $netAmount = $subTotal - $itemDiscountAmount;

@@ -255,7 +255,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         item.discount_type = type;
 
         // Recalculate discount amount
-        const grossTotal = item.quantity * item.price;
+        const grossTotal = item.total_price;
         let discountAmount = 0;
 
         if (type === 'percentage') {

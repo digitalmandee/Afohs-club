@@ -40,6 +40,22 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
         return base + variantsSum;
     };
 
+    const getDiscountAmountForQty = (orderItem, quantity, totalPrice) => {
+        const discountValue = Number(orderItem?.discount_value || 0);
+        if (!discountValue || discountValue <= 0) return 0;
+
+        const discountType = orderItem?.discount_type || 'percentage';
+        const gross = Number(totalPrice || 0);
+        let discountAmount = 0;
+        if (discountType === 'percentage') {
+            discountAmount = Math.round(gross * (discountValue / 100));
+        } else {
+            discountAmount = Math.round(discountValue * quantity);
+        }
+        if (discountAmount > gross) discountAmount = gross;
+        return discountAmount;
+    };
+
     const addOrIncrementItem = (newOrderItem) => {
         setOrderItems((prev) => {
             const key = getItemKey(newOrderItem);
@@ -47,6 +63,7 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
             const existingIndex = prev.findIndex((row) => !row?.removed && row?.status !== 'cancelled' && getItemKey(row?.order_item) === key);
             if (existingIndex === -1) {
                 const unitPrice = getUnitPrice(newOrderItem);
+                const totalPrice = unitPrice * incomingQty;
                 return [
                     ...prev,
                     {
@@ -54,7 +71,8 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
                         order_item: {
                             ...newOrderItem,
                             quantity: incomingQty,
-                            total_price: unitPrice * incomingQty,
+                            total_price: totalPrice,
+                            discount_amount: getDiscountAmountForQty(newOrderItem, incomingQty, totalPrice),
                         },
                         removed: false,
                     },
@@ -68,6 +86,7 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
                 const nextQty = currentQty + incomingQty;
                 const nextId = row?.id && typeof row.id === 'number' ? `update-${row.id}` : row.id;
                 const unitPrice = getUnitPrice(row?.order_item);
+                const totalPrice = unitPrice * nextQty;
 
                 return {
                     ...row,
@@ -75,7 +94,8 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
                     order_item: {
                         ...row.order_item,
                         quantity: nextQty,
-                        total_price: unitPrice * nextQty,
+                        total_price: totalPrice,
+                        discount_amount: getDiscountAmountForQty(row.order_item, nextQty, totalPrice),
                     },
                 };
             });
@@ -92,6 +112,7 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, i
         } else {
             const item = {
                 id: product.id,
+                product_id: product.id,
                 name: product.name,
                 price: parseFloat(product.base_price),
                 total_price: parseFloat(product.base_price),

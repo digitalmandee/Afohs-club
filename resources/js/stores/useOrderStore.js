@@ -102,7 +102,7 @@ export const useOrderStore = create((set, get) => ({
                 address: '',
             },
         })),
-    setInitialOrder: ({ orderNo, guestTypes, floorTables, time, table }) =>
+    setInitialOrder: ({ orderNo, floorTables, time, table }) =>
         set((state) => ({
             orderDetails: {
                 ...state.orderDetails,

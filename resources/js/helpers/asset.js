@@ -1,6 +1,6 @@
-import { usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 
 export const tenantAsset = (path) => {
-    const base = usePage().props?.tenantAssetBase ?? '';
+    const base = router.page?.props?.tenantAssetBase ?? '';
     return `${base}${path}`;
 };

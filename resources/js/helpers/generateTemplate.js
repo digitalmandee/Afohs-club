@@ -20,7 +20,7 @@ export function getBookingTypeLabel(type) {
 export const JSONParse = (data) => {
     try {
         return JSON.parse(data);
-    } catch (e) {
+    } catch {
         return [];
     }
 };
