@@ -11,14 +11,37 @@ use Inertia\Inertia;
 
 class MemberFeeRevenueController extends Controller
 {
+    private function parseDateToYmd(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        $formats = ['d-m-Y', 'm-d-Y', 'Y-m-d', 'd/m/Y', 'm/d/Y'];
+
+        foreach ($formats as $format) {
+            try {
+                return \Carbon\Carbon::createFromFormat($format, $value)->format('Y-m-d');
+            } catch (\Exception $e) {
+            }
+        }
+
+        return null;
+    }
+
     public function maintenanceFeeRevenue(Request $request)
     {
         $statusFilter = $request->input('status');  // array of statuses
         $categoryFilter = $request->input('categories');  // array of category IDs
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
-        $dateFromParsed = $dateFrom ? \Carbon\Carbon::createFromFormat('d-m-Y', $dateFrom)->format('Y-m-d') : null;
-        $dateToParsed = $dateTo ? \Carbon\Carbon::createFromFormat('d-m-Y', $dateTo)->format('Y-m-d') : null;
+        $dateFromParsed = $this->parseDateToYmd($dateFrom);
+        $dateToParsed = $this->parseDateToYmd($dateTo);
 
         // Get member categories with their members
         $query = MemberCategory::query()->with(['members' => function ($q) use ($statusFilter) {
@@ -38,48 +61,63 @@ class MemberFeeRevenueController extends Controller
             // We join users/members to ensure we only get items for members in this category?
             // Actually we have $memberUserIds, so we can filter by invoice.member_id
 
-            $maintenanceQuery = \App\Models\FinancialInvoiceItem::where('fee_type', '4')  // 4 = Maintenance
-                ->whereHas('invoice', function ($q) use ($memberUserIds) {
-                    $q
-                        ->where('status', 'paid')
-                        ->whereIn('member_id', $memberUserIds);
-                });
-
-            // Apply date filters by payment (credit) date
-            if ($dateFromParsed) {
-                $maintenanceQuery->whereHas('invoice.transactions', function ($q) use ($dateFromParsed) {
-                    $q->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
-                });
-            }
-            if ($dateToParsed) {
-                $maintenanceQuery->whereHas('invoice.transactions', function ($q) use ($dateToParsed) {
-                    $q->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
-                });
-            }
-
-            // Sum totals. 'total' column in items should include tax/discount adjustments.
-            $totalMaintenance = $maintenanceQuery->sum('total');
-
-            // Count members who have paid maintenance fees
-            // We can distinct by invoice.member_id
-            $membersWithMaintenanceFees = \App\Models\FinancialInvoiceItem::where('financial_invoice_items.fee_type', '4')  // 4 = Maintenance
+            $maintenanceQuery = \App\Models\FinancialInvoiceItem::where('fee_type', '4')
                 ->whereHas('invoice', function ($q) use ($memberUserIds, $dateFromParsed, $dateToParsed) {
                     $q
                         ->where('status', 'paid')
                         ->whereIn('member_id', $memberUserIds);
 
-                    if ($dateFromParsed)
-                        $q->whereHas('transactions', function ($t) use ($dateFromParsed) {
-                            $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                    if ($dateFromParsed) {
+                        $q->where(function ($sub) use ($dateFromParsed) {
+                            $sub
+                                ->whereDate('payment_date', '>=', $dateFromParsed)
+                                ->orWhereHas('transactions', function ($t) use ($dateFromParsed) {
+                                    $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                                });
                         });
-                    if ($dateToParsed)
-                        $q->whereHas('transactions', function ($t) use ($dateToParsed) {
-                            $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                    }
+
+                    if ($dateToParsed) {
+                        $q->where(function ($sub) use ($dateToParsed) {
+                            $sub
+                                ->whereDate('payment_date', '<=', $dateToParsed)
+                                ->orWhereHas('transactions', function ($t) use ($dateToParsed) {
+                                    $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                                });
                         });
+                    }
+                });
+
+            // Sum totals. 'total' column in items should include tax/discount adjustments.
+            $totalMaintenance = $maintenanceQuery->sum('total');
+
+            // Count members who have paid maintenance fees
+            $membersWithMaintenanceFees = FinancialInvoice::query()
+                ->where('status', 'paid')
+                ->whereIn('member_id', $memberUserIds)
+                ->whereHas('items', function ($itemQ) {
+                    $itemQ->where('fee_type', '4');
                 })
-                ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-                ->distinct('financial_invoices.member_id')
-                ->count('financial_invoices.member_id');
+                ->when($dateFromParsed, function ($q) use ($dateFromParsed) {
+                    $q->where(function ($sub) use ($dateFromParsed) {
+                        $sub
+                            ->whereDate('payment_date', '>=', $dateFromParsed)
+                            ->orWhereHas('transactions', function ($t) use ($dateFromParsed) {
+                                $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                            });
+                    });
+                })
+                ->when($dateToParsed, function ($q) use ($dateToParsed) {
+                    $q->where(function ($sub) use ($dateToParsed) {
+                        $sub
+                            ->whereDate('payment_date', '<=', $dateToParsed)
+                            ->orWhereHas('transactions', function ($t) use ($dateToParsed) {
+                                $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                            });
+                    });
+                })
+                ->distinct('member_id')
+                ->count('member_id');
 
             return [
                 'id' => $category->id,
@@ -121,8 +159,8 @@ class MemberFeeRevenueController extends Controller
         $categoryFilter = $request->input('categories');  // array of category IDs
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
-        $dateFromParsed = $dateFrom ? \Carbon\Carbon::createFromFormat('d-m-Y', $dateFrom)->format('Y-m-d') : null;
-        $dateToParsed = $dateTo ? \Carbon\Carbon::createFromFormat('d-m-Y', $dateTo)->format('Y-m-d') : null;
+        $dateFromParsed = $this->parseDateToYmd($dateFrom);
+        $dateToParsed = $this->parseDateToYmd($dateTo);
 
         // Get member categories with their members
         $query = MemberCategory::query()->with(['members' => function ($q) use ($statusFilter) {
@@ -140,45 +178,61 @@ class MemberFeeRevenueController extends Controller
 
             // Calculate maintenance fee revenue from FinancialInvoiceItems
             $maintenanceQuery = \App\Models\FinancialInvoiceItem::where('fee_type', '4')
-                ->whereHas('invoice', function ($q) use ($memberUserIds) {
-                    $q
-                        ->where('status', 'paid')
-                        ->whereIn('member_id', $memberUserIds);
-                });
-
-            // Apply date filters by payment (credit) date
-            if ($dateFromParsed) {
-                $maintenanceQuery->whereHas('invoice.transactions', function ($q) use ($dateFromParsed) {
-                    $q->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
-                });
-            }
-            if ($dateToParsed) {
-                $maintenanceQuery->whereHas('invoice.transactions', function ($q) use ($dateToParsed) {
-                    $q->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
-                });
-            }
-
-            $totalMaintenance = $maintenanceQuery->sum('total');
-
-            // Count members who have paid maintenance fees
-            $membersWithMaintenanceFees = \App\Models\FinancialInvoiceItem::where('financial_invoice_items.fee_type', '4')
                 ->whereHas('invoice', function ($q) use ($memberUserIds, $dateFromParsed, $dateToParsed) {
                     $q
                         ->where('status', 'paid')
                         ->whereIn('member_id', $memberUserIds);
 
-                    if ($dateFromParsed)
-                        $q->whereHas('transactions', function ($t) use ($dateFromParsed) {
-                            $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                    if ($dateFromParsed) {
+                        $q->where(function ($sub) use ($dateFromParsed) {
+                            $sub
+                                ->whereDate('payment_date', '>=', $dateFromParsed)
+                                ->orWhereHas('transactions', function ($t) use ($dateFromParsed) {
+                                    $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                                });
                         });
-                    if ($dateToParsed)
-                        $q->whereHas('transactions', function ($t) use ($dateToParsed) {
-                            $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                    }
+
+                    if ($dateToParsed) {
+                        $q->where(function ($sub) use ($dateToParsed) {
+                            $sub
+                                ->whereDate('payment_date', '<=', $dateToParsed)
+                                ->orWhereHas('transactions', function ($t) use ($dateToParsed) {
+                                    $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                                });
                         });
+                    }
+                });
+
+            $totalMaintenance = $maintenanceQuery->sum('total');
+
+            // Count members who have paid maintenance fees
+            $membersWithMaintenanceFees = FinancialInvoice::query()
+                ->where('status', 'paid')
+                ->whereIn('member_id', $memberUserIds)
+                ->whereHas('items', function ($itemQ) {
+                    $itemQ->where('fee_type', '4');
                 })
-                ->join('financial_invoices', 'financial_invoice_items.invoice_id', '=', 'financial_invoices.id')
-                ->distinct('financial_invoices.member_id')
-                ->count('financial_invoices.member_id');
+                ->when($dateFromParsed, function ($q) use ($dateFromParsed) {
+                    $q->where(function ($sub) use ($dateFromParsed) {
+                        $sub
+                            ->whereDate('payment_date', '>=', $dateFromParsed)
+                            ->orWhereHas('transactions', function ($t) use ($dateFromParsed) {
+                                $t->where('type', 'credit')->whereDate('date', '>=', $dateFromParsed);
+                            });
+                    });
+                })
+                ->when($dateToParsed, function ($q) use ($dateToParsed) {
+                    $q->where(function ($sub) use ($dateToParsed) {
+                        $sub
+                            ->whereDate('payment_date', '<=', $dateToParsed)
+                            ->orWhereHas('transactions', function ($t) use ($dateToParsed) {
+                                $t->where('type', 'credit')->whereDate('date', '<=', $dateToParsed);
+                            });
+                    });
+                })
+                ->distinct('member_id')
+                ->count('member_id');
 
             return [
                 'id' => $category->id,
@@ -1153,6 +1207,7 @@ class MemberFeeRevenueController extends Controller
     public function monthlyMaintenanceFeeReport(Request $request)
     {
         $memberSearch = $request->input('member_search');
+        $membershipNoSearch = $request->input('membership_no_search');
         $invoiceSearch = $request->input('invoice_search');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -1177,9 +1232,14 @@ class MemberFeeRevenueController extends Controller
         // Apply member search filter
         if ($memberSearch) {
             $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
-                $q
-                    ->where('full_name', 'like', "%{$memberSearch}%")
-                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+                $q->where('full_name', 'like', "%{$memberSearch}%");
+            });
+        }
+
+        // Apply membership number search filter
+        if ($membershipNoSearch) {
+            $query->whereHas('invoice.member', function ($q) use ($membershipNoSearch) {
+                $q->where('membership_no', 'like', "%{$membershipNoSearch}%");
             });
         }
 
@@ -1273,6 +1333,7 @@ class MemberFeeRevenueController extends Controller
             ],
             'filters' => [
                 'member_search' => $memberSearch,
+                'membership_no_search' => $membershipNoSearch,
                 'invoice_search' => $invoiceSearch,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
@@ -1293,6 +1354,7 @@ class MemberFeeRevenueController extends Controller
     public function monthlyMaintenanceFeeReportPrint(Request $request)
     {
         $memberSearch = $request->input('member_search');
+        $membershipNoSearch = $request->input('membership_no_search');
         $invoiceSearch = $request->input('invoice_search');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -1316,9 +1378,14 @@ class MemberFeeRevenueController extends Controller
         // Apply member search filter
         if ($memberSearch) {
             $query->whereHas('invoice.member', function ($q) use ($memberSearch) {
-                $q
-                    ->where('full_name', 'like', "%{$memberSearch}%")
-                    ->orWhere('membership_no', 'like', "%{$memberSearch}%");
+                $q->where('full_name', 'like', "%{$memberSearch}%");
+            });
+        }
+
+        // Apply membership number search filter
+        if ($membershipNoSearch) {
+            $query->whereHas('invoice.member', function ($q) use ($membershipNoSearch) {
+                $q->where('membership_no', 'like', "%{$membershipNoSearch}%");
             });
         }
 
@@ -1394,6 +1461,7 @@ class MemberFeeRevenueController extends Controller
             ],
             'filters' => [
                 'member_search' => $memberSearch,
+                'membership_no_search' => $membershipNoSearch,
                 'invoice_search' => $invoiceSearch,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,

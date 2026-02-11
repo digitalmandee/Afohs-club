@@ -46,6 +46,10 @@ export default function MonthlyMaintenanceFeeReportPrint({ transactions, statist
             filterText.push(`Member: ${filters.member_search}`);
         }
 
+        if (filters.membership_no_search) {
+            filterText.push(`Membership #: ${filters.membership_no_search}`);
+        }
+
         if (filters.invoice_search) {
             filterText.push(`Invoice: ${filters.invoice_search}`);
         }

@@ -28,7 +28,16 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
 
     const formatDate = (dateString) => {
         try {
-            return format(new Date(dateString), 'MM/dd/yyyy');
+            if (!dateString) return '-';
+
+            if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+                const [a, b, year] = dateString.split('-').map(Number);
+                const mm = a;
+                const dd = b;
+                return format(new Date(year, mm - 1, dd), 'MM-dd-yyyy');
+            }
+
+            return format(new Date(dateString), 'MM-dd-yyyy');
         } catch (error) {
             return dateString;
         }
@@ -44,7 +53,7 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
 
     const getFilterText = () => {
         let filterText = [];
-        
+
         if (filters.date_from && filters.date_to) {
             filterText.push(`Period: ${formatDate(filters.date_from)} to ${formatDate(filters.date_to)}`);
         } else if (filters.date_from) {
@@ -52,14 +61,14 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
         } else if (filters.date_to) {
             filterText.push(`Until: ${formatDate(filters.date_to)}`);
         }
-        
+
         if (filters.status && filters.status.length > 0) {
-            const statusLabels = filters.status.map(status => 
+            const statusLabels = filters.status.map(status =>
                 status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             );
             filterText.push(`Status: ${statusLabels.join(', ')}`);
         }
-        
+
         if (filters.categories && filters.categories.length > 0) {
             const categoryNames = filters.categories.map(catId => {
                 const category = all_categories?.find(cat => cat.id == catId);
@@ -67,119 +76,119 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
             });
             filterText.push(`Categories: ${categoryNames.join(', ')}`);
         }
-        
+
         return filterText.length > 0 ? filterText.join(' | ') : 'All Records';
     };
 
     return (
         <>
             <Head title="Maintenance Fee Revenue Report - Print" />
-            
+
             <style jsx global>{`
                 @media print {
-                    body { 
-                        margin: 0; 
+                    body {
+                        margin: 0;
                         padding: 15px;
                         font-family: Arial, sans-serif;
                         font-size: 11px;
                         line-height: 1.2;
                     }
                     .no-print { display: none !important; }
-                    
+
                     .report-header {
                         text-align: center;
                         margin-bottom: 20px;
                         border-bottom: 2px solid #000;
                         padding-bottom: 10px;
                     }
-                    
+
                     .report-title {
                         font-size: 18px;
                         font-weight: bold;
                         margin: 5px 0;
                         color: #000;
                     }
-                    
+
                     .report-subtitle {
                         font-size: 14px;
                         font-weight: bold;
                         margin: 3px 0;
                         color: #333;
                     }
-                    
+
                     .report-info {
                         font-size: 10px;
                         margin: 2px 0;
                         color: #666;
                     }
-                    
+
                     .summary-section {
                         margin: 20px 0;
                         padding: 10px;
                         border: 1px solid #000;
                         background-color: #f9f9f9;
                     }
-                    
+
                     .summary-grid {
                         display: grid;
                         grid-template-columns: repeat(4, 1fr);
                         gap: 15px;
                         margin: 10px 0;
                     }
-                    
+
                     .summary-item {
                         text-align: center;
                         padding: 8px;
                         border: 1px solid #ccc;
                         background-color: #fff;
                     }
-                    
+
                     .summary-value {
                         font-size: 14px;
                         font-weight: bold;
                         margin-bottom: 3px;
                     }
-                    
+
                     .summary-label {
                         font-size: 9px;
                         color: #666;
                     }
-                    
+
                     table {
                         width: 100%;
                         border-collapse: collapse;
                         margin: 20px 0;
                     }
-                    
+
                     th, td {
                         border: 1px solid #000;
                         padding: 6px 4px;
                         text-align: left;
                         font-size: 9px;
                     }
-                    
+
                     th {
                         background-color: #000;
                         color: #fff;
                         font-weight: bold;
                         text-align: center;
                     }
-                    
+
                     .total-row {
                         background-color: #000;
                         color: #fff;
                         font-weight: bold;
                     }
-                    
+
                     .total-row td {
                         font-size: 10px;
                     }
-                    
+
                     .text-center { text-align: center; }
                     .text-right { text-align: right; }
                     .font-bold { font-weight: bold; }
                 }
-                
+
                 @media screen {
                     body {
                         background-color: #f5f5f5;
@@ -213,7 +222,7 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                         </div>
                         <div className="summary-item">
                             <div className="summary-value">
-                                {statistics?.total_members > 0 
+                                {statistics?.total_members > 0
                                     ? `${((statistics.total_members_with_maintenance / statistics.total_members) * 100).toFixed(1)}%`
                                     : '0%'
                                 }
@@ -244,10 +253,10 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                     </thead>
                     <tbody>
                         {categories.map((categoryFee, index) => {
-                            const paymentRate = categoryFee.total_members > 0 
+                            const paymentRate = categoryFee.total_members > 0
                                 ? ((categoryFee.members_with_maintenance / categoryFee.total_members) * 100).toFixed(1)
                                 : 0;
-                            
+
                             return (
                                 <tr key={categoryFee.id}>
                                     <td className="text-center">{index + 1}</td>
@@ -264,14 +273,14 @@ export default function MaintenanceFeeRevenuePrint({ categories, statistics, fil
                                 </tr>
                             );
                         })}
-                        
+
                         {/* Total Row */}
                         <tr className="total-row">
                             <td colSpan="3" className="text-center font-bold">TOTAL</td>
                             <td className="text-center font-bold">{statistics?.total_members || 0}</td>
                             <td className="text-center font-bold">{statistics?.total_members_with_maintenance || 0}</td>
                             <td className="text-center font-bold">
-                                {statistics?.total_members > 0 
+                                {statistics?.total_members > 0
                                     ? `${((statistics.total_members_with_maintenance / statistics.total_members) * 100).toFixed(1)}%`
                                     : '0%'
                                 }

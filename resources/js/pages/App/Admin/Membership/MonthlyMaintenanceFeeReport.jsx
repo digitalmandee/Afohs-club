@@ -17,6 +17,7 @@ const MonthlyMaintenanceFeeReport = () => {
     // Filter state
     const [allFilters, setAllFilters] = useState({
         member_search: filters?.member_search || '',
+        membership_no_search: filters?.membership_no_search || '',
         invoice_search: filters?.invoice_search || '',
         date_from: filters?.date_from || '',
         date_to: filters?.date_to || '',
@@ -28,6 +29,7 @@ const MonthlyMaintenanceFeeReport = () => {
     });
 
     const [nameSuggestions, setNameSuggestions] = useState([]);
+    const [membershipNoSuggestions, setMembershipNoSuggestions] = useState([]);
 
     const fetchNameSuggestions = useMemo(
         () =>
@@ -43,6 +45,25 @@ const MonthlyMaintenanceFeeReport = () => {
                     setNameSuggestions(response.data);
                 } catch (error) {
                     console.error('Error fetching name suggestions:', error);
+                }
+            }, 300),
+        [],
+    );
+
+    const fetchMembershipNoSuggestions = useMemo(
+        () =>
+            debounce(async (query) => {
+                if (!query) {
+                    setMembershipNoSuggestions([]);
+                    return;
+                }
+                try {
+                    const response = await axios.get(route('api.bookings.search-customers'), {
+                        params: { query, type: 'member' },
+                    });
+                    setMembershipNoSuggestions(response.data);
+                } catch (error) {
+                    console.error('Error fetching membership number suggestions:', error);
                 }
             }, 300),
         [],
@@ -92,6 +113,7 @@ const MonthlyMaintenanceFeeReport = () => {
     const handleReset = () => {
         setAllFilters({
             member_search: '',
+            membership_no_search: '',
             invoice_search: '',
             date_from: '',
             date_to: '',
@@ -129,6 +151,10 @@ const MonthlyMaintenanceFeeReport = () => {
 
         if (allFilters.member_search) {
             params.append('member_search', allFilters.member_search);
+        }
+
+        if (allFilters.membership_no_search) {
+            params.append('membership_no_search', allFilters.membership_no_search);
         }
 
         if (allFilters.invoice_search) {
@@ -222,8 +248,21 @@ const MonthlyMaintenanceFeeReport = () => {
                                 freeSolo
                                 disablePortal
                                 options={nameSuggestions}
-                                getOptionLabel={(option) => option.value || option}
+                                getOptionLabel={(option) =>
+                                    typeof option === 'string'
+                                        ? option
+                                        : option?.name || option?.full_name || option?.value || option?.label || ''
+                                }
                                 inputValue={allFilters.member_search}
+                                onChange={(event, selectedOption) => {
+                                    if (typeof selectedOption === 'string') {
+                                        handleFilterChange('member_search', selectedOption);
+                                        return;
+                                    }
+                                    if (selectedOption?.name || selectedOption?.full_name) {
+                                        handleFilterChange('member_search', selectedOption.name || selectedOption.full_name);
+                                    }
+                                }}
                                 onInputChange={(event, newInputValue) => {
                                     handleFilterChange('member_search', newInputValue);
                                     fetchNameSuggestions(newInputValue);
@@ -258,6 +297,68 @@ const MonthlyMaintenanceFeeReport = () => {
                                             </Box>
                                             <Typography variant="caption" color="text.secondary">
                                                 {option.membership_no || option.customer_no}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={membershipNoSuggestions}
+                                getOptionLabel={(option) =>
+                                    typeof option === 'string'
+                                        ? option
+                                        : option?.membership_no || option?.customer_no || option?.label || ''
+                                }
+                                inputValue={allFilters.membership_no_search}
+                                onChange={(event, selectedOption) => {
+                                    if (typeof selectedOption === 'string') {
+                                        handleFilterChange('membership_no_search', selectedOption);
+                                        return;
+                                    }
+                                    if (selectedOption?.membership_no || selectedOption?.customer_no) {
+                                        handleFilterChange('membership_no_search', selectedOption.membership_no || selectedOption.customer_no);
+                                    }
+                                }}
+                                onInputChange={(event, newInputValue) => {
+                                    handleFilterChange('membership_no_search', newInputValue);
+                                    fetchMembershipNoSuggestions(newInputValue);
+                                }}
+                                renderInput={(params) =>
+                                    <TextField
+                                        {...params}
+                                        fullWidth
+                                        size="small"
+                                        placeholder="Search by Membership #"
+                                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                                    />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={`membership-${option.membership_no || option.customer_no || option.label}`}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.full_name}
                                             </Typography>
                                         </Box>
                                     </li>
@@ -368,10 +469,6 @@ const MonthlyMaintenanceFeeReport = () => {
                                 />
                             </LocalizationProvider>
                         </Grid>
-                    </Grid>
-
-                    {/* Filter Fields */}
-                    <Grid container spacing={2}>
                         <Grid item xs={12} md={3}>
                             {/* <FormControl fullWidth size="small">
                                     <InputLabel>Search by City</InputLabel>
