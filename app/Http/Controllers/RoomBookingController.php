@@ -1452,6 +1452,11 @@ class RoomBookingController extends Controller
     {
         $query = $request->input('query');
         $type = $request->input('type', 'all');  // all, member, corporate, guest
+        $includeInactive = filter_var($request->input('include_inactive', false), FILTER_VALIDATE_BOOLEAN);
+
+        if (!$type) {
+            $type = 'all';
+        }
 
         if (empty($query)) {
             return response()->json([]);
@@ -1463,7 +1468,10 @@ class RoomBookingController extends Controller
 
         // 1. Members
         if ($type === 'all' || $type === 'member') {
-            $members = \App\Models\Member::where('status', 'active')
+            $members = \App\Models\Member::query()
+                ->when(!$includeInactive, function ($q) {
+                    $q->where('status', 'active');
+                })
                 ->where(function ($q) use ($query) {
                     $q
                         ->where('full_name', 'like', "%{$query}%")
@@ -1499,7 +1507,10 @@ class RoomBookingController extends Controller
 
         // 2. Corporate Members
         if ($type === 'all' || $type === 'corporate') {
-            $corporate = \App\Models\CorporateMember::where('status', 'active')
+            $corporate = \App\Models\CorporateMember::query()
+                ->when(!$includeInactive, function ($q) {
+                    $q->where('status', 'active');
+                })
                 ->where(function ($q) use ($query) {
                     $q
                         ->where('full_name', 'like', "%{$query}%")

@@ -262,12 +262,12 @@ export default function SportsSubscriptionsReportPrint({ transactions, statistic
                             <th style={{ width: '8%' }}>Invoice #</th>
                             <th style={{ width: '12%' }}>Subscriber</th>
                             <th style={{ width: '12%' }}>Member</th>
+                            <th style={{ width: '9%' }}>Member #</th>
                             <th style={{ width: '10%' }}>Type</th>
                             <th style={{ width: '10%' }}>Family</th>
                             <th style={{ width: '9%' }}>Start Date</th>
                             <th style={{ width: '9%' }}>End Date</th>
                             <th style={{ width: '9%' }}>Amount</th>
-                            <th style={{ width: '9%' }}>Member #</th>
                             <th style={{ width: '12%' }}>Payment</th>
                         </tr>
                     </thead>
@@ -278,12 +278,12 @@ export default function SportsSubscriptionsReportPrint({ transactions, statistic
                                     <td className="text-center font-bold">{transaction.invoice?.invoice_no}</td>
                                     <td className="font-bold">{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</td>
                                     <td>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.membership_no || transaction.invoice?.corporateMember?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</td>
                                     <td className="text-center">{transaction.subscription_category?.name || transaction.data?.subscription_type_name || 'N/A'}</td>
                                     <td className="text-center">{transaction.family_member?.relation || 'SELF'}</td>
                                     <td className="text-center">{formatDate(transaction.start_date || transaction.valid_from)}</td>
                                     <td className="text-center">{formatDate(transaction.end_date || transaction.valid_to)}</td>
                                     <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
-                                    <td className="text-center">{transaction.invoice?.member?.membership_no || transaction.invoice?.corporateMember?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</td>
                                     <td className="text-center">{getPaymentMethodLabel(transaction.invoice?.payment_method)}</td>
                                 </tr>
                             ))
@@ -298,11 +298,11 @@ export default function SportsSubscriptionsReportPrint({ transactions, statistic
                         {/* Total Row */}
                         {transactions?.data && transactions.data.length > 0 && (
                             <tr className="total-row">
-                                <td colSpan="7" className="text-center font-bold">
+                                <td colSpan="8" className="text-center font-bold">
                                     TOTAL ({statistics?.total_transactions || 0} Subscriptions)
                                 </td>
                                 <td className="text-right font-bold">{formatCurrency(statistics?.total_amount || 0)}</td>
-                                <td colSpan="2" className="text-center font-bold">
+                                <td colSpan="1" className="text-center font-bold">
                                     Sports Subscriptions Collection
                                 </td>
                             </tr>

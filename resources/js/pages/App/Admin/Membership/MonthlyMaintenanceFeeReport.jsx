@@ -801,12 +801,12 @@ const MonthlyMaintenanceFeeReport = () => {
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Invoice</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>City</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Member Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Membership</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Amount Received</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Payment Method</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Category</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Dated</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Duration</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Membership</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>User</TableCell>
                                 </TableRow>
                             </TableHead>
@@ -824,6 +824,7 @@ const MonthlyMaintenanceFeeReport = () => {
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.current_city || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no}</TableCell>
                                             <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
                                             <TableCell>
                                                 <Chip
@@ -839,7 +840,6 @@ const MonthlyMaintenanceFeeReport = () => {
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.invoice?.member?.member_category?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.created_at)}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.start_date && transaction.end_date ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}` : 'N/A'}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.created_by?.name || 'System'}</TableCell>
                                         </TableRow>
                                     ))
@@ -854,12 +854,12 @@ const MonthlyMaintenanceFeeReport = () => {
                                 {/* Footer Row */}
                                 {transactions?.data && transactions.data.length > 0 && (
                                     <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={3}>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={4}>
                                             TOTAL ({statistics?.total_transactions || 0} Transactions)
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}</TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>Avg: {formatCurrency(statistics?.average_amount || 0).replace('PKR', 'Rs.')}</TableCell>
-                                        <TableCell colSpan={5} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
+                                        <TableCell colSpan={4} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
                                             Monthly Maintenance Fee Collection Report
                                         </TableCell>
                                     </TableRow>

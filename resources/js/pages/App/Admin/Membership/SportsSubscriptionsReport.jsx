@@ -852,12 +852,12 @@ const SportsSubscriptionsReport = () => {
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Invoice</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Subscriber Name</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Member Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Membership</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Type</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Family Member</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Start Date</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>End Date</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Amount</TableCell>
-                                    <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Membership</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, whiteSpace:'nowrap' }}>Payment Method</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>Category</TableCell>
                                     <TableCell sx={{ color: 'white', fontSize: '14px', fontWeight: 600, }}>User</TableCell>
@@ -877,6 +877,7 @@ const SportsSubscriptionsReport = () => {
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.invoice_no}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 600, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.full_name || transaction.invoice?.corporateMember?.full_name || transaction.invoice?.customer?.name || 'N/A'}</TableCell>
+                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || transaction.invoice?.corporateMember?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{transaction.subscription_type?.name || transaction.data?.subscription_type_name || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Chip
@@ -892,7 +893,6 @@ const SportsSubscriptionsReport = () => {
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.start_date)}</TableCell>
                                             <TableCell sx={{ color: '#6B7280', fontWeight: 400, fontSize: '14px' }}>{formatDate(transaction.end_date)}</TableCell>
                                             <TableCell sx={{ color: '#059669', fontWeight: 600, fontSize: '14px' }}>{formatCurrency(transaction.total).replace('PKR', 'Rs.')}</TableCell>
-                                            <TableCell sx={{ color: '#374151', fontWeight: 500, fontSize: '14px' }}>{transaction.invoice?.member?.membership_no || transaction.invoice?.corporateMember?.membership_no || transaction.invoice?.customer?.customer_no || 'N/A'}</TableCell>
                                             <TableCell>
                                                 <Chip
                                                     label={getPaymentMethodLabel(transaction.invoice?.payment_method || transaction.payment_method)}
@@ -919,11 +919,11 @@ const SportsSubscriptionsReport = () => {
                                 {/* Footer Row */}
                                 {transactions?.data && transactions.data.length > 0 && (
                                     <TableRow sx={{ backgroundColor: '#063455', borderTop: '2px solid #374151' }}>
-                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={7}>
+                                        <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }} colSpan={8}>
                                             TOTAL ({statistics?.total_transactions || 0} Subscriptions)
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 700, color: 'white', fontSize: '16px' }}>{formatCurrency(statistics?.total_amount || 0).replace('PKR', 'Rs.')}</TableCell>
-                                        <TableCell colSpan={4} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
+                                        <TableCell colSpan={3} sx={{ fontWeight: 700, color: 'white', fontSize: '14px' }}>
                                             Sports Subscriptions Collection Report
                                         </TableCell>
                                     </TableRow>
