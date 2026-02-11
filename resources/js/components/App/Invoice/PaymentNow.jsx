@@ -8,6 +8,7 @@ import Receipt from './Receipt';
 
 const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment, setSelectedOrder, isLoading, mode = 'payment', handleSendToKitchen }) => {
     const round0 = (n) => Math.round(typeof n === 'string' ? parseFloat(n) || 0 : n || 0);
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
     // Payment state
     const [inputAmount, setInputAmount] = useState('0');
     const [customerChanges, setCustomerChanges] = useState('0');

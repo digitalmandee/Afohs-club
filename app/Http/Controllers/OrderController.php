@@ -811,8 +811,6 @@ class OrderController extends Controller
                 }
                 $orderData['paid_at'] = now();
                 $orderData['payment_status'] = 'paid';
-            } elseif ($orderType == 'takeaway') {
-                $orderData['payment_status'] = 'awaiting';
             }
 
             // 🔎 DEBUG: Log Request Status Logic
@@ -1000,9 +998,9 @@ class OrderController extends Controller
                 'cost_price' => $totalCostPrice,
             ]);
 
-            // ✅ Create Invoice for takeaway
-            // For dine-in, delivery, reservation, room_service: invoice created when order marked 'completed'
-            if ($orderType === 'takeaway') {
+            // ✅ Create Invoice for takeaway ONLY when Pay Now is used
+            // For dine-in, delivery, reservation, room_service (and takeaway-pay-later): invoice created when order marked 'completed'
+            if ($isTakeawayPayNow) {
                 $existingInvoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
                 if ($existingInvoice) {
                     $invoice = $existingInvoice;
@@ -1037,21 +1035,19 @@ class OrderController extends Controller
                     $payerId = $memberId;
                 }
 
-                if ($isTakeawayPayNow) {
-                    $invoiceData['status'] = 'paid';
-                    $invoiceData['payment_date'] = now();
-                    $invoiceData['payment_method'] = $request->payment['payment_method'];
-                    $invoiceData['paid_amount'] = $request->payment['paid_amount'];
-                    $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
-                    $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
-                    $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
+                $invoiceData['status'] = 'paid';
+                $invoiceData['payment_date'] = now();
+                $invoiceData['payment_method'] = $request->payment['payment_method'];
+                $invoiceData['paid_amount'] = $request->payment['paid_amount'];
+                $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
+                $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
+                $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
 
-                    if ($request->payment['bank_charges_enabled'] ?? false) {
-                        $invoiceData['data']['bank_charges_enabled'] = true;
-                        $invoiceData['data']['bank_charges_type'] = $request->payment['bank_charges_type'] ?? 'percentage';
-                        $invoiceData['data']['bank_charges_value'] = round((float) ($request->payment['bank_charges_value'] ?? 0), 0);
-                        $invoiceData['data']['bank_charges_amount'] = round((float) ($request->payment['bank_charges_amount'] ?? 0), 0);
-                    }
+                if ($request->payment['bank_charges_enabled'] ?? false) {
+                    $invoiceData['data']['bank_charges_enabled'] = true;
+                    $invoiceData['data']['bank_charges_type'] = $request->payment['bank_charges_type'] ?? 'percentage';
+                    $invoiceData['data']['bank_charges_value'] = round((float) ($request->payment['bank_charges_value'] ?? 0), 0);
+                    $invoiceData['data']['bank_charges_amount'] = round((float) ($request->payment['bank_charges_amount'] ?? 0), 0);
                 }
 
                 $invoice = FinancialInvoice::create($invoiceData);
@@ -1158,117 +1154,113 @@ class OrderController extends Controller
                     }
                 }
 
-                if ($isTakeawayPayNow) {
-                    // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
-                    $entAmount = 0;
-                    $entDetails = '';
-                    $ctsAmount = 0;
-                    $paymentData = $request->payment;
+                // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
+                $entAmount = 0;
+                $entDetails = '';
+                $ctsAmount = 0;
+                $paymentData = $request->payment;
 
-                    // Check if ENT is enabled (new toggle-based flow)
-                    $entEnabled = $paymentData['ent_enabled'] ?? false;
-                    $ctsEnabled = $paymentData['cts_enabled'] ?? false;
+                // Check if ENT is enabled (new toggle-based flow)
+                $entEnabled = $paymentData['ent_enabled'] ?? false;
+                $ctsEnabled = $paymentData['cts_enabled'] ?? false;
 
-                    // ENT Calculation - Only if enabled
-                    if ($entEnabled) {
-                        if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
-                            // Calculate from items
-                            $entIds = $paymentData['ent_items'];
-                            foreach ($request->order_items as $item) {
-                                if (in_array($item['id'], $entIds)) {
-                                    $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
-                                    $entAmount += $iPrice;
-                                    $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
-                                }
+                // ENT Calculation - Only if enabled
+                if ($entEnabled) {
+                    if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
+                        // Calculate from items
+                        $entIds = $paymentData['ent_items'];
+                        foreach ($request->order_items as $item) {
+                            if (in_array($item['id'], $entIds)) {
+                                $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
+                                $entAmount += $iPrice;
+                                $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
                             }
-                        } elseif (isset($paymentData['ent_amount'])) {
-                            // Use provided ENT amount
-                            $entAmount = $paymentData['ent_amount'];
                         }
+                    } elseif (isset($paymentData['ent_amount'])) {
+                        // Use provided ENT amount
+                        $entAmount = $paymentData['ent_amount'];
                     }
+                }
 
-                    // CTS Calculation - Only if enabled
-                    if ($ctsEnabled) {
-                        $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : 0;
+                // CTS Calculation - Only if enabled
+                if ($ctsEnabled) {
+                    $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : 0;
+                }
+
+                // Verify Total (Paid + ENT + CTS >= Total)
+                // Note: paid_amount in request is the amount paid via selected payment method
+                $paidCash = $paymentData['paid_amount'] ?? 0;
+                // Allow small float variance
+                if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
+                    throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
+                }
+
+                // Update Invoice with ENT/CTS Details
+                $updateData = [];
+
+                if ($entEnabled && $entAmount > 0) {
+                    $comment = $invoiceData['ent_comment'] ?? '';
+                    if ($entDetails) {
+                        $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
                     }
+                    $updateData['ent_comment'] = $comment;
+                    $updateData['ent_amount'] = $entAmount;
+                    $updateData['ent_reason'] = $paymentData['ent_reason'] ?? null;
+                }
 
-                    // Verify Total (Paid + ENT + CTS >= Total)
-                    // Note: paid_amount in request is the amount paid via selected payment method
-                    $paidCash = $paymentData['paid_amount'] ?? 0;
-                    // Allow small float variance
-                    if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
-                        throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
+                if ($ctsEnabled && $ctsAmount > 0) {
+                    $comment = $invoiceData['cts_comment'] ?? '';
+                    if ($ctsAmount < $request->total_price) {
+                        $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
                     }
+                    $updateData['cts_comment'] = $comment;
+                    $updateData['cts_amount'] = $ctsAmount;
+                }
 
-                    // Update Invoice with ENT/CTS Details
-                    $updateData = [];
-
-                    if ($entEnabled && $entAmount > 0) {
-                        $comment = $invoiceData['ent_comment'] ?? '';
-                        if ($entDetails) {
-                            $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
-                        }
-                        $updateData['ent_comment'] = $comment;
-                        $updateData['ent_amount'] = $entAmount;
-                        $updateData['ent_reason'] = $paymentData['ent_reason'] ?? null;
-                    }
-
-                    if ($ctsEnabled && $ctsAmount > 0) {
-                        $comment = $invoiceData['cts_comment'] ?? '';
-                        if ($ctsAmount < $request->total_price) {
-                            $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
-                        }
-                        $updateData['cts_comment'] = $comment;
-                        $updateData['cts_amount'] = $ctsAmount;
-                    }
-
-                    if (!empty($updateData)) {
-                        $invoice->update($updateData);
-                    }
+                if (!empty($updateData)) {
+                    $invoice->update($updateData);
                 }
 
                 // If Paid (Takeaway) -> Receipt + Credit + Allocation
-                if ($isTakeawayPayNow) {
-                    $receiptImg = $orderData['receipt'] ?? null;
+                $receiptImg = $orderData['receipt'] ?? null;
 
-                    // 1. Create Receipt
-                    $receipt = FinancialReceipt::create([
-                        'receipt_no' => time(),
-                        'payer_type' => $payerType,
-                        'payer_id' => $payerId,
-                        'amount' => $request->payment['paid_amount'],
-                        'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
-                            ? $request->payment['cts_payment_method']
-                            : $request->payment['payment_method'],
-                        'receipt_date' => now(),
-                        'status' => 'active',
-                        'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
-                        'created_by' => Auth::id(),
-                        'receipt_image' => $receiptImg,
-                    ]);
+                // 1. Create Receipt
+                $receipt = FinancialReceipt::create([
+                    'receipt_no' => time(),
+                    'payer_type' => $payerType,
+                    'payer_id' => $payerId,
+                    'amount' => $request->payment['paid_amount'],
+                    'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
+                        ? $request->payment['cts_payment_method']
+                        : $request->payment['payment_method'],
+                    'receipt_date' => now(),
+                    'status' => 'active',
+                    'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
+                    'created_by' => Auth::id(),
+                    'receipt_image' => $receiptImg,
+                ]);
 
-                    // 2. Link Receipt to Invoice
-                    TransactionRelation::create([
-                        'invoice_id' => $invoice->id,
-                        'receipt_id' => $receipt->id,
-                        'amount' => $request->payment['paid_amount'],
-                    ]);
+                // 2. Link Receipt to Invoice
+                TransactionRelation::create([
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'amount' => $request->payment['paid_amount'],
+                ]);
 
-                    // 3. Create SINGLE Credit Transaction (Amount Paid)
-                    Transaction::create([
-                        'type' => 'credit',
-                        'amount' => $request->payment['paid_amount'],
-                        'date' => now(),
-                        'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-                        'payable_type' => $payerType,
-                        'payable_id' => $payerId,
-                        'reference_type' => FinancialInvoiceItem::class,
-                        'reference_id' => $invoiceItem->id,  // Link to the summary item
-                        'invoice_id' => $invoice->id,
-                        'receipt_id' => $receipt->id,
-                        'created_by' => Auth::id(),
-                    ]);
-                }
+                // 3. Create SINGLE Credit Transaction (Amount Paid)
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $request->payment['paid_amount'],
+                    'date' => now(),
+                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'reference_type' => FinancialInvoiceItem::class,
+                    'reference_id' => $invoiceItem->id,  // Link to the summary item
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'created_by' => Auth::id(),
+                ]);
                 }
             }
 
@@ -1630,7 +1622,7 @@ class OrderController extends Controller
                 $validated['status'] === 'completed' &&
                 !$financialInvoice &&
                 $hasPayer &&
-                in_array($order->order_type, ['dineIn', 'delivery', 'reservation', 'room_service'])
+                in_array($order->order_type, ['dineIn', 'delivery', 'reservation', 'room_service', 'takeaway'])
             ) {
                 // Determine payer type
                 if ($order->member_id) {
