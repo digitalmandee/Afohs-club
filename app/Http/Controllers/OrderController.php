@@ -734,9 +734,11 @@ class OrderController extends Controller
         try {
             $totalDue = $request->price;
             $orderType = $request->order_type;
+            $hasPayment = $request->has('payment') && is_array($request->payment);
+            $isTakeawayPayNow = $orderType == 'takeaway' && $hasPayment && array_key_exists('payment_method', $request->payment ?? []);
 
-            // Validate Takeaway Payment
-            if ($orderType == 'takeaway') {
+            // Validate Takeaway Payment (only when "Pay Now" flow is used)
+            if ($isTakeawayPayNow) {
                 $entEnabled = $request->payment['ent_enabled'] ?? false;
                 $ctsEnabled = $request->payment['cts_enabled'] ?? false;
                 $entDeduction = $entEnabled ? ($request->payment['ent_amount'] ?? 0) : 0;
@@ -770,10 +772,9 @@ class OrderController extends Controller
                 'room_booking_id' => $request->room_booking_id ?? null,
                 'address' => $request->address,
                 'rider_id' => $request->rider_id ?? null,
-                // Takeaway orders are paid immediately and completed at point of sale
                 // Reservations that are new are saved as drafts
                 // All other orders go to in_progress for kitchen processing
-                'status' => $request->order_type === 'takeaway'
+                'status' => ($request->order_type === 'takeaway' && $isTakeawayPayNow)
                     ? 'completed'
                     : (($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress'),
             ];
@@ -789,7 +790,7 @@ class OrderController extends Controller
                 $orderData['employee_id'] = $memberId;
             }
 
-            if ($orderType == 'takeaway') {
+            if ($isTakeawayPayNow) {
                 $orderData['cashier_id'] = Auth::user()->id;
                 $orderData['payment_method'] = $request->payment['payment_method'];
                 $orderData['paid_amount'] = $request->payment['paid_amount'];
@@ -810,6 +811,8 @@ class OrderController extends Controller
                 }
                 $orderData['paid_at'] = now();
                 $orderData['payment_status'] = 'paid';
+            } elseif ($orderType == 'takeaway') {
+                $orderData['payment_status'] = 'awaiting';
             }
 
             // 🔎 DEBUG: Log Request Status Logic
@@ -997,9 +1000,13 @@ class OrderController extends Controller
                 'cost_price' => $totalCostPrice,
             ]);
 
-            // ✅ Create Invoice ONLY for takeaway (immediate payment flow)
+            // ✅ Create Invoice for takeaway
             // For dine-in, delivery, reservation, room_service: invoice created when order marked 'completed'
             if ($orderType === 'takeaway') {
+                $existingInvoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
+                if ($existingInvoice) {
+                    $invoice = $existingInvoice;
+                } else {
                 $invoiceData = [
                     'invoice_no' => $this->getInvoiceNo(),
                     'invoice_type' => 'food_order',
@@ -1030,7 +1037,7 @@ class OrderController extends Controller
                     $payerId = $memberId;
                 }
 
-                if ($orderType == 'takeaway') {
+                if ($isTakeawayPayNow) {
                     $invoiceData['status'] = 'paid';
                     $invoiceData['payment_date'] = now();
                     $invoiceData['payment_method'] = $request->payment['payment_method'];
@@ -1151,7 +1158,7 @@ class OrderController extends Controller
                     }
                 }
 
-                if ($orderType == 'takeaway') {
+                if ($isTakeawayPayNow) {
                     // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
                     $entAmount = 0;
                     $entDetails = '';
@@ -1221,7 +1228,7 @@ class OrderController extends Controller
                 }
 
                 // If Paid (Takeaway) -> Receipt + Credit + Allocation
-                if ($orderType == 'takeaway') {
+                if ($isTakeawayPayNow) {
                     $receiptImg = $orderData['receipt'] ?? null;
 
                     // 1. Create Receipt
@@ -1261,6 +1268,7 @@ class OrderController extends Controller
                         'receipt_id' => $receipt->id,
                         'created_by' => Auth::id(),
                     ]);
+                }
                 }
             }
 

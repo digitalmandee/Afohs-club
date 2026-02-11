@@ -890,8 +890,6 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                     onClick={() => {
                         if (orderDetails.order_type === 'reservation') {
                             handleOpenPopup(); // open popup first
-                        } else if (orderDetails.order_type === 'takeaway') {
-                            handleOpenPayment(); // directly send
                         } else {
                             handleSendToKitchen(); // directly send
                         }
@@ -905,19 +903,35 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                 >
                     {orderDetails.order_type === 'reservation' ? 'Proceed' : 'Send to kitchen'}
                 </Button>
-                <Button
-                    variant="contained"
-                    startIcon={<PrintIcon />}
-                    disabled={orderDetails.order_items.length === 0 || !orderDetails.member}
-                    sx={{
-                        flex: 2,
-                        bgcolor: '#063455',
-                        '&:hover': { bgcolor: '#063455' },
-                        textTransform: 'none',
-                    }}
-                >
-                    Print Receipt
-                </Button>
+                {orderDetails.order_type === 'takeaway' ? (
+                    <Button
+                        variant="contained"
+                        disabled={orderDetails.order_items.length === 0 || !orderDetails.member || isLoading}
+                        onClick={handleOpenPayment}
+                        sx={{
+                            flex: 2,
+                            bgcolor: '#063455',
+                            '&:hover': { bgcolor: '#063455' },
+                            textTransform: 'none',
+                        }}
+                    >
+                        Pay Now
+                    </Button>
+                ) : (
+                    <Button
+                        variant="contained"
+                        startIcon={<PrintIcon />}
+                        disabled={orderDetails.order_items.length === 0 || !orderDetails.member}
+                        sx={{
+                            flex: 2,
+                            bgcolor: '#063455',
+                            '&:hover': { bgcolor: '#063455' },
+                            textTransform: 'none',
+                        }}
+                    >
+                        Print Receipt
+                    </Button>
+                )}
             </Box>
 
             {/* Reservation Popup */}
