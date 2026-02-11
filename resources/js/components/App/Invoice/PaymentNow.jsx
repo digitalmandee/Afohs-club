@@ -1,4 +1,5 @@
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 import { AccountBalance as AccountBalanceIcon, ArrowForward as ArrowForwardIcon, Backspace as BackspaceIcon, CreditCard as CreditCardIcon } from '@mui/icons-material';
 import { Box, Button, Dialog, Grid, InputAdornment, MenuItem, Select, Switch, TextField, Typography } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
@@ -6,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Receipt from './Receipt';
 
 const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleClosePayment, setSelectedOrder, isLoading, mode = 'payment', handleSendToKitchen }) => {
+    const round0 = (n) => Math.round(typeof n === 'string' ? parseFloat(n) || 0 : n || 0);
     // Payment state
     const [inputAmount, setInputAmount] = useState('0');
     const [customerChanges, setCustomerChanges] = useState('0');
@@ -37,6 +39,41 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     const [ctsComment, setCtsComment] = useState('');
     const [ctsAmount, setCtsAmount] = useState('0');
 
+    // Bank Charges
+    const [bankChargesEnabled, setBankChargesEnabled] = useState(false);
+    const [bankChargesType, setBankChargesType] = useState('percentage');
+    const [bankChargesValue, setBankChargesValue] = useState(0);
+    const [bankChargesAmount, setBankChargesAmount] = useState('0');
+
+    // Fetch Settings
+    useEffect(() => {
+        axios
+            .get(route('setting.financial'))
+            .then((response) => {
+                setBankChargesType(response.data.bank_charges_type || 'percentage');
+                setBankChargesValue(parseFloat(response.data.bank_charges_value || 0));
+            })
+            .catch((error) => {
+                console.error('Failed to load financial settings:', error);
+            });
+    }, []);
+
+    // Calculate Bank Charges Amount
+    useEffect(() => {
+        if (bankChargesEnabled && bankChargesValue > 0) {
+            let charges = 0;
+            if (bankChargesType === 'percentage') {
+                const grandTotal = parsePrice(invoiceData?.total_price || 0);
+                charges = round0(grandTotal * (bankChargesValue / 100));
+            } else {
+                charges = round0(bankChargesValue);
+            }
+            setBankChargesAmount(String(charges));
+        } else {
+            setBankChargesAmount('0');
+        }
+    }, [bankChargesEnabled, bankChargesType, bankChargesValue, invoiceData]);
+
     // Helper to parse price safely
     const parsePrice = (price) => {
         if (typeof price === 'number') return price;
@@ -58,18 +95,27 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         }
     }, [selectedEntItems, invoiceData, entEnabled]);
 
-    // Calculate Remaining Balance after ENT/CTS deductions
+    // Calculate Remaining Balance or Total with Charges
     useEffect(() => {
-        const grandTotal = parsePrice(invoiceData?.total_price);
-        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const remainder = grandTotal - entDeduction - ctsDeduction;
-        const finalRemainder = remainder < 0 ? 0 : remainder;
+        const grandTotal = round0(parsePrice(invoiceData?.total_price));
+        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
 
-        // Update input amount to remaining balance
-        setInputAmount(finalRemainder.toFixed(2));
+        let targetAmount = 0;
+
+        if (entEnabled || ctsEnabled) {
+            const remainder = round0(grandTotal - entDeduction - ctsDeduction);
+            targetAmount = remainder < 0 ? 0 : remainder;
+        } else {
+            // If bank charges enabled, add to total
+            const bankCharge = bankChargesEnabled ? round0(bankChargesAmount || 0) : 0;
+            targetAmount = round0(grandTotal + bankCharge);
+        }
+
+        // Update input amount
+        setInputAmount(String(Math.round(targetAmount)));
         setCustomerChanges('0');
-    }, [entAmount, ctsAmount, entEnabled, ctsEnabled, invoiceData]);
+    }, [entAmount, ctsAmount, entEnabled, ctsEnabled, bankChargesEnabled, bankChargesAmount, invoiceData]);
 
     const handlePaymentMethodChange = (method) => {
         setActivePaymentMethod(method);
@@ -85,22 +131,24 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         const cleanAmount = parsePrice(amount).toString();
         setInputAmount(cleanAmount);
 
-        // Calculate customer changes based on remaining after ENT/CTS
-        const grandTotal = parsePrice(invoiceData.total_price);
-        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const dueAmount = grandTotal - entDeduction - ctsDeduction;
+        // Calculate customer changes based on remaining after ENT/CTS and including Bank Charges
+        const grandTotal = round0(parsePrice(invoiceData.total_price));
+        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
+        const bankCharges = bankChargesEnabled ? round0(bankChargesAmount || 0) : 0;
+        const dueAmount = round0(grandTotal + bankCharges - entDeduction - ctsDeduction);
 
-        const changes = parseFloat(cleanAmount) - dueAmount;
-        setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
+        const changes = round0(parseFloat(cleanAmount) - dueAmount);
+        setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
     };
 
     const handleNumberClick = (number) => {
         let newAmount;
-        const grandTotal = parsePrice(invoiceData.total_price);
-        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const dueAmount = grandTotal - entDeduction - ctsDeduction;
+        const grandTotal = round0(parsePrice(invoiceData.total_price));
+        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
+        const bankCharges = bankChargesEnabled ? round0(bankChargesAmount || 0) : 0;
+        const dueAmount = round0(grandTotal + bankCharges - entDeduction - ctsDeduction);
 
         if (parseFloat(inputAmount) === 0 && !inputAmount.includes('.')) {
             newAmount = number;
@@ -114,15 +162,16 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         setInputAmount(newAmount);
 
         // Calculate customer changes
-        const changes = parseFloat(newAmount) - dueAmount;
-        setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
+        const changes = round0(parseFloat(newAmount) - dueAmount);
+        setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
     };
 
     const handleDeleteClick = () => {
         const grandTotal = parsePrice(invoiceData.total_price);
         const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const dueAmount = grandTotal - entDeduction - ctsDeduction;
+        const bankCharges = bankChargesEnabled ? parseFloat(bankChargesAmount || 0) : 0;
+        const dueAmount = grandTotal + bankCharges - entDeduction - ctsDeduction;
 
         if (inputAmount.length > 1) {
             const newAmount = inputAmount.slice(0, -1);
@@ -132,8 +181,8 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
         } else {
             setInputAmount('0');
-            const changes = 0 - dueAmount;
-            setCustomerChanges((changes < 0 ? 0 : changes).toFixed(2));
+            const changes = round0(0 - dueAmount);
+            setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
         }
     };
 
@@ -153,13 +202,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleOrderAndPay = async () => {
-        const grandTotal = parsePrice(invoiceData.total_price);
-        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const remainingBalance = grandTotal - entDeduction - ctsDeduction;
+        const grandTotal = round2(parsePrice(invoiceData.total_price));
+        const entDeduction = entEnabled ? round2(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? round2(ctsAmount || 0) : 0;
+        const bcAmount = bankChargesEnabled ? round2(bankChargesAmount || 0) : 0;
+        const remainingBalance = round2(grandTotal + bcAmount - entDeduction - ctsDeduction);
 
         // Amount validation - input should cover remaining balance
-        if (remainingBalance > 0 && parseFloat(inputAmount) < remainingBalance) {
+        // Note: Using a small epsilon for float comparison safety, though simple < works usually
+        if (remainingBalance > 0 && parseFloat(inputAmount) < remainingBalance - 0.01) {
             enqueueSnackbar('Please enter amount to cover remaining balance of Rs ' + remainingBalance.toFixed(2), { variant: 'warning' });
             return;
         }
@@ -215,6 +266,14 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
             payload.payment.cts_amount = ctsDeduction;
         }
 
+        // Add Bank Charges data if enabled
+        if (bankChargesEnabled) {
+            payload.payment.bank_charges_enabled = true;
+            payload.payment.bank_charges_type = bankChargesType;
+            payload.payment.bank_charges_value = bankChargesValue;
+            payload.payment.bank_charges_amount = bankChargesAmount;
+        }
+
         await handleSendToKitchen(payload);
     };
 
@@ -222,10 +281,11 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         const grandTotal = parsePrice(invoiceData.total_price);
         const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const remainingBalance = grandTotal - entDeduction - ctsDeduction;
+        const bcAmount = bankChargesEnabled ? parseFloat(bankChargesAmount || 0) : 0;
+        const remainingBalance = grandTotal + bcAmount - entDeduction - ctsDeduction;
 
         // Amount validation - input should cover remaining balance
-        if (remainingBalance > 0 && parseFloat(inputAmount) < remainingBalance) {
+        if (remainingBalance > 0 && parseFloat(inputAmount) < remainingBalance - 0.01) {
             enqueueSnackbar('Please enter amount to cover remaining balance of Rs ' + remainingBalance.toFixed(2), { variant: 'warning' });
             return;
         }
@@ -256,6 +316,15 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                 formData.append('cts_enabled', 'true');
                 formData.append('cts_comment', ctsComment);
                 formData.append('cts_amount', ctsDeduction);
+            }
+            if (bankChargesEnabled) {
+                formData.append('bank_charges_enabled', 'true');
+                formData.append('bank_charges_type', bankChargesType);
+                formData.append('bank_charges_value', bankChargesValue);
+                formData.append('bank_charges_amount', bankChargesAmount);
+                if (bankChargesType === 'percentage') {
+                    formData.append('bank_charges_percentage', bankChargesValue);
+                }
             }
 
             router.post(route('order.payment'), formData, {
@@ -308,6 +377,14 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                 payload.cts_enabled = true;
                 payload.cts_comment = ctsComment;
                 payload.cts_amount = ctsDeduction;
+            }
+
+            // Add Bank Charges data if enabled
+            if (bankChargesEnabled) {
+                payload.bank_charges_enabled = true;
+                payload.bank_charges_type = bankChargesType;
+                payload.bank_charges_value = bankChargesValue;
+                payload.bank_charges_amount = bankChargesAmount;
             }
 
             router.post(route('order.payment'), payload, {
@@ -446,14 +523,46 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                         </Box>
                     </Box>
 
-                    {/* ENT/CTS Toggles - Deductions Section */}
+                    {/* ENT/CTS/Bank Charges Toggles - Deductions & Adjustments Section */}
                     <Box sx={{ mb: 3, pt: 2, borderTop: '1px dashed #e0e0e0' }}>
                         <Typography variant="subtitle2" color="text.secondary" gutterBottom sx={{ fontWeight: 'bold' }}>
                             Deductions & Adjustments
                         </Typography>
 
-                        {/* ENT and CTS Toggles - Side by Side */}
-                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                        {/* ENT, CTS, Bank Charges Toggles */}
+                        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
+                            {/* Bank Charges Toggle */}
+                            <Box
+                                sx={{
+                                    flex: 1,
+                                    p: 1.5,
+                                    border: '1px solid #e0e0e0',
+                                    borderRadius: 1,
+                                    backgroundColor: bankChargesEnabled ? '#e3f2fd' : 'transparent',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    minWidth: '150px',
+                                }}
+                            >
+                                <Switch
+                                    checked={bankChargesEnabled}
+                                    onChange={(e) => {
+                                        setBankChargesEnabled(e.target.checked);
+                                    }}
+                                    size="small"
+                                    sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: '#0a3d62' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#0a3d62' } }}
+                                />
+                                <Box>
+                                    <Typography variant="body2" fontWeight="medium">
+                                        Bank Charges
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {bankChargesType === 'percentage' ? `${bankChargesValue}%` : `Rs. ${bankChargesValue}`}
+                                    </Typography>
+                                </Box>
+                            </Box>
+
                             {/* ENT Toggle */}
                             <Box
                                 sx={{
@@ -465,6 +574,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 1,
+                                    minWidth: '150px',
                                 }}
                             >
                                 <Switch
@@ -499,6 +609,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: 1,
+                                        minWidth: '150px',
                                     }}
                                 >
                                     <Switch
@@ -613,6 +724,23 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                             </Box>
                         )}
 
+                        {/* Bank Charges Information */}
+                        {bankChargesEnabled && (
+                            <Box sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1, backgroundColor: '#e3f2fd' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Bank Charges ({bankChargesType === 'percentage' ? `${bankChargesValue}%` : 'Fixed'}):
+                                    </Typography>
+                                    <Typography variant="body2" color="primary.main" fontWeight="bold">
+                                        + Rs {bankChargesAmount}
+                                    </Typography>
+                                </Box>
+                                <Typography variant="caption" color="text.secondary" fontStyle="italic">
+                                    Added to the payable amount.
+                                </Typography>
+                            </Box>
+                        )}
+
                         {/* Remaining Balance Display */}
                         {(entEnabled || ctsEnabled) && (
                             <Box sx={{ p: 2, backgroundColor: '#fff3e0', borderRadius: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -621,6 +749,17 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                 </Typography>
                                 <Typography variant="h6" fontWeight="bold" color="warning.main">
                                     Rs {(parsePrice(invoiceData?.total_price) - (entEnabled ? parseFloat(entAmount || 0) : 0) - (ctsEnabled ? parseFloat(ctsAmount || 0) : 0)).toFixed(2)}
+                                </Typography>
+                            </Box>
+                        )}
+                        {/* Total With Bank Charges Display */}
+                        {bankChargesEnabled && !entEnabled && !ctsEnabled && (
+                            <Box sx={{ p: 2, backgroundColor: '#e3f2fd', borderRadius: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body1" fontWeight="medium">
+                                    Total Payable:
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold" color="primary.main">
+                                    Rs {(parsePrice(invoiceData?.total_price) + parseFloat(bankChargesAmount)).toFixed(2)}
                                 </Typography>
                             </Box>
                         )}
@@ -665,24 +804,25 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                             const grandTotal = parsePrice(invoiceData.total_price);
                                             const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
                                             const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-                                            const remainingBalance = grandTotal - entDeduction - ctsDeduction;
+                                            const bcAmount = bankChargesEnabled ? parseFloat(bankChargesAmount || 0) : 0;
+                                            const remainingBalance = grandTotal + bcAmount - entDeduction - ctsDeduction;
                                             handleQuickAmountClick(remainingBalance.toString());
                                         }}
                                         sx={styles.quickAmountButton}
                                     >
                                         Exact money
                                     </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('10')} sx={styles.quickAmountButton}>
-                                        Rs 10
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('20')} sx={styles.quickAmountButton}>
-                                        Rs 20
-                                    </Button>
-                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('50')} sx={styles.quickAmountButton}>
-                                        Rs 50
-                                    </Button>
                                     <Button variant="outlined" onClick={() => handleQuickAmountClick('100')} sx={styles.quickAmountButton}>
                                         Rs 100
+                                    </Button>
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('500')} sx={styles.quickAmountButton}>
+                                        Rs 500
+                                    </Button>
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('1000')} sx={styles.quickAmountButton}>
+                                        Rs 1000
+                                    </Button>
+                                    <Button variant="outlined" onClick={() => handleQuickAmountClick('5000')} sx={styles.quickAmountButton}>
+                                        Rs 5000
                                     </Button>
                                 </Box>
 

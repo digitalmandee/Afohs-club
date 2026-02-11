@@ -206,6 +206,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     // Transform order data for Receipt component
     const getReceiptData = (order) => {
         if (!order) return null;
+        const bankChargesEnabled = order.invoice_bank_charges_enabled === true || order.invoice_bank_charges_enabled === 1 || order.invoice_bank_charges_enabled === '1' || order.invoice_bank_charges_enabled === 'true';
         return {
             id: order.id,
             order_no: order.id,
@@ -215,6 +216,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             discount: order.discount || 0,
             tax: order.tax || 0,
             total_price: order.total_price,
+            data: {
+                bank_charges_enabled: bankChargesEnabled,
+                bank_charges_type: order.invoice_bank_charges_type || 'percentage',
+                bank_charges_value: Number(order.invoice_bank_charges_value || 0),
+                bank_charges_amount: Number(order.invoice_bank_charges_amount || 0),
+            },
             order_type: order.order_type,
             member: order.member,
             customer: order.customer,
@@ -240,6 +247,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
         const printWindow = window.open('', '_blank');
         const customerName = order.member?.full_name || order.customer?.name || order.employee?.name || 'N/A';
         const memberNo = order.member?.membership_no || '';
+        const bankCharges = parseFloat(order.invoice_bank_charges_amount || 0);
 
         const itemsHtml =
             order.order_items
@@ -293,12 +301,18 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             <div class="row"><div>Subtotal</div><div>Rs ${order.amount || order.total_price || 0}</div></div>
             <div class="row"><div>Discount</div><div>Rs ${order.discount || 0}</div></div>
             <div class="row"><div>Tax</div><div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div></div>
+            ${
+                bankCharges > 0
+                    ? `<div class="row"><div>Bank Charges</div><div>Rs ${bankCharges}</div></div>`
+                    : ''
+            }
             <div class="divider"></div>
-            <div class="row total"><div>Total Amount</div><div>Rs ${order.total_price || 0}</div></div>
-            ${order.paid_amount
-                ? `
+            <div class="row total"><div>Total Amount</div><div>Rs ${(Number(order.total_price || 0) + Number(bankCharges || 0)).toFixed(2)}</div></div>
+            ${
+                order.paid_amount
+                    ? `
             <div class="row"><div>Paid Amount</div><div>Rs ${order.paid_amount}</div></div>
-            <div class="row"><div>Change</div><div>Rs ${order.paid_amount - order.total_price}</div></div>
+            <div class="row"><div>Change</div><div>Rs ${Number(order.paid_amount || 0) - (Number(order.total_price || 0) + Number(bankCharges || 0))}</div></div>
             `
                 : ''
             }
@@ -526,28 +540,142 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                         </Grid>
                     </Box>
 
-                    {/* Table */}
-                    <TableContainer component={Paper} sx={{ position: 'relative' }}>
-                        {isLoading && (
-                            <Box
-                                sx={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                    zIndex: 10,
-                                }}
-                            >
-                                <CircularProgress size={40} />
-                            </Box>
-                        )}
-                        <Table size="small">
-                            <TableHead sx={{ backgroundColor: '#063455' }}>
+                {/* Table */}
+                <TableContainer component={Paper} sx={{ position: 'relative' }}>
+                    {isLoading && (
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                zIndex: 10,
+                            }}
+                        >
+                            <CircularProgress size={40} />
+                        </Box>
+                    )}
+                    <Table size="small">
+                        <TableHead sx={{ backgroundColor: '#063455' }}>
+                            <TableRow>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order #</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership #</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Gross</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Disc</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Tax</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Payment Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Location</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {orders?.data?.length > 0 ? (
+                                orders.data.map((order) => {
+                                    const round0 = (n) => Math.round(Number(n) || 0);
+                                    const gross = round0(order.amount || 0);
+                                    const discount = round0(order.discount || 0);
+                                    const taxRate = Number(order.tax || 0);
+                                    const taxAmount = round0((gross - discount) * taxRate);
+                                    const total = round0(order.total_price || 0);
+                                    const paid = round0(order.paid_amount || 0);
+                                    const entAmount = round0(order.invoice_ent_amount || 0);
+                                    const ctsAmount = round0(order.invoice_cts_amount || 0);
+                                    const bankCharges = round0(order.invoice_bank_charges_amount || 0);
+                                    const balance = round0(total + bankCharges - paid - entAmount - ctsAmount);
+
+                                    // Determine Client Type
+                                    let clientType = 'Guest';
+                                    if (order.employee) clientType = 'Employee';
+                                    else if (order.member) {
+                                        clientType = order.member.member_type?.name === 'Corporate' ? 'Corporate' : 'Member';
+                                    } else if (order.customer && order.customer.guest_type) {
+                                        clientType = order.customer.guest_type.name || 'Guest';
+                                    }
+
+                                    // Determine ID
+                                    let clientId = '-';
+                                    if (order.member) clientId = order.member.membership_no;
+                                    else if (order.customer) clientId = order.customer.customer_no;
+                                    else if (order.employee) clientId = order.employee.employee_id;
+
+                                    return (
+                                        <TableRow key={order.id} hover>
+                                            <TableCell>#{order.id}</TableCell>
+                                            <TableCell>{new Date(order.start_date).toLocaleDateString()}</TableCell>
+                                            <TableCell>{clientId}</TableCell>
+                                            <TableCell>{getClientName(order)}</TableCell>
+                                            <TableCell>{clientType}</TableCell>
+                                            <TableCell>{formatOrderType(order.order_type)}</TableCell>
+                                            <TableCell>{order.table?.table_no || '-'}</TableCell>
+                                            <TableCell>{gross}</TableCell>
+                                            <TableCell>{discount}</TableCell>
+                                            <TableCell>{taxAmount}</TableCell>
+                                            <TableCell>{total}</TableCell>
+                                            <TableCell>{paid}</TableCell>
+                                            <TableCell sx={{ color: balance > 0 ? 'red' : 'green' }}>{balance}</TableCell>
+                                            <TableCell>{order.payment_method || '-'}</TableCell>
+                                            <TableCell>
+                                                <Chip label={formatOrderStatus(order.status)} size="small" color={getOrderStatusColor(order.status)} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
+                                            </TableCell>
+                                            <TableCell>
+                                                {order.invoice_ent_amount > 0 ? (
+                                                    <Tooltip title={order.invoice_ent_reason || 'ENT Applied'}>
+                                                        <Chip label={`Rs ${order.invoice_ent_amount}`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1565c0' }} />
+                                                    </Tooltip>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {order.invoice_cts_amount > 0 ? (
+                                                    <Tooltip title={order.invoice_cts_comment || 'CTS Applied'}>
+                                                        <Chip label={`Rs ${order.invoice_cts_amount}`} size="small" sx={{ bgcolor: '#fff3e0', color: '#ef6c00' }} />
+                                                    </Tooltip>
+                                                ) : (
+                                                    '-'
+                                                )}
+                                            </TableCell>
+                                            <TableCell>{order.cashier?.name || order.user?.name || '-'}</TableCell>
+                                            <TableCell>{order.tenant?.name || '-'}</TableCell>
+                                            <TableCell>
+                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                    <Tooltip title="View Details">
+                                                        <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
+                                                            <VisibilityIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Print Receipt">
+                                                        <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
+                                                            <PrintIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Box>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            ) : (
                                 <TableRow>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order</TableCell>
                                     <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>

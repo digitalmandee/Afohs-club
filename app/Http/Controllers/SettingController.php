@@ -11,19 +11,26 @@ class SettingController extends Controller
 {
     public function index()
     {
-        $setting = Setting::firstOrCreate([
-            'type' => 'tax',
-            'value' => 12
-        ]); // Default tax to 12 if no record exists
+        $tax = Setting::firstOrCreate(
+            ['type' => 'tax'],
+            ['value' => 12]
+        );
+        $bankCharges = Setting::firstOrCreate(
+            ['type' => 'bank_charges_percentage'],
+            ['value' => 0]
+        );
 
         return Inertia::render('App/Settings/EditTax', [
-            'taxx' => $setting->tax,
+            'taxx' => $tax->value,
+            'bank_charges_percentage' => $bankCharges->value,
         ]);
     }
+
     public function update(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'tax' => 'required|numeric|min:0|max:100',
+            'tax' => 'nullable|numeric|min:0|max:100',
+            'bank_charges_percentage' => 'nullable|numeric|min:0|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -32,19 +39,49 @@ class SettingController extends Controller
             ], 422);
         }
 
-        $setting = Setting::where('type', 'tax')->first();
-        $setting->value = $request->tax;
-        $setting->save();
+        if ($request->has('tax')) {
+            $setting = Setting::firstOrCreate(['type' => 'tax']);
+            $setting->value = $request->tax;
+            $setting->save();
+        }
+
+        if ($request->has('bank_charges_percentage')) {
+            $setting = Setting::firstOrCreate(['type' => 'bank_charges_percentage']);
+            $setting->value = $request->bank_charges_percentage;
+            $setting->save();
+        }
 
         return response()->json([
-            'message' => 'Tax updated successfully',
-            'tax' => $setting->tax,
+            'message' => 'Settings updated successfully',
         ], 200);
     }
+
     public function showTax()
     {
         $setting = Setting::where('type', 'tax')->first();
 
         return response()->json($setting);
+    }
+
+    public function getFinancialSettings()
+    {
+        $tax = Setting::where('type', 'tax')->value('value') ?? 12;
+
+        // Fetch billing settings group which contains bank charges
+        $billingSettings = Setting::where('type', 'billing')->value('value') ?? [];
+
+        $bankChargesType = $billingSettings['bank_charges_type'] ?? 'percentage';
+        $bankChargesValue = $billingSettings['bank_charges_value'] ?? 0;
+
+        // Fallback to legacy setting if group setting is missing (optional)
+        if (empty($billingSettings)) {
+            $bankChargesValue = Setting::where('type', 'bank_charges_percentage')->value('value') ?? 0;
+        }
+
+        return response()->json([
+            'tax' => $tax,
+            'bank_charges_type' => $bankChargesType,
+            'bank_charges_value' => $bankChargesValue,
+        ]);
     }
 }

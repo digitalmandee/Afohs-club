@@ -129,6 +129,15 @@ const Dashboard = ({ orders, filters, totals }) => {
                     price: item.order_item?.price || 0,
                     total_price: item.order_item?.total_price || (item.order_item?.quantity || 1) * (item.order_item?.price || 0),
                 })) || [],
+            data: {
+                bank_charges_enabled: order.id ? true : false, // Simplification, need actual data from pivot/invoice
+                // Since we don't have direct invoice data here on 'order' object easily without transformation in controller...
+                // Ideally, controller should have loaded 'invoice' relation.
+                // Assuming 'order' has 'invoice' loaded as per TransactionController::transactionHistory
+                bank_charges_amount: order.invoice?.data?.bank_charges_amount || 0,
+                bank_charges_type: order.invoice?.data?.bank_charges_type || 'percentage',
+                bank_charges_value: order.invoice?.data?.bank_charges_value || 0,
+            },
         };
     };
 
@@ -257,6 +266,17 @@ const Dashboard = ({ orders, filters, totals }) => {
               <div>Tax</div>
               <div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div>
             </div>
+
+            ${
+                order.invoice?.data?.bank_charges_amount > 0
+                    ? `
+                <div class="row">
+                  <div>Bank Charges (${order.invoice.data.bank_charges_type === 'percentage' ? order.invoice.data.bank_charges_value + '%' : 'Fixed'})</div>
+                  <div>Rs ${order.invoice.data.bank_charges_amount}</div>
+                </div>
+                `
+                    : ''
+            }
 
             <div class="divider"></div>
 
@@ -615,6 +635,18 @@ const Dashboard = ({ orders, filters, totals }) => {
                                             Rs. {selectedOrder.total_price?.toLocaleString()}
                                         </Typography>
                                     </Box>
+
+                                    {/* Bank Charges Detail in Modal */}
+                                    {selectedOrder.invoice?.data?.bank_charges_amount > 0 && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Bank Charges
+                                            </Typography>
+                                            <Typography variant="body1" color="error">
+                                                Rs. {selectedOrder.invoice.data.bank_charges_amount}
+                                            </Typography>
+                                        </Box>
+                                    )}
                                     {/* Additional Details for ENT/CTS in Modal */}
                                     {selectedOrder.ent_comment && (
                                         <Box sx={{ gridColumn: 'span 2' }}>

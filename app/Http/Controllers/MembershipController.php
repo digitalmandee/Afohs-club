@@ -560,6 +560,7 @@ class MembershipController extends Controller
                 'tax_amount' => 0,
                 'discount_amount' => 0,
                 'payment_method' => null,
+                'issue_date' => $this->formatDateForDatabase($request->membership_date), // Fix: Use membership date as invoice date
                 'status' => 'unpaid',
                 'remarks' => $request->membership_fee_additional_remarks,
                 'invoiceable_id' => $mainMember->id,
@@ -626,7 +627,6 @@ class MembershipController extends Controller
 
             // Dispatch Notification to Super Admins
             $superAdmins = User::role('super-admin')->get();
-            Log::info('Dispatching notification. Super Admins count: ' . $superAdmins->count());
 
             try {
                 \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
@@ -1007,7 +1007,7 @@ class MembershipController extends Controller
 
             // Dispatch Notification
             try {
-                $superAdmins = \App\Models\User::role('super-admin')->get();
+                $superAdmins = User::role('super-admin')->get();
                 \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
                     "Member Updated: {$member->full_name}",
                     "Profile details updated for Membership #{$member->membership_no}",
@@ -1245,7 +1245,7 @@ class MembershipController extends Controller
             // Dispatch Notification for saveProfessionInfo
             try {
                 // Ensure User and Notification facades are imported or fully qualified
-                $superAdmins = \App\Models\User::role('super-admin')->get();
+                $superAdmins = User::role('super-admin')->get();
                 \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
                     "Profession Updated: {$member->full_name}",
                     "Profession details updated for Membership #{$member->membership_no}",
@@ -1342,7 +1342,7 @@ class MembershipController extends Controller
 
             // Dispatch Notification
             try {
-                $superAdmins = \App\Models\User::role('super-admin')->get();
+                $superAdmins = User::role('super-admin')->get();
                 \Illuminate\Support\Facades\Notification::send($superAdmins, new \App\Notifications\ActivityNotification(
                     "Profession Updated: {$member->full_name}",
                     "Profession details updated for Membership #{$member->membership_no}",

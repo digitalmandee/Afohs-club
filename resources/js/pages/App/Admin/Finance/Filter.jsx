@@ -199,20 +199,19 @@ const TransactionFilter = ({ transactionTypes = [], users = [], subscriptionCate
                         </FormControl>
                     </Grid>
 
-                    {/* Membership No / Search */}
+                    {/* Membership # */}
                     <Grid item xs={12} md={3}>
                         <Autocomplete
                             freeSolo
                             disablePortal
                             options={membershipSuggestions}
                             getOptionLabel={(option) => {
-                                if (option.membership_no && option.membership_no !== 'N/A') return option.membership_no;
-                                if (option.customer_no) return option.customer_no;
-                                return option.value || option;
+                                if (typeof option === 'string') return option;
+                                return option.membership_no || option.customer_no || '';
                             }}
                             inputValue={membershipNo}
                             onInputChange={(event, newInputValue) => setMembershipNo(newInputValue)}
-                            renderInput={(params) => <TextField {...params} fullWidth size="small" label="Membership # / Name" placeholder="Search Name or No..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                            renderInput={(params) => <TextField {...params} fullWidth size="small" label="Membership #" placeholder="Search Membership No..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
                             renderOption={(props, option) => (
                                 <li {...props} key={option.id || option.label}>
                                     <Box sx={{ width: '100%' }}>
@@ -236,7 +235,51 @@ const TransactionFilter = ({ transactionTypes = [], users = [], subscriptionCate
                                             )}
                                         </Box>
                                         <Typography variant="caption" color="text.secondary">
-                                            {option.name || option.label}
+                                            {option.name || option.full_name}
+                                        </Typography>
+                                    </Box>
+                                </li>
+                            )}
+                        />
+                    </Grid>
+
+                    {/* Member Name */}
+                    <Grid item xs={12} md={3}>
+                        <Autocomplete
+                            freeSolo
+                            disablePortal
+                            options={suggestions}
+                            getOptionLabel={(option) => {
+                                if (typeof option === 'string') return option;
+                                return option.full_name || option.name || option.value || option.label || '';
+                            }}
+                            inputValue={searchTerm}
+                            onInputChange={(event, newValue) => setSearchTerm(newValue)}
+                            renderInput={(params) => <TextField {...params} fullWidth size="small" label="Member Name" placeholder="Search Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                            renderOption={(props, option) => (
+                                <li {...props} key={option.id || option.label}>
+                                    <Box sx={{ width: '100%' }}>
+                                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {option.full_name || option.name}
+                                            </Typography>
+                                            {option.status && (
+                                                <Chip
+                                                    label={option.status}
+                                                    size="small"
+                                                    sx={{
+                                                        height: '20px',
+                                                        fontSize: '10px',
+                                                        backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                        color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                        textTransform: 'capitalize',
+                                                        ml: 1,
+                                                    }}
+                                                />
+                                            )}
+                                        </Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            {option.membership_no || option.customer_no}
                                         </Typography>
                                     </Box>
                                 </li>

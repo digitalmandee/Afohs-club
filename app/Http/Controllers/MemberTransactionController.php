@@ -255,6 +255,7 @@ class MemberTransactionController extends Controller
                 'items.*.fee_type' => 'required|string',
                 'items.*.financial_charge_type_id' => 'nullable|integer|exists:financial_charge_types,id',
                 'items.*.amount' => 'required|numeric|min:0',
+                'items.*.extra_percentage' => 'nullable|numeric|min:0',
                 'payment_method' => 'required_if:action,save_receive|in:cash,cheque,online,credit_card,debit_card,bank_transfer',
             ];
 
@@ -465,12 +466,17 @@ class MemberTransactionController extends Controller
             foreach ($request->items as $itemData) {
                 $qty = $itemData['qty'] ?? 1;
                 $rate = $itemData['amount'];
-                $subTotal = $rate * $qty;
+                $baseSubTotal = $rate * $qty;
 
                 $taxPct = $itemData['tax_percentage'] ?? 0;
+                $discAmtInput = $itemData['discount_amount'] ?? 0;
+                $extraPct = $itemData['extra_percentage'] ?? 0;
+                $addChargesFixed = $itemData['additional_charges'] ?? 0;
+                $addChargesAmt = $extraPct > 0 ? round(($baseSubTotal * $extraPct) / 100, 0) : round($addChargesFixed, 0);
+                $subTotal = $baseSubTotal + $addChargesAmt;
                 $taxAmt = ($subTotal * $taxPct) / 100;
 
-                $discAmt = $itemData['discount_amount'] ?? 0;
+                $discAmt = $discAmtInput;
 
                 $lineTotal = $subTotal + $taxAmt - $discAmt;
 
@@ -493,7 +499,8 @@ class MemberTransactionController extends Controller
                     'description' => $itemData['description'] ?? ($transactionType ? $transactionType->name : ($itemData['fee_type_name'] ?? $itemData['fee_type'])),
                     'qty' => $qty,
                     'amount' => $rate,
-                    'additional_charges' => $itemData['additional_charges'] ?? 0,
+                    'additional_charges' => $addChargesAmt,
+                    'extra_percentage' => $extraPct,
                     'sub_total' => $subTotal,
                     'tax_percentage' => $taxPct,
                     'tax_amount' => $taxAmt,
@@ -503,7 +510,7 @@ class MemberTransactionController extends Controller
                     'discount_amount' => $discAmt,
                     'discount_details' => $itemData['discount_details'] ?? null,
                     'remarks' => $itemData['remarks'] ?? null,
-                    'total' => $lineTotal,
+                    'total' => round($lineTotal, 0),
                     'start_date' => $itemData['valid_from'] ?? null,
                     'end_date' => $itemData['valid_to'] ?? null,
                     // Linking

@@ -11,6 +11,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('financial_receipts', function (Blueprint $table) {
+            $table->unsignedBigInteger('created_by')->nullable();
             $table->string('employee_id')->nullable()->after('created_by')->comment('Legacy Employee ID (e.g. from finance_cash_receipts)');
             $table->string('guest_name')->nullable()->after('payer_id');
             $table->string('guest_contact')->nullable()->after('guest_name');

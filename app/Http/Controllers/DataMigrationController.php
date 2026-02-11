@@ -46,9 +46,9 @@ class DataMigrationController extends Controller
                 ];
             }
 
-            $oldMembersCount = DB::table('memberships')->count();
-            $oldFamiliesCount = DB::table('mem_families')->count();
-            $oldMediaCount = DB::table('old_media')->count();
+            $oldMembersCount = DB::table('old_afohs.memberships')->count();
+            $oldFamiliesCount = DB::table('old_afohs.mem_families')->count();
+            $oldMediaCount = DB::table('old_afohs.old_media')->count();
             // Employee Stats
             $oldEmployeesCount = DB::table('old_afohs.hr_employments')->count();
             $newEmployeesCount = \App\Models\Employee::whereNotNull('old_employee_id')->count();
@@ -149,8 +149,8 @@ class DataMigrationController extends Controller
     private function checkOldTablesExist()
     {
         try {
-            $tables = DB::select("SHOW TABLES LIKE 'memberships'");
-            $familyTables = DB::select("SHOW TABLES LIKE 'mem_families'");
+            $tables = DB::connection('old_afohs')->select("SHOW TABLES LIKE 'memberships'");
+            $familyTables = DB::connection('old_afohs')->select("SHOW TABLES LIKE 'mem_families'");
 
             // Check for finance_invoices table in old database connection if possible, or just assume it exists if others do
             // Better to check explicitly if we can
@@ -250,7 +250,7 @@ class DataMigrationController extends Controller
             // Construct full name if possible, otherwise just use applicant_name
             'full_name' => trim(preg_replace('/\s+/', ' ', ($oldMember->title ?? '') . ' ' . ($oldMember->first_name ?? '') . ' ' . ($oldMember->middle_name ?? '') . ' ' . ($oldMember->applicant_name ?? ''))),
             'member_category_id' => $memberCategoryId,
-            'member_type_id' => 13,  // Default to a specific type? Or should this be dynamic? Keeping 13 as per previous code.
+            'member_type_id' => 10,  // Default to a specific type? Or should this be dynamic? Keeping 13 as per previous code.
             'classification_id' => $oldMember->mem_classification_id ?? null,
             'card_status' => $this->mapCardStatus($oldMember->card_status ?? null),
             'guardian_name' => $oldMember->father_name ?? null,
@@ -524,7 +524,7 @@ class DataMigrationController extends Controller
 
         // Get status from mem_statuses table
         try {
-            $status = DB::table('mem_statuses')->where('id', $oldStatus)->first();
+            $status = DB::table('old_afohs.mem_statuses')->where('id', $oldStatus)->first();
 
             if ($status) {
                 // Map status name to new enum values
@@ -1078,7 +1078,7 @@ class DataMigrationController extends Controller
         try {
             DB::beginTransaction();
 
-            $oldFamilies = DB::table('corporate_mem_families')
+            $oldFamilies = DB::table('old_afohs.corporate_mem_families')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -1178,7 +1178,7 @@ class DataMigrationController extends Controller
             DB::beginTransaction();
 
             // Get batch of old media records
-            $oldMediaRecords = DB::table('old_media')
+            $oldMediaRecords = DB::table('old_afohs.old_media')
                 ->offset($offset)
                 ->limit($batchSize)
                 ->get();
@@ -1732,6 +1732,42 @@ class DataMigrationController extends Controller
                 }
             }
 
+            // 3. Data Migration: Move strings to Designations table
+            $employees = DB::table('employees')->select('id', 'designation')->whereNotNull('designation')->where('designation', '!=', '')->get();
+            $designationMap = [];
+
+            foreach ($employees as $employee) {
+                $designationName = trim($employee->designation);
+                if (empty($designationName))
+                    continue;
+
+                if (!isset($designationMap[$designationName])) {
+                    $id = null;
+                    $existing = DB::table('designations')->where('name', $designationName)->first();
+
+                    if ($existing) {
+                        $id = $existing->id;
+                    } else {
+                        try {
+                            $id = DB::table('designations')->insertGetId([
+                                'name' => $designationName,
+                                'status' => 'active',
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ]);
+                        } catch (\Exception $e) {
+                            // Fallback if concurrency or case sensitivity causes duplicate error
+                            $id = DB::table('designations')->where('name', $designationName)->value('id');
+                        }
+                    }
+                    $designationMap[$designationName] = $id;
+                }
+
+                DB::table('employees')->where('id', $employee->id)->update([
+                    'designation_id' => $designationMap[$designationName]
+                ]);
+            }
+
             DB::commit();
 
             return response()->json([
@@ -2271,8 +2307,21 @@ class DataMigrationController extends Controller
         }
     }
 
-    private function createInvoiceFromLegacy($first, $groupRows)
+    private function createInvoiceFromLegacy($first, $groupRows, $oldTransTypeId = null)
     {
+        static $transactionTypeIds = null;
+        static $subscriptionCategoryCache = [];
+        static $chargeTypeCache = [];
+
+        if ($transactionTypeIds === null) {
+            $transactionTypeIds = [
+                'membership_fee' => TransactionType::where('name', 'Membership Fee')->value('id') ?? 'membership_fee',
+                'maintenance_fee' => TransactionType::where('name', 'Monthly Maintenance Fee')->value('id') ?? 'maintenance_fee',
+                'subscription_fee' => TransactionType::where('name', 'Subscription Fee')->value('id') ?? 'subscription_fee',
+                'charges_fee' => TransactionType::where('name', 'Charges Fee')->value('id') ?? 'charges_fee',
+            ];
+        }
+
         // Resolve Payer
         $memberId = null;
         $corpId = null;
@@ -2317,34 +2366,33 @@ class DataMigrationController extends Controller
             $feeType = 'custom';
             $finChargeTypeId = null;
             $subTypeId = null;
+            $subCategoryId = null;
 
             if ($typeId == 3) {
-                // $generic = TransactionType::where('name', 'Membership Fee')->first();
-                // Optimization: Hardcode known IDs or use cache if possible, but for now stick to query or simple lookups
-                // To avoid 1000s of queries, we could look up once outside loop, but "typeId" varies.
-                // Re-using the logic:
-                $generic = TransactionType::where('name', 'Membership Fee')->first();
-                $feeType = $generic ? $generic->id : null;
+                $feeType = $transactionTypeIds['membership_fee'];
             } elseif ($typeId == 4) {
-                $generic = TransactionType::where('name', 'Monthly Maintenance Fee')->first();
-                $feeType = $generic ? $generic->id : null;
+                $feeType = $transactionTypeIds['maintenance_fee'];
             } else {
                 // Lookup Legacy Definition to decide strategy
                 $legacyDef = DB::connection('old_afohs')->table('trans_types')->where('id', $typeId)->first();
 
                 if ($legacyDef) {
                     if ($legacyDef->type == 3) {  // Subscription Strategy
-                        $generic = TransactionType::where('name', 'Subscription Fee')->first();
-                        $feeType = $generic ? $generic->id : null;
+                        $feeType = $transactionTypeIds['subscription_fee'];
 
-                        $subTypeModel = \App\Models\SubscriptionCategory::where('name', $legacyDef->name)->first();
+                        if (!array_key_exists($legacyDef->name, $subscriptionCategoryCache)) {
+                            $subscriptionCategoryCache[$legacyDef->name] = \App\Models\SubscriptionCategory::where('name', $legacyDef->name)->first();
+                        }
+                        $subTypeModel = $subscriptionCategoryCache[$legacyDef->name];
                         $subTypeId = $subTypeModel ? $subTypeModel->subscription_type_id : null;
                         $subCategoryId = $subTypeModel ? $subTypeModel->id : null;
                     } elseif ($legacyDef->type == 2) {  // Ad-hoc / Charges Strategy
-                        $generic = TransactionType::where('name', 'Charges Fee')->first();
-                        $feeType = $generic ? $generic->id : null;
+                        $feeType = $transactionTypeIds['charges_fee'];
 
-                        $ChargeTypeModel = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
+                        if (!array_key_exists($legacyDef->mod_id, $chargeTypeCache)) {
+                            $chargeTypeCache[$legacyDef->mod_id] = \App\Models\FinancialChargeType::where('id', $legacyDef->mod_id)->first();
+                        }
+                        $ChargeTypeModel = $chargeTypeCache[$legacyDef->mod_id];
                         $finChargeTypeId = $ChargeTypeModel ? $ChargeTypeModel->id : null;
                     } else {
                         // skip
@@ -2464,6 +2512,77 @@ class DataMigrationController extends Controller
         }
     }
 
+    private function migrateInvoiceTransactionsPreloaded($newInvoice, $newItem, $legacyRow, $creditsGrouped, array &$receiptByLegacyId, array $oldReceiptsById)
+    {
+        $payableType = $this->getPayableType($newInvoice);
+        $payableId = $this->getPayableId($newInvoice);
+
+        \App\Models\Transaction::create([
+            'amount' => $newItem->total,
+            'type' => 'debit',
+            'payable_type' => $payableType,
+            'payable_id' => $payableId,
+            'reference_type' => \App\Models\FinancialInvoiceItem::class,
+            'reference_id' => $newItem->id,
+            'invoice_id' => $newInvoice->id,
+            'date' => $newItem->start_date ?? $newInvoice->issue_date,
+            'created_at' => $newItem->created_at,
+            'updated_at' => $newItem->updated_at,
+            'created_by' => $newItem->created_by,
+            'updated_by' => $newItem->updated_by,
+        ]);
+
+        $legacyTrans = $creditsGrouped[$legacyRow->id][$legacyRow->charges_type] ?? [];
+
+        foreach ($legacyTrans as $t) {
+            if (empty($t->receipt_id)) {
+                continue;
+            }
+
+            $receipt = $receiptByLegacyId[$t->receipt_id] ?? null;
+            if (!$receipt && isset($oldReceiptsById[$t->receipt_id])) {
+                $receipt = $this->migrateSingleReceipt($oldReceiptsById[$t->receipt_id], $payableType, $payableId, false);
+                if ($receipt) {
+                    $receiptByLegacyId[$t->receipt_id] = $receipt;
+                }
+            }
+
+            $remarks = $t->remarks ?? 'Legacy Credit';
+            if ($receipt) {
+                $remarks .= " (Receipt #{$receipt->receipt_no})";
+            } elseif ($t->receipt_id) {
+                $remarks .= " (Legacy Receipt ID: {$t->receipt_id} - Not Found)";
+            }
+
+            \App\Models\Transaction::create([
+                'amount' => $t->trans_amount,
+                'type' => 'credit',
+                'payable_type' => $payableType,
+                'payable_id' => $payableId,
+                'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                'reference_id' => $newItem->id,
+                'invoice_id' => $newInvoice->id,
+                'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
+                'date' => $this->validateDate($t->date),
+                'remarks' => $remarks,
+                'created_at' => $this->validateDate($t->created_at),
+                'updated_at' => $this->validateDate($t->updated_at),
+                'created_by' => $t->created_by ?? null,
+                'updated_by' => $t->updated_by ?? null,
+            ]);
+
+            if ($receipt) {
+                \App\Models\TransactionRelation::updateOrCreate([
+                    'invoice_id' => $newInvoice->id,
+                    'receipt_id' => $receipt->id
+                ], [
+                    'amount' => $t->trans_amount,
+                    'legacy_transaction_id' => $t->id
+                ]);
+            }
+        }
+    }
+
     private function migrateRelatedReceipts($invoice)
     {
         // 1. Find relations in legacy DB using Invoice ID (we need the legacy ID)
@@ -2535,6 +2654,65 @@ class DataMigrationController extends Controller
         }
 
         // Update Status
+        if ($totalPaid >= $invoice->total_price) {
+            $invoice->update(['status' => 'paid']);
+        } elseif ($totalPaid > 0) {
+            $invoice->update(['status' => 'partial']);
+        }
+    }
+
+    private function migrateRelatedReceiptsPreloaded($invoice, $legacyInvoiceRow, $relations, array $legacyTransactionsById, array &$receiptByLegacyId, array $oldReceiptsById)
+    {
+        if ($relations instanceof \Illuminate\Support\Collection) {
+            $relationsIterable = $relations;
+        } else {
+            $relationsIterable = collect($relations);
+        }
+
+        if ($relationsIterable->isEmpty()) {
+            return;
+        }
+
+        $totalPaid = 0;
+
+        foreach ($relationsIterable as $rel) {
+            $legacyTransId = $rel->receipt ?? null;
+            if (!$legacyTransId || !isset($legacyTransactionsById[$legacyTransId])) {
+                continue;
+            }
+
+            $legacyTrans = $legacyTransactionsById[$legacyTransId];
+            $legacyReceiptId = $legacyTrans->receipt_id ?? null;
+            if (!$legacyReceiptId) {
+                continue;
+            }
+
+            $receipt = $receiptByLegacyId[$legacyReceiptId] ?? null;
+            if (!$receipt && isset($oldReceiptsById[$legacyReceiptId])) {
+                $receipt = $this->migrateSingleReceipt($oldReceiptsById[$legacyReceiptId]);
+                if ($receipt) {
+                    $receiptByLegacyId[$legacyReceiptId] = $receipt;
+                }
+            }
+
+            if (!$receipt) {
+                continue;
+            }
+
+            $creditTransId = $rel->account ?? null;
+            $creditTrans = $creditTransId && isset($legacyTransactionsById[$creditTransId]) ? $legacyTransactionsById[$creditTransId] : null;
+            $allocatedAmount = $creditTrans ? $creditTrans->trans_amount : $receipt->amount;
+
+            \App\Models\TransactionRelation::updateOrCreate([
+                'invoice_id' => $invoice->id,
+                'receipt_id' => $receipt->id
+            ], [
+                'amount' => $allocatedAmount,
+                'legacy_transaction_id' => $creditTransId
+            ]);
+            $totalPaid += $allocatedAmount;
+        }
+
         if ($totalPaid >= $invoice->total_price) {
             $invoice->update(['status' => 'paid']);
         } elseif ($totalPaid > 0) {
@@ -2781,11 +2959,11 @@ class DataMigrationController extends Controller
 
     public function migrateInvoicesGlobal(Request $request)
     {
-        $batchSize = $request->get('batch_size', 50);
+        set_time_limit(0);
+        $batchSize = (int) $request->get('batch_size', 50);
+        $batchSize = max(1, min($batchSize, 20));
 
         try {
-            DB::beginTransaction();
-
             // 1. Fetch Batch of Unmigrated Invoices
             // We use the "migrated" flag in the OLD database to track progress.
             // "migrated" = 0 or NULL means not yet migrated.
@@ -2805,12 +2983,13 @@ class DataMigrationController extends Controller
                 ->toArray();
 
             if (empty($invoiceNos)) {
-                DB::commit();
                 return response()->json([
                     'success' => true,
                     'migrated' => 0,
+                    'errors' => [],
                     'has_more' => false,
-                    'message' => 'No more unmigrated invoices found.'
+                    'remaining' => 0,
+                    'message' => 'No more unmigrated invoices found.',
                 ]);
             }
 
@@ -2826,12 +3005,7 @@ class DataMigrationController extends Controller
 
             foreach ($grouped as $invoiceNo => $groupRows) {
                 try {
-                    $first = $groupRows->first();
-                    $typeId = $first->charges_type;
-
-                    // Check if exists locally
                     if (FinancialInvoice::where('invoice_no', $invoiceNo)->exists()) {
-                        // Already exists, just mark as migrated in legacy to fix state
                         DB::connection('old_afohs')
                             ->table('finance_invoices')
                             ->where('invoice_no', $invoiceNo)
@@ -2839,37 +3013,119 @@ class DataMigrationController extends Controller
                         continue;
                     }
 
-                    // --- A. Migrate Invoice Header & Items ---
-                    // --- A. Migrate Invoice Header & Items ---
-                    $result = $this->createInvoiceFromLegacy($first, $groupRows);
-                    $invoice = $result['invoice'];
-                    $itemsMap = $result['items_map'];
+                    $legacyRowIds = $groupRows->pluck('id')->all();
+                    $legacyChargesTypes = $groupRows->pluck('charges_type')->unique()->filter(fn($v) => $v !== null)->values()->all();
 
-                    // --- B. Migrate Transactions Per Item ---
-                    foreach ($groupRows as $legacyRow) {
-                        if (isset($itemsMap[$legacyRow->id])) {
-                            $this->migrateInvoiceTransactions($invoice, $itemsMap[$legacyRow->id], $legacyRow);
+                    $legacyCredits = DB::connection('old_afohs')
+                        ->table('transactions')
+                        ->whereIn('trans_type_id', $legacyRowIds)
+                        ->when(!empty($legacyChargesTypes), function ($q) use ($legacyChargesTypes) {
+                            $q->whereIn('trans_type', $legacyChargesTypes);
+                        })
+                        ->where('debit_or_credit', '>', 0)
+                        ->whereNull('deleted_at')
+                        ->orderBy('id', 'asc')
+                        ->get();
+
+                    $creditsGrouped = [];
+                    $receiptIds = [];
+
+                    foreach ($legacyCredits as $t) {
+                        $creditsGrouped[$t->trans_type_id][$t->trans_type][] = $t;
+                        if (!empty($t->receipt_id)) {
+                            $receiptIds[$t->receipt_id] = true;
                         }
                     }
 
-                    // --- C. Related Receipts ---
-                    $this->migrateRelatedReceipts($invoice);
-                    $this->updateInvoiceStatus($invoice);
+                    $first = $groupRows->first();
 
-                    // --- D. Mark as Migrated in Legacy DB ---
+                    $invoiceTransIds = DB::connection('old_afohs')
+                        ->table('transactions')
+                        ->where('trans_type_id', $first->id)
+                        ->whereNull('deleted_at')
+                        ->pluck('id')
+                        ->all();
+
+                    $relations = collect();
+                    $legacyTransactionsById = [];
+
+                    if (!empty($invoiceTransIds)) {
+                        $relations = DB::connection('old_afohs')
+                            ->table('trans_relations')
+                            ->whereIn('invoice', $invoiceTransIds)
+                            ->get();
+
+                        $relationTransIds = [];
+                        foreach ($relations as $rel) {
+                            if (!empty($rel->receipt)) {
+                                $relationTransIds[$rel->receipt] = true;
+                            }
+                            if (!empty($rel->account)) {
+                                $relationTransIds[$rel->account] = true;
+                            }
+                        }
+
+                        if (!empty($relationTransIds)) {
+                            $legacyTransactionsById = DB::connection('old_afohs')
+                                ->table('transactions')
+                                ->whereIn('id', array_keys($relationTransIds))
+                                ->whereNull('deleted_at')
+                                ->get()
+                                ->keyBy('id')
+                                ->all();
+
+                            foreach ($legacyTransactionsById as $t) {
+                                if (!empty($t->receipt_id)) {
+                                    $receiptIds[$t->receipt_id] = true;
+                                }
+                            }
+                        }
+                    }
+
+                    $receiptIds = array_keys($receiptIds);
+
+                    $oldReceiptsById = [];
+                    if (!empty($receiptIds)) {
+                        $oldReceiptsById = DB::connection('old_afohs')
+                            ->table('finance_cash_receipts')
+                            ->whereIn('id', $receiptIds)
+                            ->whereNull('deleted_at')
+                            ->get()
+                            ->keyBy('id')
+                            ->all();
+                    }
+
+                    $receiptByLegacyId = [];
+                    if (!empty($receiptIds)) {
+                        $receiptByLegacyId = \App\Models\FinancialReceipt::whereIn('legacy_id', $receiptIds)->get()->keyBy('legacy_id')->all();
+                    }
+
+                    DB::transaction(function () use ($invoiceNo, $groupRows, $first, $creditsGrouped, $relations, $legacyTransactionsById, $oldReceiptsById, &$receiptByLegacyId) {
+                        $result = $this->createInvoiceFromLegacy($first, $groupRows);
+                        $invoice = $result['invoice'];
+                        $itemsMap = $result['items_map'];
+
+                        foreach ($groupRows as $legacyRow) {
+                            if (isset($itemsMap[$legacyRow->id])) {
+                                $this->migrateInvoiceTransactionsPreloaded($invoice, $itemsMap[$legacyRow->id], $legacyRow, $creditsGrouped, $receiptByLegacyId, $oldReceiptsById);
+                            }
+                        }
+
+                        $this->migrateRelatedReceiptsPreloaded($invoice, $first, $relations, $legacyTransactionsById, $receiptByLegacyId, $oldReceiptsById);
+                        $this->updateInvoiceStatus($invoice);
+                    });
+
                     DB::connection('old_afohs')
                         ->table('finance_invoices')
                         ->where('invoice_no', $invoiceNo)
                         ->update(['migrated' => 1]);
 
                     $migratedCount++;
-                } catch (\Exception $e) {
+                } catch (\Throwable $e) {
                     $errors[] = ['invoice_no' => $invoiceNo, 'error' => $e->getMessage()];
-                    Log::error("Global migration error for invoice $invoiceNo: " . $e->getMessage());
+                    Log::error("Global migration error for invoice {$invoiceNo}: " . $e->getMessage());
                 }
             }
-
-            DB::commit();
 
             // Check if there are more
             $remaining = DB::connection('old_afohs')
@@ -2890,9 +3146,14 @@ class DataMigrationController extends Controller
                 'has_more' => $remaining > 0,
                 'remaining' => $remaining
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'migrated' => 0,
+                'errors' => [['error' => $e->getMessage()]],
+                'has_more' => false,
+                'remaining' => null,
+            ]);
         }
     }
 

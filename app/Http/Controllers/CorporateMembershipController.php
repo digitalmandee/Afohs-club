@@ -195,6 +195,7 @@ class CorporateMembershipController extends Controller
                 'discount_details' => null,
                 'total_price' => 0,
                 'payment_method' => null,
+                'issue_date' => $this->formatDateForDatabase($request->membership_date),
                 'status' => 'unpaid',
                 'remarks' => $request->membership_fee_additional_remarks,
                 'invoiceable_id' => $mainMember->id,
@@ -233,6 +234,7 @@ class CorporateMembershipController extends Controller
             }
 
             // 3. Update Invoice Header with Totals
+            $grandTotal = $request->total_membership_fee + ($request->total_maintenance_fee ?? 0);
             $invoice->update([
                 'amount' => $request->membership_fee ?? 0,
                 'additional_charges' => $request->additional_membership_charges ?? 0,
@@ -240,13 +242,13 @@ class CorporateMembershipController extends Controller
                 'discount_value' => $request->membership_fee_discount ?? 0,
                 'discount_details' => $request->membership_fee_discount_remarks,
                 'discount_amount' => $request->membership_fee_discount ?? 0,
-                'total_price' => $request->total_membership_fee,
+                'total_price' => $grandTotal,
             ]);
 
             // 4. Create Ledger Entry (Debit)
             \App\Models\Transaction::create([
                 'type' => 'debit',
-                'amount' => $request->total_membership_fee,
+                'amount' => $grandTotal,
                 'date' => now(),
                 'description' => 'Corporate Membership Fee Invoice #' . $invoice->invoice_no,
                 'payable_type' => CorporateMember::class,

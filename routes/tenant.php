@@ -125,6 +125,7 @@ Route::group([
         Route::get('/setting', [SettingController::class, 'index'])->name('setting.index');
         Route::put('/setting', [SettingController::class, 'update'])->name('setting.update');
         Route::get('/setting/showTax', [SettingController::class, 'showTax'])->name('setting.showTax');
+        Route::get('/setting/financial', [SettingController::class, 'getFinancialSettings'])->name('setting.financial');
 
         // Inventory Category
         Route::get('/inventory/category', [CategoryController::class, 'index'])->name('inventory.category');

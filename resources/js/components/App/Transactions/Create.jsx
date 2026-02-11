@@ -79,10 +79,10 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
         items: [],
         // Invoice Header Details
         payment_frequency: 'monthly', // Can be specific to maintenance items, but kept for legacy compat if needed
-        payment_method: 'cash',
+        payment_method: null,
         amount: 0, // Total Amount
         remarks: '',
-        credit_card_type: '',
+        credit_card_type: null,
         receipt_file: null,
     });
 
@@ -1524,62 +1524,7 @@ export default function CreateTransaction({ subscriptionTypes = [], subscription
                                                         />
                                                     </Grid>
 
-                                                    {/* Payment Details Section */}
-                                                    <Grid item xs={12}>
-                                                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: '#063455', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                            <Payment fontSize="small" /> Payment Details
-                                                        </Typography>
-                                                        <Grid container spacing={2}>
-                                                            <Grid item xs={12} md={4}>
-                                                                <FormControl
-                                                                    fullWidth
-                                                                    size="small"
-                                                                    sx={{
-                                                                        '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
-                                                                            borderRadius: '16px !important',
-                                                                        },
-                                                                    }}
-                                                                >
-                                                                    <InputLabel>Payment Method</InputLabel>
-                                                                    <Select value={data.payment_method} label="Payment Method" onChange={(e) => setData('payment_method', e.target.value)}>
-                                                                        <MenuItem value="cash">Cash</MenuItem>
-                                                                        <MenuItem value="credit_card">Credit Card</MenuItem>
-                                                                        <MenuItem value="debit_card">Debit Card</MenuItem>
-                                                                        <MenuItem value="cheque">Cheque</MenuItem>
-                                                                        <MenuItem value="online">Online Transfer</MenuItem>
-                                                                    </Select>
-                                                                </FormControl>
-                                                            </Grid>
 
-                                                            {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card') && (
-                                                                <Grid item xs={12} md={4}>
-                                                                    <FormControl fullWidth size="small">
-                                                                        <InputLabel>Card Type</InputLabel>
-                                                                        <Select value={data.credit_card_type} label="Card Type" onChange={(e) => setData('credit_card_type', e.target.value)}>
-                                                                            <MenuItem value="visa">Visa</MenuItem>
-                                                                            <MenuItem value="mastercard">MasterCard</MenuItem>
-                                                                        </Select>
-                                                                    </FormControl>
-                                                                </Grid>
-                                                            )}
-
-                                                            {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card' || data.payment_method === 'cheque' || data.payment_method === 'online') && (
-                                                                <Grid item xs={12} md={4}>
-                                                                    <TextField fullWidth size="small" label={data.payment_method === 'cheque' ? 'Cheque No' : data.payment_method === 'online' ? 'Transaction ID/Ref' : 'Card No (Last 4) / Ref'} value={data.payment_mode_details || ''} onChange={(e) => setData('payment_mode_details', e.target.value)} />
-                                                                </Grid>
-                                                            )}
-
-                                                            {/* Receipt Upload - Optional */}
-                                                            {(data.payment_method === 'credit_card' || data.payment_method === 'debit_card' || data.payment_method === 'cheque' || data.payment_method === 'online') && (
-                                                                <Grid item xs={12} md={6}>
-                                                                    <Button variant="outlined" component="label" fullWidth sx={{ height: '40px', justifyContent: 'flex-start' }}>
-                                                                        {data.receipt_file ? `Selected: ${data.receipt_file.name}` : 'Upload Receipt (Optional)'}
-                                                                        <input type="file" hidden accept="image/*,.pdf" onChange={(e) => setData('receipt_file', e.target.files[0])} />
-                                                                    </Button>
-                                                                </Grid>
-                                                            )}
-                                                        </Grid>
-                                                    </Grid>
 
                                                     {/* Action Buttons */}
                                                     <Grid item xs={12}>
