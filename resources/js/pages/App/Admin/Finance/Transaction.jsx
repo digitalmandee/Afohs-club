@@ -407,7 +407,7 @@ const Transaction = ({ transactions, filters, users, transactionTypes, subscript
                                                 </TableCell>
 
                                                 {/* <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{formatPaymentMethod(transaction.payment_method)}</TableCell> */}
-                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(transaction.created_at)}</TableCell>
+                                                <TableCell sx={{ color: '#7F7F7F', fontSize: '14px', whiteSpace: 'nowrap' }}>{formatDate(transaction.issue_date)}</TableCell>
 
                                                 <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>
                                                     {(() => {
