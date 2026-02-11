@@ -218,12 +218,21 @@ class MemberFeeRevenueController extends Controller
     {
         $statusFilter = $request->input('status');
         $categoryFilter = $request->input('categories');
-        $dateFrom = $request->input('date_from');
-        $dateTo = $request->input('date_to');
+
+        $untilDateInput = $request->input('date');
+        $untilDate = $untilDateInput;
+        if ($untilDateInput && preg_match('/^\d{2}-\d{2}-\d{4}$/', $untilDateInput)) {
+             try {
+                $untilDate = \Carbon\Carbon::createFromFormat('d-m-Y', $untilDateInput)->format('Y-m-d');
+             } catch (\Exception $e) {}
+        }
+        $untilDate = $untilDate ?: now()->format('Y-m-d');
+
         $memberSearch = $request->input('member_search');
+        $memberId = $request->input('member_id');
         $cnicSearch = $request->input('cnic_search');
         $contactSearch = $request->input('contact_search');
-        $quartersFilter = $request->input('quarters_pending');  // New Filter
+        $quartersFilter = $request->input('quarters_pending');
 
         // Subquery to get the latest valid_to date for maintenance fees per member using Items
         $latestMaintenance = \App\Models\FinancialInvoiceItem::select(
@@ -261,7 +270,9 @@ class MemberFeeRevenueController extends Controller
         $nameSearch = $request->input('name_search');
         $noSearch = $request->input('membership_no_search');
 
-        if ($memberSearch) {
+        if ($memberId) {
+            $query->where('members.id', $memberId);
+        } elseif ($memberSearch) {
             $query->where(function ($q) use ($memberSearch) {
                 $q
                     ->where('full_name', 'like', "%{$memberSearch}%")
@@ -290,21 +301,19 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
-        // Apply Date Filters (Expiry/Valid Date)
-        if ($dateFrom) {
-            $query->whereDate('latest_maintenance.last_valid_date', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->whereDate('latest_maintenance.last_valid_date', '<=', $dateTo);
-        }
+        $query->where(function ($q) use ($untilDate) {
+            $q
+                ->whereNull('latest_maintenance.last_valid_date')
+                ->orWhereDate('latest_maintenance.last_valid_date', '<=', $untilDate);
+        });
 
         // Calculate Pending Months/Quarters in SQL for filtering and sorting
         // Logic: CEIL(TIMESTAMPDIFF(MONTH, start_date, NOW()) / 3)
         // start_date = COALESCE(last_valid_date, membership_date, created_at)
-        $currentDate = now()->format('Y-m-d');
+        $currentDate = \Carbon\Carbon::parse($untilDate)->format('Y-m-d');
         $query->selectRaw("
             CEIL( GREATEST(0, TIMESTAMPDIFF(MONTH,
-                COALESCE(latest_maintenance.last_valid_date, members.membership_date),
+                COALESCE(latest_maintenance.last_valid_date, members.membership_date, members.created_at),
                 '$currentDate'
             )) / 3 ) as pending_quarters_calc
         ");
@@ -315,10 +324,10 @@ class MemberFeeRevenueController extends Controller
 
         // Apply Quarters Filter
         if ($quartersFilter) {
-            $query->having('pending_quarters_calc', '=', $quartersFilter);
-            // Handle "More than 5" separately if needed, e.g. input '6+'
             if ($quartersFilter === '6+') {
                 $query->having('pending_quarters_calc', '>=', 6);
+            } else {
+                $query->having('pending_quarters_calc', '=', $quartersFilter);
             }
         }
 
@@ -365,7 +374,9 @@ class MemberFeeRevenueController extends Controller
                 'status' => $statusFilter,
                 'categories' => $categoryFilter,
                 'member_search' => $memberSearch,
+                'member_id' => $memberId,
                 'quarters_pending' => $quartersFilter,
+                'date' => $untilDate,
             ],
             'all_statuses' => Member::distinct()->pluck('status')->filter()->values(),
             'all_categories' => MemberCategory::select('id', 'name')->get(),
@@ -376,9 +387,18 @@ class MemberFeeRevenueController extends Controller
     {
         $statusFilter = $request->input('status');
         $categoryFilter = $request->input('categories');
-        $dateFrom = $request->input('date_from');
-        $dateTo = $request->input('date_to');
+
+        $untilDateInput = $request->input('date');
+        $untilDate = $untilDateInput;
+        if ($untilDateInput && preg_match('/^\d{2}-\d{2}-\d{4}$/', $untilDateInput)) {
+             try {
+                $untilDate = \Carbon\Carbon::createFromFormat('d-m-Y', $untilDateInput)->format('Y-m-d');
+             } catch (\Exception $e) {}
+        }
+        $untilDate = $untilDate ?: now()->format('Y-m-d');
+
         $memberSearch = $request->input('member_search');
+        $memberId = $request->input('member_id');
         $cnicSearch = $request->input('cnic_search');
         $contactSearch = $request->input('contact_search');
 
@@ -420,7 +440,9 @@ class MemberFeeRevenueController extends Controller
         $nameSearch = $request->input('name_search');
         $noSearch = $request->input('membership_no_search');
 
-        if ($memberSearch) {
+        if ($memberId) {
+            $query->where('members.id', $memberId);
+        } elseif ($memberSearch) {
             $query->where(function ($q) use ($memberSearch) {
                 $q
                     ->where('full_name', 'like', "%{$memberSearch}%")
@@ -449,37 +471,28 @@ class MemberFeeRevenueController extends Controller
             });
         }
 
-        // Apply Date Filters (Expiry/Valid Date)
-        if ($dateFrom) {
-            $query->whereDate('latest_maintenance.last_valid_date', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->whereDate('latest_maintenance.last_valid_date', '<=', $dateTo);
-        }
-
-        // Filter for PENDING members only
-        $query->where(function ($q) {
+        $query->where(function ($q) use ($untilDate) {
             $q
-                ->where('latest_maintenance.last_valid_date', '<', now())
-                ->orWhere(function ($sub) {
-                    $sub->whereNull('latest_maintenance.last_valid_date');
-                });
+                ->whereNull('latest_maintenance.last_valid_date')
+                ->orWhereDate('latest_maintenance.last_valid_date', '<', $untilDate);
         });
 
         // Get All Results (No pagination for print)
         $members = $query->get();
 
         // Transform
-        $members->transform(function ($member) {
+        $members->transform(function ($member) use ($untilDate) {
             $monthlyFee = $member->total_maintenance_fee > 0
                 ? $member->total_maintenance_fee
                 : ($member->memberCategory ? $member->memberCategory->subscription_fee : 0);
-            $currentDate = now();
+            $currentDate = \Carbon\Carbon::parse($untilDate);
 
             if ($member->last_valid_date) {
                 $startDate = \Carbon\Carbon::parse($member->last_valid_date);
             } else {
-                $startDate = $member->membership_date ? \Carbon\Carbon::parse($member->membership_date) : null;
+                $startDate = $member->membership_date
+                    ? \Carbon\Carbon::parse($member->membership_date)
+                    : \Carbon\Carbon::parse($member->created_at);
             }
 
             if ($startDate && $startDate->gt($currentDate)) {
@@ -535,9 +548,9 @@ class MemberFeeRevenueController extends Controller
             'filters' => [
                 'status' => $statusFilter ?? [],
                 'categories' => $categoryFilter ?? [],
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
+                'date' => $untilDate,
                 'member_search' => $memberSearch,
+                'member_id' => $memberId,
                 'cnic_search' => $cnicSearch,
                 'contact_search' => $contactSearch,
             ],

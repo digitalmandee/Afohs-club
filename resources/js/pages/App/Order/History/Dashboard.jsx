@@ -677,124 +677,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Client Type</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Order Type</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Gross</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Disc</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Tax</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Order Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Payment Status</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Location</TableCell>
-                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
+                                    <TableCell colSpan={21} sx={{ textAlign: 'center', py: 4 }}>
+                                        No orders found
+                                    </TableCell>
                                 </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {orders?.data?.length > 0 ? (
-                                    orders.data.map((order) => {
-                                        const gross = order.amount || 0;
-                                        const discount = order.discount || 0;
-                                        const taxRate = order.tax || 0;
-                                        const taxAmount = Math.round((gross - discount) * taxRate);
-                                        const total = order.total_price || 0;
-                                        const paid = order.paid_amount || 0;
-                                        const entAmount = parseFloat(order.invoice_ent_amount || 0);
-                                        const ctsAmount = parseFloat(order.invoice_cts_amount || 0);
-                                        const balance = total - paid - entAmount - ctsAmount;
-
-                                        // Determine Client Type
-                                        let clientType = 'Guest';
-                                        if (order.employee) clientType = 'Employee';
-                                        else if (order.member) {
-                                            clientType = order.member.member_type?.name === 'Corporate' ? 'Corporate' : 'Member';
-                                        } else if (order.customer && order.customer.guest_type) {
-                                            clientType = order.customer.guest_type.name || 'Guest';
-                                        }
-
-                                        // Determine ID
-                                        let clientId = '-';
-                                        if (order.member) clientId = order.member.membership_no;
-                                        else if (order.customer) clientId = order.customer.customer_no;
-                                        else if (order.employee) clientId = order.employee.employee_id;
-
-                                        return (
-                                            <TableRow key={order.id} hover>
-                                                <TableCell>#{order.id}</TableCell>
-                                                <TableCell>{new Date(order.start_date).toLocaleDateString()}</TableCell>
-                                                <TableCell>{clientId}</TableCell>
-                                                <TableCell>{getClientName(order)}</TableCell>
-                                                <TableCell>{clientType}</TableCell>
-                                                <TableCell>{formatOrderType(order.order_type)}</TableCell>
-                                                <TableCell>{order.table?.table_no || '-'}</TableCell>
-                                                <TableCell>{gross}</TableCell>
-                                                <TableCell>{discount}</TableCell>
-                                                <TableCell>{taxAmount}</TableCell>
-                                                <TableCell>{total}</TableCell>
-                                                <TableCell>{paid}</TableCell>
-                                                <TableCell sx={{ color: balance > 0 ? 'red' : 'green' }}>{balance}</TableCell>
-                                                <TableCell>{order.payment_method || '-'}</TableCell>
-                                                <TableCell>
-                                                    <Chip label={formatOrderStatus(order.status)} size="small" color={getOrderStatusColor(order.status)} />
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Chip label={order.payment_status || 'unpaid'} size="small" color={getStatusColor(order.payment_status)} />
-                                                </TableCell>
-                                                <TableCell>
-                                                    {order.invoice_ent_amount > 0 ? (
-                                                        <Tooltip title={order.invoice_ent_reason || 'ENT Applied'}>
-                                                            <Chip label={`Rs ${order.invoice_ent_amount}`} size="small" sx={{ bgcolor: '#e3f2fd', color: '#1565c0' }} />
-                                                        </Tooltip>
-                                                    ) : (
-                                                        '-'
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {order.invoice_cts_amount > 0 ? (
-                                                        <Tooltip title={order.invoice_cts_comment || 'CTS Applied'}>
-                                                            <Chip label={`Rs ${order.invoice_cts_amount}`} size="small" sx={{ bgcolor: '#fff3e0', color: '#ef6c00' }} />
-                                                        </Tooltip>
-                                                    ) : (
-                                                        '-'
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>{order.cashier?.name || order.user?.name || '-'}</TableCell>
-                                                <TableCell>{order.tenant?.name || '-'}</TableCell>
-                                                <TableCell>
-                                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                        <Tooltip title="View Details">
-                                                            <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
-                                                                <VisibilityIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Print Receipt">
-                                                            <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
-                                                                <PrintIcon fontSize="small" />
-                                                            </IconButton>
-                                                        </Tooltip>
-                                                    </Box>
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={15} align="center">
-                                            No orders found
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
+                            )}
+                        </TableBody>
                         </Table>
                     </TableContainer>
 

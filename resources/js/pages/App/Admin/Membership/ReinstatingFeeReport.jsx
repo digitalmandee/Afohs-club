@@ -22,7 +22,6 @@ const ReinstatingFeeReport = () => {
         city: filters?.city || '',
         payment_method: filters?.payment_method || '',
         categories: filters?.categories || [],
-        categories: filters?.categories || [],
         gender: filters?.gender || '',
         cashier: filters?.cashier || '',
     });
@@ -76,8 +75,6 @@ const ReinstatingFeeReport = () => {
             date_to: '',
             city: '',
             payment_method: '',
-            categories: [],
-            gender: '',
             categories: [],
             gender: '',
             cashier: '',

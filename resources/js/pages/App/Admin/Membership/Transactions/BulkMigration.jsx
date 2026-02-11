@@ -91,10 +91,6 @@ export default function BulkMigration() {
             const mostRecentTransaction = sortedTransactions[0];
             const mostRecentEnd = new Date(mostRecentTransaction.valid_to);
 
-            // Check if we've moved past the first year (December 31st of membership year)
-            const firstYearEnd = new Date(membershipYear, 11, 31); // Dec 31 of membership year
-            isFirstYear = mostRecentEnd <= firstYearEnd;
-
             latestEndDate = mostRecentEnd.toISOString().split('T')[0];
         }
 
