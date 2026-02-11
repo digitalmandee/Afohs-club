@@ -1,6 +1,7 @@
 import { Autocomplete, Box, Chip, CircularProgress, TextField, Typography } from '@mui/material';
 import axios from 'axios';
-import React, { useCallback, useState } from 'react';
+import debounce from 'lodash.debounce';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 /**
  * A reusable autocomplete component for searching Members, Guests, and Employees.
@@ -19,31 +20,78 @@ const UserAutocomplete = ({ memberType, value, onChange, label = 'Customer Name'
     const [open, setOpen] = useState(false);
     const [options, setOptions] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [inputValue, setInputValue] = useState('');
+    const activeRequestIdRef = useRef(0);
+    const abortControllerRef = useRef(null);
 
-    const handleSearch = useCallback(
-        async (event, query) => {
-            if (!query || query.trim() === '') {
+    const doSearch = useCallback(
+        async (query) => {
+            const trimmedQuery = (query || '').trim();
+            if (!trimmedQuery) {
                 setOptions([]);
+                setLoading(false);
                 return;
             }
+
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+            const controller = new AbortController();
+            abortControllerRef.current = controller;
+
+            const requestId = ++activeRequestIdRef.current;
             setLoading(true);
+
             try {
                 const response = await axios.get(routeUri || route('admin.api.search-users'), {
                     params: {
-                        q: query,
+                        q: trimmedQuery,
                         type: memberType,
                     },
+                    signal: controller.signal,
                 });
+                if (requestId !== activeRequestIdRef.current) return;
                 setOptions(response.data.results || []);
             } catch (err) {
+                if (requestId !== activeRequestIdRef.current) return;
+                if (err?.name === 'CanceledError' || err?.code === 'ERR_CANCELED') return;
                 console.error('Error fetching users:', err);
                 setOptions([]);
             } finally {
+                if (requestId !== activeRequestIdRef.current) return;
                 setLoading(false);
             }
         },
         [memberType, routeUri],
     );
+
+    const debouncedSearch = useMemo(() => debounce((query) => doSearch(query), 300), [doSearch]);
+
+    useEffect(() => {
+        return () => {
+            debouncedSearch.cancel();
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [debouncedSearch]);
+
+    useEffect(() => {
+        setOptions([]);
+        debouncedSearch.cancel();
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+        setLoading(false);
+    }, [memberType]);
+
+    useEffect(() => {
+        if (!value) {
+            setInputValue('');
+            return;
+        }
+        setInputValue(value.label || value.name || '');
+    }, [value?.id]);
 
     const getStatusChipStyles = (status) => {
         const s = (status || '').toLowerCase();
@@ -98,18 +146,35 @@ const UserAutocomplete = ({ memberType, value, onChange, label = 'Customer Name'
             open={open}
             onOpen={() => setOpen(true)}
             onClose={() => setOpen(false)}
+            openOnFocus
             isOptionEqualToValue={(option, val) => option.id === val?.id}
             getOptionLabel={(option) => option.label || option.name || ''}
             options={options}
+            filterOptions={(x) => x}
             loading={loading}
             value={value || null}
+            inputValue={inputValue}
             onInputChange={(event, newInputValue, reason) => {
+                setInputValue(newInputValue);
                 if (reason === 'input') {
-                    handleSearch(event, newInputValue);
+                    if (newInputValue && newInputValue.trim()) {
+                        setOpen(true);
+                    }
+                    debouncedSearch(newInputValue);
+                }
+                if (!newInputValue || !newInputValue.trim()) {
+                    debouncedSearch.cancel();
+                    if (abortControllerRef.current) {
+                        abortControllerRef.current.abort();
+                    }
+                    setLoading(false);
+                    setOptions([]);
                 }
             }}
             onChange={(event, newValue) => {
                 onChange(newValue);
+                setInputValue(newValue ? newValue.label || newValue.name || '' : '');
+                setOpen(false);
             }}
             renderInput={(params) => (
                 <TextField

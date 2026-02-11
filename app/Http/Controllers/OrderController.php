@@ -700,6 +700,11 @@ class OrderController extends Controller
             ->first();
     }
 
+    private function checkActiveShift(): bool
+    {
+        return (bool) $this->getActiveShift();
+    }
+
     public function sendToKitchen(Request $request)
     {
         // Enforce Active Shift (Global)
@@ -1345,6 +1350,122 @@ class OrderController extends Controller
         try {
             $order = Order::findOrFail($id);
 
+            $getItemId = function ($rawId) {
+                if (is_int($rawId) || (is_string($rawId) && ctype_digit($rawId))) {
+                    return (int) $rawId;
+                }
+                if (is_string($rawId) && str_starts_with($rawId, 'update-')) {
+                    $maybe = substr($rawId, 7);
+                    return ctype_digit($maybe) ? (int) $maybe : null;
+                }
+                return null;
+            };
+
+            $normalizeOrderItem = function ($orderItem) {
+                if (!is_array($orderItem)) {
+                    return [];
+                }
+
+                if (!isset($orderItem['product_id']) && isset($orderItem['id'])) {
+                    $orderItem['product_id'] = $orderItem['id'];
+                }
+                if (!isset($orderItem['id']) && isset($orderItem['product_id'])) {
+                    $orderItem['id'] = $orderItem['product_id'];
+                }
+
+                $qty = isset($orderItem['quantity']) ? (int) $orderItem['quantity'] : 1;
+                $orderItem['quantity'] = $qty > 0 ? $qty : 1;
+                $orderItem['price'] = isset($orderItem['price']) ? (float) $orderItem['price'] : 0.0;
+
+                $variants = isset($orderItem['variants']) && is_array($orderItem['variants']) ? $orderItem['variants'] : [];
+                $orderItem['variants'] = array_values(array_map(function ($v) {
+                    if (!is_array($v)) {
+                        return [];
+                    }
+                    if (isset($v['price'])) {
+                        $v['price'] = (float) $v['price'];
+                    }
+                    return $v;
+                }, $variants));
+
+                return $orderItem;
+            };
+
+            $itemKey = function ($orderItem) use ($normalizeOrderItem) {
+                $oi = $normalizeOrderItem($orderItem);
+                $productId = $oi['product_id'] ?? $oi['id'] ?? null;
+                $variants = isset($oi['variants']) && is_array($oi['variants']) ? $oi['variants'] : [];
+                $variantKeyParts = [];
+                foreach ($variants as $v) {
+                    $variantKeyParts[] = ($v['id'] ?? '') . ':' . ($v['value'] ?? '');
+                }
+                sort($variantKeyParts);
+                return (string) ($productId ?? '') . '|' . implode(',', $variantKeyParts);
+            };
+
+            $unitPrice = function ($orderItem) use ($normalizeOrderItem) {
+                $oi = $normalizeOrderItem($orderItem);
+                $base = (float) ($oi['price'] ?? 0);
+                $variants = isset($oi['variants']) && is_array($oi['variants']) ? $oi['variants'] : [];
+                $variantsSum = 0.0;
+                foreach ($variants as $v) {
+                    $variantsSum += isset($v['price']) ? (float) $v['price'] : 0.0;
+                }
+                return $base + $variantsSum;
+            };
+
+            $mergeIncoming = function (array $updated, array $new) use ($itemKey, $unitPrice, $normalizeOrderItem) {
+                $map = [];
+
+                foreach ($updated as $row) {
+                    if (!is_array($row) || !isset($row['order_item'])) {
+                        continue;
+                    }
+                    $row['order_item'] = $normalizeOrderItem($row['order_item']);
+                    $key = $itemKey($row['order_item']);
+                    if ($key === '|') {
+                        $key = uniqid('row_', true);
+                    }
+                    $map[$key] = $row;
+                }
+
+                foreach ($new as $row) {
+                    if (!is_array($row) || !isset($row['order_item'])) {
+                        continue;
+                    }
+                    $row['order_item'] = $normalizeOrderItem($row['order_item']);
+                    $key = $itemKey($row['order_item']);
+                    if ($key === '|') {
+                        $key = uniqid('row_', true);
+                    }
+
+                    if (!isset($map[$key])) {
+                        $map[$key] = $row;
+                        continue;
+                    }
+
+                    $existingQty = (int) ($map[$key]['order_item']['quantity'] ?? 1);
+                    $incomingQty = (int) ($row['order_item']['quantity'] ?? 1);
+                    $nextQty = $existingQty + ($incomingQty > 0 ? $incomingQty : 1);
+
+                    $map[$key]['order_item']['quantity'] = $nextQty;
+                    $map[$key]['order_item']['total_price'] = $unitPrice($map[$key]['order_item']) * $nextQty;
+                }
+
+                $mergedUpdated = [];
+                $mergedNew = [];
+                foreach ($map as $row) {
+                    $rawId = $row['id'] ?? null;
+                    if (is_string($rawId) && str_starts_with($rawId, 'update-')) {
+                        $mergedUpdated[] = $row;
+                    } else {
+                        $mergedNew[] = $row;
+                    }
+                }
+
+                return [$mergedUpdated, $mergedNew];
+            };
+
             // Update only price fields if both are present
             // Update order fields
             $updateData = [
@@ -1376,11 +1497,18 @@ class OrderController extends Controller
 
             $order->update($updateData);
 
+            [$mergedUpdatedItems, $mergedNewItems] = $mergeIncoming($validated['updated_items'] ?? [], $validated['new_items'] ?? []);
+
             // Update existing order items
-            foreach ($validated['updated_items'] ?? [] as $itemData) {
-                $itemId = (int) str_replace('update-', '', $itemData['id']);
+            foreach ($mergedUpdatedItems as $itemData) {
+                $itemId = $getItemId($itemData['id'] ?? null);
+                if (!$itemId) {
+                    continue;
+                }
+                $normalizedOrderItem = $normalizeOrderItem($itemData['order_item'] ?? []);
+                $normalizedOrderItem['total_price'] = $unitPrice($normalizedOrderItem) * (int) ($normalizedOrderItem['quantity'] ?? 1);
                 $order->orderItems()->where('id', $itemId)->update([
-                    'order_item' => $itemData['order_item'],
+                    'order_item' => $normalizedOrderItem,
                     'status' => $itemData['status'],
                     'remark' => $itemData['remark'] ?? null,
                     'instructions' => $itemData['instructions'] ?? null,
@@ -1389,14 +1517,57 @@ class OrderController extends Controller
             }
 
             // Add new order items
-            foreach ($validated['new_items'] ?? [] as $itemData) {
+            foreach ($mergedNewItems as $itemData) {
+                $normalizedOrderItem = $normalizeOrderItem($itemData['order_item'] ?? []);
+                $normalizedOrderItem['total_price'] = $unitPrice($normalizedOrderItem) * (int) ($normalizedOrderItem['quantity'] ?? 1);
                 $order->orderItems()->create([
-                    'tenant_id' => $itemData['order_item']['tenant_id'] ?? null,
-                    'order_item' => $itemData['order_item'],
+                    'tenant_id' => $normalizedOrderItem['tenant_id'] ?? null,
+                    'order_item' => $normalizedOrderItem,
                     'status' => $itemData['status'] ?? 'pending',
                     'remark' => $itemData['remark'] ?? null,
                     'instructions' => $itemData['instructions'] ?? null,
                     'cancelType' => $itemData['cancelType'] ?? null,
+                ]);
+            }
+
+            $freshItems = $order->orderItems()->where('status', '!=', 'cancelled')->get();
+            $taxRate = (float) ($order->tax ?? 0);
+            $subtotal = 0.0;
+            $totalTax = 0.0;
+            foreach ($freshItems as $row) {
+                $oi = is_array($row->order_item) ? $row->order_item : [];
+                $oi = $normalizeOrderItem($oi);
+                $qty = (int) ($oi['quantity'] ?? 1);
+                $lineTotal = $unitPrice($oi) * ($qty > 0 ? $qty : 1);
+                $lineDiscount = isset($oi['discount_amount']) ? (float) $oi['discount_amount'] : 0.0;
+                $net = $lineTotal - $lineDiscount;
+
+                $isTaxable = $oi['is_taxable'] ?? null;
+                if ($isTaxable === null) {
+                    $productId = $oi['product_id'] ?? null;
+                    if ($productId) {
+                        $product = Product::find($productId);
+                        $isTaxable = $product ? (bool) $product->is_taxable : false;
+                    } else {
+                        $isTaxable = false;
+                    }
+                } else {
+                    $isTaxable = $isTaxable === true || $isTaxable === 1 || $isTaxable === 'true';
+                }
+
+                $subtotal += $lineTotal;
+                $totalTax += $isTaxable ? ($net * $taxRate) : 0.0;
+            }
+
+            $orderDiscount = (float) ($order->discount ?? 0);
+            $computedAmount = (float) round($subtotal);
+            $computedTotal = (float) round($subtotal - $orderDiscount + $totalTax);
+
+            $shouldSyncTotals = !empty($mergedUpdatedItems) || !empty($mergedNewItems) || ($request->has('subtotal') || $request->has('total_price'));
+            if ($shouldSyncTotals) {
+                $order->update([
+                    'amount' => $computedAmount,
+                    'total_price' => $computedTotal,
                 ]);
             }
 
@@ -1570,16 +1741,11 @@ class OrderController extends Controller
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
-                } elseif (
-                    $request->has('subtotal') &&
-                    $request->has('total_price') &&
-                    $validated['subtotal'] !== null &&
-                    $validated['total_price'] !== null
-                ) {
+                } elseif ($shouldSyncTotals) {
                     // Otherwise update amounts if provided
                     $financialInvoice->update([
-                        'amount' => $validated['subtotal'],
-                        'total_price' => $validated['total_price'],
+                        'amount' => $computedAmount,
+                        'total_price' => $computedTotal,
                     ]);
 
                     // ✅ Sync Ledger (Debit) if unpaid
@@ -1590,7 +1756,7 @@ class OrderController extends Controller
 
                     if ($transaction) {
                         $transaction->update([
-                            'amount' => $validated['total_price'],
+                            'amount' => $computedTotal,
                             'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
                         ]);
                     }
@@ -1603,7 +1769,7 @@ class OrderController extends Controller
 
                     if ($transaction) {
                         $transaction->update([
-                            'amount' => $validated['total_price'],
+                            'amount' => $computedTotal,
                             'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
                         ]);
                     }

@@ -27,6 +27,13 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
         }));
     };
 
+    const getUnitPrice = (orderItem) => {
+        const base = parseFloat(orderItem?.price) || 0;
+        const variants = Array.isArray(orderItem?.variants) ? orderItem.variants : [];
+        const variantsSum = variants.reduce((sum, v) => sum + (parseFloat(v?.price) || 0), 0);
+        return base + variantsSum;
+    };
+
     const updateItem = (index, updates) => {
         setOrderItems((prev) =>
             prev.map((item, i) => {
@@ -63,15 +70,16 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     updatedId = `update-${item.id}`;
                 }
 
-                const price = parseFloat(item.order_item.price) || 0;
+                const unitPrice = getUnitPrice(item.order_item);
+                const safeQty = updatedQty > 0 ? updatedQty : 1;
 
                 return {
                     ...item,
                     id: updatedId,
                     order_item: {
                         ...item.order_item,
-                        quantity: updatedQty > 0 ? updatedQty : 1, // prevent quantity going below 1
-                        total_price: price * (updatedQty > 0 ? updatedQty : 1),
+                        quantity: safeQty,
+                        total_price: unitPrice * safeQty,
                     },
                 };
             }),
@@ -130,7 +138,8 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             // Partial Cancel -> Split
             // 1. Reduce quantity of original item
             const reducedQty = currentQty - safeCancelQty;
-            const reducedPrice = parseFloat(originalItem.order_item.price) * reducedQty;
+            const unitPrice = getUnitPrice(originalItem.order_item);
+            const reducedPrice = unitPrice * reducedQty;
 
             const updatedOriginal = {
                 ...originalItem,
@@ -143,7 +152,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             };
 
             // 2. Create NEW item for cancelled part
-            const cancelledPrice = parseFloat(originalItem.order_item.price) * safeCancelQty;
+            const cancelledPrice = unitPrice * safeCancelQty;
             const cancelledItem = {
                 ...originalItem,
                 id: 'new', // Treat as new item
@@ -171,16 +180,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     };
 
     const handleItemClick = async (item, index) => {
-        try {
-            setVariantProductId(item.order_item.id);
-            setVariantPopupOpen(true);
-            setInitialEditItem(item.order_item);
-            setEditingItemIndex(index);
-        } catch (error) {
-            console.error('Error loading product:', error);
-        } finally {
-            setVariantLoading(false);
-        }
+        setVariantProductId(item.order_item.id);
+        setVariantPopupOpen(true);
+        setInitialEditItem(item.order_item);
+        setEditingItemIndex(index);
     };
 
     const handleVariantConfirm = (updatedItem) => {
@@ -201,7 +204,6 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
 
     const resetVariantState = () => {
         setVariantPopupOpen(false);
-        setVariantProduct(null);
         setInitialEditItem(null);
         setEditingItemIndex(null);
     };
@@ -528,7 +530,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 overflow: 'auto',
                             }}
                         >
-                            <AddItems allrestaurants={allrestaurants} orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} />
+                            <AddItems allrestaurants={allrestaurants} orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} initialRestaurantId={order?.tenant_id} orderType={order?.order_type} />
                         </Box>
                     )}
                 </DialogContent>

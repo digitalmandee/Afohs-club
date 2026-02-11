@@ -196,6 +196,7 @@ class UserController extends Controller
     {
         $query = $request->input('q');
         $bookingType = $request->query('type') ?? '0';
+        $includeKinships = $request->boolean('include_kinships');
 
         // Prevent empty search from returning all results
         if (!$query || trim($query) === '') {
@@ -233,7 +234,7 @@ class UserController extends Controller
                 ];
             });
         } elseif ($bookingType === '0') {
-            $members = Member::select(
+            $selectColumns = [
                 'members.id',
                 'members.full_name',
                 'members.membership_no',
@@ -243,8 +244,12 @@ class UserController extends Controller
                 'members.mobile_number_a',
                 'members.status',
                 'member_categories.name as category_name',
-                DB::raw('(SELECT COUNT(*) FROM members AS fm WHERE fm.kinship = members.id) as total_kinships')
-            )
+            ];
+            if ($includeKinships) {
+                $selectColumns[] = DB::raw('(SELECT COUNT(*) FROM members AS fm WHERE fm.kinship = members.id) as total_kinships');
+            }
+
+            $members = Member::select($selectColumns)
                 ->leftJoin('member_categories', 'members.member_category_id', '=', 'member_categories.id')
                 ->whereNull('members.parent_id')
                 ->where(function ($q) use ($query) {
@@ -255,12 +260,11 @@ class UserController extends Controller
 
             $members = $members->limit(40)->get();
 
-            $results = $members->map(function ($user) {
-                return [
+            $results = $members->map(function ($user) use ($includeKinships) {
+                $payload = [
                     'id' => $user->id,
                     'booking_type' => 'member',
                     'name' => $user->full_name,
-                    'total_kinships' => $user->total_kinships,
                     'label' => "{$user->full_name} ({$user->membership_no})",
                     'membership_no' => $user->membership_no,
                     'email' => $user->personal_email,
@@ -269,9 +273,13 @@ class UserController extends Controller
                     'address' => $user->current_address,
                     'status' => $user->status ?? 'active',
                 ];
+                if ($includeKinships) {
+                    $payload['total_kinships'] = $user->total_kinships;
+                }
+                return $payload;
             });
         } elseif ($bookingType === '2') {
-            $members = \App\Models\CorporateMember::select(
+            $selectColumns = [
                 'corporate_members.id',
                 'corporate_members.full_name',
                 'corporate_members.membership_no',
@@ -281,8 +289,12 @@ class UserController extends Controller
                 'corporate_members.mobile_number_a',
                 'corporate_members.status',
                 'member_categories.name as category_name',
-                DB::raw('(SELECT COUNT(*) FROM corporate_members AS fm WHERE fm.kinship = corporate_members.id) as total_kinships')
-            )
+            ];
+            if ($includeKinships) {
+                $selectColumns[] = DB::raw('(SELECT COUNT(*) FROM corporate_members AS fm WHERE fm.kinship = corporate_members.id) as total_kinships');
+            }
+
+            $members = \App\Models\CorporateMember::select($selectColumns)
                 ->leftJoin('member_categories', 'corporate_members.member_category_id', '=', 'member_categories.id')
                 ->whereNull('corporate_members.parent_id')
                 ->where(function ($q) use ($query) {
@@ -293,13 +305,12 @@ class UserController extends Controller
 
             $members = $members->limit(40)->get();
 
-            $results = $members->map(function ($user) {
-                return [
+            $results = $members->map(function ($user) use ($includeKinships) {
+                $payload = [
                     'id' => $user->id,
                     'booking_type' => 'member',  // Use 'member' to keep frontend logic consistent if it relies on this
                     'is_corporate' => true,
                     'name' => $user->full_name,
-                    'total_kinships' => $user->total_kinships,
                     'label' => "{$user->full_name} ({$user->membership_no})",
                     'membership_no' => $user->membership_no,
                     'email' => $user->personal_email,
@@ -308,6 +319,10 @@ class UserController extends Controller
                     'address' => $user->current_address,
                     'status' => $user->status ?? 'active',
                 ];
+                if ($includeKinships) {
+                    $payload['total_kinships'] = $user->total_kinships;
+                }
+                return $payload;
             });
 
             // Case 2: bookingType = 1 => Search in customers

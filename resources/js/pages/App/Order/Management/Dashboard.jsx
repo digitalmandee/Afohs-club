@@ -25,6 +25,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
     const [openModal, setOpenModal] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [expandedOrders, setExpandedOrders] = useState({});
 
     // Search Order State
     const [searchId, setSearchId] = useState(filters.search_id || '');
@@ -682,7 +683,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
 
                                             {/* Order Items */}
                                             <List sx={{ py: 0 }}>
-                                                {card.order_items.slice(0, 4).map((item, index) => (
+                                                {(expandedOrders[card.id] ? card.order_items : card.order_items.slice(0, 4)).map((item, index) => (
                                                     <ListItem key={index} divider={index < card.order_items.length - 1} sx={{ py: 1, px: 2, textDecoration: item.status === 'cancelled' ? 'line-through' : 'none', opacity: item.status === 'cancelled' ? 0.6 : 1 }}>
                                                         <ListItemText
                                                             sx={{
@@ -723,9 +724,17 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
 
                                                 {/* Show More */}
                                                 {card.order_items.length > 4 && (
-                                                    <ListItem sx={{ py: 1.5, px: 2, color: '#1976d2', cursor: 'pointer' }}>
+                                                    <ListItem
+                                                        sx={{ py: 1.5, px: 2, color: '#1976d2', cursor: 'pointer' }}
+                                                        onClick={() => {
+                                                            setExpandedOrders((prev) => ({
+                                                                ...prev,
+                                                                [card.id]: !prev[card.id],
+                                                            }));
+                                                        }}
+                                                    >
                                                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                                            Show More ({card.order_items.length - 4})
+                                                            {expandedOrders[card.id] ? 'Show Less' : `Show More (${card.order_items.length - 4})`}
                                                         </Typography>
                                                     </ListItem>
                                                 )}
