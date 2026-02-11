@@ -184,40 +184,57 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                     marginTop: '5rem',
                 }}
             >
-                <div className="container-fluid bg-light py-4">
+                <div style={{
+                    backgroundColor:'#f5f5f5',
+                    height:'100vh',
+                    padding: '20px'
+                }}>
                     {/* Filter Section */}
-                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                        <Button
-                            variant="outlined"
-                            color="error"
-                            startIcon={<DeleteSweepIcon />}
-                            onClick={() => router.visit(route('inventory.trashed'))}
-                            sx={{
-                                borderRadius: '16px',
-                                px: 3,
-                                bgcolor: 'white',
-                                '&:hover': {
-                                    bgcolor: '#ffebee',
-                                },
-                            }}
-                        >
-                            Trash
-                        </Button>
-                        <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={() => router.visit(route('product.create'))}
-                            sx={{
-                                borderRadius: '16px',
-                                backgroundColor: '#003B5C',
-                                px: 3,
-                                '&:hover': {
-                                    backgroundColor: '#002A41',
-                                },
-                            }}
-                        >
-                            Add Product
-                        </Button>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems:'center' }}>
+                        <Typography sx={{
+                            fontWeight: '600',
+                            fontSize: '30px',
+                            color: '#063455'
+                        }}>
+                            Products/Menu
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap:2 }}>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => router.visit(route('product.create'))}
+                                sx={{
+                                    borderRadius: '16px',
+                                    backgroundColor: '#063455',
+                                    // px: 3,
+                                    textTransform: 'none',
+                                    height:35,
+                                    '&:hover': {
+                                        backgroundColor: '#063455',
+                                    },
+                                }}
+                            >
+                                Add Product
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                startIcon={<DeleteIcon />}
+                                onClick={() => router.visit(route('inventory.trashed'))}
+                                sx={{
+                                    borderRadius: '16px',
+                                    // px: 3,
+                                    textTransform: 'none',
+                                    height:35,
+                                    bgcolor: 'transparent',
+                                    '&:hover': {
+                                        bgcolor: '#ffebee',
+                                    },
+                                }}
+                            >
+                                Deleted
+                            </Button>
+                        </Box>
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                         <Box>
@@ -372,31 +389,31 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                                             {(product.variants || []).length > 0
                                                                 ? product.variants.map((variant, index) => {
-                                                                      return (
-                                                                          <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
-                                                                              <Typography variant="body2" color="text.secondary">
-                                                                                  {variant.name}
-                                                                              </Typography>
-                                                                              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                                                  {variant.values.map((value, valueIndex) => (
-                                                                                      <Button
-                                                                                          key={valueIndex}
-                                                                                          variant="outlined"
-                                                                                          size="small"
-                                                                                          sx={{
-                                                                                              minWidth: 'unset',
-                                                                                              px: 1.5,
-                                                                                              borderColor: '#e0e0e0',
-                                                                                              color: 'text.primary',
-                                                                                          }}
-                                                                                      >
-                                                                                          {value.name}
-                                                                                      </Button>
-                                                                                  ))}
-                                                                              </Box>
-                                                                          </Box>
-                                                                      );
-                                                                  })
+                                                                    return (
+                                                                        <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
+                                                                            <Typography variant="body2" color="text.secondary">
+                                                                                {variant.name}
+                                                                            </Typography>
+                                                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                                                {variant.values.map((value, valueIndex) => (
+                                                                                    <Button
+                                                                                        key={valueIndex}
+                                                                                        variant="outlined"
+                                                                                        size="small"
+                                                                                        sx={{
+                                                                                            minWidth: 'unset',
+                                                                                            px: 1.5,
+                                                                                            borderColor: '#e0e0e0',
+                                                                                            color: 'text.primary',
+                                                                                        }}
+                                                                                    >
+                                                                                        {value.name}
+                                                                                    </Button>
+                                                                                ))}
+                                                                            </Box>
+                                                                        </Box>
+                                                                    );
+                                                                })
                                                                 : '-----'}
 
                                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -679,12 +696,12 @@ export default function CoffeeShop({ productLists, categoriesList = [] }) {
                     <AddMenu
                         openMenu={openAddMenu}
                         onClose={handleAddMenuClose}
-                        // handleAddMenu={handleAddMenu}
-                        // selectedCategory={selectedCategory}
-                        // setSelectedCategory={setSelectedCategory}
-                        // newMenu={newMenu}
-                        // setNewMenu={setNewMenu}
-                        // addMenuStep={addMenuStep}
+                    // handleAddMenu={handleAddMenu}
+                    // selectedCategory={selectedCategory}
+                    // setSelectedCategory={setSelectedCategory}
+                    // newMenu={newMenu}
+                    // setNewMenu={setNewMenu}
+                    // addMenuStep={addMenuStep}
                     />
 
                     {/* Stock Modal */}

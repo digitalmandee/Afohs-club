@@ -199,15 +199,14 @@ const Dashboard = ({ orders, filters, totals }) => {
               <div>${order.cashier?.name || user?.name || 'N/A'}</div>
             </div>
 
-            ${
-                order.waiter
-                    ? `
+            ${order.waiter
+                ? `
             <div class="row">
               <div>Waiter</div>
               <div>${order.waiter.name}</div>
             </div>
             `
-                    : ''
+                : ''
             }
 
             <div class="divider"></div>
@@ -217,15 +216,14 @@ const Dashboard = ({ orders, filters, totals }) => {
               <div>${customerName}</div>
             </div>
 
-            ${
-                memberNo
-                    ? `
+            ${memberNo
+                ? `
             <div class="row">
               <div>Member Id</div>
               <div>${memberNo}</div>
             </div>
             `
-                    : ''
+                : ''
             }
 
             <div class="row">
@@ -233,15 +231,14 @@ const Dashboard = ({ orders, filters, totals }) => {
               <div>${formatOrderType(order.order_type)}</div>
             </div>
 
-            ${
-                order.table
-                    ? `
+            ${order.table
+                ? `
             <div class="row">
               <div>Table Number</div>
               <div>${order.table.table_no}</div>
             </div>
             `
-                    : ''
+                : ''
             }
 
             <div class="row">
@@ -293,15 +290,14 @@ const Dashboard = ({ orders, filters, totals }) => {
               <div>Rs ${order.paid_amount || 0}</div>
             </div>
 
-            ${
-                order.paid_amount > order.total_price
-                    ? `
+            ${order.paid_amount > order.total_price
+                ? `
             <div class="row">
               <div>Change</div>
               <div>Rs ${order.paid_amount - order.total_price}</div>
             </div>
             `
-                    : ''
+                : ''
             }
 
             <div class="footer">
@@ -330,258 +326,264 @@ const Dashboard = ({ orders, filters, totals }) => {
                     marginTop: '5rem',
                 }}
             >
-                <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: '#063455' }}>
-                    Transaction History
-                </Typography>
+                <Box sx={{
+                    height: '100vh',
+                    bgcolor: '#f5f5f5',
+                    p: 2
+                }}>
+                    <Typography sx={{ mb: 3, fontWeight: 600, fontSize: '30px', color: '#063455' }}>
+                        Transaction History
+                    </Typography>
 
-                {/* Summary Cards */}
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                    <Grid item xs={12} md={4}>
-                        <Card sx={{ backgroundColor: '#063455', color: '#fff' }}>
-                            <CardContent>
-                                <Typography variant="body2">Total Transactions</Typography>
-                                <Typography variant="h4">{totals?.count || 0}</Typography>
-                            </CardContent>
-                        </Card>
+                    {/* Summary Cards */}
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                        <Grid item xs={12} md={4}>
+                            <Card sx={{ backgroundColor: '#063455', color: '#fff' }}>
+                                <CardContent>
+                                    <Typography variant="body2">Total Transactions</Typography>
+                                    <Typography variant="h4">{totals?.count || 0}</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Card sx={{ backgroundColor: '#063455', color: '#fff' }}>
+                                <CardContent>
+                                    <Typography variant="body2">Total Amount</Typography>
+                                    <Typography variant="h4">Rs. {(totals?.total_amount || 0).toLocaleString()}</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                            <Card sx={{ backgroundColor: '#063455', color: '#fff' }}>
+                                <CardContent>
+                                    <Typography variant="body2">Total Paid</Typography>
+                                    <Typography variant="h4">Rs. {(totals?.total_paid || 0).toLocaleString()}</Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Card sx={{ backgroundColor: '#1976d2', color: '#fff' }}>
-                            <CardContent>
-                                <Typography variant="body2">Total Amount</Typography>
-                                <Typography variant="h4">Rs. {(totals?.total_amount || 0).toLocaleString()}</Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                        <Card sx={{ backgroundColor: '#2e7d32', color: '#fff' }}>
-                            <CardContent>
-                                <Typography variant="body2">Total Paid</Typography>
-                                <Typography variant="h4">Rs. {(totals?.total_paid || 0).toLocaleString()}</Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
 
-                {/* Filters */}
-                <Paper sx={{ p: 2, mb: 3 }}>
-                    <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <TextField
-                            size="small"
-                            label="Order ID"
-                            value={searchId}
-                            onChange={(e) => {
-                                setSearchId(e.target.value);
-                                applyFilters();
-                            }}
-                            sx={{ width: 120 }}
-                            InputProps={{
-                                startAdornment: (
-                                    <InputAdornment position="start">
-                                        <SearchIcon />
-                                    </InputAdornment>
-                                ),
-                            }}
-                        />
-                        <TextField
-                            size="small"
-                            label="Client Name"
-                            value={searchName}
-                            onChange={(e) => {
-                                setSearchName(e.target.value);
-                                applyFilters();
-                            }}
-                            sx={{ width: 200 }}
-                        />
-                        <TextField
-                            size="small"
-                            type="date"
-                            label="Start Date"
-                            value={startDate}
-                            onChange={(e) => {
-                                setStartDate(e.target.value);
-                                applyFilters();
-                            }}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ width: 160 }}
-                        />
-                        <TextField
-                            size="small"
-                            type="date"
-                            label="End Date"
-                            value={endDate}
-                            onChange={(e) => {
-                                setEndDate(e.target.value);
-                                applyFilters();
-                            }}
-                            InputLabelProps={{ shrink: true }}
-                            sx={{ width: 160 }}
-                        />
-                        <FormControl size="small" sx={{ width: 140 }}>
-                            <InputLabel>Order Type</InputLabel>
-                            <Select
-                                value={orderType}
-                                label="Order Type"
+                    {/* Filters */}
+                    <Paper sx={{ p: 2, mb: 3 }}>
+                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <TextField
+                                size="small"
+                                label="Order ID"
+                                value={searchId}
                                 onChange={(e) => {
-                                    setOrderType(e.target.value);
+                                    setSearchId(e.target.value);
                                     applyFilters();
                                 }}
-                            >
-                                <MenuItem value="all">All</MenuItem>
-                                <MenuItem value="dineIn">Dine-In</MenuItem>
-                                <MenuItem value="delivery">Delivery</MenuItem>
-                                <MenuItem value="takeaway">Takeaway</MenuItem>
-                                <MenuItem value="reservation">Reservation</MenuItem>
-                                <MenuItem value="room_service">Room Service</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <FormControl size="small" sx={{ width: 140 }}>
-                            <InputLabel>Payment</InputLabel>
-                            <Select
-                                value={paymentMethod}
-                                label="Payment"
+                                sx={{ width: 120 }}
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            />
+                            <TextField
+                                size="small"
+                                label="Client Name"
+                                value={searchName}
                                 onChange={(e) => {
-                                    setPaymentMethod(e.target.value);
+                                    setSearchName(e.target.value);
                                     applyFilters();
                                 }}
-                            >
-                                <MenuItem value="all">All</MenuItem>
-                                <MenuItem value="cash">Cash</MenuItem>
-                                <MenuItem value="card">Card</MenuItem>
-                                <MenuItem value="online">Online</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Box>
-                </Paper>
+                                sx={{ width: 200 }}
+                            />
+                            <TextField
+                                size="small"
+                                type="date"
+                                label="Start Date"
+                                value={startDate}
+                                onChange={(e) => {
+                                    setStartDate(e.target.value);
+                                    applyFilters();
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{ width: 160 }}
+                            />
+                            <TextField
+                                size="small"
+                                type="date"
+                                label="End Date"
+                                value={endDate}
+                                onChange={(e) => {
+                                    setEndDate(e.target.value);
+                                    applyFilters();
+                                }}
+                                InputLabelProps={{ shrink: true }}
+                                sx={{ width: 160 }}
+                            />
+                            <FormControl size="small" sx={{ width: 140 }}>
+                                <InputLabel>Order Type</InputLabel>
+                                <Select
+                                    value={orderType}
+                                    label="Order Type"
+                                    onChange={(e) => {
+                                        setOrderType(e.target.value);
+                                        applyFilters();
+                                    }}
+                                >
+                                    <MenuItem value="all">All</MenuItem>
+                                    <MenuItem value="dineIn">Dine-In</MenuItem>
+                                    <MenuItem value="delivery">Delivery</MenuItem>
+                                    <MenuItem value="takeaway">Takeaway</MenuItem>
+                                    <MenuItem value="reservation">Reservation</MenuItem>
+                                    <MenuItem value="room_service">Room Service</MenuItem>
+                                </Select>
+                            </FormControl>
+                            <FormControl size="small" sx={{ width: 140 }}>
+                                <InputLabel>Payment</InputLabel>
+                                <Select
+                                    value={paymentMethod}
+                                    label="Payment"
+                                    onChange={(e) => {
+                                        setPaymentMethod(e.target.value);
+                                        applyFilters();
+                                    }}
+                                >
+                                    <MenuItem value="all">All</MenuItem>
+                                    <MenuItem value="cash">Cash</MenuItem>
+                                    <MenuItem value="card">Card</MenuItem>
+                                    <MenuItem value="online">Online</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Box>
+                    </Paper>
 
-                {/* Table */}
-                <TableContainer component={Paper} sx={{ position: 'relative' }}>
-                    {/* Loading Overlay */}
-                    {isLoading && (
-                        <Box
-                            sx={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                zIndex: 10,
-                            }}
-                        >
-                            <CircularProgress size={40} />
+                    {/* Table */}
+                    <TableContainer component={Paper} sx={{ position: 'relative' }}>
+                        {/* Loading Overlay */}
+                        {isLoading && (
+                            <Box
+                                sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                                    zIndex: 10,
+                                }}
+                            >
+                                <CircularProgress size={40} />
+                            </Box>
+                        )}
+                        <Table>
+                            <TableHead sx={{ backgroundColor: '#063455' }}>
+                                <TableRow>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order #</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid At</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell> {/* Renamed from Method/etc or added */}
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
+                                    <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {orders?.data?.length > 0 ? (
+                                    orders.data.map((order) => {
+                                        // Parse ENT/CTS from comments - this is a bit hacky if not in separate columns,
+                                        // but we just added them to DB. Let's assume they might be in comments OR new columns if we reload.
+                                        // Ideally, the backend should return these values.
+                                        // For now, let's extract value from comment string if columns are null (backward comp)
+                                        // OR better, we know we added columns ent_reason, ent_comment etc.
+                                        // Use regex to extract value from brackets [ENT... Value: 100] if needed or use logic similar to controller.
+
+                                        // Actually, we should calculate balance: Total - Paid - ENT_Value - CTS_Value
+                                        // We need to parse the value from the new comment format IF the new columns aren't populous or if we just want to display what was saved.
+                                        // The controller logic: "[ENT Items: ... - Value: 123.00]"
+
+                                        const getEntValue = (o) => {
+                                            if (o.ent_comment) {
+                                                const match = o.ent_comment.match(/Value:\s*([\d,]+\.?\d*)/);
+                                                return match ? parseFloat(match[1].replace(/,/g, '')) : 0;
+                                            }
+                                            return 0;
+                                        };
+                                        const getCtsValue = (o) => {
+                                            if (o.cts_comment) {
+                                                const match = o.cts_comment.match(/Partial CTS Amount:\s*([\d,]+\.?\d*)/);
+                                                // If full CTS, comment is just comment, amount is total - paid (usually 0 if full cts)
+                                                // But wait, if full CTS, paid_amount is 0?
+                                                // Let's rely on the fact that Balance = Total - Paid - ENT - CTS.
+                                                // If balance is 0, then we are good.
+                                                // Let's just try to parse what we can.
+                                                if (match) return parseFloat(match[1].replace(/,/g, ''));
+                                                // If method is CTS and no partial amount, maybe full amount?
+                                                // best to leave 0 if not explicit.
+                                                return 0;
+                                            }
+                                            return 0;
+                                        };
+
+                                        const entVal = getEntValue(order);
+                                        const ctsVal = getCtsValue(order);
+                                        // Balance = Total - Paid - ENT - CTS
+                                        const balance = (order.total_price || 0) - (order.paid_amount || 0) - entVal - ctsVal;
+
+                                        return (
+                                            <TableRow key={order.id} hover>
+                                                <TableCell>#{order.id}</TableCell>
+                                                <TableCell>{order.paid_at ? new Date(order.paid_at).toLocaleString() : '-'}</TableCell>
+                                                <TableCell>{formatOrderType(order.order_type)}</TableCell>
+                                                <TableCell>{getClientName(order)}</TableCell>
+                                                <TableCell>{order.table?.table_no || '-'}</TableCell>
+                                                <TableCell>Rs. {order.total_price?.toLocaleString()}</TableCell>
+                                                <TableCell>Rs. {order.paid_amount?.toLocaleString()}</TableCell>
+                                                <TableCell sx={{ color: balance > 5 ? 'error.main' : 'success.main', fontWeight: 'bold' }}>Rs. {Math.max(0, balance).toLocaleString()}</TableCell>
+                                                <TableCell>
+                                                    <Chip label={formatPaymentMethod(order.payment_method)} size="small" color="primary" variant="outlined" />
+                                                </TableCell>
+                                                <TableCell>{entVal > 0 ? `Rs. ${entVal.toLocaleString()}` : '-'}</TableCell>
+                                                <TableCell>{ctsVal > 0 ? `Rs. ${ctsVal.toLocaleString()}` : '-'}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                        <Tooltip title="View Details">
+                                                            <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
+                                                                <VisibilityIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Print Receipt">
+                                                            <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
+                                                                <PrintIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={12} align="center">
+                                            No transactions found
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                    {/* Pagination */}
+                    {orders?.last_page > 1 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                            <Pagination count={orders.last_page} page={orders.current_page} onChange={handlePageChange} color="primary" />
                         </Box>
                     )}
-                    <Table>
-                        <TableHead sx={{ backgroundColor: '#063455' }}>
-                            <TableRow>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order #</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid At</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Total</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell> {/* Renamed from Method/etc or added */}
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {orders?.data?.length > 0 ? (
-                                orders.data.map((order) => {
-                                    // Parse ENT/CTS from comments - this is a bit hacky if not in separate columns,
-                                    // but we just added them to DB. Let's assume they might be in comments OR new columns if we reload.
-                                    // Ideally, the backend should return these values.
-                                    // For now, let's extract value from comment string if columns are null (backward comp)
-                                    // OR better, we know we added columns ent_reason, ent_comment etc.
-                                    // Use regex to extract value from brackets [ENT... Value: 100] if needed or use logic similar to controller.
-
-                                    // Actually, we should calculate balance: Total - Paid - ENT_Value - CTS_Value
-                                    // We need to parse the value from the new comment format IF the new columns aren't populous or if we just want to display what was saved.
-                                    // The controller logic: "[ENT Items: ... - Value: 123.00]"
-
-                                    const getEntValue = (o) => {
-                                        if (o.ent_comment) {
-                                            const match = o.ent_comment.match(/Value:\s*([\d,]+\.?\d*)/);
-                                            return match ? parseFloat(match[1].replace(/,/g, '')) : 0;
-                                        }
-                                        return 0;
-                                    };
-                                    const getCtsValue = (o) => {
-                                        if (o.cts_comment) {
-                                            const match = o.cts_comment.match(/Partial CTS Amount:\s*([\d,]+\.?\d*)/);
-                                            // If full CTS, comment is just comment, amount is total - paid (usually 0 if full cts)
-                                            // But wait, if full CTS, paid_amount is 0?
-                                            // Let's rely on the fact that Balance = Total - Paid - ENT - CTS.
-                                            // If balance is 0, then we are good.
-                                            // Let's just try to parse what we can.
-                                            if (match) return parseFloat(match[1].replace(/,/g, ''));
-                                            // If method is CTS and no partial amount, maybe full amount?
-                                            // best to leave 0 if not explicit.
-                                            return 0;
-                                        }
-                                        return 0;
-                                    };
-
-                                    const entVal = getEntValue(order);
-                                    const ctsVal = getCtsValue(order);
-                                    // Balance = Total - Paid - ENT - CTS
-                                    const balance = (order.total_price || 0) - (order.paid_amount || 0) - entVal - ctsVal;
-
-                                    return (
-                                        <TableRow key={order.id} hover>
-                                            <TableCell>#{order.id}</TableCell>
-                                            <TableCell>{order.paid_at ? new Date(order.paid_at).toLocaleString() : '-'}</TableCell>
-                                            <TableCell>{formatOrderType(order.order_type)}</TableCell>
-                                            <TableCell>{getClientName(order)}</TableCell>
-                                            <TableCell>{order.table?.table_no || '-'}</TableCell>
-                                            <TableCell>Rs. {order.total_price?.toLocaleString()}</TableCell>
-                                            <TableCell>Rs. {order.paid_amount?.toLocaleString()}</TableCell>
-                                            <TableCell sx={{ color: balance > 5 ? 'error.main' : 'success.main', fontWeight: 'bold' }}>Rs. {Math.max(0, balance).toLocaleString()}</TableCell>
-                                            <TableCell>
-                                                <Chip label={formatPaymentMethod(order.payment_method)} size="small" color="primary" variant="outlined" />
-                                            </TableCell>
-                                            <TableCell>{entVal > 0 ? `Rs. ${entVal.toLocaleString()}` : '-'}</TableCell>
-                                            <TableCell>{ctsVal > 0 ? `Rs. ${ctsVal.toLocaleString()}` : '-'}</TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                    <Tooltip title="View Details">
-                                                        <IconButton size="small" onClick={() => handleViewOrder(order)} sx={{ color: '#1976d2' }}>
-                                                            <VisibilityIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Print Receipt">
-                                                        <IconButton size="small" onClick={() => handlePrintReceipt(order)} sx={{ color: '#063455' }}>
-                                                            <PrintIcon fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={12} align="center">
-                                        No transactions found
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-
-                {/* Pagination */}
-                {orders?.last_page > 1 && (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                        <Pagination count={orders.last_page} page={orders.current_page} onChange={handlePageChange} color="primary" />
-                    </Box>
-                )}
+                </Box>
             </Box>
 
             {/* View Order Modal */}

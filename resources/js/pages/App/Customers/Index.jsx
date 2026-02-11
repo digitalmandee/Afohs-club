@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Typography, IconButton, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Delete as DeleteIcon, Add } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
@@ -62,11 +62,17 @@ const ManageCustomer = ({ customerData }) => {
             >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Typography variant="h5" sx={{ fontWeight: 500, color: '#333' }}>
+                        <Typography sx={{ fontWeight: '600', color: '#063455', fontSize:'30px' }}>
                             Customers
                         </Typography>
                     </Box>
-                    <Button variant="contained" sx={{ backgroundColor: '#063455', textTransform: 'none' }} onClick={() => router.visit(route('customers.create'))}>
+                    <Button 
+                    variant="contained" 
+                    startIcon={<Add/>}
+                    sx={{ backgroundColor: '#063455', 
+                    borderRadius:'16px',
+                    height:35,
+                    textTransform: 'none' }} onClick={() => router.visit(route('customers.create'))}>
                         Add Customer
                     </Button>
                 </Box>
@@ -74,12 +80,12 @@ const ManageCustomer = ({ customerData }) => {
                 <TableContainer component={Paper} style={{ boxShadow: 'none' }}>
                     <Table>
                         <TableHead>
-                            <TableRow style={{ backgroundColor: '#E5E5EA', height: '60px' }}>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>#</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Customer No</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Email</TableCell>
-                                <TableCell sx={{ color: '#000000', fontSize: '18px', fontWeight: 500 }}>Action</TableCell>
+                            <TableRow style={{ backgroundColor: '#063455', }}>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ID</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Customer No</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Email</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Action</TableCell>
                             </TableRow>
                         </TableHead>
 
@@ -95,7 +101,7 @@ const ManageCustomer = ({ customerData }) => {
                                             <IconButton onClick={() => router.visit(route('customers.edit', customer.id))} size="small" title="Edit">
                                                 <EditIcon fontSize="small" />
                                             </IconButton>
-                                            <IconButton onClick={() => confirmDelete(customer)} size="small" title="Delete">
+                                            <IconButton onClick={() => confirmDelete(customer)} size="small" color='error' title="Delete">
                                                 <DeleteIcon fontSize="small" />
                                             </IconButton>
                                         </TableCell>

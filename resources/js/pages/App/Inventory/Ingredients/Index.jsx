@@ -75,75 +75,111 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
-                    padding: '2rem',
-                    backgroundColor:'#f5f5f5'
                 }}
             >
-                {/* Header */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h5" fontWeight="bold">
-                        Ingredients Management
-                    </Typography>
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('ingredients.create'))} sx={{ backgroundColor: '#063455' }}>
-                        Add Ingredient
-                    </Button>
-                </Box>
+                <Box sx={{
+                    height: '100vh',
+                    p: 2,
+                    backgroundColor: '#f5f5f5'
+                }}>
+                    {/* Header */}
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                        <Typography sx={{
+                            fontWeight: '600',
+                            fontSize: '30px',
+                            color: '#063455'
+                        }}>
+                            Ingredients Management
+                        </Typography>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => router.visit(route('ingredients.create'))}
+                            sx={{
+                                backgroundColor: '#063455',
+                                borderRadius: '16px',
+                                height: 35,
+                                textTransform: 'none'
+                            }}>
+                            Add Ingredient
+                        </Button>
+                    </Box>
 
-                {/* Statistics Cards */}
-                <Grid container spacing={3} sx={{ mb: 3 }}>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card>
-                            <CardContent>
-                                <Typography color="textSecondary" gutterBottom>
-                                    Total Ingredients
-                                </Typography>
-                                <Typography variant="h4" component="div">
-                                    {stats.total_ingredients}
-                                </Typography>
-                            </CardContent>
-                        </Card>
+                    {/* Statistics Cards */}
+                    <Grid container spacing={3} sx={{ mb: 3 }}>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card sx={{ bgcolor: '#063455' }}>
+                                <CardContent
+                                sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                    }}>
+                                    <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>
+                                        Total Ingredients
+                                    </Typography>
+                                    <Typography sx={{ color: '#fff', fontSize: '20px', fontWeight: 600 }}>
+                                        {stats.total_ingredients}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card sx={{ bgcolor: '#063455' }}>
+                                <CardContent
+                                sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                    }}>
+                                    <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>
+                                        Active Ingredients
+                                    </Typography>
+                                    <Typography sx={{ color: '#fff', fontSize: '20px', fontWeight: 600 }}>
+                                        {stats.active_ingredients}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card sx={{ bgcolor: '#063455' }}>
+                                <CardContent
+                                sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                    }}>
+                                    <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>
+                                        Low Stock
+                                    </Typography>
+                                    <Typography sx={{ color: '#fff', fontSize: '20px', fontWeight: 600 }}>
+                                        {stats.low_stock}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={3}>
+                            <Card sx={{ bgcolor: '#063455' }}>
+                                <CardContent
+                                    sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                    }}>
+                                    <Typography sx={{ color: '#fff', fontSize: '14px', fontWeight: 500 }}>
+                                        Out of Stock
+                                    </Typography>
+                                    <Typography sx={{ color: '#fff', fontSize: '20px', fontWeight: 600 }}>
+                                        {stats.out_of_stock}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card>
-                            <CardContent>
-                                <Typography color="textSecondary" gutterBottom>
-                                    Active Ingredients
-                                </Typography>
-                                <Typography variant="h4" component="div" color="success.main">
-                                    {stats.active_ingredients}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card>
-                            <CardContent>
-                                <Typography color="textSecondary" gutterBottom>
-                                    Low Stock
-                                </Typography>
-                                <Typography variant="h4" component="div" color="warning.main">
-                                    {stats.low_stock}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Card>
-                            <CardContent>
-                                <Typography color="textSecondary" gutterBottom>
-                                    Out of Stock
-                                </Typography>
-                                <Typography variant="h4" component="div" color="error.main">
-                                    {stats.out_of_stock}
-                                </Typography>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
 
-                {/* Filters */}
-                <Card sx={{ mb: 3 }}>
-                    <CardContent>
+                    {/* Filters */}
+                    <Card sx={{ pt: 2, mb: 2, bgcolor: 'transparent', boxShadow: 'none', px: 0 }}>
+
                         <Grid container spacing={2} alignItems="center">
                             <Grid item xs={12} md={4}>
                                 <TextField
@@ -158,10 +194,29 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                                             </InputAdornment>
                                         ),
                                     }}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                            height: 35
+                                        },
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <TextField fullWidth select label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                                <TextField fullWidth select label="Status" value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                            height: 35
+                                        },
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}>
                                     <MenuItem value="all">All Status</MenuItem>
                                     <MenuItem value="active">Active</MenuItem>
                                     <MenuItem value="inactive">Inactive</MenuItem>
@@ -169,7 +224,18 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                                 </TextField>
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <TextField fullWidth select label="Stock Level" value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
+                                <TextField fullWidth select label="Stock Level" value={stockFilter}
+                                    onChange={(e) => setStockFilter(e.target.value)}
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: '16px',
+                                            height: 35
+                                        },
+                                        '& .MuiOutlinedInput-notchedOutline': {
+                                            borderRadius: '16px',
+                                        },
+                                    }}
+                                >
                                     <MenuItem value="all">All Stock</MenuItem>
                                     <MenuItem value="available">Available</MenuItem>
                                     <MenuItem value="low">Low Stock</MenuItem>
@@ -177,149 +243,166 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                                 </TextField>
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <Button fullWidth variant="contained" onClick={handleSearch} sx={{ backgroundColor: '#063455' }}>
+                                <Button
+                                    fullWidth
+                                    variant="contained"
+                                    startIcon={<SearchIcon />}
+                                    onClick={handleSearch}
+                                    sx={{
+                                        backgroundColor: '#063455',
+                                        borderRadius: '16px',
+                                        textTransform: 'none',
+                                        height: 35
+                                    }}>
                                     Search
                                 </Button>
                             </Grid>
                             <Grid item xs={12} md={2}>
-                                <Button fullWidth variant="outlined" onClick={handleReset}>
+                                <Button
+                                    fullWidth
+                                    variant="outlined"
+                                    onClick={handleReset}
+                                    sx={{
+                                        borderRadius: '16px'
+                                    }}
+                                >
                                     Reset
                                 </Button>
                             </Grid>
                         </Grid>
-                    </CardContent>
-                </Card>
+                    </Card>
 
-                {/* Ingredients Table */}
-                <Card>
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                    <TableCell>
-                                        <strong>Name</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Total Quantity</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Used</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Remaining</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Unit</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Cost/Unit</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Stock Status</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Status</strong>
-                                    </TableCell>
-                                    <TableCell>
-                                        <strong>Actions</strong>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {ingredients.data.map((ingredient) => {
-                                    const stockInfo = getStockInfo(ingredient.remaining_quantity, ingredient.total_quantity);
-                                    return (
-                                        <TableRow key={ingredient.id} hover>
-                                            <TableCell>
-                                                <Box>
-                                                    <Typography variant="subtitle2" fontWeight="bold">
-                                                        {ingredient.name}
-                                                    </Typography>
-                                                    {ingredient.description && (
-                                                        <Typography variant="caption" color="textSecondary">
-                                                            {ingredient.description}
-                                                        </Typography>
-                                                    )}
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>{ingredient.total_quantity}</TableCell>
-                                            <TableCell>{ingredient.used_quantity}</TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                    {stockInfo.icon}
-                                                    <Typography color={`${stockInfo.color}.main`}>{ingredient.remaining_quantity}</Typography>
-                                                </Box>
-                                            </TableCell>
-                                            <TableCell>{ingredient.unit}</TableCell>
-                                            <TableCell>{ingredient.cost_per_unit ? formatCurrency(ingredient.cost_per_unit) : 'N/A'}</TableCell>
-                                            <TableCell>
-                                                <Chip label={stockInfo.text} color={stockInfo.color} size="small" />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Chip label={ingredient.status} color={getStatusColor(ingredient.status)} size="small" sx={{ textTransform: 'capitalize' }} />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Box sx={{ display: 'flex', gap: 1 }}>
-                                                    <Tooltip title="View Details">
-                                                        <IconButton size="small" onClick={() => router.visit(route('ingredients.show', ingredient.id))}>
-                                                            <ViewIcon />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Edit">
-                                                        <IconButton size="small" onClick={() => router.visit(route('ingredients.edit', ingredient.id))}>
-                                                            <EditIcon />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Add Stock">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="success"
-                                                            onClick={() => router.visit(route('ingredients.add-stock.form', ingredient.id))}
-                                                        >
-                                                            <AddStockIcon />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                    <Tooltip title="Delete">
-                                                        <IconButton
-                                                            size="small"
-                                                            color="error"
-                                                            onClick={() => {
-                                                                if (confirm('Are you sure you want to delete this ingredient?')) {
-                                                                    router.delete(route('ingredients.destroy', ingredient.id));
-                                                                }
-                                                            }}
-                                                        >
-                                                            <DeleteIcon />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                </Box>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })}
-                                {ingredients.data.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={9} sx={{ textAlign: 'center', py: 4 }}>
-                                            <Typography color="textSecondary">No ingredients found</Typography>
+                    {/* Ingredients Table */}
+                    <Card>
+                        <TableContainer component={Paper}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow sx={{ backgroundColor: '#063455' }}>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Name
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Total Quantity
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Used
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Remaining
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Unit
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Cost/Unit
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Stock Status
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Status
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                            Actions
                                         </TableCell>
                                     </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                </TableHead>
+                                <TableBody>
+                                    {ingredients.data.map((ingredient) => {
+                                        const stockInfo = getStockInfo(ingredient.remaining_quantity, ingredient.total_quantity);
+                                        return (
+                                            <TableRow key={ingredient.id} hover>
+                                                <TableCell>
+                                                    <Box>
+                                                        <Typography variant="subtitle2" fontWeight="bold">
+                                                            {ingredient.name}
+                                                        </Typography>
+                                                        {ingredient.description && (
+                                                            <Typography variant="caption" color="textSecondary">
+                                                                {ingredient.description}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell>{ingredient.total_quantity}</TableCell>
+                                                <TableCell>{ingredient.used_quantity}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                        {stockInfo.icon}
+                                                        <Typography color={`${stockInfo.color}.main`}>{ingredient.remaining_quantity}</Typography>
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell>{ingredient.unit}</TableCell>
+                                                <TableCell>{ingredient.cost_per_unit ? formatCurrency(ingredient.cost_per_unit) : 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    <Chip label={stockInfo.text} color={stockInfo.color} size="small" />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip label={ingredient.status} color={getStatusColor(ingredient.status)} size="small" sx={{ textTransform: 'capitalize' }} />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                                        <Tooltip title="View Details">
+                                                            <IconButton size="small" onClick={() => router.visit(route('ingredients.show', ingredient.id))}>
+                                                                <ViewIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Edit">
+                                                            <IconButton size="small" onClick={() => router.visit(route('ingredients.edit', ingredient.id))}>
+                                                                <EditIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Add Stock">
+                                                            <IconButton
+                                                                size="small"
+                                                                color="success"
+                                                                onClick={() => router.visit(route('ingredients.add-stock.form', ingredient.id))}
+                                                            >
+                                                                <AddStockIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Delete">
+                                                            <IconButton
+                                                                size="small"
+                                                                color="error"
+                                                                onClick={() => {
+                                                                    if (confirm('Are you sure you want to delete this ingredient?')) {
+                                                                        router.delete(route('ingredients.destroy', ingredient.id));
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <DeleteIcon />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                    {ingredients.data.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={9} sx={{ textAlign: 'center', py: 4 }}>
+                                                <Typography color="textSecondary">No ingredients found</Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
 
-                    {/* Pagination */}
-                    {ingredients.links && (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-                            {ingredients.links.map((link, index) => (
-                                <Button key={index} onClick={() => link.url && router.visit(link.url)} disabled={!link.url} variant={link.active ? 'contained' : 'outlined'} size="small" sx={{ mx: 0.5, minWidth: '36px' }}>
-                                    <span dangerouslySetInnerHTML={{ __html: link.label }} />
-                                </Button>
-                            ))}
-                        </Box>
-                    )}
-                </Card>
-            </div>
+                        {/* Pagination */}
+                        {ingredients.links && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                                {ingredients.links.map((link, index) => (
+                                    <Button key={index} onClick={() => link.url && router.visit(link.url)} disabled={!link.url} variant={link.active ? 'contained' : 'outlined'} size="small" sx={{ mx: 0.5, minWidth: '36px' }}>
+                                        <span dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    </Button>
+                                ))}
+                            </Box>
+                        )}
+                    </Card>
+                </Box>
+            </div >
         </>
     );
 };

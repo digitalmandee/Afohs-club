@@ -418,7 +418,9 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
             >
                 <Box
                     sx={{
-                        px: 3,
+                        p: 2,
+                        bgcolor:'#f5f5f5',
+                        height:'100vh'
                     }}
                 >
                     <Box
@@ -426,14 +428,13 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            pt: 5,
                         }}
                     >
                         {/* Left - Heading */}
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <h2 className="fw-normal mb-0" style={{ color: '#063455', fontSize: '30px' }}>
+                            <Typography style={{ color: '#063455', fontSize: '30px', fontWeight:600 }}>
                                 Order Management
-                            </h2>
+                            </Typography>
                         </Box>
                     </Box>
 

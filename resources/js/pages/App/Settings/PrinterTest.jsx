@@ -42,44 +42,55 @@ export default function PrinterTest() {
     return (
         <>
             <SideNav open={open} setOpen={setOpen} />
-            <Box sx={{ marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`, transition: 'margin-left 0.3s ease-in-out', marginTop: '5rem', padding: '0 16px' }}>
-                <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold', color: '#063455' }}>
-                    🖨️ Printer Test
-                </Typography>
+            <Box
+                sx={{
+                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
+                    transition: 'margin-left 0.3s ease-in-out',
+                    marginTop: '5rem',
+                }}>
+                <Box sx={{
+                    height: '100vh',
+                    bgcolor: '#f5f5f5',
+                    p: 2
+                }}>
+                    <Typography sx={{ mb: 3, fontWeight: '600', fontSize: '30px', color: '#063455' }}>
+                        🖨️ Printer Test
+                    </Typography>
 
-                <Card elevation={3}>
-                    <CardContent>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                            Test Thermal Printer Connection
-                        </Typography>
-
-                        <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
-                            <Typography variant="body2" color="text.secondary">
-                                <strong>Instructions:</strong>
-                                <br />
-                                1. Connect the printer to the same network (LAN) as this computer.
-                                <br />
-                                2. Find the printer's IP address (usually printed on self-test page).
-                                <br />
-                                3. Enter the IP below and click "Test Print".
+                    <Card elevation={3}>
+                        <CardContent>
+                            <Typography variant="h6" sx={{ mb: 2 }}>
+                                Test Thermal Printer Connection
                             </Typography>
-                        </Paper>
 
-                        <TextField label="Printer IP Address" placeholder="e.g. 192.168.1.100" value={printerIp} onChange={(e) => setPrinterIp(e.target.value)} fullWidth sx={{ mb: 2 }} />
+                            <Paper sx={{ p: 2, mb: 3, bgcolor: '#f5f5f5' }}>
+                                <Typography variant="body2" color="text.secondary">
+                                    <strong>Instructions:</strong>
+                                    <br />
+                                    1. Connect the printer to the same network (LAN) as this computer.
+                                    <br />
+                                    2. Find the printer's IP address (usually printed on self-test page).
+                                    <br />
+                                    3. Enter the IP below and click "Test Print".
+                                </Typography>
+                            </Paper>
 
-                        <TextField label="Port (Default: 9100)" placeholder="9100" value={printerPort} onChange={(e) => setPrinterPort(e.target.value)} fullWidth sx={{ mb: 3 }} type="number" />
+                            <TextField label="Printer IP Address" placeholder="e.g. 192.168.1.100" value={printerIp} onChange={(e) => setPrinterIp(e.target.value)} fullWidth sx={{ mb: 2 }} />
 
-                        <Button variant="contained" color="primary" size="large" fullWidth onClick={handleTestPrint} disabled={loading} startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Print />}>
-                            {loading ? 'Sending Test Print...' : 'Test Print'}
-                        </Button>
+                            <TextField label="Port (Default: 9100)" placeholder="9100" value={printerPort} onChange={(e) => setPrinterPort(e.target.value)} fullWidth sx={{ mb: 3 }} type="number" />
 
-                        {result && (
-                            <Alert severity={result.success ? 'success' : 'error'} icon={result.success ? <CheckCircle /> : <Error />} sx={{ mt: 3 }}>
-                                {result.message}
-                            </Alert>
-                        )}
-                    </CardContent>
-                </Card>
+                            <Button variant="contained" color="primary" size="large" fullWidth onClick={handleTestPrint} disabled={loading} startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Print />}>
+                                {loading ? 'Sending Test Print...' : 'Test Print'}
+                            </Button>
+
+                            {result && (
+                                <Alert severity={result.success ? 'success' : 'error'} icon={result.success ? <CheckCircle /> : <Error />} sx={{ mt: 3 }}>
+                                    {result.message}
+                                </Alert>
+                            )}
+                        </CardContent>
+                    </Card>
+                </Box>
             </Box>
         </>
     );

@@ -355,16 +355,17 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
 
                 {/* Reset Button */}
                 <Grid item xs={12} md={1} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <Tooltip title="Reset Filters">
+                    {/* <Tooltip title="Reset Filters"> */}
                         <Button
                             variant="outlined"
                             onClick={handleReset}
                             disabled={isLoading}
                             sx={{
-                                borderRadius: '10px',
-                                height: '40px',
-                                p: 0,
+                                borderRadius: '16px',
+                                height: 35,
+                                px: 2,
                                 color: '#063455',
+                                textTransform:'none',
                                 border: '1px solid #063455',
                                 '&:hover': {
                                     backgroundColor: 'rgba(6, 52, 85, 0.04)',
@@ -373,7 +374,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                         >
                             Reset
                         </Button>
-                    </Tooltip>
+                    {/* </Tooltip> */}
                 </Grid>
             </Grid>
         </Box>

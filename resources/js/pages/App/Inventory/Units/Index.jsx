@@ -108,7 +108,6 @@ const UnitsIndex = ({ units, filters }) => {
 
     return (
         <>
-            <Head title="Units of Measurement" />
             <SideNav open={open} setOpen={setOpen} />
 
             {/* Global Loader */}
@@ -120,71 +119,113 @@ const UnitsIndex = ({ units, filters }) => {
                 sx={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
-                    padding: '1rem',
+                    // padding: '1rem',
                     marginTop: '5rem',
                 }}
             >
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Typography variant="h5" fontWeight="bold">
-                        Units of Measurement
-                    </Typography>
-                    <Box display="flex" gap={2}>
-                        <TextField size="small" placeholder="Search..." value={search} onChange={handleSearch} sx={{ bgcolor: 'white', borderRadius: 1 }} />
-                        <Button variant="outlined" color="error" startIcon={<DeleteSweepIcon />} onClick={() => router.visit(route('units.trashed'))} sx={{ bgcolor: 'white', '&:hover': { bgcolor: '#ffebee' } }}>
-                            Trash
-                        </Button>
-                        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenModal()} sx={{ bgcolor: '#063455', '&:hover': { bgcolor: '#04243a' } }}>
-                            Add Unit
-                        </Button>
+                <Box sx={{
+                    p: 2,
+                    height: '100vh',
+                    bgcolor: '#f5f5f5'
+                }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                        <Typography sx={{ fontWeight: 600, fontSize: '30px', color: '#063455' }}>
+                            Units of Measurement
+                        </Typography>
+                        <Box display="flex" gap={2}>
+                            <TextField
+                                size="small"
+                                placeholder="Search..."
+                                value={search}
+                                onChange={handleSearch}
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '16px',
+                                        '&:hover fieldset': {
+                                            borderRadius: '16px',
+                                        },
+                                        '&.Mui-focused fieldset': {
+                                            borderRadius: '16px',
+                                        },
+                                    },
+                                }} />
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                startIcon={<DeleteIcon />}
+                                onClick={() => router.visit(route('units.trashed'))}
+                                sx={{
+                                    bgcolor: 'transparent',
+                                    height: 35,
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': { bgcolor: 'transparent' }
+                                }}>
+                                Deleted
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={<AddIcon />}
+                                onClick={() => handleOpenModal()}
+                                sx={{
+                                    bgcolor: '#063455',
+                                    height: 35,
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': { bgcolor: '#04243a' }
+                                }}>
+                                Add Unit
+                            </Button>
+                        </Box>
                     </Box>
-                </Box>
 
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-                    <Table>
-                        <TableHead sx={{ bgcolor: '#063455' }}>
-                            <TableRow>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Code</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
-                                    Actions
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {units.data.length > 0 ? (
-                                units.data.map((unit) => (
-                                    <TableRow key={unit.id} hover>
-                                        <TableCell>{unit.name}</TableCell>
-                                        <TableCell>{unit.code}</TableCell>
-                                        <TableCell>
-                                            <Chip label={unit.status} size="small" color={unit.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
-                                        </TableCell>
-                                        <TableCell>{dayjs(unit.updated_at).format('DD MMM YYYY, h:mm A')}</TableCell>
-                                        <TableCell align="right">
-                                            <IconButton onClick={() => handleOpenModal(unit)} color="primary">
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton onClick={() => handleOpenDeleteModal(unit)} color="error">
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
+                    <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                        <Table>
+                            <TableHead sx={{ bgcolor: '#063455' }}>
                                 <TableRow>
-                                    <TableCell colSpan={4} align="center">
-                                        No units found.
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Code</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
+                                        Actions
                                     </TableCell>
                                 </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+                            </TableHead>
+                            <TableBody>
+                                {units.data.length > 0 ? (
+                                    units.data.map((unit) => (
+                                        <TableRow key={unit.id} hover>
+                                            <TableCell>{unit.name}</TableCell>
+                                            <TableCell>{unit.code}</TableCell>
+                                            <TableCell>
+                                                <Chip label={unit.status} size="small" color={unit.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
+                                            </TableCell>
+                                            <TableCell>{dayjs(unit.updated_at).format('DD MMM YYYY, h:mm A')}</TableCell>
+                                            <TableCell align="right">
+                                                <IconButton onClick={() => handleOpenModal(unit)} color="primary">
+                                                    <EditIcon />
+                                                </IconButton>
+                                                <IconButton onClick={() => handleOpenDeleteModal(unit)} color="error">
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={4} align="center">
+                                            No units found.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
 
-                <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={units.last_page} page={units.current_page} onChange={(e, p) => router.get(route('units.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Box mt={3} display="flex" justifyContent="center">
+                        <Pagination count={units.last_page} page={units.current_page} onChange={(e, p) => router.get(route('units.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                    </Box>
                 </Box>
             </Box>
 

@@ -353,7 +353,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                             <Typography
                                 variant="h6"
                                 sx={{
-                                    fontWeight: '500',
+                                    fontWeight: '600',
                                     fontSize: '30px',
                                     color: '#063455',
                                 }}

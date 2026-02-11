@@ -58,12 +58,13 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .membership-card {
-            width: 325px;
+            width: 330px;
             border: 1px solid #e3e3e3;
             border-radius: 12px;
             box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
             background-color: white;
             overflow: hidden;
+            padding-top: 10px;
         }
 
         .content {
@@ -108,7 +109,7 @@ export const handlePrintMembershipCard = (member) => {
             font-size: 10px;
             font-weight: 700;
             color: #000;
-            margin-top: 10px;
+            margin-top: 5px;
             text-transform: capitalize;
         }
 
@@ -124,7 +125,7 @@ export const handlePrintMembershipCard = (member) => {
         }
 
         .label {
-            margin-top: 22px;
+            margin-top: 18px;
             font-size: 10px;
             font-weight: 700;
             padding-left: 40px;
@@ -134,7 +135,7 @@ export const handlePrintMembershipCard = (member) => {
 
         .value-no {
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 800;
             color: #000;
             padding-left: 50px;
             padding-top: 2px
@@ -167,9 +168,10 @@ export const handlePrintMembershipCard = (member) => {
 
         .label-month-year {
     margin-top: 4px;
-    font-size: 8px;
-    font-weight: 700;
+    font-size: 6px;
+    font-weight: 900;
     color: #000;
+    margin-top: 5px
 }
 
 .valid-row-box {
@@ -177,7 +179,7 @@ export const handlePrintMembershipCard = (member) => {
     justify-content: space-between;
   align-items: center;   /* 🔥 KEY FIX */
   gap: 10px;
-  padding-top: 3px;
+  margin-top: 6px;
 }
 
 
@@ -185,7 +187,7 @@ export const handlePrintMembershipCard = (member) => {
    display: flex;   /* 🔥 shrink to content */
     flex-direction: column;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 800;
     color: #000;
     line-height: 1;
     margin-top: 0;
@@ -198,8 +200,8 @@ export const handlePrintMembershipCard = (member) => {
 }
 
 .value {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: 800;
     color: #000;
 }
 
@@ -309,7 +311,7 @@ export const MembershipCardContent = ({ member, id }) => {
             <CardContent sx={{ py: 2 }}>
                 <Grid container spacing={0} sx={{ width: '100%', m: 0 }}>
                     <Grid item xs={12} sm={4}>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 8 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', pt: 5.8 }}>
                             {/* <Avatar src={member?.profile_photo?.file_path} alt="Member Photo" sx={{
                                 width: 100, height: 100, borderRadius: 1, border: '1px solid #0a3d62', objectFit: 'cover', objectPosition: 'center', p: "4px", bgcolor:'#BDBDBD'
                             }} variant="square" /> */}
@@ -337,7 +339,7 @@ export const MembershipCardContent = ({ member, id }) => {
                                     }}
                                 />
                             </Box>
-                            <Typography sx={{ fontSize: '16px', fontWeight: 'bold', textTransform: 'capitalize', pt: 0.5 }} color="#000">
+                            <Typography sx={{ fontSize: '16px', fontWeight: 600, textTransform: 'capitalize', pt: 0.5 }} color="#000">
                                 {member?.full_name || 'N/A'}
                             </Typography>
                         </Box>
@@ -347,7 +349,7 @@ export const MembershipCardContent = ({ member, id }) => {
                             <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
                                 <img src="/assets/Logo.png" alt="AFOHS CLUB" style={{ height: 150 }} />
                             </Box>
-                            <Typography sx={{ fontSize: '16px', fontWeight: 700, pt: 7, pl: 10, whiteSpace: 'nowrap', color: '#000' }}>
+                            <Typography sx={{ fontSize: '16px', fontWeight: 600, pt: 5, pl: 10, whiteSpace: 'nowrap', color: '#000' }}>
                                 Membership No
                             </Typography>
                             <Typography variant="subtitle1" fontWeight="bold" color="#000" sx={{ ml: 7 }}>
@@ -369,23 +371,23 @@ export const MembershipCardContent = ({ member, id }) => {
                             >
                                 <img src={'/' + member?.qr_code} alt="QR Code" style={{ width: "100%", height: "100%" }} />
                             </Box>
-                            <Typography sx={{ fontSize: '12px', fontWeight: 700, color: '#000', pt: 1 }}>
+                            <Typography sx={{ fontSize: '10px', fontWeight: 'bold', color: '#000', pt: 1 }}>
                                 MONTH/YEAR
                             </Typography>
-                            <Box sx={{ display: 'flex', gap: 3 }}>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
                                 <Typography
                                     sx={{
-                                        fontSize: '16px',
-                                        fontWeight: 700,
+                                        fontSize: '14px',
+                                        fontWeight: 'bold',
                                         pt: 0.1,
                                         color: '#000',
-                                        // lineHeight: 1.2,
+                                        lineHeight: 1.2,
                                     }}
                                 >
-                                    Valid<br />
-                                    Until
+                                    VALID<br />
+                                    UNTIL
                                 </Typography>
-                                <Typography variant="subtitle1" fontWeight="bold" color="#000">
+                                <Typography sx={{fontWeight:800, fontSize:'16px', color:'#000', marginTop:1}}>
                                     {formatExpiryDate(member?.card_expiry_date)}
                                 </Typography>
                             </Box>
