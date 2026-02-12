@@ -6,6 +6,7 @@ use App\Models\AllowanceType;
 use App\Models\DeductionType;
 use App\Models\Employee;
 use App\Models\EmployeeSalaryStructure;
+use App\Models\FinancialInvoice;
 use App\Models\Order;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollSetting;
@@ -231,11 +232,22 @@ class PayrollController extends Controller
             $periodStart = Carbon::parse($period->start_date)->startOfDay();
             $periodEnd = Carbon::parse($period->end_date)->endOfDay();
 
-            $totalOrderDeductions = Order::where('payment_method', 'cts')
-                ->whereBetween('paid_at', [$periodStart, $periodEnd])
-                ->sum(DB::raw('COALESCE(total_price, 0)'));
+            $totalOrderDeductions = (float) (Order::whereBetween('paid_at', [$periodStart, $periodEnd])
+                ->where(function ($q) {
+                    $q
+                        ->where('payment_method', 'cts')
+                        ->orWhereExists(function ($sub) {
+                            $sub
+                                ->select(DB::raw(1))
+                                ->from('financial_invoices')
+                                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                                ->where('cts_amount', '>', 0);
+                        });
+                })
+                ->selectRaw("SUM(COALESCE((SELECT cts_amount FROM financial_invoices WHERE JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR) LIMIT 1), COALESCE(total_price, 0))) as total")
+                ->value('total') ?? 0);
 
-            $period->total_order_deductions = (float) $totalOrderDeductions;
+            $period->total_order_deductions = $totalOrderDeductions;
 
             // Format dates for display
             $period->start_date = $period->start_date ? Carbon::parse($period->start_date)->format('d/m/Y') : '-';
@@ -267,6 +279,12 @@ class PayrollController extends Controller
 
         if (!empty($payslipIds)) {
             $ctsOrders = Order::whereIn('deducted_in_payslip_id', $payslipIds)
+                ->addSelect([
+                    'orders.*',
+                    'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                        ->limit(1),
+                ])
                 ->get()
                 ->groupBy('deducted_in_payslip_id');
 
@@ -277,13 +295,13 @@ class PayrollController extends Controller
         $payslips->getCollection()->transform(function ($payslip) use ($ordersByPayslip) {
             $empOrders = $ordersByPayslip->get($payslip->id, collect());
             $totalOrderDeductions = $empOrders->sum(function ($o) {
-                return (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0);
+                return (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0);
             });
             $payslip->order_deductions = $empOrders->map(function ($o) {
                 return [
                     'id' => $o->id,
                     'paid_at' => $o->paid_at ? \Carbon\Carbon::parse($o->paid_at)->format('d/m/Y h:i A') : null,
-                    'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                    'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                     'note' => $o->payment_note ?? $o->remark ?? null,
                     'deducted_at' => $o->deducted_at ? \Carbon\Carbon::parse($o->deducted_at)->format('d/m/Y h:i A') : null
                 ];
@@ -312,13 +330,19 @@ class PayrollController extends Controller
 
         // Attach CTS order deductions related to this payslip
         $ctsOrders = Order::where('deducted_in_payslip_id', $payslip->id)
+            ->addSelect([
+                'orders.*',
+                'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+            ])
             ->get();
 
         $payslip->order_deductions = $ctsOrders->map(function ($o) {
             return [
                 'id' => $o->id,
                 'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
-                'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                 'note' => $o->payment_note ?? $o->remark ?? null,
                 'deducted_at' => $o->deducted_at ? (string) $o->deducted_at : null
             ];
@@ -453,13 +477,19 @@ class PayrollController extends Controller
 
         // Attach CTS order deductions for print view
         $ctsOrders = Order::where('deducted_in_payslip_id', $payslip->id)
+            ->addSelect([
+                'orders.*',
+                'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+            ])
             ->get();
 
         $payslip->order_deductions = $ctsOrders->map(function ($o) {
             return [
                 'id' => $o->id,
                 'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
-                'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                 'note' => $o->payment_note ?? $o->remark ?? null
             ];
         })->values();

@@ -3,7 +3,7 @@ import { tenantAsset } from '@/helpers/asset';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router, usePage } from '@inertiajs/react';
 import { ArrowBack, Search } from '@mui/icons-material';
-import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Avatar, Badge, Box, Button, FormControl, Grid, IconButton, InputAdornment, InputLabel, MenuItem, Paper, Select, TextField, Typography } from '@mui/material';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
@@ -179,6 +179,7 @@ const OrderMenu = () => {
                 handleOrderDetailChange('order_items', updatedItems);
             } else {
                 // Add new item
+                const isDiscountable = product.is_discountable === false || product.is_discountable === 0 || product.is_discountable === '0' ? false : true;
                 const newItem = {
                     id: product.id,
                     name: product.name,
@@ -188,7 +189,7 @@ const OrderMenu = () => {
                     tenant_id: product.tenant_id,
                     category: product.category?.name || '',
                     variants: [],
-                    is_discountable: product.is_discountable !== false,
+                    is_discountable: isDiscountable,
                     discount_value: 0,
                     discount_type: 'percentage',
                     discount_amount: 0,
@@ -268,14 +269,21 @@ const OrderMenu = () => {
     useEffect(() => {
         if (reservation) {
             handleOrderDetailChange('reservation_id', reservation.id);
-            handleOrderDetailChange('order_type', 'reservation');
+            handleOrderDetailChange('order_type', is_new_order ? 'reservation' : 'dineIn');
 
-            if (reservation.member || reservation.customer) {
-                const memberData = { id: reservation.member ? reservation.member.user_id : reservation.customer.id, name: reservation.member ? reservation.member.full_name : reservation.customer.name, membership_no: reservation.member ? reservation.member.membership_no : reservation.customer.customer_no, booking_type: reservation.member ? 'member' : 'guest' };
+            if (reservation.member || reservation.customer || reservation.employee) {
+                const memberData = {
+                    id: reservation.member ? reservation.member.id : reservation.customer ? reservation.customer.id : reservation.employee.id,
+                    name: reservation.member ? reservation.member.full_name : reservation.customer ? reservation.customer.name : reservation.employee.name,
+                    membership_no: reservation.member ? reservation.member.membership_no : reservation.customer ? reservation.customer.customer_no : reservation.employee.employee_id,
+                    booking_type: reservation.member ? 'member' : reservation.customer ? 'guest' : 'employee',
+                };
                 handleOrderDetailChange('member', memberData);
             }
             handleOrderDetailChange('person_count', reservation.person_count);
             handleOrderDetailChange('table', reservation.table);
+            handleOrderDetailChange('down_payment', reservation.down_payment || 0);
+            handleOrderDetailChange('advance_amount', reservation.down_payment || 0);
 
             // Load existing order items if available
 
@@ -549,7 +557,6 @@ const OrderMenu = () => {
                                             onChange={(e) => handleSearch(e.target.value)}
                                             sx={{
                                                 width: 300,
-                                                mr: 2,
                                                 borderRadius: 0,
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 0,
@@ -574,14 +581,14 @@ const OrderMenu = () => {
                                             }}
                                         />
                                     </Box>
-                                    <img
+                                    {/* <img
                                         src="/assets/right.png"
                                         alt=""
                                         style={{
                                             width: '39px',
                                             height: '39px',
                                         }}
-                                    />
+                                    /> */}
                                 </Box>
                             </Paper>
 
@@ -721,12 +728,13 @@ const OrderMenu = () => {
                                                                         fontWeight: 500,
                                                                         mb: 0.5,
                                                                         textAlign: 'center',
-                                                                        fontSize: '11px',
+                                                                        fontSize: '10px',
+                                                                        width: '100%',
                                                                     }}
                                                                 >
-                                                                    {product.name}
+                                                                    {product.menu_code ? `${product.menu_code} - ${product.name}` : product.name}
                                                                 </Typography>
-                                                                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '10px' }}>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '9px' }}>
                                                                     Rs {product.base_price}
                                                                 </Typography>
                                                                 {product.tenant && product.tenant_id !== selectedRestaurant && (
@@ -795,16 +803,18 @@ const OrderMenu = () => {
                                                         )}
 
                                                         <Typography
-                                                            variant="body1"
+                                                            variant="body2"
                                                             sx={{
                                                                 fontWeight: 500,
                                                                 mb: 0.5,
                                                                 textAlign: 'center',
+                                                                fontSize: '10px',
+                                                                width: '100%',
                                                             }}
                                                         >
-                                                            {product.name}
+                                                            {product.menu_code ? `${product.menu_code} - ${product.name}` : product.name}
                                                         </Typography>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                                        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '9px' }}>
                                                             Rs {product.base_price}
                                                         </Typography>
                                                     </Paper>

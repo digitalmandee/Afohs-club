@@ -1,5 +1,5 @@
 import { AccessTime, Close, KeyboardArrowDown, KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import { Box, Button, Chip, CircularProgress, Grid, IconButton, Paper, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, Grid, IconButton, Paper, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -19,6 +19,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
     // Cancel reservation state
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
+    const [cancelReason, setCancelReason] = useState('');
 
     // Format time helper
     const formatTime = (time) => {
@@ -124,19 +125,25 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
     // Handle cancel reservation
     const handleCancelClick = (reservation) => {
         setSelectedReservation(reservation);
+        setCancelReason('');
         setShowCancelModal(true);
     };
 
     const confirmCancelReservation = () => {
         if (!selectedReservation) return;
+        if (!cancelReason.trim()) {
+            enqueueSnackbar('Please provide a cancellation reason.', { variant: 'error' });
+            return;
+        }
 
         router.post(
             route('reservations.cancel', selectedReservation.id),
-            {},
+            { cancellation_reason: cancelReason },
             {
                 onSuccess: () => {
                     setShowCancelModal(false);
                     setSelectedReservation(null);
+                    setCancelReason('');
                     enqueueSnackbar('Reservation cancelled successfully', { variant: 'success' });
                     // Refresh reservations
                     fetchReservations(currentDate);
@@ -144,6 +151,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
                 onError: () => {
                     setShowCancelModal(false);
                     setSelectedReservation(null);
+                    setCancelReason('');
                     enqueueSnackbar('Failed to cancel reservation', { variant: 'error' });
                 },
             },
@@ -632,6 +640,16 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
                             </Typography>
                         </Box>
                     )}
+                    <TextField
+                        fullWidth
+                        sx={{ mt: 2 }}
+                        label="Cancellation Reason"
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        multiline
+                        minRows={3}
+                        required
+                    />
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
                     <Button variant="outlined" onClick={() => setShowCancelModal(false)}>

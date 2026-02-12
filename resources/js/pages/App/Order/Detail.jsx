@@ -1,7 +1,7 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
 import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
-import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent, DialogTitle, Autocomplete } from '@mui/material';
+import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent, DialogTitle, Autocomplete, InputAdornment } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -41,6 +41,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     const [isPopupOpen, setIsPopupOpen] = useState(false);
     const [openPaymentModal, setOpenPaymentModal] = useState(false);
+    const [collectiveDiscountPct, setCollectiveDiscountPct] = useState('');
 
     const handleOpenPopup = () => setIsPopupOpen(true);
     const handleClosePopup = () => setIsPopupOpen(false);
@@ -125,9 +126,13 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     // Final total
     const total = Math.round(discountedSubtotal + taxAmount);
+    const advanceAmount = Number(orderDetails.advance_amount || 0);
+    const payableTotal = Math.max(0, total - advanceAmount);
 
     const handleSendToKitchen = async (extra = {}) => {
         setIsLoading(true);
+
+        const collectivePct = collectiveDiscountPct === '' ? null : Number(collectiveDiscountPct);
 
         const newPayload = {
             ...orderDetails,
@@ -142,6 +147,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
             staff_note: notes.staff_note,
             payment_note: notes.payment_note,
             is_new_order: is_new_order,
+            collective_discount_percent: Number.isFinite(collectivePct) && collectivePct > 0 ? collectivePct : undefined,
         };
 
         const payload = objectToFormData(newPayload);
@@ -203,9 +209,59 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         setIsEditingTax(false);
     };
 
+    const handleApplyCollectiveDiscount = () => {
+        const raw = collectiveDiscountPct === '' ? NaN : Number(collectiveDiscountPct);
+        if (!Number.isFinite(raw) || raw < 0 || raw > 100) {
+            enqueueSnackbar('Collective discount must be a number between 0 and 100.', { variant: 'error' });
+            return;
+        }
+
+        const updatedItems = orderDetails.order_items.map((item) => {
+            if (!item.is_discountable) return item;
+
+            const grossTotal = Number(item.total_price || 0);
+            if (grossTotal <= 0) {
+                return {
+                    ...item,
+                    discount_value: 0,
+                    discount_type: 'percentage',
+                    discount_amount: 0,
+                };
+            }
+
+            let effectivePct = raw;
+            const maxDisc = item.max_discount != null ? Number(item.max_discount) : null;
+            const maxDiscType = item.max_discount_type || 'percentage';
+
+            if (Number.isFinite(maxDisc) && maxDisc > 0) {
+                if (maxDiscType === 'percentage') {
+                    effectivePct = Math.min(effectivePct, maxDisc);
+                } else {
+                    const qty = Number(item.quantity || 1);
+                    const maxAmount = maxDisc * (qty > 0 ? qty : 1);
+                    const maxPctEquivalent = (maxAmount / grossTotal) * 100;
+                    effectivePct = Math.min(effectivePct, maxPctEquivalent);
+                }
+            }
+
+            const safePct = Number.isFinite(effectivePct) ? Math.round(effectivePct * 100) / 100 : 0;
+            let disc = Math.round(grossTotal * (safePct / 100));
+            if (disc > grossTotal) disc = grossTotal;
+
+            return {
+                ...item,
+                discount_value: safePct,
+                discount_type: 'percentage',
+                discount_amount: disc,
+            };
+        });
+
+        handleOrderDetailChange('order_items', updatedItems);
+    };
+
     const handleClearOrderItems = () => {
         clearOrderItems();
-        setFormData({ discountValue: '', discountType: 'percentage' });
+        setCollectiveDiscountPct('');
         setNotes({ kitchen_note: '', staff_note: '', payment_note: '' });
     };
 
@@ -699,7 +755,31 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                                 <Typography variant="body2" color="#4caf50">
                                     Rs {discountAmount}
                                 </Typography>
-                                {/* Removed Edit button for global discount */}
+                                <TextField
+                                    size="small"
+                                    value={collectiveDiscountPct}
+                                    onChange={(e) => setCollectiveDiscountPct(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleApplyCollectiveDiscount();
+                                        }
+                                    }}
+                                    placeholder="0"
+                                    sx={{ width: '90px' }}
+                                    inputProps={{ inputMode: 'decimal', min: 0, max: 100 }}
+                                    InputProps={{
+                                        endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                                    }}
+                                />
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={handleApplyCollectiveDiscount}
+                                    disabled={orderDetails.order_items.length === 0}
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    Apply
+                                </Button>
                             </Box>
                         </Box>
 
@@ -743,13 +823,13 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                                     Advance
                                 </Typography>
                                 <Typography variant="body2" color="primary">
-                                    - Rs {orderDetails.advance_amount}
+                                    - Rs {advanceAmount.toFixed(2)}
                                 </Typography>
                             </Box>
                         )}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="subtitle2">Total</Typography>
-                            <Typography variant="subtitle2">Rs {total.toFixed(2)}</Typography>
+                            <Typography variant="subtitle2">Rs {payableTotal.toFixed(2)}</Typography>
                         </Box>
                         <Divider sx={{ my: 2 }} />
                     </Box>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Button, Typography, Table, TableHead, TableRow, TableCell, TableBody, Paper, TableContainer, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from '@mui/material';
+import { Box, Button, Typography, Table, TableHead, TableRow, TableCell, TableBody, Paper, TableContainer, Dialog, DialogTitle, DialogContent, DialogActions, Chip, TextField } from '@mui/material';
 import { debounce } from 'lodash';
 import { router, usePage } from '@inertiajs/react';
 import SearchIcon from '@mui/icons-material/Search';
@@ -24,6 +24,7 @@ const Reservations = () => {
     // 🔹 Cancel Reservation State
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
+    const [cancelReason, setCancelReason] = useState('');
 
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
@@ -52,19 +53,25 @@ const Reservations = () => {
     // 🔹 Handle cancel click
     const handleCancelClick = (reservation) => {
         setSelectedReservation(reservation);
+        setCancelReason('');
         setShowCancelModal(true);
     };
 
     const confirmCancel = () => {
         if (!selectedReservation) return;
+        if (!cancelReason.trim()) {
+            enqueueSnackbar('Please provide a cancellation reason.', { variant: 'error' });
+            return;
+        }
 
         router.post(
             route('reservations.cancel', selectedReservation.id),
-            {},
+            { cancellation_reason: cancelReason },
             {
                 onSuccess: () => {
                     setShowCancelModal(false);
                     setSelectedReservation(null);
+                    setCancelReason('');
                     enqueueSnackbar('Reservation cancelled successfully', { variant: 'success' });
                     // Optionally, refresh filteredReservations locally
                     setFilteredReservations((prev) => prev.map((r) => (r.id === selectedReservation.id ? { ...r, status: 'cancelled' } : r)));
@@ -72,6 +79,7 @@ const Reservations = () => {
                 onError: () => {
                     setShowCancelModal(false);
                     setSelectedReservation(null);
+                    setCancelReason('');
                 },
             },
         );
@@ -174,6 +182,7 @@ const Reservations = () => {
                                         <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Theme</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color:'#fff', whiteSpace:'nowrap' }}>Special Request</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Status</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color:'#fff', whiteSpace:'nowrap' }}>Cancellation Reason</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Location</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color:'#fff' }}>Actions</TableCell>
                                     </TableRow>
@@ -183,7 +192,15 @@ const Reservations = () => {
                                         filteredReservations.map((reservation) => (
                                             <TableRow key={reservation.id} style={{ borderBottom: '1px solid #eee' }}>
                                                 <TableCell>#{reservation.id}</TableCell>
-                                                <TableCell>{reservation.member ? `${reservation.member?.full_name} (${reservation.member?.membership_no})` : `${reservation.customer?.name}`}</TableCell>
+                                                <TableCell>
+                                                    {reservation.member
+                                                        ? `${reservation.member?.full_name} (${reservation.member?.membership_no})`
+                                                        : reservation.customer
+                                                            ? `${reservation.customer?.name} (${reservation.customer?.customer_no || 'N/A'})`
+                                                            : reservation.employee
+                                                                ? `${reservation.employee?.name} (${reservation.employee?.employee_id || 'N/A'})`
+                                                                : 'N/A'}
+                                                </TableCell>
                                                 <TableCell>{reservation.date}</TableCell>
                                                 <TableCell>
                                                     {reservation.start_time} - {reservation.end_time}
@@ -197,13 +214,16 @@ const Reservations = () => {
                                                 <TableCell>
                                                     <Chip label={reservation.status} size="small" color={reservation.status === 'pending' ? 'warning' : reservation.status === 'confirmed' ? 'success' : 'error'} />
                                                 </TableCell>
-                                                <TableCell>{reservation.tenant?.name || '-'}</TableCell>
+                                                <TableCell sx={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                    {reservation.status === 'cancelled' ? reservation.cancellation_reason || '-' : '-'}
+                                                </TableCell>
+                                                <TableCell>{reservation.tenant?.name || tenant?.name || '-'}</TableCell>
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                         {/* Show only if pending */}
                                                         {reservation.status === 'pending' && (
                                                             <>
-                                                                <Button onClick={() => router.visit(route('order.menu', { reservation_id: reservation.id, order_type: 'reservation' }))} size="small" variant="contained" color="primary" startIcon={<ShoppingCartIcon />}></Button>
+                                                                <Button onClick={() => router.visit(route('order.menu', { reservation_id: reservation.id, order_type: 'dineIn' }))} size="small" variant="contained" color="primary" startIcon={<ShoppingCartIcon />}></Button>
                                                             </>
                                                         )}
                                                         <Button onClick={() => handleInvoiceClick(reservation)} size="small" variant="contained" color="secondary" startIcon={<ReceiptLongIcon />}></Button>
@@ -214,7 +234,7 @@ const Reservations = () => {
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={12} align="center">
+                                            <TableCell colSpan={14} align="center">
                                                 No reservations found.
                                             </TableCell>
                                         </TableRow>
@@ -383,7 +403,18 @@ const Reservations = () => {
                                 <CloseIcon />
                             </Button>
                         </DialogTitle>
-                        <DialogContent>Are you sure you want to cancel reservation #{selectedReservation?.id}?</DialogContent>
+                        <DialogContent>
+                            <Typography sx={{ mb: 2 }}>Are you sure you want to cancel reservation #{selectedReservation?.id}?</Typography>
+                            <TextField
+                                fullWidth
+                                label="Cancellation Reason"
+                                value={cancelReason}
+                                onChange={(e) => setCancelReason(e.target.value)}
+                                multiline
+                                minRows={3}
+                                required
+                            />
+                        </DialogContent>
                         <DialogActions>
                             <Button variant="outlined" onClick={() => setShowCancelModal(false)}>
                                 No

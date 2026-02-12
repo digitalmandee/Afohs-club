@@ -131,6 +131,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         {/* <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-In</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Check-Out</TableCell> */}
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member / Guest</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Membership No</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Member Type</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Room</TableCell>
 
                                         <TableCell sx={{ fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>Rent</TableCell>
@@ -164,6 +166,17 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                             const paid = parseFloat(booking.invoice?.paid_amount || 0) + paidOrdersSum;
                                             const balance = Math.max(0, invoiceTotal - paid);
 
+                                            const memberType = booking.member ? 'Member' : booking.corporateMember || booking.corporate_member ? 'Corporate' : booking.customer ? 'Guest' : booking.employee ? 'Employee' : 'Unknown';
+                                            const membershipNo = booking.member
+                                                ? booking.member.membership_no
+                                                : booking.corporateMember || booking.corporate_member
+                                                  ? (booking.corporateMember || booking.corporate_member).membership_no
+                                                  : booking.customer
+                                                    ? booking.customer.customer_no
+                                                    : booking.employee
+                                                      ? booking.employee.employee_id || booking.employee.employee_no || booking.employee.id
+                                                      : '-';
+
                                             return (
                                                 <TableRow key={booking.id} style={{ borderBottom: '1px solid #eee' }}>
                                                     <TableCell sx={{ color: '#000', fontWeight: 600, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.id}</TableCell>
@@ -186,6 +199,8 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                                             <span>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember || booking.corporate_member ? (booking.corporateMember || booking.corporate_member).full_name : ''}</span>
                                                         </Tooltip>
                                                     </TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{membershipNo || '-'}</TableCell>
+                                                    <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{memberType}</TableCell>
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{booking.room?.name}</TableCell>
 
                                                     <TableCell sx={{ color: '#7F7F7F', fontWeight: 400, fontSize: '13px', whiteSpace: 'nowrap' }}>{Math.round(booking.per_day_charge)}</TableCell>
@@ -223,7 +238,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={14} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
+                                            <TableCell colSpan={16} align="center" sx={{ py: 4, color: '#7F7F7F' }}>
                                                 No bookings found
                                             </TableCell>
                                         </TableRow>
@@ -231,7 +246,7 @@ const RoomCheckOut = ({ bookings, filters }) => {
                                 </TableBody>
                                 <TableFooter>
                                     <TableRow style={{ backgroundColor: '#f0f0f0' }}>
-                                        <TableCell colSpan={5} sx={{ fontWeight: 'bold' }}>
+                                        <TableCell colSpan={7} sx={{ fontWeight: 'bold' }}>
                                             Grand Total
                                         </TableCell>
                                         {/* Nights Total */}

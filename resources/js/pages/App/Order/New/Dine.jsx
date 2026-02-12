@@ -308,10 +308,10 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                                         elevation={0}
                                         sx={{
                                             p: 1.5,
-                                            bgcolor: table.id === orderDetails.table?.id ? '#FCF7EF' : table.available ? 'white' : '#f5f5f5',
+                                            bgcolor: table.id === orderDetails.table?.id ? '#FCF7EF' : table.is_available ? 'white' : '#f5f5f5',
                                             border: table.id === orderDetails.table?.id ? '1px solid #A27B5C' : '1px solid #e0e0e0',
                                             borderRadius: 1,
-                                            opacity: table.available ? 1 : 0.7,
+                                            opacity: table.is_available ? 1 : 0.7,
                                         }}
                                     >
                                         <Box

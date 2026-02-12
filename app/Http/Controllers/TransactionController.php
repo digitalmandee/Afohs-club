@@ -169,7 +169,14 @@ class TransactionController extends Controller
         ]);
 
         $order = Order::findOrFail($request->order_id);
-        $totalDue = $order->total_price;
+        $invoiceForDue = FinancialInvoice::whereJsonContains('data', ['order_id' => $order->id])->first();
+        $invoiceTotal = $invoiceForDue ? (float) ($invoiceForDue->total_price ?? 0) : (float) ($order->total_price ?? 0);
+        $invoiceAdvance = $invoiceForDue ? (float) ($invoiceForDue->advance_payment ?? 0) : 0;
+        if ($invoiceAdvance <= 0) {
+            $invoiceAdvance = (float) ($order->down_payment ?? 0);
+        }
+        $invoicePaid = $invoiceForDue ? (float) ($invoiceForDue->paid_amount ?? 0) : 0;
+        $totalDue = max(0, $invoiceTotal - $invoiceAdvance - $invoicePaid);
 
         $paidAmount = $request->paid_amount;
         $entAmount = 0;
@@ -288,10 +295,31 @@ class TransactionController extends Controller
                 $invoiceData['bank_charges_amount'] = round($bankChargesAmount, 0);
             }
 
+            if ($invoice->member_id) {
+                $payerType = \App\Models\Member::class;
+                $payerId = $invoice->member_id;
+            } elseif ($invoice->customer_id) {
+                $payerType = \App\Models\Customer::class;
+                $payerId = $invoice->customer_id;
+            } elseif ($invoice->employee_id) {
+                $payerType = \App\Models\Employee::class;
+                $payerId = $invoice->employee_id;
+            } else {
+                $payerType = \App\Models\Member::class;
+                $payerId = null;
+            }
+
+            $advanceToPersist = round((float) ($invoice->advance_payment ?? 0), 0);
+            if ($advanceToPersist <= 0 && $invoiceAdvance > 0) {
+                $advanceToPersist = round((float) $invoiceAdvance, 0);
+                $invoiceData['advance_deducted'] = $advanceToPersist;
+            }
+
             $invoice->update([
                 'status' => 'paid',
                 'payment_date' => now(),
                 'payment_method' => $request->payment_method,
+                'advance_payment' => $advanceToPersist,
                 'paid_amount' => round((float) $order->paid_amount, 0),
                 'ent_reason' => $order->ent_reason,
                 'ent_comment' => $order->ent_comment,
@@ -302,6 +330,108 @@ class TransactionController extends Controller
                 'invoiceable_type' => Order::class,
                 'data' => $invoiceData,  // Save updated JSON
             ]);
+
+            $invoiceItem = \App\Models\FinancialInvoiceItem::where('invoice_id', $invoice->id)
+                ->where('fee_type', '7')  // Food Order
+                ->where('description', 'like', "%Order #{$order->id}%")
+                ->first();
+
+            if (!$invoiceItem) {
+                $invoiceItem = $invoice->items()->first();
+            }
+
+            if ($invoiceItem && $advanceToPersist > 0) {
+                $reservationAdvanceTx = null;
+                if ($order->reservation_id) {
+                    $reservationAdvanceTx = \App\Models\Transaction::where('type', 'credit')
+                        ->where('reference_type', \App\Models\Reservation::class)
+                        ->where('reference_id', $order->reservation_id)
+                        ->where('amount', $advanceToPersist)
+                        ->latest('id')
+                        ->first();
+                }
+
+                if ($reservationAdvanceTx) {
+                    $advanceReceipt = null;
+                    if ($reservationAdvanceTx->receipt_id) {
+                        $advanceReceipt = \App\Models\FinancialReceipt::find($reservationAdvanceTx->receipt_id);
+                    }
+
+                    if (!$advanceReceipt) {
+                        $advanceReceipt = \App\Models\FinancialReceipt::create([
+                            'payer_type' => $payerType,
+                            'payer_id' => $payerId,
+                            'receipt_no' => 'REC-' . time() . '-ADV-' . $order->id,
+                            'amount' => $advanceToPersist,
+                            'advance_amount' => $advanceToPersist,
+                            'receipt_date' => now(),
+                            'payment_method' => 'cash',
+                            'remarks' => "Advance Payment for Reservation #{$order->reservation_id}",
+                            'created_by' => Auth::id(),
+                        ]);
+                        $reservationAdvanceTx->receipt_id = $advanceReceipt->id;
+                    }
+
+                    \App\Models\TransactionRelation::firstOrCreate(
+                        [
+                            'invoice_id' => $invoice->id,
+                            'receipt_id' => $advanceReceipt->id,
+                        ],
+                        [
+                            'amount' => $advanceToPersist,
+                        ]
+                    );
+
+                    $reservationAdvanceTx->invoice_id = $invoice->id;
+                    $reservationAdvanceTx->reference_type = \App\Models\FinancialInvoiceItem::class;
+                    $reservationAdvanceTx->reference_id = $invoiceItem->id;
+                    $reservationAdvanceTx->description = 'Advance Payment (Rec #' . $advanceReceipt->receipt_no . ') - Order #' . $order->id;
+                    $reservationAdvanceTx->payable_type = $payerType;
+                    $reservationAdvanceTx->payable_id = $payerId;
+                    $reservationAdvanceTx->save();
+                } else {
+                    $existingAdvanceCredit = \App\Models\Transaction::where('invoice_id', $invoice->id)
+                        ->where('type', 'credit')
+                        ->where('reference_type', \App\Models\FinancialInvoiceItem::class)
+                        ->where('reference_id', $invoiceItem->id)
+                        ->where('description', 'like', 'Advance Payment%')
+                        ->exists();
+
+                    if (!$existingAdvanceCredit) {
+                        $advanceReceipt = \App\Models\FinancialReceipt::create([
+                            'payer_type' => $payerType,
+                            'payer_id' => $payerId,
+                            'receipt_no' => 'REC-' . time() . '-ADV-' . $order->id,
+                            'amount' => $advanceToPersist,
+                            'advance_amount' => $advanceToPersist,
+                            'receipt_date' => now(),
+                            'payment_method' => 'cash',
+                            'remarks' => "Advance Payment for Order #{$order->id}",
+                            'created_by' => Auth::id(),
+                        ]);
+
+                        \App\Models\TransactionRelation::create([
+                            'invoice_id' => $invoice->id,
+                            'receipt_id' => $advanceReceipt->id,
+                            'amount' => $advanceToPersist,
+                        ]);
+
+                        \App\Models\Transaction::create([
+                            'type' => 'credit',
+                            'amount' => $advanceToPersist,
+                            'date' => now(),
+                            'description' => 'Advance Payment (Rec #' . $advanceReceipt->receipt_no . ') - Order #' . $order->id,
+                            'payable_type' => $payerType,
+                            'payable_id' => $payerId,
+                            'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                            'reference_id' => $invoiceItem->id,
+                            'invoice_id' => $invoice->id,
+                            'receipt_id' => $advanceReceipt->id,
+                            'created_by' => Auth::id(),
+                        ]);
+                    }
+                }
+            }
 
             // Create Bank Charges Debit Transaction if applicable
             if ($bankChargesAmount > 0) {
@@ -322,8 +452,8 @@ class TransactionController extends Controller
                     'amount' => $bankChargesAmount,
                     'date' => now(),
                     'description' => 'Bank Charges for Order Payment',
-                    'payable_type' => 'App\Models\Member',  // Simplified, should match invoice payer logic ideally
-                    'payable_id' => $invoice->member_id,
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
                     'reference_type' => \App\Models\FinancialInvoiceItem::class,
                     'reference_id' => $bcItem->id,
                     'invoice_id' => $invoice->id,
@@ -333,25 +463,12 @@ class TransactionController extends Controller
 
             // 3. Create Financial Receipt & Transaction (Credits)
             // Always create receipt for the PAID portion (if > 0)
-            if ($paidAmount > 0) {
-                // Find the single summary item for this order
-                $invoiceItem = \App\Models\FinancialInvoiceItem::where('invoice_id', $invoice->id)
-                    ->where('fee_type', '7')  // Food Order
-                    ->where('description', 'like', "%Order #{$order->id}%")
-                    ->first();
-
-                // If no summary item found (legacy data?), try finding ANY item linked to this invoice to attach credit to
-                if (!$invoiceItem) {
-                    $invoiceItem = $invoice->items()->first();
-                }
-
-                if ($invoiceItem) {
+            if ($paidAmount > 0 && $invoiceItem) {
                     // Create Receipt
                     $receipt = \App\Models\FinancialReceipt::create([
-                        // 'financial_invoice_id' => $invoice->id, // Removed as column likely doesn't exist in model
-                        'payer_type' => 'App\Models\Member',  // Assuming Member payer for now
-                        'payer_id' => $invoice->member_id,
-                        'receipt_no' => 'REC-' . time(),  // Simple generation or use helper if available
+                        'payer_type' => $payerType,
+                        'payer_id' => $payerId,
+                        'receipt_no' => 'REC-' . time() . '-PAY-' . $order->id,
                         'amount' => $paidAmount,
                         'receipt_date' => now(),
                         'payment_method' => $request->payment_method,
@@ -366,23 +483,29 @@ class TransactionController extends Controller
                             'ent_details' => $entDetails ? "ENT Value: $entAmount" : null,
                             'cts_details' => $ctsAmount > 0 ? "CTS Value: $ctsAmount" : null,
                         ]),
-                        // 'receipt_path' => $receiptPath, // Model doesn't have receipt_path in fillable? Wait, I didn't see it.
                         'created_by' => Auth::id(),
+                    ]);
+
+                    \App\Models\TransactionRelation::create([
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,
+                        'amount' => $paidAmount,
                     ]);
 
                     // Create Credit Transaction
                     \App\Models\Transaction::create([
-                        'financial_invoice_item_id' => $invoiceItem->id,
-                        'financial_receipt_id' => $receipt->id,
                         'type' => 'credit',
                         'amount' => $paidAmount,  // Total amount credited
                         'date' => now(),
-                        'payment_method' => $request->payment_method,
-                        'transaction_type_id' => 1,  // Payment
-                        'description' => "Payment for Order #{$order->id}",
+                        'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ') - Order #' . $order->id,
+                        'payable_type' => $payerType,
+                        'payable_id' => $payerId,
+                        'reference_type' => \App\Models\FinancialInvoiceItem::class,
+                        'reference_id' => $invoiceItem->id,
+                        'invoice_id' => $invoice->id,
+                        'receipt_id' => $receipt->id,
                         'created_by' => Auth::id(),
                     ]);
-                }
             }
         }
 

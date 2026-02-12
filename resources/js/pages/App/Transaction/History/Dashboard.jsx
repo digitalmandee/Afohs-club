@@ -660,8 +660,10 @@ const Dashboard = ({ orders, filters, totals }) => {
 
                                     const entVal = getEntValue(order);
                                     const ctsVal = getCtsValue(order);
-                                    // Balance = Total - Paid - ENT - CTS
-                                    const balance = (order.total_price || 0) - (order.paid_amount || 0) - entVal - ctsVal;
+                                    const bankCharges = Number(order.invoice?.data?.bank_charges_amount || 0);
+                                    const advance = Number(order.invoice?.advance_payment || order.down_payment || order.invoice?.data?.advance_deducted || 0);
+                                    const paidTotal = Number(order.paid_amount || 0) + advance;
+                                    const balance = (order.total_price || 0) + bankCharges - paidTotal - entVal - ctsVal;
 
                                     return (
                                         <TableRow key={order.id} hover>
@@ -671,7 +673,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                                             <TableCell>{getClientName(order)}</TableCell>
                                             <TableCell>{order.table?.table_no || '-'}</TableCell>
                                             <TableCell>Rs. {order.total_price?.toLocaleString()}</TableCell>
-                                            <TableCell>Rs. {order.paid_amount?.toLocaleString()}</TableCell>
+                                            <TableCell>Rs. {paidTotal?.toLocaleString()}</TableCell>
                                             <TableCell sx={{ color: balance > 5 ? 'error.main' : 'success.main', fontWeight: 'bold' }}>Rs. {Math.max(0, balance).toLocaleString()}</TableCell>
                                             <TableCell>
                                                 <Chip label={formatPaymentMethod(order.payment_method)} size="small" color="primary" variant="outlined" />

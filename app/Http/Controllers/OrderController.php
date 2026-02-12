@@ -225,6 +225,8 @@ class OrderController extends Controller
                     ->orWhere('payment_status', '!=', 'paid');
             });
 
+            $query->where('status', '!=', 'saved');
+
             // 🔍 Search By ID
             if ($request->filled('search_id')) {
                 $query->where('id', $request->search_id);
@@ -324,6 +326,25 @@ class OrderController extends Controller
             // Check if invoice already exists
             $existingInvoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
             if ($existingInvoice) {
+                $advancePayment = (float) ($order->down_payment ?? 0);
+                if ($advancePayment <= 0 && $order->reservation_id) {
+                    $reservation = Reservation::find($order->reservation_id);
+                    if ($reservation && (float) ($reservation->down_payment ?? 0) > 0) {
+                        $advancePayment = (float) $reservation->down_payment;
+                        $order->update(['down_payment' => $advancePayment]);
+                    }
+                }
+
+                if ($advancePayment > 0 && (float) ($existingInvoice->advance_payment ?? 0) <= 0) {
+                    $existingData = $existingInvoice->data ?? [];
+                    $existingData['reservation_id'] = $existingData['reservation_id'] ?? $order->reservation_id;
+                    $existingData['advance_deducted'] = $existingData['advance_deducted'] ?? $advancePayment;
+                    $existingInvoice->update([
+                        'advance_payment' => $advancePayment,
+                        'data' => $existingData,
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Invoice already exists.',
@@ -335,16 +356,28 @@ class OrderController extends Controller
             $totalPrice = $order->total_price;
             $items = $order->orderItems;
 
+            $advancePayment = (float) ($order->down_payment ?? 0);
+            if ($advancePayment <= 0 && $order->reservation_id) {
+                $reservation = Reservation::find($order->reservation_id);
+                if ($reservation && (float) ($reservation->down_payment ?? 0) > 0) {
+                    $advancePayment = (float) $reservation->down_payment;
+                    $order->update(['down_payment' => $advancePayment]);
+                }
+            }
+
             $invoiceData = [
                 'invoice_no' => $this->getInvoiceNo(),
                 'invoice_type' => 'food_order',
                 'amount' => $order->amount,  // Subtotal
                 'total_price' => $totalPrice,  // Grand Total
+                'advance_payment' => $advancePayment > 0 ? $advancePayment : 0,
                 'payment_method' => null,
                 'issue_date' => Carbon::now(),
                 'status' => 'unpaid',
                 'data' => [
                     'order_id' => $order->id,
+                    'reservation_id' => $order->reservation_id,
+                    'advance_deducted' => $advancePayment > 0 ? $advancePayment : 0,
                 ],
                 'invoiceable_id' => $order->id,
                 'invoiceable_type' => Order::class,
@@ -426,6 +459,21 @@ class OrderController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
+            if ($advancePayment > 0 && $order->reservation_id) {
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $advancePayment,
+                    'date' => now(),
+                    'description' => 'Advance Payment Adjustment - Reservation #' . $order->reservation_id,
+                    'payable_type' => $order->member ? Member::class : ($order->customer ? Customer::class : Employee::class),
+                    'payable_id' => $order->member_id ?? ($order->customer_id ?? $order->employee_id),
+                    'reference_type' => Reservation::class,
+                    'reference_id' => $order->reservation_id,
+                    'invoice_id' => $invoice->id,
+                    'created_by' => Auth::id(),
+                ]);
+            }
+
             // Update Order Status
             $order->update([
                 'status' => 'completed',
@@ -492,6 +540,7 @@ class OrderController extends Controller
                 ->with([
                     'member:id,full_name,membership_no',
                     'customer:id,name,customer_no',
+                    'employee:id,name,employee_id',
                     'table:id,table_no,floor_id',
                     'order.orderItems'
                 ])
@@ -721,6 +770,7 @@ class OrderController extends Controller
             'order_items' => 'required|array',
             'order_items.*.id' => 'required|exists:products,id',
             'price' => 'required|numeric',
+            'collective_discount_percent' => 'nullable|numeric|min:0|max:100',
             'kitchen_note' => 'nullable|string',
             'staff_note' => 'nullable|string',
             'payment_note' => 'nullable|string',
@@ -826,6 +876,53 @@ class OrderController extends Controller
                 $existingOrder = Order::find($request->id);
             }
 
+            $tableId = $request->input('table.id');
+            if ($tableId && !$request->id && in_array($orderData['status'], ['pending', 'in_progress'], true)) {
+                $conflictingOrder = Order::where('table_id', $tableId)
+                    // ->where('tenant_id', $activeShift->tenant_id)
+                    ->whereDate('start_date', $activeShift->start_date)
+                    ->whereIn('status', ['pending', 'in_progress'])
+                    ->where(function ($q) {
+                        $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
+                    })
+                    ->latest('id')
+                    ->first();
+
+                if ($conflictingOrder) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This table already has an active order (#' . $conflictingOrder->id . '). Please continue the same order.',
+                        'existing_order_id' => $conflictingOrder->id,
+                    ], 409);
+                }
+
+                $orderDateTime = Carbon::parse($activeShift->start_date . ' ' . $orderData['start_time'], 'Asia/Karachi');
+
+                $reservationConflicts = Reservation::select('id', 'date', 'start_time', 'end_time', 'status')
+                    ->where('table_id', $tableId)
+                    ->whereDate('date', $activeShift->start_date)
+                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->when($request->filled('reservation_id'), function ($q) use ($request) {
+                        $q->where('id', '!=', $request->reservation_id);
+                    })
+                    ->get();
+
+                foreach ($reservationConflicts as $reservation) {
+                    $startTime = Carbon::parse($reservation->date . ' ' . $reservation->start_time, 'Asia/Karachi')->subMinutes(15);
+                    $endTime = Carbon::parse($reservation->date . ' ' . $reservation->end_time, 'Asia/Karachi')->addMinutes(5);
+
+                    if ($reservation->status !== 'completed' && $orderDateTime->between($startTime, $endTime)) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'This table is reserved during this time (Reservation #' . $reservation->id . ').',
+                            'conflicting_reservation_id' => $reservation->id,
+                        ], 409);
+                    }
+                }
+            }
+
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
                 $orderData
@@ -863,13 +960,51 @@ class OrderController extends Controller
             }
 
             // Mark reservation completed (ONLY if order is active, not saved)
-            if ($orderData['status'] !== 'saved' && $request->order_type === 'reservation' && $request->filled('reservation_id')) {
+            if ($orderData['status'] !== 'saved' && $request->filled('reservation_id')) {
                 Reservation::where('id', $request->reservation_id)->update([
                     'status' => 'completed'
                 ]);
             }
 
-            $groupedByKitchen = collect($request->order_items)
+            $orderItems = $request->input('order_items', []);
+            if (!is_array($orderItems)) {
+                $orderItems = [];
+            }
+
+            $collectivePct = $request->input('collective_discount_percent');
+            if ($collectivePct !== null && $collectivePct !== '' && is_numeric($collectivePct)) {
+                $productIds = collect($orderItems)->pluck('id')->filter()->unique()->values()->all();
+                $productsById = Product::whereIn('id', $productIds)
+                    ->get()
+                    ->mapWithKeys(function ($p) {
+                        return [
+                            $p->id => [
+                                'is_discountable' => $p->is_discountable !== false,
+                                'max_discount' => $p->max_discount,
+                                'max_discount_type' => $p->max_discount_type,
+                                'base_price' => $p->base_price,
+                            ]
+                        ];
+                    })
+                    ->all();
+
+                $orderItems = $this->applyCollectiveDiscountToItems($orderItems, $productsById, (float) $collectivePct);
+            }
+
+            $orderItems = array_values(array_map(function ($item) {
+                if (!is_array($item)) {
+                    return [];
+                }
+                if (!isset($item['product_id']) && isset($item['id'])) {
+                    $item['product_id'] = $item['id'];
+                }
+                if (!isset($item['id']) && isset($item['product_id'])) {
+                    $item['id'] = $item['product_id'];
+                }
+                return $item;
+            }, $orderItems));
+
+            $groupedByKitchen = collect($orderItems)
                 ->filter(function ($item) {
                     return !empty($item['id']);
                 })
@@ -1053,7 +1188,7 @@ class OrderController extends Controller
                 $invoice = FinancialInvoice::create($invoiceData);
 
                 // ✅ Create Invoice Items & DEBIT Transactions (Aggregated)
-                if (!empty($request->order_items)) {
+                if (!empty($orderItems)) {
                     $totalGross = 0;
                     $totalDiscount = 0;
                     $totalTax = 0;
@@ -1062,10 +1197,10 @@ class OrderController extends Controller
                     $taxRate = $request->tax ?? 0;  // Tax rate (e.g. 0.16)
 
                     // Fetch products to check is_taxable
-                    $productIds = collect($request->order_items)->pluck('product_id')->filter()->toArray();
+                    $productIds = collect($orderItems)->pluck('product_id')->filter()->toArray();
                     $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
-                    foreach ($request->order_items as $item) {
+                    foreach ($orderItems as $item) {
                         $qty = $item['quantity'] ?? 1;
                         $price = $item['price'] ?? 0;
                         $subTotal = $qty * $price;
@@ -1095,7 +1230,7 @@ class OrderController extends Controller
 
                     $totalNet = $totalGross - $totalDiscount + $totalTax;
 
-                    $description = 'Food Order Items (' . count($request->order_items) . ') - ' . implode(', ', $itemNames) . (count($request->order_items) > 3 ? '...' : '');
+                    $description = 'Food Order Items (' . count($orderItems) . ') - ' . implode(', ', $itemNames) . (count($orderItems) > 3 ? '...' : '');
 
                     $invoiceItem = FinancialInvoiceItem::create([
                         'invoice_id' => $invoice->id,
@@ -1169,7 +1304,7 @@ class OrderController extends Controller
                     if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
                         // Calculate from items
                         $entIds = $paymentData['ent_items'];
-                        foreach ($request->order_items as $item) {
+                        foreach ($orderItems as $item) {
                             if (in_array($item['id'], $entIds)) {
                                 $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
                                 $entAmount += $iPrice;
@@ -1286,6 +1421,75 @@ class OrderController extends Controller
                 'message' => $th->getMessage(),
             ], 500);
         }
+    }
+
+    private function applyCollectiveDiscountToItems(array $orderItems, array $productsById, float $percent): array
+    {
+        $pct = max(0.0, min(100.0, $percent));
+
+        foreach ($orderItems as $index => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $productId = $item['id'] ?? ($item['product_id'] ?? null);
+            if (!$productId || !isset($productsById[$productId])) {
+                continue;
+            }
+
+            $product = $productsById[$productId];
+            if (empty($product['is_discountable'])) {
+                continue;
+            }
+
+            $qty = isset($item['quantity']) ? (int) $item['quantity'] : 1;
+            $qty = $qty > 0 ? $qty : 1;
+
+            $basePrice = isset($item['price'])
+                ? (float) $item['price']
+                : (isset($product['base_price']) ? (float) $product['base_price'] : 0.0);
+
+            $variantsSum = 0.0;
+            if (isset($item['variants']) && is_array($item['variants'])) {
+                foreach ($item['variants'] as $variant) {
+                    if (is_array($variant) && isset($variant['price'])) {
+                        $variantsSum += (float) $variant['price'];
+                    }
+                }
+            }
+
+            $totalPrice = ($basePrice + $variantsSum) * $qty;
+
+            $effectivePct = $pct;
+            $maxDiscount = isset($product['max_discount']) ? (float) $product['max_discount'] : 0.0;
+            if ($maxDiscount > 0) {
+                $maxType = $product['max_discount_type'] ?? 'percentage';
+                if ($maxType === 'percentage') {
+                    $effectivePct = min($effectivePct, $maxDiscount);
+                } else {
+                    $maxAmt = $maxDiscount * $qty;
+                    $maxPctEquivalent = $totalPrice > 0 ? ($maxAmt / $totalPrice) * 100 : 0.0;
+                    $effectivePct = min($effectivePct, $maxPctEquivalent);
+                }
+            }
+
+            $effectivePct = round($effectivePct, 2);
+            $discountAmount = round($totalPrice * ($effectivePct / 100));
+            if ($discountAmount > $totalPrice) {
+                $discountAmount = $totalPrice;
+            }
+
+            $item['quantity'] = $qty;
+            $item['price'] = $basePrice;
+            $item['total_price'] = $totalPrice;
+            $item['discount_type'] = 'percentage';
+            $item['discount_value'] = $effectivePct;
+            $item['discount_amount'] = $discountAmount;
+
+            $orderItems[$index] = $item;
+        }
+
+        return $orderItems;
     }
 
     protected function printItem($printer, $item)
@@ -1665,7 +1869,7 @@ class OrderController extends Controller
                 $order->update(['payment_status' => 'awaiting']);
 
                 // Mark reservation as completed
-                if ($order->order_type === 'reservation' && $order->reservation_id) {
+                if ($order->reservation_id) {
                     Reservation::where('id', $order->reservation_id)->update(['status' => 'completed']);
                 }
 
@@ -1748,7 +1952,7 @@ class OrderController extends Controller
                     ]);
 
                     // If reservation order with advance payment, create credit entry
-                    if ($order->order_type === 'reservation' && $order->reservation_id) {
+                    if ($order->reservation_id) {
                         $reservation = Reservation::find($order->reservation_id);
                         if ($reservation && $reservation->down_payment > 0) {
                             // Create credit transaction for advance payment
@@ -2036,6 +2240,12 @@ class OrderController extends Controller
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->limit(1),
                 'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_advance_payment' => FinancialInvoice::select('advance_payment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_advance_deducted' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.advance_deducted')), '0') AS DECIMAL(10,2))")
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->limit(1),
                 'invoice_ent_reason' => FinancialInvoice::select('ent_reason')

@@ -64,8 +64,12 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         if (bankChargesEnabled && bankChargesValue > 0) {
             let charges = 0;
             if (bankChargesType === 'percentage') {
-                const grandTotal = parsePrice(invoiceData?.total_price || 0);
-                charges = round0(grandTotal * (bankChargesValue / 100));
+                const total = parsePrice(invoiceData?.total_price ?? invoiceData?.invoice?.total_price ?? 0);
+                const alreadyPaid =
+                    parsePrice(invoiceData?.paid_amount ?? invoiceData?.invoice?.paid_amount ?? 0) +
+                    parsePrice(invoiceData?.advance_payment ?? invoiceData?.invoice?.advance_payment ?? invoiceData?.down_payment ?? invoiceData?.invoice?.data?.advance_deducted ?? invoiceData?.data?.advance_deducted ?? 0);
+                const remaining = Math.max(0, total - alreadyPaid);
+                charges = round0(remaining * (bankChargesValue / 100));
             } else {
                 charges = round0(bankChargesValue);
             }
@@ -81,6 +85,21 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         if (!price) return 0;
         return parseFloat(price.toString().replace(/,/g, ''));
     };
+
+    const getTotalPrice = () => parsePrice(invoiceData?.total_price ?? invoiceData?.invoice?.total_price ?? 0);
+    const getAdvancePaid = () =>
+        parsePrice(
+            invoiceData?.advance_payment ??
+                invoiceData?.invoice?.advance_payment ??
+                invoiceData?.down_payment ??
+                invoiceData?.invoice?.data?.advance_deducted ??
+                invoiceData?.data?.advance_deducted ??
+                0,
+        );
+    const getPaidCash = () => parsePrice(invoiceData?.paid_amount ?? invoiceData?.invoice?.paid_amount ?? 0);
+
+    const getAlreadyPaid = () => getPaidCash() + getAdvancePaid();
+    const getDueTotal = () => Math.max(0, getTotalPrice() - getAlreadyPaid());
 
     // Calculate ENT Amount when items selected
     useEffect(() => {
@@ -98,7 +117,9 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     // Calculate Remaining Balance or Total with Charges
     useEffect(() => {
-        const grandTotal = round0(parsePrice(invoiceData?.total_price));
+        const total = round0(parsePrice(invoiceData?.total_price));
+        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
+        const grandTotal = Math.max(0, total - alreadyPaid);
         const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
 
@@ -133,11 +154,16 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         setInputAmount(cleanAmount);
 
         // Calculate customer changes based on remaining after ENT/CTS and including Bank Charges
-        const grandTotal = round0(parsePrice(invoiceData.total_price));
+        const total = round0(parsePrice(invoiceData?.total_price));
+        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
+        const grandTotal = Math.max(0, total - alreadyPaid);
         const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
         const bankCharges = bankChargesEnabled ? round0(bankChargesAmount || 0) : 0;
-        const dueAmount = round0(grandTotal + bankCharges - entDeduction - ctsDeduction);
+        const dueAmount = Math.max(
+            0,
+            entEnabled || ctsEnabled ? round0(grandTotal - entDeduction - ctsDeduction) : round0(grandTotal + bankCharges),
+        );
 
         const changes = round0(parseFloat(cleanAmount) - dueAmount);
         setCustomerChanges(String(Math.round(changes < 0 ? 0 : changes)));
@@ -145,11 +171,16 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
 
     const handleNumberClick = (number) => {
         let newAmount;
-        const grandTotal = round0(parsePrice(invoiceData.total_price));
+        const total = round0(parsePrice(invoiceData?.total_price));
+        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
+        const grandTotal = Math.max(0, total - alreadyPaid);
         const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
         const bankCharges = bankChargesEnabled ? round0(bankChargesAmount || 0) : 0;
-        const dueAmount = round0(grandTotal + bankCharges - entDeduction - ctsDeduction);
+        const dueAmount = Math.max(
+            0,
+            entEnabled || ctsEnabled ? round0(grandTotal - entDeduction - ctsDeduction) : round0(grandTotal + bankCharges),
+        );
 
         if (parseFloat(inputAmount) === 0 && !inputAmount.includes('.')) {
             newAmount = number;
@@ -168,11 +199,16 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleDeleteClick = () => {
-        const grandTotal = parsePrice(invoiceData.total_price);
-        const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
-        const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
-        const bankCharges = bankChargesEnabled ? parseFloat(bankChargesAmount || 0) : 0;
-        const dueAmount = grandTotal + bankCharges - entDeduction - ctsDeduction;
+        const total = round0(parsePrice(invoiceData?.total_price));
+        const alreadyPaid = round0(parsePrice(invoiceData?.paid_amount || 0)) + round0(parsePrice(invoiceData?.advance_payment || 0));
+        const grandTotal = Math.max(0, total - alreadyPaid);
+        const entDeduction = entEnabled ? round0(entAmount || 0) : 0;
+        const ctsDeduction = ctsEnabled ? round0(ctsAmount || 0) : 0;
+        const bankCharges = bankChargesEnabled ? round0(bankChargesAmount || 0) : 0;
+        const dueAmount = Math.max(
+            0,
+            entEnabled || ctsEnabled ? round0(grandTotal - entDeduction - ctsDeduction) : round0(grandTotal + bankCharges),
+        );
 
         if (inputAmount.length > 1) {
             const newAmount = inputAmount.slice(0, -1);
@@ -203,7 +239,9 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handleOrderAndPay = async () => {
-        const grandTotal = round2(parsePrice(invoiceData.total_price));
+        const total = round2(parsePrice(invoiceData.total_price));
+        const alreadyPaid = round2(parsePrice(invoiceData?.paid_amount || 0)) + round2(parsePrice(invoiceData?.advance_payment || 0));
+        const grandTotal = Math.max(0, total - alreadyPaid);
         const entDeduction = entEnabled ? round2(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? round2(ctsAmount || 0) : 0;
         const bcAmount = bankChargesEnabled ? round2(bankChargesAmount || 0) : 0;
@@ -279,7 +317,9 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     };
 
     const handlePayNow = () => {
-        const grandTotal = parsePrice(invoiceData.total_price);
+        const total = parsePrice(invoiceData.total_price);
+        const alreadyPaid = parsePrice(invoiceData?.paid_amount || 0) + parsePrice(invoiceData?.advance_payment || 0);
+        const grandTotal = Math.max(0, total - alreadyPaid);
         const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
         const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
         const bcAmount = bankChargesEnabled ? parseFloat(bankChargesAmount || 0) : 0;
@@ -423,12 +463,12 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
     useEffect(() => {
         if (activePaymentMethod === 'split_payment') {
             const totalPaid = Number(cashAmount) + Number(creditCardAmount) + Number(bankTransferAmount);
-            const total = parsePrice(invoiceData?.total_price);
-            const change = totalPaid - total;
+            const due = getDueTotal();
+            const change = totalPaid - due;
             setCustomerChanges((change < 0 ? 0 : change).toFixed(2));
             setInputAmount(totalPaid.toString()); // Optional: track total paid in inputAmount too
         }
-    }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData?.total_price, activePaymentMethod]);
+    }, [cashAmount, creditCardAmount, bankTransferAmount, invoiceData, activePaymentMethod]);
 
     return (
         <Dialog
@@ -453,8 +493,22 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
         >
             <Box sx={{ display: 'flex', height: '100vh' }}>
                 {/* Left Side - Receipt */}
-                {mode === 'payment' && <Receipt invoiceId={invoiceData?.id} openModal={openPaymentModal} showButtons={false} />}
-                {mode === 'order' && <Receipt invoiceData={invoiceData} openModal={openPaymentModal} showButtons={false} />}
+                <Receipt
+                    invoiceData={
+                        invoiceData
+                            ? {
+                                  ...invoiceData,
+                                  invoice_no: invoiceData.invoice_no ?? invoiceData.invoice?.invoice_no,
+                                  total_price: getTotalPrice(),
+                                  paid_amount: getPaidCash(),
+                                  advance_payment: getAdvancePaid(),
+                                  data: invoiceData.data ?? invoiceData.invoice?.data,
+                              }
+                            : null
+                    }
+                    openModal={openPaymentModal}
+                    showButtons={false}
+                />
 
                 {/* Right Side - Payment */}
                 <Box sx={{ flex: 1, p: 3 }}>
@@ -749,7 +803,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     Remaining Balance to Pay:
                                 </Typography>
                                 <Typography variant="h6" fontWeight="bold" color="warning.main">
-                                    Rs {(parsePrice(invoiceData?.total_price) - (entEnabled ? parseFloat(entAmount || 0) : 0) - (ctsEnabled ? parseFloat(ctsAmount || 0) : 0)).toFixed(2)}
+                                    Rs {Math.max(0, getDueTotal() - (entEnabled ? parseFloat(entAmount || 0) : 0) - (ctsEnabled ? parseFloat(ctsAmount || 0) : 0)).toFixed(2)}
                                 </Typography>
                             </Box>
                         )}
@@ -760,7 +814,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     Total Payable:
                                 </Typography>
                                 <Typography variant="h6" fontWeight="bold" color="primary.main">
-                                    Rs {(parsePrice(invoiceData?.total_price) + parseFloat(bankChargesAmount)).toFixed(2)}
+                                    Rs {(getDueTotal() + parseFloat(bankChargesAmount)).toFixed(2)}
                                 </Typography>
                             </Box>
                         )}
@@ -802,7 +856,7 @@ const PaymentNow = ({ invoiceData, openSuccessPayment, openPaymentModal, handleC
                                     <Button
                                         variant="outlined"
                                         onClick={() => {
-                                            const grandTotal = parsePrice(invoiceData.total_price);
+                                            const grandTotal = getDueTotal();
                                             const entDeduction = entEnabled ? parseFloat(entAmount || 0) : 0;
                                             const ctsDeduction = ctsEnabled ? parseFloat(ctsAmount || 0) : 0;
                                             const bcAmount = bankChargesEnabled ? parseFloat(bankChargesAmount || 0) : 0;

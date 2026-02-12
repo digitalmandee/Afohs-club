@@ -7,7 +7,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Reservation extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, BelongsToTenant;
 
     protected $fillable = [
         'member_id',
@@ -23,6 +23,7 @@ class Reservation extends BaseModel
         'start_time',
         'end_time',
         'status',
+        'cancellation_reason',
         'created_by',
         'updated_by',
         'deleted_by',

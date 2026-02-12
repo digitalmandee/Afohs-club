@@ -6,7 +6,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import { Box, Button, CircularProgress, ClickAwayListener, FormControl, FormControlLabel, Grid, InputAdornment, MenuItem, Paper, Popper, Radio, RadioGroup, Select, TextField, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, ClickAwayListener, FormControl, FormControlLabel, Grid, InputAdornment, InputLabel, MenuItem, Paper, Popper, Radio, RadioGroup, Select, TextField, Typography } from '@mui/material';
 import { StaticDatePicker, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -23,11 +23,12 @@ dayjs.extend(isSameOrBefore);
 
 const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
     // Get from props if available (for table-based navigation)
-    const { selectedFloor: propsFloor, selectedTable: propsTable } = usePage().props;
+    const { selectedFloor: propsFloor, selectedTable: propsTable, tenant } = usePage().props;
 
     const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
     const [availableSlots, setAvailableSlots] = useState([]);
     const [slotsLoading, setSlotsLoading] = useState(false);
+    const advanceAmount = Number(orderDetails.down_payment || 0);
 
     // Read URL params for floor, table, and date
     const urlParams = new URLSearchParams(window.location.search);
@@ -63,7 +64,6 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
         }
     }, [floorTables, initialized, urlFloorId, urlTableId, urlDate, propsFloor, propsTable]);
 
-    const [paymentType, setPaymentType] = useState('percentage');
     const [errors, setErrors] = useState({});
     const [Form, setForm] = useState({});
 
@@ -103,6 +103,72 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
     const openCalendar = Boolean(anchorEl); // Renamed to avoid conflict with Autocomplete 'open' state
     const id = openCalendar ? 'month-year-picker' : undefined;
 
+    const buildReservationInvoiceHtml = ({ reservationId, tableNo }) => {
+        const name = orderDetails.member?.full_name || orderDetails.member?.name || 'Customer';
+        const membershipNo = orderDetails.member?.membership_no || orderDetails.member?.employee_id || orderDetails.member?.customer_no || 'N/A';
+        const typeLabel =
+            orderDetails.member?.booking_type === 'member'
+                ? orderDetails.member?.memberType?.name || 'Member'
+                : orderDetails.member?.booking_type === 'employee'
+                  ? 'Employee'
+                  : 'Guest';
+        const contact = orderDetails.member?.mobile_number_a || orderDetails.member?.contact || orderDetails.member?.phone_no || 'N/A';
+        const dateLabel = orderDetails.date ? dayjs(orderDetails.date).format('YYYY-MM-DD') : '';
+        const tenantName = tenant?.name || '';
+
+        return `
+            <html>
+              <head>
+                <title>Reservation Invoice</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; max-width: 300px; margin: auto; }
+                </style>
+              </head>
+              <body>
+                <div style="padding: 10px; font-family: Arial;">
+                  <div style="text-align: center; margin-bottom: 10px;">
+                    <img src="/assets/Logo.png" alt="AFOHS Logo" style="height: 60px;" />
+                    <h5 style="margin: 5px 0;">AFOHS CLUB</h5>
+                    <p style="font-size: 12px;">Enjoy the Pride</p>
+                    <p style="font-size: 12px;">PAF Falcon Complex</p>
+                  </div>
+
+                  <h6 style="text-align: center; margin: 10px 0;">RESERVATION ESTIMATE</h6>
+
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px;">
+                    <div>
+                      <p style="margin: 2px 0;"><strong>Res #:</strong> ${reservationId ?? ''}</p>
+                      <p style="margin: 2px 0;"><strong>Date:</strong> ${dateLabel}</p>
+                      <p style="margin: 2px 0;"><strong>Time:</strong> ${orderDetails.start_time || ''} - ${orderDetails.end_time || ''}</p>
+                    </div>
+                    <div style="text-align: right;">
+                      <p style="margin: 2px 0;"><strong>Table:</strong> ${tableNo || 'N/A'}</p>
+                      <p style="margin: 2px 0;"><strong>Covers:</strong> ${orderDetails.person_count || ''}</p>
+                      <p style="margin: 2px 0;"><strong>Server:</strong> ${tenantName}</p>
+                    </div>
+                  </div>
+
+                  <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 5px 0; font-size: 12px; margin-bottom: 10px;">
+                    <p style="margin: 2px 0;"><strong>Name:</strong> ${name}</p>
+                    <p style="margin: 2px 0;"><strong>Membership #:</strong> ${membershipNo}</p>
+                    <p style="margin: 2px 0;"><strong>Type:</strong> ${typeLabel}</p>
+                    <p style="margin: 2px 0;"><strong>Contact:</strong> ${contact}</p>
+                  </div>
+
+                  <div style="font-size: 12px; margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                      <span>Advance Paid:</span>
+                      <span>${Number(orderDetails.down_payment || 0)}</span>
+                    </div>
+                  </div>
+
+                  <p style="font-size: 10px; text-align: center; margin-top: 20px;">Thank you for visiting AFOHS Club!</p>
+                </div>
+              </body>
+            </html>
+        `;
+    };
+
     const handleSaveOrder = async (redirectToMenu = false) => {
         const newErrors = {};
 
@@ -129,11 +195,19 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
 
         if (!orderDetails.person_count || orderDetails.person_count < 1) newErrors.person_count = 'Please enter a valid number of persons.';
         if (!orderDetails.down_payment || Number(orderDetails.down_payment) < 1) newErrors.down_payment = 'Advance payment is required (minimum Rs. 1).';
+        if ((orderDetails.paymentMode || 'Cash') !== 'Cash' && !orderDetails.paymentAccount) newErrors.paymentAccount = 'Payment account / reference is required.';
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             enqueueSnackbar('Please fix the errors in the form.', { variant: 'error' });
             return;
+        }
+
+        let printWindow = null;
+        try {
+            printWindow = window.open('', '_blank');
+        } catch {
+            printWindow = null;
         }
 
         try {
@@ -144,6 +218,19 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
             const response = await axios.post(route('order.reservation'), payload);
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
+
+            if (printWindow) {
+                const reservationId = response.data.order?.id;
+                const selectedTableNo = selectedTable?.table_no;
+                const html = buildReservationInvoiceHtml({ reservationId, tableNo: selectedTableNo });
+                printWindow.document.write(html);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            }
 
             if (redirectToMenu) {
                 // If proceeding to menu, clear validation errors but keep details (or maybe not needed if redirecting?)
@@ -158,11 +245,18 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                 handleOrderDetailChange('custom_time', '');
                 handleOrderDetailChange('person_count', '');
                 handleOrderDetailChange('down_payment', '');
+                handleOrderDetailChange('paymentMode', 'Cash');
+                handleOrderDetailChange('paymentAccount', '');
                 handleOrderDetailChange('price', '');
                 setErrors({});
                 router.visit(route('order.new'));
             }
         } catch (error) {
+            if (printWindow) {
+                try {
+                    printWindow.close();
+                } catch {}
+            }
             if (error.response?.status === 422) {
                 setErrors(error.response.data.errors);
                 enqueueSnackbar('Validation error: Please fix the form fields.', { variant: 'error' });
@@ -478,19 +572,21 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                                     <Typography variant="body2" color="#121212">
                                         Advance Amount <span style={{ color: 'red' }}>*</span>
                                     </Typography>
-                                    <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
-                                        <Radio checked={paymentType === 'percentage'} onChange={() => setPaymentType('percentage')} size="small" sx={{ p: 0.5 }} />
-                                        <Typography variant="body2" sx={{ ml: 0.5 }}>
-                                            Percentage
-                                        </Typography>
-                                    </Box>
                                 </Box>
                                 <TextField
                                     fullWidth
                                     size="small"
-                                    type="number"
+                                    type="text"
                                     value={orderDetails.down_payment}
-                                    onChange={(e) => handleOrderDetailChange('down_payment', e.target.value)}
+                                    onChange={(e) => {
+                                        const next = (e.target.value || '').replace(/\D/g, '');
+                                        handleOrderDetailChange('down_payment', next);
+
+                                        if (Number(next || 0) <= 0) {
+                                            handleOrderDetailChange('paymentMode', 'Cash');
+                                            handleOrderDetailChange('paymentAccount', '');
+                                        }
+                                    }}
                                     error={!!errors.down_payment}
                                     helperText={errors.down_payment}
                                     sx={{
@@ -533,10 +629,61 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                                                 </Box>
                                             </InputAdornment>
                                         ),
+                                        inputMode: 'numeric',
                                     }}
                                 />
                             </Box>
                         </Grid>
+                        {advanceAmount > 0 && (
+                            <Grid item xs={6}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.2 }}>
+                                        <Typography variant="body2" color="#121212">
+                                            Payment Mode
+                                        </Typography>
+                                    </Box>
+                                    <FormControl fullWidth size="small">
+                                        <InputLabel>Payment Mode</InputLabel>
+                                        <Select name="paymentMode" value={orderDetails.paymentMode || 'Cash'} onChange={(e) => handleOrderDetailChange('paymentMode', e.target.value)} label="Payment Mode">
+                                            <MenuItem value="Cash">Cash</MenuItem>
+                                            <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+                                            <MenuItem value="Credit Card">Credit Card</MenuItem>
+                                            <MenuItem value="Online">Online</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Box>
+                            </Grid>
+                        )}
+                        {advanceAmount > 0 && (orderDetails.paymentMode || 'Cash') !== 'Cash' && (
+                            <Grid item xs={6}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.2 }}>
+                                        <Typography variant="body2" color="#121212">
+                                            Payment Account / Reference
+                                        </Typography>
+                                    </Box>
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        type="text"
+                                        value={orderDetails.paymentAccount || ''}
+                                        onChange={(e) => handleOrderDetailChange('paymentAccount', e.target.value)}
+                                        error={!!errors.paymentAccount}
+                                        helperText={errors.paymentAccount}
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: 0,
+                                                padding: 0,
+                                                alignItems: 'stretch',
+                                            },
+                                            '& fieldset': {
+                                                borderColor: '#121212',
+                                            },
+                                        }}
+                                    />
+                                </Box>
+                            </Grid>
+                        )}
                         <Grid item xs={6}>
                             <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.2 }}>
