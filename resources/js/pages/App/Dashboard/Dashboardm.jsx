@@ -7,7 +7,7 @@ import { Add } from '@mui/icons-material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import CancelIcon from '@mui/icons-material/Cancel';
-import { Box, Button, Chip, CircularProgress, Grid, IconButton, Modal, Paper, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Button, Chip, CircularProgress, Grid, IconButton, Modal, Paper, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
@@ -38,6 +38,7 @@ const Dashboard = () => {
     // Reservation actions state
     const [showCancelReservationModal, setShowCancelReservationModal] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
+    const [cancelReservationReason, setCancelReservationReason] = useState('');
     const [showInvoiceModal, setShowInvoiceModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
 
@@ -104,19 +105,25 @@ const Dashboard = () => {
     // Handle cancel reservation
     const handleCancelReservation = (reservation) => {
         setSelectedReservation(reservation);
+        setCancelReservationReason('');
         setShowCancelReservationModal(true);
     };
 
     const confirmCancelReservation = () => {
         if (!selectedReservation) return;
+        if (!cancelReservationReason.trim()) {
+            enqueueSnackbar('Please provide a cancellation reason.', { variant: 'error' });
+            return;
+        }
 
         router.post(
             route('reservations.cancel', selectedReservation.id),
-            {},
+            { cancellation_reason: cancelReservationReason },
             {
                 onSuccess: () => {
                     setShowCancelReservationModal(false);
                     setSelectedReservation(null);
+                    setCancelReservationReason('');
                     enqueueSnackbar('Reservation cancelled successfully', { variant: 'success' });
                     // Refresh reservations
                     getOrderReservtions(selectedDate.toISOString().split('T')[0]);
@@ -124,6 +131,7 @@ const Dashboard = () => {
                 onError: () => {
                     setShowCancelReservationModal(false);
                     setSelectedReservation(null);
+                    setCancelReservationReason('');
                     enqueueSnackbar('Failed to cancel reservation', { variant: 'error' });
                 },
             },
@@ -1612,7 +1620,18 @@ const Dashboard = () => {
                             <CloseIcon />
                         </Button>
                     </DialogTitle>
-                    <DialogContent>Are you sure you want to cancel reservation #{selectedReservation?.id}?</DialogContent>
+                    <DialogContent>
+                        <Typography sx={{ mb: 2 }}>Are you sure you want to cancel reservation #{selectedReservation?.id}?</Typography>
+                        <TextField
+                            fullWidth
+                            label="Cancellation Reason"
+                            value={cancelReservationReason}
+                            onChange={(e) => setCancelReservationReason(e.target.value)}
+                            multiline
+                            minRows={3}
+                            required
+                        />
+                    </DialogContent>
                     <DialogActions>
                         <Button variant="outlined" onClick={() => setShowCancelReservationModal(false)}>
                             No

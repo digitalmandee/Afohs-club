@@ -90,6 +90,7 @@ class ReservationController extends Controller
             'special_request' => $validated['special_request'] ?? null,
             'table_id' => $validated['table'] ?? null,
             'status' => 'pending',
+            'tenant_id' => tenant('id'),
         ];
 
         if (($request->member['booking_type'] ?? null) === 'member') {
@@ -221,13 +222,20 @@ class ReservationController extends Controller
         return response()->json(array_values($availableSlots));
     }
 
-    public function cancel(Reservation $reservation)
+    public function cancel(Request $request, Reservation $reservation)
     {
         if ($reservation->status === 'cancelled') {
             return back()->with('error', 'Reservation already cancelled.');
         }
 
-        $reservation->update(['status' => 'cancelled']);
+        $validated = $request->validate([
+            'cancellation_reason' => 'required|string|max:1000',
+        ]);
+
+        $reservation->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $validated['cancellation_reason'],
+        ]);
 
         $reservation->order()->update(['status' => 'cancelled']);
 

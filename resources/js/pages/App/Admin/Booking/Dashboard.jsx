@@ -254,7 +254,7 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
                                                 showSelectionPreview={false}
                                                 showDateDisplay={false}
                                                 direction="horizontal"
-                                                minDate={new Date()}
+                                                minDate={addDays(new Date(), -1)}
                                             />
                                         </Box>
                                     </Popper>

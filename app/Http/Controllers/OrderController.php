@@ -876,6 +876,53 @@ class OrderController extends Controller
                 $existingOrder = Order::find($request->id);
             }
 
+            $tableId = $request->input('table.id');
+            if ($tableId && !$request->id && in_array($orderData['status'], ['pending', 'in_progress'], true)) {
+                $conflictingOrder = Order::where('table_id', $tableId)
+                    // ->where('tenant_id', $activeShift->tenant_id)
+                    ->whereDate('start_date', $activeShift->start_date)
+                    ->whereIn('status', ['pending', 'in_progress'])
+                    ->where(function ($q) {
+                        $q->whereNull('payment_status')->orWhere('payment_status', '!=', 'paid');
+                    })
+                    ->latest('id')
+                    ->first();
+
+                if ($conflictingOrder) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'This table already has an active order (#' . $conflictingOrder->id . '). Please continue the same order.',
+                        'existing_order_id' => $conflictingOrder->id,
+                    ], 409);
+                }
+
+                $orderDateTime = Carbon::parse($activeShift->start_date . ' ' . $orderData['start_time'], 'Asia/Karachi');
+
+                $reservationConflicts = Reservation::select('id', 'date', 'start_time', 'end_time', 'status')
+                    ->where('table_id', $tableId)
+                    ->whereDate('date', $activeShift->start_date)
+                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->when($request->filled('reservation_id'), function ($q) use ($request) {
+                        $q->where('id', '!=', $request->reservation_id);
+                    })
+                    ->get();
+
+                foreach ($reservationConflicts as $reservation) {
+                    $startTime = Carbon::parse($reservation->date . ' ' . $reservation->start_time, 'Asia/Karachi')->subMinutes(15);
+                    $endTime = Carbon::parse($reservation->date . ' ' . $reservation->end_time, 'Asia/Karachi')->addMinutes(5);
+
+                    if ($reservation->status !== 'completed' && $orderDateTime->between($startTime, $endTime)) {
+                        DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'This table is reserved during this time (Reservation #' . $reservation->id . ').',
+                            'conflicting_reservation_id' => $reservation->id,
+                        ], 409);
+                    }
+                }
+            }
+
             $order = Order::updateOrCreate(
                 ['id' => $request->id],
                 $orderData

@@ -162,7 +162,7 @@ const RoomBookingRequestForm = ({ mode }) => {
                                         format="DD-MM-YYYY"
                                         value={formData.checkInDate ? dayjs(formData.checkInDate) : null}
                                         onChange={(newValue) => handleChange({ target: { name: 'checkInDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
-                                        minDate={dayjs()}
+                                        minDate={dayjs().subtract(1, 'day')}
                                         slotProps={{
                                             textField: {
                                                 fullWidth: true,
@@ -185,7 +185,7 @@ const RoomBookingRequestForm = ({ mode }) => {
                                         format="DD-MM-YYYY"
                                         value={formData.checkOutDate ? dayjs(formData.checkOutDate) : null}
                                         onChange={(newValue) => handleChange({ target: { name: 'checkOutDate', value: newValue ? newValue.format('YYYY-MM-DD') : '' } })}
-                                        minDate={formData.checkInDate ? dayjs(formData.checkInDate) : dayjs()}
+                                        minDate={formData.checkInDate ? dayjs(formData.checkInDate).add(1, 'day') : dayjs()}
                                         slotProps={{
                                             textField: {
                                                 fullWidth: true,
