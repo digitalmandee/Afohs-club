@@ -939,7 +939,6 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     </Box>
                                 </Box>
                             </Box>
-                        </Box>
                     )}
                 </DialogContent>
             </Dialog>

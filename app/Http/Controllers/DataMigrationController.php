@@ -803,23 +803,58 @@ class DataMigrationController extends Controller
             return null;
         }
 
+        $date = is_string($date) ? trim($date) : $date;
+
         // Handle invalid dates like '0000-00-00' or '0000-00-00 00:00:00'
         if (strpos($date, '0000-00-00') === 0) {
             return null;
         }
 
-        // Handle other invalid date formats
         try {
-            $carbonDate = Carbon::parse($date);
+            if (is_string($date) && preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/', $date)) {
+                $formats = [
+                    'd/m/Y H:i:s',
+                    'd/m/Y H:i',
+                    'd/m/Y',
+                    'm/d/Y H:i:s',
+                    'm/d/Y H:i',
+                    'm/d/Y',
+                ];
+
+                $carbonDate = null;
+                $matchedFormat = null;
+                foreach ($formats as $fmt) {
+                    try {
+                        $carbonDate = Carbon::createFromFormat($fmt, $date);
+                        $matchedFormat = $fmt;
+                        break;
+                    } catch (\Throwable $e) {
+                    }
+                }
+
+                if (!$carbonDate) {
+                    return null;
+                }
+
+                if ($matchedFormat && strpos($matchedFormat, 'H:i:s') === false && strpos($matchedFormat, 'H:i') === false) {
+                    $carbonDate = $carbonDate->startOfDay();
+                } elseif ($matchedFormat && strpos($matchedFormat, 'H:i') !== false && strpos($matchedFormat, 'H:i:s') === false) {
+                    $carbonDate = $carbonDate->setSecond(0);
+                }
+            } else {
+                $carbonDate = Carbon::parse($date);
+                if (is_string($date) && !preg_match('/\d{1,2}:\d{2}/', $date)) {
+                    $carbonDate = $carbonDate->startOfDay();
+                }
+            }
 
             // Check if the date is valid (not year 0 or before 1900)
-            if ($carbonDate->year < 1900) {
+            if ($carbonDate->year < 1800) {
                 return null;
             }
 
-            return $date;
-        } catch (\Exception $e) {
-            // If Carbon can't parse it, return null
+            return $carbonDate->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
             return null;
         }
     }
