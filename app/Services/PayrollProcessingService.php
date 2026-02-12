@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Attendance;
 use App\Models\DeductionType;
 use App\Models\Employee;
+use App\Models\FinancialInvoice;
 use App\Models\Order;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollSetting;
@@ -71,9 +72,25 @@ class PayrollProcessingService
 
                     // Only consider CTS orders that have not been deducted yet to avoid double-deduction
                     $ctsOrders = Order::whereIn('employee_id', $employeeIdsList)
-                        ->where('payment_method', 'cts')
                         ->whereNull('deducted_in_payslip_id')
                         ->whereBetween('paid_at', [$periodStart, $periodEnd])
+                        ->where(function ($q) {
+                            $q
+                                ->where('payment_method', 'cts')
+                                ->orWhereExists(function ($sub) {
+                                    $sub
+                                        ->select(DB::raw(1))
+                                        ->from('financial_invoices')
+                                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                                        ->where('cts_amount', '>', 0);
+                                });
+                        })
+                        ->addSelect([
+                            'orders.*',
+                            'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                                ->limit(1),
+                        ])
                         ->get()
                         ->groupBy('employee_id');
 
@@ -210,7 +227,7 @@ class PayrollProcessingService
                 if (!empty($order->deducted_in_payslip_id)) {
                     continue;
                 }
-                $amt = $order->total_price ?? $order->paid_amount ?? $order->amount ?? 0;
+                $amt = $order->invoice_cts_amount ?? $order->total_price ?? $order->paid_amount ?? $order->amount ?? 0;
                 $totalCtsBill += (float) $amt;
 
                 $orderDeductions[] = [

@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeAllowance;
 use App\Models\EmployeeDeduction;
 use App\Models\EmployeeSalaryStructure;
+use App\Models\FinancialInvoice;
 use App\Models\Order;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollSetting;
@@ -762,9 +763,25 @@ class PayrollApiController extends Controller
                 $periodEnd = Carbon::parse($period->end_date)->endOfDay();
 
                 $ctsOrders = Order::whereIn('employee_id', $employeeIdsList)
-                    ->where('payment_method', 'cts')
                     ->whereNull('deducted_in_payslip_id')
                     ->whereBetween('paid_at', [$periodStart, $periodEnd])
+                    ->where(function ($q) {
+                        $q
+                            ->where('payment_method', 'cts')
+                            ->orWhereExists(function ($sub) {
+                                $sub
+                                    ->select(DB::raw(1))
+                                    ->from('financial_invoices')
+                                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                                    ->where('cts_amount', '>', 0);
+                            });
+                    })
+                    ->addSelect([
+                        'orders.*',
+                        'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                            ->limit(1),
+                    ])
                     ->get()
                     ->groupBy('employee_id');
 
@@ -831,7 +848,7 @@ class PayrollApiController extends Controller
             $employeeOrders = $ordersByEmployee->get($employee->id, collect());
             $ctsDeductions = $employeeOrders->map(function ($o) {
                 return [
-                    'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                    'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                     'name' => 'CTS Order #' . $o->id
                 ];
             });
@@ -1099,9 +1116,25 @@ class PayrollApiController extends Controller
                 $employeeIds = collect($payslips->items())->pluck('employee_id')->unique()->filter()->values()->toArray();
                 if (!empty($employeeIds)) {
                     $ctsOrders = Order::whereIn('employee_id', $employeeIds)
-                        ->where('payment_method', 'cts')
                         ->whereNull('deducted_in_payslip_id')
                         ->whereBetween('paid_at', [$periodStart, $periodEnd])
+                        ->where(function ($q) {
+                            $q
+                                ->where('payment_method', 'cts')
+                                ->orWhereExists(function ($sub) {
+                                    $sub
+                                        ->select(DB::raw(1))
+                                        ->from('financial_invoices')
+                                        ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                                        ->where('cts_amount', '>', 0);
+                                });
+                        })
+                        ->addSelect([
+                            'orders.*',
+                            'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                                ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                                ->limit(1),
+                        ])
                         ->get()
                         ->groupBy('employee_id');
 
@@ -1112,7 +1145,7 @@ class PayrollApiController extends Controller
                             return [
                                 'id' => $o->id,
                                 'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
-                                'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                                'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                                 'note' => $o->payment_note ?? $o->remark ?? null,
                                 'deducted_at' => $o->deducted_at ? (string) $o->deducted_at : null
                             ];
@@ -1146,16 +1179,32 @@ class PayrollApiController extends Controller
                 $periodEnd = Carbon::parse($period->end_date)->endOfDay();
 
                 $ctsOrders = Order::where('employee_id', $payslip->employee_id)
-                    ->where('payment_method', 'cts')
                     ->whereNull('deducted_in_payslip_id')
                     ->whereBetween('paid_at', [$periodStart, $periodEnd])
+                    ->where(function ($q) {
+                        $q
+                            ->where('payment_method', 'cts')
+                            ->orWhereExists(function ($sub) {
+                                $sub
+                                    ->select(DB::raw(1))
+                                    ->from('financial_invoices')
+                                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                                    ->where('cts_amount', '>', 0);
+                            });
+                    })
+                    ->addSelect([
+                        'orders.*',
+                        'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.order_id')) = CAST(orders.id AS CHAR)")
+                            ->limit(1),
+                    ])
                     ->get();
 
                 $payslip->order_deductions = $ctsOrders->map(function ($o) {
                     return [
                         'id' => $o->id,
                         'paid_at' => $o->paid_at ? (string) $o->paid_at : null,
-                        'amount' => (float) ($o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
+                        'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                         'note' => $o->payment_note ?? $o->remark ?? null,
                         'deducted_at' => $o->deducted_at ? (string) $o->deducted_at : null
                     ];
