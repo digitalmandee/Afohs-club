@@ -207,6 +207,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
     const getReceiptData = (order) => {
         if (!order) return null;
         const bankChargesEnabled = order.invoice_bank_charges_enabled === true || order.invoice_bank_charges_enabled === 1 || order.invoice_bank_charges_enabled === '1' || order.invoice_bank_charges_enabled === 'true';
+        const advancePayment = Number(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
         return {
             id: order.id,
             order_no: order.id,
@@ -229,6 +230,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             table: order.table,
             cashier: order.cashier,
             waiter: order.waiter,
+            advance_payment: advancePayment,
             paid_amount: order.paid_amount,
             order_items:
                 order.order_items
@@ -593,7 +595,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     const taxRate = Number(order.tax || 0);
                                     const taxAmount = round0((gross - discount) * taxRate);
                                     const total = round0(order.total_price || 0);
-                                    const paid = round0(order.paid_amount || 0);
+                                    const advance = round0(order.invoice_advance_payment || order.down_payment || order.invoice_advance_deducted || 0);
+                                    const paid = round0(order.paid_amount || 0) + advance;
                                     const entAmount = round0(order.invoice_ent_amount || 0);
                                     const ctsAmount = round0(order.invoice_cts_amount || 0);
                                     const bankCharges = round0(order.invoice_bank_charges_amount || 0);

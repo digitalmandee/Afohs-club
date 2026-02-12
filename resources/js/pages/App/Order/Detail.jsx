@@ -126,6 +126,8 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     // Final total
     const total = Math.round(discountedSubtotal + taxAmount);
+    const advanceAmount = Number(orderDetails.advance_amount || 0);
+    const payableTotal = Math.max(0, total - advanceAmount);
 
     const handleSendToKitchen = async (extra = {}) => {
         setIsLoading(true);
@@ -821,13 +823,13 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
                                     Advance
                                 </Typography>
                                 <Typography variant="body2" color="primary">
-                                    - Rs {orderDetails.advance_amount}
+                                    - Rs {advanceAmount.toFixed(2)}
                                 </Typography>
                             </Box>
                         )}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography variant="subtitle2">Total</Typography>
-                            <Typography variant="subtitle2">Rs {total.toFixed(2)}</Typography>
+                            <Typography variant="subtitle2">Rs {payableTotal.toFixed(2)}</Typography>
                         </Box>
                         <Divider sx={{ my: 2 }} />
                     </Box>

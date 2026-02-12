@@ -262,6 +262,9 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
             customer: order.customer,
             employee: order.employee,
             table: order.table,
+            data: order.invoice?.data || order.data || {},
+            advance_payment: order.invoice?.advance_payment || 0,
+            paid_amount: order.invoice?.paid_amount || order.paid_amount || 0,
             // Items need to be mapped if structure differs
             order_items: order.order_items?.map((item) => ({
                 order_item: item.order_item || item, // handle structure variations
@@ -306,6 +309,8 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         const invoiceData = {
             ...order,
             invoice_no: order.invoice?.invoice_no, // Attach invoice no specifically
+            advance_payment: order.invoice?.advance_payment || 0,
+            paid_amount: order.invoice?.paid_amount || 0,
         };
         setSelectedInvoice(invoiceData);
         setPaymentModalOpen(true);
@@ -664,12 +669,25 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                                                     </Typography>
                                                     <Typography variant="body2">{Number(card.discount || 0).toFixed(2)}</Typography>
                                                 </ListItem>
+                                                {Number(card.invoice?.advance_payment || card.down_payment || card.data?.advance_deducted || 0) > 0 && (
+                                                    <ListItem sx={{ py: 1, px: 2, display: 'flex', justifyContent: 'space-between', bgcolor: '#f5f5f5' }}>
+                                                        <Typography variant="body2" fontWeight="bold">
+                                                            Advance:
+                                                        </Typography>
+                                                        <Typography variant="body2" fontWeight="bold" color="primary">
+                                                            - {Number(card.invoice?.advance_payment || card.down_payment || card.data?.advance_deducted || 0).toLocaleString()}
+                                                        </Typography>
+                                                    </ListItem>
+                                                )}
                                                 <ListItem sx={{ py: 1, px: 2, display: 'flex', justifyContent: 'space-between', bgcolor: '#e0e0e0' }}>
                                                     <Typography variant="body2" fontWeight="bold">
                                                         Total:
                                                     </Typography>
                                                     <Typography variant="body2" fontWeight="bold">
-                                                        {Number(card.total_price || 0).toLocaleString()}
+                                                        {Math.max(
+                                                            0,
+                                                            Number(card.total_price || 0) - Number(card.invoice?.advance_payment || card.down_payment || card.data?.advance_deducted || 0),
+                                                        ).toLocaleString()}
                                                     </Typography>
                                                 </ListItem>
                                                 {card.waiter && (

@@ -211,7 +211,7 @@ const Reservations = () => {
                                                         {/* Show only if pending */}
                                                         {reservation.status === 'pending' && (
                                                             <>
-                                                                <Button onClick={() => router.visit(route('order.menu', { reservation_id: reservation.id, order_type: 'reservation' }))} size="small" variant="contained" color="primary" startIcon={<ShoppingCartIcon />}></Button>
+                                                                <Button onClick={() => router.visit(route('order.menu', { reservation_id: reservation.id, order_type: 'dineIn' }))} size="small" variant="contained" color="primary" startIcon={<ShoppingCartIcon />}></Button>
                                                             </>
                                                         )}
                                                         <Button onClick={() => handleInvoiceClick(reservation)} size="small" variant="contained" color="secondary" startIcon={<ReceiptLongIcon />}></Button>

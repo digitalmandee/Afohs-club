@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\FinancialReceipt;
 use App\Models\Member;
 use App\Models\Order;
 use App\Models\Reservation;
@@ -61,6 +62,8 @@ class ReservationController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'down_payment' => 'required|numeric|min:1',
+            'paymentMode' => 'required|string|in:Cash,Bank Transfer,Credit Card,Online',
+            'paymentAccount' => 'required_unless:paymentMode,Cash|string|max:255',
             'nature_of_function' => 'nullable|string|max:255',
             'theme_of_function' => 'nullable|string|max:255',
             'special_request' => 'nullable|string|max:1000',
@@ -99,12 +102,32 @@ class ReservationController extends Controller
 
         $reservation = Reservation::create($reservationData);
 
-        // Create advance payment transaction
         $payerType = ($request->member['booking_type'] ?? null) === 'member'
             ? Member::class
             : (($request->member['booking_type'] ?? null) === 'employee' ? \App\Models\Employee::class : Customer::class);
         $payerId = $request->member['id'];
         $payerName = $request->member['full_name'] ?? $request->member['name'] ?? 'Customer';
+
+        $paymentMethodMap = [
+            'Cash' => 'cash',
+            'Bank Transfer' => 'bank_transfer',
+            'Credit Card' => 'credit_card',
+            'Online' => 'online',
+        ];
+        $advancePaymentMethod = $paymentMethodMap[$validated['paymentMode']] ?? 'cash';
+
+        $receipt = FinancialReceipt::create([
+            'receipt_no' => 'REC-' . time() . '-RSV-' . $reservation->id,
+            'payer_type' => $payerType,
+            'payer_id' => $payerId,
+            'amount' => $validated['down_payment'],
+            'advance_amount' => $validated['down_payment'],
+            'payment_method' => $advancePaymentMethod,
+            'payment_details' => $validated['paymentAccount'] ?? null,
+            'receipt_date' => now(),
+            'remarks' => 'Advance Payment for Reservation #' . $reservation->id,
+            'created_by' => Auth::id(),
+        ]);
 
         Transaction::create([
             'type' => 'credit',
@@ -115,6 +138,7 @@ class ReservationController extends Controller
             'payable_id' => $payerId,
             'reference_type' => Reservation::class,
             'reference_id' => $reservation->id,
+            'receipt_id' => $receipt->id,
             'created_by' => Auth::id(),
         ]);
 

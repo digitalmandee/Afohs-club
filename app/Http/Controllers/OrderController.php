@@ -225,6 +225,8 @@ class OrderController extends Controller
                     ->orWhere('payment_status', '!=', 'paid');
             });
 
+            $query->where('status', '!=', 'saved');
+
             // 🔍 Search By ID
             if ($request->filled('search_id')) {
                 $query->where('id', $request->search_id);
@@ -324,6 +326,25 @@ class OrderController extends Controller
             // Check if invoice already exists
             $existingInvoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
             if ($existingInvoice) {
+                $advancePayment = (float) ($order->down_payment ?? 0);
+                if ($advancePayment <= 0 && $order->reservation_id) {
+                    $reservation = Reservation::find($order->reservation_id);
+                    if ($reservation && (float) ($reservation->down_payment ?? 0) > 0) {
+                        $advancePayment = (float) $reservation->down_payment;
+                        $order->update(['down_payment' => $advancePayment]);
+                    }
+                }
+
+                if ($advancePayment > 0 && (float) ($existingInvoice->advance_payment ?? 0) <= 0) {
+                    $existingData = $existingInvoice->data ?? [];
+                    $existingData['reservation_id'] = $existingData['reservation_id'] ?? $order->reservation_id;
+                    $existingData['advance_deducted'] = $existingData['advance_deducted'] ?? $advancePayment;
+                    $existingInvoice->update([
+                        'advance_payment' => $advancePayment,
+                        'data' => $existingData,
+                    ]);
+                }
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Invoice already exists.',
@@ -335,16 +356,28 @@ class OrderController extends Controller
             $totalPrice = $order->total_price;
             $items = $order->orderItems;
 
+            $advancePayment = (float) ($order->down_payment ?? 0);
+            if ($advancePayment <= 0 && $order->reservation_id) {
+                $reservation = Reservation::find($order->reservation_id);
+                if ($reservation && (float) ($reservation->down_payment ?? 0) > 0) {
+                    $advancePayment = (float) $reservation->down_payment;
+                    $order->update(['down_payment' => $advancePayment]);
+                }
+            }
+
             $invoiceData = [
                 'invoice_no' => $this->getInvoiceNo(),
                 'invoice_type' => 'food_order',
                 'amount' => $order->amount,  // Subtotal
                 'total_price' => $totalPrice,  // Grand Total
+                'advance_payment' => $advancePayment > 0 ? $advancePayment : 0,
                 'payment_method' => null,
                 'issue_date' => Carbon::now(),
                 'status' => 'unpaid',
                 'data' => [
                     'order_id' => $order->id,
+                    'reservation_id' => $order->reservation_id,
+                    'advance_deducted' => $advancePayment > 0 ? $advancePayment : 0,
                 ],
                 'invoiceable_id' => $order->id,
                 'invoiceable_type' => Order::class,
@@ -425,6 +458,21 @@ class OrderController extends Controller
                 'invoice_id' => $invoice->id,
                 'created_by' => Auth::id(),
             ]);
+
+            if ($advancePayment > 0 && $order->reservation_id) {
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $advancePayment,
+                    'date' => now(),
+                    'description' => 'Advance Payment Adjustment - Reservation #' . $order->reservation_id,
+                    'payable_type' => $order->member ? Member::class : ($order->customer ? Customer::class : Employee::class),
+                    'payable_id' => $order->member_id ?? ($order->customer_id ?? $order->employee_id),
+                    'reference_type' => Reservation::class,
+                    'reference_id' => $order->reservation_id,
+                    'invoice_id' => $invoice->id,
+                    'created_by' => Auth::id(),
+                ]);
+            }
 
             // Update Order Status
             $order->update([
@@ -865,7 +913,7 @@ class OrderController extends Controller
             }
 
             // Mark reservation completed (ONLY if order is active, not saved)
-            if ($orderData['status'] !== 'saved' && $request->order_type === 'reservation' && $request->filled('reservation_id')) {
+            if ($orderData['status'] !== 'saved' && $request->filled('reservation_id')) {
                 Reservation::where('id', $request->reservation_id)->update([
                     'status' => 'completed'
                 ]);
@@ -1774,7 +1822,7 @@ class OrderController extends Controller
                 $order->update(['payment_status' => 'awaiting']);
 
                 // Mark reservation as completed
-                if ($order->order_type === 'reservation' && $order->reservation_id) {
+                if ($order->reservation_id) {
                     Reservation::where('id', $order->reservation_id)->update(['status' => 'completed']);
                 }
 
@@ -1857,7 +1905,7 @@ class OrderController extends Controller
                     ]);
 
                     // If reservation order with advance payment, create credit entry
-                    if ($order->order_type === 'reservation' && $order->reservation_id) {
+                    if ($order->reservation_id) {
                         $reservation = Reservation::find($order->reservation_id);
                         if ($reservation && $reservation->down_payment > 0) {
                             // Create credit transaction for advance payment
@@ -2145,6 +2193,12 @@ class OrderController extends Controller
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->limit(1),
                 'invoice_cts_amount' => FinancialInvoice::select('cts_amount')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_advance_payment' => FinancialInvoice::select('advance_payment')
+                    ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
+                    ->limit(1),
+                'invoice_advance_deducted' => FinancialInvoice::selectRaw("CAST(COALESCE(JSON_UNQUOTE(JSON_EXTRACT(data, '\\$.advance_deducted')), '0') AS DECIMAL(10,2))")
                     ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '\$.order_id')) = CAST(orders.id AS CHAR)")
                     ->limit(1),
                 'invoice_ent_reason' => FinancialInvoice::select('ent_reason')

@@ -859,6 +859,18 @@ class DataMigrationController extends Controller
         }
     }
 
+    private function resolveNonNullDate(...$candidates)
+    {
+        foreach ($candidates as $candidate) {
+            $validated = $this->validateDate($candidate);
+            if (!empty($validated)) {
+                return $validated;
+            }
+        }
+
+        return now()->format('Y-m-d H:i:s');
+    }
+
     public function migrateCustomers(Request $request)
     {
         $batchSize = $request->get('batch_size', 100);
@@ -2182,7 +2194,7 @@ class DataMigrationController extends Controller
                         'payable_id' => $payable ? $payable->id : null,
                         'reference_type' => $referenceType,
                         'reference_id' => $referenceId,
-                        'date' => $this->validateDate($t->date),
+                        'date' => $this->resolveNonNullDate($t->date, $t->created_at, $t->updated_at),
                         'created_at' => $this->validateDate($t->created_at),
                         'updated_at' => $this->validateDate($t->updated_at),
                     ]);
@@ -2474,7 +2486,7 @@ class DataMigrationController extends Controller
             'reference_type' => \App\Models\FinancialInvoiceItem::class,
             'reference_id' => $newItem->id,
             'invoice_id' => $newInvoice->id,
-            'date' => $newItem->start_date ?? $newInvoice->issue_date,  // Best guess for date
+            'date' => $this->resolveNonNullDate($newItem->start_date, $newInvoice->issue_date, $legacyRow->invoice_date ?? null, $legacyRow->created_at ?? null),
             'created_at' => $newItem->created_at,
             'updated_at' => $newItem->updated_at,
             'created_by' => $newItem->created_by,
@@ -2526,7 +2538,7 @@ class DataMigrationController extends Controller
                 'reference_id' => $newItem->id,
                 'invoice_id' => $newInvoice->id,
                 'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
-                'date' => $this->validateDate($t->date),
+                'date' => $this->resolveNonNullDate($t->date, $receipt ? $receipt->receipt_date : null, $t->created_at, $legacyRow->invoice_date ?? null, $newInvoice->issue_date),
                 'remarks' => $remarks,
                 'created_at' => $this->validateDate($t->created_at),
                 'updated_at' => $this->validateDate($t->updated_at),
@@ -2560,7 +2572,7 @@ class DataMigrationController extends Controller
             'reference_type' => \App\Models\FinancialInvoiceItem::class,
             'reference_id' => $newItem->id,
             'invoice_id' => $newInvoice->id,
-            'date' => $newItem->start_date ?? $newInvoice->issue_date,
+            'date' => $this->resolveNonNullDate($newItem->start_date, $newInvoice->issue_date, $legacyRow->invoice_date ?? null, $legacyRow->created_at ?? null),
             'created_at' => $newItem->created_at,
             'updated_at' => $newItem->updated_at,
             'created_by' => $newItem->created_by,
@@ -2598,7 +2610,7 @@ class DataMigrationController extends Controller
                 'reference_id' => $newItem->id,
                 'invoice_id' => $newInvoice->id,
                 'receipt_id' => $receipt ? $receipt->id : ($t->receipt_id ?? null),
-                'date' => $this->validateDate($t->date),
+                'date' => $this->resolveNonNullDate($t->date, $receipt ? $receipt->receipt_date : null, $t->created_at, $legacyRow->invoice_date ?? null, $newInvoice->issue_date),
                 'remarks' => $remarks,
                 'created_at' => $this->validateDate($t->created_at),
                 'updated_at' => $this->validateDate($t->updated_at),
@@ -2835,7 +2847,7 @@ class DataMigrationController extends Controller
             'receipt_no' => $old->id,  // finance_cash_receipts.invoice_no is the receipt #
             'amount' => $old->total ?? 0,
             'payment_method' => $paymentMethod,
-            'receipt_date' => $this->validateDate($old->invoice_date),
+            'receipt_date' => $this->resolveNonNullDate($old->invoice_date, $old->created_at, $old->updated_at),
             'payer_type' => $payerType,
             'payer_id' => $payerId,
             'remarks' => $old->remarks,
@@ -2870,7 +2882,7 @@ class DataMigrationController extends Controller
                 'payable_id' => $payerId,
                 'reference_type' => \App\Models\FinancialReceipt::class,
                 'reference_id' => $receipt->id,
-                'date' => $receipt->receipt_date,
+                'date' => $this->resolveNonNullDate($receipt->receipt_date, $old->invoice_date, $old->created_at, $old->updated_at),
                 'created_at' => $this->validateDate($old->created_at),
                 'updated_at' => $this->validateDate($old->updated_at),
             ]);

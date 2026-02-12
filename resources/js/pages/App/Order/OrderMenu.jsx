@@ -268,7 +268,7 @@ const OrderMenu = () => {
     useEffect(() => {
         if (reservation) {
             handleOrderDetailChange('reservation_id', reservation.id);
-            handleOrderDetailChange('order_type', 'reservation');
+            handleOrderDetailChange('order_type', is_new_order ? 'reservation' : 'dineIn');
 
             if (reservation.member || reservation.customer || reservation.employee) {
                 const memberData = {
@@ -281,6 +281,8 @@ const OrderMenu = () => {
             }
             handleOrderDetailChange('person_count', reservation.person_count);
             handleOrderDetailChange('table', reservation.table);
+            handleOrderDetailChange('down_payment', reservation.down_payment || 0);
+            handleOrderDetailChange('advance_amount', reservation.down_payment || 0);
 
             // Load existing order items if available
 

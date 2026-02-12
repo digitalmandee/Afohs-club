@@ -95,6 +95,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 waiter: invoiceData.waiter || null,
                 order_items: invoiceData.order_items || [],
                 paid_amount: invoiceData.paid_amount || null,
+                advance_payment: invoiceData.advance_payment || invoiceData.advance_amount || invoiceData.down_payment || invoiceData.data?.advance_deducted || 0,
             };
             setPaymentData(restructuredData);
             setLoading(false);
@@ -120,10 +121,23 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
     }
 
     const round0 = (n) => Math.round(Number(n) || 0);
+    const totalAmount = round0(round0(paymentData.total_price) + round0(paymentData.data?.bank_charges_amount));
+    const advancePaid = round0(paymentData.advance_payment || paymentData.data?.advance_deducted || 0);
+    const netPayable = Math.max(0, totalAmount - advancePaid);
+    const paidCash = round0(paymentData.paid_amount || 0);
+    const remainingDue = Math.max(0, netPayable - paidCash);
+    const customerChangeAmount = Math.max(0, paidCash - netPayable);
     const handlePrintReceipt = (data) => {
         if (!data) return;
 
         const printWindow = window.open('', '_blank');
+
+        const printTotalAmount = round0(round0(data.total_price) + round0(data.data?.bank_charges_amount));
+        const printAdvancePaid = round0(data.advance_payment || data.data?.advance_deducted || 0);
+        const printNetPayable = Math.max(0, printTotalAmount - printAdvancePaid);
+        const printPaidCash = round0(data.paid_amount || 0);
+        const printRemainingDue = Math.max(0, printNetPayable - printPaidCash);
+        const printCustomerChange = Math.max(0, printPaidCash - printNetPayable);
 
         const content = `
         <html>
@@ -235,8 +249,29 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
 
             <div class="row total">
               <div>Total Amount</div>
-              <div>Rs ${round0(round0(data.total_price) + round0(data.data?.bank_charges_amount))}</div>
+              <div>Rs ${printTotalAmount}</div>
             </div>
+
+            ${printAdvancePaid > 0 ? `<div class="row"><div>Advance Paid</div><div>- Rs ${printAdvancePaid}</div></div>` : ''}
+            <div class="row total">
+              <div>Remaining Due</div>
+              <div>Rs ${printRemainingDue}</div>
+            </div>
+
+            ${
+                printPaidCash > 0
+                    ? `
+                <div class="row">
+                  <div>Total Cash</div>
+                  <div>Rs ${printPaidCash}</div>
+                </div>
+                <div class="row">
+                  <div>Customer Changes</div>
+                  <div>Rs ${printCustomerChange}</div>
+                </div>
+                `
+                    : ''
+            }
 
             <div class="footer">
               <p>Thanks for having our passion. Drop by again. If your orders aren't still visible, you're always welcome here!</p>
@@ -381,19 +416,35 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 </Box>
             )}
             <Box sx={styles.receiptDivider} />
-            {paymentData.paid_amount > 0 && (
+            {advancePaid > 0 && (
+                <Box sx={styles.receiptRow}>
+                    <Typography variant="caption" color="text.secondary">
+                        Advance Paid
+                    </Typography>
+                    <Typography variant="caption">Rs {advancePaid}</Typography>
+                </Box>
+            )}
+
+            <Box sx={styles.receiptRow}>
+                <Typography variant="caption" color="text.secondary">
+                    Remaining Due
+                </Typography>
+                <Typography variant="caption">Rs {remainingDue}</Typography>
+            </Box>
+
+            {paidCash > 0 && (
                 <>
                     <Box sx={styles.receiptRow}>
                         <Typography variant="caption" color="text.secondary">
                             Total Cash
                         </Typography>
-                        <Typography variant="caption">Rs{round0(paymentData.paid_amount)}</Typography>
+                        <Typography variant="caption">Rs{paidCash}</Typography>
                     </Box>
                     <Box sx={styles.receiptRow}>
                         <Typography variant="caption" color="text.secondary">
                             Customer Changes
                         </Typography>
-                        <Typography variant="caption">Rs{round0(round0(paymentData.paid_amount) - (round0(paymentData.total_price) + round0(paymentData.data?.bank_charges_amount)))}</Typography>
+                        <Typography variant="caption">Rs{customerChangeAmount}</Typography>
                     </Box>
                 </>
             )}
@@ -403,7 +454,7 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                     Total Amount
                 </Typography>
                 <Typography variant="body2" fontWeight="bold" color="#0a3d62">
-                    Rs {round0(round0(paymentData.total_price) + round0(paymentData.data?.bank_charges_amount))}
+                    Rs {totalAmount}
                 </Typography>
             </Box>
 
