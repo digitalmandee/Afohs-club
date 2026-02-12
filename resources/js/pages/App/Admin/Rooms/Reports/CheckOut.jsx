@@ -27,6 +27,7 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
         if (booking.customer) return booking.customer.name;
         if (booking.member) return booking.member.full_name;
         if (booking.corporateMember) return booking.corporateMember.full_name;
+        if (booking.corporate_member) return booking.corporate_member.full_name;
         return 'Unknown';
     };
 
@@ -82,11 +83,11 @@ const CheckOutReport = ({ bookings = {}, filters = {} }) => {
                                 ) : (
                                     bookingList.map((booking) => (
                                         <TableRow key={booking.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                                            <TableCell>{booking.booking_no || booking.booking_number}</TableCell>
+                                            <TableCell>{booking.booking_no || booking.booking_number || booking.id}</TableCell>
                                             <TableCell>
                                                 {booking.room?.name} <br />
                                                 <Typography variant="caption" color="textSecondary">
-                                                    {booking.room?.roomType?.name}
+                                                    {booking.room?.roomType?.name || booking.room?.room_type?.name}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>{getGuestName(booking)}</TableCell>

@@ -916,22 +916,44 @@ export const generateInvoiceContent = (booking, type) => {
         <thead>
             <tr style="border-bottom: 1px solid #ddd;">
                 <th style="text-align: left; padding: 8px 4px;">OTHER CHARGES</th>
+                <th style="text-align: right; padding: 8px 4px;">AMOUNT</th>
             </tr>
         </thead>
 
         <tbody>
-            <tr>
-                <td style="padding: 8px 4px;">
-                    Other Charges:   ${Math.round(booking.total_other_charges || 0)}
-                </td>
+            ${(() => {
+                    const otherCharges = booking.other_charges || booking.otherCharges || [];
+                    const rows = Array.isArray(otherCharges) ? otherCharges.filter((c) => c && (c.type || c.details || c.amount)) : [];
+
+                    if (!rows.length) {
+                        return `
+                            <tr>
+                                <td style="padding: 8px 4px;" colspan="2">-</td>
+                            </tr>
+                        `;
+                    }
+
+                    return rows
+                        .map((charge) => {
+                            const title = [charge.type, charge.details].filter(Boolean).join(' - ');
+                            const isComplementary = charge.is_complementary === true || charge.is_complementary === 1;
+                            const amount = isComplementary ? 0 : parseFloat(charge.amount || 0);
+                            return `
+                                <tr>
+                                    <td style="padding: 6px 4px;">${title || 'Charge'}${isComplementary ? ' (Complimentary)' : ''}</td>
+                                    <td style="padding: 6px 4px; text-align: right;">${Math.round(amount || 0)}</td>
+                                </tr>
+                            `;
+                        })
+                        .join('');
+                })()}
+            <tr style="border-top: 1px solid #ddd;">
+                <td style="padding: 8px 4px; font-weight: bold;">Other Charges Total</td>
+                <td style="padding: 8px 4px; text-align: right; font-weight: bold;">${Math.round(booking.total_other_charges || 0)}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #ddd;">
-                <th></th>
-            </tr>
-            <tr>
-                <td style="padding: 8px 4px;">
-                    Mini Bar:   ${Math.round(booking.total_mini_bar || 0)}
-                </td>
+            <tr style="border-top: 1px solid #ddd;">
+                <td style="padding: 8px 4px; font-weight: bold;">Mini Bar</td>
+                <td style="padding: 8px 4px; text-align: right; font-weight: bold;">${Math.round(booking.total_mini_bar || 0)}</td>
             </tr>
         </tbody>
     </table>

@@ -23,7 +23,7 @@ const CheckOutPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                     Check-out Report
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                    {filters.dateFrom} to {filters.dateTo}
+                    {(filters.check_out_from || filters.dateFrom || '') + (filters.check_out_to || filters.dateTo ? ` to ${filters.check_out_to || filters.dateTo}` : '')}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                     Generated: {generatedAt}
@@ -45,9 +45,9 @@ const CheckOutPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                     <TableBody>
                         {bookings.map((booking) => (
                             <TableRow key={booking.id}>
-                                <TableCell>{booking.booking_number || booking.id}</TableCell>
-                                <TableCell>{booking.room?.room_number}</TableCell>
-                                <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporate_member ? booking.corporate_member.name : '-'}</TableCell>
+                                <TableCell>{booking.booking_no || booking.booking_number || booking.id}</TableCell>
+                                <TableCell>{booking.room?.name || booking.room?.room_number || '-'}</TableCell>
+                                <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporateMember ? booking.corporateMember.full_name : booking.corporate_member ? booking.corporate_member.full_name : '-'}</TableCell>
                                 <TableCell>{booking.check_in_date}</TableCell>
                                 <TableCell>{booking.check_out_date}</TableCell>
                                 <TableCell>

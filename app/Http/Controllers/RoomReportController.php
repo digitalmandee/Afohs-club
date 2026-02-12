@@ -408,7 +408,7 @@ class RoomReportController extends Controller
         }
 
         $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])
-            ->where('status', 'completed')
+            ->whereIn('status', ['checked_out', 'completed'])
             ->orderBy('check_out_date', 'desc');
 
         $query = $this->applyFilters($query, $filters);
@@ -426,7 +426,7 @@ class RoomReportController extends Controller
     {
         $filters = $request->all();
         $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])
-            ->where('status', 'completed')
+            ->whereIn('status', ['checked_out', 'completed'])
             ->orderBy('check_out_date', 'desc');
         $query = $this->applyFilters($query, $filters);
 
@@ -447,7 +447,7 @@ class RoomReportController extends Controller
     {
         $filters = $request->all();
         $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])
-            ->where('status', 'completed')
+            ->whereIn('status', ['checked_out', 'completed'])
             ->orderBy('check_out_date', 'desc');
         $query = $this->applyFilters($query, $filters);
         $bookings = $query->get();
