@@ -63,7 +63,7 @@ class ReservationController extends Controller
             'end_time' => 'required|date_format:H:i|after:start_time',
             'down_payment' => 'required|numeric|min:1',
             'paymentMode' => 'required|string|in:Cash,Bank Transfer,Credit Card,Online',
-            'paymentAccount' => 'required_unless:paymentMode,Cash|string|max:255',
+            'paymentAccount' => 'nullable|required_unless:paymentMode,Cash|string|max:255',
             'nature_of_function' => 'nullable|string|max:255',
             'theme_of_function' => 'nullable|string|max:255',
             'special_request' => 'nullable|string|max:1000',

@@ -23,7 +23,7 @@ dayjs.extend(isSameOrBefore);
 
 const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
     // Get from props if available (for table-based navigation)
-    const { selectedFloor: propsFloor, selectedTable: propsTable } = usePage().props;
+    const { selectedFloor: propsFloor, selectedTable: propsTable, tenant } = usePage().props;
 
     const { orderDetails, weeks, selectedWeek, monthYear, setMonthYear, handleOrderDetailChange } = useOrderStore();
     const [availableSlots, setAvailableSlots] = useState([]);
@@ -103,6 +103,72 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
     const openCalendar = Boolean(anchorEl); // Renamed to avoid conflict with Autocomplete 'open' state
     const id = openCalendar ? 'month-year-picker' : undefined;
 
+    const buildReservationInvoiceHtml = ({ reservationId, tableNo }) => {
+        const name = orderDetails.member?.full_name || orderDetails.member?.name || 'Customer';
+        const membershipNo = orderDetails.member?.membership_no || orderDetails.member?.employee_id || orderDetails.member?.customer_no || 'N/A';
+        const typeLabel =
+            orderDetails.member?.booking_type === 'member'
+                ? orderDetails.member?.memberType?.name || 'Member'
+                : orderDetails.member?.booking_type === 'employee'
+                  ? 'Employee'
+                  : 'Guest';
+        const contact = orderDetails.member?.mobile_number_a || orderDetails.member?.contact || orderDetails.member?.phone_no || 'N/A';
+        const dateLabel = orderDetails.date ? dayjs(orderDetails.date).format('YYYY-MM-DD') : '';
+        const tenantName = tenant?.name || '';
+
+        return `
+            <html>
+              <head>
+                <title>Reservation Invoice</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 20px; max-width: 300px; margin: auto; }
+                </style>
+              </head>
+              <body>
+                <div style="padding: 10px; font-family: Arial;">
+                  <div style="text-align: center; margin-bottom: 10px;">
+                    <img src="/assets/Logo.png" alt="AFOHS Logo" style="height: 60px;" />
+                    <h5 style="margin: 5px 0;">AFOHS CLUB</h5>
+                    <p style="font-size: 12px;">Enjoy the Pride</p>
+                    <p style="font-size: 12px;">PAF Falcon Complex</p>
+                  </div>
+
+                  <h6 style="text-align: center; margin: 10px 0;">RESERVATION ESTIMATE</h6>
+
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 10px;">
+                    <div>
+                      <p style="margin: 2px 0;"><strong>Res #:</strong> ${reservationId ?? ''}</p>
+                      <p style="margin: 2px 0;"><strong>Date:</strong> ${dateLabel}</p>
+                      <p style="margin: 2px 0;"><strong>Time:</strong> ${orderDetails.start_time || ''} - ${orderDetails.end_time || ''}</p>
+                    </div>
+                    <div style="text-align: right;">
+                      <p style="margin: 2px 0;"><strong>Table:</strong> ${tableNo || 'N/A'}</p>
+                      <p style="margin: 2px 0;"><strong>Covers:</strong> ${orderDetails.person_count || ''}</p>
+                      <p style="margin: 2px 0;"><strong>Server:</strong> ${tenantName}</p>
+                    </div>
+                  </div>
+
+                  <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 5px 0; font-size: 12px; margin-bottom: 10px;">
+                    <p style="margin: 2px 0;"><strong>Name:</strong> ${name}</p>
+                    <p style="margin: 2px 0;"><strong>Membership #:</strong> ${membershipNo}</p>
+                    <p style="margin: 2px 0;"><strong>Type:</strong> ${typeLabel}</p>
+                    <p style="margin: 2px 0;"><strong>Contact:</strong> ${contact}</p>
+                  </div>
+
+                  <div style="font-size: 12px; margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+                      <span>Advance Paid:</span>
+                      <span>${Number(orderDetails.down_payment || 0)}</span>
+                    </div>
+                  </div>
+
+                  <p style="font-size: 10px; text-align: center; margin-top: 20px;">Thank you for visiting AFOHS Club!</p>
+                </div>
+              </body>
+            </html>
+        `;
+    };
+
     const handleSaveOrder = async (redirectToMenu = false) => {
         const newErrors = {};
 
@@ -137,6 +203,13 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
             return;
         }
 
+        let printWindow = null;
+        try {
+            printWindow = window.open('', '_blank');
+        } catch {
+            printWindow = null;
+        }
+
         try {
             const payload = {
                 ...orderDetails,
@@ -145,6 +218,19 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
             const response = await axios.post(route('order.reservation'), payload);
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
             enqueueSnackbar(response.data.message || 'Order placed successfully!', { variant: 'success' });
+
+            if (printWindow) {
+                const reservationId = response.data.order?.id;
+                const selectedTableNo = selectedTable?.table_no;
+                const html = buildReservationInvoiceHtml({ reservationId, tableNo: selectedTableNo });
+                printWindow.document.write(html);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            }
 
             if (redirectToMenu) {
                 // If proceeding to menu, clear validation errors but keep details (or maybe not needed if redirecting?)
@@ -166,6 +252,11 @@ const ReservationDialog = ({ guestTypes, floorTables = [] }) => {
                 router.visit(route('order.new'));
             }
         } catch (error) {
+            if (printWindow) {
+                try {
+                    printWindow.close();
+                } catch {}
+            }
             if (error.response?.status === 422) {
                 setErrors(error.response.data.errors);
                 enqueueSnackbar('Validation error: Please fix the form fields.', { variant: 'error' });
