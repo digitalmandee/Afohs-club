@@ -492,6 +492,7 @@ class OrderController extends Controller
                 ->with([
                     'member:id,full_name,membership_no',
                     'customer:id,name,customer_no',
+                    'employee:id,name,employee_id',
                     'table:id,table_no,floor_id',
                     'order.orderItems'
                 ])

@@ -89,8 +89,10 @@ class ReservationController extends Controller
             'status' => 'pending',
         ];
 
-        if ($request->member['booking_type'] == 'member') {
+        if (($request->member['booking_type'] ?? null) === 'member') {
             $reservationData['member_id'] = $request->member['id'];
+        } elseif (($request->member['booking_type'] ?? null) === 'employee') {
+            $reservationData['employee_id'] = $request->member['id'];
         } else {
             $reservationData['customer_id'] = $request->member['id'];
         }
@@ -98,7 +100,9 @@ class ReservationController extends Controller
         $reservation = Reservation::create($reservationData);
 
         // Create advance payment transaction
-        $payerType = $request->member['booking_type'] == 'member' ? Member::class : Customer::class;
+        $payerType = ($request->member['booking_type'] ?? null) === 'member'
+            ? Member::class
+            : (($request->member['booking_type'] ?? null) === 'employee' ? \App\Models\Employee::class : Customer::class);
         $payerId = $request->member['id'];
         $payerName = $request->member['full_name'] ?? $request->member['name'] ?? 'Customer';
 

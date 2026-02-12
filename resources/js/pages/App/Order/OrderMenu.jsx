@@ -270,8 +270,13 @@ const OrderMenu = () => {
             handleOrderDetailChange('reservation_id', reservation.id);
             handleOrderDetailChange('order_type', 'reservation');
 
-            if (reservation.member || reservation.customer) {
-                const memberData = { id: reservation.member ? reservation.member.user_id : reservation.customer.id, name: reservation.member ? reservation.member.full_name : reservation.customer.name, membership_no: reservation.member ? reservation.member.membership_no : reservation.customer.customer_no, booking_type: reservation.member ? 'member' : 'guest' };
+            if (reservation.member || reservation.customer || reservation.employee) {
+                const memberData = {
+                    id: reservation.member ? reservation.member.id : reservation.customer ? reservation.customer.id : reservation.employee.id,
+                    name: reservation.member ? reservation.member.full_name : reservation.customer ? reservation.customer.name : reservation.employee.name,
+                    membership_no: reservation.member ? reservation.member.membership_no : reservation.customer ? reservation.customer.customer_no : reservation.employee.employee_id,
+                    booking_type: reservation.member ? 'member' : reservation.customer ? 'guest' : 'employee',
+                };
                 handleOrderDetailChange('member', memberData);
             }
             handleOrderDetailChange('person_count', reservation.person_count);
