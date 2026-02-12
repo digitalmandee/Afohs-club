@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 export const JSONParse = (jsonString) => {
     try {
         return JSON.parse(jsonString);
-    } catch (error) {
+    } catch {
         return [];
     }
 };

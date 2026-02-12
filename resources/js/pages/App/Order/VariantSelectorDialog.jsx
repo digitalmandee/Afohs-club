@@ -63,6 +63,7 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
 
         const orderItem = {
             id: product.id,
+            product_id: product.id,
             name: product.name,
             price: parseFloat(product.base_price),
             tenant_id: product.tenant_id,
@@ -71,6 +72,14 @@ const VariantSelectorDialog = ({ open, onClose, productId, initialItem, onConfir
             category: product.category?.name || '',
             variants: selectedVariantItems,
             remarks, // ✅ Include remarks
+            is_discountable: product.is_discountable !== false,
+            discount_value: initialItem?.discount_value ?? 0,
+            discount_type: initialItem?.discount_type ?? 'percentage',
+            discount_amount: initialItem?.discount_amount ?? 0,
+            is_taxable: product.is_taxable,
+            max_discount: product.max_discount,
+            max_discount_type: product.max_discount_type,
+            menu_code: product.menu_code,
             manage_stock: product.manage_stock,
             current_stock: product.current_stock,
             minimal_stock: product.minimal_stock,

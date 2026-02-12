@@ -25,6 +25,7 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState({
         id: '',
+        menu_code: '',
         name: '',
         category: 'Coffee & Beverage',
         image: '',
@@ -188,15 +189,17 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                     padding: '20px'
                 }}>
                     {/* Filter Section */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems:'center' }}>
-                        <Typography sx={{
-                            fontWeight: '600',
-                            fontSize: '30px',
-                            color: '#063455'
-                        }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography
+                            sx={{
+                                fontWeight: '600',
+                                fontSize: '30px',
+                                color: '#063455',
+                            }}
+                        >
                             Products/Menu
                         </Typography>
-                        <Box sx={{ display: 'flex', gap:2 }}>
+                        <Box sx={{ display: 'flex', gap: 2 }}>
                             <Button
                                 variant="contained"
                                 startIcon={<AddIcon />}
@@ -206,7 +209,7 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                     backgroundColor: '#063455',
                                     // px: 3,
                                     textTransform: 'none',
-                                    height:35,
+                                    height: 35,
                                     '&:hover': {
                                         backgroundColor: '#063455',
                                     },
@@ -223,7 +226,7 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                     borderRadius: '16px',
                                     // px: 3,
                                     textTransform: 'none',
-                                    height:35,
+                                    height: 35,
                                     bgcolor: 'transparent',
                                     '&:hover': {
                                         bgcolor: '#ffebee',
@@ -331,8 +334,8 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                         >
                                             <CardContent>
                                                 <Grid container alignItems="center">
-                                                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                        <div>
+                                                    <Grid item xs={12}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                                                             <Box sx={{ width: 70, height: 70, mr: 2 }}>
                                                                 <img
                                                                     src={(product.images || []).length > 0 ? tenantAsset(product.images[0]) : '/assets/dish.png'}
@@ -345,19 +348,19 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                                                     }}
                                                                 />
                                                             </Box>
-
-                                                            <Box>
-                                                                <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{product.name}</Typography>
-                                                                <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#063455' }}>{product.category?.name}</Typography>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                                                    Rs
+                                                                </Typography>
+                                                                <Typography variant="h6" fontWeight="500" sx={{ fontSize: '24px' }}>
+                                                                    {product.base_price}
+                                                                </Typography>
                                                             </Box>
-                                                        </div>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                            <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                                                Rs
-                                                            </Typography>
-                                                            <Typography variant="h6" fontWeight="500" sx={{ fontSize: '24px' }}>
-                                                                {product.base_price}
-                                                            </Typography>
+                                                        </Box>
+
+                                                        <Box>
+                                                            <Typography sx={{ fontSize: '18px', fontWeight: 500, color: '#121212' }}>{product.menu_code ? `${product.menu_code} - ${product.name}` : product.name}</Typography>
+                                                            <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#063455' }}>{product.category?.name}</Typography>
                                                         </Box>
                                                     </Grid>
 
@@ -387,31 +390,31 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                                         <div style={{ display: 'flex', alignItems: 'center' }}>
                                                             {(product.variants || []).length > 0
                                                                 ? product.variants.map((variant, index) => {
-                                                                    return (
-                                                                        <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
-                                                                            <Typography variant="body2" color="text.secondary">
-                                                                                {variant.name}
-                                                                            </Typography>
-                                                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                                                                                {variant.values.map((value, valueIndex) => (
-                                                                                    <Button
-                                                                                        key={valueIndex}
-                                                                                        variant="outlined"
-                                                                                        size="small"
-                                                                                        sx={{
-                                                                                            minWidth: 'unset',
-                                                                                            px: 1.5,
-                                                                                            borderColor: '#e0e0e0',
-                                                                                            color: 'text.primary',
-                                                                                        }}
-                                                                                    >
-                                                                                        {value.name}
-                                                                                    </Button>
-                                                                                ))}
-                                                                            </Box>
-                                                                        </Box>
-                                                                    );
-                                                                })
+                                                                      return (
+                                                                          <Box key={index} sx={{ display: 'flex', flexDirection: 'column', gap: 1, mr: 2 }}>
+                                                                              <Typography variant="body2" color="text.secondary">
+                                                                                  {variant.name}
+                                                                              </Typography>
+                                                                              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                                                                  {variant.values.map((value, valueIndex) => (
+                                                                                      <Button
+                                                                                          key={valueIndex}
+                                                                                          variant="outlined"
+                                                                                          size="small"
+                                                                                          sx={{
+                                                                                              minWidth: 'unset',
+                                                                                              px: 1.5,
+                                                                                              borderColor: '#e0e0e0',
+                                                                                              color: 'text.primary',
+                                                                                          }}
+                                                                                      >
+                                                                                          {value.name}
+                                                                                      </Button>
+                                                                                  ))}
+                                                                              </Box>
+                                                                          </Box>
+                                                                      );
+                                                                  })
                                                                 : '-----'}
 
                                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -498,10 +501,10 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                                 <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Box>
                                         <Typography variant="h5" fontWeight="bold">
-                                            {selectedProduct.name}
+                                            {selectedProduct.menu_code ? `${selectedProduct.menu_code} - ${selectedProduct.name}` : selectedProduct.name}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary">
-                                            {selectedProduct.id} • {selectedProduct.category?.name}
+                                            {selectedProduct.menu_code || selectedProduct.id} • {selectedProduct.category?.name}
                                         </Typography>
                                     </Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -694,12 +697,12 @@ const CoffeeShop = ({ productLists, categoriesList = [] }) => {
                     <AddMenu
                         openMenu={openAddMenu}
                         onClose={handleAddMenuClose}
-                    // handleAddMenu={handleAddMenu}
-                    // selectedCategory={selectedCategory}
-                    // setSelectedCategory={setSelectedCategory}
-                    // newMenu={newMenu}
-                    // setNewMenu={setNewMenu}
-                    // addMenuStep={addMenuStep}
+                        // handleAddMenu={handleAddMenu}
+                        // selectedCategory={selectedCategory}
+                        // setSelectedCategory={setSelectedCategory}
+                        // newMenu={newMenu}
+                        // setNewMenu={setNewMenu}
+                        // addMenuStep={addMenuStep}
                     />
 
                     {/* Stock Modal */}

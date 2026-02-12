@@ -55,7 +55,7 @@ const TransactionFilter = ({ transactionTypes = [], users = [], subscriptionCate
                 }
                 try {
                     const response = await axios.get(route('api.bookings.search-customers'), {
-                        params: { query, type: type === 'all' ? null : type },
+                        params: { query, type: type || 'all', include_inactive: 1 },
                     });
                     setSuggestions(response.data);
                 } catch (error) {
@@ -75,7 +75,7 @@ const TransactionFilter = ({ transactionTypes = [], users = [], subscriptionCate
                 }
                 try {
                     const response = await axios.get(route('api.bookings.search-customers'), {
-                        params: { query, type: 'all' },
+                        params: { query, type: 'all', include_inactive: 1 },
                     });
                     setMembershipSuggestions(response.data);
                 } catch (error) {

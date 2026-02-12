@@ -8,12 +8,12 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import { useEffect, useState } from 'react';
 import VariantSelectorDialog from '../VariantSelectorDialog';
 
-const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants }) => {
-    const [selectedCategory, setSelectedCategory] = useState(1);
+const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants, initialRestaurantId, orderType }) => {
+    const [selectedCategory, setSelectedCategory] = useState(null);
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [categories, setCategories] = useState([]);
     const [products, setProducts] = useState([]);
-    const [selectedRestaurant, setSelectedRestaurant] = useState(allrestaurants[0]?.id);
+    const [selectedRestaurant, setSelectedRestaurant] = useState(initialRestaurantId || allrestaurants[0]?.id || '');
 
     const handleCategoryClick = (categoryId) => {
         setSelectedCategory(categoryId);
@@ -23,18 +23,96 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants })
     const [variantProduct, setVariantProduct] = useState(null);
     const [initialEditItem, setInitialEditItem] = useState(null);
 
+    const getItemKey = (orderItem) => {
+        const productId = orderItem?.id ?? '';
+        const variants = Array.isArray(orderItem?.variants) ? orderItem.variants : [];
+        const variantsKey = variants
+            .map((v) => `${v?.id ?? ''}:${v?.value ?? ''}`)
+            .sort()
+            .join(',');
+        return `${productId}|${variantsKey}`;
+    };
+
+    const getUnitPrice = (orderItem) => {
+        const base = parseFloat(orderItem?.price) || 0;
+        const variants = Array.isArray(orderItem?.variants) ? orderItem.variants : [];
+        const variantsSum = variants.reduce((sum, v) => sum + (parseFloat(v?.price) || 0), 0);
+        return base + variantsSum;
+    };
+
+    const getDiscountAmountForQty = (orderItem, quantity, totalPrice) => {
+        const discountValue = Number(orderItem?.discount_value || 0);
+        if (!discountValue || discountValue <= 0) return 0;
+
+        const discountType = orderItem?.discount_type || 'percentage';
+        const gross = Number(totalPrice || 0);
+        let discountAmount = 0;
+        if (discountType === 'percentage') {
+            discountAmount = Math.round(gross * (discountValue / 100));
+        } else {
+            discountAmount = Math.round(discountValue * quantity);
+        }
+        if (discountAmount > gross) discountAmount = gross;
+        return discountAmount;
+    };
+
+    const addOrIncrementItem = (newOrderItem) => {
+        setOrderItems((prev) => {
+            const key = getItemKey(newOrderItem);
+            const incomingQty = Number(newOrderItem?.quantity) || 1;
+            const existingIndex = prev.findIndex((row) => !row?.removed && row?.status !== 'cancelled' && getItemKey(row?.order_item) === key);
+            if (existingIndex === -1) {
+                const unitPrice = getUnitPrice(newOrderItem);
+                const totalPrice = unitPrice * incomingQty;
+                return [
+                    ...prev,
+                    {
+                        id: 'new',
+                        order_item: {
+                            ...newOrderItem,
+                            quantity: incomingQty,
+                            total_price: totalPrice,
+                            discount_amount: getDiscountAmountForQty(newOrderItem, incomingQty, totalPrice),
+                        },
+                        removed: false,
+                    },
+                ];
+            }
+
+            return prev.map((row, idx) => {
+                if (idx !== existingIndex) return row;
+
+                const currentQty = Number(row?.order_item?.quantity) || 1;
+                const nextQty = currentQty + incomingQty;
+                const nextId = row?.id && typeof row.id === 'number' ? `update-${row.id}` : row.id;
+                const unitPrice = getUnitPrice(row?.order_item);
+                const totalPrice = unitPrice * nextQty;
+
+                return {
+                    ...row,
+                    id: nextId,
+                    order_item: {
+                        ...row.order_item,
+                        quantity: nextQty,
+                        total_price: totalPrice,
+                        discount_amount: getDiscountAmountForQty(row.order_item, nextQty, totalPrice),
+                    },
+                };
+            });
+        });
+    };
+
     // This would be called when user clicks a product
     const handleProductClick = (product) => {
-        if (product.current_stock === 0) return;
+        if (product.manage_stock && product.minimal_stock > product.current_stock - 1) return;
 
         if (product.variants && product.variants.length > 0) {
             setVariantProduct(product);
             setVariantPopupOpen(true);
         } else {
-            console.log(product);
-
             const item = {
                 id: product.id,
+                product_id: product.id,
                 name: product.name,
                 price: parseFloat(product.base_price),
                 total_price: parseFloat(product.base_price),
@@ -42,24 +120,47 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants })
                 tenant_id: product.tenant_id,
                 category: product.category?.name || '',
                 variants: [],
+                is_discountable: product.is_discountable !== false,
+                discount_value: 0,
+                discount_type: 'percentage',
+                discount_amount: 0,
+                is_taxable: product.is_taxable,
+                max_discount: product.max_discount,
+                max_discount_type: product.max_discount_type,
+                manage_stock: product.manage_stock,
+                current_stock: product.current_stock,
+                minimal_stock: product.minimal_stock,
+                menu_code: product.menu_code,
             };
 
-            setOrderItems((prev) => [...prev, { id: 'new', order_item: item, removed: false }]);
+            addOrIncrementItem(item);
             // handleOrderDetailChange('order_items', [...orderDetails.order_items, item]);
         }
     };
 
     const handleVariantConfirm = (item) => {
-        let updatedItems = [...orderItems];
-
         if (editingItemIndex !== null) {
-            updatedItems[editingItemIndex] = item;
+            setOrderItems((prev) =>
+                prev.map((row, idx) => {
+                    if (idx !== editingItemIndex) return row;
+                    const nextId = row?.id && typeof row.id === 'number' ? `update-${row.id}` : row.id;
+                    const qty = Number(item?.quantity) || 1;
+                    const unitPrice = getUnitPrice(item);
+                    return {
+                        ...row,
+                        id: nextId,
+                        order_item: {
+                            ...item,
+                            quantity: qty,
+                            total_price: unitPrice * qty,
+                        },
+                        removed: false,
+                    };
+                }),
+            );
         } else {
-            updatedItems.push(item);
+            addOrIncrementItem(item);
         }
-
-        setOrderItems((prev) => [...prev, { id: 'new', order_item: item, removed: false }]);
-        // handleOrderDetailChange('order_items', updatedItems);
         setVariantPopupOpen(false);
         setVariantProduct(null);
         setEditingItemIndex(null);
@@ -67,11 +168,27 @@ const AddItems = ({ setOrderItems, orderItems, setShowAddItem, allrestaurants })
 
     useEffect(() => {
         setProducts([]);
-        axios.get(route('products.categories'), { params: { tenant_id: selectedRestaurant } }).then((res) => setCategories(res.data.categories));
+        axios.get(route('products.categories'), { params: { tenant_id: selectedRestaurant } }).then((res) => {
+            const nextCategories = res.data.categories || [];
+            setCategories(nextCategories);
+            setSelectedCategory((prev) => {
+                if (!prev) return nextCategories[0]?.id || null;
+                const exists = nextCategories.some((c) => c.id === prev);
+                return exists ? prev : nextCategories[0]?.id || null;
+            });
+        });
     }, [selectedRestaurant]);
 
     useEffect(() => {
-        axios.get(route('products.bycategory', { category_id: selectedCategory })).then((res) => setProducts(res.data.products));
+        if (!selectedCategory) {
+            setProducts([]);
+            return;
+        }
+        axios
+            .get(route('products.bycategory', { category_id: selectedCategory }), {
+                params: { order_type: orderType },
+            })
+            .then((res) => setProducts(res.data.products));
     }, [selectedCategory]);
 
     return (

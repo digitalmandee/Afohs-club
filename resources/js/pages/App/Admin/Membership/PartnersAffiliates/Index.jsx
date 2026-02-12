@@ -133,7 +133,6 @@ const PartnersAffiliatesIndex = ({ partners, filters = {} }) => {
                                 style={{
                                     backgroundColor: '#063455',
                                     textTransform: 'none',
-                                    borderRadius: '4px',
                                     height: 40,
                                     width: 120,
                                     borderRadius: '16px',

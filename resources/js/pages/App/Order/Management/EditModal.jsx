@@ -1,5 +1,6 @@
 import { AccessTime, Add, Block, Restore } from '@mui/icons-material';
-import { Avatar, Box, Button, Checkbox, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide, Select, MenuItem, InputLabel, FormControl, FormControlLabel, Radio, TextField, RadioGroup, Collapse } from '@mui/material';
+import { Avatar, Box, Button, Checkbox, Chip, Dialog, DialogContent, IconButton, List, ListItem, ListItemText, Paper, Typography, Slide, Select, MenuItem, InputLabel, FormControl, FormControlLabel, Radio, TextField, RadioGroup, Collapse } from '@mui/material';
+import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import AddItems from './AddItem';
 import VariantSelectorDialog from '../VariantSelectorDialog';
@@ -13,6 +14,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     const [editingItemIndex, setEditingItemIndex] = useState(null);
     const [orderStatus, setOrderStatus] = useState(order?.status || 'pending');
     const [loading, setLoading] = useState(false);
+    const [editingDiscountIndex, setEditingDiscountIndex] = useState(null);
+    const [itemDiscountForm, setItemDiscountForm] = useState({ value: '', type: 'percentage' });
+    const [openDiscountModal, setOpenDiscountModal] = useState(false);
 
     // Cancel Item State
     const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -26,6 +30,122 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             [index]: !prev[index], // toggle only this item
         }));
     };
+
+    const getUnitPrice = (orderItem) => {
+        const base = parseFloat(orderItem?.price) || 0;
+        const variants = Array.isArray(orderItem?.variants) ? orderItem.variants : [];
+        const variantsSum = variants.reduce((sum, v) => sum + (parseFloat(v?.price) || 0), 0);
+        return base + variantsSum;
+    };
+
+    const getDiscountAmountForQty = (orderItem, quantity, totalPrice) => {
+        const discountValue = Number(orderItem?.discount_value || 0);
+        if (!discountValue || discountValue <= 0) return 0;
+
+        const discountType = orderItem?.discount_type || 'percentage';
+        const gross = Number(totalPrice || 0);
+        let discountAmount = 0;
+        if (discountType === 'percentage') {
+            discountAmount = Math.round(gross * (discountValue / 100));
+        } else {
+            discountAmount = Math.round(discountValue * quantity);
+        }
+        if (discountAmount > gross) discountAmount = gross;
+        return discountAmount;
+    };
+
+    const handleOpenItemDiscount = (index, item) => {
+        setEditingDiscountIndex(index);
+        setItemDiscountForm({
+            value: item.discount_value || '',
+            type: item.discount_type || 'percentage',
+        });
+        setOpenDiscountModal(true);
+    };
+
+    const handleApplyItemDiscount = () => {
+        if (editingDiscountIndex === null) return;
+
+        const row = orderItems[editingDiscountIndex];
+        const item = row?.order_item;
+        if (!item) return;
+
+        const val = Number(itemDiscountForm.value || 0);
+        const type = itemDiscountForm.type;
+
+        if (item.max_discount != null && parseFloat(item.max_discount) > 0) {
+            const maxDisc = parseFloat(item.max_discount);
+            const maxDiscType = item.max_discount_type || 'percentage';
+
+            let exceedsLimit = false;
+
+            if (maxDiscType === 'percentage') {
+                if (type === 'percentage') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    const equivalentPercent = (val / item.price) * 100;
+                    if (equivalentPercent > maxDisc) exceedsLimit = true;
+                }
+            } else {
+                if (type === 'amount') {
+                    if (val > maxDisc) exceedsLimit = true;
+                } else {
+                    const calculatedAmount = (val / 100) * item.price;
+                    if (calculatedAmount > maxDisc) exceedsLimit = true;
+                }
+            }
+
+            if (exceedsLimit) {
+                enqueueSnackbar(`Maximum discount allowed is ${maxDisc}${maxDiscType === 'percentage' ? '%' : ' Rs'}`, { variant: 'error' });
+                return;
+            }
+        }
+
+        setOrderItems((prev) =>
+            prev.map((row, i) => {
+                if (i !== editingDiscountIndex) return row;
+
+                const nextId = row?.id && typeof row.id === 'number' ? `update-${row.id}` : row.id;
+                const quantity = Number(row?.order_item?.quantity) || 1;
+                const grossTotal = Number(row?.order_item?.total_price || 0);
+                let discountAmount = 0;
+                if (type === 'percentage') {
+                    discountAmount = Math.round(grossTotal * (val / 100));
+                } else {
+                    discountAmount = Math.round(val * quantity);
+                }
+                if (discountAmount > grossTotal) discountAmount = grossTotal;
+
+                return {
+                    ...row,
+                    id: nextId,
+                    order_item: {
+                        ...row.order_item,
+                        discount_value: val,
+                        discount_type: type,
+                        discount_amount: discountAmount,
+                    },
+                };
+            }),
+        );
+
+        setOpenDiscountModal(false);
+        setEditingDiscountIndex(null);
+    };
+
+    useEffect(() => {
+        if (!openDiscountModal) return;
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleApplyItemDiscount();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [openDiscountModal, itemDiscountForm, editingDiscountIndex]);
 
     const updateItem = (index, updates) => {
         setOrderItems((prev) =>
@@ -63,15 +183,19 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     updatedId = `update-${item.id}`;
                 }
 
-                const price = parseFloat(item.order_item.price) || 0;
+                const unitPrice = getUnitPrice(item.order_item);
+                const safeQty = updatedQty > 0 ? updatedQty : 1;
+                const totalPrice = unitPrice * safeQty;
+                const discountAmount = getDiscountAmountForQty(item.order_item, safeQty, totalPrice);
 
                 return {
                     ...item,
                     id: updatedId,
                     order_item: {
                         ...item.order_item,
-                        quantity: updatedQty > 0 ? updatedQty : 1, // prevent quantity going below 1
-                        total_price: price * (updatedQty > 0 ? updatedQty : 1),
+                        quantity: safeQty,
+                        total_price: totalPrice,
+                        discount_amount: discountAmount,
                     },
                 };
             }),
@@ -130,7 +254,9 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
             // Partial Cancel -> Split
             // 1. Reduce quantity of original item
             const reducedQty = currentQty - safeCancelQty;
-            const reducedPrice = parseFloat(originalItem.order_item.price) * reducedQty;
+            const unitPrice = getUnitPrice(originalItem.order_item);
+            const reducedPrice = unitPrice * reducedQty;
+            const reducedDiscountAmount = getDiscountAmountForQty(originalItem.order_item, reducedQty, reducedPrice);
 
             const updatedOriginal = {
                 ...originalItem,
@@ -139,11 +265,13 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     ...originalItem.order_item,
                     quantity: reducedQty,
                     total_price: reducedPrice,
+                    discount_amount: reducedDiscountAmount,
                 },
             };
 
             // 2. Create NEW item for cancelled part
-            const cancelledPrice = parseFloat(originalItem.order_item.price) * safeCancelQty;
+            const cancelledPrice = unitPrice * safeCancelQty;
+            const cancelledDiscountAmount = getDiscountAmountForQty(originalItem.order_item, safeCancelQty, cancelledPrice);
             const cancelledItem = {
                 ...originalItem,
                 id: 'new', // Treat as new item
@@ -155,6 +283,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                     ...originalItem.order_item,
                     quantity: safeCancelQty,
                     total_price: cancelledPrice,
+                    discount_amount: cancelledDiscountAmount,
                 },
             };
 
@@ -171,16 +300,10 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
     };
 
     const handleItemClick = async (item, index) => {
-        try {
-            setVariantProductId(item.order_item.id);
-            setVariantPopupOpen(true);
-            setInitialEditItem(item.order_item);
-            setEditingItemIndex(index);
-        } catch (error) {
-            console.error('Error loading product:', error);
-        } finally {
-            setVariantLoading(false);
-        }
+        setVariantProductId(item.order_item.id);
+        setVariantPopupOpen(true);
+        setInitialEditItem(item.order_item);
+        setEditingItemIndex(index);
     };
 
     const handleVariantConfirm = (updatedItem) => {
@@ -189,7 +312,19 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                 i === editingItemIndex
                     ? {
                           ...item,
-                          order_item: updatedItem,
+                          order_item: (() => {
+                              const nextOrderItem = {
+                                  ...updatedItem,
+                                  discount_value: updatedItem?.discount_value ?? item.order_item?.discount_value ?? 0,
+                                  discount_type: updatedItem?.discount_type ?? item.order_item?.discount_type ?? 'percentage',
+                              };
+                              const quantity = Number(nextOrderItem?.quantity) || 1;
+                              const totalPrice = Number(nextOrderItem?.total_price || 0);
+                              return {
+                                  ...nextOrderItem,
+                                  discount_amount: getDiscountAmountForQty(nextOrderItem, quantity, totalPrice),
+                              };
+                          })(),
                           id: item.id && typeof item.id === 'number' ? `update-${item.id}` : item.id,
                       }
                     : item,
@@ -201,7 +336,6 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
 
     const resetVariantState = () => {
         setVariantPopupOpen(false);
-        setVariantProduct(null);
         setInitialEditItem(null);
         setEditingItemIndex(null);
     };
@@ -221,6 +355,88 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
 
     return (
         <>
+            <Dialog
+                open={openDiscountModal}
+                onClose={() => setOpenDiscountModal(false)}
+                fullWidth
+                maxWidth="sm"
+                PaperProps={{
+                    style: {
+                        position: 'absolute',
+                        m: 0,
+                        width: '600px',
+                        borderRadius: 2,
+                        p: 2,
+                    },
+                }}
+            >
+                <Box sx={{ padding: 3 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 500, color: '#063455', fontSize: '30px', mb: 3 }}>
+                        Apply Item Discount
+                    </Typography>
+
+                    <Box mb={2}>
+                        <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                            Discount Rate
+                        </Typography>
+                        <TextField
+                            fullWidth
+                            name="value"
+                            type="number"
+                            value={itemDiscountForm.value}
+                            onChange={(e) => setItemDiscountForm((prev) => ({ ...prev, value: e.target.value }))}
+                            placeholder={itemDiscountForm.type === 'percentage' ? 'Enter % discount' : 'Enter amount in Rs (per unit)'}
+                            size="small"
+                        />
+                    </Box>
+
+                    <Box mb={3}>
+                        <Typography variant="body1" sx={{ mb: 1, fontSize: '14px', fontWeight: 500 }}>
+                            Discount Method
+                        </Typography>
+                        <TextField select fullWidth name="type" value={itemDiscountForm.type} onChange={(e) => setItemDiscountForm((prev) => ({ ...prev, type: e.target.value }))} size="small">
+                            <MenuItem key="percentage" value="percentage">
+                                Percentage (%)
+                            </MenuItem>
+                            <MenuItem key="amount" value="amount">
+                                Fixed Amount (Rs per unit)
+                            </MenuItem>
+                        </TextField>
+                    </Box>
+
+                    <Box display="flex" justifyContent="flex-end">
+                        <Button
+                            variant="contained"
+                            onClick={() => setOpenDiscountModal(false)}
+                            sx={{
+                                backgroundColor: '#F14C35',
+                                color: '#FFFFFF',
+                                textTransform: 'none',
+                                fontSize: '14px',
+                                mr: 1,
+                                '&:hover': { backgroundColor: '#d8432f' },
+                            }}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            variant="contained"
+                            onClick={handleApplyItemDiscount}
+                            sx={{
+                                backgroundColor: '#063455',
+                                color: '#FFFFFF',
+                                textTransform: 'none',
+                                fontSize: '14px',
+                                px: 3,
+                                '&:hover': { backgroundColor: '#002244' },
+                            }}
+                        >
+                            Apply
+                        </Button>
+                    </Box>
+                </Box>
+            </Dialog>
             <Dialog open={open} onClose={onClose} fullScreen={showAddItem} TransitionComponent={Slide}>
                 <DialogContent
                     sx={{
@@ -353,7 +569,38 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                     }),
                                                 }}
                                             >
-                                                <ListItemText primary={item.order_item?.name} onClick={() => handleItemClick(item, index)} sx={{ cursor: 'pointer' }} />
+                                                <ListItemText
+                                                    primary={item.order_item?.name}
+                                                    secondary={
+                                                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                                                            {item.order_item?.is_discountable && (
+                                                                <Chip
+                                                                    label={
+                                                                        Number(item.order_item?.discount_value || 0) > 0
+                                                                            ? `-${item.order_item?.discount_type === 'percentage' ? item.order_item?.discount_value + '%' : 'Rs ' + item.order_item?.discount_value}`
+                                                                            : 'Add Disc.'
+                                                                    }
+                                                                    size="small"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleOpenItemDiscount(index, item.order_item);
+                                                                    }}
+                                                                    sx={{
+                                                                        height: '18px',
+                                                                        fontSize: '0.65rem',
+                                                                        bgcolor: Number(item.order_item?.discount_value || 0) > 0 ? '#ffebee' : '#f5f5f5',
+                                                                        color: Number(item.order_item?.discount_value || 0) > 0 ? '#c62828' : '#757575',
+                                                                        cursor: 'pointer',
+                                                                        '&:hover': { bgcolor: '#e0e0e0' },
+                                                                    }}
+                                                                />
+                                                            )}
+                                                            {item.order_item?.is_taxable && <Chip label="Taxable" size="small" sx={{ height: '18px', fontSize: '0.65rem' }} />}
+                                                        </Box>
+                                                    }
+                                                    onClick={() => handleItemClick(item, index)}
+                                                    sx={{ cursor: 'pointer' }}
+                                                />
 
                                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                     <IconButton size="small" onClick={() => handleQuantityChange(index, -1)} sx={{ color: '#003153' }}>
@@ -363,6 +610,16 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                                     <IconButton size="small" onClick={() => handleQuantityChange(index, 1)} sx={{ color: '#003153' }}>
                                                         <Typography sx={{ fontSize: 16, fontWeight: 'bold' }}>+</Typography>
                                                     </IconButton>
+                                                    <Box sx={{ textAlign: 'right', ml: 1 }}>
+                                                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                                            Rs. {Number((Number(item.order_item?.total_price || 0) - Number(item.order_item?.discount_amount || 0)).toFixed(2)).toLocaleString()}
+                                                        </Typography>
+                                                        {Number(item.order_item?.discount_amount || 0) > 0 && (
+                                                            <Typography variant="caption" sx={{ color: '#ef5350', display: 'block' }}>
+                                                                (Saved Rs {Number(item.order_item?.discount_amount || 0).toFixed(2)})
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
                                                     {item.id === 'new' ? (
                                                         <IconButton
                                                             onClick={() => {
@@ -413,6 +670,53 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                         </Box>
                                     ))}
                             </List>
+
+                            {(() => {
+                                const active = orderItems.filter((x) => x?.status !== 'cancelled');
+                                const subtotal = Math.round(active.reduce((sum, x) => sum + Number(x?.order_item?.total_price || 0), 0));
+                                const discountAmount = active.reduce((sum, x) => sum + Number(x?.order_item?.discount_amount || 0), 0);
+                                const discountedSubtotal = subtotal - discountAmount;
+                                const taxRate = Number(order?.tax || 0);
+                                const taxableAmount = active.reduce((sum, x) => {
+                                    if (x?.order_item?.is_taxable) {
+                                        return sum + (Number(x?.order_item?.total_price || 0) - Number(x?.order_item?.discount_amount || 0));
+                                    }
+                                    return sum;
+                                }, 0);
+                                const taxAmount = Math.round(taxableAmount * taxRate);
+                                const total = Math.round(discountedSubtotal + taxAmount);
+
+                                return (
+                                    <Box sx={{ px: 2, py: 1.5, bgcolor: '#f5f5f5', borderTop: '1px solid #e0e0e0' }}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" fontWeight="bold">
+                                                Subtotal
+                                            </Typography>
+                                            <Typography variant="body2">{subtotal.toLocaleString()}</Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" fontWeight="bold">
+                                                Discount
+                                            </Typography>
+                                            <Typography variant="body2">{Number(discountAmount || 0).toFixed(2)}</Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" fontWeight="bold">
+                                                Tax {taxRate ? `(${Math.round(taxRate * 100)}%)` : ''}
+                                            </Typography>
+                                            <Typography variant="body2">{taxAmount.toLocaleString()}</Typography>
+                                        </Box>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <Typography variant="body2" fontWeight="bold">
+                                                Total
+                                            </Typography>
+                                            <Typography variant="body2" fontWeight="bold">
+                                                {total.toLocaleString()}
+                                            </Typography>
+                                        </Box>
+                                    </Box>
+                                );
+                            })()}
 
                             {/* Add Item Button */}
                             {!showAddItem && (
@@ -528,7 +832,7 @@ function EditOrderModal({ open, onClose, order, orderItems, setOrderItems, onSav
                                 overflow: 'auto',
                             }}
                         >
-                            <AddItems allrestaurants={allrestaurants} orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} />
+                            <AddItems allrestaurants={allrestaurants} orderItems={orderItems} setOrderItems={setOrderItems} setShowAddItem={setShowAddItem} initialRestaurantId={order?.tenant_id} orderType={order?.order_type} />
                         </Box>
                     )}
                 </DialogContent>

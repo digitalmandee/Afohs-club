@@ -27,7 +27,14 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
 
     const formatDate = (dateString) => {
         try {
-            return format(new Date(dateString), 'MM/dd/yyyy');
+            if (!dateString) return '-';
+
+            if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+                const [day, month, year] = dateString.split('-').map(Number);
+                return format(new Date(year, month - 1, day), 'dd-MM-yyyy');
+            }
+
+            return format(new Date(dateString), 'dd-MM-yyyy');
         } catch (error) {
             return dateString || '-';
         }
@@ -43,22 +50,18 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
 
     const getFilterText = () => {
         let filterText = [];
-        
-        if (filters.date_from && filters.date_to) {
-            filterText.push(`Period: ${formatDate(filters.date_from)} to ${formatDate(filters.date_to)}`);
-        } else if (filters.date_from) {
-            filterText.push(`From: ${formatDate(filters.date_from)}`);
-        } else if (filters.date_to) {
-            filterText.push(`Until: ${formatDate(filters.date_to)}`);
+
+        if (filters.date) {
+            filterText.push(`As-of: ${formatDate(filters.date)}`);
         }
-        
+
         if (filters.status && filters.status.length > 0) {
-            const statusLabels = filters.status.map(status => 
+            const statusLabels = filters.status.map(status =>
                 status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
             );
             filterText.push(`Status: ${statusLabels.join(', ')}`);
         }
-        
+
         if (filters.categories && filters.categories.length > 0) {
             const categoryNames = filters.categories.map(catId => {
                 const category = all_categories?.find(cat => cat.id == catId);
@@ -78,98 +81,98 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
         if (filters.contact_search) {
             filterText.push(`Contact: ${filters.contact_search}`);
         }
-        
+
         return filterText.length > 0 ? filterText.join(' | ') : 'All Records';
     };
 
     return (
         <>
             <Head title="Pending Maintenance Report - Print" />
-            
+
             <style jsx global>{`
                 @media print {
-                    body { 
-                        margin: 0; 
+                    body {
+                        margin: 0;
                         padding: 15px;
                         font-family: Arial, sans-serif;
                         font-size: 10px;
                         line-height: 1.2;
                     }
                     .no-print { display: none !important; }
-                    
+
                     .report-header {
                         text-align: center;
                         margin-bottom: 20px;
                         border-bottom: 2px solid #000;
                         padding-bottom: 10px;
                     }
-                    
+
                     .report-title {
                         font-size: 18px;
                         font-weight: bold;
                         margin: 5px 0;
                         color: #000;
                     }
-                    
+
                     .report-subtitle {
                         font-size: 14px;
                         font-weight: bold;
                         margin: 3px 0;
                         color: #333;
                     }
-                    
+
                     .report-info {
                         font-size: 9px;
                         margin: 2px 0;
                         color: #666;
                     }
-                    
+
                     .summary-section {
                         margin: 20px 0;
                         padding: 10px;
                         border: 1px solid #000;
                         background-color: #f9f9f9;
                     }
-                    
+
                     .summary-grid {
                         display: grid;
                         grid-template-columns: repeat(4, 1fr);
                         gap: 15px;
                         margin: 10px 0;
                     }
-                    
+
                     .summary-item {
                         text-align: center;
                         padding: 8px;
                         border: 1px solid #ccc;
                         background-color: #fff;
                     }
-                    
+
                     .summary-value {
                         font-size: 12px;
                         font-weight: bold;
                         margin-bottom: 3px;
                     }
-                    
+
                     .summary-label {
                         font-size: 8px;
                         color: #666;
                     }
-                    
+
                     table {
                         width: 100%;
                         border-collapse: collapse;
                         margin: 20px 0;
                         font-size: 8px;
                     }
-                    
+
                     th, td {
                         border: 1px solid #000;
                         padding: 4px 2px;
                         text-align: left;
                         vertical-align: top;
                     }
-                    
+
                     th {
                         background-color: #000;
                         color: #fff;
@@ -177,30 +180,30 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                         text-align: center;
                         font-size: 8px;
                     }
-                    
+
                     .total-row {
                         background-color: #000;
                         color: #fff;
                         font-weight: bold;
                     }
-                    
+
                     .total-row td {
                         font-size: 9px;
                     }
-                    
+
                     .text-center { text-align: center; }
                     .text-right { text-align: right; }
                     .font-bold { font-weight: bold; }
-                    
+
                     .member-row:nth-child(even) {
                         background-color: #f9f9f9;
                     }
-                    
+
                     .status-active { color: #059669; font-weight: bold; }
                     .status-inactive { color: #dc2626; font-weight: bold; }
                     .status-suspended { color: #f59e0b; font-weight: bold; }
                 }
-                
+
                 @media screen {
                     body {
                         background-color: #f5f5f5;
@@ -290,7 +293,7 @@ export default function PendingMaintenanceReportPrint({ members, statistics, fil
                                 <td className="text-center">Unpaid</td>
                             </tr>
                         ))}
-                        
+
                         {/* Total Row */}
                         <tr className="total-row">
                             <td colSpan="7" className="text-center font-bold">TOTAL ({statistics?.total_members || 0} Members)</td>

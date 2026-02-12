@@ -62,6 +62,20 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
     useEffect(() => {
         // If invoiceData is provided directly, use it (for order mode)
         if (invoiceData) {
+            let member = invoiceData.member ?? null;
+            let customer = invoiceData.customer ?? null;
+            let employee = invoiceData.employee ?? null;
+
+            if (!customer && !employee && member?.booking_type) {
+                if (member.booking_type === 'guest') {
+                    customer = member;
+                    member = null;
+                } else if (member.booking_type === 'employee') {
+                    employee = member;
+                    member = null;
+                }
+            }
+
             // Restructure the data to match expected format
             const restructuredData = {
                 ...invoiceData,
@@ -73,9 +87,9 @@ const Receipt = ({ invoiceId = null, invoiceData = null, openModal = false, show
                 tax: invoiceData.tax || 0,
                 total_price: invoiceData.total_price || 0,
                 order_type: invoiceData.order_type || 'N/A',
-                member: invoiceData.member?.booking_type === 'member' ? invoiceData.member : null,
-                customer: invoiceData.member?.booking_type === 'guest' ? invoiceData.member : null,
-                employee: invoiceData.member?.booking_type === 'employee' ? invoiceData.member : null,
+                member,
+                customer,
+                employee,
                 table: invoiceData.table || null,
                 cashier: invoiceData.cashier || null,
                 waiter: invoiceData.waiter || null,

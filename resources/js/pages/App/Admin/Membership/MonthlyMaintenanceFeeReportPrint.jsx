@@ -46,6 +46,10 @@ export default function MonthlyMaintenanceFeeReportPrint({ transactions, statist
             filterText.push(`Member: ${filters.member_search}`);
         }
 
+        if (filters.membership_no_search) {
+            filterText.push(`Membership #: ${filters.membership_no_search}`);
+        }
+
         if (filters.invoice_search) {
             filterText.push(`Invoice: ${filters.invoice_search}`);
         }
@@ -242,12 +246,12 @@ export default function MonthlyMaintenanceFeeReportPrint({ transactions, statist
                             <th style={{ width: '8%' }}>Invoice #</th>
                             <th style={{ width: '10%' }}>City</th>
                             <th style={{ width: '15%' }}>Member Name</th>
+                            <th style={{ width: '10%' }}>Membership #</th>
                             <th style={{ width: '10%' }}>Amount</th>
                             <th style={{ width: '10%' }}>Payment Method</th>
                             <th style={{ width: '12%' }}>Category</th>
                             <th style={{ width: '8%' }}>Dated</th>
                             <th style={{ width: '17%' }}>Duration</th>
-                            <th style={{ width: '10%' }}>Membership #</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -257,12 +261,12 @@ export default function MonthlyMaintenanceFeeReportPrint({ transactions, statist
                                     <td className="text-center font-bold">{transaction.invoice?.invoice_no}</td>
                                     <td className="text-center">{transaction.invoice?.member?.current_city || 'N/A'}</td>
                                     <td className="font-bold">{transaction.invoice?.member?.full_name}</td>
+                                    <td className="text-center">{transaction.invoice?.member?.membership_no}</td>
                                     <td className="text-right font-bold">{formatCurrency(transaction.total)}</td>
                                     <td className="text-center">{transaction.invoice?.payment_method || 'N/A'}</td>
                                     <td>{transaction.invoice?.member?.member_category?.name || 'N/A'}</td>
                                     <td className="text-center">{formatDate(transaction.created_at)}</td>
                                     <td className="text-center">{transaction.start_date && transaction.end_date ? `${formatDate(transaction.start_date)} - ${formatDate(transaction.end_date)}` : 'N/A'}</td>
-                                    <td className="text-center">{transaction.invoice?.member?.membership_no}</td>
                                 </tr>
                             ))
                         ) : (
@@ -276,14 +280,14 @@ export default function MonthlyMaintenanceFeeReportPrint({ transactions, statist
                         {/* Total Row */}
                         {transactions?.data && transactions.data.length > 0 && (
                             <tr className="total-row">
-                                <td colSpan="3" className="text-center font-bold">
+                                <td colSpan="4" className="text-center font-bold">
                                     TOTAL ({statistics?.total_transactions || 0} Transactions)
                                 </td>
                                 <td className="text-right font-bold">{formatCurrency(statistics?.total_amount || 0)}</td>
                                 <td colSpan="2" className="text-center font-bold">
                                     Avg: {formatCurrency(statistics?.average_amount || 0)}
                                 </td>
-                                <td colSpan="3" className="text-center font-bold">
+                                <td colSpan="2" className="text-center font-bold">
                                     Monthly Maintenance Fee Collection Report
                                 </td>
                             </tr>

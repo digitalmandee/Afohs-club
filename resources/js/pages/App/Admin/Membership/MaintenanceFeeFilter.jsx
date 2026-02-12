@@ -7,6 +7,9 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
 
 const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
     const { all_categories } = usePage().props;
@@ -72,12 +75,12 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
                             label="From Date"
-                            format="DD-MM-YYYY"
-                            value={filters.date_from ? dayjs(filters.date_from, "DD-MM-YYYY") : null}
+                            format="MM-DD-YYYY"
+                            value={filters.date_from ? dayjs(filters.date_from, "MM-DD-YYYY") : null}
                             onChange={(newValue) =>
                                 handleFilterChange(
                                     "date_from",
-                                    newValue ? newValue.format("DD-MM-YYYY") : ""
+                                    newValue ? newValue.format("MM-DD-YYYY") : ""
                                 )
                             }
                             slotProps={{
@@ -118,12 +121,12 @@ const MaintenanceFeeFilter = ({ filters: initialFilters }) => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                         <DatePicker
                             label="To Date"
-                            format="DD-MM-YYYY"
-                            value={filters.date_to ? dayjs(filters.date_to, "DD-MM-YYYY") : null}
+                            format="MM-DD-YYYY"
+                            value={filters.date_to ? dayjs(filters.date_to, "MM-DD-YYYY") : null}
                             onChange={(newValue) =>
                                 handleFilterChange(
                                     "date_to",
-                                    newValue ? newValue.format("DD-MM-YYYY") : ""
+                                    newValue ? newValue.format("MM-DD-YYYY") : ""
                                 )
                             }
                             slotProps={{

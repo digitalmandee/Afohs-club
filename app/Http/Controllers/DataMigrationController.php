@@ -2657,7 +2657,7 @@ class DataMigrationController extends Controller
         if ($totalPaid >= $invoice->total_price) {
             $invoice->update(['status' => 'paid']);
         } elseif ($totalPaid > 0) {
-            $invoice->update(['status' => 'partial']);
+            $invoice->update(['status' => 'unpaid']);
         }
     }
 
@@ -2716,7 +2716,7 @@ class DataMigrationController extends Controller
         if ($totalPaid >= $invoice->total_price) {
             $invoice->update(['status' => 'paid']);
         } elseif ($totalPaid > 0) {
-            $invoice->update(['status' => 'partial']);
+            $invoice->update(['status' => 'unpaid']);
         }
     }
 

@@ -700,6 +700,11 @@ class OrderController extends Controller
             ->first();
     }
 
+    private function checkActiveShift(): bool
+    {
+        return (bool) $this->getActiveShift();
+    }
+
     public function sendToKitchen(Request $request)
     {
         // Enforce Active Shift (Global)
@@ -729,9 +734,11 @@ class OrderController extends Controller
         try {
             $totalDue = $request->price;
             $orderType = $request->order_type;
+            $hasPayment = $request->has('payment') && is_array($request->payment);
+            $isTakeawayPayNow = $orderType == 'takeaway' && $hasPayment && array_key_exists('payment_method', $request->payment ?? []);
 
-            // Validate Takeaway Payment
-            if ($orderType == 'takeaway') {
+            // Validate Takeaway Payment (only when "Pay Now" flow is used)
+            if ($isTakeawayPayNow) {
                 $entEnabled = $request->payment['ent_enabled'] ?? false;
                 $ctsEnabled = $request->payment['cts_enabled'] ?? false;
                 $entDeduction = $entEnabled ? ($request->payment['ent_amount'] ?? 0) : 0;
@@ -765,10 +772,9 @@ class OrderController extends Controller
                 'room_booking_id' => $request->room_booking_id ?? null,
                 'address' => $request->address,
                 'rider_id' => $request->rider_id ?? null,
-                // Takeaway orders are paid immediately and completed at point of sale
                 // Reservations that are new are saved as drafts
                 // All other orders go to in_progress for kitchen processing
-                'status' => $request->order_type === 'takeaway'
+                'status' => ($request->order_type === 'takeaway' && $isTakeawayPayNow)
                     ? 'completed'
                     : (($request->order_type === 'reservation' && $request->boolean('is_new_order')) ? 'saved' : 'in_progress'),
             ];
@@ -784,7 +790,7 @@ class OrderController extends Controller
                 $orderData['employee_id'] = $memberId;
             }
 
-            if ($orderType == 'takeaway') {
+            if ($isTakeawayPayNow) {
                 $orderData['cashier_id'] = Auth::user()->id;
                 $orderData['payment_method'] = $request->payment['payment_method'];
                 $orderData['paid_amount'] = $request->payment['paid_amount'];
@@ -992,9 +998,13 @@ class OrderController extends Controller
                 'cost_price' => $totalCostPrice,
             ]);
 
-            // ✅ Create Invoice ONLY for takeaway (immediate payment flow)
-            // For dine-in, delivery, reservation, room_service: invoice created when order marked 'completed'
-            if ($orderType === 'takeaway') {
+            // ✅ Create Invoice for takeaway ONLY when Pay Now is used
+            // For dine-in, delivery, reservation, room_service (and takeaway-pay-later): invoice created when order marked 'completed'
+            if ($isTakeawayPayNow) {
+                $existingInvoice = FinancialInvoice::whereJsonContains('data->order_id', $order->id)->first();
+                if ($existingInvoice) {
+                    $invoice = $existingInvoice;
+                } else {
                 $invoiceData = [
                     'invoice_no' => $this->getInvoiceNo(),
                     'invoice_type' => 'food_order',
@@ -1025,21 +1035,19 @@ class OrderController extends Controller
                     $payerId = $memberId;
                 }
 
-                if ($orderType == 'takeaway') {
-                    $invoiceData['status'] = 'paid';
-                    $invoiceData['payment_date'] = now();
-                    $invoiceData['payment_method'] = $request->payment['payment_method'];
-                    $invoiceData['paid_amount'] = $request->payment['paid_amount'];
-                    $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
-                    $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
-                    $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
+                $invoiceData['status'] = 'paid';
+                $invoiceData['payment_date'] = now();
+                $invoiceData['payment_method'] = $request->payment['payment_method'];
+                $invoiceData['paid_amount'] = $request->payment['paid_amount'];
+                $invoiceData['ent_reason'] = $request->payment['ent_reason'] ?? null;
+                $invoiceData['ent_comment'] = $request->payment['ent_comment'] ?? null;
+                $invoiceData['cts_comment'] = $request->payment['cts_comment'] ?? null;
 
-                    if ($request->payment['bank_charges_enabled'] ?? false) {
-                        $invoiceData['data']['bank_charges_enabled'] = true;
-                        $invoiceData['data']['bank_charges_type'] = $request->payment['bank_charges_type'] ?? 'percentage';
-                        $invoiceData['data']['bank_charges_value'] = round((float) ($request->payment['bank_charges_value'] ?? 0), 0);
-                        $invoiceData['data']['bank_charges_amount'] = round((float) ($request->payment['bank_charges_amount'] ?? 0), 0);
-                    }
+                if ($request->payment['bank_charges_enabled'] ?? false) {
+                    $invoiceData['data']['bank_charges_enabled'] = true;
+                    $invoiceData['data']['bank_charges_type'] = $request->payment['bank_charges_type'] ?? 'percentage';
+                    $invoiceData['data']['bank_charges_value'] = round((float) ($request->payment['bank_charges_value'] ?? 0), 0);
+                    $invoiceData['data']['bank_charges_amount'] = round((float) ($request->payment['bank_charges_amount'] ?? 0), 0);
                 }
 
                 $invoice = FinancialInvoice::create($invoiceData);
@@ -1146,116 +1154,113 @@ class OrderController extends Controller
                     }
                 }
 
-                if ($orderType == 'takeaway') {
-                    // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
-                    $entAmount = 0;
-                    $entDetails = '';
-                    $ctsAmount = 0;
-                    $paymentData = $request->payment;
+                // Recalculate Logic for ENT/CTS to ensure consistency with TransactionController
+                $entAmount = 0;
+                $entDetails = '';
+                $ctsAmount = 0;
+                $paymentData = $request->payment;
 
-                    // Check if ENT is enabled (new toggle-based flow)
-                    $entEnabled = $paymentData['ent_enabled'] ?? false;
-                    $ctsEnabled = $paymentData['cts_enabled'] ?? false;
+                // Check if ENT is enabled (new toggle-based flow)
+                $entEnabled = $paymentData['ent_enabled'] ?? false;
+                $ctsEnabled = $paymentData['cts_enabled'] ?? false;
 
-                    // ENT Calculation - Only if enabled
-                    if ($entEnabled) {
-                        if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
-                            // Calculate from items
-                            $entIds = $paymentData['ent_items'];
-                            foreach ($request->order_items as $item) {
-                                if (in_array($item['id'], $entIds)) {
-                                    $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
-                                    $entAmount += $iPrice;
-                                    $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
-                                }
+                // ENT Calculation - Only if enabled
+                if ($entEnabled) {
+                    if (array_key_exists('ent_items', $paymentData) && !empty($paymentData['ent_items'])) {
+                        // Calculate from items
+                        $entIds = $paymentData['ent_items'];
+                        foreach ($request->order_items as $item) {
+                            if (in_array($item['id'], $entIds)) {
+                                $iPrice = $item['total_price'] ?? (($item['price'] ?? 0) * ($item['quantity'] ?? 1));
+                                $entAmount += $iPrice;
+                                $entDetails .= ($item['name'] ?? 'Item') . ' (x' . ($item['quantity'] ?? 1) . '), ';
                             }
-                        } elseif (isset($paymentData['ent_amount'])) {
-                            // Use provided ENT amount
-                            $entAmount = $paymentData['ent_amount'];
                         }
-                    }
-
-                    // CTS Calculation - Only if enabled
-                    if ($ctsEnabled) {
-                        $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : 0;
-                    }
-
-                    // Verify Total (Paid + ENT + CTS >= Total)
-                    // Note: paid_amount in request is the amount paid via selected payment method
-                    $paidCash = $paymentData['paid_amount'] ?? 0;
-                    // Allow small float variance
-                    if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
-                        throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
-                    }
-
-                    // Update Invoice with ENT/CTS Details
-                    $updateData = [];
-
-                    if ($entEnabled && $entAmount > 0) {
-                        $comment = $invoiceData['ent_comment'] ?? '';
-                        if ($entDetails) {
-                            $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
-                        }
-                        $updateData['ent_comment'] = $comment;
-                        $updateData['ent_amount'] = $entAmount;
-                        $updateData['ent_reason'] = $paymentData['ent_reason'] ?? null;
-                    }
-
-                    if ($ctsEnabled && $ctsAmount > 0) {
-                        $comment = $invoiceData['cts_comment'] ?? '';
-                        if ($ctsAmount < $request->total_price) {
-                            $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
-                        }
-                        $updateData['cts_comment'] = $comment;
-                        $updateData['cts_amount'] = $ctsAmount;
-                    }
-
-                    if (!empty($updateData)) {
-                        $invoice->update($updateData);
+                    } elseif (isset($paymentData['ent_amount'])) {
+                        // Use provided ENT amount
+                        $entAmount = $paymentData['ent_amount'];
                     }
                 }
 
+                // CTS Calculation - Only if enabled
+                if ($ctsEnabled) {
+                    $ctsAmount = isset($paymentData['cts_amount']) ? $paymentData['cts_amount'] : 0;
+                }
+
+                // Verify Total (Paid + ENT + CTS >= Total)
+                // Note: paid_amount in request is the amount paid via selected payment method
+                $paidCash = $paymentData['paid_amount'] ?? 0;
+                // Allow small float variance
+                if (($paidCash + $entAmount + $ctsAmount) < ($request->total_price - 1.0)) {
+                    throw new \Exception('Total payment (Paid + ENT + CTS) is less than Total Due. (' . ($paidCash + $entAmount + $ctsAmount) . ' < ' . $request->total_price . ')');
+                }
+
+                // Update Invoice with ENT/CTS Details
+                $updateData = [];
+
+                if ($entEnabled && $entAmount > 0) {
+                    $comment = $invoiceData['ent_comment'] ?? '';
+                    if ($entDetails) {
+                        $comment .= ' [ENT Items: ' . rtrim($entDetails, ', ') . ' - Value: ' . number_format($entAmount, 2) . ']';
+                    }
+                    $updateData['ent_comment'] = $comment;
+                    $updateData['ent_amount'] = $entAmount;
+                    $updateData['ent_reason'] = $paymentData['ent_reason'] ?? null;
+                }
+
+                if ($ctsEnabled && $ctsAmount > 0) {
+                    $comment = $invoiceData['cts_comment'] ?? '';
+                    if ($ctsAmount < $request->total_price) {
+                        $comment .= ' [Partial CTS Amount: ' . number_format($ctsAmount, 2) . ']';
+                    }
+                    $updateData['cts_comment'] = $comment;
+                    $updateData['cts_amount'] = $ctsAmount;
+                }
+
+                if (!empty($updateData)) {
+                    $invoice->update($updateData);
+                }
+
                 // If Paid (Takeaway) -> Receipt + Credit + Allocation
-                if ($orderType == 'takeaway') {
-                    $receiptImg = $orderData['receipt'] ?? null;
+                $receiptImg = $orderData['receipt'] ?? null;
 
-                    // 1. Create Receipt
-                    $receipt = FinancialReceipt::create([
-                        'receipt_no' => time(),
-                        'payer_type' => $payerType,
-                        'payer_id' => $payerId,
-                        'amount' => $request->payment['paid_amount'],
-                        'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
-                            ? $request->payment['cts_payment_method']
-                            : $request->payment['payment_method'],
-                        'receipt_date' => now(),
-                        'status' => 'active',
-                        'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
-                        'created_by' => Auth::id(),
-                        'receipt_image' => $receiptImg,
-                    ]);
+                // 1. Create Receipt
+                $receipt = FinancialReceipt::create([
+                    'receipt_no' => time(),
+                    'payer_type' => $payerType,
+                    'payer_id' => $payerId,
+                    'amount' => $request->payment['paid_amount'],
+                    'payment_method' => ($request->payment['payment_method'] === 'cts' && !empty($request->payment['cts_payment_method']))
+                        ? $request->payment['cts_payment_method']
+                        : $request->payment['payment_method'],
+                    'receipt_date' => now(),
+                    'status' => 'active',
+                    'remarks' => 'Payment for Food Order #' . $invoiceData['invoice_no'],
+                    'created_by' => Auth::id(),
+                    'receipt_image' => $receiptImg,
+                ]);
 
-                    // 2. Link Receipt to Invoice
-                    TransactionRelation::create([
-                        'invoice_id' => $invoice->id,
-                        'receipt_id' => $receipt->id,
-                        'amount' => $request->payment['paid_amount'],
-                    ]);
+                // 2. Link Receipt to Invoice
+                TransactionRelation::create([
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'amount' => $request->payment['paid_amount'],
+                ]);
 
-                    // 3. Create SINGLE Credit Transaction (Amount Paid)
-                    Transaction::create([
-                        'type' => 'credit',
-                        'amount' => $request->payment['paid_amount'],
-                        'date' => now(),
-                        'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
-                        'payable_type' => $payerType,
-                        'payable_id' => $payerId,
-                        'reference_type' => FinancialInvoiceItem::class,
-                        'reference_id' => $invoiceItem->id,  // Link to the summary item
-                        'invoice_id' => $invoice->id,
-                        'receipt_id' => $receipt->id,
-                        'created_by' => Auth::id(),
-                    ]);
+                // 3. Create SINGLE Credit Transaction (Amount Paid)
+                Transaction::create([
+                    'type' => 'credit',
+                    'amount' => $request->payment['paid_amount'],
+                    'date' => now(),
+                    'description' => 'Payment Received (Rec #' . $receipt->receipt_no . ')',
+                    'payable_type' => $payerType,
+                    'payable_id' => $payerId,
+                    'reference_type' => FinancialInvoiceItem::class,
+                    'reference_id' => $invoiceItem->id,  // Link to the summary item
+                    'invoice_id' => $invoice->id,
+                    'receipt_id' => $receipt->id,
+                    'created_by' => Auth::id(),
+                ]);
                 }
             }
 
@@ -1345,6 +1350,160 @@ class OrderController extends Controller
         try {
             $order = Order::findOrFail($id);
 
+            $getItemId = function ($rawId) {
+                if (is_int($rawId) || (is_string($rawId) && ctype_digit($rawId))) {
+                    return (int) $rawId;
+                }
+                if (is_string($rawId) && str_starts_with($rawId, 'update-')) {
+                    $maybe = substr($rawId, 7);
+                    return ctype_digit($maybe) ? (int) $maybe : null;
+                }
+                return null;
+            };
+
+            $normalizeOrderItem = function ($orderItem) {
+                if (!is_array($orderItem)) {
+                    return [];
+                }
+
+                if (!isset($orderItem['product_id']) && isset($orderItem['id'])) {
+                    $orderItem['product_id'] = $orderItem['id'];
+                }
+                if (!isset($orderItem['id']) && isset($orderItem['product_id'])) {
+                    $orderItem['id'] = $orderItem['product_id'];
+                }
+
+                $qty = isset($orderItem['quantity']) ? (int) $orderItem['quantity'] : 1;
+                $orderItem['quantity'] = $qty > 0 ? $qty : 1;
+                $orderItem['price'] = isset($orderItem['price']) ? (float) $orderItem['price'] : 0.0;
+
+                $variants = isset($orderItem['variants']) && is_array($orderItem['variants']) ? $orderItem['variants'] : [];
+                $orderItem['variants'] = array_values(array_map(function ($v) {
+                    if (!is_array($v)) {
+                        return [];
+                    }
+                    if (isset($v['price'])) {
+                        $v['price'] = (float) $v['price'];
+                    }
+                    return $v;
+                }, $variants));
+
+                return $orderItem;
+            };
+
+            $itemKey = function ($orderItem) use ($normalizeOrderItem) {
+                $oi = $normalizeOrderItem($orderItem);
+                $productId = $oi['product_id'] ?? $oi['id'] ?? null;
+                $variants = isset($oi['variants']) && is_array($oi['variants']) ? $oi['variants'] : [];
+                $variantKeyParts = [];
+                foreach ($variants as $v) {
+                    $variantKeyParts[] = ($v['id'] ?? '') . ':' . ($v['value'] ?? '');
+                }
+                sort($variantKeyParts);
+                return (string) ($productId ?? '') . '|' . implode(',', $variantKeyParts);
+            };
+
+            $unitPrice = function ($orderItem) use ($normalizeOrderItem) {
+                $oi = $normalizeOrderItem($orderItem);
+                $base = (float) ($oi['price'] ?? 0);
+                $variants = isset($oi['variants']) && is_array($oi['variants']) ? $oi['variants'] : [];
+                $variantsSum = 0.0;
+                foreach ($variants as $v) {
+                    $variantsSum += isset($v['price']) ? (float) $v['price'] : 0.0;
+                }
+                return $base + $variantsSum;
+            };
+
+            $recalcPricing = function ($orderItem) use ($normalizeOrderItem, $unitPrice) {
+                $oi = $normalizeOrderItem($orderItem);
+                $qty = (int) ($oi['quantity'] ?? 1);
+                $qty = $qty > 0 ? $qty : 1;
+                $totalPrice = $unitPrice($oi) * $qty;
+                $oi['total_price'] = $totalPrice;
+
+                $discountValue = isset($oi['discount_value']) ? (float) $oi['discount_value'] : null;
+                $discountType = $oi['discount_type'] ?? null;
+
+                if ($discountValue !== null && $discountValue > 0) {
+                    $disc = 0.0;
+                    if ($discountType === 'percentage') {
+                        $disc = round($totalPrice * ($discountValue / 100));
+                    } else {
+                        $disc = round($discountValue * $qty);
+                    }
+                    if ($disc > $totalPrice) {
+                        $disc = $totalPrice;
+                    }
+                    $oi['discount_amount'] = $disc;
+                } else {
+                    $oi['discount_amount'] = isset($oi['discount_amount']) ? (float) $oi['discount_amount'] : 0.0;
+                }
+
+                return $oi;
+            };
+
+            $mergeIncoming = function (array $updated, array $new) use ($itemKey, $recalcPricing) {
+                $map = [];
+
+                foreach ($updated as $row) {
+                    if (!is_array($row) || !isset($row['order_item'])) {
+                        continue;
+                    }
+                    $row['order_item'] = $recalcPricing($row['order_item']);
+                    $baseKey = $itemKey($row['order_item']);
+                    $status = $row['status'] ?? null;
+                    $key = $status === 'cancelled' ? ('cancelled|' . $baseKey . '|' . uniqid('row_', true)) : $baseKey;
+                    if ($key === '|') {
+                        $key = uniqid('row_', true);
+                    }
+                    $map[$key] = $row;
+                }
+
+                foreach ($new as $row) {
+                    if (!is_array($row) || !isset($row['order_item'])) {
+                        continue;
+                    }
+                    $row['order_item'] = $recalcPricing($row['order_item']);
+                    $baseKey = $itemKey($row['order_item']);
+                    $status = $row['status'] ?? null;
+                    $key = $status === 'cancelled' ? ('cancelled|' . $baseKey . '|' . uniqid('row_', true)) : $baseKey;
+                    if ($key === '|') {
+                        $key = uniqid('row_', true);
+                    }
+
+                    if (!isset($map[$key])) {
+                        $map[$key] = $row;
+                        continue;
+                    }
+
+                    $existingStatus = $map[$key]['status'] ?? null;
+                    if ($existingStatus === 'cancelled' || $status === 'cancelled') {
+                        $map[uniqid('row_', true)] = $row;
+                        continue;
+                    }
+
+                    $existingQty = (int) ($map[$key]['order_item']['quantity'] ?? 1);
+                    $incomingQty = (int) ($row['order_item']['quantity'] ?? 1);
+                    $nextQty = $existingQty + ($incomingQty > 0 ? $incomingQty : 1);
+
+                    $map[$key]['order_item']['quantity'] = $nextQty;
+                    $map[$key]['order_item'] = $recalcPricing($map[$key]['order_item']);
+                }
+
+                $mergedUpdated = [];
+                $mergedNew = [];
+                foreach ($map as $row) {
+                    $rawId = $row['id'] ?? null;
+                    if (is_string($rawId) && str_starts_with($rawId, 'update-')) {
+                        $mergedUpdated[] = $row;
+                    } else {
+                        $mergedNew[] = $row;
+                    }
+                }
+
+                return [$mergedUpdated, $mergedNew];
+            };
+
             // Update only price fields if both are present
             // Update order fields
             $updateData = [
@@ -1376,11 +1535,17 @@ class OrderController extends Controller
 
             $order->update($updateData);
 
+            [$mergedUpdatedItems, $mergedNewItems] = $mergeIncoming($validated['updated_items'] ?? [], $validated['new_items'] ?? []);
+
             // Update existing order items
-            foreach ($validated['updated_items'] ?? [] as $itemData) {
-                $itemId = (int) str_replace('update-', '', $itemData['id']);
+            foreach ($mergedUpdatedItems as $itemData) {
+                $itemId = $getItemId($itemData['id'] ?? null);
+                if (!$itemId) {
+                    continue;
+                }
+                $normalizedOrderItem = $recalcPricing($itemData['order_item'] ?? []);
                 $order->orderItems()->where('id', $itemId)->update([
-                    'order_item' => $itemData['order_item'],
+                    'order_item' => $normalizedOrderItem,
                     'status' => $itemData['status'],
                     'remark' => $itemData['remark'] ?? null,
                     'instructions' => $itemData['instructions'] ?? null,
@@ -1389,14 +1554,59 @@ class OrderController extends Controller
             }
 
             // Add new order items
-            foreach ($validated['new_items'] ?? [] as $itemData) {
+            foreach ($mergedNewItems as $itemData) {
+                $normalizedOrderItem = $recalcPricing($itemData['order_item'] ?? []);
                 $order->orderItems()->create([
-                    'tenant_id' => $itemData['order_item']['tenant_id'] ?? null,
-                    'order_item' => $itemData['order_item'],
+                    'tenant_id' => $normalizedOrderItem['tenant_id'] ?? null,
+                    'order_item' => $normalizedOrderItem,
                     'status' => $itemData['status'] ?? 'pending',
                     'remark' => $itemData['remark'] ?? null,
                     'instructions' => $itemData['instructions'] ?? null,
                     'cancelType' => $itemData['cancelType'] ?? null,
+                ]);
+            }
+
+            $freshItems = $order->orderItems()->where('status', '!=', 'cancelled')->get();
+            $taxRate = (float) ($order->tax ?? 0);
+            $subtotal = 0.0;
+            $totalDiscount = 0.0;
+            $totalTax = 0.0;
+            foreach ($freshItems as $row) {
+                $oi = is_array($row->order_item) ? $row->order_item : [];
+                $oi = $normalizeOrderItem($oi);
+                $qty = (int) ($oi['quantity'] ?? 1);
+                $lineTotal = $unitPrice($oi) * ($qty > 0 ? $qty : 1);
+                $lineDiscount = isset($oi['discount_amount']) ? (float) $oi['discount_amount'] : 0.0;
+                $net = $lineTotal - $lineDiscount;
+
+                $isTaxable = $oi['is_taxable'] ?? null;
+                if ($isTaxable === null) {
+                    $productId = $oi['product_id'] ?? null;
+                    if ($productId) {
+                        $product = Product::find($productId);
+                        $isTaxable = $product ? (bool) $product->is_taxable : false;
+                    } else {
+                        $isTaxable = false;
+                    }
+                } else {
+                    $isTaxable = $isTaxable === true || $isTaxable === 1 || $isTaxable === 'true';
+                }
+
+                $subtotal += $lineTotal;
+                $totalDiscount += $lineDiscount;
+                $totalTax += $isTaxable ? ($net * $taxRate) : 0.0;
+            }
+
+            $computedAmount = (float) round($subtotal);
+            $computedDiscount = (float) round($totalDiscount);
+            $computedTotal = (float) round($subtotal - $totalDiscount + $totalTax);
+
+            $shouldSyncTotals = !empty($mergedUpdatedItems) || !empty($mergedNewItems) || ($request->has('subtotal') || $request->has('total_price'));
+            if ($shouldSyncTotals) {
+                $order->update([
+                    'amount' => $computedAmount,
+                    'discount' => $computedDiscount,
+                    'total_price' => $computedTotal,
                 ]);
             }
 
@@ -1412,7 +1622,7 @@ class OrderController extends Controller
                 $validated['status'] === 'completed' &&
                 !$financialInvoice &&
                 $hasPayer &&
-                in_array($order->order_type, ['dineIn', 'delivery', 'reservation', 'room_service'])
+                in_array($order->order_type, ['dineIn', 'delivery', 'reservation', 'room_service', 'takeaway'])
             ) {
                 // Determine payer type
                 if ($order->member_id) {
@@ -1481,10 +1691,10 @@ class OrderController extends Controller
                     $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
                     foreach ($orderItems as $orderItem) {
-                        $item = $orderItem->order_item;
-                        $qty = $item['quantity'] ?? 1;
-                        $price = $item['price'] ?? 0;
-                        $subTotal = $qty * $price;
+                        $item = is_array($orderItem->order_item) ? $orderItem->order_item : [];
+                        $item = $normalizeOrderItem($item);
+                        $qty = (int) ($item['quantity'] ?? 1);
+                        $subTotal = $unitPrice($item) * ($qty > 0 ? $qty : 1);
 
                         $itemDiscountAmount = $item['discount_amount'] ?? 0;
                         $netAmount = $subTotal - $itemDiscountAmount;
@@ -1570,16 +1780,11 @@ class OrderController extends Controller
                 if ($validated['status'] === 'cancelled' || $validated['status'] === 'refund') {
                     // Mark invoice as cancelled
                     $financialInvoice->update(['status' => 'cancelled']);
-                } elseif (
-                    $request->has('subtotal') &&
-                    $request->has('total_price') &&
-                    $validated['subtotal'] !== null &&
-                    $validated['total_price'] !== null
-                ) {
+                } elseif ($shouldSyncTotals) {
                     // Otherwise update amounts if provided
                     $financialInvoice->update([
-                        'amount' => $validated['subtotal'],
-                        'total_price' => $validated['total_price'],
+                        'amount' => $computedAmount,
+                        'total_price' => $computedTotal,
                     ]);
 
                     // ✅ Sync Ledger (Debit) if unpaid
@@ -1590,7 +1795,7 @@ class OrderController extends Controller
 
                     if ($transaction) {
                         $transaction->update([
-                            'amount' => $validated['total_price'],
+                            'amount' => $computedTotal,
                             'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
                         ]);
                     }
@@ -1603,7 +1808,7 @@ class OrderController extends Controller
 
                     if ($transaction) {
                         $transaction->update([
-                            'amount' => $validated['total_price'],
+                            'amount' => $computedTotal,
                             'description' => 'Food Order Invoice #' . $financialInvoice->invoice_no . ' (Updated)',
                         ]);
                     }

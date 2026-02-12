@@ -9,6 +9,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
 
 const PendingMaintenanceReport = () => {
     // Get props first
@@ -22,6 +25,7 @@ const PendingMaintenanceReport = () => {
     const [statusReason, setStatusReason] = useState('');
     const [allFilters, setAllFilters] = useState({
         member_search: filters?.member_search || '',
+        member_id: filters?.member_id || '',
         name_search: filters?.name_search || '',
         membership_no_search: filters?.membership_no_search || '',
         cnic_search: filters?.cnic_search || '',
@@ -29,8 +33,7 @@ const PendingMaintenanceReport = () => {
         status: filters?.status || [],
         categories: filters?.categories || [],
         quarters_pending: filters?.quarters_pending || '',
-        date_from: filters?.date_from || '',
-        date_to: filters?.date_to || '',
+        date: filters?.date || dayjs().format('DD-MM-YYYY'),
     });
 
     // Suggestions State
@@ -127,6 +130,7 @@ const PendingMaintenanceReport = () => {
     const handleReset = () => {
         setAllFilters({
             member_search: '',
+            member_id: '',
             name_search: '',
             membership_no_search: '',
             cnic_search: '',
@@ -134,8 +138,7 @@ const PendingMaintenanceReport = () => {
             status: [],
             categories: [],
             quarters_pending: '',
-            date_from: '',
-            date_to: '',
+            date: dayjs().format('YYYY-MM-DD'),
         });
         router.get(route('membership.pending-maintenance-report'));
     };
@@ -318,6 +321,15 @@ const PendingMaintenanceReport = () => {
                                 options={nameSuggestions}
                                 getOptionLabel={(option) => option.full_name || option.name || option.value || option}
                                 inputValue={allFilters.member_search}
+                                onChange={(event, option) => {
+                                    if (option && option.id) {
+                                        handleFilterChange('member_id', option.id);
+                                        handleFilterChange('member_search', option.full_name || option.name || '');
+                                        handleFilterChange('name_search', '');
+                                    } else {
+                                        handleFilterChange('member_id', '');
+                                    }
+                                }}
                                 onInputChange={(event, newInputValue) => {
                                     handleFilterChange('member_search', newInputValue);
                                     fetchNameSuggestions(newInputValue);
@@ -362,6 +374,15 @@ const PendingMaintenanceReport = () => {
                                 options={noSuggestions}
                                 getOptionLabel={(option) => option.membership_no || option.customer_no || option.value || option}
                                 inputValue={allFilters.membership_no_search}
+                                onChange={(event, option) => {
+                                    if (option && option.id) {
+                                        handleFilterChange('member_id', option.id);
+                                        handleFilterChange('membership_no_search', option.membership_no || option.customer_no || '');
+                                        handleFilterChange('name_search', '');
+                                    } else {
+                                        handleFilterChange('member_id', '');
+                                    }
+                                }}
                                 onInputChange={(event, newInputValue) => {
                                     handleFilterChange('membership_no_search', newInputValue);
                                     fetchNoSuggestions(newInputValue);
@@ -705,66 +726,15 @@ const PendingMaintenanceReport = () => {
                         </Grid>
 
                         <Grid item xs={12} md={3}>
-                            {/* <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="From Date"
-                                value={allFilters.date_from}
-                                onChange={(e) => handleFilterChange('date_from', e.target.value)}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            /> */}
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
-                                    label="From Date"
+                                    label="As-of Date"
                                     format="DD-MM-YYYY"
-                                    value={allFilters.date_from ? dayjs(allFilters.date_from, "DD-MM-YYYY") : null}
+                                    value={allFilters.date ? dayjs(allFilters.date, "DD-MM-YYYY") : dayjs()}
                                     onChange={(newValue) =>
                                         handleFilterChange(
-                                            "date_from",
-                                            newValue ? newValue.format("DD-MM-YYYY") : ""
-                                        )
-                                    }
-                                    slotProps={{
-                                        textField: {
-                                            fullWidth: true,
-                                            size: "small",
-                                            sx: {
-                                                "& .MuiOutlinedInput-root": {
-                                                    borderRadius: "16px",
-                                                },
-                                                "& fieldset": {
-                                                    borderRadius: "16px",
-                                                },
-                                            },
-                                        },
-                                    }}
-                                />
-                            </LocalizationProvider>
-                        </Grid>
-                        <Grid item xs={12} md={3}>
-                            {/* <TextField
-                                fullWidth
-                                size="small"
-                                type="date"
-                                label="To Date"
-                                value={allFilters.date_to}
-                                onChange={(e) => handleFilterChange('date_to', e.target.value)}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                            /> */}
-                            <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker
-                                    label="To Date"
-                                    format="DD-MM-YYYY"
-                                    value={allFilters.date_to ? dayjs(allFilters.date_to, "DD-MM-YYYY") : null}
-                                    onChange={(newValue) =>
-                                        handleFilterChange(
-                                            "date_to",
-                                            newValue ? newValue.format("DD-MM-YYYY") : ""
+                                            "date",
+                                            newValue ? newValue.format("DD-MM-YYYY") : dayjs().format("DD-MM-YYYY")
                                         )
                                     }
                                     slotProps={{
