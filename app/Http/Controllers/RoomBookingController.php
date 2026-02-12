@@ -220,6 +220,8 @@ class RoomBookingController extends Controller
         // Customer Type & Search Logic
         $customerType = $filters['customer_type'] ?? 'all';
         $search = $filters['search'] ?? null;
+        $searchId = $filters['search_id'] ?? null;
+        $membershipNo = $filters['membership_no'] ?? null;
 
         if ($customerType === 'member') {
             $query->whereHas('member');
@@ -272,6 +274,43 @@ class RoomBookingController extends Controller
                         })
                         ->orWhereHas('room', function ($sub) use ($search) {
                             $sub->where('name', 'like', "%{$search}%");
+                        });
+                });
+            }
+        }
+
+        if (!empty($searchId)) {
+            $query->where(function ($q) use ($searchId) {
+                $q
+                    ->where('id', $searchId)
+                    ->orWhere('booking_no', 'like', "%{$searchId}%");
+            });
+        }
+
+        if (!empty($membershipNo)) {
+            if ($customerType === 'member') {
+                $query->whereHas('member', function ($q) use ($membershipNo) {
+                    $q->where('membership_no', 'like', "%{$membershipNo}%");
+                });
+            } elseif ($customerType === 'corporate') {
+                $query->whereHas('corporateMember', function ($q) use ($membershipNo) {
+                    $q->where('membership_no', 'like', "%{$membershipNo}%");
+                });
+            } elseif ($customerType === 'guest') {
+                $query->whereHas('customer', function ($q) use ($membershipNo) {
+                    $q->where('customer_no', 'like', "%{$membershipNo}%");
+                });
+            } else {
+                $query->where(function ($q) use ($membershipNo) {
+                    $q
+                        ->whereHas('member', function ($sub) use ($membershipNo) {
+                            $sub->where('membership_no', 'like', "%{$membershipNo}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($sub) use ($membershipNo) {
+                            $sub->where('membership_no', 'like', "%{$membershipNo}%");
+                        })
+                        ->orWhereHas('customer', function ($sub) use ($membershipNo) {
+                            $sub->where('customer_no', 'like', "%{$membershipNo}%");
                         });
                 });
             }

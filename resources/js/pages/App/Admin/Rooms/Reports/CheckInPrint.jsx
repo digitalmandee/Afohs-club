@@ -15,6 +15,31 @@ const CheckInPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
         return colors[status] || 'default';
     };
 
+    const getGuestName = (booking) => {
+        if (booking.customer) return booking.customer.name;
+        if (booking.member) return booking.member.full_name;
+        if (booking.corporateMember) return booking.corporateMember.full_name;
+        if (booking.corporate_member) return booking.corporate_member.full_name;
+        return 'Unknown';
+    };
+
+    const getMemberType = (booking) => {
+        if (booking.member) return 'Member';
+        if (booking.corporateMember || booking.corporate_member) return 'Corporate';
+        if (booking.customer) return 'Guest';
+        if (booking.employee) return 'Employee';
+        return 'Unknown';
+    };
+
+    const getMembershipNo = (booking) => {
+        if (booking.member) return booking.member.membership_no;
+        if (booking.corporateMember) return booking.corporateMember.membership_no;
+        if (booking.corporate_member) return booking.corporate_member.membership_no;
+        if (booking.customer) return booking.customer.customer_no;
+        if (booking.employee) return booking.employee.employee_id || booking.employee.employee_no || booking.employee.id;
+        return '-';
+    };
+
     return (
         <Box sx={{ p: 3, backgroundColor: '#fff' }}>
             <style>{`@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }`}</style>
@@ -24,7 +49,7 @@ const CheckInPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                     Check-in Report
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                    {filters.dateFrom} to {filters.dateTo}
+                    {(filters.check_in_from || '') + (filters.check_in_to ? ` to ${filters.check_in_to}` : '')}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                     Generated: {generatedAt}
@@ -37,7 +62,9 @@ const CheckInPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableCell sx={{ fontWeight: 600 }}>Booking ID</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Room</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>Guest</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Member / Guest</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Membership No</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Member Type</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Check In</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Check Out</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -46,9 +73,11 @@ const CheckInPrint = ({ bookings = [], filters = {}, generatedAt = '' }) => {
                     <TableBody>
                         {bookings.map((booking) => (
                             <TableRow key={booking.id}>
-                                <TableCell>{booking.booking_number || booking.id}</TableCell>
-                                <TableCell>{booking.room?.room_number}</TableCell>
-                                <TableCell>{booking.customer ? booking.customer.name : booking.member ? booking.member.full_name : booking.corporate_member ? booking.corporate_member.name : '-'}</TableCell>
+                                <TableCell>{booking.booking_no || booking.booking_number || booking.id}</TableCell>
+                                <TableCell>{booking.room?.name || booking.room?.room_number || '-'}</TableCell>
+                                <TableCell>{getGuestName(booking)}</TableCell>
+                                <TableCell>{getMembershipNo(booking)}</TableCell>
+                                <TableCell>{getMemberType(booking)}</TableCell>
                                 <TableCell>{booking.check_in_date}</TableCell>
                                 <TableCell>{booking.check_out_date}</TableCell>
                                 <TableCell>

@@ -402,12 +402,32 @@ class RoomReportController extends Controller
     public function checkOut(Request $request)
     {
         $filters = $request->all();
-        if (empty($filters['check_out_from']) && empty($filters['check_out_to'])) {
+        $hasNonDateFilters =
+            !empty($filters['search']) ||
+            !empty($filters['search_id']) ||
+            !empty($filters['membership_no']) ||
+            (!empty($filters['customer_type']) && $filters['customer_type'] !== 'all') ||
+            !empty($filters['room_type']) ||
+            !empty($filters['room_ids']) ||
+            !empty($filters['booking_status']) ||
+            !empty($filters['status']);
+
+        if (!$hasNonDateFilters && empty($filters['check_out_from']) && empty($filters['check_out_to'])) {
             $filters['check_out_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
             $filters['check_out_to'] = Carbon::now()->format('Y-m-d');
         }
 
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])
+        $query = RoomBooking::with([
+            'room:id,name,room_type_id',
+            'room.roomType:id,name',
+            'customer:id,customer_no,email,name',
+            'member:id,membership_no,full_name',
+            'corporateMember:id,membership_no,full_name',
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment',
+        ])
+            ->withSum('miniBarItems', 'amount')
+            ->withSum('otherCharges', 'amount')
+            ->with('orders')
             ->whereIn('status', ['checked_out', 'completed'])
             ->orderBy('check_out_date', 'desc');
 
@@ -425,7 +445,28 @@ class RoomReportController extends Controller
     public function checkOutExport(Request $request)
     {
         $filters = $request->all();
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])
+        $hasNonDateFilters =
+            !empty($filters['search']) ||
+            !empty($filters['search_id']) ||
+            !empty($filters['membership_no']) ||
+            (!empty($filters['customer_type']) && $filters['customer_type'] !== 'all') ||
+            !empty($filters['room_type']) ||
+            !empty($filters['room_ids']) ||
+            !empty($filters['booking_status']) ||
+            !empty($filters['status']);
+
+        if (!$hasNonDateFilters && empty($filters['check_out_from']) && empty($filters['check_out_to'])) {
+            $filters['check_out_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $filters['check_out_to'] = Carbon::now()->format('Y-m-d');
+        }
+
+        $query = RoomBooking::with([
+            'room:id,name,room_type_id',
+            'room.roomType:id,name',
+            'customer:id,customer_no,email,name',
+            'member:id,membership_no,full_name',
+            'corporateMember:id,membership_no,full_name',
+        ])
             ->whereIn('status', ['checked_out', 'completed'])
             ->orderBy('check_out_date', 'desc');
         $query = $this->applyFilters($query, $filters);
@@ -446,7 +487,32 @@ class RoomReportController extends Controller
     public function checkOutPrint(Request $request)
     {
         $filters = $request->all();
-        $query = RoomBooking::with(['room.roomType', 'customer', 'member', 'corporateMember'])
+        $hasNonDateFilters =
+            !empty($filters['search']) ||
+            !empty($filters['search_id']) ||
+            !empty($filters['membership_no']) ||
+            (!empty($filters['customer_type']) && $filters['customer_type'] !== 'all') ||
+            !empty($filters['room_type']) ||
+            !empty($filters['room_ids']) ||
+            !empty($filters['booking_status']) ||
+            !empty($filters['status']);
+
+        if (!$hasNonDateFilters && empty($filters['check_out_from']) && empty($filters['check_out_to'])) {
+            $filters['check_out_from'] = Carbon::now()->startOfMonth()->format('Y-m-d');
+            $filters['check_out_to'] = Carbon::now()->format('Y-m-d');
+        }
+
+        $query = RoomBooking::with([
+            'room:id,name,room_type_id',
+            'room.roomType:id,name',
+            'customer:id,customer_no,email,name',
+            'member:id,membership_no,full_name',
+            'corporateMember:id,membership_no,full_name',
+            'invoice:id,invoiceable_id,invoiceable_type,status,paid_amount,total_price,advance_payment',
+        ])
+            ->withSum('miniBarItems', 'amount')
+            ->withSum('otherCharges', 'amount')
+            ->with('orders')
             ->whereIn('status', ['checked_out', 'completed'])
             ->orderBy('check_out_date', 'desc');
         $query = $this->applyFilters($query, $filters);
@@ -784,6 +850,8 @@ class RoomReportController extends Controller
         // Customer Type & Search Logic
         $customerType = $filters['customer_type'] ?? 'all';
         $search = $filters['search'] ?? null;
+        $searchId = $filters['search_id'] ?? null;
+        $membershipNo = $filters['membership_no'] ?? null;
 
         if ($customerType === 'member') {
             $query->whereHas('member');
@@ -836,6 +904,43 @@ class RoomReportController extends Controller
                         })
                         ->orWhereHas('room', function ($sub) use ($search) {
                             $sub->where('name', 'like', "%{$search}%");
+                        });
+                });
+            }
+        }
+
+        if (!empty($searchId)) {
+            $query->where(function ($q) use ($searchId) {
+                $q
+                    ->where('id', $searchId)
+                    ->orWhere('booking_no', 'like', "%{$searchId}%");
+            });
+        }
+
+        if (!empty($membershipNo)) {
+            if ($customerType === 'member') {
+                $query->whereHas('member', function ($q) use ($membershipNo) {
+                    $q->where('membership_no', 'like', "%{$membershipNo}%");
+                });
+            } elseif ($customerType === 'corporate') {
+                $query->whereHas('corporateMember', function ($q) use ($membershipNo) {
+                    $q->where('membership_no', 'like', "%{$membershipNo}%");
+                });
+            } elseif ($customerType === 'guest') {
+                $query->whereHas('customer', function ($q) use ($membershipNo) {
+                    $q->where('customer_no', 'like', "%{$membershipNo}%");
+                });
+            } else {
+                $query->where(function ($q) use ($membershipNo) {
+                    $q
+                        ->whereHas('member', function ($sub) use ($membershipNo) {
+                            $sub->where('membership_no', 'like', "%{$membershipNo}%");
+                        })
+                        ->orWhereHas('corporateMember', function ($sub) use ($membershipNo) {
+                            $sub->where('membership_no', 'like', "%{$membershipNo}%");
+                        })
+                        ->orWhereHas('customer', function ($sub) use ($membershipNo) {
+                            $sub->where('customer_no', 'like', "%{$membershipNo}%");
                         });
                 });
             }
