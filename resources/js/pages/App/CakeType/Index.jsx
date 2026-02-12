@@ -2,7 +2,7 @@ import React from 'react';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 import { Box, Paper, Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Chip } from '@mui/material';
 import { Add, Edit, Delete, Search } from '@mui/icons-material';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -26,7 +26,7 @@ function Index({ cakeTypes, filters }) {
 
     return (
         <>
-            <Head title="Cake Types" />
+            {/* <Head title="Cake Types" />
             <SideNav open={open} setOpen={setOpen} />
             <Box
                 sx={{
@@ -35,11 +35,11 @@ function Index({ cakeTypes, filters }) {
                     marginTop: '5rem',
                     // p: 3,
                 }}
-            >
+            > */}
                 <Box sx={{
                     p: 2,
                     bgcolor: '#f5f5f5',
-                    height: '100vh'
+                    minHeight: '100vh'
                 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                         <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '30px' }}>
@@ -138,10 +138,10 @@ function Index({ cakeTypes, filters }) {
                     </TableContainer>
                     {/* Pagination can be added here if needed */}
                 </Box>
-            </Box>
+            {/* </Box> */}
         </>
     );
 }
 
-Index.layout = (page) => page;
+Index.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default Index;

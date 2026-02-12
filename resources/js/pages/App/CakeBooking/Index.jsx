@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import ViewDocumentsModal from '@/components/App/CakeBooking/ViewDocumentsModal';
 import { Head, Link, router } from '@inertiajs/react';
 import { Box, Paper, Typography, Button, Grid, TextField, MenuItem, Select, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, InputAdornment, Chip, Pagination, ListItemText, Autocomplete } from '@mui/material';
@@ -8,11 +8,11 @@ import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 export default function Index({ bookings, filters, cashiers }) {
-    const [open, setOpen] = React.useState(true);
+    // const [open, setOpen] = React.useState(true);
     const [docsModalOpen, setDocsModalOpen] = useState(false);
     const [selectedDocs, setSelectedDocs] = useState([]);
 
@@ -107,7 +107,7 @@ export default function Index({ bookings, filters, cashiers }) {
 
     return (
         <>
-            <Head title="Cake Bookings List" />
+            {/* <Head title="Cake Bookings List" />
             <SideNav open={open} setOpen={setOpen} />
             <Box
                 sx={{
@@ -118,9 +118,14 @@ export default function Index({ bookings, filters, cashiers }) {
                     bgcolor: '#f4f6f8',
                     minHeight: '100vh',
                 }}
-            >
+            > */}
+            <Box sx={{
+                minHeight: '100vh',
+                p: 2,
+                bgcolor: '#f5f5f5'
+            }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#063455' }}>
+                    <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '30px' }}>
                         Cake Bookings List
                     </Typography>
                     <Box>
@@ -505,5 +510,5 @@ export default function Index({ bookings, filters, cashiers }) {
     );
 }
 
-Index.layout = (page) => page; // Layout already applied via SideNav internal logic in original file? Original file had explicit SideNav usage.
+Index.layout = (page) => <POSLayout>{page}</POSLayout>; // Layout already applied via SideNav internal logic in original file? Original file had explicit SideNav usage.
 // Ah, the user added `Index.layout = (page) => page;` manually in previous step, so keeping it.

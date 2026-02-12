@@ -1,4 +1,4 @@
-import SideNav from '@/Components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { tenantAsset } from '@/helpers/asset';
 import { router, useForm, usePage } from '@inertiajs/react';
 import { Add as AddIcon, Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material';
@@ -201,16 +201,16 @@ export default function CategoryIndex({ categories }) {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <div style={{
-                    height:'100vh',
+                    // height:'100vh',
                     backgroundColor:'#f5f5f5',
                     padding: '20px'
                 }}>
@@ -257,7 +257,10 @@ export default function CategoryIndex({ categories }) {
                                 >
                                     Add Category
                                 </Button>
-                                <Button variant="outlined" color="error" startIcon={<DeleteSweepIcon />} onClick={() => router.visit(route('category.trashed'))}
+                                <Button 
+                                variant="outlined" 
+                                color="error" 
+                                startIcon={<DeleteIcon />} onClick={() => router.visit(route('category.trashed'))}
                                     sx={{
                                         bgcolor: 'transparent',
                                         borderRadius: '16px',
@@ -265,7 +268,7 @@ export default function CategoryIndex({ categories }) {
                                         height: 35,
                                         '&:hover': { bgcolor: 'transparent' }
                                     }}>
-                                    Trash
+                                    Deleted
                                 </Button>
                             </Box>
                         </div>
@@ -328,7 +331,7 @@ export default function CategoryIndex({ categories }) {
                         </Grid>
                     </div>
                 </div>
-            </div>
+            {/* </div> */}
 
             {/* Add/Edit Modal */}
             <Dialog
@@ -453,4 +456,4 @@ export default function CategoryIndex({ categories }) {
         </>
     );
 }
-CategoryIndex.layout = (page) => page;
+CategoryIndex.layout = (page) => <POSLayout>{page}</POSLayout>;

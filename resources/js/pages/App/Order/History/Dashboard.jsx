@@ -1,4 +1,4 @@
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import Receipt from '@/components/App/Invoice/Receipt';
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, MenuItem, Select, FormControl, InputLabel, Pagination, Typography, Chip, InputAdornment, CircularProgress, IconButton, Tooltip, Dialog, DialogContent, DialogTitle, Button, Grid, Autocomplete } from '@mui/material';
 import { Search } from '@mui/icons-material';
@@ -10,14 +10,14 @@ import { router, usePage } from '@inertiajs/react';
 import debounce from 'lodash.debounce';
 import axios from 'axios';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }) => {
     const { auth } = usePage().props;
     const user = auth.user;
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchId, setSearchId] = useState(filters?.search_id || '');
     const [searchName, setSearchName] = useState(filters?.search_name || '');
     const [startDate, setStartDate] = useState(filters?.start_date || '');
@@ -301,16 +301,14 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
             <div class="row"><div>Subtotal</div><div>Rs ${order.amount || order.total_price || 0}</div></div>
             <div class="row"><div>Discount</div><div>Rs ${order.discount || 0}</div></div>
             <div class="row"><div>Tax</div><div>Rs ${order.tax ? Math.round((order.amount || order.total_price) * order.tax) : 0}</div></div>
-            ${
-                bankCharges > 0
-                    ? `<div class="row"><div>Bank Charges</div><div>Rs ${bankCharges}</div></div>`
-                    : ''
+            ${bankCharges > 0
+                ? `<div class="row"><div>Bank Charges</div><div>Rs ${bankCharges}</div></div>`
+                : ''
             }
             <div class="divider"></div>
             <div class="row total"><div>Total Amount</div><div>Rs ${(Number(order.total_price || 0) + Number(bankCharges || 0)).toFixed(2)}</div></div>
-            ${
-                order.paid_amount
-                    ? `
+            ${order.paid_amount
+                ? `
             <div class="row"><div>Paid Amount</div><div>Rs ${order.paid_amount}</div></div>
             <div class="row"><div>Change</div><div>Rs ${Number(order.paid_amount || 0) - (Number(order.total_price || 0) + Number(bankCharges || 0))}</div></div>
             `
@@ -352,193 +350,193 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
-            <Box
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
+            {/* <Box
                 style={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
-                <Box sx={{
-                    p: 2,
-                    bgcolor: '#f5f5f5',
-                    height: '100vh'
-                }}>
-                    <Typography sx={{ mb: 3, fontWeight: 600, color: '#063455', fontSize:'30px' }}>
-                        Order History
-                    </Typography>
+            > */}
+            <Box sx={{
+                p: 2,
+                bgcolor: '#f5f5f5',
+                minHeight: '100vh'
+            }}>
+                <Typography sx={{ mb: 3, fontWeight: 600, color: '#063455', fontSize: '30px' }}>
+                    Order History
+                </Typography>
 
-                    {/* Filters */}
-                    <Box sx={{ mb: 3 }}>
-                        <Grid container spacing={2} alignItems="center">
-                            {/* Unified Type Selection */}
-                            <Grid item xs={12} md={2}>
-                                <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                    <Select value={orderType} onChange={(e) => setOrderType(e.target.value)} MenuProps={menuProps}>
-                                        <MenuItem value="all">All Types</MenuItem>
-                                        <MenuItem value="member">Member</MenuItem>
-                                        <MenuItem value="corporate">Corporate</MenuItem>
-                                        <MenuItem value="employee">Employee</MenuItem>
-                                        <MenuItem value="guest">Guest</MenuItem>
-                                        <MenuItem value="dineIn">Dine-In</MenuItem>
-                                        <MenuItem value="delivery">Delivery</MenuItem>
-                                        <MenuItem value="takeaway">Takeaway</MenuItem>
-                                        <MenuItem value="reservation">Reservation</MenuItem>
-                                        <MenuItem value="room_service">Room Service</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Search by Name with Autocomplete */}
-                            <Grid item xs={12} md={3}>
-                                <Autocomplete
-                                    freeSolo
-                                    disablePortal
-                                    options={suggestions}
-                                    getOptionLabel={(option) => option.value || option.name || option.full_name || option}
-                                    inputValue={searchName}
-                                    onInputChange={(event, newInputValue) => {
-                                        setSearchName(newInputValue);
-                                    }}
-                                    loading={loadingSuggestions}
-                                    renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Customer Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
-                                    renderOption={(props, option) => (
-                                        <li {...props} key={option.id || option.label}>
-                                            <Box sx={{ width: '100%' }}>
-                                                <Box display="flex" justifyContent="space-between" alignItems="center">
-                                                    <Typography variant="body2" fontWeight="bold">
-                                                        {option.membership_no || option.customer_no || option.employee_id}
-                                                    </Typography>
-                                                    {option.status && (
-                                                        <Chip
-                                                            label={option.status}
-                                                            size="small"
-                                                            sx={{
-                                                                height: '20px',
-                                                                fontSize: '10px',
-                                                                backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
-                                                                color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
-                                                                textTransform: 'capitalize',
-                                                                ml: 1,
-                                                            }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    {option.name || option.full_name || option.label}
-                                                </Typography>
-                                            </Box>
-                                        </li>
-                                    )}
-                                />
-                            </Grid>
-
-                            {/* Order ID */}
-                            <Grid item xs={12} md={2}>
-                                <TextField fullWidth size="small" label="Order ID" placeholder="Order ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
-                            </Grid>
-
-                            {/* Start Date */}
-                            <Grid item xs={12} md={2}>
-                                <TextField fullWidth size="small" type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
-                            </Grid>
-
-                            {/* End Date */}
-                            <Grid item xs={12} md={2}>
-                                <TextField fullWidth size="small" type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
-                            </Grid>
-
-                            {/* Status */}
-                            <Grid item xs={12} md={2}>
-                                <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                    <Select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)} displayEmpty MenuProps={menuProps}>
-                                        <MenuItem value="all">All Status</MenuItem>
-                                        <MenuItem value="paid">Paid</MenuItem>
-                                        <MenuItem value="awaiting">Awaiting</MenuItem>
-                                        <MenuItem value="unpaid">Unpaid</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Payment Method */}
-                            <Grid item xs={12} md={2}>
-                                <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                    <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} displayEmpty MenuProps={menuProps}>
-                                        <MenuItem value="all">All Methods</MenuItem>
-                                        <MenuItem value="cash">Cash</MenuItem>
-                                        <MenuItem value="credit_card">Credit Card</MenuItem>
-                                        <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-                                        <MenuItem value="split_payment">Split Payment</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Adjustment Type (ENT/CTS) */}
-                            <Grid item xs={12} md={2}>
-                                <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                    <Select value={adjustmentType} onChange={(e) => setAdjustmentType(e.target.value)} displayEmpty MenuProps={menuProps}>
-                                        <MenuItem value="all">All Adjustments</MenuItem>
-                                        <MenuItem value="ent">ENT Only</MenuItem>
-                                        <MenuItem value="cts">CTS Only</MenuItem>
-                                        <MenuItem value="none">No Adjustments</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Table */}
-                            <Grid item xs={12} md={2}>
-                                <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                    <Select value={tableId} onChange={(e) => setTableId(e.target.value)} displayEmpty MenuProps={menuProps}>
-                                        <MenuItem value="">All Tables</MenuItem>
-                                        {tables.map((t) => (
-                                            <MenuItem key={t.id} value={t.id}>
-                                                {t.table_no}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Waiter */}
-                            <Grid item xs={12} md={2}>
-                                <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                    <Select value={waiterId} onChange={(e) => setWaiterId(e.target.value)} displayEmpty MenuProps={menuProps}>
-                                        <MenuItem value="">All Waiters</MenuItem>
-                                        {waiters.map((w) => (
-                                            <MenuItem key={w.id} value={w.id}>
-                                                {w.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Cashier */}
-                            <Grid item xs={12} md={2}>
-                                <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
-                                    <Select value={cashierId} onChange={(e) => setCashierId(e.target.value)} displayEmpty MenuProps={menuProps}>
-                                        <MenuItem value="">All Cashiers</MenuItem>
-                                        {cashiers.map((c) => (
-                                            <MenuItem key={c.id} value={c.id}>
-                                                {c.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-
-                            {/* Action Buttons */}
-                            <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 2 }}>
-                                <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455', px: 4 }}>
-                                    Reset
-                                </Button>
-                                <Button variant="contained" startIcon={<Search />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none', px: 4 }}>
-                                    Search
-                                </Button>
-                            </Grid>
+                {/* Filters */}
+                <Box sx={{ mb: 3 }}>
+                    <Grid container spacing={2} alignItems="center">
+                        {/* Unified Type Selection */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={orderType} onChange={(e) => setOrderType(e.target.value)} MenuProps={menuProps}>
+                                    <MenuItem value="all">All Types</MenuItem>
+                                    <MenuItem value="member">Member</MenuItem>
+                                    <MenuItem value="corporate">Corporate</MenuItem>
+                                    <MenuItem value="employee">Employee</MenuItem>
+                                    <MenuItem value="guest">Guest</MenuItem>
+                                    <MenuItem value="dineIn">Dine-In</MenuItem>
+                                    <MenuItem value="delivery">Delivery</MenuItem>
+                                    <MenuItem value="takeaway">Takeaway</MenuItem>
+                                    <MenuItem value="reservation">Reservation</MenuItem>
+                                    <MenuItem value="room_service">Room Service</MenuItem>
+                                </Select>
+                            </FormControl>
                         </Grid>
-                    </Box>
+
+                        {/* Search by Name with Autocomplete */}
+                        <Grid item xs={12} md={3}>
+                            <Autocomplete
+                                freeSolo
+                                disablePortal
+                                options={suggestions}
+                                getOptionLabel={(option) => option.value || option.name || option.full_name || option}
+                                inputValue={searchName}
+                                onInputChange={(event, newInputValue) => {
+                                    setSearchName(newInputValue);
+                                }}
+                                loading={loadingSuggestions}
+                                renderInput={(params) => <TextField {...params} fullWidth size="small" label="Search Name" placeholder="Customer Name..." sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />}
+                                renderOption={(props, option) => (
+                                    <li {...props} key={option.id || option.label}>
+                                        <Box sx={{ width: '100%' }}>
+                                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="body2" fontWeight="bold">
+                                                    {option.membership_no || option.customer_no || option.employee_id}
+                                                </Typography>
+                                                {option.status && (
+                                                    <Chip
+                                                        label={option.status}
+                                                        size="small"
+                                                        sx={{
+                                                            height: '20px',
+                                                            fontSize: '10px',
+                                                            backgroundColor: option.status === 'active' ? '#e8f5e9' : option.status === 'suspended' ? '#fff3e0' : '#ffebee',
+                                                            color: option.status === 'active' ? '#2e7d32' : option.status === 'suspended' ? '#ef6c00' : '#c62828',
+                                                            textTransform: 'capitalize',
+                                                            ml: 1,
+                                                        }}
+                                                    />
+                                                )}
+                                            </Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                {option.name || option.full_name || option.label}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                            />
+                        </Grid>
+
+                        {/* Order ID */}
+                        <Grid item xs={12} md={2}>
+                            <TextField fullWidth size="small" label="Order ID" placeholder="Order ID..." value={searchId} onChange={(e) => setSearchId(e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        </Grid>
+
+                        {/* Start Date */}
+                        <Grid item xs={12} md={2}>
+                            <TextField fullWidth size="small" type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        </Grid>
+
+                        {/* End Date */}
+                        <Grid item xs={12} md={2}>
+                            <TextField fullWidth size="small" type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        </Grid>
+
+                        {/* Status */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="all">All Status</MenuItem>
+                                    <MenuItem value="paid">Paid</MenuItem>
+                                    <MenuItem value="awaiting">Awaiting</MenuItem>
+                                    <MenuItem value="unpaid">Unpaid</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Payment Method */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="all">All Methods</MenuItem>
+                                    <MenuItem value="cash">Cash</MenuItem>
+                                    <MenuItem value="credit_card">Credit Card</MenuItem>
+                                    <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+                                    <MenuItem value="split_payment">Split Payment</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Adjustment Type (ENT/CTS) */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={adjustmentType} onChange={(e) => setAdjustmentType(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="all">All Adjustments</MenuItem>
+                                    <MenuItem value="ent">ENT Only</MenuItem>
+                                    <MenuItem value="cts">CTS Only</MenuItem>
+                                    <MenuItem value="none">No Adjustments</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Table */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={tableId} onChange={(e) => setTableId(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="">All Tables</MenuItem>
+                                    {tables.map((t) => (
+                                        <MenuItem key={t.id} value={t.id}>
+                                            {t.table_no}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Waiter */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={waiterId} onChange={(e) => setWaiterId(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="">All Waiters</MenuItem>
+                                    {waiters.map((w) => (
+                                        <MenuItem key={w.id} value={w.id}>
+                                            {w.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Cashier */}
+                        <Grid item xs={12} md={2}>
+                            <FormControl size="small" fullWidth sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}>
+                                <Select value={cashierId} onChange={(e) => setCashierId(e.target.value)} displayEmpty MenuProps={menuProps}>
+                                    <MenuItem value="">All Cashiers</MenuItem>
+                                    {cashiers.map((c) => (
+                                        <MenuItem key={c.id} value={c.id}>
+                                            {c.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {/* Action Buttons */}
+                        <Grid item xs={12} md={3} sx={{ display: 'flex', gap: 2 }}>
+                            <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: '16px', textTransform: 'none', color: '#063455', border: '1px solid #063455', px: 4 }}>
+                                Reset
+                            </Button>
+                            <Button variant="contained" startIcon={<Search />} onClick={handleApply} sx={{ borderRadius: '16px', backgroundColor: '#063455', textTransform: 'none', px: 4 }}>
+                                Search
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Box>
 
                 {/* Table */}
                 <TableContainer component={Paper} sx={{ position: 'relative' }}>
@@ -677,167 +675,158 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                 })
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={21} sx={{ textAlign: 'center', py: 4 }}>
+                                    <TableCell colSpan={15} align="center">
                                         No orders found
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
-                        </Table>
-                    </TableContainer>
+                    </Table>
+                </TableContainer>
 
-                    {/* Pagination */}
-                    {orders?.last_page > 1 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-                            <Pagination count={orders.last_page} page={orders.current_page} onChange={handlePageChange} color="primary" />
-                        </Box>
-                    )}
-                </Box>
+                {/* Pagination */}
+                {orders?.last_page > 1 && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                        <Pagination count={orders.last_page} page={orders.current_page} onChange={handlePageChange} color="primary" />
+                    </Box>
+                )}
+            </Box>
 
-                {/* View Order Modal */}
-                <Dialog open={viewModalOpen} onClose={handleCloseModal} maxWidth="md" fullWidth>
-                    <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#063455', color: '#fff' }}>
-                        <Typography variant="h6">Order Details - #{selectedOrder?.id}</Typography>
-                        <IconButton onClick={handleCloseModal} sx={{ color: '#fff' }}>
-                            <CloseIcon />
-                        </IconButton>
-                    </DialogTitle>
-                    <DialogContent sx={{ p: 0, overflow: 'hidden' }}>
-                        {selectedOrder && (
-                            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, height: { xs: 'auto', md: '85vh' } }}>
-                                <Box
-                                    sx={{
-                                        width: { xs: '100%', md: '40%' },
-                                        borderRight: { md: '1px solid #e0e0e0' },
-                                        height: { xs: 'auto', md: '85vh' },
-                                        overflowY: 'auto',
-                                    }}
-                                >
-                                    <Receipt invoiceRoute={'transaction.invoice'} invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} />
-                                </Box>
-                                <Box sx={{ flex: 1, p: 3, height: { xs: 'auto', md: '85vh' }, overflowY: 'auto', overflowX: 'hidden' }}>
-                                    <Typography variant="h6" sx={{ mb: 2 }}>
-                                        Order Information
-                                    </Typography>
-                                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Order Type
-                                            </Typography>
-                                            <Typography variant="body1">{formatOrderType(selectedOrder.order_type)}</Typography>
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Date
-                                            </Typography>
-                                            <Typography variant="body1">{new Date(selectedOrder.start_date).toLocaleString()}</Typography>
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Order Status
-                                            </Typography>
-                                            <Box>
-                                                <Chip label={formatOrderStatus(selectedOrder.status)} size="small" color={getOrderStatusColor(selectedOrder.status)} />
-                                            </Box>
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Payment Status
-                                            </Typography>
-                                            <Box>
-                                                <Chip label={selectedOrder.payment_status || 'unpaid'} size="small" color={getStatusColor(selectedOrder.payment_status)} />
-                                            </Box>
-                                        </Box>
-                                        {selectedOrder.table && (
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Table
-                                                </Typography>
-                                                <Typography variant="body1">{selectedOrder.table.table_no}</Typography>
-                                            </Box>
-                                        )}
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                Payment Method
-                                            </Typography>
-                                            <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
-                                                {selectedOrder.payment_method?.replace('_', ' ') || '-'}
-                                            </Typography>
-                                        </Box>
-                                        {selectedOrder.cashier && (
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Cashier
-                                                </Typography>
-                                                <Typography variant="body1">{selectedOrder.cashier.name}</Typography>
-                                            </Box>
-                                        )}
-                                        {selectedOrder.waiter && (
-                                            <Box>
-                                                <Typography variant="caption" color="text.secondary">
-                                                    Waiter
-                                                </Typography>
-                                                <Typography variant="body1">{selectedOrder.waiter.name}</Typography>
-                                            </Box>
-                                        )}
+            {/* View Order Modal */}
+            <Dialog open={viewModalOpen} onClose={handleCloseModal} maxWidth="md" fullWidth>
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#063455', color: '#fff' }}>
+                    <Typography variant="h6">Order Details - #{selectedOrder?.id}</Typography>
+                    <IconButton onClick={handleCloseModal} sx={{ color: '#fff' }}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0 }}>
+                    {selectedOrder && (
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
+                            <Receipt invoiceData={getReceiptData(selectedOrder)} openModal={viewModalOpen} showButtons={false} />
+                            <Box sx={{ flex: 1, p: 3 }}>
+                                <Typography variant="h6" sx={{ mb: 2 }}>
+                                    Order Information
+                                </Typography>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3 }}>
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Order Type
+                                        </Typography>
+                                        <Typography variant="body1">{formatOrderType(selectedOrder.order_type)}</Typography>
                                     </Box>
-
-                                    {/* ENT/CTS Details Section */}
-                                    {(selectedOrder.invoice_ent_amount > 0 || selectedOrder.invoice_cts_amount > 0) && (
-                                        <>
-                                            <Typography variant="h6" sx={{ mb: 2 }}>
-                                                Adjustments & Deductions
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Date
+                                        </Typography>
+                                        <Typography variant="body1">{new Date(selectedOrder.start_date).toLocaleString()}</Typography>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Order Status
+                                        </Typography>
+                                        <Box>
+                                            <Chip label={formatOrderStatus(selectedOrder.status)} size="small" color={getOrderStatusColor(selectedOrder.status)} />
+                                        </Box>
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Payment Status
+                                        </Typography>
+                                        <Box>
+                                            <Chip label={selectedOrder.payment_status || 'unpaid'} size="small" color={getStatusColor(selectedOrder.payment_status)} />
+                                        </Box>
+                                    </Box>
+                                    {selectedOrder.table && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Table
                                             </Typography>
-                                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-                                                {selectedOrder.invoice_ent_amount > 0 && (
-                                                    <>
-                                                        <Box>
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                ENT Amount
-                                                            </Typography>
-                                                            <Typography variant="body1" sx={{ color: '#1565c0', fontWeight: 600 }}>
-                                                                Rs {selectedOrder.invoice_ent_amount}
-                                                            </Typography>
-                                                        </Box>
-                                                        <Box>
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                ENT Reason
-                                                            </Typography>
-                                                            <Typography variant="body1">{selectedOrder.invoice_ent_reason || '-'}</Typography>
-                                                        </Box>
-                                                        {selectedOrder.invoice_ent_comment && (
-                                                            <Box sx={{ gridColumn: 'span 2' }}>
-                                                                <Typography variant="caption" color="text.secondary">
-                                                                    ENT Comment
-                                                                </Typography>
-                                                                <Typography variant="body2">{selectedOrder.invoice_ent_comment}</Typography>
-                                                            </Box>
-                                                        )}
-                                                    </>
-                                                )}
-                                                {selectedOrder.invoice_cts_amount > 0 && (
-                                                    <>
-                                                        <Box>
-                                                            <Typography variant="caption" color="text.secondary">
-                                                                CTS Amount
-                                                            </Typography>
-                                                            <Typography variant="body1" sx={{ color: '#ef6c00', fontWeight: 600 }}>
-                                                                Rs {selectedOrder.invoice_cts_amount}
-                                                            </Typography>
-                                                        </Box>
-                                                        {selectedOrder.invoice_cts_comment && (
-                                                            <Box>
-                                                                <Typography variant="caption" color="text.secondary">
-                                                                    CTS Comment
-                                                                </Typography>
-                                                                <Typography variant="body2">{selectedOrder.invoice_cts_comment}</Typography>
-                                                            </Box>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </Box>
-                                        </>
+                                            <Typography variant="body1">{selectedOrder.table.table_no}</Typography>
+                                        </Box>
                                     )}
+                                    <Box>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Payment Method
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+                                            {selectedOrder.payment_method?.replace('_', ' ') || '-'}
+                                        </Typography>
+                                    </Box>
+                                    {selectedOrder.cashier && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Cashier
+                                            </Typography>
+                                            <Typography variant="body1">{selectedOrder.cashier.name}</Typography>
+                                        </Box>
+                                    )}
+                                    {selectedOrder.waiter && (
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary">
+                                                Waiter
+                                            </Typography>
+                                            <Typography variant="body1">{selectedOrder.waiter.name}</Typography>
+                                        </Box>
+                                    )}
+                                </Box>
+
+                                {/* ENT/CTS Details Section */}
+                                {(selectedOrder.invoice_ent_amount > 0 || selectedOrder.invoice_cts_amount > 0) && (
+                                    <>
+                                        <Typography variant="h6" sx={{ mb: 2 }}>
+                                            Adjustments & Deductions
+                                        </Typography>
+                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                                            {selectedOrder.invoice_ent_amount > 0 && (
+                                                <>
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            ENT Amount
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ color: '#1565c0', fontWeight: 600 }}>
+                                                            Rs {selectedOrder.invoice_ent_amount}
+                                                        </Typography>
+                                                    </Box>
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            ENT Reason
+                                                        </Typography>
+                                                        <Typography variant="body1">{selectedOrder.invoice_ent_reason || '-'}</Typography>
+                                                    </Box>
+                                                    {selectedOrder.invoice_ent_comment && (
+                                                        <Box sx={{ gridColumn: 'span 2' }}>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                ENT Comment
+                                                            </Typography>
+                                                            <Typography variant="body2">{selectedOrder.invoice_ent_comment}</Typography>
+                                                        </Box>
+                                                    )}
+                                                </>
+                                            )}
+                                            {selectedOrder.invoice_cts_amount > 0 && (
+                                                <>
+                                                    <Box>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            CTS Amount
+                                                        </Typography>
+                                                        <Typography variant="body1" sx={{ color: '#ef6c00', fontWeight: 600 }}>
+                                                            Rs {selectedOrder.invoice_cts_amount}
+                                                        </Typography>
+                                                    </Box>
+                                                    {selectedOrder.invoice_cts_comment && (
+                                                        <Box>
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                CTS Comment
+                                                            </Typography>
+                                                            <Typography variant="body2">{selectedOrder.invoice_cts_comment}</Typography>
+                                                        </Box>
+                                                    )}
+                                                </>
+                                            )}
+                                        </Box>
+                                    </>
+                                )}
 
                                     <Typography variant="h6" sx={{ mb: 2 }}>
                                         Order Items
@@ -950,14 +939,15 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                     </Box>
                                 </Box>
                             </Box>
-                        )}
-                    </DialogContent>
-                </Dialog>
-            </Box>
+                        </Box>
+                    )}
+                </DialogContent>
+            </Dialog>
+            {/* </Box > */}
         </>
     );
 };
 
-Dashboard.layout = (page) => page;
+Dashboard.layout = (page) => <POSLayout>{page}</POSLayout>;
 
 export default Dashboard;

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Chip, IconButton, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Backdrop, CircularProgress, DialogContentText, Autocomplete } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [processing, setProcessing] = useState(false);
 
@@ -116,23 +116,23 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             {/* Global Loader */}
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1000 }} open={processing}>
                 <CircularProgress color="inherit" />
             </Backdrop>
 
-            <Box
+            {/* <Box
                 sx={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     // padding: '1rem',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{
-                    height: '100vh',
+                    minHeight: '100vh',
                     bgcolor: '#f5f5f5',
                     p: 2
                 }}>
@@ -163,7 +163,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
                                     textTransform: 'none',
                                     borderRadius: '16px',
                                     height: 35,
-                                    '&:hover': { bgcolor: '#04243a' }
+                                    '&:hover': { bgcolor: '#063455' }
                                 }}>
                                 Add Sub Category
                             </Button>
@@ -233,7 +233,7 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
                         <Pagination count={subCategories.last_page} page={subCategories.current_page} onChange={(e, p) => router.get(route('sub-categories.index'), { page: p, search }, { preserveState: true })} color="primary" />
                     </Box>
                 </Box>
-            </Box>
+            {/* </Box> */}
 
             {/* Create/Edit Modal */}
             <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
@@ -294,6 +294,6 @@ const SubCategoriesIndex = ({ subCategories, categories, filters }) => {
     );
 };
 
-SubCategoriesIndex.layout = (page) => page;
+SubCategoriesIndex.layout = (page) => <POSLayout>{page}</POSLayout>;
 
 export default SubCategoriesIndex;

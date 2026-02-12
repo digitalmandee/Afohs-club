@@ -5,7 +5,7 @@ import { router, usePage } from '@inertiajs/react';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import ReservationFilter from '@/components/App/Reservation/Filter';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { Modal } from 'react-bootstrap';
 import { Close as CloseIcon } from '@mui/icons-material';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -16,7 +16,7 @@ import { enqueueSnackbar } from 'notistack';
 const Reservations = () => {
     const { reservations, filters, tenant } = usePage().props;
 
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [searchTerm, setSearchTerm] = useState(filters.search || '');
     const [filteredReservations, setFilteredReservations] = useState(reservations.data || []);
     const [showFilter, setShowFilter] = useState(false);
@@ -112,15 +112,15 @@ const Reservations = () => {
 
     return (
         <>
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <SideNav open={open} setOpen={setOpen} />
             <div
                 style={{
                     marginLeft: open ? `240px` : `110px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}
-            >
-                <Box sx={{ p: 2, height:'100vh', bgcolor:'#f5f5f5' }}>
+            > */}
+                <Box sx={{ p: 2, minHeight:'100vh', bgcolor:'#f5f5f5' }}>
                     {/* Header */}
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                         <Typography sx={{fontWeight:600, fontSize:'30px', color:'#063455'}}>Reservations</Typography>
@@ -417,9 +417,9 @@ const Reservations = () => {
                         </DialogContent>
                     </Dialog>
                 </Box>
-            </div>
+            {/* </div> */}
         </>
     );
 };
-Reservations.layout = (page) => page;
+Reservations.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default Reservations;

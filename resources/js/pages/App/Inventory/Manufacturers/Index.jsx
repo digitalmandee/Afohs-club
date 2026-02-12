@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, Chip, IconButton, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, Backdrop, CircularProgress, DialogContentText } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const ManufacturersIndex = ({ manufacturers, filters }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [processing, setProcessing] = useState(false);
 
@@ -107,24 +107,24 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
 
     return (
         <>
-            <Head title="Manufacturers" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <Head title="Manufacturers" />
+            <SideNav open={open} setOpen={setOpen} /> */}
 
             {/* Global Loader */}
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1000 }} open={processing}>
                 <CircularProgress color="inherit" />
             </Backdrop>
 
-            <Box
+            {/* <Box
                 sx={{
                     marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
                     transition: 'margin-left 0.3s ease-in-out',
                     // padding: '1rem',
                     marginTop: '5rem',
                 }}
-            >
+            > */}
                 <Box sx={{
-                    height: '100vh',
+                    minHeight: '100vh',
                     bgcolor: '#f5f5f5',
                     p: 2
                 }}>
@@ -210,7 +210,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                         <Pagination count={manufacturers.last_page} page={manufacturers.current_page} onChange={(e, p) => router.get(route('manufacturers.index'), { page: p, search }, { preserveState: true })} color="primary" />
                     </Box>
                 </Box>
-            </Box>
+            {/* </Box> */}
 
             {/* Create/Edit Modal */}
             <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
@@ -258,6 +258,6 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
     );
 };
 
-ManufacturersIndex.layout = (page) => page;
+ManufacturersIndex.layout = (page) => <POSLayout>{page}</POSLayout>;
 
 export default ManufacturersIndex;
