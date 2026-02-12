@@ -1,8 +1,8 @@
 import React from 'react';
 import POSLayout from "@/components/POSLayout";
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Box, Paper, Typography, Button, IconButton, TextField, Select, MenuItem, FormControl, InputLabel, Grid, InputAdornment } from '@mui/material';
-import { Save, ArrowBackIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
