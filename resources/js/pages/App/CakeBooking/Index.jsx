@@ -7,6 +7,9 @@ import { Add, Search, Edit, Delete, Print, Close } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import { debounce } from 'lodash';
 import axios from 'axios';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -138,7 +141,7 @@ export default function Index({ bookings, filters, cashiers }) {
                                     bgcolor: filterState.status === 'active' ? '#063455' : 'transparent',
                                     color: filterState.status === 'active' ? 'white' : '#063455',
                                     '&:hover': { bgcolor: filterState.status === 'active' ? '#04243a' : 'rgba(6, 52, 85, 0.04)' },
-                                    borderRadius: 1.5,
+                                    borderRadius: '16px',
                                     textTransform: 'none',
                                     px: 3,
                                 }}
@@ -152,7 +155,7 @@ export default function Index({ bookings, filters, cashiers }) {
                                     bgcolor: filterState.status === 'cancelled' ? '#d32f2f' : 'transparent',
                                     color: filterState.status === 'cancelled' ? 'white' : '#d32f2f',
                                     '&:hover': { bgcolor: filterState.status === 'cancelled' ? '#b71c1c' : 'rgba(211, 47, 47, 0.04)' },
-                                    borderRadius: 1.5,
+                                    borderRadius: '16px',
                                     textTransform: 'none',
                                     px: 3,
                                 }}
@@ -161,13 +164,23 @@ export default function Index({ bookings, filters, cashiers }) {
                             </Button>
                         </Box>
 
-                        <Button variant="contained" startIcon={<Add />} component={Link} href={route('cake-bookings.create')} sx={{ bgcolor: '#063455', '&:hover': { bgcolor: '#04243a' } }}>
+                        <Button
+                            variant="contained"
+                            startIcon={<Add />}
+                            component={Link}
+                            href={route('cake-bookings.create')}
+                            sx={{
+                                bgcolor: '#063455',
+                                borderRadius: '16px',
+                                textTransform: 'none',
+                                '&:hover': { bgcolor: '#063455' }
+                            }}>
                             Create Booking
                         </Button>
                     </Box>
                 </Box>
 
-                <Paper sx={{ p: 2, mb: 2 }}>
+                <Box sx={{ pt: 2, mb: 2 }}>
                     {/* Top Row Filters */}
                     <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
                         {/* Customer Type Select */}
@@ -214,7 +227,7 @@ export default function Index({ bookings, filters, cashiers }) {
                         </Grid>
 
                         {/* Search by Name with Autocomplete */}
-                        <Grid item xs={12} md={3}>
+                        <Grid item xs={12} md={4}>
                             <Autocomplete
                                 freeSolo
                                 disablePortal
@@ -303,40 +316,201 @@ export default function Index({ bookings, filters, cashiers }) {
 
                         {/* Search by ID */}
                         <Grid item xs={12} md={2}>
-                            <TextField fullWidth label="Booking No." placeholder="Search Id..." size="small" value={filterState.booking_number} onChange={(e) => handleFilterChange('booking_number', e.target.value)} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                            <TextField
+                                fullWidth
+                                label="Booking No."
+                                placeholder="Search Id..."
+                                size="small"
+                                value={filterState.booking_number}
+                                onChange={(e) => handleFilterChange('booking_number', e.target.value)}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }} />
+                        </Grid>
+                        <Grid item xs={6} md={2}>
+                            {/* <TextField
+                                fullWidth
+                                // label="Start Date"
+                                placeholder='Start Date'
+                                type="date"
+                                size="small"
+                                value={filterState.start_date}
+                                onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '16px' } }}
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="Start Date"
+                                    value={filterState.start_date ? dayjs(filterState.start_date) : null}
+                                    onChange={(newValue) => {
+                                        const formattedDate = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                        handleFilterChange('start_date', formattedDate);
+                                    }}
+                                    sx={{
+                                        '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                            borderRadius: '16px !important',
+                                        },
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                     </Grid>
 
                     {/* Second Row Filters */}
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={6} md={2}>
-                            <Typography variant="caption">Begin Date:</Typography>
-                            <TextField fullWidth type="date" size="small" value={filterState.start_date} onChange={(e) => handleFilterChange('start_date', e.target.value)} />
+                            {/* <TextField
+                                fullWidth
+                                type="date"
+                                size="small"
+                                value={filterState.end_date}
+                                onChange={(e) => handleFilterChange('end_date', e.target.value)} /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="End Date"
+                                    value={filterState.end_date ? dayjs(filterState.end_date) : null}
+                                    onChange={(newValue) => {
+                                        const formattedDate = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                        handleFilterChange('end_date', formattedDate);
+                                    }}
+                                    sx={{
+                                        '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                            borderRadius: '16px !important',
+                                        },
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
                         <Grid item xs={6} md={2}>
-                            <Typography variant="caption">End Date:</Typography>
-                            <TextField fullWidth type="date" size="small" value={filterState.end_date} onChange={(e) => handleFilterChange('end_date', e.target.value)} />
-                        </Grid>
-                        <Grid item xs={6} md={2}>
-                            <Typography variant="caption">Delivery Date:</Typography>
-                            <TextField fullWidth type="date" size="small" value={filterState.delivery_date} onChange={(e) => handleFilterChange('delivery_date', e.target.value)} />
+                            {/* <TextField
+                                fullWidth
+                                type="date"
+                                size="small"
+                                value={filterState.delivery_date}
+                                onChange={(e) => handleFilterChange('delivery_date', e.target.value)} /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="Delivery Date"
+                                    value={filterState.delivery_date ? dayjs(filterState.delivery_date) : null}
+                                    onChange={(newValue) => {
+                                        const formattedDate = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                        handleFilterChange('delivery_date', formattedDate);
+                                    }}
+                                    sx={{
+                                        '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                            borderRadius: '16px !important',
+                                        },
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            size: 'small',
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
                         </Grid>
 
                         <Grid item xs={6} md={2}>
-                            <Typography variant="caption">Discounted/Taxed:</Typography>
-                            <Select fullWidth size="small" value={filterState.discounted_taxed} onChange={(e) => handleFilterChange('discounted_taxed', e.target.value)} displayEmpty>
+                            {/* <Select fullWidth size="small" value={filterState.discounted_taxed} onChange={(e) => handleFilterChange('discounted_taxed', e.target.value)} displayEmpty>
                                 <MenuItem value="All">All</MenuItem>
                                 <MenuItem value="discounted">Discounted</MenuItem>
                                 <MenuItem value="taxed">Taxed</MenuItem>
-                            </Select>
+                            </Select> */}
+                            <Autocomplete
+                                fullWidth
+                                size="small"
+                                options={['All', 'Discounted', 'Taxed']}
+                                value={filterState.discounted_taxed || 'All'}
+                                onChange={(event, newValue) => {
+                                    handleFilterChange('discounted_taxed', newValue || 'All');
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        placeholder="Select option"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderRadius: '16px',
+                                            },
+                                        }}
+                                    />
+                                )}
+                                disableClearable
+                                ListboxProps={{
+                                    sx: {
+                                        '& .MuiAutocomplete-option': {
+                                            '&[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                                borderRadius: '16px',
+                                                my: 0.3
+                                            },
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important',
+                                                borderRadius: '16px',
+                                                my: 0.3
+                                            },
+                                        },
+                                    },
+                                }}
+                            />
                         </Grid>
                         <Grid item xs={6} md={2}>
-                            <Typography variant="caption">Cashier:</Typography>
-                            <Autocomplete options={cashiers || []} getOptionLabel={(option) => option.name} value={cashiers?.find((c) => c.id == filterState.cashier_id) || null} onChange={(event, newValue) => handleFilterChange('cashier_id', newValue ? newValue.id : '')} renderInput={(params) => <TextField {...params} placeholder="Choose Options" size="small" />} />
+                            <Autocomplete
+                                options={cashiers || []} getOptionLabel={(option) => option.name}
+                                value={cashiers?.find((c) => c.id == filterState.cashier_id) || null}
+                                onChange={(event, newValue) => handleFilterChange('cashier_id', newValue ? newValue.id : '')}
+                                renderInput={(params) =>
+                                    <TextField {...params}
+                                        placeholder="Choose Options"
+                                        size="small"
+                                        sx={{
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '16px',
+                                            },
+                                            '& .MuiOutlinedInput-notchedOutline': {
+                                                borderRadius: '16px',
+                                            },
+                                        }}
+                                    />}
+                                ListboxProps={{
+                                    sx: {
+                                        '& .MuiAutocomplete-option': {
+                                            '&[aria-selected="true"]': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                                borderRadius: '16px',
+                                                my: 0.3
+                                            },
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important',
+                                                borderRadius: '16px',
+                                                my: 0.3
+                                            },
+                                        },
+                                    },
+                                }}
+                            />
                         </Grid>
 
                         {/* Action Buttons */}
-                        <Grid item xs={12} display="flex" justifyContent="flex-end" gap={1} mt={1}>
+                        <Grid item xs={12} md={4}>
                             <Button
                                 variant="outlined"
                                 color="secondary"
@@ -354,27 +528,38 @@ export default function Index({ bookings, filters, cashiers }) {
                                     });
                                     router.get(route('cake-bookings.index')); // Reset
                                 }}
+                                sx={{
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    border: '1px solid #063455'
+                                }}
                             >
-                                Clear Filter
+                                Reset
                             </Button>
                             <Button
                                 variant="contained"
                                 startIcon={<Search />}
-                                onClick={() => handleApplyFilters()} // Manual search trigger
-                                sx={{ bgcolor: '#063455', '&:hover': { bgcolor: '#04243a' } }}
+                                onClick={() => handleApplyFilters()}
+                                sx={{
+                                    bgcolor: '#063455',
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    ml:2,
+                                    '&:hover': { bgcolor: '#063455' }
+                                }}
                             >
                                 Search
                             </Button>
                         </Grid>
                     </Grid>
-                </Paper>
+                </Box>
 
-                <TableContainer component={Paper}>
+                <TableContainer component={Paper} sx={{borderRadius:'12px'}}>
                     <Table size="small">
                         <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
-                                {['SR #', 'BOOKING #', 'BOOKING DATE', 'NAME', 'CUSTOMER TYPE', 'TOTAL', 'ADVANCE', 'BALANCE', 'DISCOUNT', 'TAX', 'GRAND TOTAL', 'USER', 'DOC', 'INVOICE', 'CANCEL', 'EDIT', 'DELETE'].map((head) => (
-                                    <TableCell key={head} sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.8rem', py: 1 }}>
+                                {['SR', 'Booking', 'Booking Date', 'Name', 'Customer Type', 'Total', 'Advance', 'Balance', 'Discount', 'Tax', 'Grand Total', 'User', 'Document', 'Invoice', 'Cancel', 'Edit', 'Delete'].map((head) => (
+                                    <TableCell key={head} sx={{ color: '#fff', fontWeight: '600', whiteSpace:'nowrap' }}>
                                         {head}
                                     </TableCell>
                                 ))}

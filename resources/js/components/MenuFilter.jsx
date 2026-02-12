@@ -3,6 +3,7 @@ import { Box, Button, TextField, FormControl, Select, MenuItem, Grid, Typography
 import axios from 'axios';
 import debounce from 'lodash.debounce';
 import { styled } from '@mui/material/styles';
+import { Search } from '@mui/icons-material'
 
 const RoundedTextField = styled(TextField)({
     '& .MuiOutlinedInput-root': {
@@ -146,7 +147,7 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                 </Grid>
 
                 {/* Menu Code Filter */}
-                <Grid item xs={12} md={1.5}>
+                <Grid item xs={12} md={2}>
                     <RoundedTextField
                         fullWidth
                         size="small"
@@ -161,55 +162,65 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                 </Grid>
 
                 {/* Status Filter */}
-                <Grid item xs={12} md={1.5}>
-                    <FormControl
-                        fullWidth
+                <Grid item xs={12} md={2}>
+                    <Autocomplete
                         size="small"
+                        options={[
+                            { label: "Status", value: "all" },
+                            { label: "Active", value: "active" },
+                            { label: "Inactive", value: "inactive" },
+                        ]}
+                        getOptionLabel={(option) => option.label}
+                        value={
+                            [
+                                { label: "Status", value: "all" },
+                                { label: "Active", value: "active" },
+                                { label: "Inactive", value: "inactive" },
+                            ].find((opt) => opt.value === statusFilter) || null
+                        }
+                        onChange={(event, newValue) => {
+                            setStatusFilter(newValue?.value || "all");
+                            onFiltersChange?.();
+                        }}
+                        disableClearable
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                placeholder="Status"
+                                sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                        borderRadius: "16px",
+                                    },
+                                }}
+                            />
+                        )}
                         sx={{
-                            '& .MuiOutlinedInput-root': {
-                                borderRadius: '16px',
+                            "& .MuiAutocomplete-paper": {
+                                borderRadius: "16px",
+                                boxShadow: "none",
+                                mt: "4px",
                             },
                         }}
-                    >
-                        <Select
-                            value={statusFilter}
-                            onChange={(e) => {
-                                setStatusFilter(e.target.value);
-                                onFiltersChange?.();
-                            }}
-                            displayEmpty
-                            MenuProps={{
-                                sx: {
-                                    '& .MuiPaper-root': {
-                                        borderRadius: '16px',
-                                        boxShadow: 'none !important',
-                                        marginTop: '4px',
-                                    },
-                                    '& .MuiMenuItem-root': {
-                                        borderRadius: '16px',
-                                        '&:hover': {
-                                            backgroundColor: '#063455 !important',
-                                            color: '#fff !important',
-                                        },
-                                    },
-                                },
-                            }}
-                        >
-                            <MenuItem value="all">Status</MenuItem>
-                            <MenuItem value="active">
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#2e7d32' }} />
-                                    Active
-                                </Box>
-                            </MenuItem>
-                            <MenuItem value="inactive">
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#d32f2f' }} />
-                                    Inactive
-                                </Box>
-                            </MenuItem>
-                        </Select>
-                    </FormControl>
+                        renderOption={(props, option) => (
+                            <li
+                                {...props}
+                                style={{
+                                    borderRadius: "16px",
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = "#063455";
+                                    e.currentTarget.style.color = "#fff";
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = "";
+                                    e.currentTarget.style.color = "";
+                                }}
+                            >
+                                {option.label}
+                            </li>
+                        )}
+                    />
+
                 </Grid>
 
                 <Grid item xs={12} md={2}>
@@ -224,6 +235,37 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                             // Reset sub-category filter if category changes
                             setSubCategoryFilter([]);
                             onFiltersChange?.();
+                        }}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    borderRadius: "16px",
+                                    boxShadow: "none",
+                                    mt: 0.5,
+                                },
+                            },
+                            listbox: {
+                                sx: {
+                                    "& .MuiAutocomplete-option:hover": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                    "& .MuiAutocomplete-option.Mui-focused": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                    "& .MuiAutocomplete-option[aria-selected='true']": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                },
+                            },
                         }}
                         renderTags={(value, getTagProps) =>
                             value.length > 1 ? (
@@ -272,6 +314,37 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                             setSubCategoryFilter(newValue.map((sub) => sub.id));
                             onFiltersChange?.();
                         }}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    borderRadius: "16px",
+                                    boxShadow: "none",
+                                    mt: 0.5,
+                                },
+                            },
+                            listbox: {
+                                sx: {
+                                    "& .MuiAutocomplete-option:hover": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                    "& .MuiAutocomplete-option.Mui-focused": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                    "& .MuiAutocomplete-option[aria-selected='true']": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                },
+                            },
+                        }}
                         renderTags={(value, getTagProps) =>
                             value.length > 1 ? (
                                 <Chip label={`${value.length} selected`} size="small" sx={{ backgroundColor: '#063455', color: '#fff' }} />
@@ -318,6 +391,37 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                             setManufacturerFilter(newValue.map((m) => m.id));
                             onFiltersChange?.();
                         }}
+                        slotProps={{
+                            paper: {
+                                sx: {
+                                    borderRadius: "16px",
+                                    boxShadow: "none",
+                                    mt: 0.5,
+                                },
+                            },
+                            listbox: {
+                                sx: {
+                                    "& .MuiAutocomplete-option:hover": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                    "& .MuiAutocomplete-option.Mui-focused": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                    "& .MuiAutocomplete-option[aria-selected='true']": {
+                                        backgroundColor: "#063455 !important",
+                                        color: "#fff",
+                                        borderRadius:'16px',
+                                        my:0.3
+                                    },
+                                },
+                            },
+                        }}
                         renderTags={(value, getTagProps) =>
                             value.length > 1 ? (
                                 <Chip label={`${value.length} selected`} size="small" sx={{ backgroundColor: '#063455', color: '#fff' }} />
@@ -354,26 +458,45 @@ const MenuFilter = ({ categories = [], onProductsLoaded, onLoadingChange, page =
                 </Grid>
 
                 {/* Reset Button */}
-                <Grid item xs={12} md={1} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, alignItems: 'center' }}>
                     {/* <Tooltip title="Reset Filters"> */}
-                        <Button
-                            variant="outlined"
-                            onClick={handleReset}
-                            disabled={isLoading}
-                            sx={{
-                                borderRadius: '16px',
-                                height: 35,
-                                px: 2,
-                                color: '#063455',
-                                textTransform:'none',
-                                border: '1px solid #063455',
-                                '&:hover': {
-                                    backgroundColor: 'rgba(6, 52, 85, 0.04)',
-                                },
-                            }}
-                        >
-                            Reset
-                        </Button>
+                    <Button
+                        variant="outlined"
+                        onClick={handleReset}
+                        disabled={isLoading}
+                        sx={{
+                            borderRadius: '16px',
+                            height: 35,
+                            px: 2,
+                            color: '#063455',
+                            textTransform: 'none',
+                            border: '1px solid #063455',
+                            '&:hover': {
+                                backgroundColor: 'rgba(6, 52, 85, 0.04)',
+                            },
+                        }}
+                    >
+                        Reset
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<Search />}
+                        // onClick={handleReset}
+                        disabled={isLoading}
+                        sx={{
+                            borderRadius: '16px',
+                            height: 35,
+                            px: 1,
+                            color: '#fff',
+                            bgcolor: '#063455',
+                            textTransform: 'none',
+                            '&:hover': {
+                                backgroundColor: '#063455',
+                            },
+                        }}
+                    >
+                        Search
+                    </Button>
                     {/* </Tooltip> */}
                 </Grid>
             </Grid>

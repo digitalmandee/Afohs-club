@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Pagination, Dialog, DialogTitle, DialogContent, DialogActions, Backdrop, CircularProgress, DialogContentText } from '@mui/material';
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const CategoryTrashed = ({ trashedCategories, filters }) => {
-    const [open, setOpen] = useState(true);
+    // const [open, setOpen] = useState(true);
     const [search, setSearch] = useState(filters.search || '');
     const [processing, setProcessing] = useState(false);
 
@@ -70,8 +70,8 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
 
     return (
         <>
-            <Head title="Trashed Categories" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <Head title="Trashed Categories" />
+            <SideNav open={open} setOpen={setOpen} /> */}
 
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1000 }} open={processing}>
                 <CircularProgress color="inherit" />
@@ -79,10 +79,9 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
 
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    padding: '1rem',
-                    marginTop: '5rem',
+                    p: 2,
+                    minHeight: '100vh',
+                    bgcolor: '#f5f5f5'
                 }}
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -90,22 +89,30 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
                         <IconButton onClick={() => router.visit(route('inventory.category'))}>
                             <ArrowBackIcon />
                         </IconButton>
-                        <Typography variant="h5" fontWeight="bold">
+                        <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
                             Trashed Categories
                         </Typography>
                     </Box>
                     <Box display="flex" gap={2}>
-                        <TextField size="small" placeholder="Search..." value={search} onChange={handleSearch} sx={{ bgcolor: 'white', borderRadius: 1 }} />
+                        <TextField
+                            size="small"
+                            placeholder="Search..."
+                            value={search}
+                            onChange={handleSearch}
+                            sx={{
+                                bgcolor: 'transparent',
+                                '& .MuiOutlinedInput-root': { borderRadius: '16px' },
+                            }} />
                     </Box>
                 </Box>
 
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                <TableContainer component={Paper} sx={{ borderRadius: '12px', boxShadow: 3 }}>
                     <Table>
-                        <TableHead sx={{ bgcolor: '#d32f2f' }}>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Deleted At</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
+                                <TableCell sx={{ color: 'white', fontWeight: '600' }}>Name</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: '600' }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: '600' }}>
                                     Actions
                                 </TableCell>
                             </TableRow>
@@ -181,6 +188,6 @@ const CategoryTrashed = ({ trashedCategories, filters }) => {
     );
 };
 
-CategoryTrashed.layout = (page) => page;
+CategoryTrashed.layout = (page) => <POSLayout>{page}</POSLayout>;
 
 export default CategoryTrashed;

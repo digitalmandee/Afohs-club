@@ -539,7 +539,7 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                 </Box>
 
                 {/* Table */}
-                <TableContainer component={Paper} sx={{ position: 'relative' }}>
+                <TableContainer component={Paper} sx={{ position: 'relative', borderRadius:'12px' }}>
                     {isLoading && (
                         <Box
                             sx={{
@@ -561,12 +561,12 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                     <Table size="small">
                         <TableHead sx={{ backgroundColor: '#063455' }}>
                             <TableRow>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order #</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Date</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership #</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Membership</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Name</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client Type</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Client Type</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Order Type</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Table</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Gross</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Disc</TableCell>
@@ -575,8 +575,8 @@ const Dashboard = ({ orders, filters, tables = [], waiters = [], cashiers = [] }
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Balance</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Method</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order Status</TableCell>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Payment Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Order Status</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600, whiteSpace:'nowrap' }}>Payment Status</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>ENT</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>CTS</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Cashier</TableCell>
