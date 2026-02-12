@@ -179,6 +179,7 @@ const OrderMenu = () => {
                 handleOrderDetailChange('order_items', updatedItems);
             } else {
                 // Add new item
+                const isDiscountable = product.is_discountable === false || product.is_discountable === 0 || product.is_discountable === '0' ? false : true;
                 const newItem = {
                     id: product.id,
                     name: product.name,
@@ -188,7 +189,7 @@ const OrderMenu = () => {
                     tenant_id: product.tenant_id,
                     category: product.category?.name || '',
                     variants: [],
-                    is_discountable: product.is_discountable !== false,
+                    is_discountable: isDiscountable,
                     discount_value: 0,
                     discount_type: 'percentage',
                     discount_amount: 0,
@@ -556,7 +557,6 @@ const OrderMenu = () => {
                                             onChange={(e) => handleSearch(e.target.value)}
                                             sx={{
                                                 width: 300,
-                                                mr: 2,
                                                 borderRadius: 0,
                                                 '& .MuiOutlinedInput-root': {
                                                     borderRadius: 0,
@@ -581,14 +581,14 @@ const OrderMenu = () => {
                                             }}
                                         />
                                     </Box>
-                                    <img
+                                    {/* <img
                                         src="/assets/right.png"
                                         alt=""
                                         style={{
                                             width: '39px',
                                             height: '39px',
                                         }}
-                                    />
+                                    /> */}
                                 </Box>
                             </Paper>
 

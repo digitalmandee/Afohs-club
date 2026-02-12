@@ -353,7 +353,7 @@ class InventoryController extends Controller
             'manufacturer_id' => $request->input('manufacturer_id'),
             'current_stock' => $request->input('current_stock', 0),
             'minimal_stock' => $request->input('minimal_stock', 0),
-            'is_discountable' => $request->input('is_discountable', true),
+            'is_discountable' => $request->has('is_discountable') ? $request->boolean('is_discountable') : (bool) $product->is_discountable,
             'is_salable' => $request->input('is_salable', true),
             'is_purchasable' => $request->input('is_purchasable', true),
             'is_returnable' => $request->input('is_returnable', true),
