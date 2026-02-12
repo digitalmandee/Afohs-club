@@ -9,10 +9,14 @@ use App\Models\EmployeeAllowance;
 use App\Models\EmployeeDeduction;
 use App\Models\EmployeeSalaryStructure;
 use App\Models\FinancialInvoice;
+use App\Models\FinancialInvoiceItem;
+use App\Models\FinancialReceipt;
 use App\Models\Order;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollSetting;
 use App\Models\Payslip;
+use App\Models\Transaction;
+use App\Models\TransactionRelation;
 use App\Services\PayrollProcessingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -648,6 +652,10 @@ class PayrollApiController extends Controller
                         $advance->save();
                     }
                 }
+            }
+
+            foreach ($payslips as $payslip) {
+                $this->settleEmployeeCtsOrdersForPayslip($payslip, $period);
             }
 
             // Mark period as paid
@@ -1311,8 +1319,126 @@ class PayrollApiController extends Controller
             ], 422);
         }
 
+        $period = PayrollPeriod::find($payslip->payroll_period_id);
+        if ($period) {
+            DB::beginTransaction();
+            try {
+                $this->settleEmployeeCtsOrdersForPayslip($payslip, $period);
+                $payslip->markAsPaid();
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error marking payslip as paid: ' . $e->getMessage()
+                ], 500);
+            }
+            return response()->json(['success' => true, 'payslip' => $payslip->fresh()]);
+        }
+
         $payslip->markAsPaid();
         return response()->json(['success' => true, 'payslip' => $payslip]);
+    }
+
+    private function settleEmployeeCtsOrdersForPayslip(Payslip $payslip, PayrollPeriod $period): void
+    {
+        $orders = Order::where('employee_id', $payslip->employee_id)
+            ->where('deducted_in_payslip_id', $payslip->id)
+            ->get(['id']);
+
+        if ($orders->isEmpty()) {
+            return;
+        }
+
+        $allocations = [];
+        $totalReceiptAmount = 0;
+        $orderIds = [];
+
+        foreach ($orders as $order) {
+            $invoice = FinancialInvoice::with('items')
+                ->whereJsonContains('data', ['order_id' => $order->id])
+                ->first();
+
+            if (!$invoice) {
+                continue;
+            }
+
+            $ctsAmount = (float) ($invoice->cts_amount ?? ($invoice->data['cts_amount'] ?? 0));
+            if ($ctsAmount <= 0) {
+                continue;
+            }
+
+            $paidCredits = (float) Transaction::where('invoice_id', $invoice->id)
+                ->where('type', 'credit')
+                ->sum('amount');
+
+            $remaining = max(0, (float) ($invoice->total_price ?? 0) - $paidCredits);
+            if ($remaining <= 0) {
+                continue;
+            }
+
+            $applyAmount = min($ctsAmount, $remaining);
+            if ($applyAmount <= 0) {
+                continue;
+            }
+
+            $invoiceItem = $invoice->items->first();
+            if (!$invoiceItem) {
+                continue;
+            }
+
+            $allocations[] = [
+                'invoice_id' => $invoice->id,
+                'invoice_item_id' => $invoiceItem->id,
+                'amount' => $applyAmount,
+            ];
+            $totalReceiptAmount += $applyAmount;
+            $orderIds[] = $order->id;
+        }
+
+        if ($totalReceiptAmount <= 0 || empty($allocations)) {
+            return;
+        }
+
+        $receipt = FinancialReceipt::create([
+            'receipt_no' => 'REC-' . time() . '-P' . $period->id . '-E' . $payslip->employee_id,
+            'payer_type' => Employee::class,
+            'payer_id' => $payslip->employee_id,
+            'employee_id' => $payslip->employee_id,
+            'amount' => $totalReceiptAmount,
+            'payment_method' => 'cts',
+            'payment_details' => json_encode([
+                'payroll_period_id' => $period->id,
+                'payslip_id' => $payslip->id,
+                'order_ids' => $orderIds,
+            ]),
+            'receipt_date' => now(),
+            'remarks' => 'CTS Settlement via Payroll',
+            'created_by' => Auth::id(),
+        ]);
+
+        foreach ($allocations as $allocation) {
+            TransactionRelation::create([
+                'invoice_id' => $allocation['invoice_id'],
+                'receipt_id' => $receipt->id,
+                'amount' => $allocation['amount'],
+                'created_by' => Auth::id(),
+            ]);
+
+            Transaction::create([
+                'type' => 'credit',
+                'amount' => $allocation['amount'],
+                'date' => now(),
+                'description' => "CTS Settlement via Payroll (Payslip #{$payslip->id})",
+                'payable_type' => Employee::class,
+                'payable_id' => $payslip->employee_id,
+                'reference_type' => FinancialInvoiceItem::class,
+                'reference_id' => $allocation['invoice_item_id'],
+                'invoice_id' => $allocation['invoice_id'],
+                'receipt_id' => $receipt->id,
+                'created_by' => Auth::id(),
+            ]);
+        }
     }
 
     // Reports
