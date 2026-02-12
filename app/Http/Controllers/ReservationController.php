@@ -13,21 +13,35 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Stancl\Tenancy\Database\TenantScope;
 
 class ReservationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Reservation::where('created_by', Auth::id())
-            ->with([
-                'member:id,full_name,membership_no,mobile_number_a,member_type_id',
-                'member.memberType:id,name',
-                'customer:id,name,customer_no,contact',
-                'employee:id,name,employee_id',
-                'table',
-                'tenant:id,name',
-                'order.orderItems'
-            ]);
+        $tenantId = tenant('id');
+
+        $query = Reservation::query();
+        if ($tenantId) {
+            $query = Reservation::withoutGlobalScope(TenantScope::class)
+                ->where(function ($q) use ($tenantId) {
+                    $q
+                        ->where('tenant_id', $tenantId)
+                        ->orWhere(function ($q2) {
+                            $q2->whereNull('tenant_id')->whereHas('table');
+                        });
+                });
+        }
+
+        $query->with([
+            'member:id,full_name,membership_no,mobile_number_a,member_type_id',
+            'member.memberType:id,name',
+            'customer:id,name,customer_no,contact',
+            'employee:id,name,employee_id',
+            'table',
+            'tenant:id,name',
+            'order.orderItems'
+        ]);
 
         // ✅ Apply filters
         if ($request->filled('status')) {
@@ -38,10 +52,17 @@ class ReservationController extends Controller
         }
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('member', function ($q) use ($search) {
-                $q->where('full_name', 'like', "%{$search}%");
-            })->orWhereHas('customer', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q
+                    ->whereHas('member', function ($mq) use ($search) {
+                        $mq->where('full_name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('customer', function ($cq) use ($search) {
+                        $cq->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('employee', function ($eq) use ($search) {
+                        $eq->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 

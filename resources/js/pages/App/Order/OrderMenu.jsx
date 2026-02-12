@@ -728,12 +728,13 @@ const OrderMenu = () => {
                                                                         fontWeight: 500,
                                                                         mb: 0.5,
                                                                         textAlign: 'center',
-                                                                        fontSize: '11px',
+                                                                        fontSize: '10px',
+                                                                        width: '100%',
                                                                     }}
                                                                 >
-                                                                    {product.name}
+                                                                    {product.menu_code ? `${product.menu_code} - ${product.name}` : product.name}
                                                                 </Typography>
-                                                                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '10px' }}>
+                                                                <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '9px' }}>
                                                                     Rs {product.base_price}
                                                                 </Typography>
                                                                 {product.tenant && product.tenant_id !== selectedRestaurant && (
@@ -802,16 +803,18 @@ const OrderMenu = () => {
                                                         )}
 
                                                         <Typography
-                                                            variant="body1"
+                                                            variant="body2"
                                                             sx={{
                                                                 fontWeight: 500,
                                                                 mb: 0.5,
                                                                 textAlign: 'center',
+                                                                fontSize: '10px',
+                                                                width: '100%',
                                                             }}
                                                         >
-                                                            {product.name}
+                                                            {product.menu_code ? `${product.menu_code} - ${product.name}` : product.name}
                                                         </Typography>
-                                                        <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+                                                        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', fontSize: '9px' }}>
                                                             Rs {product.base_price}
                                                         </Typography>
                                                     </Paper>
