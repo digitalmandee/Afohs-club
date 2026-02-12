@@ -291,7 +291,7 @@ export default function SideNav({ open, setOpen }) {
                         <ListItemIcon
                             sx={{
                                 minWidth: 0,
-                                mr: open ? 2 : 'auto',
+                                mr: open ? 2 : 0,
                                 justifyContent: 'center',
                                 color: isSelected || isChildSelected ? '#fff' : '#555',
                             }}

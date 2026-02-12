@@ -123,93 +123,101 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                     marginTop: '5rem',
                 }}
             > */}
-                <Box sx={{
-                    minHeight: '100vh',
-                    bgcolor: '#f5f5f5',
-                    p: 2
-                }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                        <Typography sx={{ fontWeight: 600, fontSize: '30px', color: '#063455' }}>
-                            Manufacturers
-                        </Typography>
-                        <Box display="flex" gap={2}>
-                            <TextField size="small" placeholder="Search..." value={search} onChange={handleSearch} sx={{ bgcolor: 'white', borderRadius: 1 }} />
-                            <Button
-                                variant="outlined"
-                                color="error"
-                                startIcon={<DeleteIcon />}
-                                onClick={() => router.visit(route('manufacturers.trashed'))}
-                                sx={{
-                                    bgcolor: 'transparent',
-                                    borderRadius: '16px',
-                                    textTransform: 'none',
-                                    height: 35,
-                                    '&:hover': { bgcolor: 'transparent' }
-                                }}>
-                                Deleted
-                            </Button>
-                            <Button
-                                variant="contained"
-                                startIcon={<AddIcon />}
-                                onClick={() => handleOpenModal()}
-                                sx={{
-                                    bgcolor: '#063455',
-                                    borderRadius: '16px',
-                                    textTransform: 'none',
-                                    height: 35,
-                                    '&:hover': { bgcolor: '#04243a' }
-                                }}>
-                                Add Manufacturer
-                            </Button>
-                        </Box>
-                    </Box>
-
-                    <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
-                        <Table>
-                            <TableHead sx={{ bgcolor: '#063455' }}>
-                                <TableRow>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
-                                        Actions
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {manufacturers.data.length > 0 ? (
-                                    manufacturers.data.map((manufacturer) => (
-                                        <TableRow key={manufacturer.id} hover>
-                                            <TableCell>{manufacturer.name}</TableCell>
-                                            <TableCell>
-                                                <Chip label={manufacturer.status} size="small" color={manufacturer.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
-                                            </TableCell>
-                                            <TableCell>{dayjs(manufacturer.updated_at).format('DD MMM YYYY, h:mm A')}</TableCell>
-                                            <TableCell align="right">
-                                                <IconButton onClick={() => handleOpenModal(manufacturer)} color="primary">
-                                                    <EditIcon />
-                                                </IconButton>
-                                                <IconButton onClick={() => handleOpenDeleteModal(manufacturer)} color="error">
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : (
-                                    <TableRow>
-                                        <TableCell colSpan={4} align="center">
-                                            No manufacturers found.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-
-                    <Box mt={3} display="flex" justifyContent="center">
-                        <Pagination count={manufacturers.last_page} page={manufacturers.current_page} onChange={(e, p) => router.get(route('manufacturers.index'), { page: p, search }, { preserveState: true })} color="primary" />
+            <Box sx={{
+                minHeight: '100vh',
+                bgcolor: '#f5f5f5',
+                p: 2
+            }}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                    <Typography sx={{ fontWeight: 600, fontSize: '30px', color: '#063455' }}>
+                        Manufacturers
+                    </Typography>
+                    <Box display="flex" gap={2}>
+                        <TextField
+                            size="small"
+                            placeholder="Search..."
+                            value={search}
+                            onChange={handleSearch}
+                            sx={{
+                                bgcolor: 'transparent',
+                                '& .MuiOutlinedInput-root': { borderRadius: '16px' },
+                            }} />
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<DeleteIcon />}
+                            onClick={() => router.visit(route('manufacturers.trashed'))}
+                            sx={{
+                                bgcolor: 'transparent',
+                                borderRadius: '16px',
+                                textTransform: 'none',
+                                height: 35,
+                                '&:hover': { bgcolor: 'transparent' }
+                            }}>
+                            Deleted
+                        </Button>
+                        <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={() => handleOpenModal()}
+                            sx={{
+                                bgcolor: '#063455',
+                                borderRadius: '16px',
+                                textTransform: 'none',
+                                height: 35,
+                                '&:hover': { bgcolor: '#04243a' }
+                            }}>
+                            Add Manufacturer
+                        </Button>
                     </Box>
                 </Box>
+
+                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                    <Table>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
+                            <TableRow>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
+                                    Actions
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {manufacturers.data.length > 0 ? (
+                                manufacturers.data.map((manufacturer) => (
+                                    <TableRow key={manufacturer.id} hover>
+                                        <TableCell>{manufacturer.name}</TableCell>
+                                        <TableCell>
+                                            <Chip label={manufacturer.status} size="small" color={manufacturer.status === 'active' ? 'success' : 'default'} sx={{ textTransform: 'capitalize' }} />
+                                        </TableCell>
+                                        <TableCell>{dayjs(manufacturer.updated_at).format('DD MMM YYYY, h:mm A')}</TableCell>
+                                        <TableCell align="right">
+                                            <IconButton onClick={() => handleOpenModal(manufacturer)} color="primary">
+                                                <EditIcon />
+                                            </IconButton>
+                                            <IconButton onClick={() => handleOpenDeleteModal(manufacturer)} color="error">
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} align="center">
+                                        No manufacturers found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                <Box mt={3} display="flex" justifyContent="center">
+                    <Pagination count={manufacturers.last_page} page={manufacturers.current_page} onChange={(e, p) => router.get(route('manufacturers.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                </Box>
+            </Box>
             {/* </Box> */}
 
             {/* Create/Edit Modal */}

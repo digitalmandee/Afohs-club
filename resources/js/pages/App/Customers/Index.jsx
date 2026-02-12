@@ -6,6 +6,7 @@ import { router, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import POSLayout from "@/components/POSLayout";
+import { FaEdit } from 'react-icons/fa';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -106,7 +107,7 @@ const ManageCustomer = ({ customerData }) => {
                                         <TableCell sx={{ color: '#7F7F7F', fontSize: '14px' }}>{customer.email}</TableCell>
                                         <TableCell>
                                             <IconButton onClick={() => router.visit(route('customers.edit', customer.id))} size="small" title="Edit">
-                                                <EditIcon fontSize="small" />
+                                                <FaEdit size={16} style={{ marginRight: 8, color: '#f57c00' }} />
                                             </IconButton>
                                             <IconButton onClick={() => confirmDelete(customer)} size="small" color='error' title="Delete">
                                                 <DeleteIcon fontSize="small" />

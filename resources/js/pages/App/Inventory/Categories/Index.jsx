@@ -231,7 +231,7 @@ export default function CategoryIndex({ categories }) {
                                 sx={{
                                     ml: 3,
                                     width: 450,
-                                    '& .MuiOutlinedInput-root': { borderRadius: 1 },
+                                    '& .MuiOutlinedInput-root': { borderRadius: '16px' },
                                 }}
                                 InputProps={{
                                     startAdornment: (
@@ -251,7 +251,7 @@ export default function CategoryIndex({ categories }) {
                                         borderRadius: '16px',
                                         textTransform: 'none',
                                         height: 35,
-                                        backgroundColor: '#003B5C',
+                                        backgroundColor: '#063455',
                                         '&:hover': { backgroundColor: '#002A41' },
                                     }}
                                 >

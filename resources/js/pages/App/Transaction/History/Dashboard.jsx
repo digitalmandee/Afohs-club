@@ -8,6 +8,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import debounce from 'lodash.debounce';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -402,7 +406,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                                 },
                             }}
                         />
-                        <TextField
+                        {/* <TextField
                             size="small"
                             type="date"
                             label="Start Date"
@@ -418,8 +422,29 @@ const Dashboard = ({ orders, filters, totals }) => {
                                     borderRadius: "16px",
                                 },
                             }}
-                        />
-                        <TextField
+                        /> */}
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker
+                                label="Start Date"
+                                value={startDate ? dayjs(startDate) : null}
+                                onChange={(newValue) => {
+                                    const formattedDate = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                    handleFilterChange('start_date', formattedDate);
+                                }}
+                                sx={{
+                                    width: '150px',
+                                    '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                        borderRadius: '16px !important',
+                                    },
+                                }}
+                                slotProps={{
+                                    textField: {
+                                        size: 'small',
+                                    },
+                                }}
+                            />
+                        </LocalizationProvider>
+                        {/* <TextField
                             size="small"
                             type="date"
                             label="End Date"
@@ -435,7 +460,28 @@ const Dashboard = ({ orders, filters, totals }) => {
                                     borderRadius: "16px",
                                 },
                             }}
-                        />
+                        /> */}
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker
+                                label="End Date"
+                                value={endDate ? dayjs(endDate) : null}
+                                onChange={(newValue) => {
+                                    const formattedDate = newValue ? newValue.format('YYYY-MM-DD') : '';
+                                    handleFilterChange('end_date', formattedDate);
+                                }}
+                                sx={{
+                                    width: '150px',
+                                    '& .MuiInputBase-root, & .MuiOutlinedInput-root, & fieldset': {
+                                        borderRadius: '16px !important',
+                                    },
+                                }}
+                                slotProps={{
+                                    textField: {
+                                        size: 'small',
+                                    },
+                                }}
+                            />
+                        </LocalizationProvider>
                         <FormControl size="small" sx={{
                             width: 200,
                             "& .MuiOutlinedInput-root": {
@@ -449,6 +495,33 @@ const Dashboard = ({ orders, filters, totals }) => {
                                 onChange={(e) => {
                                     setOrderType(e.target.value);
                                     applyFilters();
+                                }}
+                                MenuProps={{
+                                    sx: {
+                                        '& .MuiMenuItem-root': {
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important',
+                                                borderRadius: '16px',
+                                                my: 0.3,
+                                                mx: 0.3
+                                            },
+                                            '&.Mui-selected': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                                borderRadius: '16px',
+                                                my: 0.3,
+                                                mx: 0.3,
+                                                '&:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                    borderRadius: '16px',
+                                                    my: 0.3,
+                                                    mx: 0.3
+                                                },
+                                            },
+                                        },
+                                    },
                                 }}
                             >
                                 <MenuItem value="all">All</MenuItem>
@@ -473,6 +546,33 @@ const Dashboard = ({ orders, filters, totals }) => {
                                     setPaymentMethod(e.target.value);
                                     applyFilters();
                                 }}
+                                MenuProps={{
+                                    sx: {
+                                        '& .MuiMenuItem-root': {
+                                            '&:hover': {
+                                                backgroundColor: '#063455 !important',
+                                                color: '#fff !important',
+                                                borderRadius: '16px',
+                                                my: 0.3,
+                                                mx: 0.3
+                                            },
+                                            '&.Mui-selected': {
+                                                backgroundColor: '#063455',
+                                                color: '#fff',
+                                                borderRadius: '16px',
+                                                my: 0.3,
+                                                mx: 0.3,
+                                                '&:hover': {
+                                                    backgroundColor: '#063455',
+                                                    color: '#fff',
+                                                    borderRadius: '16px',
+                                                    my: 0.3,
+                                                    mx: 0.3
+                                                },
+                                            },
+                                        },
+                                    },
+                                }}
                             >
                                 <MenuItem value="all">All</MenuItem>
                                 <MenuItem value="cash">Cash</MenuItem>
@@ -484,7 +584,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                 </Box>
 
                 {/* Table */}
-                <TableContainer component={Paper} sx={{ position: 'relative' }}>
+                <TableContainer component={Paper} sx={{ position: 'relative', borderRadius: '12px' }}>
                     {/* Loading Overlay */}
                     {isLoading && (
                         <Box
@@ -507,7 +607,7 @@ const Dashboard = ({ orders, filters, totals }) => {
                     <Table>
                         <TableHead sx={{ backgroundColor: '#063455' }}>
                             <TableRow>
-                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order #</TableCell>
+                                <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Order</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Paid At</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Type</TableCell>
                                 <TableCell sx={{ color: '#fff', fontWeight: 600 }}>Client</TableCell>

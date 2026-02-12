@@ -1,7 +1,7 @@
 import FoodIcon from '@/components/App/Icons/Food';
 import ShopIcon from '@/components/App/Icons/ShoppingBag';
 import SofaIcon from '@/components/App/Icons/Sofa';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { useOrderStore } from '@/stores/useOrderStore';
 import { Box, Button, List, ListItem, ListItemSecondaryAction, ListItemText, Paper, Radio, ToggleButton, ToggleButtonGroup, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, CircularProgress } from '@mui/material';
 import { router } from '@inertiajs/react';
@@ -16,6 +16,8 @@ import { CiDeliveryTruck } from 'react-icons/ci';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import CakeIcon from '@mui/icons-material/Cake';
 import ShiftGate from '@/components/Pos/ShiftGate';
+import BedroomParentIcon from '@mui/icons-material/BedroomParent';
+
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -157,13 +159,12 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     return (
         <>
             <ShiftGate>
-                <SideNav open={open} setOpen={setOpen} />
+                {/* <SideNav open={open} setOpen={setOpen} /> */}
                 <div
                     style={{
-                        marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                        transition: 'margin-left 0.3s ease-in-out',
-                        paddingTop: '5rem',
+                        minHeight:'100vh',
                         backgroundColor: '#f5f5f5',
+                        padding:'20px'
                     }}
                 >
                     {/* Active Shift Info */}
@@ -515,8 +516,10 @@ const NewOrder = ({ orderNo, guestTypes }) => {
                                             },
                                         }}
                                     >
-                                        <MeetingRoomIcon
+                                        <BedroomParentIcon
                                             sx={{
+                                                height: '25px',
+                                                width: '25px',
                                                 mb: 0.5,
                                                 color: orderDetails.order_type === 'room' ? '#063455' : 'inherit',
                                             }}
@@ -653,5 +656,5 @@ const NewOrder = ({ orderNo, guestTypes }) => {
         </>
     );
 };
-NewOrder.layout = (page) => page;
+NewOrder.layout = (page) => <POSLayout>{page}</POSLayout>;
 export default NewOrder;

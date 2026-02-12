@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
-import SideNav from '@/components/App/SideBar/SideNav';
+import POSLayout from "@/components/POSLayout";
 import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography, IconButton, Pagination, Tooltip, Backdrop, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 
-const drawerWidthOpen = 240;
-const drawerWidthClosed = 110;
+// const drawerWidthOpen = 240;
+// const drawerWidthClosed = 110;
 
 const UnitsTrashed = ({ trashedUnits, filters }) => {
     const [open, setOpen] = useState(true);
@@ -78,8 +78,8 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
 
     return (
         <>
-            <Head title="Trashed Units" />
-            <SideNav open={open} setOpen={setOpen} />
+            {/* <Head title="Trashed Units" />
+            <SideNav open={open} setOpen={setOpen} /> */}
 
             {/* Global Loader */}
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1000 }} open={processing}>
@@ -88,34 +88,43 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
 
             <Box
                 sx={{
-                    marginLeft: open ? `${drawerWidthOpen}px` : `${drawerWidthClosed}px`,
-                    transition: 'margin-left 0.3s ease-in-out',
-                    padding: '1rem',
-                    marginTop: '5rem',
+                    p: 2,
+                    bgcolor: '#f5f5f5',
+                    minHeight: '100vh'
                 }}
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-                    <Box display="flex" alignItems="center" gap={2}>
-                        <Button startIcon={<ArrowBackIcon />} onClick={() => router.visit(route('units.index'))} variant="outlined" size="small">
-                            Back
-                        </Button>
-                        <Typography variant="h5" fontWeight="bold">
+                    <Box display="flex" alignItems="center">
+                        <IconButton>
+                            <ArrowBackIcon sx={{
+                                color: '#063455'
+                            }} onClick={() => router.visit(route('units.index'))} />
+                        </IconButton>
+                        <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
                             Trashed Units
                         </Typography>
                     </Box>
                     <Box display="flex" gap={2}>
-                        <TextField size="small" placeholder="Search..." value={search} onChange={handleSearch} sx={{ bgcolor: 'white', borderRadius: 1 }} />
+                        <TextField
+                            size="small"
+                            placeholder="Search..."
+                            value={search}
+                            onChange={handleSearch}
+                            sx={{
+                                bgcolor: 'transparent',
+                                '& .MuiOutlinedInput-root': { borderRadius: '16px' },
+                            }} />
                     </Box>
                 </Box>
 
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3 }}>
+                <TableContainer component={Paper} sx={{ borderRadius: '12px', }}>
                     <Table>
-                        <TableHead sx={{ bgcolor: '#d32f2f' }}>
+                        <TableHead sx={{ bgcolor: '#063455' }}>
                             <TableRow>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Deleted At</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Deleted By</TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
+                                <TableCell sx={{ color: 'white', fontWeight: '600' }}>Name</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: '600' }}>Deleted At</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: '600' }}>Deleted By</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: '600' }}>
                                     Actions
                                 </TableCell>
                             </TableRow>
@@ -197,6 +206,6 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
     );
 };
 
-UnitsTrashed.layout = (page) => page;
+UnitsTrashed.layout = (page) => <POSLayout>{page}</POSLayout>;
 
 export default UnitsTrashed;
