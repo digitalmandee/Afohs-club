@@ -18,8 +18,9 @@ return new class extends Migration {
                 ])
                 ->update(['status' => 'active']);
 
-            // Step 3: Now safely convert column to new ENUM
-            DB::statement("ALTER TABLE members MODIFY COLUMN status ENUM('active', 'inactive', 'suspended', 'cancelled', 'absent') NULL DEFAULT 'active'");
+            if (DB::getDriverName() === 'mysql') {
+                DB::statement("ALTER TABLE members MODIFY COLUMN status ENUM('active', 'inactive', 'suspended', 'cancelled', 'absent') NULL DEFAULT 'active'");
+            }
         });
     }
 
@@ -28,15 +29,16 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        // Revert ENUM to original values
-        DB::statement('ALTER TABLE members MODIFY COLUMN status VARCHAR(50) NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE members MODIFY COLUMN status VARCHAR(50) NULL');
 
-        DB::table('members')
-            ->whereNotIn('status', [
-                'active', 'inactive', 'suspended', 'cancelled', 'pause'
-            ])
-            ->update(['status' => 'inactive']);
+            DB::table('members')
+                ->whereNotIn('status', [
+                    'active', 'inactive', 'suspended', 'cancelled', 'pause'
+                ])
+                ->update(['status' => 'inactive']);
 
-        DB::statement("ALTER TABLE members MODIFY COLUMN status ENUM('active', 'inactive', 'suspended', 'cancelled', 'pause') NULL DEFAULT 'inactive'");
+            DB::statement("ALTER TABLE members MODIFY COLUMN status ENUM('active', 'inactive', 'suspended', 'cancelled', 'pause') NULL DEFAULT 'inactive'");
+        }
     }
 };

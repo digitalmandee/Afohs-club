@@ -31,14 +31,38 @@ const ViewSalaryStructure = ({ employee }) => {
             .replace('PKR', 'Rs');
     };
 
+    const calculateAllowanceAmount = (allowance, basicSalary) => {
+        const type = allowance?.allowance_type?.type || allowance?.type;
+        if (type === 'percentage') {
+            const percentage = parseFloat(allowance?.percentage ?? allowance?.amount ?? 0);
+            return (basicSalary * percentage) / 100;
+        }
+        return parseFloat(allowance?.amount ?? 0);
+    };
+
+    const calculateDeductionAmount = (deduction, basicSalary, grossSalary) => {
+        const type = deduction?.deduction_type?.type || deduction?.type;
+        if (type === 'percentage') {
+            const percentage = parseFloat(deduction?.percentage ?? deduction?.amount ?? 0);
+            const calculationBase = (deduction?.deduction_type?.calculation_base || 'basic_salary') === 'gross_salary' ? grossSalary : basicSalary;
+            return (calculationBase * percentage) / 100;
+        }
+        return parseFloat(deduction?.amount ?? 0);
+    };
+
     const calculateTotalAllowances = () => {
         if (!employee?.allowances) return 0;
-        return employee.allowances.reduce((total, allowance) => total + parseFloat(allowance.amount), 0);
+        const salaryStructure = getSalaryStructure();
+        const basicSalary = parseFloat(salaryStructure?.basic_salary || 0);
+        return employee.allowances.reduce((total, allowance) => total + calculateAllowanceAmount(allowance, basicSalary), 0);
     };
 
     const calculateTotalDeductions = () => {
         if (!employee?.deductions) return 0;
-        return employee.deductions.reduce((total, deduction) => total + parseFloat(deduction.amount), 0);
+        const salaryStructure = getSalaryStructure();
+        const basicSalary = parseFloat(salaryStructure?.basic_salary || 0);
+        const grossSalary = basicSalary + calculateTotalAllowances();
+        return employee.deductions.reduce((total, deduction) => total + calculateDeductionAmount(deduction, basicSalary, grossSalary), 0);
     };
 
     const calculateGrossSalary = () => {
@@ -305,7 +329,7 @@ const ViewSalaryStructure = ({ employee }) => {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#2e7d32' }}>
-                                                                        {formatCurrency(allowance.amount)}
+                                                                        {formatCurrency(calculateAllowanceAmount(allowance, parseFloat(getSalaryStructure()?.basic_salary || 0)))}
                                                                     </Typography>
                                                                 </TableCell>
                                                                 <TableCell>
@@ -352,7 +376,7 @@ const ViewSalaryStructure = ({ employee }) => {
                                                                 </TableCell>
                                                                 <TableCell>
                                                                     <Typography variant="body2" sx={{ fontWeight: 600, color: '#d32f2f' }}>
-                                                                        {formatCurrency(deduction.amount)}
+                                                                        {formatCurrency(calculateDeductionAmount(deduction, parseFloat(getSalaryStructure()?.basic_salary || 0), calculateGrossSalary()))}
                                                                     </Typography>
                                                                 </TableCell>
                                                                 <TableCell>

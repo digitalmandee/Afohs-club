@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("ALTER TABLE financial_invoices MODIFY COLUMN fee_type ENUM('membership_fee', 'maintenance_fee', 'subscription_fee', 'reinstating_fee')");
     }
 
@@ -19,6 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         DB::statement("ALTER TABLE financial_invoices MODIFY COLUMN fee_type ENUM('membership_fee', 'maintenance_fee', 'subscription_fee')");
     }
 };

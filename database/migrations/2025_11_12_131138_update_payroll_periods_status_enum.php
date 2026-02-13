@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Update the status enum to include 'active'
         DB::statement("ALTER TABLE payroll_periods MODIFY COLUMN status ENUM('draft', 'active', 'processing', 'completed', 'paid') DEFAULT 'draft'");
     }
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Revert back to original enum values
         DB::statement("ALTER TABLE payroll_periods MODIFY COLUMN status ENUM('draft', 'processing', 'completed', 'paid') DEFAULT 'draft'");
     }

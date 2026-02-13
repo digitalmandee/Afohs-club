@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Step 1: Nullify invalid customer_id values
         DB::table('room_bookings')->update(['customer_id' => null]);
 
@@ -46,6 +50,10 @@ return new class extends Migration {
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Drop new FK for customer_id
         $exists = DB::select("
             SELECT CONSTRAINT_NAME

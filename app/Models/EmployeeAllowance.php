@@ -72,7 +72,8 @@ class EmployeeAllowance extends Model
         if ($this->allowanceType->type === 'fixed') {
             return $this->amount;
         } elseif ($this->allowanceType->type === 'percentage') {
-            return ($basicSalary * $this->percentage) / 100;
+            $percentage = $this->percentage ?? $this->amount ?? 0;
+            return ($basicSalary * $percentage) / 100;
         }
         
         return 0;

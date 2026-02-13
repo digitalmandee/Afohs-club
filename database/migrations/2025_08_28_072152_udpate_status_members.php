@@ -13,6 +13,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('members', function (Blueprint $table) {
             // DB::table('members')
             //     ->whereNotIn('status', [
@@ -30,6 +34,10 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Revert ENUM to original values
         // DB::statement('ALTER TABLE members MODIFY COLUMN status VARCHAR(50) NULL');
 

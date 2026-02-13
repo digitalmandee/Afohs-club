@@ -160,6 +160,10 @@ const EmployeeSalaries = () => {
                                         <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Employee</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Department</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Basic Salary</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Allowances</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Deductions</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Gross</TableCell>
+                                        <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Net</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Status</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Effective From</TableCell>
                                         <TableCell sx={{ fontWeight: 600, color: '#fff' }}>Actions</TableCell>
@@ -168,18 +172,27 @@ const EmployeeSalaries = () => {
                                 <TableBody>
                                     {loading ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                                                 <CircularProgress sx={{ color: '#063455' }} />
                                             </TableCell>
                                         </TableRow>
                                     ) : employees.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={10} align="center" sx={{ py: 4 }}>
                                                 <Typography color="textSecondary">No employees found</Typography>
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         employees.map((employee) => (
+                                            (() => {
+                                                const computed = employee.computed_salary || {};
+                                                const basicSalary = computed.basic_salary ?? employee.salary_structure?.basic_salary ?? 0;
+                                                const totalAllowances = computed.total_allowances ?? 0;
+                                                const totalDeductions = computed.total_deductions ?? 0;
+                                                const grossSalary = computed.gross_salary ?? (Number(basicSalary || 0) + Number(totalAllowances || 0));
+                                                const netSalary = computed.net_salary ?? (Number(grossSalary || 0) - Number(totalDeductions || 0));
+
+                                                return (
                                             <TableRow key={employee.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
                                                 <TableCell>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -199,7 +212,27 @@ const EmployeeSalaries = () => {
                                                 <TableCell>{employee.department?.name || 'N/A'}</TableCell>
                                                 <TableCell>
                                                     <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                                                        {employee.salary_structure ? formatCurrency(employee.salary_structure.basic_salary) : 'Not Set'}
+                                                        {employee.salary_structure ? formatCurrency(basicSalary) : 'Not Set'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#2e7d32' }}>
+                                                        {employee.salary_structure ? formatCurrency(totalAllowances) : '—'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#d32f2f' }}>
+                                                        {employee.salary_structure ? formatCurrency(totalDeductions) : '—'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                        {employee.salary_structure ? formatCurrency(grossSalary) : '—'}
+                                                    </Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                                        {employee.salary_structure ? formatCurrency(netSalary) : '—'}
                                                     </Typography>
                                                 </TableCell>
                                                 <TableCell>
@@ -230,6 +263,8 @@ const EmployeeSalaries = () => {
                                                     </Box>
                                                 </TableCell>
                                             </TableRow>
+                                                );
+                                            })()
                                         ))
                                     )}
                                 </TableBody>

@@ -11,9 +11,19 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->unsignedBigInteger('reservation_id')->nullable()->after('id');
-            $table->foreign('reservation_id')->references('id')->on('reservations')->onDelete('set null');
-            $table->dropColumn('order_number');
+            if (!Schema::hasColumn('orders', 'reservation_id')) {
+                $table->unsignedBigInteger('reservation_id')->nullable()->after('id');
+                $table->foreign('reservation_id')->references('id')->on('reservations')->onDelete('set null');
+            }
+
+            if (Schema::hasColumn('orders', 'order_number')) {
+                try {
+                    $table->dropUnique('orders_order_number_unique');
+                } catch (\Throwable $e) {
+                }
+
+                $table->dropColumn('order_number');
+            }
         });
     }
 

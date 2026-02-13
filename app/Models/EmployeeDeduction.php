@@ -76,7 +76,8 @@ class EmployeeDeduction extends Model
         if ($this->deductionType->type === 'fixed') {
             return $this->amount;
         } elseif ($this->deductionType->type === 'percentage') {
-            return ($calculationBase * $this->percentage) / 100;
+            $percentage = $this->percentage ?? $this->amount ?? 0;
+            return ($calculationBase * $percentage) / 100;
         }
         
         return 0;

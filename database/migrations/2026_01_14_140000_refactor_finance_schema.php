@@ -11,7 +11,7 @@ return new class extends Migration {
         Schema::table('transactions', function (Blueprint $table) {
             if (Schema::hasColumn('transactions', 'trans_type_id')) {
                 // Drop FK first
-                $table->dropForeign('transactions_trans_type_id_foreign');
+                $table->dropForeign(['trans_type_id']);
                 $table->dropColumn('trans_type_id');
             }
             if (!Schema::hasColumn('transactions', 'invoice_id')) {

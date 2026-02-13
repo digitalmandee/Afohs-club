@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Add 'extended' and 'expired' to the status enum
         DB::statement("ALTER TABLE member_status_histories MODIFY COLUMN status ENUM('active', 'suspended', 'cancelled', 'absent', 'extended', 'expired', 'pause')");
     }
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Revert back to original enum values
         DB::statement("ALTER TABLE member_status_histories MODIFY COLUMN status ENUM('active', 'suspended', 'cancelled', 'absent')");
     }

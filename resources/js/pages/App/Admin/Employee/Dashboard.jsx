@@ -14,7 +14,7 @@ import { FaExchangeAlt } from 'react-icons/fa';
 
 const EmployeeDashboard = () => {
     const { props } = usePage();
-    const { employees, companyStats, departments: initialDepartments } = props;
+    const { employees, companyStats, departments: initialDepartments, overviewStats } = props;
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
@@ -163,6 +163,53 @@ const EmployeeDashboard = () => {
                             </div>
                         </div>
                         <Typography sx={{ color: '#063455', fontSize: '15px', fontWeight: '600' }}>Overview of staff strength, attendance status, and pending HR actions</Typography>
+
+                        <Grid container spacing={3} sx={{ mb: 4, mt: 1 }}>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card sx={{ borderRadius: '16px', border: '1px solid #E9E9E9' }}>
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Box>
+                                            <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '20px' }}>{overviewStats?.total_employees ?? 0}</Typography>
+                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 600, fontSize: '14px' }}>Total Employees</Typography>
+                                        </Box>
+                                        <PeopleIcon sx={{ color: '#063455' }} />
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card sx={{ borderRadius: '16px', border: '1px solid #E9E9E9' }}>
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Box>
+                                            <Typography sx={{ color: '#2E7D32', fontWeight: 700, fontSize: '20px' }}>{overviewStats?.present_today ?? 0}</Typography>
+                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 600, fontSize: '14px' }}>Present Today</Typography>
+                                        </Box>
+                                        <EventSeatIcon sx={{ color: '#2E7D32' }} />
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card sx={{ borderRadius: '16px', border: '1px solid #E9E9E9' }}>
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Box>
+                                            <Typography sx={{ color: '#d32f2f', fontWeight: 700, fontSize: '20px' }}>{overviewStats?.absent_today ?? 0}</Typography>
+                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 600, fontSize: '14px' }}>Absent Today</Typography>
+                                        </Box>
+                                        <AssignmentIcon sx={{ color: '#d32f2f' }} />
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Card sx={{ borderRadius: '16px', border: '1px solid #E9E9E9' }}>
+                                    <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <Box>
+                                            <Typography sx={{ color: '#063455', fontWeight: 700, fontSize: '20px' }}>{overviewStats?.active_salary_structures ?? 0}</Typography>
+                                            <Typography sx={{ color: '#7F7F7F', fontWeight: 600, fontSize: '14px' }}>Active Salary Structures</Typography>
+                                        </Box>
+                                        <PrintIcon sx={{ color: '#063455' }} />
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </Grid>
 
                         {/* Company Stats Grid */}
                         <Typography sx={{ fontWeight: 600, fontSize: '20px', color: '#063455', mb: 2, mt: 3 }}>Company Overview</Typography>
@@ -423,9 +470,11 @@ const EmployeeDashboard = () => {
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>EMP ID</TableCell>
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Name</TableCell>
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Department</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Sub-department</TableCell>
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Designation</TableCell>
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Joining Date</TableCell>
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Email Address</TableCell>
+                                        <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Contact</TableCell>
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Employee Status</TableCell>
                                         <TableCell style={{ color: '#fff', fontWeight: '600', whiteSpace: 'nowrap' }}>Actions</TableCell>
                                     </TableRow>
@@ -503,6 +552,22 @@ const EmployeeDashboard = () => {
                                                             </Typography>
                                                         )}
                                                     </TableCell>
+                                                    <TableCell style={cellStyle}>
+                                                        {emp.subdepartment?.name ? (
+                                                            <>
+                                                                {emp.subdepartment.name}
+                                                                {emp.subdepartment?.deleted_at && (
+                                                                    <Typography variant="caption" style={{ color: '#d32f2f', fontStyle: 'italic', display: 'block', fontSize: '0.7rem' }}>
+                                                                        (Sub-dept Deleted)
+                                                                    </Typography>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <Typography variant="caption" style={{ color: '#d32f2f', fontStyle: 'italic' }}>
+                                                                No Sub-dept
+                                                            </Typography>
+                                                        )}
+                                                    </TableCell>
                                                     <TableCell style={{
                                                         fontSize: '14px',
                                                         fontWeight: 400,
@@ -528,6 +593,11 @@ const EmployeeDashboard = () => {
                                                     }}>
                                                         <Tooltip title={emp.email} arrow>
                                                             {emp.email}
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                    <TableCell style={cellStyle}>
+                                                        <Tooltip title={emp.phone_no || '-'} arrow>
+                                                            {emp.phone_no || '-'}
                                                         </Tooltip>
                                                     </TableCell>
                                                     {/* <TableCell style={cellStyle}>
@@ -623,7 +693,7 @@ const EmployeeDashboard = () => {
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={8} align="center">
+                                            <TableCell colSpan={10} align="center">
                                                 No employees found.
                                             </TableCell>
                                         </TableRow>

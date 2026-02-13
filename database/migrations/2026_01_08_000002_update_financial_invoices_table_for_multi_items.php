@@ -11,6 +11,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('financial_invoices', function (Blueprint $table) {
             // Make fee_type nullable or allow 'mixed'/'general'
             // Since we can't easily modify ENUMs in some SQL versions without raw SQL,

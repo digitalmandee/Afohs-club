@@ -11,6 +11,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('financial_invoices', function (Blueprint $table) {
             DB::statement("ALTER TABLE financial_invoices MODIFY COLUMN status ENUM('paid', 'unpaid', 'overdue', 'cancelled','upcoming') NOT NULL");
         });
@@ -21,6 +25,10 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('financial_invoices', function (Blueprint $table) {
             DB::statement("ALTER TABLE financial_invoices MODIFY COLUMN status ENUM('paid', 'unpaid', 'overdue', 'cancelled') NOT NULL");
         });

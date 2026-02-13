@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeLog;
 use App\Models\EmployeeSalaryStructure;
+use App\Models\Subdepartment;
 use App\Models\Media;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -51,6 +52,25 @@ class EmployeeController extends Controller
                     'weekend' => $attendance->total_weekend ?? 0,
                 ];
             });
+
+        $attendanceTotals = \App\Models\Attendance::where('date', $currentDay)
+            ->selectRaw("
+                SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as total_absent,
+                SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as total_present,
+                SUM(CASE WHEN status = 'weekend' THEN 1 ELSE 0 END) as total_weekend
+            ")
+            ->first();
+
+        $overviewStats = [
+            'total_employees' => Employee::count(),
+            'present_today' => $attendanceTotals->total_present ?? 0,
+            'absent_today' => $attendanceTotals->total_absent ?? 0,
+            'weekend_today' => $attendanceTotals->total_weekend ?? 0,
+            'total_departments' => Department::count(),
+            'total_subdepartments' => Subdepartment::count(),
+            'active_salary_structures' => EmployeeSalaryStructure::where('is_active', true)->count(),
+            'employees_without_salary_structure' => Employee::doesntHave('salaryStructure')->count(),
+        ];
 
         $limit = $request->query('limit') ?? 10;
         $search = $request->query('search', '');
@@ -116,6 +136,7 @@ class EmployeeController extends Controller
 
         return Inertia::render('App/Admin/Employee/Dashboard', [
             'companyStats' => $companyStats,
+            'overviewStats' => $overviewStats,
             'employees' => $employees,
             'filters' => $request->only(['search', 'department_id', 'subdepartment_id', 'branch_id', 'shift_id', 'designation_id']),
             'departments' => $departments,

@@ -12,14 +12,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Disable foreign key checks temporarily
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        
-        // Truncate users table (removes all records)
+        $driver = DB::getDriverName();
+
+        if ($driver === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            DB::table('users')->truncate();
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            return;
+        }
+
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = OFF;');
+            DB::table('users')->truncate();
+            DB::statement('PRAGMA foreign_keys = ON;');
+            return;
+        }
+
         DB::table('users')->truncate();
-        
-        // Re-enable foreign key checks
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 
     /**
