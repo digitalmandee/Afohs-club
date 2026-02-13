@@ -50,7 +50,7 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                 }}
             > */}
             <Box sx={{
-                bgColor: '#F6F6F6',
+                bgcolor: '#f5f5f5',
                 minHeight: '100vh',
                 p: 2,
             }}>

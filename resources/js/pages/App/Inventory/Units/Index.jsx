@@ -187,7 +187,7 @@ const UnitsIndex = ({ units, filters }) => {
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Code</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
                                     <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Updated At</TableCell>
-                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }} align="right">
+                                    <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
                                         Actions
                                     </TableCell>
                                 </TableRow>

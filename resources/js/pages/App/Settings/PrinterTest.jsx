@@ -48,16 +48,16 @@ export default function PrinterTest() {
                     transition: 'margin-left 0.3s ease-in-out',
                     marginTop: '5rem',
                 }}> */}
-                <Box sx={{
-                    minHeight: '100vh',
-                    bgcolor: '#f5f5f5',
-                    p: 2
-                }}>
-                    <Typography sx={{ mb: 3, fontWeight: '600', fontSize: '30px', color: '#063455' }}>
-                        🖨️ Printer Test
-                    </Typography>
-
-                    <Card elevation={3}>
+            <Box sx={{
+                minHeight: '100vh',
+                bgcolor: '#f5f5f5',
+                p: 2
+            }}>
+                <Typography sx={{ mb: 3, fontWeight: '600', fontSize: '30px', color: '#063455' }}>
+                    🖨️ Printer Test
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent:'center' }}>
+                    <Card elevation={3} sx={{ maxWidth: '600px' }}>
                         <CardContent>
                             <Typography variant="h6" sx={{ mb: 2 }}>
                                 Test Thermal Printer Connection
@@ -91,6 +91,7 @@ export default function PrinterTest() {
                         </CardContent>
                     </Card>
                 </Box>
+            </Box>
             {/* </Box> */}
         </>
     );

@@ -6,7 +6,7 @@ import Table6Icon from '@/components/App/Icons/Table6';
 import Table8Icon from '@/components/App/Icons/Table8';
 import POSLayout from "@/components/POSLayout";
 import { KeyboardArrowDown, Settings } from '@mui/icons-material';
-import { Box, Button, FormControl, MenuItem, Modal, Select, Typography } from '@mui/material';
+import { Box, Button, FormControl, MenuItem, Modal, Select, Typography, InputLabel } from '@mui/material';
 import axios from 'axios';
 import update from 'immutability-helper';
 import { useCallback, useEffect, useState } from 'react';
@@ -259,390 +259,404 @@ const TableManagement = ({ floorsdata, tablesData }) => {
                     marginTop: '5rem',
                 }}
             > */}
+            <Box
+                sx={{
+                    // height: '100vh',
+                    bgcolor: '#f5f5f5',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    p: 2,
+                    // pt: 2,
+                }}
+            >
+                {/* Header */}
                 <Box
                     sx={{
-                        // height: '100vh',
-                        bgcolor: '#F6F6F6',
                         display: 'flex',
-                        flexDirection: 'column',
-                        px: 3,
-                        pt: 2,
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        // p: 2,
                     }}
                 >
-                    {/* Header */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            // p: 2,
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    fontWeight: '600',
-                                    fontSize: '30px',
-                                    color: '#063455',
-                                }}
-                            >
-                                Table Management
-                            </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <img
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Typography
+                            variant="h6"
+                            sx={{
+                                fontWeight: '600',
+                                fontSize: '30px',
+                                color: '#063455',
+                            }}
+                        >
+                            Table Management
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {/* <img
                                 src="/assets/qbutton.png"
                                 alt=""
                                 style={{
                                     width: 40,
                                     height: 40,
                                 }}
-                            />
+                            /> */}
 
-                            <Box sx={{ minWidth: 160 }}>
-                                <FormControl fullWidth size="small">
-                                    {/* <InputLabel
-                                        id="dropdown-label"
-                                        sx={{
-                                            color: '#063455',
-                                            fontSize: '14px',
-                                        }}
-                                    >
-                                        Choose floor
-                                    </InputLabel> */}
-                                    <Select
-                                        labelId="dropdown-label"
-                                        value={selectedFloor}
-                                        label="Choose Option"
-                                        onChange={handleFloorChange}
-                                        sx={{
-                                            border: '1px solid #063455',
-                                            color: '#063455',
-                                            textTransform: 'none',
-                                            height: 40,
-                                            borderRadius: '0',
-                                            fontSize: '14px',
-                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                border: 'none',
-                                            },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                border: '1px solid #063455',
-                                            },
-                                        }}
-                                    >
-                                        {matchedFloors.length > 0 ? (
-                                            matchedFloors.map((floor, index) => {
-                                                // Get tables for the current floor
-                                                return (
-                                                    <MenuItem key={floor.id} value={floor.id}>
-                                                        {floor.name}
-                                                    </MenuItem>
-                                                );
-                                            })
-                                        ) : (
-                                            <MenuItem>none</MenuItem>
-                                        )}
-                                    </Select>
-                                </FormControl>
-                            </Box>
-
-                            <Button
-                                variant="outlined"
-                                startIcon={<Settings />}
-                                onClick={handleOpenSettings}
-                                sx={{
-                                    border: '1px solid #063455',
-                                    color: '#063455',
-                                    textTransform: 'none',
-                                    height: 40,
-                                    borderRadius: '0',
-                                    fontSize: '14px',
-                                }}
-                            >
-                                Table Settings
-                            </Button>
-                        </Box>
-
-                        <Modal open={openSettings} onClose={handleCloseSettings}>
-                            <Box
-                                sx={{
-                                    position: 'fixed',
-                                    top: 5,
-                                    bottom: 5,
-                                    right: 10,
-                                    bgcolor: '#FFFFFF',
-                                    boxShadow: 24,
-                                    // p: 4,
-                                    borderRadius: 2,
-                                    width: 400,
-                                    overflowY: 'hidden', // Enables scrolling if content overflows
-                                }}
-                            >
-                                <TableSetting floorsdata={floorsdata} tablesData={tablesData} />
-                            </Box>
-                        </Modal>
-                    </Box>
-
-                    {/* Main Content */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            mt: 2,
-                            flexGrow: 1,
-                            justifyContent: 'center',
-                            bgcolor: 'transparent',
-                        }}
-                    >
-                        {/* Left Sidebar - Calendar */}
-                        <Box
-                            sx={{
-                                width: 115,
-                                display: 'flex',
-                                flexDirection: 'column',
-                                pr: 2,
-                            }}
-                        >
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    mb: 2,
-                                }}
-                            >
-                                <Typography
-                                    variant="body2"
+                        <Box sx={{ minWidth: 160 }}>
+                            <FormControl fullWidth size="small">
+                                <InputLabel
+                                    id="dropdown-label"
                                     sx={{
-                                        fontWeight: '500',
-                                        fontSize: '14px',
-                                        color: '#121212',
+                                        color: "#063455",
+                                        fontSize: "14px",
                                     }}
                                 >
-                                    May 2024
-                                    {/* date:{selectedDate} */}
-                                </Typography>
-                                <KeyboardArrowDown fontSize="small" sx={{ ml: 0.5 }} />
-                            </Box>
+                                    Choose floor
+                                </InputLabel>
 
-                            {days.map((day, index) => (
-                                <Box
-                                    key={index}
-                                    onClick={() => handleDateClick(day)}
+                                <Select
+                                    labelId="dropdown-label"
+                                    value={selectedFloor || ""}
+                                    label="Choose floor"   // MUST match InputLabel text
+                                    displayEmpty
+                                    onChange={handleFloorChange}
                                     sx={{
-                                        height: '120px',
-                                        py: 3,
-                                        alignItems: 'center',
-                                        textAlign: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        bgcolor: selectedDate.date === day.date ? '#B0DEFF' : '#FFFFFF',
-                                        border: selectedDate.date === day.date ? '1px solid #063455' : '1px solid #E3E3E3',
-                                        '&:hover': {
-                                            bgcolor: selectedDate.date === day.date ? '#B0DEFF' : '#FFFFFF',
+                                        height: 40,
+                                        fontSize: "14px",
+                                        color: "#063455",
+
+                                        "& .MuiOutlinedInput-notchedOutline": {
+                                            border: "1px solid #063455",
+                                            borderRadius: "16px",
+                                        },
+
+                                        "&:hover .MuiOutlinedInput-notchedOutline": {
+                                            border: "1px solid #063455",
+                                        },
+
+                                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                                            border: "1px solid #063455",
                                         },
                                     }}
                                 >
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            display: 'block',
-                                            color: '#7F7F7F',
-                                            fontSize: '16px',
-                                        }}
-                                    >
-                                        {day.day}
-                                    </Typography>
-                                    <Typography
-                                        variant="body1"
-                                        sx={{
-                                            fontWeight: 'medium',
-                                            my: 0.5,
-                                            color: '#121212',
-                                            fontSize: '22px',
-                                        }}
-                                    >
-                                        {day.date}
-                                    </Typography>
-                                    {day.hasReservations && (
-                                        <Box
+                                    <MenuItem value="">
+                                        Select floor
+                                    </MenuItem>
+
+                                    {matchedFloors.map((floor) => (
+                                        <MenuItem key={floor.id} value={floor.id}
                                             sx={{
-                                                width: 8,
-                                                height: 8,
-                                                borderRadius: '50%',
-                                                bgcolor: '#1976d2',
-                                                mx: 'auto',
-                                            }}
-                                        />
-                                    )}
-                                </Box>
-                            ))}
+                                                "&:hover": {
+                                                    backgroundColor: "#063455",
+                                                    color: "#fff",
+                                                    borderRadius:'16px',
+                                                    mx:1,
+                                                    my:1
+                                                },
+                                            }}>
+                                            {floor.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+
                         </Box>
 
-                        {/* Right Content - Floor Plan */}
-                        <Box
+                        <Button
+                            variant="outlined"
+                            startIcon={<Settings />}
+                            onClick={handleOpenSettings}
                             sx={{
-                                flexGrow: 1,
-                                display: 'flex',
-                                flexDirection: 'column',
+                                border: '1px solid #063455',
+                                color: '#063455',
+                                textTransform: 'none',
+                                height: 40,
+                                borderRadius: '16px',
+                                fontSize: '14px',
                             }}
                         >
-                            {/* Floor Tabs */}
+                            Table Settings
+                        </Button>
+                    </Box>
+
+                    <Modal open={openSettings} onClose={handleCloseSettings}>
+                        <Box
+                            sx={{
+                                position: 'fixed',
+                                top: 5,
+                                bottom: 5,
+                                right: 10,
+                                bgcolor: '#FFFFFF',
+                                boxShadow: 24,
+                                // p: 4,
+                                borderRadius: 2,
+                                width: 400,
+                                overflowY: 'hidden', // Enables scrolling if content overflows
+                            }}
+                        >
+                            <TableSetting floorsdata={floorsdata} tablesData={tablesData} />
+                        </Box>
+                    </Modal>
+                </Box>
+
+                {/* Main Content */}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        mt: 2,
+                        flexGrow: 1,
+                        justifyContent: 'center',
+                        bgcolor: 'transparent',
+                    }}
+                >
+                    {/* Left Sidebar - Calendar */}
+                    <Box
+                        sx={{
+                            width: 115,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            pr: 2,
+                        }}
+                    >
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                mb: 2,
+                            }}
+                        >
+                            <Typography
+                                variant="body2"
+                                sx={{
+                                    fontWeight: '500',
+                                    fontSize: '14px',
+                                    color: '#121212',
+                                }}
+                            >
+                                May 2024
+                                {/* date:{selectedDate} */}
+                            </Typography>
+                            <KeyboardArrowDown fontSize="small" sx={{ ml: 0.5 }} />
+                        </Box>
+
+                        {days.map((day, index) => (
+                            <Box
+                                key={index}
+                                onClick={() => handleDateClick(day)}
+                                sx={{
+                                    height: '120px',
+                                    py: 3,
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    bgcolor: selectedDate.date === day.date ? '#B0DEFF' : '#FFFFFF',
+                                    border: selectedDate.date === day.date ? '1px solid #063455' : '1px solid #E3E3E3',
+                                    '&:hover': {
+                                        bgcolor: selectedDate.date === day.date ? '#B0DEFF' : '#FFFFFF',
+                                    },
+                                }}
+                            >
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        display: 'block',
+                                        color: '#7F7F7F',
+                                        fontSize: '16px',
+                                    }}
+                                >
+                                    {day.day}
+                                </Typography>
+                                <Typography
+                                    variant="body1"
+                                    sx={{
+                                        fontWeight: 'medium',
+                                        my: 0.5,
+                                        color: '#121212',
+                                        fontSize: '22px',
+                                    }}
+                                >
+                                    {day.date}
+                                </Typography>
+                                {day.hasReservations && (
+                                    <Box
+                                        sx={{
+                                            width: 8,
+                                            height: 8,
+                                            borderRadius: '50%',
+                                            bgcolor: '#1976d2',
+                                            mx: 'auto',
+                                        }}
+                                    />
+                                )}
+                            </Box>
+                        ))}
+                    </Box>
+
+                    {/* Right Content - Floor Plan */}
+                    <Box
+                        sx={{
+                            flexGrow: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}
+                    >
+                        {/* Floor Tabs */}
+                        <Box
+                            sx={{
+                                position: 'relative',
+                                width: '100%',
+                                height: 50,
+                                zIndex: 1,
+                            }}
+                        >
+                            {/* Floor 1 Indoor Area - White background (bottom layer) */}
                             <Box
                                 sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    p: 1.5,
+                                    bgcolor: '#FFFFFF',
+                                    height: 100,
+                                    zIndex: -1,
+                                    borderTopLeftRadius: '24px',
+                                    borderTopRightRadius: '24px',
+                                }}
+                            >
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        mt: -7,
+                                        width: '100%',
+                                    }}
+                                >
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                        }}
+                                    >
+                                        <Box
+                                            sx={{
+                                                width: 30,
+                                                height: 30,
+                                                borderRadius: '50%',
+                                                bgcolor: 'transparent',
+                                                // color: '#333333',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                mr: 1.5,
+                                                fontSize: '0.75rem',
+                                                fontWeight: 'bold',
+                                                border: '1px solid #E3E3E3',
+                                            }}
+                                        >
+                                            <img
+                                                src="/assets/home-roof.png"
+                                                alt=""
+                                                style={{
+                                                    width: 18,
+                                                    height: 18,
+                                                }}
+                                            />
+                                        </Box>
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                color: '#333333',
+                                                fontWeight: 'medium',
+                                            }}
+                                        >
+                                            {activefloor?.name}
+                                        </Typography>
+                                    </Box>
+                                    <Typography variant="body2" sx={{ color: '#333333' }}>
+                                        Available for {availableCapacity ?? 0}-Person
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                        {/* Floor Plan */}
+                        <DndProvider backend={HTML5Backend}>
+                            <Box
+                                sx={{
+                                    flexGrow: 1,
+                                    bgcolor: '#063455',
                                     position: 'relative',
-                                    width: '100%',
-                                    height: 50,
+                                    overflow: 'auto',
+                                    height: '100%',
+                                    minHeight: 500,
                                     zIndex: 1,
                                 }}
                             >
-                                {/* Floor 1 Indoor Area - White background (bottom layer) */}
+                                {/* First row of tables */}
                                 <Box
                                     sx={{
                                         position: 'absolute',
-                                        top: 0,
+                                        top: 10,
                                         left: 0,
                                         right: 0,
                                         display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        p: 1.5,
-                                        bgcolor: '#FFFFFF',
-                                        height: 100,
-                                        zIndex: -1,
-                                        borderTopLeftRadius: '24px',
-                                        borderTopRightRadius: '24px',
+                                        flexWrap: 'wrap',
+                                        justifyContent: 'space-around',
+                                        width: '100%',
+                                        gap: '30px 15px',
                                     }}
                                 >
-                                    <Box
-                                        sx={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            mt: -7,
-                                            width: '100%',
-                                        }}
-                                    >
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                            }}
-                                        >
-                                            <Box
-                                                sx={{
-                                                    width: 30,
-                                                    height: 30,
-                                                    borderRadius: '50%',
-                                                    bgcolor: 'transparent',
-                                                    // color: '#333333',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    mr: 1.5,
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 'bold',
-                                                    border: '1px solid #E3E3E3',
-                                                }}
-                                            >
-                                                <img
-                                                    src="/assets/home-roof.png"
-                                                    alt=""
-                                                    style={{
-                                                        width: 18,
-                                                        height: 18,
-                                                    }}
-                                                />
-                                            </Box>
-                                            <Typography
-                                                variant="body2"
-                                                sx={{
-                                                    color: '#333333',
-                                                    fontWeight: 'medium',
-                                                }}
-                                            >
-                                                {activefloor?.name}
-                                            </Typography>
-                                        </Box>
-                                        <Typography variant="body2" sx={{ color: '#333333' }}>
-                                            Available for {availableCapacity ?? 0}-Person
-                                        </Typography>
-                                    </Box>
+                                    {activefloor && activefloor?.tables.map((table, index) => <DraggableTable index={index} data={table} moveTable={moveTable} onClick={() => handleOpenReservation(table)} />)}
                                 </Box>
                             </Box>
-                            {/* Floor Plan */}
-                            <DndProvider backend={HTML5Backend}>
+                            <Modal open={openReservation} onClose={handleCloseReservation}>
                                 <Box
                                     sx={{
-                                        flexGrow: 1,
-                                        bgcolor: '#063455',
-                                        position: 'relative',
-                                        overflow: 'auto',
-                                        height: '100%',
-                                        minHeight: 500,
-                                        zIndex: 1,
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        bgcolor: 'white',
+                                        borderRadius: 2,
+                                        boxShadow: 24,
+                                        p: 3,
+                                        maxWidth: 600,
+                                        width: '90%',
+                                        maxHeight: '90vh',
+                                        overflow: 'auto', // or remove if you want to hide scroll
                                     }}
                                 >
-                                    {/* First row of tables */}
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 10,
-                                            left: 0,
-                                            right: 0,
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            justifyContent: 'space-around',
-                                            width: '100%',
-                                            gap: '30px 15px',
-                                        }}
-                                    >
-                                        {activefloor && activefloor?.tables.map((table, index) => <DraggableTable index={index} data={table} moveTable={moveTable} onClick={() => handleOpenReservation(table)} />)}
-                                    </Box>
+                                    <AddReservation table={selectedTable} selectedDate={selectedDate} onClose={handleCloseReservation} />
                                 </Box>
-                                <Modal open={openReservation} onClose={handleCloseReservation}>
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: '50%',
-                                            left: '50%',
-                                            transform: 'translate(-50%, -50%)',
-                                            bgcolor: 'white',
-                                            borderRadius: 2,
-                                            boxShadow: 24,
-                                            p: 3,
-                                            maxWidth: 600,
-                                            width: '90%',
-                                            maxHeight: '90vh',
-                                            overflow: 'auto', // or remove if you want to hide scroll
-                                        }}
-                                    >
-                                        <AddReservation table={selectedTable} selectedDate={selectedDate} onClose={handleCloseReservation} />
-                                    </Box>
-                                </Modal>
-                                <Modal open={openAvailableOrder} onClose={handleCloseReservation}>
-                                    <Box
-                                        sx={{
-                                            position: 'absolute',
-                                            top: '50%',
-                                            left: '50%',
-                                            transform: 'translate(-50%, -50%)',
-                                            bgcolor: 'white',
-                                            borderRadius: 2,
-                                            boxShadow: 24,
-                                            p: 3,
-                                            maxWidth: 600,
-                                            width: '90%',
-                                            maxHeight: '90vh',
-                                            overflow: 'auto',
-                                        }}
-                                    >
-                                        <ActiveTable table={selectedTable} floorName={activefloor?.name} onClose={handleCloseReservation} />
-                                    </Box>
-                                </Modal>
-                            </DndProvider>
-                        </Box>
+                            </Modal>
+                            <Modal open={openAvailableOrder} onClose={handleCloseReservation}>
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        bgcolor: 'white',
+                                        borderRadius: 2,
+                                        boxShadow: 24,
+                                        p: 3,
+                                        maxWidth: 600,
+                                        width: '90%',
+                                        maxHeight: '90vh',
+                                        overflow: 'auto',
+                                    }}
+                                >
+                                    <ActiveTable table={selectedTable} floorName={activefloor?.name} onClose={handleCloseReservation} />
+                                </Box>
+                            </Modal>
+                        </DndProvider>
                     </Box>
                 </Box>
+            </Box>
             {/* </div> */}
         </>
     );

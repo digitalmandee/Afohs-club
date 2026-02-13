@@ -71,15 +71,15 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
             <Box
                 sx={{
                     minHeight: '100vh',
-                    padding: '20px',
-                    backgroundColor: '#f5f5f5',
+                    p: 2,
+                    bgcolor: '#f5f5f5',
                 }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <IconButton>
                         <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('guests.index'))} />
                     </IconButton>
-                    <Typography sx={{ fontWeight: 700, color: '#063455', fontSize: '30px' }}>{isEdit ? 'Edit Customer' : 'Add Customer'}</Typography>
+                    <Typography sx={{ fontWeight: 600, color: '#063455', fontSize: '30px' }}>{isEdit ? 'Edit Customer' : 'Add Customer'}</Typography>
                 </Box>
 
                 <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 600, mx: 'auto', mt: 3, bgcolor: '#fff', p: 3 }}>
@@ -413,7 +413,11 @@ const CustomerForm = ({ customer = {}, customerNo, guestTypes = [], isEdit = fal
                     </Grid>
 
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button type="submit" variant="contained" disabled={processing}>
+                        <Button 
+                        type="submit" 
+                        variant="contained" 
+                        disabled={processing}
+                        >
                             {isEdit ? 'Update' : 'Save'}
                         </Button>
                     </Box>
