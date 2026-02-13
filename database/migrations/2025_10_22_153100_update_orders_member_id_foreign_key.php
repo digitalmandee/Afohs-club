@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // First, let's check and drop any existing foreign key constraints on member_id
         $foreignKeys = DB::select("
             SELECT CONSTRAINT_NAME 
@@ -38,6 +42,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('orders', function (Blueprint $table) {
             // Drop the foreign key constraint on member_id
             $table->dropForeign(['member_id']);

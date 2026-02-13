@@ -53,18 +53,17 @@ return new class extends Migration {
             $table->json('documents')->nullable();
         });
 
-        // Step 1: Convert enum to VARCHAR temporarily to allow value changes
-        DB::statement('ALTER TABLE members MODIFY COLUMN card_status VARCHAR(50) NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE members MODIFY COLUMN card_status VARCHAR(50) NULL');
 
-        // Step 2: Update invalid values to new enum values (with quotes!)
-        DB::table('members')
-            ->whereNotIn('card_status', [
-                'In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued'
-            ])
-            ->update(['card_status' => 'In-Process']);
+            DB::table('members')
+                ->whereNotIn('card_status', [
+                    'In-Process', 'Printed', 'Received', 'Issued', 'Applied', 'Re-Printed', 'Not Applied', 'Expired', 'Not Applicable', 'E-Card Issued'
+                ])
+                ->update(['card_status' => 'In-Process']);
 
-        // Step 3: Now safely convert column to new ENUM
-        DB::statement("ALTER TABLE members MODIFY COLUMN card_status ENUM('In-Process','Printed','Received','Issued','Re-Printed','E-Card Issued') NULL DEFAULT 'In-Process'");
+            DB::statement("ALTER TABLE members MODIFY COLUMN card_status ENUM('In-Process','Printed','Received','Issued','Re-Printed','E-Card Issued') NULL DEFAULT 'In-Process'");
+        }
     }
 
     /**
@@ -72,16 +71,17 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        // Revert ENUM to original values
-        DB::statement('ALTER TABLE members MODIFY COLUMN card_status VARCHAR(50) NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE members MODIFY COLUMN card_status VARCHAR(50) NULL');
 
-        DB::table('members')
-            ->whereNotIn('card_status', [
-                'active', 'inactive', 'suspended', 'cancelled', 'pause'
-            ])
-            ->update(['card_status' => 'inactive']);
+            DB::table('members')
+                ->whereNotIn('card_status', [
+                    'active', 'inactive', 'suspended', 'cancelled', 'pause'
+                ])
+                ->update(['card_status' => 'inactive']);
 
-        DB::statement("ALTER TABLE members MODIFY COLUMN card_status ENUM('active', 'inactive', 'suspended', 'cancelled', 'pause') NULL DEFAULT 'inactive'");
+            DB::statement("ALTER TABLE members MODIFY COLUMN card_status ENUM('active', 'inactive', 'suspended', 'cancelled', 'pause') NULL DEFAULT 'inactive'");
+        }
 
         Schema::table('members', function (Blueprint $table) {
             $table->dropColumn([

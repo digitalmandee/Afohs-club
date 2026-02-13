@@ -40,9 +40,11 @@ class PayrollProcessingService
             'allowances' => function ($query) {
                 $query->where('is_active', true);
             },
+            'allowances.allowanceType',
             'deductions' => function ($query) {
                 $query->where('is_active', true);
             },
+            'deductions.deductionType',
             'department:id,name',
             'activeLoans',
             'activeAdvances'
@@ -244,9 +246,32 @@ class PayrollProcessingService
         // Calculate Food Deduction after Allowance
         $foodDeductionAmount = 0;
         if ($totalCtsBill > 0) {
-            // Fetch Food Allowance (ID 4)
-            $foodAllowance = $employee->allowances->where('allowance_type_id', \App\Constants\AppConstants::FOOD_ALLOWANCE_TYPE_ID)->first();
-            $foodAllowanceAmount = $foodAllowance ? $foodAllowance->amount : 0;  // Assuming Fixed Amount for now based on screenshot
+            $basicSalaryForFood = (float) ($salaryComponents['basic_salary'] ?? 0);
+            $foodAllowanceAmount = 0.0;
+
+            $foodAllowance = optional($employee->allowances)->where('allowance_type_id', \App\Constants\AppConstants::FOOD_ALLOWANCE_TYPE_ID)->first();
+
+            if ($foodAllowance && $foodAllowance->allowanceType) {
+                if ($foodAllowance->allowanceType->type === 'percentage') {
+                    $percentage = (float) ($foodAllowance->percentage ?? $foodAllowance->amount ?? 0);
+                    $foodAllowanceAmount = ($basicSalaryForFood * $percentage) / 100;
+                } else {
+                    $foodAllowanceAmount = (float) ($foodAllowance->amount ?? 0);
+                }
+            } else {
+                $globalFoodType = \App\Models\AllowanceType::where('id', \App\Constants\AppConstants::FOOD_ALLOWANCE_TYPE_ID)
+                    ->where('is_active', true)
+                    ->where('is_global', true)
+                    ->first();
+
+                if ($globalFoodType) {
+                    if ($globalFoodType->type === 'percentage') {
+                        $foodAllowanceAmount = ($basicSalaryForFood * (float) ($globalFoodType->percentage ?? 0)) / 100;
+                    } else {
+                        $foodAllowanceAmount = (float) ($globalFoodType->default_amount ?? 0);
+                    }
+                }
+            }
 
             // Deduction = Bill - Allowance (if Bill > Allowance)
             // If Bill <= Allowance, Deduction is 0 (Company covers it up to value)
@@ -471,9 +496,10 @@ class PayrollProcessingService
             $amount = 0;
 
             if ($employeeAllowance->allowanceType->type === 'fixed') {
-                $amount = $employeeAllowance->amount;
+                $amount = $employeeAllowance->amount ?? 0;
             } elseif ($employeeAllowance->allowanceType->type === 'percentage') {
-                $amount = ($basicSalary * $employeeAllowance->percentage) / 100;
+                $percentage = $employeeAllowance->percentage ?? $employeeAllowance->amount ?? 0;
+                $amount = ($basicSalary * $percentage) / 100;
             }
 
             $allowances[] = [
@@ -523,9 +549,10 @@ class PayrollProcessingService
                 : ($basicSalary + $totalAllowances);
 
             if ($employeeDeduction->deductionType->type === 'fixed') {
-                $amount = $employeeDeduction->amount;
+                $amount = $employeeDeduction->amount ?? 0;
             } elseif ($employeeDeduction->deductionType->type === 'percentage') {
-                $amount = ($calculationBase * $employeeDeduction->percentage) / 100;
+                $percentage = $employeeDeduction->percentage ?? $employeeDeduction->amount ?? 0;
+                $amount = ($calculationBase * $percentage) / 100;
             }
 
             $deductions[] = [

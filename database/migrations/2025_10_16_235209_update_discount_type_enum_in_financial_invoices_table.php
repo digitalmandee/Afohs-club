@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Update the discount_type enum to include 'percent' and 'fixed' (matching frontend)
         DB::statement("ALTER TABLE financial_invoices MODIFY COLUMN discount_type ENUM('percentage', 'fixed', 'percent')");
     }
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Revert back to original enum values
         DB::statement("ALTER TABLE financial_invoices MODIFY COLUMN discount_type ENUM('percentage', 'fixed')");
     }

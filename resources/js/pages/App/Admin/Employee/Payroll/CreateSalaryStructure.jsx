@@ -67,10 +67,13 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
         }
 
         const allowanceType = (allowanceTypes || []).find((a) => a.id === selectedAllowanceType);
+        const numericValue = parseFloat(allowanceAmount);
+        const isPercentage = allowanceType?.type === 'percentage';
         const newAllowance = {
             allowance_type_id: selectedAllowanceType,
             allowance_type: allowanceType,
-            amount: parseFloat(allowanceAmount),
+            amount: isPercentage ? null : numericValue,
+            percentage: isPercentage ? numericValue : null,
             type: allowanceType.type,
         };
 
@@ -91,10 +94,13 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
         }
 
         const deductionType = (deductionTypes || []).find((d) => d.id === selectedDeductionType);
+        const numericValue = parseFloat(deductionAmount);
+        const isPercentage = deductionType?.type === 'percentage';
         const newDeduction = {
             deduction_type_id: selectedDeductionType,
             deduction_type: deductionType,
-            amount: parseFloat(deductionAmount),
+            amount: isPercentage ? null : numericValue,
+            percentage: isPercentage ? numericValue : null,
             type: deductionType.type,
         };
 
@@ -139,12 +145,34 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
             .replace('PKR', 'Rs');
     };
 
+    const calculateAllowanceAmount = (allowance, basicSalary) => {
+        const type = allowance?.allowance_type?.type || allowance?.type;
+        if (type === 'percentage') {
+            const percentage = parseFloat(allowance?.percentage ?? allowance?.amount ?? 0);
+            return (basicSalary * percentage) / 100;
+        }
+        return parseFloat(allowance?.amount ?? 0);
+    };
+
+    const calculateDeductionAmount = (deduction, basicSalary, grossSalary) => {
+        const type = deduction?.deduction_type?.type || deduction?.type;
+        if (type === 'percentage') {
+            const percentage = parseFloat(deduction?.percentage ?? deduction?.amount ?? 0);
+            const calculationBase = (deduction?.deduction_type?.calculation_base || 'basic_salary') === 'gross_salary' ? grossSalary : basicSalary;
+            return (calculationBase * percentage) / 100;
+        }
+        return parseFloat(deduction?.amount ?? 0);
+    };
+
     const calculateTotalAllowances = () => {
-        return formData.allowances.reduce((total, allowance) => total + allowance.amount, 0);
+        const basicSalary = parseFloat(formData.basic_salary || 0);
+        return formData.allowances.reduce((total, allowance) => total + calculateAllowanceAmount(allowance, basicSalary), 0);
     };
 
     const calculateTotalDeductions = () => {
-        return formData.deductions.reduce((total, deduction) => total + deduction.amount, 0);
+        const basicSalary = parseFloat(formData.basic_salary || 0);
+        const grossSalary = basicSalary + calculateTotalAllowances();
+        return formData.deductions.reduce((total, deduction) => total + calculateDeductionAmount(deduction, basicSalary, grossSalary), 0);
     };
 
     const calculateGrossSalary = () => {
@@ -417,7 +445,7 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                                                                 <TableCell>
                                                                     <Chip label={allowance.type} size="small" color="primary" />
                                                                 </TableCell>
-                                                                <TableCell>{formatCurrency(allowance.amount)}</TableCell>
+                                                                <TableCell>{formatCurrency(calculateAllowanceAmount(allowance, parseFloat(formData.basic_salary || 0)))}</TableCell>
                                                                 <TableCell>
                                                                     <IconButton size="small" onClick={() => handleRemoveAllowance(index)} sx={{ color: '#d32f2f' }}>
                                                                         <DeleteIcon fontSize="small" />
@@ -464,7 +492,7 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                                                                 <TableCell>
                                                                     <Chip label={deduction.type} size="small" color="secondary" />
                                                                 </TableCell>
-                                                                <TableCell>{formatCurrency(deduction.amount)}</TableCell>
+                                                                <TableCell>{formatCurrency(calculateDeductionAmount(deduction, parseFloat(formData.basic_salary || 0), calculateGrossSalary()))}</TableCell>
                                                                 <TableCell>
                                                                     <IconButton size="small" onClick={() => handleRemoveDeduction(index)} sx={{ color: '#d32f2f' }}>
                                                                         <DeleteIcon fontSize="small" />
@@ -490,6 +518,10 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                     <Dialog open={showAllowanceDialog} onClose={() => setShowAllowanceDialog(false)} maxWidth="sm" fullWidth>
                         <DialogTitle>Add Allowance</DialogTitle>
                         <DialogContent>
+                            {(() => {
+                                const selected = (allowanceTypes || []).find((t) => t.id === selectedAllowanceType);
+                                const isPercentage = selected?.type === 'percentage';
+                                return (
                             <Grid container spacing={3} sx={{ mt: 1 }}>
                                 <Grid item xs={12}>
                                     <FormControl fullWidth>
@@ -506,16 +538,20 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
-                                        label="Amount"
+                                        label={isPercentage ? 'Percentage' : 'Amount'}
                                         type="number"
                                         value={allowanceAmount}
                                         onChange={(e) => setAllowanceAmount(e.target.value)}
                                         InputProps={{
-                                            startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                            ...(isPercentage
+                                                ? { endAdornment: <InputAdornment position="end">%</InputAdornment> }
+                                                : { startAdornment: <InputAdornment position="start">Rs</InputAdornment> }),
                                         }}
                                     />
                                 </Grid>
                             </Grid>
+                                );
+                            })()}
                         </DialogContent>
                         <DialogActions>
                             <Button onClick={() => setShowAllowanceDialog(false)}>Cancel</Button>
@@ -529,6 +565,10 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                     <Dialog open={showDeductionDialog} onClose={() => setShowDeductionDialog(false)} maxWidth="sm" fullWidth>
                         <DialogTitle>Add Deduction</DialogTitle>
                         <DialogContent>
+                            {(() => {
+                                const selected = (deductionTypes || []).find((t) => t.id === selectedDeductionType);
+                                const isPercentage = selected?.type === 'percentage';
+                                return (
                             <Grid container spacing={3} sx={{ mt: 1 }}>
                                 <Grid item xs={12}>
                                     <FormControl fullWidth>
@@ -545,16 +585,20 @@ const CreateSalaryStructure = ({ employeeId, employee, allowanceTypes = [], dedu
                                 <Grid item xs={12}>
                                     <TextField
                                         fullWidth
-                                        label="Amount"
+                                        label={isPercentage ? 'Percentage' : 'Amount'}
                                         type="number"
                                         value={deductionAmount}
                                         onChange={(e) => setDeductionAmount(e.target.value)}
                                         InputProps={{
-                                            startAdornment: <InputAdornment position="start">Rs</InputAdornment>,
+                                            ...(isPercentage
+                                                ? { endAdornment: <InputAdornment position="end">%</InputAdornment> }
+                                                : { startAdornment: <InputAdornment position="start">Rs</InputAdornment> }),
                                         }}
                                     />
                                 </Grid>
                             </Grid>
+                                );
+                            })()}
                         </DialogContent>
                         <DialogActions>
                             <Button onClick={() => setShowDeductionDialog(false)}>Cancel</Button>

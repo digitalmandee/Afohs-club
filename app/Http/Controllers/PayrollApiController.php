@@ -237,6 +237,110 @@ class PayrollApiController extends Controller
         }
 
         $employees = $query->paginate($perPage);
+
+        $globalAllowanceTypes = AllowanceType::where('is_active', true)
+            ->where('is_global', true)
+            ->get();
+
+        $globalDeductionTypes = DeductionType::where('is_active', true)
+            ->where('is_global', true)
+            ->get();
+
+        $employees->getCollection()->transform(function ($employee) use ($globalAllowanceTypes, $globalDeductionTypes) {
+            $basicSalary = (float) (optional($employee->salaryStructure)->basic_salary ?? 0);
+
+            $allowances = collect($employee->allowances ?? [])->map(function ($employeeAllowance) use ($basicSalary) {
+                $type = $employeeAllowance->allowanceType;
+                $amount = 0.0;
+
+                if (($type->type ?? null) === 'percentage') {
+                    $percentage = (float) ($employeeAllowance->percentage ?? $employeeAllowance->amount ?? 0);
+                    $amount = ($basicSalary * $percentage) / 100;
+                } else {
+                    $amount = (float) ($employeeAllowance->amount ?? 0);
+                }
+
+                return [
+                    'type_id' => (int) $employeeAllowance->allowance_type_id,
+                    'amount' => $amount,
+                ];
+            });
+
+            $existingAllowanceTypeIds = $allowances->pluck('type_id')->unique()->values();
+            $globalAllowances = $globalAllowanceTypes
+                ->whereNotIn('id', $existingAllowanceTypeIds)
+                ->map(function ($globalType) use ($basicSalary) {
+                    $amount = 0.0;
+                    if (($globalType->type ?? null) === 'percentage') {
+                        $amount = ($basicSalary * (float) ($globalType->percentage ?? 0)) / 100;
+                    } else {
+                        $amount = (float) ($globalType->default_amount ?? 0);
+                    }
+
+                    return [
+                        'type_id' => (int) $globalType->id,
+                        'amount' => $amount,
+                    ];
+                })
+                ->values();
+
+            $allAllowances = $allowances->concat($globalAllowances);
+            $totalAllowances = (float) $allAllowances->sum('amount');
+            $grossSalary = $basicSalary + $totalAllowances;
+
+            $deductions = collect($employee->deductions ?? [])->map(function ($employeeDeduction) use ($basicSalary, $grossSalary) {
+                $type = $employeeDeduction->deductionType;
+                $base = (($type->calculation_base ?? 'basic_salary') === 'gross_salary') ? $grossSalary : $basicSalary;
+                $amount = 0.0;
+
+                if (($type->type ?? null) === 'percentage') {
+                    $percentage = (float) ($employeeDeduction->percentage ?? $employeeDeduction->amount ?? 0);
+                    $amount = ($base * $percentage) / 100;
+                } else {
+                    $amount = (float) ($employeeDeduction->amount ?? 0);
+                }
+
+                return [
+                    'type_id' => (int) $employeeDeduction->deduction_type_id,
+                    'amount' => $amount,
+                ];
+            });
+
+            $existingDeductionTypeIds = $deductions->pluck('type_id')->unique()->values();
+            $globalDeductions = $globalDeductionTypes
+                ->whereNotIn('id', $existingDeductionTypeIds)
+                ->map(function ($globalType) use ($basicSalary, $grossSalary) {
+                    $base = (($globalType->calculation_base ?? 'basic_salary') === 'gross_salary') ? $grossSalary : $basicSalary;
+                    $amount = 0.0;
+
+                    if (($globalType->type ?? null) === 'percentage') {
+                        $amount = ($base * (float) ($globalType->percentage ?? 0)) / 100;
+                    } else {
+                        $amount = (float) ($globalType->default_amount ?? 0);
+                    }
+
+                    return [
+                        'type_id' => (int) $globalType->id,
+                        'amount' => $amount,
+                    ];
+                })
+                ->values();
+
+            $allDeductions = $deductions->concat($globalDeductions);
+            $totalDeductions = (float) $allDeductions->sum('amount');
+            $netSalary = $grossSalary - $totalDeductions;
+
+            $employee->setAttribute('computed_salary', [
+                'basic_salary' => $basicSalary,
+                'total_allowances' => $totalAllowances,
+                'total_deductions' => $totalDeductions,
+                'gross_salary' => $grossSalary,
+                'net_salary' => $netSalary,
+            ]);
+
+            return $employee;
+        });
+
         return response()->json(['success' => true, 'employees' => $employees]);
     }
 
@@ -248,14 +352,41 @@ class PayrollApiController extends Controller
             'effective_to' => 'nullable|date|after:effective_from',
             'allowances' => 'array',
             'allowances.*.allowance_type_id' => 'required|exists:allowance_types,id',
-            'allowances.*.amount' => 'required|numeric|min:0',
+            'allowances.*.amount' => 'nullable|numeric|min:0',
+            'allowances.*.percentage' => 'nullable|numeric|min:0|max:100',
             'deductions' => 'array',
             'deductions.*.deduction_type_id' => 'required|exists:deduction_types,id',
-            'deductions.*.amount' => 'required|numeric|min:0'
+            'deductions.*.amount' => 'nullable|numeric|min:0',
+            'deductions.*.percentage' => 'nullable|numeric|min:0|max:100'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $manualErrors = [];
+        if (is_array($request->allowances)) {
+            foreach ($request->allowances as $index => $allowance) {
+                $hasAmount = array_key_exists('amount', $allowance) && $allowance['amount'] !== null && $allowance['amount'] !== '';
+                $hasPercentage = array_key_exists('percentage', $allowance) && $allowance['percentage'] !== null && $allowance['percentage'] !== '';
+
+                if (!$hasAmount && !$hasPercentage) {
+                    $manualErrors["allowances.$index.amount"] = ['Amount or percentage is required.'];
+                }
+            }
+        }
+        if (is_array($request->deductions)) {
+            foreach ($request->deductions as $index => $deduction) {
+                $hasAmount = array_key_exists('amount', $deduction) && $deduction['amount'] !== null && $deduction['amount'] !== '';
+                $hasPercentage = array_key_exists('percentage', $deduction) && $deduction['percentage'] !== null && $deduction['percentage'] !== '';
+
+                if (!$hasAmount && !$hasPercentage) {
+                    $manualErrors["deductions.$index.amount"] = ['Amount or percentage is required.'];
+                }
+            }
+        }
+        if (!empty($manualErrors)) {
+            return response()->json(['success' => false, 'errors' => $manualErrors], 422);
         }
 
         $employee = Employee::findOrFail($employeeId);
@@ -287,7 +418,8 @@ class PayrollApiController extends Controller
                     EmployeeAllowance::create([
                         'employee_id' => $employeeId,
                         'allowance_type_id' => $allowance['allowance_type_id'],
-                        'amount' => $allowance['amount'],
+                        'amount' => $allowance['amount'] ?? null,
+                        'percentage' => $allowance['percentage'] ?? null,
                         'effective_from' => $request->effective_from,
                         'effective_to' => $request->effective_to,
                         'is_active' => true,
@@ -302,7 +434,8 @@ class PayrollApiController extends Controller
                     EmployeeDeduction::create([
                         'employee_id' => $employeeId,
                         'deduction_type_id' => $deduction['deduction_type_id'],
-                        'amount' => $deduction['amount'],
+                        'amount' => $deduction['amount'] ?? null,
+                        'percentage' => $deduction['percentage'] ?? null,
                         'effective_from' => $request->effective_from,
                         'effective_to' => $request->effective_to,
                         'is_active' => true,
@@ -324,23 +457,95 @@ class PayrollApiController extends Controller
         $validator = Validator::make($request->all(), [
             'basic_salary' => 'required|numeric|min:0',
             'effective_from' => 'required|date',
-            'effective_to' => 'nullable|date|after:effective_from'
+            'effective_to' => 'nullable|date|after:effective_from',
+            'allowances' => 'array',
+            'allowances.*.allowance_type_id' => 'required|exists:allowance_types,id',
+            'allowances.*.amount' => 'nullable|numeric|min:0',
+            'allowances.*.percentage' => 'nullable|numeric|min:0|max:100',
+            'deductions' => 'array',
+            'deductions.*.deduction_type_id' => 'required|exists:deduction_types,id',
+            'deductions.*.amount' => 'nullable|numeric|min:0',
+            'deductions.*.percentage' => 'nullable|numeric|min:0|max:100'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
+        $manualErrors = [];
+        if (is_array($request->allowances)) {
+            foreach ($request->allowances as $index => $allowance) {
+                $hasAmount = array_key_exists('amount', $allowance) && $allowance['amount'] !== null && $allowance['amount'] !== '';
+                $hasPercentage = array_key_exists('percentage', $allowance) && $allowance['percentage'] !== null && $allowance['percentage'] !== '';
+
+                if (!$hasAmount && !$hasPercentage) {
+                    $manualErrors["allowances.$index.amount"] = ['Amount or percentage is required.'];
+                }
+            }
+        }
+        if (is_array($request->deductions)) {
+            foreach ($request->deductions as $index => $deduction) {
+                $hasAmount = array_key_exists('amount', $deduction) && $deduction['amount'] !== null && $deduction['amount'] !== '';
+                $hasPercentage = array_key_exists('percentage', $deduction) && $deduction['percentage'] !== null && $deduction['percentage'] !== '';
+
+                if (!$hasAmount && !$hasPercentage) {
+                    $manualErrors["deductions.$index.amount"] = ['Amount or percentage is required.'];
+                }
+            }
+        }
+        if (!empty($manualErrors)) {
+            return response()->json(['success' => false, 'errors' => $manualErrors], 422);
+        }
+
         $salaryStructure = EmployeeSalaryStructure::where('employee_id', $employeeId)
             ->where('is_active', true)
             ->firstOrFail();
 
-        $salaryStructure->update([
-            'basic_salary' => $request->basic_salary,
-            'effective_from' => $request->effective_from,
-            'effective_to' => $request->effective_to,
-            'updated_by' => Auth::id()
-        ]);
+        DB::beginTransaction();
+        try {
+            $salaryStructure->update([
+                'basic_salary' => $request->basic_salary,
+                'effective_from' => $request->effective_from,
+                'effective_to' => $request->effective_to,
+                'updated_by' => Auth::id()
+            ]);
+
+            EmployeeAllowance::where('employee_id', $employeeId)->delete();
+            EmployeeDeduction::where('employee_id', $employeeId)->delete();
+
+            if ($request->has('allowances') && is_array($request->allowances)) {
+                foreach ($request->allowances as $allowance) {
+                    EmployeeAllowance::create([
+                        'employee_id' => $employeeId,
+                        'allowance_type_id' => $allowance['allowance_type_id'],
+                        'amount' => $allowance['amount'] ?? null,
+                        'percentage' => $allowance['percentage'] ?? null,
+                        'effective_from' => $request->effective_from,
+                        'effective_to' => $request->effective_to,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+
+            if ($request->has('deductions') && is_array($request->deductions)) {
+                foreach ($request->deductions as $deduction) {
+                    EmployeeDeduction::create([
+                        'employee_id' => $employeeId,
+                        'deduction_type_id' => $deduction['deduction_type_id'],
+                        'amount' => $deduction['amount'] ?? null,
+                        'percentage' => $deduction['percentage'] ?? null,
+                        'effective_from' => $request->effective_from,
+                        'effective_to' => $request->effective_to,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Error updating salary structure: ' . $e->getMessage()], 500);
+        }
 
         return response()->json(['success' => true, 'salaryStructure' => $salaryStructure]);
     }
@@ -753,7 +958,7 @@ class PayrollApiController extends Controller
             }
         }
 
-        $query = Employee::with(['salaryStructure', 'allowances', 'deductions', 'department', 'activeLoans', 'activeAdvances']);
+        $query = Employee::with(['salaryStructure', 'allowances.allowanceType', 'deductions.deductionType', 'department', 'activeLoans', 'activeAdvances']);
 
         if ($employeeIds) {
             $query->whereIn('id', $employeeIds);
@@ -761,6 +966,8 @@ class PayrollApiController extends Controller
 
         $employees = $query->get();
         $preview = [];
+        $globalAllowanceTypes = AllowanceType::where('is_active', true)->where('is_global', true)->get();
+        $globalDeductionTypes = DeductionType::where('is_active', true)->where('is_global', true)->get();
 
         // Batch fetch CTS orders for all employees in the preview to avoid per-employee queries
         $ordersByEmployee = collect();
@@ -805,12 +1012,87 @@ class PayrollApiController extends Controller
 
             // Calculate preview data (simplified version)
             $basicSalary = $employee->salaryStructure->basic_salary;
-            $totalAllowances = $employee->allowances->sum(function ($allowance) use ($basicSalary) {
-                return $allowance->calculateAmount($basicSalary);
-            });
-            $totalDeductions = $employee->deductions->sum(function ($deduction) use ($basicSalary) {
-                return $deduction->calculateAmount($basicSalary);
-            });
+            $allowancesBreakdown = [];
+            $totalAllowances = 0;
+
+            foreach ($employee->allowances as $employeeAllowance) {
+                $amount = $employeeAllowance->calculateAmount($basicSalary);
+                $allowancesBreakdown[] = [
+                    'type_id' => $employeeAllowance->allowance_type_id,
+                    'name' => $employeeAllowance->allowanceType->name ?? 'Allowance',
+                    'amount' => $amount,
+                    'source' => 'employee'
+                ];
+                $totalAllowances += $amount;
+            }
+
+            $existingAllowanceTypeIds = $employee->allowances->pluck('allowance_type_id')->toArray();
+            foreach ($globalAllowanceTypes as $globalType) {
+                if (in_array($globalType->id, $existingAllowanceTypeIds)) {
+                    continue;
+                }
+
+                $amount = 0;
+                if ($globalType->type === 'fixed') {
+                    $amount = $globalType->default_amount ?? 0;
+                } elseif ($globalType->type === 'percentage') {
+                    $amount = ($basicSalary * ($globalType->percentage ?? 0)) / 100;
+                }
+
+                if ($amount > 0) {
+                    $allowancesBreakdown[] = [
+                        'type_id' => $globalType->id,
+                        'name' => $globalType->name . ' (Global)',
+                        'amount' => $amount,
+                        'source' => 'global'
+                    ];
+                    $totalAllowances += $amount;
+                }
+            }
+
+            $grossSalary = $basicSalary + $totalAllowances;
+
+            $deductionsBreakdown = [];
+            $totalDeductions = 0;
+
+            foreach ($employee->deductions as $employeeDeduction) {
+                $amount = $employeeDeduction->calculateAmount($basicSalary, $grossSalary);
+                $deductionsBreakdown[] = [
+                    'type_id' => $employeeDeduction->deduction_type_id,
+                    'name' => $employeeDeduction->deductionType->name ?? 'Deduction',
+                    'amount' => $amount,
+                    'source' => 'employee'
+                ];
+                $totalDeductions += $amount;
+            }
+
+            $existingDeductionTypeIds = $employee->deductions->pluck('deduction_type_id')->toArray();
+            foreach ($globalDeductionTypes as $globalType) {
+                if (in_array($globalType->id, $existingDeductionTypeIds)) {
+                    continue;
+                }
+
+                $calculationBase = ($globalType->calculation_base ?? 'basic_salary') === 'basic_salary'
+                    ? $basicSalary
+                    : $grossSalary;
+
+                $amount = 0;
+                if ($globalType->type === 'fixed') {
+                    $amount = $globalType->default_amount ?? 0;
+                } elseif ($globalType->type === 'percentage') {
+                    $amount = ($calculationBase * ($globalType->percentage ?? 0)) / 100;
+                }
+
+                if ($amount > 0) {
+                    $deductionsBreakdown[] = [
+                        'type_id' => $globalType->id,
+                        'name' => $globalType->name . ' (Global)',
+                        'amount' => $amount,
+                        'source' => 'global'
+                    ];
+                    $totalDeductions += $amount;
+                }
+            }
 
             // Calculate Loan Deductions
             $loanDeductions = [];
@@ -856,6 +1138,8 @@ class PayrollApiController extends Controller
             $employeeOrders = $ordersByEmployee->get($employee->id, collect());
             $ctsDeductions = $employeeOrders->map(function ($o) {
                 return [
+                    'id' => $o->id,
+                    'paid_at' => $o->paid_at ?? null,
                     'amount' => (float) ($o->invoice_cts_amount ?? $o->total_price ?? $o->paid_amount ?? $o->amount ?? 0),
                     'name' => 'CTS Order #' . $o->id
                 ];
@@ -874,10 +1158,12 @@ class PayrollApiController extends Controller
                 'total_allowances' => $totalAllowances,  // CTS is not an allowance
                 'total_deductions' => $totalDeductions,
                 'total_order_deductions' => $ctsDeductions->sum('amount'),  // Explicit separate field
-                'gross_salary' => $basicSalary + $totalAllowances,  // Explicitly send gross
+                'gross_salary' => $grossSalary,  // Explicitly send gross
                 'net_salary' => $netSalary,
                 'allowances' => $employee->allowances,
+                'allowances_breakdown' => $allowancesBreakdown,
                 'deductions' => $employee->deductions,
+                'deductions_breakdown' => $deductionsBreakdown,
                 'loan_deductions' => $loanDeductions,
                 'advance_deductions' => $advanceDeductions,
                 'order_deductions' => $ctsDeductions->values()  // Send as details

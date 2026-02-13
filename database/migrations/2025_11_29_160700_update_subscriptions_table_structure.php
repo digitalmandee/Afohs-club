@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Get list of existing foreign keys
         $foreignKeys = DB::select("
             SELECT CONSTRAINT_NAME 
@@ -79,6 +83,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         Schema::table('subscriptions', function (Blueprint $table) {
             // Drop new columns
             if (Schema::hasColumn('subscriptions', 'member_id')) {

@@ -21,6 +21,41 @@ const PayrollPreview = ({ period: initialPeriod, token: initialToken }) => {
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
     const [expanded, setExpanded] = useState({});
 
+    const formatAmount = (value) => Number(value || 0).toLocaleString();
+
+    const getAllowances = (row) => {
+        if (Array.isArray(row.allowances_breakdown)) return row.allowances_breakdown;
+        const basicSalary = Number(row.basic_salary || 0);
+
+        return (row.allowances || []).map((a) => {
+            const type = a.allowance_type?.type || a.allowanceType?.type;
+            if (type === 'percentage') {
+                const percentage = Number(a.percentage ?? a.amount ?? 0);
+                return { name: a.allowance_type?.name || a.allowanceType?.name || 'Allowance', amount: (basicSalary * percentage) / 100 };
+            }
+
+            return { name: a.allowance_type?.name || a.allowanceType?.name || 'Allowance', amount: Number(a.amount || 0) };
+        });
+    };
+
+    const getDeductions = (row) => {
+        if (Array.isArray(row.deductions_breakdown)) return row.deductions_breakdown;
+        const basicSalary = Number(row.basic_salary || 0);
+        const grossSalary = Number(row.gross_salary || basicSalary);
+
+        return (row.deductions || []).map((d) => {
+            const type = d.deduction_type?.type || d.deductionType?.type;
+            const base = (d.deduction_type?.calculation_base || d.deductionType?.calculation_base) === 'gross_salary' ? grossSalary : basicSalary;
+
+            if (type === 'percentage') {
+                const percentage = Number(d.percentage ?? d.amount ?? 0);
+                return { name: d.deduction_type?.name || d.deductionType?.name || 'Deduction', amount: (base * percentage) / 100 };
+            }
+
+            return { name: d.deduction_type?.name || d.deductionType?.name || 'Deduction', amount: Number(d.amount || 0) };
+        });
+    };
+
     useEffect(() => {
         fetchPreview(page);
     }, [page, perPage, period, token]);
@@ -148,25 +183,55 @@ const PayrollPreview = ({ period: initialPeriod, token: initialToken }) => {
                                                                     </Box>
                                                                 </TableCell>
                                                                 <TableCell>{r.department}</TableCell>
-                                                                <TableCell>{(r.basic_salary || 0).toLocaleString()}</TableCell>
-                                                                <TableCell>{(r.total_allowances || 0).toLocaleString()}</TableCell>
-                                                                <TableCell>{(r.total_deductions || 0).toLocaleString()}</TableCell>
-                                                                <TableCell>{(r.total_order_deductions || 0).toLocaleString()}</TableCell>
-                                                                <TableCell>{(r.gross_salary || 0).toLocaleString()}</TableCell>
-                                                                <TableCell sx={{ fontWeight: 600 }}>{(r.net_salary || 0).toLocaleString()}</TableCell>
+                                                                <TableCell>{formatAmount(r.basic_salary)}</TableCell>
+                                                                <TableCell>{formatAmount(r.total_allowances)}</TableCell>
+                                                                <TableCell>{formatAmount(r.total_deductions)}</TableCell>
+                                                                <TableCell>{formatAmount(r.total_order_deductions)}</TableCell>
+                                                                <TableCell>{formatAmount(r.gross_salary)}</TableCell>
+                                                                <TableCell sx={{ fontWeight: 600 }}>{formatAmount(r.net_salary)}</TableCell>
                                                             </TableRow>
 
                                                             <TableRow>
                                                                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={8}>
                                                                     <Collapse in={!!expanded[r.employee_id]} timeout="auto" unmountOnExit>
                                                                         <Box sx={{ margin: 1 }}>
+                                                                            <Typography variant="subtitle2">Allowances</Typography>
+                                                                            {getAllowances(r).length > 0 ? (
+                                                                                getAllowances(r).map((a, idx) => (
+                                                                                    <Box key={`allowance-${r.employee_id}-${a.type_id ?? idx}`} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                                                                                        <Typography variant="body2">{a.name}</Typography>
+                                                                                        <Typography variant="body2">{formatAmount(a.amount)}</Typography>
+                                                                                    </Box>
+                                                                                ))
+                                                                            ) : (
+                                                                                <Typography variant="body2" color="textSecondary">
+                                                                                    No allowances.
+                                                                                </Typography>
+                                                                            )}
+
+                                                                            <Box sx={{ mt: 2 }} />
+                                                                            <Typography variant="subtitle2">Deductions</Typography>
+                                                                            {getDeductions(r).length > 0 ? (
+                                                                                getDeductions(r).map((d, idx) => (
+                                                                                    <Box key={`deduction-${r.employee_id}-${d.type_id ?? idx}`} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.5 }}>
+                                                                                        <Typography variant="body2">{d.name}</Typography>
+                                                                                        <Typography variant="body2">{formatAmount(d.amount)}</Typography>
+                                                                                    </Box>
+                                                                                ))
+                                                                            ) : (
+                                                                                <Typography variant="body2" color="textSecondary">
+                                                                                    No deductions.
+                                                                                </Typography>
+                                                                            )}
+
+                                                                            <Box sx={{ mt: 2 }} />
                                                                             <Typography variant="subtitle2">Order Deductions</Typography>
                                                                             {r.order_deductions && r.order_deductions.length > 0 ? (
                                                                                 r.order_deductions.map((o) => {
                                                                                     const alreadyDeducted = !!o.deducted_at;
                                                                                     return (
                                                                                         <Box
-                                                                                            key={`order-${o.id}`}
+                                                                                            key={`order-${o.id ?? o.name ?? Math.random()}`}
                                                                                             sx={{
                                                                                                 display: 'flex',
                                                                                                 justifyContent: 'space-between',
@@ -176,7 +241,7 @@ const PayrollPreview = ({ period: initialPeriod, token: initialToken }) => {
                                                                                             }}
                                                                                         >
                                                                                             <Typography variant="body2">{o.paid_at ? new Date(o.paid_at).toLocaleString() : '—'}</Typography>
-                                                                                            <Typography variant="body2">{Number(o.amount || 0).toLocaleString()}</Typography>
+                                                                                            <Typography variant="body2">{formatAmount(o.amount)}</Typography>
                                                                                             <Box sx={{ textAlign: 'right' }}>
                                                                                                 <Typography variant="caption" color="textSecondary">
                                                                                                     {o.note || ''}

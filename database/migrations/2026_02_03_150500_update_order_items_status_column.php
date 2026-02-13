@@ -11,6 +11,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // Use raw SQL for modification to avoid doctrine/dbal dependency issues
         // and handle ENUM to STRING conversion reliably
         DB::statement("ALTER TABLE order_items MODIFY COLUMN status VARCHAR(50) NOT NULL DEFAULT 'pending'");
