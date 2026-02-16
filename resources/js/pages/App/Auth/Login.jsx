@@ -4,7 +4,7 @@ import AppAuthLayout from '@/layouts/app/app-auth-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
-const Login = () => {
+const Login = ({ routes }) => {
     const [activeTab, setActiveTab] = useState('signin');
     const { data, setData, post, processing, errors, reset, transform } = useForm({
         employee_id: '',
@@ -17,7 +17,11 @@ const Login = () => {
 
             <AppAuthLayout>
                 {/* Active Page */}
-                {activeTab === 'signin' ? <SignIn setActiveTab={setActiveTab} data={data} setData={setData} post={post} processing={processing} errors={errors} /> : <EmployeeSignIn setActiveTab={setActiveTab} data={data} setData={setData} post={post} processing={processing} errors={errors} transform={transform} />}
+                {activeTab === 'signin' ? (
+                    <SignIn setActiveTab={setActiveTab} data={data} setData={setData} post={post} processing={processing} errors={errors} routes={routes} />
+                ) : (
+                    <EmployeeSignIn setActiveTab={setActiveTab} data={data} setData={setData} post={post} processing={processing} errors={errors} transform={transform} routes={routes} />
+                )}
             </AppAuthLayout>
         </>
     );

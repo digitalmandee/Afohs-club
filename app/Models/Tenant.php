@@ -16,6 +16,12 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return [
             'id',
             'name',
+            'branch_id',
+            'status',
+            'printer_ip',
+            'printer_port',
+            'expeditor_printer_ip',
+            'expeditor_printer_port',
         ];
     }
 

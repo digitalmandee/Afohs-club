@@ -3,6 +3,7 @@ import { Box, Button, Card, CardContent, TextField, Typography, Alert, CircularP
 import { Print, CheckCircle, Error } from '@mui/icons-material';
 import axios from 'axios';
 import POSLayout from "@/components/POSLayout";
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -24,7 +25,7 @@ export default function PrinterTest() {
         setResult(null);
 
         try {
-            const response = await axios.post(route('printer.test'), {
+            const response = await axios.post(route(routeNameForContext('printer.test')), {
                 printer_ip: printerIp,
                 printer_port: parseInt(printerPort) || 9100,
             });

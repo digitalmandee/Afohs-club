@@ -16,7 +16,7 @@ class AuthenticateTenant
 
         if (Auth::guard($guard)->check()) {
             // Compare logged-in tenant vs current tenant
-            $loggedInTenant = session('tenant_id');
+            $loggedInTenant = session('active_restaurant_id');
 
             if ($loggedInTenant && $loggedInTenant !== $currentTenant) {
                 TenantLogout::logout($request);
@@ -54,8 +54,9 @@ class AuthenticateTenant
             return redirect()->route('tenant.login', ['tenant' => $currentTenant]);
         }
 
-        // Always store tenant in session
-        session(['tenant_id' => $currentTenant]);
+        session([
+            'active_restaurant_id' => $currentTenant,
+        ]);
 
         return $next($request);
     }

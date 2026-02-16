@@ -41,6 +41,7 @@ import { MdMenuBook } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 import { FaKitchenSet } from 'react-icons/fa6';
 import { FiPrinter } from "react-icons/fi";
+import { isPosPath, routeNameForContext } from '@/lib/utils';
 
 
 const drawerWidthOpen = 240;
@@ -113,6 +114,7 @@ export default function SideNav({ open, setOpen }) {
     const auth = rawAuth || {};
     const role = auth.role || '';
     const permissions = Array.isArray(auth.permissions) ? auth.permissions : [];
+    const isPos = isPosPath(url);
 
     const [showNotification, setShowNotification] = React.useState(false);
     const [showProfile, setShowProfile] = React.useState(false);
@@ -124,93 +126,93 @@ export default function SideNav({ open, setOpen }) {
         {
             text: 'Dashboard',
             icon: <HomeIcon />,
-            path: route('tenant.dashboard'),
+            path: isPos ? route('pos.dashboard') : route('tenant.dashboard'),
         },
         {
             text: 'Order Management',
             icon: <MdOutlineManageAccounts style={{ width: 25, height: 25 }} />,
-            path: route('order.management'),
+            path: route(routeNameForContext('order.management', url)),
         },
         {
             text: 'Order History',
             icon: <MdManageHistory style={{ width: 25, height: 25 }} />,
-            path: route('order.history'),
+            path: route(routeNameForContext('order.history', url)),
         },
         {
             text: 'Reservations',
             icon: <RiReservedLine style={{ width: 25, height: 25 }} />,
-            path: route('reservations.index'),
+            path: route(routeNameForContext('reservations.index', url)),
         },
         {
             text: 'Table Management',
-            path: route('table.management'),
+            path: route(routeNameForContext('table.management', url)),
             icon: <img src="/assets/Tablemanage.svg" alt="Table Icon" className="svg-img-icon" style={{ width: 20, height: 20 }} />,
         },
         {
             text: 'Products / Menu',
             icon: <MdOutlineRestaurantMenu />,
-            path: route('inventory.index'),
+            path: route(routeNameForContext('inventory.index', url)),
         },
         {
             text: 'Categories',
             icon: <CategoryIcon />,
-            path: route('inventory.category'),
+            path: route(routeNameForContext('inventory.category', url)),
         },
         {
             text: 'Sub Categories',
             icon: <CategoryIcon />,
-            path: route('sub-categories.index'),
+            path: route(routeNameForContext('sub-categories.index', url)),
         },
         {
             text: 'Ingredients',
             icon: <InventoryIcon />,
-            path: route('ingredients.index'),
+            path: route(routeNameForContext('ingredients.index', url)),
         },
         {
             text: 'Units',
             icon: <ScaleIcon />,
-            path: route('units.index'),
+            path: route(routeNameForContext('units.index', url)),
         },
         {
             text: 'Manufacturers',
             icon: <InventoryIcon />,
-            path: route('manufacturers.index'),
+            path: route(routeNameForContext('manufacturers.index', url)),
         },
         {
             text: 'Cake Bookings',
             icon: <MdMenuBook style={{ height: '25px', width: '25px' }} />,
-            path: route('cake-bookings.index'),
+            path: route(routeNameForContext('cake-bookings.index', url)),
         },
         {
             text: 'Cake Types',
             icon: <MdOutlineCake style={{ height: '25px', width: '25px' }} />,
-            path: route('cake-types.index'),
+            path: route(routeNameForContext('cake-types.index', url)),
         },
         {
             text: 'Printer Test',
             icon: <FiPrinter style={{ height: '25px', width: '25px' }} />,
-            path: route('printer.index'),
+            path: route(routeNameForContext('printer.index', url)),
         },
         {
             text: 'Kitchen',
             icon: <FaKitchenSet style={{ width: 25, height: 25 }} />,
-            path: route('kitchen.index'),
+            path: route(routeNameForContext('kitchen.index', url)),
             permission: 'kitchen',
         },
         {
             text: 'Transactions',
             icon: <PaymentsIcon />,
-            path: route('transaction.history'),
+            path: route(routeNameForContext('transaction.history', url)),
         },
         {
             text: 'Guests',
             icon: <IoPeople style={{ height: 20, width: 20 }} />,
-            path: route('customers.index'),
+            path: route(routeNameForContext('customers.index', url)),
         },
         {
             text: 'Settings',
             icon: <SettingsIcon />,
-            path: route('setting.index'),
+            path: route(routeNameForContext('setting.index', url)),
         },
     ];
 
@@ -245,7 +247,7 @@ export default function SideNav({ open, setOpen }) {
         const handleKeyDown = (e) => {
             if (e.key === 'F12') {
                 e.preventDefault();
-                router.visit(route('order.management'));
+                router.visit(route(routeNameForContext('order.management', url)));
             }
         };
         window.addEventListener('keydown', handleKeyDown);
@@ -452,7 +454,7 @@ export default function SideNav({ open, setOpen }) {
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
                                 }}
-                                onClick={() => router.visit(route('order.new'))}
+                                onClick={() => router.visit(route(routeNameForContext('order.new', url)))}
                             >
                                 {open ? '+ New Order' : '+'}
                             </Button>

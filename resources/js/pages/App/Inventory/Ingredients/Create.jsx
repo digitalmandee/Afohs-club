@@ -4,6 +4,7 @@ import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-materia
 import { router } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import POSLayout from "@/components/POSLayout";
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -33,7 +34,7 @@ const CreateIngredient = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('ingredients.store'), {
+        post(route(routeNameForContext('ingredients.store')), {
             onSuccess: () => {
                 // Will redirect automatically on success
             },
@@ -53,7 +54,7 @@ const CreateIngredient = () => {
 
                 {/* Header */}
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <IconButton onClick={() => router.visit(route('ingredients.index'))}>
+                    <IconButton onClick={() => router.visit(route(routeNameForContext('ingredients.index')))}>
                         <ArrowBackIcon sx={{ color: '#063455' }} />
                     </IconButton>
                     <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
@@ -138,7 +139,7 @@ const CreateIngredient = () => {
                                     <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
                                         <Button
                                             variant="outlined"
-                                            onClick={() => router.visit(route('ingredients.index'))}
+                                            onClick={() => router.visit(route(routeNameForContext('ingredients.index')))}
                                             disabled={processing}
                                             sx={{ textTransform: 'none', border: '1px solid #063455', borderRadius: '16px' }}
                                         >
@@ -147,7 +148,7 @@ const CreateIngredient = () => {
                                         <Button
                                             type="submit"
                                             variant="contained"
-                                            // startIcon={<SaveIcon />} 
+                                            // startIcon={<SaveIcon />}
                                             disabled={processing}
                                             sx={{
                                                 backgroundColor: '#063455',

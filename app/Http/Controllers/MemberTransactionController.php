@@ -8,11 +8,7 @@ use App\Models\CorporateMember;
 use App\Models\FinancialChargeType;
 use App\Models\FinancialInvoice;
 use App\Models\FinancialInvoiceItem;
-use App\Models\FinancialReceipt;
-use App\Models\MaintenanceFee;
 use App\Models\Member;
-use App\Models\MemberCategory;
-use App\Models\Membership;
 use App\Models\Subscription;
 use App\Models\SubscriptionCategory;
 use App\Models\SubscriptionType;
@@ -24,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MemberTransactionController extends Controller
 {
@@ -319,85 +314,90 @@ class MemberTransactionController extends Controller
             // 3. One-Time Membership Fee Validation
             // 3b. Maintenance/Subscription Date Conflict Validation
             foreach ($request->items as $index => $item) {
-                $feeType = $item['fee_type'] ?? '';
-                $validFrom = $item['valid_from'] ?? null;
-                $validTo = $item['valid_to'] ?? null;
+                $feeTypeInput = $item['fee_type'] ?? '';
+                $transactionType = is_numeric($feeTypeInput) ? \App\Models\TransactionType::find(intval($feeTypeInput)) : null;
+                $feeCategory = $transactionType ? intval($transactionType->type) : (is_numeric($feeTypeInput) ? intval($feeTypeInput) : $feeTypeInput);
 
-                if (in_array($feeType, ['maintenance_fee', 'subscription_fee'])) {
-                    if (!$validFrom || !$validTo) {
-                        // Ideally caught by front-end, but safe to fail here
+                $validFrom = $item['valid_from'] ?? $item['start_date'] ?? null;
+                $validTo = $item['valid_to'] ?? $item['end_date'] ?? null;
+
+                $isMaintenance = ($feeTypeInput === 'maintenance_fee') || ($feeCategory === AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE);
+                $isSubscription = ($feeTypeInput === 'subscription_fee') || ($feeCategory === AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION);
+
+                if (!($isMaintenance || $isSubscription)) {
+                    continue;
+                }
+
+                if (!$validFrom || !$validTo) {
+                    continue;
+                }
+
+                $scopeMember = function ($q) use ($memberId, $corporateId, $customerId) {
+                    if ($memberId)
+                        $q->where('member_id', $memberId);
+                    elseif ($corporateId)
+                        $q->where('corporate_member_id', $corporateId);
+                    elseif ($customerId)
+                        $q->where('customer_id', $customerId);
+                };
+
+                if ($isMaintenance) {
+                    $legacyConflict = FinancialInvoice::query()
+                        ->where($scopeMember)
+                        ->where('status', '!=', 'cancelled')
+                        ->whereIn('fee_type', ['maintenance_fee', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE])
+                        ->where(function ($q) use ($validFrom, $validTo) {
+                            $q
+                                ->where('valid_from', '<=', $validTo)
+                                ->where('valid_to', '>=', $validFrom);
+                        })
+                        ->exists();
+
+                    $itemConflict = \App\Models\FinancialInvoiceItem::whereHas('invoice', function ($q) use ($scopeMember) {
+                        $q->where('status', '!=', 'cancelled')->where($scopeMember);
+                    })
+                        ->whereIn('fee_type', ['maintenance_fee', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE])
+                        ->where(function ($q) use ($validFrom, $validTo) {
+                            $q
+                                ->where('start_date', '<=', $validTo)
+                                ->where('end_date', '>=', $validFrom);
+                        })
+                        ->exists();
+
+                    if ($legacyConflict || $itemConflict) {
+                        return response()->json(['errors' => ["items.$index.fee_type" => ["Maintenance Fee overlaps with an existing period ($validFrom to $validTo)."]]], 422);
+                    }
+                }
+
+                if ($isSubscription) {
+                    $subTypeId = $item['subscription_type_id'] ?? null;
+                    if (!$subTypeId)
                         continue;
-                    }
 
-                    // Common scope for member
-                    $scopeMember = function ($q) use ($memberId, $corporateId, $customerId) {
-                        if ($memberId)
-                            $q->where('member_id', $memberId);
-                        elseif ($corporateId)
-                            $q->where('corporate_member_id', $corporateId);
-                        elseif ($customerId)
-                            $q->where('customer_id', $customerId);
-                    };
-
-                    // Maintenance Fee Check
-                    if ($feeType === 'maintenance_fee') {
-                        // Check Legacy
-                        $legacyConflict = FinancialInvoice::query()
-                            ->where($scopeMember)
-                            ->where('status', '!=', 'cancelled')
-                            ->whereIn('fee_type', ['maintenance_fee', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE])
-                            ->where(function ($q) use ($validFrom, $validTo) {
-                                $q
-                                    ->where('valid_from', '<=', $validTo)
-                                    ->where('valid_to', '>=', $validFrom);
-                            })
-                            ->exists();
-
-                        // Check New Items
-                        $itemConflict = \App\Models\FinancialInvoiceItem::whereHas('invoice', function ($q) use ($scopeMember) {
-                            $q->where('status', '!=', 'cancelled')->where($scopeMember);
+                    $itemConflict = \App\Models\FinancialInvoiceItem::whereHas('invoice', function ($q) use ($scopeMember) {
+                        $q->where('status', '!=', 'cancelled')->where($scopeMember);
+                    })
+                        ->whereIn('fee_type', ['subscription_fee', AppConstants::TRANSACTION_TYPE_ID_SUBSCRIPTION])
+                        ->where('subscription_type_id', $subTypeId)
+                        ->where(function ($q) use ($validFrom, $validTo) {
+                            $q
+                                ->where('start_date', '<=', $validTo)
+                                ->where('end_date', '>=', $validFrom);
                         })
-                            ->whereIn('fee_type', ['maintenance_fee', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE])
-                            ->where(function ($q) use ($validFrom, $validTo) {
-                                // Overlap: Start <= End2 AND End >= Start2
-                                $q
-                                    ->where('start_date', '<=', $validTo)
-                                    ->where('end_date', '>=', $validFrom);
-                            })
-                            ->exists();
+                        ->exists();
 
-                        if ($legacyConflict || $itemConflict) {
-                            return response()->json(['errors' => ["items.$index.fee_type" => ["Maintenance Fee overlaps with an existing period ($validFrom to $validTo)."]]], 422);
-                        }
-                    }
-
-                    // Subscription Fee Check
-                    if ($feeType === 'subscription_fee') {
-                        $subTypeId = $item['subscription_type_id'] ?? null;
-                        if (!$subTypeId)
-                            continue;
-
-                        // Check New Items
-                        $itemConflict = \App\Models\FinancialInvoiceItem::whereHas('invoice', function ($q) use ($scopeMember) {
-                            $q->where('status', '!=', 'cancelled')->where($scopeMember);
-                        })
-                            ->where('fee_type', 'subscription_fee')
-                            ->where('subscription_type_id', $subTypeId)
-                            ->where(function ($q) use ($validFrom, $validTo) {
-                                $q
-                                    ->where('start_date', '<=', $validTo)
-                                    ->where('end_date', '>=', $validFrom);
-                            })
-                            ->exists();
-
-                        if ($itemConflict) {
-                            return response()->json(['errors' => ["items.$index.fee_type" => ['Subscription for this type overlaps with an existing period.']]], 422);
-                        }
+                    if ($itemConflict) {
+                        return response()->json(['errors' => ["items.$index.fee_type" => ['Subscription for this type overlaps with an existing period.']]], 422);
                     }
                 }
             }
-            // 3. One-Time Membership Fee Validation
-            $isMembershipFee = collect($request->items)->contains('fee_type', 'membership_fee');
+
+            $isMembershipFee = collect($request->items)->contains(function ($item) {
+                $feeTypeInput = $item['fee_type'] ?? '';
+                $transactionType = is_numeric($feeTypeInput) ? \App\Models\TransactionType::find(intval($feeTypeInput)) : null;
+                $feeCategory = $transactionType ? intval($transactionType->type) : (is_numeric($feeTypeInput) ? intval($feeTypeInput) : $feeTypeInput);
+                return ($feeTypeInput === 'membership_fee') || ($feeCategory === AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP);
+            });
             if ($isMembershipFee) {
                 $exists = FinancialInvoice::query()
                     ->where(function ($q) use ($memberId, $corporateId, $customerId) {
@@ -413,7 +413,7 @@ class MemberTransactionController extends Controller
                         $q
                             ->where('fee_type', 'membership_fee')
                             ->orWhereHas('items', function ($sub) {
-                                $sub->where('fee_type', 'membership_fee');
+                                $sub->whereIn('fee_type', ['membership_fee', AppConstants::TRANSACTION_TYPE_ID_MEMBERSHIP]);
                             });
                     })
                     ->exists();

@@ -12,6 +12,7 @@ import { Close as CloseIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import POSLayout from "@/components/POSLayout";
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -65,7 +66,7 @@ const Dashboard = () => {
     // Fetch orders for selected date
     const getAllOrders = async (date, order_type) => {
         try {
-            const { data } = await axios.get(route('order.all', { date, order_type }));
+            const { data } = await axios.get(route(routeNameForContext('order.all'), { date, order_type }));
             return data.orders; // return orders without setting state here
         } catch (err) {
             console.log(err);
@@ -75,7 +76,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         // Generate next 7 days from today
-        axios.get(route('order.weekly-overview')).then((res) => {
+        axios.get(route(routeNameForContext('order.weekly-overview'))).then((res) => {
             setWeekDays(res.data.week_days);
             // default select first day (today)
             setSelectedDate(new Date(res.data.week_days[0].date));
@@ -96,7 +97,7 @@ const Dashboard = () => {
     const getOrderReservtions = (date) => {
         setLoading(true); // start loader
         axios
-            .get(route('order.reservations', { date, limit: 5 }))
+            .get(route(routeNameForContext('order.reservations'), { date, limit: 5 }))
             .then((res) => setOrderReservtions(res.data.orders))
             .catch((err) => console.log(err))
             .finally(() => setLoading(false)); // stop loader
@@ -117,7 +118,7 @@ const Dashboard = () => {
         }
 
         router.post(
-            route('reservations.cancel', selectedReservation.id),
+            route(routeNameForContext('reservations.cancel'), selectedReservation.id),
             { cancellation_reason: cancelReservationReason },
             {
                 onSuccess: () => {
@@ -662,7 +663,7 @@ const Dashboard = () => {
                                                             size="small"
                                                             onClick={() => {
                                                                 if (item.status === 'pending') {
-                                                                    router.visit(route('order.menu', { reservation_id: item.id, order_type: 'reservation' }));
+                                                                    router.visit(route(routeNameForContext('order.menu'), { reservation_id: item.id, order_type: 'reservation' }));
                                                                 }
                                                             }}
                                                             startIcon={
@@ -1286,7 +1287,7 @@ const Dashboard = () => {
                                                 // marginLeft: drawerWidthOpen ? '5px' : '0px',
                                                 cursor: 'pointer',
                                             }}
-                                            onClick={() => router.visit(route('order.management'))}
+                                            onClick={() => router.visit(route(routeNameForContext('order.management')))}
                                         />
                                     </Box>
                                 </Box>

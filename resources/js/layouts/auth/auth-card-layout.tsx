@@ -2,6 +2,7 @@ import AppLogoIcon from '@/components/app-logo-icon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
+import { route } from 'ziggy-js';
 
 export default function AuthCardLayout({
     children,

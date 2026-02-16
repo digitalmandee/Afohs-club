@@ -12,6 +12,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import CancelIcon from '@mui/icons-material/Cancel';
 import { enqueueSnackbar } from 'notistack';
+import { routeNameForContext } from '@/lib/utils';
 
 const Reservations = () => {
     const { reservations, filters, tenant } = usePage().props;
@@ -37,7 +38,7 @@ const Reservations = () => {
     const debouncedSearch = useMemo(
         () =>
             debounce((value) => {
-                router.get(route('reservations.index'), { search: value }, { preserveState: true });
+                router.get(route(routeNameForContext('reservations.index')), { search: value }, { preserveState: true });
             }, 500),
         [],
     );
@@ -65,7 +66,7 @@ const Reservations = () => {
         }
 
         router.post(
-            route('reservations.cancel', selectedReservation.id),
+            route(routeNameForContext('reservations.cancel'), selectedReservation.id),
             { cancellation_reason: cancelReason },
             {
                 onSuccess: () => {
@@ -223,7 +224,7 @@ const Reservations = () => {
                                                         {/* Show only if pending */}
                                                         {reservation.status === 'pending' && (
                                                             <>
-                                                                <Button onClick={() => router.visit(route('order.menu', { reservation_id: reservation.id, order_type: 'dineIn' }))} size="small" variant="contained" color="primary" startIcon={<ShoppingCartIcon />}></Button>
+                                                                <Button onClick={() => router.visit(route(routeNameForContext('order.menu'), { reservation_id: reservation.id, order_type: 'dineIn' }))} size="small" variant="contained" color="primary" startIcon={<ShoppingCartIcon />}></Button>
                                                             </>
                                                         )}
                                                         <Button onClick={() => handleInvoiceClick(reservation)} size="small" variant="contained" color="secondary" startIcon={<ReceiptLongIcon />}></Button>

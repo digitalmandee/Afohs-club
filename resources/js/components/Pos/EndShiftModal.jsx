@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from '@mui/material';
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
+import { routeNameForContext } from '@/lib/utils';
 
 const EndShiftModal = ({ open, onClose, onSuccess }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -10,7 +11,7 @@ const EndShiftModal = ({ open, onClose, onSuccess }) => {
     const handleEndShift = async () => {
         setLoading(true);
         try {
-            const response = await axios.post(route('pos-shifts.end'));
+            const response = await axios.post(route(routeNameForContext('pos-shifts.end')));
 
             if (response.data.success) {
                 enqueueSnackbar('Shift ended successfully.', { variant: 'success' });

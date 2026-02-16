@@ -1,5 +1,6 @@
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 import { Close as CloseIcon, Edit as EditIcon, Print as PrintIcon, Save as SaveIcon } from '@mui/icons-material';
 import { Avatar, Box, Button, Chip, Divider, Grid, IconButton, TextField, Dialog, Paper, Typography, MenuItem, DialogContent, DialogTitle, Autocomplete, InputAdornment } from '@mui/material';
 import { enqueueSnackbar } from 'notistack';
@@ -74,7 +75,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
 
     useEffect(() => {
         axios
-            .get(route('setting.showTax'))
+            .get(route(routeNameForContext('setting.showTax')))
             .then((response) => {
                 setSetting(response.data);
                 setTempTax(response.data.tax?.toString() || '0');
@@ -153,11 +154,11 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
         const payload = objectToFormData(newPayload);
 
         await axios
-            .post(route('order.send-to-kitchen'), payload)
+            .post(route(routeNameForContext('order.send-to-kitchen')), payload)
             .then((res) => {
                 console.log('Server response:', res.data);
                 enqueueSnackbar(res.data?.message || 'Your order has been successfully sent to the kitchen!', { variant: 'success' });
-                router.visit(route('order.new'));
+                router.visit(route(routeNameForContext('order.new')));
             })
             .catch((error) => {
                 console.log(error);
@@ -447,7 +448,7 @@ const OrderDetail = ({ handleEditItem, is_new_order }) => {
     }, [handleTaxEditClick, handleSendToKitchen, handleClearOrderItems, handleOpen, orderDetails]);
 
     useEffect(() => {
-        axios.get(route('waiters.all')).then((res) => setWaiters(res.data.waiters));
+        axios.get(route(routeNameForContext('waiters.all'))).then((res) => setWaiters(res.data.waiters));
     }, []);
 
     return (

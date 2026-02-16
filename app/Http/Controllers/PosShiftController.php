@@ -9,16 +9,22 @@ use Illuminate\Support\Facades\Auth;
 
 class PosShiftController extends Controller
 {
+    private function restaurantId(Request $request = null)
+    {
+        $request = $request ?? request();
+        return $request->session()->get('active_restaurant_id') ?? tenant('id');
+    }
+
     /**
      * Get shift history for the current user.
      */
     public function history()
     {
         $user = Auth::user();
-        // $tenantId = tenant('id'); // Scoped by User, not Tenant
+        $tenantId = $this->restaurantId();
 
         $shifts = PosShift::where('user_id', $user->id)
-            // ->where('tenant_id', $tenantId)
+            ->where('tenant_id', $tenantId)
             ->latest()
             ->limit(50)
             ->get();
@@ -32,12 +38,12 @@ class PosShiftController extends Controller
     public function status()
     {
         $user = Auth::user();
-        // $tenantId = tenant('id');
+        $tenantId = $this->restaurantId();
         $today = Carbon::today()->toDateString();
 
         // Check for an active shift for today (User Global)
         $activeShift = PosShift::where('user_id', $user->id)
-            // ->where('tenant_id', $tenantId)
+            ->where('tenant_id', $tenantId)
             ->where('status', 'active')
             // ->whereDate('start_date', $today) // Allow persistent shifts across dates
             ->with('tenant:id,name')  // Load tenant name
@@ -58,11 +64,11 @@ class PosShiftController extends Controller
         // No input validation needed as we auto-set date/time
 
         $user = Auth::user();
-        $tenantId = tenant('id');
+        $tenantId = $this->restaurantId($request);
 
         // Prevent double shift (User Global)
         $existingShift = PosShift::where('user_id', $user->id)
-            // ->where('tenant_id', $tenantId)
+            ->where('tenant_id', $tenantId)
             ->where('status', 'active')
             ->first();
 
@@ -96,10 +102,10 @@ class PosShiftController extends Controller
     public function end()
     {
         $user = Auth::user();
-        // $tenantId = tenant('id');
+        $tenantId = $this->restaurantId();
 
         $activeShift = PosShift::where('user_id', $user->id)
-            // ->where('tenant_id', $tenantId)
+            ->where('tenant_id', $tenantId)
             ->where('status', 'active')
             ->latest()
             ->first();
@@ -109,6 +115,7 @@ class PosShiftController extends Controller
         // 1. Status is NOT 'completed' AND NOT 'cancelled'
         // 2. OR Payment Status is NOT 'paid' OR 'awaiting' (unless cancelled)
         $incompleteOrders = \App\Models\Order::where('created_by', $user->id)
+            ->where('tenant_id', $tenantId)
             ->where(function ($query) {
                 $query
                     ->whereNotIn('status', ['completed', 'cancelled'])

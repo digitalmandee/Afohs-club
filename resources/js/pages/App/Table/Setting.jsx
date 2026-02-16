@@ -2,6 +2,7 @@ import { router } from '@inertiajs/react';
 import { Add, ArrowBack } from '@mui/icons-material';
 import { Box, Button, CircularProgress, IconButton, Paper, Switch, Typography } from '@mui/material';
 import { useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const TableSetting = ({ floorsdata, tablesData }) => {
     const [processingId, setProcessingId] = useState(null);
@@ -10,7 +11,7 @@ const TableSetting = ({ floorsdata, tablesData }) => {
         setProcessingId(id);
 
         router.put(
-            route('floors.toggleStatus', { id: id }),
+            route(routeNameForContext('floors.toggleStatus'), { id: id }),
             {
                 status: newStatus,
             },
@@ -69,7 +70,7 @@ const TableSetting = ({ floorsdata, tablesData }) => {
                     variant="outlined"
                     fullWidth
                     startIcon={<Add />}
-                    onClick={() => router.visit(route('floors.createOrEdit'))}
+                    onClick={() => router.visit(route(routeNameForContext('floors.createOrEdit')))}
                     sx={{
                         mb: 2,
                         py: 1.5,
@@ -130,7 +131,7 @@ const TableSetting = ({ floorsdata, tablesData }) => {
 
                         {processingId === floor.id ? <CircularProgress size={18} thickness={5} sx={{ mx: 1 }} /> : <Switch checked={floor.status} onChange={(e) => handleToggle(floor.id, e.target.checked)} size="small" disabled={processingId !== null} />}
 
-                        <img src="/assets/edit.png" alt="Edit" style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }} onClick={() => router.visit(route('floors.edit', { id: floor.id }))} />
+                        <img src="/assets/edit.png" alt="Edit" style={{ width: 20, height: 20, marginLeft: 15, cursor: 'pointer' }} onClick={() => router.visit(route(routeNameForContext('floors.edit'), { id: floor.id }))} />
                     </Paper>
                 ))}
             </Box>

@@ -10,6 +10,7 @@ import axios from 'axios';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -48,7 +49,7 @@ export default function Index({ bookings, filters, cashiers }) {
     const handleApplyFilters = () => {
         // When searching, we might want to reset status to active? Or keep current?
         // User might search for a cancelled booking.
-        router.get(route('cake-bookings.index'), { ...filterState, page: 1 }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('cake-bookings.index')), { ...filterState, page: 1 }, { preserveState: true, replace: true });
     };
 
     // Auto-refresh when status tab changes
@@ -57,7 +58,7 @@ export default function Index({ bookings, filters, cashiers }) {
     }, [filterState.status]);
 
     const handlePageChange = (event, value) => {
-        router.get(route('cake-bookings.index'), { ...filterState, page: value }, { preserveState: true, preserveScroll: true });
+        router.get(route(routeNameForContext('cake-bookings.index')), { ...filterState, page: value }, { preserveState: true, preserveScroll: true });
     };
 
     // Calculate Page Totals
@@ -80,7 +81,7 @@ export default function Index({ bookings, filters, cashiers }) {
                 if (!inputValue) return;
                 setLoadingSuggestions(true);
                 axios
-                    .get(route('api.orders.search-customers'), { params: { query: inputValue, type } })
+                    .get(route(routeNameForContext('api.orders.search-customers')), { params: { query: inputValue, type } })
                     .then((response) => {
                         const formatted = response.data.map((item) => ({
                             ...item,
@@ -168,7 +169,7 @@ export default function Index({ bookings, filters, cashiers }) {
                             variant="contained"
                             startIcon={<Add />}
                             component={Link}
-                            href={route('cake-bookings.create')}
+                            href={route(routeNameForContext('cake-bookings.create'))}
                             sx={{
                                 bgcolor: '#063455',
                                 borderRadius: '16px',
@@ -526,7 +527,7 @@ export default function Index({ bookings, filters, cashiers }) {
                                         discounted_taxed: 'All',
                                         cashier_id: '',
                                     });
-                                    router.get(route('cake-bookings.index')); // Reset
+                                    router.get(route(routeNameForContext('cake-bookings.index'))); // Reset
                                 }}
                                 sx={{
                                     borderRadius: '16px',
@@ -613,7 +614,7 @@ export default function Index({ bookings, filters, cashiers }) {
                                                 )}
                                             </TableCell>
                                             <TableCell align="center">
-                                                <a href={route('cake-bookings.print', booking.id)} target="_blank" rel="noreferrer">
+                                                <a href={route(routeNameForContext('cake-bookings.print'), booking.id)} target="_blank" rel="noreferrer">
                                                     <Print fontSize="small" color="action" />
                                                 </a>
                                             </TableCell>
@@ -624,7 +625,7 @@ export default function Index({ bookings, filters, cashiers }) {
                                                         onClick={() => {
                                                             if (confirm('Are you sure you want to cancel this booking?')) {
                                                                 router.put(
-                                                                    route('cake-bookings.update', booking.id),
+                                                                    route(routeNameForContext('cake-bookings.update'), booking.id),
                                                                     {
                                                                         status: 'cancelled',
                                                                         // Preserve other fields to avoid validation errors if controller requires them?
@@ -648,7 +649,7 @@ export default function Index({ bookings, filters, cashiers }) {
                                                 )}
                                             </TableCell>
                                             <TableCell align="center">
-                                                <Link href={route('cake-bookings.edit', booking.id)}>
+                                                <Link href={route(routeNameForContext('cake-bookings.edit'), booking.id)}>
                                                     <Edit fontSize="small" sx={{ fontSize: 16, color: 'text.secondary' }} />
                                                 </Link>
                                             </TableCell>

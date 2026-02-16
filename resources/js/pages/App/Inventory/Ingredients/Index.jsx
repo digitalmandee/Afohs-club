@@ -3,6 +3,7 @@ import { Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell
 import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility as ViewIcon, AddBox as AddStockIcon, Warning as WarningIcon, CheckCircle as CheckCircleIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import POSLayout from "@/components/POSLayout";
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -20,7 +21,7 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
         if (statusFilter !== 'all') params.set('status', statusFilter);
         if (stockFilter !== 'all') params.set('stock_level', stockFilter);
 
-        router.visit(`${route('ingredients.index')}?${params.toString()}`);
+        router.visit(`${route(routeNameForContext('ingredients.index'))}?${params.toString()}`);
     };
 
     // Handle filter reset
@@ -28,7 +29,7 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
         setSearchQuery('');
         setStatusFilter('all');
         setStockFilter('all');
-        router.visit(route('ingredients.index'));
+        router.visit(route(routeNameForContext('ingredients.index')));
     };
 
     // Get status color
@@ -94,7 +95,7 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => router.visit(route('ingredients.create'))}
+                        onClick={() => router.visit(route(routeNameForContext('ingredients.create')))}
                         sx={{
                             backgroundColor: '#063455',
                             borderRadius: '16px',
@@ -392,12 +393,12 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                                         <TableCell>
                                             <Box sx={{ display: 'flex', gap: 1 }}>
                                                 <Tooltip title="View Details">
-                                                    <IconButton size="small" onClick={() => router.visit(route('ingredients.show', ingredient.id))}>
+                                                    <IconButton size="small" onClick={() => router.visit(route(routeNameForContext('ingredients.show'), ingredient.id))}>
                                                         <ViewIcon />
                                                     </IconButton>
                                                 </Tooltip>
                                                 <Tooltip title="Edit">
-                                                    <IconButton size="small" onClick={() => router.visit(route('ingredients.edit', ingredient.id))}>
+                                                    <IconButton size="small" onClick={() => router.visit(route(routeNameForContext('ingredients.edit'), ingredient.id))}>
                                                         <EditIcon />
                                                     </IconButton>
                                                 </Tooltip>
@@ -405,7 +406,7 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                                                     <IconButton
                                                         size="small"
                                                         color="success"
-                                                        onClick={() => router.visit(route('ingredients.add-stock.form', ingredient.id))}
+                                                        onClick={() => router.visit(route(routeNameForContext('ingredients.add-stock.form'), ingredient.id))}
                                                     >
                                                         <AddStockIcon />
                                                     </IconButton>
@@ -416,7 +417,7 @@ const IngredientsIndex = ({ ingredients, stats, filters }) => {
                                                         color="error"
                                                         onClick={() => {
                                                             if (confirm('Are you sure you want to delete this ingredient?')) {
-                                                                router.delete(route('ingredients.destroy', ingredient.id));
+                                                                router.delete(route(routeNameForContext('ingredients.destroy'), ingredient.id));
                                                             }
                                                         }}
                                                     >

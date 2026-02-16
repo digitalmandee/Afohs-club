@@ -11,6 +11,7 @@ import OrderDetail from './Detail';
 import OrderSaved from './Saved';
 import VariantSelectorDialog from './VariantSelectorDialog';
 import ShiftGate from '@/components/Pos/ShiftGate';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -63,7 +64,10 @@ const OrderMenu = () => {
 
         setIsSearching(true);
         try {
-            const url = searchMode === 'booking' ? route('api.cake-bookings.search') : route('order.search.products');
+            const url =
+                searchMode === 'booking'
+                    ? route(routeNameForContext('api.cake-bookings.search'))
+                    : route(routeNameForContext('order.search.products'));
             const params = searchMode === 'booking' ? { query: value.trim() } : { search: value.trim() };
 
             const response = await axios.get(url, { params });
@@ -255,12 +259,14 @@ const OrderMenu = () => {
     };
 
     useEffect(() => {
-        axios.get(route('products.categories'), { params: { tenant_id: selectedRestaurant } }).then((res) => setCategories(res.data.categories));
+        axios
+            .get(route(routeNameForContext('products.categories')), { params: { tenant_id: selectedRestaurant } })
+            .then((res) => setCategories(res.data.categories));
     }, [selectedRestaurant]);
 
     useEffect(() => {
         axios
-            .get(route('products.bycategory', { category_id: selectedCategory }), {
+            .get(route(routeNameForContext('products.bycategory'), { category_id: selectedCategory }), {
                 params: { order_type: orderDetails.order_type },
             })
             .then((res) => setProducts(res.data.products));
@@ -389,7 +395,7 @@ const OrderMenu = () => {
                                 // bgcolor: "white",
                             }}
                         >
-                            <IconButton onClick={() => router.visit(route('order.new'))} sx={{ mr: 1 }}>
+                            <IconButton onClick={() => router.visit(route(routeNameForContext('order.new')))} sx={{ mr: 1 }}>
                                 <ArrowBack />
                             </IconButton>
                             <Typography sx={{ color: '#063455', fontSize: '30px', fontWeight: 500 }}>Back</Typography>

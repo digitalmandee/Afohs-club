@@ -2,6 +2,7 @@ import { Avatar, Box, Button, Chip, CircularProgress, Divider, Grid, IconButton,
 import { Close as CloseIcon } from '@mui/icons-material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const OrderDetails = ({ orderId, onClose }) => {
     const [details, setDetails] = useState(null);
@@ -12,7 +13,7 @@ const OrderDetails = ({ orderId, onClose }) => {
         try {
             console.log(orderId);
 
-            const res = await axios.get(route('table.order.details', orderId));
+            const res = await axios.get(route(routeNameForContext('table.order.details'), orderId));
 
             if (res.data.success) {
                 setDetails({

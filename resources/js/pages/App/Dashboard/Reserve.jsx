@@ -7,6 +7,7 @@ import { router } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
+import { routeNameForContext } from '@/lib/utils';
 
 const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => {
     const [reservations, setReservations] = useState([]);
@@ -15,7 +16,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
     const [currentMonth, setCurrentMonth] = useState(selectedDate || new Date());
     const [monthDays, setMonthDays] = useState([]);
     const scrollContainerRef = useState(null);
-    
+
     // Cancel reservation state
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [selectedReservation, setSelectedReservation] = useState(null);
@@ -38,21 +39,21 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
         const firstDay = new Date(year, month, 1);
         const lastDay = new Date(year, month + 1, 0);
         const daysInMonth = lastDay.getDate();
-        
+
         const days = [];
-        
+
         // Generate all days of the month
         for (let day = 1; day <= daysInMonth; day++) {
             const currentDay = new Date(year, month, day);
             const dateString = currentDay.toISOString().split('T')[0];
-            
+
             // Try to get count from weekDays prop if available
             let count = 0;
             if (weekDays && weekDays.length > 0) {
                 const matchingDay = weekDays.find(wd => wd.date === dateString);
                 count = matchingDay?.orders_count || 0;
             }
-            
+
             days.push({
                 label: currentDay.toLocaleDateString('en-US', { weekday: 'short' }),
                 date: dateString,
@@ -60,7 +61,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
                 orders_count: count,
             });
         }
-        
+
         setMonthDays(days);
     };
 
@@ -98,7 +99,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
         setLoading(true);
         const dateString = date.toISOString().split('T')[0];
         axios
-            .get(route('order.reservations', { date: dateString }))
+            .get(route(routeNameForContext('order.reservations'), { date: dateString }))
             .then((res) => setReservations(res.data.orders || []))
             .catch((err) => console.error(err))
             .finally(() => setLoading(false));
@@ -137,7 +138,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
         }
 
         router.post(
-            route('reservations.cancel', selectedReservation.id),
+            route(routeNameForContext('reservations.cancel'), selectedReservation.id),
             { cancellation_reason: cancelReason },
             {
                 onSuccess: () => {
@@ -337,7 +338,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
                             <Typography variant="caption" sx={{ color: '#6b7280', fontWeight: 500, display: 'block', mb: 0.5 }}>
                                 {day.label}
                             </Typography>
-                            
+
                             {/* Badge at top right */}
                             {day.orders_count > 0 && (
                                 <Box
@@ -362,7 +363,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
                                     {day.orders_count}
                                 </Box>
                             )}
-                            
+
                             <Typography variant="h6" sx={{ fontWeight: 500 }}>
                                 {day.dayNum}
                             </Typography>
@@ -577,7 +578,7 @@ const ReservationOrder = ({ selectedDate, onClose, weekDays, onDateChange }) => 
                                                 size="small"
                                                 onClick={() => {
                                                     if (item.status === 'pending') {
-                                                        router.visit(route('order.menu', { reservation_id: item.id, order_type: 'reservation' }));
+                                                        router.visit(route(routeNameForContext('order.menu'), { reservation_id: item.id, order_type: 'reservation' }));
                                                     }
                                                 }}
                                                 startIcon={

@@ -5,11 +5,10 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class Table extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory;
 
     // Allow mass assignment for these attributes
     protected $fillable = ['floor_id', 'table_no', 'capacity', 'tenant_id'];

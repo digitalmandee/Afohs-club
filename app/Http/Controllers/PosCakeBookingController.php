@@ -93,8 +93,8 @@ class PosCakeBookingController extends Controller
         }
 
         // Apply Tenant Scope if needed (assuming trait or manual scope)
-        if (session()->has('tenant_id')) {
-            $query->where('tenant_id', session('tenant_id'));
+        if (session()->has('active_restaurant_id')) {
+            $query->where('tenant_id', session('active_restaurant_id'));
         }
 
         $bookings = $query->latest()->paginate(50)->withQueryString();
@@ -154,7 +154,7 @@ class PosCakeBookingController extends Controller
                 $booking->booking_number = $this->getNextBookingNumber();
             }
 
-            $booking->tenant_id = session('tenant_id');
+            $booking->tenant_id = session('active_restaurant_id');
             $booking->created_by = Auth::id();
 
             // Map ID based on Type

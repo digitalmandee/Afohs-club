@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import StartShiftModal from '@/components/Pos/StartShiftModal';
 import EndShiftModal from '@/components/Pos/EndShiftModal';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 const ShiftActivityScreen = ({ setProfileView }) => {
     const [shifts, setShifts] = useState([]);
@@ -16,7 +17,7 @@ const ShiftActivityScreen = ({ setProfileView }) => {
 
     const fetchShifts = async () => {
         try {
-            const response = await axios.get(route('pos-shifts.history'));
+            const response = await axios.get(route(routeNameForContext('pos-shifts.history')));
             setShifts(response.data);
 
             // Check for active shift in history (or fetch status ref)

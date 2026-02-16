@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -21,7 +22,7 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('units.trashed'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('units.trashed')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // --- Restore Handlers ---
@@ -39,7 +40,7 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
         if (!selectedUnit) return;
         setProcessing(true);
         router.post(
-            route('units.restore', selectedUnit.id),
+            route(routeNameForContext('units.restore'), selectedUnit.id),
             {},
             {
                 onSuccess: () => {
@@ -66,7 +67,7 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
     const handleForceDelete = () => {
         if (!selectedUnit) return;
         setProcessing(true);
-        router.delete(route('units.force-delete', selectedUnit.id), {
+        router.delete(route(routeNameForContext('units.force-delete'), selectedUnit.id), {
             onSuccess: () => {
                 enqueueSnackbar('Unit permanently deleted!', { variant: 'success' });
                 handleCloseForceDeleteModal();
@@ -98,7 +99,7 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
                         <IconButton>
                             <ArrowBackIcon sx={{
                                 color: '#063455'
-                            }} onClick={() => router.visit(route('units.index'))} />
+                            }} onClick={() => router.visit(route(routeNameForContext('units.index')))} />
                         </IconButton>
                         <Typography sx={{ fontWeight: '600', fontSize: '30px', color: '#063455' }}>
                             Trashed Units
@@ -162,7 +163,7 @@ const UnitsTrashed = ({ trashedUnits, filters }) => {
                 </TableContainer>
 
                 <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={trashedUnits.last_page} page={trashedUnits.current_page} onChange={(e, p) => router.get(route('units.trashed'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={trashedUnits.last_page} page={trashedUnits.current_page} onChange={(e, p) => router.get(route(routeNameForContext('units.trashed')), { page: p, search }, { preserveState: true })} color="primary" />
                 </Box>
             </Box>
 

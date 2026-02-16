@@ -200,7 +200,7 @@ class OrderController extends Controller
     public function orderManagement(Request $request)
     {
         $filters = $request->only('search_id', 'search_name', 'search_membership', 'time', 'type', 'start_date', 'end_date');
-        $allrestaurants = Tenant::select('id', 'name')->get();
+        $allrestaurants = Auth::user()->getAccessibleTenants();
 
         // Check if request expects JSON (Axios call)
         if ($request->wantsJson()) {
@@ -514,19 +514,8 @@ class OrderController extends Controller
     {
         $totalSavedOrders = Order::where('status', 'saved')->count();
 
-        // Filter restaurants based on user's allowed tenants
         $user = Auth::user();
-        $allowedTenantIds = $user->allowedTenants()->pluck('tenants.id');
-
-        if ($allowedTenantIds->isNotEmpty()) {
-            // User has specific tenant access - filter restaurants
-            $allrestaurants = Tenant::whereIn('id', $allowedTenantIds)
-                ->select('id', 'name')
-                ->get();
-        } else {
-            // Admin or unrestricted user - show all restaurants
-            $allrestaurants = Tenant::select('id', 'name')->get();
-        }
+        $allrestaurants = $user->getAccessibleTenants();
         $activeTenantId = tenant()->id;
         $latestCategory = Category::where('tenant_id', $activeTenantId)->latest()->first();
         $firstCategoryId = $latestCategory->id ?? null;

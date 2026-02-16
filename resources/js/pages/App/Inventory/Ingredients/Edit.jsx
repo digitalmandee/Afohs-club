@@ -4,6 +4,7 @@ import { Save as SaveIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-materia
 import { router } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import SideNav from '@/components/App/SideBar/SideNav';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -33,7 +34,7 @@ const EditIngredient = ({ ingredient }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        put(route('ingredients.update', ingredient.id), {
+        put(route(routeNameForContext('ingredients.update'), ingredient.id), {
             onSuccess: () => {
                 // Will redirect automatically on success
             },
@@ -132,7 +133,7 @@ const EditIngredient = ({ ingredient }) => {
                                     {/* Action Buttons */}
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                                            <Button variant="outlined" onClick={() => router.visit(route('ingredients.index'))} disabled={processing}>
+                                            <Button variant="outlined" onClick={() => router.visit(route(routeNameForContext('ingredients.index')))} disabled={processing}>
                                                 Cancel
                                             </Button>
                                             <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={processing} sx={{ backgroundColor: '#063455' }}>

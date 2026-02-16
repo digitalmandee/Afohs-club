@@ -17,6 +17,7 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import CakeIcon from '@mui/icons-material/Cake';
 import ShiftGate from '@/components/Pos/ShiftGate';
 import BedroomParentIcon from '@mui/icons-material/BedroomParent';
+import { routeNameForContext } from '@/lib/utils';
 
 
 const drawerWidthOpen = 240;
@@ -52,7 +53,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     const searchBookings = async (query) => {
         setBookingSearchLoading(true);
         try {
-            const response = await axios.get(route('api.cake-bookings.search'), {
+            const response = await axios.get(route(routeNameForContext('api.cake-bookings.search')), {
                 params: { query },
             });
             if (Array.isArray(response.data)) {
@@ -71,7 +72,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     const handleLoadBooking = () => {
         if (!bookingSearchResult) return;
 
-        router.visit(route('order.menu'), {
+        router.visit(route(routeNameForContext('order.menu')), {
             method: 'get',
             data: {
                 cake_booking_id: bookingSearchResult.id,
@@ -84,7 +85,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     useEffect(() => {
         const fetchShiftInfo = async () => {
             try {
-                const response = await axios.get(route('pos-shifts.status'));
+                const response = await axios.get(route(routeNameForContext('pos-shifts.status')));
                 if (response.data.has_active_shift) {
                     setShiftInfo(response.data.shift);
                 }
@@ -124,7 +125,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
 
     const loadFloorTables = async () => {
         try {
-            const response = await axios.get(route('api.floors-with-tables'));
+            const response = await axios.get(route(routeNameForContext('api.floors-with-tables')));
             setFloorTables(response.data);
             if (response.data.length > 0) {
                 handleOrderDetailChange('floor', response.data[0].id);
@@ -138,7 +139,7 @@ const NewOrder = ({ orderNo, guestTypes }) => {
     const loadRooms = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(route('rooms.order'));
+            const response = await axios.get(route(routeNameForContext('rooms.order')));
             setRoomTypes(response.data);
         } catch (error) {
             console.error(error);

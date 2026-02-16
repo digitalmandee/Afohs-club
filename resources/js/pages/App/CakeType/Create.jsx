@@ -3,6 +3,7 @@ import POSLayout from "@/components/POSLayout";
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { Box, Paper, Typography, Button, IconButton, TextField, Select, MenuItem, FormControl, InputLabel, Grid, InputAdornment } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -19,9 +20,9 @@ function Create({ cakeType, isEdit, units }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (isEdit) {
-            put(route('cake-types.update', cakeType.id));
+            put(route(routeNameForContext('cake-types.update'), cakeType.id));
         } else {
-            post(route('cake-types.store'));
+            post(route(routeNameForContext('cake-types.store')));
         }
     };
 
@@ -38,7 +39,7 @@ function Create({ cakeType, isEdit, units }) {
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                     <IconButton>
-                        <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route('cake-types.index'))} />
+                        <ArrowBackIcon sx={{ color: '#063455' }} onClick={() => router.visit(route(routeNameForContext('cake-types.index')))} />
                     </IconButton>
                     <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '30px' }}>
                         {isEdit ? 'Edit Cake Type' : 'Add Cake Type'}

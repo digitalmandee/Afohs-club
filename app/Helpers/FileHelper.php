@@ -8,8 +8,7 @@ class FileHelper
 {
     public static function saveImage(UploadedFile $image, string $folder): string
     {
-        // Get the tenant ID (Adjust this based on your tenant identification logic)
-        $tenantId = tenant('id') ?? 'default';  // Use 'default' if tenant is not found
+        $tenantId = session('active_restaurant_id') ?? tenant('id') ?? 'default';
 
         // Define tenant-specific folder inside public
         $destinationPath = public_path("tenants/{$tenantId}/{$folder}");
@@ -31,7 +30,7 @@ class FileHelper
 
     public static function saveBinaryImage(string $binaryData, string $folder, string $filename = null): string
     {
-        $tenantId = tenant('id') ?? 'default';
+        $tenantId = session('active_restaurant_id') ?? tenant('id') ?? 'default';
 
         $destinationPath = public_path("tenants/{$tenantId}/{$folder}");
 

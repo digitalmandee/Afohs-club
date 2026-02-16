@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -21,7 +22,7 @@ const ManufacturersTrashed = ({ trashedManufacturers, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('manufacturers.trashed'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('manufacturers.trashed')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // Restore
@@ -34,7 +35,7 @@ const ManufacturersTrashed = ({ trashedManufacturers, filters }) => {
         if (!selectedItem) return;
         setProcessing(true);
         router.post(
-            route('manufacturers.restore', selectedItem.id),
+            route(routeNameForContext('manufacturers.restore'), selectedItem.id),
             {},
             {
                 onSuccess: () => {
@@ -57,7 +58,7 @@ const ManufacturersTrashed = ({ trashedManufacturers, filters }) => {
     const handleForceDelete = () => {
         if (!selectedItem) return;
         setProcessing(true);
-        router.delete(route('manufacturers.force-delete', selectedItem.id), {
+        router.delete(route(routeNameForContext('manufacturers.force-delete'), selectedItem.id), {
             onSuccess: () => {
                 enqueueSnackbar('Manufacturer permanently deleted!', { variant: 'success' });
                 setDeleteModalOpen(false);
@@ -86,7 +87,7 @@ const ManufacturersTrashed = ({ trashedManufacturers, filters }) => {
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Box display="flex" alignItems="center">
-                        <IconButton sx={{color:'#063455'}} onClick={() => router.visit(route('manufacturers.index'))}>
+                        <IconButton sx={{color:'#063455'}} onClick={() => router.visit(route(routeNameForContext('manufacturers.index')))}>
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography sx={{fontWeight:'600', fontSize:'30px', color:'#063455'}}>
@@ -145,7 +146,7 @@ const ManufacturersTrashed = ({ trashedManufacturers, filters }) => {
                 </TableContainer>
 
                 <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={trashedManufacturers.last_page} page={trashedManufacturers.current_page} onChange={(e, p) => router.get(route('manufacturers.trashed'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={trashedManufacturers.last_page} page={trashedManufacturers.current_page} onChange={(e, p) => router.get(route(routeNameForContext('manufacturers.trashed')), { page: p, search }, { preserveState: true })} color="primary" />
                 </Box>
             </Box>
 

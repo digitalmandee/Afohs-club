@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { RestoreFromTrash as RestoreIcon, DeleteForever as DeleteForeverIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 const SubCategoriesTrashed = ({ trashedSubCategories, filters }) => {
     // const [open, setOpen] = useState(true);
@@ -18,7 +19,7 @@ const SubCategoriesTrashed = ({ trashedSubCategories, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('sub-categories.trashed'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('sub-categories.trashed')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // Restore
@@ -31,7 +32,7 @@ const SubCategoriesTrashed = ({ trashedSubCategories, filters }) => {
         if (!selectedItem) return;
         setProcessing(true);
         router.post(
-            route('sub-categories.restore', selectedItem.id),
+            route(routeNameForContext('sub-categories.restore'), selectedItem.id),
             {},
             {
                 onSuccess: () => {
@@ -54,7 +55,7 @@ const SubCategoriesTrashed = ({ trashedSubCategories, filters }) => {
     const handleForceDelete = () => {
         if (!selectedItem) return;
         setProcessing(true);
-        router.delete(route('sub-categories.force-delete', selectedItem.id), {
+        router.delete(route(routeNameForContext('sub-categories.force-delete'), selectedItem.id), {
             onSuccess: () => {
                 enqueueSnackbar('Sub Category permanently deleted!', { variant: 'success' });
                 setDeleteModalOpen(false);
@@ -83,7 +84,7 @@ const SubCategoriesTrashed = ({ trashedSubCategories, filters }) => {
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Box display="flex" alignItems="center" gap={1}>
-                        <IconButton onClick={() => router.visit(route('sub-categories.index'))}>
+                        <IconButton onClick={() => router.visit(route(routeNameForContext('sub-categories.index')))}>
                             <ArrowBackIcon />
                         </IconButton>
                         <Typography sx={{ color: '#063455', fontWeight: '600', fontSize: '30px' }}>
@@ -144,7 +145,7 @@ const SubCategoriesTrashed = ({ trashedSubCategories, filters }) => {
                 </TableContainer>
 
                 <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={trashedSubCategories.last_page} page={trashedSubCategories.current_page} onChange={(e, p) => router.get(route('sub-categories.trashed'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={trashedSubCategories.last_page} page={trashedSubCategories.current_page} onChange={(e, p) => router.get(route(routeNameForContext('sub-categories.trashed')), { page: p, search }, { preserveState: true })} color="primary" />
                 </Box>
             </Box>
 
