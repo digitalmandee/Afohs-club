@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -39,11 +40,23 @@ class HandleInertiaRequests extends Middleware
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
+        $sessionRestaurantId = $request->session()->get('active_restaurant_id');
+        $sessionRestaurant = $sessionRestaurantId ? Tenant::select('id', 'name')->find($sessionRestaurantId) : null;
+        $currentTenant = tenant();
+
+        $activeRestaurant = null;
+        if ($sessionRestaurant) {
+            $activeRestaurant = ['id' => $sessionRestaurant->id, 'name' => $sessionRestaurant->name];
+        } elseif ($currentTenant) {
+            $activeRestaurant = ['id' => $currentTenant->id, 'name' => $currentTenant->name];
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'tenant' => tenant(),
+            'activeRestaurant' => $activeRestaurant,
             'auth' => [
                 'user' => $request->user()?->load('employee:id,user_id,employee_id,phone_no,designation,address'),
                 'role' => $request->user()?->roles->first()?->name ?? null,

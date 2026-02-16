@@ -110,7 +110,7 @@ const AppBar = styled(MuiAppBar, {
 
 export default function SideNav({ open, setOpen }) {
     const { url } = usePage();
-    const { auth: rawAuth, tenant } = usePage().props;
+    const { auth: rawAuth, tenant, activeRestaurant } = usePage().props;
     const auth = rawAuth || {};
     const role = auth.role || '';
     const permissions = Array.isArray(auth.permissions) ? auth.permissions : [];
@@ -376,7 +376,7 @@ export default function SideNav({ open, setOpen }) {
                         {open ? <MenuOpenIcon sx={{ color: '#063455' }} /> : <MenuIcon sx={{ color: '#063455' }} />}
                     </IconButton>
                     <Typography variant="h5" sx={{ color: '#063455', fontWeight: 'bold' }}>
-                        {tenant?.name}
+                        {activeRestaurant?.name ?? tenant?.name}
                     </Typography>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
