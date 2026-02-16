@@ -17,30 +17,36 @@ import {
     Card,
     CardContent,
     Stack,
+    Autocomplete,
     FormControl,
     InputLabel,
     Select,
     MenuItem
 } from '@mui/material';
+import { Search } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PersonIcon from '@mui/icons-material/Person';
 import { format } from 'date-fns';
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-export default function DailySalesListCashierWise({ 
-    cashierData, 
+export default function DailySalesListCashierWise({
+    cashierData,
     allCashiers = [],
-    startDate, 
-    endDate, 
-    grandTotalSale, 
-    grandTotalDiscount, 
-    grandTotalSTax, 
-    grandTotalCash, 
-    grandTotalCredit, 
-    grandTotalPaid, 
-    grandTotalUnpaid, 
-    grandTotal, 
-    filters 
+    startDate,
+    endDate,
+    grandTotalSale,
+    grandTotalDiscount,
+    grandTotalSTax,
+    grandTotalCash,
+    grandTotalCredit,
+    grandTotalPaid,
+    grandTotalUnpaid,
+    grandTotal,
+    filters
 }) {
     // const [open, setOpen] = useState(true);
     const [dateFilters, setDateFilters] = useState({
@@ -83,25 +89,22 @@ export default function DailySalesListCashierWise({
 
     return (
         <>
-            <Head title="Daily Sales List (Cashier-Wise)" />
+            {/* <Head title="Daily Sales List (Cashier-Wise)" /> */}
             {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5'
+                    backgroundColor: '#f5f5f5'
                 }}
             >
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 2 }}>
                     {/* Header */}
-                    <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+                    <Box sx={{ mb: 2 }}>
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
-                                <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                                     Daily Sales List (Cashier-Wise)
-                                </Typography>
-                                <Typography variant="h6" color="text.secondary">
-                                    Sales summary grouped by cashier with payment details
                                 </Typography>
                             </Grid>
                             <Grid item>
@@ -109,118 +112,246 @@ export default function DailySalesListCashierWise({
                                     variant="contained"
                                     startIcon={<PrintIcon />}
                                     onClick={handlePrint}
-                                    sx={{ 
-                                        backgroundColor: '#0a3d62',
+                                    sx={{
+                                        backgroundColor: '#063455',
                                         color: 'white',
-                                        '&:hover': { backgroundColor: '#083049' }
+                                        borderRadius: '16px',
+                                        textTransform: 'none',
+                                        '&:hover': { backgroundColor: '#063455' }
                                     }}
                                 >
-                                    Print Report
+                                    Print
                                 </Button>
                             </Grid>
                         </Grid>
-                    </Paper>
+                        <Typography sx={{ fontWeight: '600', fontSize: '16px', color: '#063455' }}>
+                            Sales summary grouped by cashier with payment details
+                        </Typography>
+                    </Box>
 
                     {/* Filters */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                                <FilterListIcon color="primary" />
-                                <Typography variant="h6">Filters</Typography>
-                                <TextField
+                    <Box sx={{ mt: 4, mb: 2 }}>
+                        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                            {/* <FilterListIcon color="primary" />
+                            <Typography variant="h6">Filters</Typography> */}
+                            {/* <TextField
+                                label="Start Date"
+                                type="date"
+                                size="small"
+                                value={dateFilters.start_date}
+                                onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
                                     label="Start Date"
-                                    type="date"
-                                    size="small"
-                                    value={dateFilters.start_date}
-                                    onChange={(e) => handleFilterChange('start_date', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <TextField
-                                    label="End Date"
-                                    type="date"
-                                    size="small"
-                                    value={dateFilters.end_date}
-                                    onChange={(e) => handleFilterChange('end_date', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <FormControl size="small" sx={{ minWidth: 200 }}>
-                                    <InputLabel>Cashier</InputLabel>
-                                    <Select
-                                        value={dateFilters.cashier_id}
-                                        onChange={(e) => handleFilterChange('cashier_id', e.target.value)}
-                                        label="Cashier"
-                                    >
-                                        <MenuItem value="">
-                                            <em>All Cashiers</em>
-                                        </MenuItem>
-                                        {allCashiers.map((cashier) => (
-                                            <MenuItem key={cashier.id} value={cashier.id}>
-                                                {cashier.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <Button
-                                    variant="contained"
-                                    onClick={applyFilters}
-                                    sx={{ 
-                                        backgroundColor: '#0a3d62',
-                                        color: 'white',
-                                        '&:hover': { backgroundColor: '#083049' }
+                                    format="DD/MM/YYYY"
+                                    value={
+                                        dateFilters.start_date
+                                            ? dayjs(dateFilters.start_date)
+                                            : null
+                                    }
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "start_date",
+                                            newValue ? newValue.format("YYYY-MM-DD") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            InputProps: {
+                                                sx: {
+                                                    borderRadius: "16px",
+                                                    "& fieldset": {
+                                                        borderRadius: "16px",
+                                                    },
+                                                },
+                                            },
+                                        },
                                     }}
+                                />
+                            </LocalizationProvider>
+                            {/* <TextField
+                                label="End Date"
+                                type="date"
+                                size="small"
+                                value={dateFilters.end_date}
+                                onChange={(e) => handleFilterChange('end_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="End Date"
+                                    format="DD/MM/YYYY"
+                                    value={
+                                        dateFilters.end_date
+                                            ? dayjs(dateFilters.end_date)
+                                            : null
+                                    }
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "end_date",
+                                            newValue ? newValue.format("YYYY-MM-DD") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            InputProps: {
+                                                sx: {
+                                                    borderRadius: "16px",
+                                                    "& fieldset": {
+                                                        borderRadius: "16px",
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
+                            {/* <FormControl size="small" sx={{ minWidth: 200 }}>
+                                <InputLabel>Cashier</InputLabel>
+                                <Select
+                                    value={dateFilters.cashier_id}
+                                    onChange={(e) => handleFilterChange('cashier_id', e.target.value)}
+                                    label="Cashier"
                                 >
-                                    Apply Filters
-                                </Button>
-                            </Stack>
-                        </CardContent>
-                    </Card>
+                                    <MenuItem value="">
+                                        <em>All Cashiers</em>
+                                    </MenuItem>
+                                    {allCashiers.map((cashier) => (
+                                        <MenuItem key={cashier.id} value={cashier.id}>
+                                            {cashier.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl> */}
+                            <Autocomplete
+                                size="small"
+                                options={[
+                                    { id: "", name: "All Cashiers" },
+                                    ...allCashiers,
+                                ]}
+                                getOptionLabel={(option) => option.name || ""}
+                                value={
+                                    [{ id: "", name: "All Cashiers" }, ...allCashiers]
+                                        .find((cashier) => cashier.id === dateFilters.cashier_id) || null
+                                }
+                                onChange={(event, newValue) =>
+                                    handleFilterChange("cashier_id", newValue ? newValue.id : "")
+                                }
+                                isOptionEqualToValue={(option, value) => option.id === value.id}
+                                slotProps={{
+                                    paper: {
+                                        sx: {
+                                            borderRadius: "16px",
+                                            boxShadow: "none",
+                                            mt: 1,
+                                        },
+                                    },
+                                    listbox: {
+                                        sx: {
+                                            "& .MuiAutocomplete-option": {
+                                                borderRadius: "16px",
+                                                mx: 1,
+                                                my: 0.3,
+                                            },
+                                            "& .MuiAutocomplete-option:hover": {
+                                                backgroundColor: "#063455 !important",
+                                                color: "#fff",
+                                                mx: 1,
+                                                my: 0.3,
+                                            },
+                                            "& .MuiAutocomplete-option.Mui-focused": {
+                                                backgroundColor: "#063455 !important",
+                                                color: "#fff",
+                                                mx: 1,
+                                                my: 0.3,
+                                            },
+                                        },
+                                    },
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Cashier"
+                                        sx={{
+                                            minWidth: 200,
+                                            "& .MuiOutlinedInput-root": {
+                                                borderRadius: "16px",
+                                                "& fieldset": {
+                                                    borderRadius: "16px",
+                                                },
+                                            },
+                                        }}
+                                    />
+                                )}
+                            />
+
+                            <Button
+                                variant="contained"
+                                startIcon={<Search />}
+                                onClick={applyFilters}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    color: 'white',
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': { backgroundColor: '#063455' }
+                                }}
+                            >
+                                Search
+                            </Button>
+                        </Stack>
+                    </Box>
 
                     {/* Summary Stats */}
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ bgcolor: '#063455', borderRadius: '16px' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="primary" sx={{ fontWeight: 'bold' }}>
-                                        {cashierData?.length || 0}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Active Cashiers
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {cashierData?.length || 0}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ bgcolor: '#063455', borderRadius: '16px' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="success.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(grandTotalSale)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Sales
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(grandTotalSale)}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ bgcolor: '#063455', borderRadius: '16px' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(grandTotalPaid)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Paid
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(grandTotalPaid)}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ bgcolor: '#063455', borderRadius: '16px' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(grandTotalUnpaid)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Unpaid
+                                    </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(grandTotalUnpaid)}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -239,43 +370,43 @@ export default function DailySalesListCashierWise({
                             <TableContainer component={Paper} elevation={1}>
                                 <Table>
                                     <TableHead>
-                                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', borderRight: '1px solid #ddd' }}>
-                                                CASHIER NAME
+                                        <TableRow sx={{ backgroundColor: '#063455' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                                Cashier Name
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                SALE
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                                Sale
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                DISC.
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                                Discount
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
                                                 S.TAX AMT
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
                                                 Cash
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
                                                 Credit
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
                                                 Paid
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
                                                 Unpaid
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                TOTAL
+                                            <TableCell sx={{ fontWeight: '600', color: '#fff' }}>
+                                                Total
                                             </TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {cashierData.map((cashier, index) => (
-                                            <TableRow 
+                                            <TableRow
                                                 key={index}
-                                                sx={{ 
-                                                    '&:nth-of-type(odd)': { 
-                                                        backgroundColor: '#fafafa' 
+                                                sx={{
+                                                    '&:nth-of-type(odd)': {
+                                                        backgroundColor: '#fafafa'
                                                     },
                                                     '&:hover': {
                                                         backgroundColor: '#f0f7ff'
@@ -311,34 +442,34 @@ export default function DailySalesListCashierWise({
                                                 </TableCell>
                                             </TableRow>
                                         ))}
-                                        
+
                                         {/* Grand Total Row */}
-                                        <TableRow sx={{ backgroundColor: '#0a3d62', color: 'white' }}>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'white', borderRight: '1px solid #fff' }}>
+                                        <TableRow sx={{ backgroundColor: '#063455', color: '#fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 GRAND TOTAL:
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(grandTotalSale)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(grandTotalDiscount)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(grandTotalSTax)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(grandTotalCash)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(grandTotalCredit)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white', }}>
                                                 {formatCurrency(grandTotalPaid)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(grandTotalUnpaid)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center', color: 'white' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(grandTotal)}
                                             </TableCell>
                                         </TableRow>

@@ -18,10 +18,15 @@ import {
     CardContent,
     Stack
 } from '@mui/material';
+import { Search } from '@mui/icons-material';
 import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import { format } from 'date-fns';
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 export default function SalesSummaryWithItems({ salesData, startDate, endDate, grandTotalQty, grandTotalAmount, grandTotalDiscount, grandTotalSale, filters }) {
     // const [open, setOpen] = useState(true);
@@ -63,25 +68,22 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
 
     return (
         <>
-            <Head title="Sales Summary (With Items)" />
+            {/* <Head title="Sales Summary (With Items)" /> */}
             {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor:"#f5f5f5"
+                    backgroundColor: "#f5f5f5"
                 }}
             >
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 2 }}>
                     {/* Header */}
-                    <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+                    <Box sx={{ mb: 2 }}>
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
-                                <Typography variant="h5" sx={{ fontWeight: '600', mb: 1 }}>
+                                <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                                     Sales Summary (With Items)
-                                </Typography>
-                                <Typography variant="h6" color="text.secondary">
-                                    Invoice-wise detailed sales report with item breakdown
                                 </Typography>
                             </Grid>
                             <Grid item>
@@ -89,101 +91,167 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                                     variant="contained"
                                     startIcon={<PrintIcon />}
                                     onClick={handlePrint}
-                                    sx={{ 
-                                        backgroundColor: '#0a3d62',
+                                    sx={{
+                                        backgroundColor: '#063455',
                                         color: 'white',
-                                        '&:hover': { backgroundColor: '#083049' }
+                                        borderRadius: '16px',
+                                        textTransform: 'none',
+                                        '&:hover': { backgroundColor: '#063455' }
                                     }}
                                 >
-                                    Print Report
+                                    Print
                                 </Button>
                             </Grid>
                         </Grid>
-                    </Paper>
+                        <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
+                            Invoice-wise detailed sales report with item breakdown
+                        </Typography>
+                    </Box>
 
                     {/* Filters */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <FilterListIcon color="primary" />
-                                <Typography variant="h6">Filters</Typography>
-                                <TextField
+                    <Box sx={{ mt: 4, mb: 2 }}>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            {/* <FilterListIcon color="primary" />
+                            <Typography variant="h6">Filters</Typography> */}
+                            {/* <TextField
+                                label="Start Date"
+                                type="date"
+                                size="small"
+                                value={dateFilters.start_date}
+                                onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
                                     label="Start Date"
-                                    type="date"
-                                    size="small"
-                                    value={dateFilters.start_date}
-                                    onChange={(e) => handleFilterChange('start_date', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <TextField
-                                    label="End Date"
-                                    type="date"
-                                    size="small"
-                                    value={dateFilters.end_date}
-                                    onChange={(e) => handleFilterChange('end_date', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <Button
-                                    variant="contained"
-                                    onClick={applyFilters}
-                                    sx={{ 
-                                        backgroundColor: '#0a3d62',
-                                        color: 'white',
-                                        '&:hover': { backgroundColor: '#083049' }
+                                    format="DD/MM/YYYY"
+                                    value={
+                                        dateFilters.start_date
+                                            ? dayjs(dateFilters.start_date)
+                                            : null
+                                    }
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "start_date",
+                                            newValue ? newValue.format("YYYY-MM-DD") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            InputProps: {
+                                                sx: {
+                                                    borderRadius: "16px",
+                                                    "& fieldset": {
+                                                        borderRadius: "16px",
+                                                    },
+                                                },
+                                            },
+                                        },
                                     }}
-                                >
-                                    Apply Filters
-                                </Button>
-                            </Stack>
-                        </CardContent>
-                    </Card>
+                                />
+                            </LocalizationProvider>
+                            {/* <TextField
+                                label="End Date"
+                                type="date"
+                                size="small"
+                                value={dateFilters.end_date}
+                                onChange={(e) => handleFilterChange('end_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="End Date"
+                                    format="DD/MM/YYYY"
+                                    value={
+                                        dateFilters.end_date
+                                            ? dayjs(dateFilters.end_date)
+                                            : null
+                                    }
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "end_date",
+                                            newValue ? newValue.format("YYYY-MM-DD") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            InputProps: {
+                                                sx: {
+                                                    borderRadius: "16px",
+                                                    "& fieldset": {
+                                                        borderRadius: "16px",
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
+                            <Button
+                                variant="contained"
+                                startIcon={<Search />}
+                                onClick={applyFilters}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    color: 'white',
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': { backgroundColor: '#063455' }
+                                }}
+                            >
+                                Search
+                            </Button>
+                        </Stack>
+                    </Box>
 
                     {/* Summary Stats */}
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-                                        {salesData?.length || 0}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Invoices
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {salesData?.length || 0}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" color="info.main" sx={{ fontWeight: 'bold' }}>
-                                        {grandTotalQty}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Quantity
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {grandTotalQty}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(grandTotalDiscount)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Discount
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(grandTotalDiscount)}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={3}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" color="success.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(grandTotalSale)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Sale
+                                    </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(grandTotalSale)}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -203,8 +271,8 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                                 {salesData.map((invoice, index) => (
                                     <Box key={index} sx={{ mb: 4, border: '1px solid #ddd', borderRadius: 2 }}>
                                         {/* Invoice Header */}
-                                        <Box sx={{ 
-                                            p: 2, 
+                                        <Box sx={{
+                                            p: 2,
                                             backgroundColor: '#f5f5f5',
                                             borderBottom: '1px solid #ddd',
                                             display: 'flex',
@@ -236,14 +304,14 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                                         <TableContainer>
                                             <Table size="small">
                                                 <TableHead>
-                                                    <TableRow>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem' }}>ITEM CODE</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem' }}>ITEM NAME</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>QTY SOLD</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>SALE PRICE</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>SUB TOTAL</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>DISCOUNT</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>TOTAL SALE</TableCell>
+                                                    <TableRow sx={{bgcolor:'#063455'}}>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>Item Code</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>Item Name</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff', }}>QTY Sold</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>Sale Price</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>Sub Total</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>Discount</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>Total Sale</TableCell>
                                                     </TableRow>
                                                 </TableHead>
                                                 <TableBody>
@@ -259,14 +327,14 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
                                                         </TableRow>
                                                     ))}
                                                     {/* Invoice Total Row */}
-                                                    <TableRow sx={{ backgroundColor: '#f0f7ff' }}>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem' }}>TOTAL:</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem' }}></TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>{invoice.total_qty}</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}></TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>{formatCurrency(invoice.total_amount)}</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>{formatCurrency(invoice.total_discount)}</TableCell>
-                                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center' }}>{formatCurrency(invoice.total_sale)}</TableCell>
+                                                    <TableRow sx={{ backgroundColor: '#063455' }}>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>TOTAL:</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}></TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>{invoice.total_qty}</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}></TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>{formatCurrency(invoice.total_amount)}</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>{formatCurrency(invoice.total_discount)}</TableCell>
+                                                        <TableCell sx={{ fontWeight: '600', color:'#fff' }}>{formatCurrency(invoice.total_sale)}</TableCell>
                                                     </TableRow>
                                                 </TableBody>
                                             </Table>
@@ -276,9 +344,9 @@ export default function SalesSummaryWithItems({ salesData, startDate, endDate, g
 
                                 {/* Grand Total */}
                                 <Box sx={{ mt: 4, p: 3, bgcolor: '#0a3d62', color: 'white', borderRadius: 2 }}>
-                                    <Typography 
-                                        variant="h6" 
-                                        sx={{ 
+                                    <Typography
+                                        variant="h6"
+                                        sx={{
                                             textAlign: 'center',
                                             fontWeight: 'bold',
                                             mb: 2

@@ -206,14 +206,17 @@ const Dashboard = () => {
                                 IconComponent: () => null,
                                 MenuProps: {
                                     sx: {
-                                        mt: 0.5, // Adds space/gap between TextField and menu (adjust as needed: 1=8px, 2=16px, etc.)
+                                        mt: 0.5,
                                         '& .MuiMenu-paper': {
-                                            borderRadius: '16px',  // ✅ Rounded menu corners
+                                            borderRadius: '16px',
                                             '& .MuiMenuItem-root': {
-                                                transition: 'background-color 0.2s ease',
+                                                // transition: 'background-color 0.2s ease',
                                                 '&:hover': {
                                                     backgroundColor: '#063455 !important',
-                                                    color: 'white !important'
+                                                    color: 'white !important',
+                                                    borderRadius: '16px !important',
+                                                    mx: 1,
+                                                    my: 0.3
                                                 }
                                             }
                                         }
@@ -227,7 +230,7 @@ const Dashboard = () => {
                                     '& .MuiSelect-select': {
                                         color: '#7F7F7F',
                                         '&:focus': {
-                                            color: '#000'  // Fix focus color if needed
+                                            color: '#000'
                                         }
                                     }
                                 }
@@ -235,7 +238,7 @@ const Dashboard = () => {
                             InputProps={{
                                 endAdornment: (
                                     <InputAdornment position="end">
-                                        <CalendarIcon fontSize="small" />
+                                        <CalendarIcon fontSize="small" style={{ cursor: 'pointer' }} />
                                     </InputAdornment>
                                 ),
                             }}
@@ -513,12 +516,55 @@ const Dashboard = () => {
                                                     <Typography sx={{ color: '#777980', fontWeight: 500, fontSize: '14px' }}>Your Revenue 2025 Year</Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', gap: 2 }}>
-                                                    <TextField select size="small" value={revenueType} onChange={(e) => setRevenueType(e.target.value)} sx={{ width: '160px' }}>
+                                                    {/* <TextField select size="small" value={revenueType} onChange={(e) => setRevenueType(e.target.value)} sx={{ width: '160px' }}>
+                                                        <MenuItem value="Revenue">Revenue</MenuItem>
+                                                        <MenuItem value="Profit">Profit</MenuItem>
+                                                        <MenuItem value="Expenses">Expenses</MenuItem>
+                                                    </TextField> */}
+                                                    <TextField
+                                                        select
+                                                        size="small"
+                                                        value={revenueType}
+                                                        onChange={(e) => setRevenueType(e.target.value)}
+                                                        sx={{
+                                                            width: "160px",
+                                                            "& .MuiOutlinedInput-root": {
+                                                                borderRadius: "16px",
+                                                                "& fieldset": {
+                                                                    borderRadius: "16px",
+                                                                },
+                                                            },
+                                                        }}
+                                                        SelectProps={{
+                                                            MenuProps: {
+                                                                sx: {
+                                                                    "& .MuiPaper-root": {
+                                                                        borderRadius: "16px",
+                                                                    },
+                                                                    "& .MuiMenuItem-root": {
+                                                                        borderRadius: "16px",
+                                                                        mx: 1,
+                                                                        my: 0.3,
+                                                                        transition: "all 0.2s ease",
+                                                                        "&:hover": {
+                                                                            backgroundColor: "#063455 !important",
+                                                                            color: "#fff !important",
+                                                                        },
+                                                                        "&.Mui-selected": {
+                                                                            backgroundColor: "#063455 !important",
+                                                                            color: "#fff",
+                                                                        },
+                                                                    },
+                                                                },
+                                                            },
+                                                        }}
+                                                    >
                                                         <MenuItem value="Revenue">Revenue</MenuItem>
                                                         <MenuItem value="Profit">Profit</MenuItem>
                                                         <MenuItem value="Expenses">Expenses</MenuItem>
                                                     </TextField>
-                                                    <TextField
+
+                                                    {/* <TextField
                                                         size="small"
                                                         value={chartYear}
                                                         onChange={(e) => setChartYear(e.target.value)}
@@ -530,7 +576,7 @@ const Dashboard = () => {
                                                             ),
                                                         }}
                                                         sx={{ width: '160px' }}
-                                                    />
+                                                    /> */}
                                                 </Box>
                                             </Box>
 

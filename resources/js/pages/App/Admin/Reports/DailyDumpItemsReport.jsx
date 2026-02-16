@@ -22,15 +22,20 @@ import PrintIcon from '@mui/icons-material/Print';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { format } from 'date-fns';
+import { Search } from '@mui/icons-material';
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-export default function DailyDumpItemsReport({ 
-    dumpItemsData, 
-    startDate, 
-    endDate, 
-    totalQuantity, 
-    totalSalePrice, 
-    totalFoodValue, 
-    filters 
+export default function DailyDumpItemsReport({
+    dumpItemsData,
+    startDate,
+    endDate,
+    totalQuantity,
+    totalSalePrice,
+    totalFoodValue,
+    filters
 }) {
     const [open, setOpen] = useState(true);
     const [dateFilters, setDateFilters] = useState({
@@ -72,26 +77,23 @@ export default function DailyDumpItemsReport({
 
     return (
         <>
-            <Head title="Daily Dump Items Report" />
+            {/* <Head title="Daily Dump Items Report" /> */}
             {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5',
-                    overflowX:'hidden'
+                    backgroundColor: '#f5f5f5',
+                    overflowX: 'hidden'
                 }}
             >
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 2 }}>
                     {/* Header */}
-                    <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+                    <Box sx={{ mb: 2 }}>
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
-                                <Typography variant="h5" sx={{ fontWeight: '600', mb: 1 }}>
+                                <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                                     Daily Dump Items Report
-                                </Typography>
-                                <Typography variant="h6" color="text.secondary">
-                                    Cancelled and dumped items tracking report
                                 </Typography>
                             </Grid>
                             <Grid item>
@@ -99,89 +101,155 @@ export default function DailyDumpItemsReport({
                                     variant="contained"
                                     startIcon={<PrintIcon />}
                                     onClick={handlePrint}
-                                    sx={{ 
-                                        backgroundColor: '#0a3d62',
+                                    sx={{
+                                        backgroundColor: '#063455',
                                         color: 'white',
-                                        '&:hover': { backgroundColor: '#083049' }
+                                        borderRadius: '16px',
+                                        textTransform: 'none',
+                                        '&:hover': { backgroundColor: '#063455' }
                                     }}
                                 >
-                                    Print Report
+                                    Print
                                 </Button>
                             </Grid>
                         </Grid>
-                    </Paper>
+                        <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
+                            Cancelled and dumped items tracking report
+                        </Typography>
+                    </Box>
 
                     {/* Filters */}
-                    <Card sx={{ mb: 3 }}>
-                        <CardContent>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <FilterListIcon color="primary" />
-                                <Typography variant="h6">Filters</Typography>
-                                <TextField
+                    <Box sx={{ mb: 2 }}>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            {/* <FilterListIcon color="primary" />
+                            <Typography variant="h6">Filters</Typography> */}
+                            {/* <TextField
+                                label="Start Date"
+                                type="date"
+                                size="small"
+                                value={dateFilters.start_date}
+                                onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
                                     label="Start Date"
-                                    type="date"
-                                    size="small"
-                                    value={dateFilters.start_date}
-                                    onChange={(e) => handleFilterChange('start_date', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <TextField
-                                    label="End Date"
-                                    type="date"
-                                    size="small"
-                                    value={dateFilters.end_date}
-                                    onChange={(e) => handleFilterChange('end_date', e.target.value)}
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <Button
-                                    variant="contained"
-                                    onClick={applyFilters}
-                                    sx={{ 
-                                        backgroundColor: '#0a3d62',
-                                        color: 'white',
-                                        '&:hover': { backgroundColor: '#083049' }
+                                    format="DD/MM/YYYY"
+                                    value={
+                                        dateFilters.start_date
+                                            ? dayjs(dateFilters.start_date)
+                                            : null
+                                    }
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "start_date",
+                                            newValue ? newValue.format("YYYY-MM-DD") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            InputProps: {
+                                                sx: {
+                                                    borderRadius: "16px",
+                                                    "& fieldset": {
+                                                        borderRadius: "16px",
+                                                    },
+                                                },
+                                            },
+                                        },
                                     }}
-                                >
-                                    Apply Filters
-                                </Button>
-                            </Stack>
-                        </CardContent>
-                    </Card>
+                                />
+                            </LocalizationProvider>
+                            {/* <TextField
+                                label="End Date"
+                                type="date"
+                                size="small"
+                                value={dateFilters.end_date}
+                                onChange={(e) => handleFilterChange('end_date', e.target.value)}
+                                InputLabelProps={{ shrink: true }}
+                            /> */}
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                    label="End Date"
+                                    format="DD/MM/YYYY"
+                                    value={
+                                        dateFilters.end_date
+                                            ? dayjs(dateFilters.end_date)
+                                            : null
+                                    }
+                                    onChange={(newValue) =>
+                                        handleFilterChange(
+                                            "end_date",
+                                            newValue ? newValue.format("YYYY-MM-DD") : ""
+                                        )
+                                    }
+                                    slotProps={{
+                                        textField: {
+                                            size: "small",
+                                            InputProps: {
+                                                sx: {
+                                                    borderRadius: "16px",
+                                                    "& fieldset": {
+                                                        borderRadius: "16px",
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    }}
+                                />
+                            </LocalizationProvider>
+                            <Button
+                                variant="contained"
+                                startIcon={<Search />}
+                                onClick={applyFilters}
+                                sx={{
+                                    backgroundColor: '#063455',
+                                    color: 'white',
+                                    borderRadius: '16px',
+                                    textTransform: 'none',
+                                    '&:hover': { backgroundColor: '#063455' }
+                                }}
+                            >
+                                Search
+                            </Button>
+                        </Stack>
+                    </Box>
 
                     {/* Summary Stats */}
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                         <Grid item xs={12} md={4}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="error.main" sx={{ fontWeight: 'bold' }}>
-                                        {dumpItemsData?.length || 0}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Dumped Items
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {dumpItemsData?.length || 0}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(totalQuantity)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Quantity
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(totalQuantity)}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Card>
+                            <Card sx={{ borderRadius: '16px', bgcolor: '#063455' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h4" color="error.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(totalFoodValue)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Food Value
+                                    </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(totalFoodValue)}
                                     </Typography>
                                 </CardContent>
                             </Card>
@@ -197,58 +265,58 @@ export default function DailyDumpItemsReport({
                         <Divider sx={{ mb: 3 }} />
 
                         {dumpItemsData && Array.isArray(dumpItemsData) && dumpItemsData.length > 0 ? (
-                            <TableContainer component={Paper} elevation={1} style={{overflowX:'auto'}}>
+                            <TableContainer component={Paper} elevation={1} style={{ overflowX: 'auto' }}>
                                 <Table size="small">
                                     <TableHead>
-                                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #ddd', width: '80px' }}>
-                                                INVOICE KOT #
+                                        <TableRow sx={{ backgroundColor: '#063455' }}>
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Invoice KOT
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '60px' }}>
-                                                TABLE #
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Table
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '80px' }}>
-                                                DATE
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Date
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '70px' }}>
-                                                ITEM CODE
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Item Code
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', borderRight: '1px solid #ddd', width: '150px' }}>
-                                                ITEM NAME
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Item Name
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '50px' }}>
-                                                QTY
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Quantity
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '80px' }}>
-                                                STATUS
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Status
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '100px' }}>
-                                                INSTRUCTIONS
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Instructions
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '120px' }}>
-                                                REASON
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Reason
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '100px' }}>
-                                                REMARKS
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Remarks
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '80px' }}>
-                                                SALE PRICE
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Sale Price
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', borderRight: '1px solid #ddd', width: '80px' }}>
-                                                FOOD VALUE
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Food Value
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', textAlign: 'center', width: '100px' }}>
-                                                CANCELLED BY
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Cancelled By
                                             </TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {dumpItemsData.map((item, index) => (
-                                            <TableRow 
+                                            <TableRow
                                                 key={index}
-                                                sx={{ 
-                                                    '&:nth-of-type(odd)': { 
-                                                        backgroundColor: '#fafafa' 
+                                                sx={{
+                                                    '&:nth-of-type(odd)': {
+                                                        backgroundColor: '#fafafa'
                                                     },
                                                     '&:hover': {
                                                         backgroundColor: '#ffebee'
@@ -274,11 +342,11 @@ export default function DailyDumpItemsReport({
                                                     {item.qty}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.7rem', textAlign: 'center', borderRight: '1px solid #ddd' }}>
-                                                    <Typography variant="caption" sx={{ 
-                                                        backgroundColor: '#ffcdd2', 
-                                                        color: '#c62828', 
-                                                        px: 1, 
-                                                        py: 0.5, 
+                                                    <Typography variant="caption" sx={{
+                                                        backgroundColor: '#ffcdd2',
+                                                        color: '#c62828',
+                                                        px: 1,
+                                                        py: 0.5,
                                                         borderRadius: 1,
                                                         fontWeight: 'bold'
                                                     }}>
@@ -305,21 +373,21 @@ export default function DailyDumpItemsReport({
                                                 </TableCell>
                                             </TableRow>
                                         ))}
-                                        
+
                                         {/* Grand Total Row */}
-                                        <TableRow sx={{ backgroundColor: '#0a3d62', color: 'white' }}>
-                                            <TableCell colSpan={5} sx={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'white', borderRight: '1px solid #fff' }}>
+                                        <TableRow sx={{ backgroundColor: '#063455', color: 'white' }}>
+                                            <TableCell colSpan={5} sx={{ fontWeight: '600',color: 'white'}}>
                                                 GRAND TOTAL:
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white', }}>
                                                 {formatCurrency(totalQuantity)}
                                             </TableCell>
-                                            <TableCell colSpan={5} sx={{ fontWeight: 'bold', fontSize: '0.8rem', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell colSpan={5} sx={{ fontWeight: '600', color: 'white'}}>
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center', color: 'white', borderRight: '1px solid #fff' }}>
+                                            <TableCell sx={{ fontWeight: '600', color:'white'}}>
                                                 {formatCurrency(totalSalePrice)}
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', textAlign: 'center', color: 'white' }}>
+                                            <TableCell sx={{ fontWeight: '600', color: 'white' }}>
                                                 {formatCurrency(totalFoodValue)}
                                             </TableCell>
                                         </TableRow>

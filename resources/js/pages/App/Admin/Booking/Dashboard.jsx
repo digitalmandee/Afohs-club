@@ -242,7 +242,7 @@ const CustomDateRangePicker = ({ onSearch, clearFilter }) => {
                                             <DateRange editableDateInputs={true} onChange={(item) => setRange([item.selection])} moveRangeOnFirstSelection={false} ranges={range} months={2} showSelectionPreview={false} showDateDisplay={false} direction="horizontal" />
                                         </Box>
                                     </Popper> */}
-                                    <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start">
+                                    <Popper open={open} anchorEl={anchorRef.current} placement="bottom-start" sx={{border:'2px solid #063455', borderRadius:'16px'}}>
                                         <Box ref={popperRef} sx={{ bgcolor: 'background.paper', zIndex: 1300 }}>
                                             <DateRange
                                                 editableDateInputs={true}
