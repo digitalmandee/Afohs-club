@@ -29,7 +29,7 @@ export default function RestaurantWisePosReportPrint({ allReportsData, startDate
 
     return (
         <>
-            <Head title="Restaurant-Wise POS Reports - Print" />
+            {/* <Head title="Restaurant-Wise POS Reports - Print" /> */}
             
             <style jsx global>{`
                 @media print {

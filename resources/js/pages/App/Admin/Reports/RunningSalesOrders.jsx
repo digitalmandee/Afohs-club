@@ -73,30 +73,27 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
 
     return (
         <>
-            <Head title="Running Sales Orders" />
+            {/* <Head title="Running Sales Orders" /> */}
             {/* <SideNav open={open} setOpen={setOpen} /> */}
 
             <div
                 style={{
                     minHeight: '100vh',
-                    backgroundColor:'#f5f5f5'
+                    backgroundColor: '#f5f5f5'
                 }}
             >
-                <Box sx={{ p: 3 }}>
+                <Box sx={{ p: 2 }}>
                     {/* Header */}
-                    <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+                    <Box sx={{ mb: 2 }}>
                         <Grid container justifyContent="space-between" alignItems="center">
                             <Grid item>
-                                <Typography variant="h5" sx={{ fontWeight: '600', mb: 1 }}>
+                                <Typography sx={{ fontWeight: '700', fontSize: '30px', color: '#063455' }}>
                                     Running Sales Orders
-                                </Typography>
-                                <Typography variant="h6" color="text.secondary">
-                                    Today's Active Orders - {formatDate(reportDate)}
                                 </Typography>
                             </Grid>
                             <Grid item>
                                 <Box sx={{ display: 'flex', gap: 2 }}>
-                                    <Button
+                                    {/* <Button
                                         variant="outlined"
                                         startIcon={<RefreshIcon />}
                                         onClick={handleRefresh}
@@ -107,57 +104,62 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                                         }}
                                     >
                                         Refresh
-                                    </Button>
+                                    </Button> */}
                                     <Button
                                         variant="contained"
                                         startIcon={<PrintIcon />}
                                         onClick={handlePrint}
-                                        sx={{ 
-                                            backgroundColor: '#0a3d62',
+                                        sx={{
+                                            backgroundColor: '#063455',
                                             color: 'white',
-                                            '&:hover': { backgroundColor: '#083049' }
+                                            borderRadius: '16px',
+                                            textTransform: 'none',
+                                            '&:hover': { backgroundColor: '#063455' }
                                         }}
                                     >
-                                        Print Report
+                                        Print
                                     </Button>
                                 </Box>
                             </Grid>
                         </Grid>
-                    </Paper>
+                        <Typography sx={{ fontWeight: '600', fontSize: '15px', color: '#063455' }}>
+                            Today's Active Orders - {formatDate(reportDate)}
+                        </Typography>
+                    </Box>
 
                     {/* Summary Stats */}
                     <Grid container spacing={3} sx={{ mb: 3 }}>
                         <Grid item xs={12} md={4}>
-                            <Card>
+                            <Card sx={{ bgcolor: '#063455', borderRadius: '16px' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
-                                        {totalOrders}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Running Orders
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {totalOrders}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Card>
+                            <Card sx={{ bgcolor: '#063455', borderRadius: '16px' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <Typography variant="h6" color="success.main" sx={{ fontWeight: 'bold' }}>
-                                        {formatCurrency(totalAmount)}
-                                    </Typography>
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Total Amount
                                     </Typography>
+                                    <Typography sx={{ fontWeight: '500', fontSize: '20px', color: '#fff' }}>
+                                        {formatCurrency(totalAmount)}
+                                    </Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
                         <Grid item xs={12} md={4}>
-                            <Card>
+                            <Card sx={{ bgcolor: '#063455', borderRadius: '16px' }}>
                                 <CardContent sx={{ textAlign: 'center' }}>
-                                    <AccessTimeIcon sx={{ fontSize: 25, color: '#0a3d62', mb:1 }} />
-                                    <Typography variant="body1" color="text.secondary">
+                                    <Typography sx={{ fontWeight: '500', fontSize: '16px', color: '#fff' }}>
                                         Live Report
                                     </Typography>
+                                    <AccessTimeIcon sx={{ fontSize: 25, color: '#fff' }} />
                                 </CardContent>
                             </Card>
                         </Grid>
@@ -173,52 +175,52 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                             <TableContainer component={Paper} elevation={1}>
                                 <Table>
                                     <TableHead>
-                                        <TableRow>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
+                                        <TableRow sx={{bgcolor:'#063455'}}>
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
                                                 SR
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                ORDER#
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Order
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                DATE
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Date
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                TIME
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Time
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                TABLE
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Table
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>
-                                                RESTAURANT
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Restaurant
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                CUSTOMER NAME
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Customer Name
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                CUSTOMER #
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Customer
                                             </TableCell>
                                             {/* <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
                                                 ITEMS
                                             </TableCell> */}
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                TOTAL AMOUNT
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Total Amount
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                CASHIER
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Cashier
                                             </TableCell>
-                                            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', textAlign: 'center' }}>
-                                                STATUS
+                                            <TableCell sx={{ fontWeight: '600', color:'#fff' }}>
+                                                Status
                                             </TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {runningOrders.map((order, index) => (
-                                            <TableRow 
+                                            <TableRow
                                                 key={order.id}
-                                                sx={{ 
-                                                    '&:nth-of-type(odd)': { 
-                                                        backgroundColor: '#fafafa' 
+                                                sx={{
+                                                    '&:nth-of-type(odd)': {
+                                                        backgroundColor: '#fafafa'
                                                     }
                                                 }}
                                             >
@@ -256,8 +258,8 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                                                     {order.cashier_name || 'N/A'}
                                                 </TableCell>
                                                 <TableCell sx={{ fontSize: '0.8rem', textAlign: 'center' }}>
-                                                    <Chip 
-                                                        label={order.status || 'Pending'} 
+                                                    <Chip
+                                                        label={order.status || 'Pending'}
                                                         color={getStatusColor(order.status)}
                                                         size="small"
                                                         sx={{ fontWeight: 'bold' }}
@@ -283,9 +285,9 @@ export default function RunningSalesOrders({ runningOrders, totalOrders, totalAm
                         {/* Summary Footer */}
                         {runningOrders && runningOrders.length > 0 && (
                             <Box sx={{ mt: 4, p: 3, bgcolor: '#f0f7ff', borderRadius: 2, border: '2px solid #0a3d62' }}>
-                                <Typography 
-                                    variant="h6" 
-                                    sx={{ 
+                                <Typography
+                                    variant="h6"
+                                    sx={{
                                         textAlign: 'center',
                                         fontWeight: 'bold',
                                         color: '#0a3d62'
