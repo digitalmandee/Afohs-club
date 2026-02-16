@@ -6,6 +6,7 @@ import { Alert, Box, Button, FormControl, Grid, IconButton, MenuItem, Select, Sn
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 export default function AddWaiter({ users, memberTypes, customer = null }) {
     const drawerWidthOpen = 240;
@@ -109,7 +110,9 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
         }
 
         const method = isEditMode ? 'put' : 'post';
-        const url = isEditMode ? route('waiters.update', { id: newCustomer.id }) : route('waiters.store');
+        const url = isEditMode
+            ? route(routeNameForContext('waiters.update'), { id: newCustomer.id })
+            : route(routeNameForContext('waiters.store'));
 
         const payload = {
             _method: method,
@@ -122,7 +125,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
             onSuccess: () => {
                 enqueueSnackbar(isEditMode ? 'Waiter updated successfully!' : 'Waiter added successfully!', { variant: 'success' });
                 handleCloseAddForm();
-                router.visit(route('waiters.index'));
+                router.visit(route(routeNameForContext('waiters.index')));
             },
             onError: (errors) => {
                 setErrors(errors);
@@ -144,7 +147,7 @@ export default function AddWaiter({ users, memberTypes, customer = null }) {
                 }}
             >
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
-                    <IconButton onClick={() => router.visit(route('waiters.index'))}>
+                    <IconButton onClick={() => router.visit(route(routeNameForContext('waiters.index')))}>
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="h6" style={{ marginLeft: '10px' }}>

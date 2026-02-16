@@ -116,6 +116,46 @@ class User extends Authenticatable
             ->toArray();
     }
 
+    public function getAccessibleTenants()
+    {
+        $this->loadMissing('employee');
+
+        $query = Tenant::query()->select('id', 'name', 'branch_id', 'status');
+
+        if ($this->hasRole('super-admin')) {
+            return $query->get();
+        }
+
+        $query->where('status', 'active');
+
+        if ($this->hasRole('admin')) {
+            return $query->get();
+        }
+
+        $allowedTenantIds = $this->allowedTenants()->pluck('tenants.id');
+        $branchId = $this->employee?->branch_id;
+
+        if (!$branchId && $allowedTenantIds->isEmpty()) {
+            return $query->whereRaw('1 = 0')->get();
+        }
+
+        $query->where(function ($q) use ($branchId, $allowedTenantIds) {
+            if ($branchId) {
+                $q->where('branch_id', $branchId);
+            }
+
+            if ($allowedTenantIds->isNotEmpty()) {
+                if ($branchId) {
+                    $q->orWhereIn('id', $allowedTenantIds);
+                } else {
+                    $q->whereIn('id', $allowedTenantIds);
+                }
+            }
+        });
+
+        return $query->get();
+    }
+
     // Password is automatically hashed by the 'hashed' cast in $casts
     // No need for setPasswordAttribute mutator
 }

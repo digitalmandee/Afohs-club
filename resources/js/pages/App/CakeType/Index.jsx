@@ -3,6 +3,7 @@ import { Head, Link, useForm, router } from '@inertiajs/react';
 import { Box, Paper, Typography, Button, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Chip } from '@mui/material';
 import { Add, Edit, Delete, Search } from '@mui/icons-material';
 import POSLayout from "@/components/POSLayout";
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -15,12 +16,12 @@ function Index({ cakeTypes, filters }) {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        get(route('cake-types.index'), { preserveState: true });
+        get(route(routeNameForContext('cake-types.index')), { preserveState: true });
     };
 
     const handleDelete = (id) => {
         if (confirm('Are you sure you want to delete this cake type?')) {
-            router.delete(route('cake-types.destroy', id));
+            router.delete(route(routeNameForContext('cake-types.destroy'), id));
         }
     };
 
@@ -67,7 +68,7 @@ function Index({ cakeTypes, filters }) {
                                 color="error"
                                 startIcon={<Delete />}
                                 component={Link}
-                                href={route('cake-types.trashed')}
+                                href={route(routeNameForContext('cake-types.trashed'))}
                                 sx={{ bgcolor: 'transparent', borderRadius: '16px', height: 35, textTransform: 'none' }}>
                                 Deleted
                             </Button>
@@ -75,7 +76,7 @@ function Index({ cakeTypes, filters }) {
                                 variant="contained"
                                 startIcon={<Add />}
                                 component={Link}
-                                href={route('cake-types.create')}
+                                href={route(routeNameForContext('cake-types.create'))}
                                 sx={{
                                     bgcolor: '#063455',
                                     borderRadius: '16px', height: 35, textTransform: 'none',
@@ -117,7 +118,7 @@ function Index({ cakeTypes, filters }) {
                                                 <Chip label={type.status} color={type.status === 'active' ? 'success' : 'default'} size="small" variant="outlined" sx={{ textTransform: 'capitalize' }} />
                                             </TableCell>
                                             <TableCell align="right">
-                                                <IconButton component={Link} href={route('cake-types.edit', type.id)} size="small" color="primary">
+                                                <IconButton component={Link} href={route(routeNameForContext('cake-types.edit'), type.id)} size="small" color="primary">
                                                     <Edit />
                                                 </IconButton>
                                                 <IconButton onClick={() => handleDelete(type.id)} size="small" color="error">

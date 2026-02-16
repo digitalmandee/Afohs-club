@@ -18,6 +18,7 @@ import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useRef, useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const AddMenu = ({ openMenu, onClose }) => {
     const { data, setData, post, processing, errors, reset, transform } = useForm({
@@ -216,7 +217,7 @@ const AddMenu = ({ openMenu, onClose }) => {
 
     // Save new menu
     const handleSaveMenu = () => {
-        post(route('inventory.store'), {
+        post(route(routeNameForContext('inventory.store')), {
             onSuccess: (data) => {
                 enqueueSnackbar('Product added successfully', { variant: 'success' });
                 reset();
@@ -246,7 +247,7 @@ const AddMenu = ({ openMenu, onClose }) => {
     }, [data.cogs, data.basePrice]);
 
     useEffect(() => {
-        axios.get(route('inventory.categories')).then((response) => {
+        axios.get(route(routeNameForContext('inventory.categories'))).then((response) => {
             setCategories(response.data.categories);
         });
     }, []);

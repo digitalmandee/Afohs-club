@@ -37,6 +37,6 @@ class AuthController extends Controller
         }
 
         // ✅ Passed all checks
-        return redirect()->route('tenant.login');
+        return response()->noContent();
     }
 }

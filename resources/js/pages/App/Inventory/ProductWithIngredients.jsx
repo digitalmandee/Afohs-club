@@ -4,6 +4,7 @@ import { Save as SaveIcon, ArrowBack as BackIcon, Add as AddIcon, Delete as Dele
 import { router } from '@inertiajs/react';
 import { useForm } from '@inertiajs/react';
 import axios from 'axios';
+import { routeNameForContext } from '@/lib/utils';
 
 const ProductWithIngredients = ({ categories, product, id }) => {
     const [ingredients, setIngredients] = useState([]);
@@ -43,7 +44,7 @@ const ProductWithIngredients = ({ categories, product, id }) => {
 
     const loadIngredients = async () => {
         try {
-            const response = await axios.get(route('api.ingredients'));
+            const response = await axios.get(route(routeNameForContext('api.ingredients')));
             setIngredients(response.data);
         } catch (error) {
             console.error('Error loading ingredients:', error);
@@ -82,7 +83,7 @@ const ProductWithIngredients = ({ categories, product, id }) => {
         if (selectedIngredients.length === 0) return;
 
         try {
-            const response = await axios.post(route('api.ingredients.check-availability'), {
+            const response = await axios.post(route(routeNameForContext('api.ingredients.check-availability')), {
                 ingredients: selectedIngredients.map((ing) => ({
                     id: ing.id,
                     quantity: ing.quantity_used * (data.current_stock || 1),
@@ -112,9 +113,9 @@ const ProductWithIngredients = ({ categories, product, id }) => {
         };
 
         if (id) {
-            put(route('inventory.update', id), formData);
+            put(route(routeNameForContext('inventory.update'), id), formData);
         } else {
-            post(route('inventory.store'), formData);
+            post(route(routeNameForContext('inventory.store')), formData);
         }
     };
 
@@ -128,7 +129,7 @@ const ProductWithIngredients = ({ categories, product, id }) => {
         <Box sx={{ p: 3 }}>
             {/* Header */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Button startIcon={<BackIcon />} onClick={() => router.visit(route('inventory.index'))} sx={{ mr: 2 }}>
+                <Button startIcon={<BackIcon />} onClick={() => router.visit(route(routeNameForContext('inventory.index')))} sx={{ mr: 2 }}>
                     Back to Products
                 </Button>
                 <Typography variant="h4" fontWeight="bold">
@@ -342,7 +343,7 @@ const ProductWithIngredients = ({ categories, product, id }) => {
                     {/* Action Buttons */}
                     <Grid item xs={12}>
                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                            <Button variant="outlined" onClick={() => router.visit(route('inventory.index'))} disabled={processing}>
+                            <Button variant="outlined" onClick={() => router.visit(route(routeNameForContext('inventory.index')))} disabled={processing}>
                                 Cancel
                             </Button>
                             <Button type="submit" variant="contained" startIcon={<SaveIcon />} disabled={processing} sx={{ backgroundColor: '#063455' }}>

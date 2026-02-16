@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Box, Typography, IconButton, Chip, Button, DialogContent, DialogActions, Collapse } from '@mui/material';
 import { Close as CloseIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
 import { router, usePage } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 
 const OrderFilter = ({ onClose }) => {
     const { filters } = usePage().props;
@@ -30,7 +31,7 @@ const OrderFilter = ({ onClose }) => {
         setEndDate('');
 
         // 🚀 Reload orders without filters
-        router.get(route('order.management'), {}, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('order.management')), {}, { preserveState: true, replace: true });
         onClose();
     };
 
@@ -43,7 +44,7 @@ const OrderFilter = ({ onClose }) => {
         };
 
         // 🚀 Trigger Inertia request with filters
-        router.get(route('order.management'), filters, {
+        router.get(route(routeNameForContext('order.management')), filters, {
             preserveScroll: true,
             preserveState: true,
             replace: true,

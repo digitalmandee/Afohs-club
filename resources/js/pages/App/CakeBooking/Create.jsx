@@ -6,6 +6,7 @@ import { Box, Paper, Typography, Button, Grid, TextField, MenuItem, Select, Form
 import { Save, ArrowBack, AttachFile, Close } from '@mui/icons-material';
 import dayjs from 'dayjs';
 import axios from 'axios';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -61,7 +62,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
     useEffect(() => {
         if (data.member_id) {
             axios
-                .get(route('api.members.family', { id: data.member_id, type: data.customer_type }))
+                .get(route(routeNameForContext('api.members.family'), { id: data.member_id, type: data.customer_type }))
                 .then((res) => {
                     setFamilyMembers(res.data);
                 })
@@ -102,12 +103,12 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (isEdit) {
-            router.post(route('cake-bookings.update', booking.id), {
+            router.post(route(routeNameForContext('cake-bookings.update'), booking.id), {
                 ...data,
                 _method: 'put',
             });
         } else {
-            post(route('cake-bookings.store'));
+            post(route(routeNameForContext('cake-bookings.store')));
         }
     };
 
@@ -126,7 +127,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                 <Box>
                     {/* Header */}
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Button startIcon={<ArrowBack />} component={'a'} href={route('cake-bookings.index')} sx={{ mr: 2 }}>
+                        <Button startIcon={<ArrowBack />} component={'a'} href={route(routeNameForContext('cake-bookings.index'))} sx={{ mr: 2 }}>
                             Back
                         </Button>
                         <Typography variant="h5" fontWeight="bold" sx={{ color: '#003B5C' }}>
@@ -202,7 +203,7 @@ export default function Create({ cakeTypes, nextBookingNumber, booking, isEdit, 
                                     Customer Info
                                 </Typography>
                                 <UserAutocomplete
-                                    routeUri={route('api.users.global-search')}
+                                    routeUri={route(routeNameForContext('api.users.global-search'))}
                                     memberType={data.customer_type}
                                     value={data.member_id ? { id: data.member_id, name: data.customer_name } : null}
                                     onChange={(newValue) => {

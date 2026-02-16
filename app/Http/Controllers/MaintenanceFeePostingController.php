@@ -324,7 +324,7 @@ class MaintenanceFeePostingController extends Controller
                 ->where('invoiceable_id', $memberId)
                 ->where('invoiceable_type', $modelClass);
         })
-            ->where('fee_type', 'maintenance_fee')
+            ->whereIn('fee_type', ['maintenance_fee', AppConstants::TRANSACTION_TYPE_ID_MAINTENANCE])
             ->where(function ($q) use ($startDate, $endDate) {
                 $q
                     ->where('start_date', '<=', $endDate)

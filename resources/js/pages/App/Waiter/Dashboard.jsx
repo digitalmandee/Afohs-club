@@ -6,6 +6,7 @@ import { Add as AddIcon, Close as CloseIcon, KeyboardArrowRight as KeyboardArrow
 import { Alert, Avatar, Box, Button, IconButton, InputAdornment, Menu, MenuItem, Modal, Snackbar, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from '@mui/material';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { useState } from 'react';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -108,7 +109,7 @@ const WaiterDashboard = ({ userDetail, users }) => {
                                 }}
                                 style={{ width: '400px', backgroundColor: 'white' }}
                             />
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route('waiters.create'))} style={{ backgroundColor: '#063455', color: 'white' }}>
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.get(route(routeNameForContext('waiters.create')))} style={{ backgroundColor: '#063455', color: 'white' }}>
                                 Add Waiter
                             </Button>
                         </div>

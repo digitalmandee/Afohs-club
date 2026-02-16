@@ -5,6 +5,7 @@ import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableH
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, DeleteSweep as DeleteSweepIcon } from '@mui/icons-material';
 import { enqueueSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -28,7 +29,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
 
     const handleSearch = (e) => {
         setSearch(e.target.value);
-        router.get(route('manufacturers.index'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route(routeNameForContext('manufacturers.index')), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     // --- Create / Edit Handlers ---
@@ -56,7 +57,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
 
         setProcessing(true);
         if (editingManufacturer) {
-            router.put(route('manufacturers.update', editingManufacturer.id), formData, {
+            router.put(route(routeNameForContext('manufacturers.update'), editingManufacturer.id), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Manufacturer updated successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -67,7 +68,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                 onFinish: () => setProcessing(false),
             });
         } else {
-            router.post(route('manufacturers.store'), formData, {
+            router.post(route(routeNameForContext('manufacturers.store')), formData, {
                 onSuccess: () => {
                     enqueueSnackbar('Manufacturer created successfully!', { variant: 'success' });
                     handleCloseModal();
@@ -93,9 +94,8 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
 
     const handleDelete = () => {
         if (!manufacturerToDelete) return;
-
         setProcessing(true);
-        router.delete(route('manufacturers.destroy', manufacturerToDelete.id), {
+        router.delete(route(routeNameForContext('manufacturers.destroy'), manufacturerToDelete.id), {
             onSuccess: () => {
                 enqueueSnackbar('Manufacturer deleted successfully!', { variant: 'success' });
                 handleCloseDeleteModal();
@@ -146,7 +146,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                             variant="outlined"
                             color="error"
                             startIcon={<DeleteIcon />}
-                            onClick={() => router.visit(route('manufacturers.trashed'))}
+                            onClick={() => router.visit(route(routeNameForContext('manufacturers.trashed')))}
                             sx={{
                                 bgcolor: 'transparent',
                                 borderRadius: '16px',
@@ -215,7 +215,7 @@ const ManufacturersIndex = ({ manufacturers, filters }) => {
                 </TableContainer>
 
                 <Box mt={3} display="flex" justifyContent="center">
-                    <Pagination count={manufacturers.last_page} page={manufacturers.current_page} onChange={(e, p) => router.get(route('manufacturers.index'), { page: p, search }, { preserveState: true })} color="primary" />
+                    <Pagination count={manufacturers.last_page} page={manufacturers.current_page} onChange={(e, p) => router.get(route(routeNameForContext('manufacturers.index')), { page: p, search }, { preserveState: true })} color="primary" />
                 </Box>
             </Box>
             {/* </Box> */}

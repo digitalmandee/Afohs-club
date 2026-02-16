@@ -2,7 +2,7 @@
 
 namespace App\Helpers;
 
-use App\Models\EmployeeLog;
+use App\Models\UserLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,17 +28,19 @@ class TenantLogout
                 $loggedAt = $now;
             }
 
-            EmployeeLog::create([
-                'employee_id' => $user->employee->id,
+            $restaurantId = $request->session()->get('active_restaurant_id') ?? $request->route('tenant');
+
+            UserLog::create([
+                'user_id' => $user->id,
                 'type' => 'logout',
                 'logged_at' => $loggedAt,
-                'tenant_id' => session('tenant_id'),
+                'restaurant_id' => $restaurantId,
             ]);
         }
 
         Auth::guard($guard)->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        session()->forget('tenant_id');
+        session()->forget(['active_restaurant_id', 'active_company_id']);
     }
 }

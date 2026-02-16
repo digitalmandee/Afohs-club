@@ -3,6 +3,7 @@ import { Box, Typography, Button, Card, CardContent, Grid, Chip, Table, TableBod
 import { ArrowBack as ArrowBackIcon, Edit as EditIcon, Add as AddIcon } from '@mui/icons-material';
 import { router } from '@inertiajs/react';
 import SideNav from '@/components/App/SideBar/SideNav';
+import { routeNameForContext } from '@/lib/utils';
 
 const drawerWidthOpen = 240;
 const drawerWidthClosed = 110;
@@ -67,10 +68,10 @@ const ShowIngredient = ({ ingredient }) => {
                             </Typography>
                         </Box>
                         <Box sx={{ display: 'flex', gap: 2 }}>
-                            <Button variant="outlined" startIcon={<EditIcon />} onClick={() => router.visit(route('ingredients.edit', ingredient.id))}>
+                            <Button variant="outlined" startIcon={<EditIcon />} onClick={() => router.visit(route(routeNameForContext('ingredients.edit'), ingredient.id))}>
                                 Edit Ingredient
                             </Button>
-                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route('ingredients.add-stock', ingredient.id))} sx={{ backgroundColor: '#063455' }}>
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => router.visit(route(routeNameForContext('ingredients.add-stock.form'), ingredient.id))} sx={{ backgroundColor: '#063455' }}>
                                 Add Stock
                             </Button>
                         </Box>

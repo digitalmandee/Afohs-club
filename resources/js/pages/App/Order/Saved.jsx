@@ -6,6 +6,7 @@ import { useOrderStore } from '@/stores/useOrderStore';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import CancelOrder from '../Dashboard/DelModal';
+import { routeNameForContext } from '@/lib/utils';
 
 const OrderSaved = ({ setActiveView }) => {
     const { setOrderDetails } = useOrderStore();
@@ -116,15 +117,15 @@ const OrderSaved = ({ setActiveView }) => {
 
     useEffect(() => {
         axios
-            .get(route('order.savedOrder'))
+            .get(route(routeNameForContext('order.savedOrder')))
             .then((response) => {
                 setSavedOrders(response.data.SavedOrders);
             })
             .catch((error) => {
                 console.error('Error fetching saved orders:', error);
             });
-        axios.get(route('waiters.all')).then((res) => setWaiters(res.data.waiters));
-        axios.get(route('floor.all')).then((res) => {
+        axios.get(route(routeNameForContext('waiters.all'))).then((res) => setWaiters(res.data.waiters));
+        axios.get(route(routeNameForContext('floor.all'))).then((res) => {
             setFloorTables(res.data.floors);
             setFormData((prev) => ({ ...prev, floor: res.data.floors[0]?.id }));
         });

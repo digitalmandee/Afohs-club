@@ -13,6 +13,7 @@ import axios from 'axios';
 import PaymentNow from '@/components/App/Invoice/PaymentNow';
 import Receipt from '@/components/App/Invoice/Receipt';
 import POSLayout from "@/components/POSLayout";
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -65,7 +66,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
             cancelType: cancelData.cancelType,
         };
 
-        router.post(route('orders.update', { id: selectedCard.id }), payload, {
+        router.post(route(routeNameForContext('orders.update'), { id: selectedCard.id }), payload, {
             preserveScroll: true,
             onSuccess: () => {
                 enqueueSnackbar('Order updated successfully!', { variant: 'success' });
@@ -108,7 +109,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         };
 
         return new Promise((resolve, reject) => {
-            router.post(route('orders.update', { id: selectedCard.id }), payload, {
+            router.post(route(routeNameForContext('orders.update'), { id: selectedCard.id }), payload, {
                 preserveScroll: true,
                 onSuccess: () => {
                     enqueueSnackbar('Order updated successfully!', { variant: 'success' });
@@ -133,7 +134,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                 }
                 setLoadingSuggestions(true);
                 try {
-                    const response = await axios.get(route('api.orders.search-customers'), {
+                    const response = await axios.get(route(routeNameForContext('api.orders.search-customers')), {
                         params: { query, type },
                     });
                     setSuggestions(response.data);
@@ -150,7 +151,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
     const fetchOrders = (page = 1) => {
         setLoading(true);
         axios
-            .get(route('order.management'), {
+            .get(route(routeNameForContext('order.management')), {
                 params: {
                     page,
                     search_id: searchId,
@@ -196,7 +197,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         setStartDate('');
         setEndDate('');
         setLoading(true);
-        axios.get(route('order.management')).then((res) => {
+        axios.get(route(routeNameForContext('order.management'))).then((res) => {
             setOrders(res.data);
             setLoading(false);
         });
@@ -208,7 +209,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
                 if (!inputValue) return;
                 setLoadingSuggestions(true);
                 axios
-                    .get(route('api.orders.search-customers'), { params: { query: inputValue, type } })
+                    .get(route(routeNameForContext('api.orders.search-customers')), { params: { query: inputValue, type } })
                     .then((response) => {
                         const formatted = response.data.map((item) => ({
                             ...item,
@@ -280,7 +281,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
 
     const handleGenerateInvoice = (order) => {
         axios
-            .post(route('order.generate-invoice', { id: order.id }))
+            .post(route(routeNameForContext('order.generate-invoice'), { id: order.id }))
             .then((response) => {
                 const { invoice, order: updatedOrder } = response.data;
                 enqueueSnackbar('Invoice generated successfully!', { variant: 'success' });
@@ -325,7 +326,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
     useEffect(() => {
         // Fetch riders on mount
         axios
-            .get(route('riders.all'))
+            .get(route(routeNameForContext('riders.all')))
             .then((res) => {
                 if (res.data.success) {
                     setRiders(res.data.riders);
@@ -344,7 +345,7 @@ const Dashboard = ({ allrestaurants, filters, initialOrders }) => {
         if (!selectedOrderForRider) return;
 
         router.post(
-            route('orders.update', { id: selectedOrderForRider.id }),
+            route(routeNameForContext('orders.update'), { id: selectedOrderForRider.id }),
             {
                 rider_id: selectedRider,
             },

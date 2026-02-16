@@ -16,6 +16,7 @@ import AddReservation from './Action';
 import TableSetting from './Setting';
 import ActiveTable from './ActiveTable';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 const ItemTypes = {
     TABLE: 'table',
@@ -234,7 +235,7 @@ const TableManagement = ({ floorsdata, tablesData }) => {
     useEffect(() => {
         if (selectedDate.full_date) {
             axios
-                .get(route('floors.getFloors'), {
+                .get(route(routeNameForContext('floors.getFloors')), {
                     params: {
                         date: selectedDate.full_date,
                         floor: selectedFloor,

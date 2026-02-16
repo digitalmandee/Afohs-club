@@ -12,6 +12,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 // const drawerWidthOpen = 240;
 // const drawerWidthClosed = 110;
@@ -36,7 +37,7 @@ const Dashboard = ({ orders, filters, totals }) => {
     const applyFilters = debounce(() => {
         setIsLoading(true);
         router.get(
-            route('transaction.history'),
+            route(routeNameForContext('transaction.history')),
             {
                 search_id: searchId || undefined,
                 search_name: searchName || undefined,
@@ -56,7 +57,7 @@ const Dashboard = ({ orders, filters, totals }) => {
     const handlePageChange = (event, page) => {
         setIsLoading(true);
         router.get(
-            route('transaction.history'),
+            route(routeNameForContext('transaction.history')),
             { ...filters, page },
             {
                 preserveState: true,

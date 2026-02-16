@@ -3,6 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 import axios from 'axios';
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
+import { routeNameForContext } from '@/lib/utils';
 
 const StartShiftModal = ({ open, onSuccess }) => {
     const { enqueueSnackbar } = useSnackbar();
@@ -11,7 +12,7 @@ const StartShiftModal = ({ open, onSuccess }) => {
     const handleStartShift = async () => {
         setLoading(true);
         try {
-            const response = await axios.post(route('pos-shifts.start')); // No data needed
+            const response = await axios.post(route(routeNameForContext('pos-shifts.start'))); // No data needed
 
             if (response.data.success) {
                 enqueueSnackbar('Shift started successfully!', { variant: 'success' });

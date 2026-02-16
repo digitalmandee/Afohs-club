@@ -805,7 +805,7 @@ export const generateInvoiceContent = (booking, type) => {
                                     : booking.corporate_member
                                         ? booking.corporate_member.personal_email
                                         : 'N/A'}</a></div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Address: </span>${booking.customer
+        <div class="typography-body2" style="margin-bottom: 6px; line-height: 1;"><span style="font-weight: bold">Address: </span>${booking.customer
                     ? booking.customer.address
                     : booking.member
                         ? booking.member.current_address
@@ -827,7 +827,7 @@ export const generateInvoiceContent = (booking, type) => {
             <span style="font-weight: bold">Email: </span>
             <a style="color: #000; text-decoration: none;" href="mailto:${booking.guest_email || 'N/A'}">${booking.guest_email || 'N/A'}</a>
         </div>
-        <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Address: </span>${booking.guest_address || 'N/A'}</div>
+        <div class="typography-body2" style="margin-bottom: 6px;line-height: 1;"><span style="font-weight: bold">Address: </span>${booking.guest_address || 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">City: </span>${booking.guest_city || 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Country: </span>${booking.guest_country || 'N/A'}</div>
         <div class="typography-body2" style="margin-bottom: 6px;"><span style="font-weight: bold">Booked By: </span>${booking.booked_by || 'N/A'}</div>

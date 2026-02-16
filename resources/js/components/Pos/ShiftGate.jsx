@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import StartShiftModal from './StartShiftModal';
+import { routeNameForContext } from '@/lib/utils';
 
 /**
  * A wrapper component that enforces an active POS shift.
@@ -19,7 +20,7 @@ const ShiftGate = ({ children }) => {
         const checkShift = async () => {
             try {
                 // We use the existing status endpoint
-                const response = await axios.get(route('pos-shifts.status'));
+                const response = await axios.get(route(routeNameForContext('pos-shifts.status')));
                 if (response.data.has_active_shift) {
                     setHasShift(true);
                     setModalOpen(false);

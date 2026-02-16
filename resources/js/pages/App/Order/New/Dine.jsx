@@ -3,6 +3,7 @@
 import UserAutocomplete from '@/components/UserAutocomplete';
 import { useOrderStore } from '@/stores/useOrderStore';
 import { router } from '@inertiajs/react';
+import { routeNameForContext } from '@/lib/utils';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import SearchIcon from '@mui/icons-material/Search';
@@ -45,7 +46,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
     };
 
     useEffect(() => {
-        axios.get(route('waiters.all')).then((res) => setWaiters(res.data.waiters));
+        axios.get(route(routeNameForContext('waiters.all'))).then((res) => setWaiters(res.data.waiters));
     }, ['']);
 
     const currentFloor = floorTables.find((f) => f.id === orderDetails.floor);
@@ -64,7 +65,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
         const handleKeyDown = (e) => {
             if (e.key === 'F10' && !isDisabled) {
                 e.preventDefault();
-                router.visit(route('order.menu'));
+                router.visit(route(routeNameForContext('order.menu')));
             }
         };
 
@@ -142,7 +143,7 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
                         Customer Name
                     </Typography>
-                    <UserAutocomplete routeUri={route('api.users.global-search')} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
+                    <UserAutocomplete routeUri={route(routeNameForContext('api.users.global-search'))} memberType={orderDetails.member_type} value={orderDetails.member && orderDetails.member.id ? orderDetails.member : null} onChange={(newValue) => handleOrderDetailChange('member', newValue || {})} label="Member / Guest Name" placeholder="Search by Name, ID, or CNIC..." />
                 </Grid>
                 <Grid item xs={4}>
                     <Typography variant="body2" sx={{ mb: 0.5 }}>
@@ -386,7 +387,19 @@ const DineDialog = ({ guestTypes, floorTables }) => {
                         textTransform: 'none',
                     }}
                     disabled={isDisabled}
-                    onClick={() => router.visit(route('order.menu', { table_id: orderDetails.table.id, member_id: orderDetails.member.id, member_type: orderDetails.member_type, waiter_id: orderDetails.waiter.id, person_count: orderDetails.person_count, floor_id: orderDetails.floor, order_type: 'dineIn' }))}
+                    onClick={() =>
+                        router.visit(
+                            route(routeNameForContext('order.menu'), {
+                                table_id: orderDetails.table.id,
+                                member_id: orderDetails.member.id,
+                                member_type: orderDetails.member_type,
+                                waiter_id: orderDetails.waiter.id,
+                                person_count: orderDetails.person_count,
+                                floor_id: orderDetails.floor,
+                                order_type: 'dineIn',
+                            }),
+                        )
+                    }
                 >
                     Choose Menu
                 </Button>

@@ -44,7 +44,7 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        Auth::login($user);
+        Auth::guard('tenant')->login($user);
 
         return to_route('tenant.dashboard');
     }
