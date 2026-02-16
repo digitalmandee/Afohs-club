@@ -75,6 +75,8 @@ class Employee extends BaseModel
         'work_experience_years',
         'previous_employer',
         'previous_position',
+        'old_department',
+        'old_subdepartment'
     ];
 
     public function user()

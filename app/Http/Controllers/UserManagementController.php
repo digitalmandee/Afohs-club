@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use Spatie\Permission\PermissionRegistrar;
 use Spatie\Permission\Models\Role;
 
 class UserManagementController extends Controller
@@ -80,8 +81,7 @@ class UserManagementController extends Controller
         $request->validate([
             'employee_id' => 'required|exists:employees,employee_id',
             'password' => 'required|min:4',
-            'tenant_ids' => 'required|array|min:1',
-            'tenant_ids.*' => 'exists:tenants,id',
+            'role' => 'nullable|exists:roles,name',
         ]);
 
         $employee = Employee::where('employee_id', $request->employee_id)->first();
@@ -100,11 +100,16 @@ class UserManagementController extends Controller
         // Update employee with user_id
         $employee->update(['user_id' => $user->id]);
 
-        // Assign default role for POS system (you can customize this)
-        $user->assignRole('cashier');  // or whatever role you want for POS users
+        $user->assignRole($request->role ?: 'cashier');
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        // Sync allowed tenants (restaurants) for order punching
-        $user->allowedTenants()->sync($request->tenant_ids);
+        $tenantIds = Tenant::query()
+            ->where('status', 'active')
+            ->when($employee->branch_id, fn ($q) => $q->where('branch_id', $employee->branch_id))
+            ->pluck('id')
+            ->toArray();
+
+        $user->allowedTenants()->sync($tenantIds);
 
         return redirect()
             ->back()
@@ -118,8 +123,6 @@ class UserManagementController extends Controller
     {
         $request->validate([
             'password' => 'nullable|min:4',
-            'tenant_ids' => 'required|array',
-            'tenant_ids.*' => 'exists:tenants,id',
         ]);
 
         $user = User::findOrFail($id);
@@ -131,8 +134,16 @@ class UserManagementController extends Controller
             ]);
         }
 
-        // Sync allowed tenants
-        $user->allowedTenants()->sync($request->tenant_ids);
+        $user->loadMissing('employee');
+        $employee = $user->employee;
+
+        $tenantIds = Tenant::query()
+            ->where('status', 'active')
+            ->when($employee?->branch_id, fn ($q) => $q->where('branch_id', $employee->branch_id))
+            ->pluck('id')
+            ->toArray();
+
+        $user->allowedTenants()->sync($tenantIds);
 
         return redirect()
             ->back()
@@ -152,6 +163,8 @@ class UserManagementController extends Controller
         $user = User::findOrFail($request->user_id);
         $user->assignRole($request->role_name);
 
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         return response()->json([
             'message' => 'Role assigned successfully!',
             'user' => $user->load('roles'),
@@ -170,6 +183,8 @@ class UserManagementController extends Controller
 
         $user = User::findOrFail($request->user_id);
         $user->removeRole($request->role_name);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
         return response()->json([
             'message' => 'Role removed successfully!',

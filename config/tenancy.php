@@ -9,7 +9,7 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 return [
     'tenant_model' => \App\Models\Tenant::class,
-    'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
+    'id_generator' => null,
     // 'domain_model' => Domain::class,
     // 'tenant_identification' => [
     //     InitializeTenancyByPath::class,

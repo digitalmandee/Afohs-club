@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tenant;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
@@ -25,7 +26,11 @@ class TenantController extends Controller
      */
     public function create()
     {
-        return Inertia::render('tenant/register');
+        $branches = Branch::select('id', 'name')->orderBy('name')->get();
+
+        return Inertia::render('tenant/register', [
+            'branches' => $branches,
+        ]);
     }
 
     /**
@@ -35,6 +40,7 @@ class TenantController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
+            'branch_id' => 'required|exists:branches,id',
             'domain_name' => 'required|string|max:255',
             'printer_ip' => 'required|string|max:255',
             'printer_port' => 'required',
@@ -44,8 +50,6 @@ class TenantController extends Controller
         if (Domain::where('domain', $request->input('domain_name'))->exists()) {
             return back()->withErrors(['domain_name' => 'The domain is already taken.'])->withInput();
         }
-
-        $validatedData['id'] = $request->input('domain_name');
 
         $tenant = Tenant::create($validatedData);
 
@@ -69,8 +73,11 @@ class TenantController extends Controller
      */
     public function edit(Tenant $tenant)
     {
+        $branches = Branch::select('id', 'name')->orderBy('name')->get();
+
         return Inertia::render('tenant/register', [
             'tenant' => $tenant,  // pass existing tenant
+            'branches' => $branches,
         ]);
     }
 
@@ -78,6 +85,7 @@ class TenantController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
+            'branch_id' => 'required|exists:branches,id',
             'printer_ip' => 'required|string|max:255',
             'printer_port' => 'required',
         ]);

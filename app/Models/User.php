@@ -132,26 +132,18 @@ class User extends Authenticatable
             return $query->get();
         }
 
-        $allowedTenantIds = $this->allowedTenants()->pluck('tenants.id');
+        $allowedTenantIds = $this->getAllowedTenantIds();
         $branchId = $this->employee?->branch_id;
 
-        if (!$branchId && $allowedTenantIds->isEmpty()) {
+        if (!$branchId && empty($allowedTenantIds)) {
             return $query->whereRaw('1 = 0')->get();
         }
 
-        $query->where(function ($q) use ($branchId, $allowedTenantIds) {
-            if ($branchId) {
-                $q->where('branch_id', $branchId);
-            }
-
-            if ($allowedTenantIds->isNotEmpty()) {
-                if ($branchId) {
-                    $q->orWhereIn('id', $allowedTenantIds);
-                } else {
-                    $q->whereIn('id', $allowedTenantIds);
-                }
-            }
-        });
+        if (!empty($allowedTenantIds)) {
+            $query->whereIn('id', $allowedTenantIds);
+        } else {
+            $query->where('branch_id', $branchId);
+        }
 
         return $query->get();
     }

@@ -1,17 +1,18 @@
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { ArrowBack } from '@mui/icons-material';
-import { Alert, Box, Button, Paper, IconButton, CircularProgress, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Paper, IconButton, CircularProgress, TextField, Typography, MenuItem } from '@mui/material';
 import { Col, Container, Row } from 'react-bootstrap';
 import { enqueueSnackbar } from 'notistack';
 
 
-const Register = ({ tenant }) => {
+const Register = ({ tenant, branches }) => {
     // const [open, setOpen] = useState(true);
     const isEdit = !!tenant;
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: tenant?.name || '',
+        branch_id: tenant?.branch_id ? String(tenant.branch_id) : '',
         domain_name: tenant?.id || '',
         printer_ip: tenant?.printer_ip || '',
         printer_port: tenant?.printer_port || '',
@@ -47,8 +48,8 @@ const Register = ({ tenant }) => {
             post(route('locations.store'), {
                 preserveScroll: true,
                 onSuccess: () => {
-                    enqueueSnackbar('Kitchen created successfully!', { variant: 'success' });
-                    reset(['name', 'domain_name', 'printer_ip', 'printer_port']);
+                    enqueueSnackbar('Restaurant created successfully!', { variant: 'success' });
+                    reset(['name', 'branch_id', 'domain_name', 'printer_ip', 'printer_port']);
                 },
             });
         }
@@ -86,7 +87,7 @@ const Register = ({ tenant }) => {
                         <ArrowBack />
                     </IconButton> */}
                     <Typography style={{ color: '#063455', fontWeight: 700, fontSize:'30px' }}>
-                        Create New Kitchen
+                        {isEdit ? 'Update Restaurant' : 'Create New Restaurant'}
                     </Typography>
                 </Box>
                 <Paper sx={{ p: 3, maxWidth: '600px', width: '100%' }}>
@@ -94,6 +95,27 @@ const Register = ({ tenant }) => {
                         {/* Name */}
                         <div style={{ marginBottom: '1.5rem' }}>
                             <TextField label="Name" type="text" required fullWidth autoFocus autoComplete="name" value={data.name} onChange={handleNameChange} disabled={processing} placeholder="Full name" error={!!errors.name} helperText={errors.name} variant="outlined" />
+                        </div>
+
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <TextField
+                                select
+                                label="Company"
+                                required
+                                fullWidth
+                                value={data.branch_id}
+                                onChange={(e) => setData('branch_id', e.target.value)}
+                                disabled={processing}
+                                error={!!errors.branch_id}
+                                helperText={errors.branch_id}
+                                variant="outlined"
+                            >
+                                {(Array.isArray(branches) ? branches : []).map((b) => (
+                                    <MenuItem key={b.id} value={String(b.id)}>
+                                        {b.name}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
                         </div>
 
                         {/* Domain Name (auto-filled, but editable if needed) */}
@@ -113,7 +135,7 @@ const Register = ({ tenant }) => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                             <Button type="submit" variant="contained" sx={{ backgroundColor: '#063455', textTransform: 'none' }} disabled={processing} fullWidth>
                                 {processing && <CircularProgress size={24} style={{ marginRight: '10px' }} />}
-                                {isEdit ? 'Update Kitchen' : 'Create Kitchen'}
+                                {isEdit ? 'Update Restaurant' : 'Create Restaurant'}
                             </Button>
                         </div>
                     </form>

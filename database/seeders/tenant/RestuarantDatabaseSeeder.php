@@ -51,7 +51,6 @@ class RestuarantDatabaseSeeder extends Seeder
             $tenantName = "Afohs Restaurant $i";
             $subdomain = strtolower(str_replace(' ', '-', $tenantName));
             $tenant = Tenant::create([
-                'id' => $i === 1 ? 'afohs' : $subdomain,
                 'name' => $tenantName,
                 'email' => "afohs$i@gmail.com",
                 'password' => $tenantPassword,
@@ -112,8 +111,8 @@ class RestuarantDatabaseSeeder extends Seeder
 
             Tenant ({$tenant->name}):
                 id:        $admin->user_id
-                URL:       http://localhost:8000/{$subdomain}
-                Login URL: http://localhost:8000/{$subdomain}/login
+                URL:       http://localhost:8000/{$tenant->id}
+                Login URL: http://localhost:8000/{$tenant->id}/login
                 Email:     {$tenant->email}
                 Password:  {$tenantPassword}
 
